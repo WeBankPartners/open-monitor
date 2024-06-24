@@ -12,7 +12,7 @@
             <Tag color="blue" v-else>{{ $t('m_field_resourceLevel') }}</Tag>
           </div>
           <span slot="extra" v-if="isEditState">
-            <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('button.add') }}</Button>
+            <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('m_button_add') }}</Button>
             <Button type="primary" @click="updateNotify(tableItem)">{{ $t('m_button_save') }}</Button>
           </span>
           <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
@@ -175,7 +175,7 @@
         </div>
         <div class="right-content">
           <div class="use-underline-title mb-3">
-            {{$t('field.metric')}}{{$t('m_field_threshold')}}
+            {{$t('m_field_metric')}}{{$t('m_field_threshold')}}
             <span class="underline"></span>
           </div>
           <Table
@@ -208,7 +208,7 @@
       v-model="isShowAddEditModal">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (isEditState ? $t('button.add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
+          {{ (isEditState ? $t('m_button_add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
         </span>
         <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
@@ -350,7 +350,7 @@
         </div>
         <div class="right-content">
           <div class="use-underline-title mb-3">
-            {{$t('field.metric')}}{{$t('m_field_threshold')}}
+            {{$t('m_field_metric')}}{{$t('m_field_threshold')}}
             <span class="underline"></span>
           </div>
           <Table
@@ -472,7 +472,7 @@ export default {
       selectedTableData: null,
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         modalStyle: 'min-width:98%',
         isAdd: true,
         noBtn: true,
@@ -655,6 +655,7 @@ export default {
                 disabled={!this.isEditState}
                 maxlength="10"
                 on-on-change={v => {
+
                   this.formData.conditions[params.index].thresholdValue = v.target.value
                 }}
                 clearable
@@ -734,14 +735,12 @@ export default {
       alarmItemTableColumns: [
         {
           title: this.$t('m_alarmName'),
-          
           width: 250,
           key: 'name'
         },
         {
           title: this.$t('m_alarmPriority'),
           key: 'priority',
-          
           width: 100,
           render: (h, params) => {
             return (
@@ -754,7 +753,6 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          
           width: 100,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
@@ -766,7 +764,6 @@ export default {
         {
           title: this.$t('m_field_relativeTime'),
           width: 130,
-          
           key: 'active_window'
         },
         {
@@ -890,12 +887,12 @@ export default {
       let res = {
         showBtn: true,
         result: {
-          role: val.notify_roles.join(';'),
-          arrange: val.proc_callback_key + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
+          role: !val.notify_roles || val.notify_roles.length === 0 ? '-' : val.notify_roles.join(';'),
+          arrange: (!val.proc_callback_name && !val.proc_callback_mode) ? '-' : val.proc_callback_name + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
           description: val.description || '-'
         }
       }
-      if (val.notify_roles.length === 0 || val.proc_callback_key === '' || val.proc_callback_mode === '') {
+      if (val.notify_roles.length === 0 && val.proc_callback_key === '' && val.proc_callback_mode === '') {
         res.showBtn = false
       }
       return res
@@ -961,7 +958,7 @@ export default {
       if (!str.length) return {};
       return {
         symbol: str.match(/[<>=smh]+/g)[0],
-        value: str.match(/\d+/g)[0]
+        value: str.match(/[\d.]+/)[0]
       }
     },
     getInitialTags() {
@@ -1030,7 +1027,7 @@ export default {
       this.request('GET', api, '', async responseData => {
           this.modelConfig.metricList = responseData;
           this.modelConfig.isAdd = true
-          this.modelConfig.modalTitle = 'button.add',
+          this.modelConfig.modalTitle = 'm_button_add',
           this.formData = cloneDeep(initFormData);
           this.formData.name = this.$t('m_alert') + new Date().getTime()
           await this.getInitialTags();

@@ -1,19 +1,43 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <div v-for="table in totalData" :key="table.guid">
-        <Tag size="medium" color="blue" style="margin: 8px 0">{{$t('m_field_resourceLevel')}}：{{table.tableData.display_name}}</Tag>
-        <PageTable :pageConfig="table.tableConfig">
-          <div slot='tableExtend'>
-            <div style="margin:8px;border:1px solid #2db7f5">
-              <extendTable :detailConfig="table.tableConfig.table.isExtend.detailConfig"></extendTable>
-            </div>
-            <!-- <div style="margin:8px;border:1px solid #19be6b">
-              <Tag type="border" color="success">{{$t('m_metric_regular')}}</Tag>
-              <extendTable :detailConfig="table.tableConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-            </div> -->
+      <div v-for="item in allPageContentData" :key="item.guid">
+        <div class="content-header">
+          <div class="use-underline-title mr-4">
+            {{item.display_name}}
+            <span class="underline"></span>
           </div>
-        </PageTable>
+          <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
+        </div>
+        <Collapse v-model="item.logFileCollapseValue">
+          <Panel v-for="(item, index) in item.config" 
+            :key="index"  
+            :name="index + ''">
+              <div class="log-file-collapse-content">
+                <div>
+                  <div class="use-underline-title mr-4">
+                    {{item.log_path}}
+                    <span class="underline"></span>
+                  </div>
+                  <Tag color="blue">{{ item.monitor_type }}</Tag>
+                </div>
+                <div class="log-file-collapse-button">
+                  <Button class="mr-5" size="small" type="info" @click.stop="editF(item)">
+                    <Icon type="md-eye" size="16" />
+                  </Button>
+                </div>
+                
+              </div>
+              <template #content>
+                <Table
+                  class="log-file-table"
+                  size="small"
+                  :columns="logFileTableColumns"
+                  :data="item.metric_groups"
+                />
+              </template>
+          </Panel>
+        </Collapse>
       </div>
     </section>
     <Modal
@@ -37,8 +61,8 @@
               <Tooltip :content="$t('m_key')" :delay="1000">
                 <Input disabled v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               </Tooltip>
-              <Tooltip :content="$t('field.metric')" :delay="1000">
-                <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
+              <Tooltip :content="$t('m_field_metric')" :delay="1000">
+                <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select disabled v-model="item.agg_type" filterable clearable style="width:190px">
@@ -115,7 +139,11 @@
     <!-- DB config -->
     <section v-if="showDbManagement" style="margin-top: 16px;">
       <Tag size="medium" color="blue">{{$t('m_db')}}</Tag>
-      <PageTable :pageConfig="pageDbConfig"></PageTable>
+      <Table
+        size="small"
+        :columns="dataBaseTableColumns"
+        :data="dataBaseTableData"
+      />
     </section>
     <Modal
       v-model="dbModelConfig.isShow"
@@ -129,7 +157,7 @@
           <FormItem :label="$t('m_field_displayName')">
             <Input disabled v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
-          <FormItem :label="$t('field.metric')">
+          <FormItem :label="$t('m_field_metric')">
             <Input disabled v-model="dbModelConfig.addRow.metric" style="width:520px" />
           </FormItem>
           <FormItem label="SQL">
@@ -146,15 +174,9 @@
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_db')" :delay="1000">
                 <Input disabled v-model="item.target_endpoint" style="width:290px" />
-                <!-- <Select disabled v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_business_object')">
-                  <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select> -->
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
                 <Input disabled v-model="item.source_endpoint" style="width:290px" />
-                <!-- <Select disabled v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_log_server')">
-                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select> -->
               </Tooltip>
             </p>
           </template>
@@ -167,7 +189,7 @@
       :mask-closable="false"
       :width="720"
       >
-      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+      <div v-if="addAndEditModal.isShow" :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
           <span>{{$t('m_field_type')}}:</span>
           <Select v-model="addAndEditModal.dataConfig.monitor_type" disabled style="width: 640px">
@@ -183,15 +205,9 @@
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_business_object')" :delay="1000">
                 <Input disabled v-model="item.source_endpoint" style="width:315px" />
-                <!-- <Select v-model="item.target_endpoint" disabled style="width: 315px" :placeholder="$t('m_business_object')">
-                  <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select> -->
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
                 <Input disabled v-model="item.source_endpoint" style="width:315px" />
-                <!-- <Select v-model="item.source_endpoint" disabled style="width: 315px" :placeholder="$t('m_log_server')">
-                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select> -->
               </Tooltip>
             </p>
           </template>
@@ -207,31 +223,15 @@
 </template>
 
 <script>
+import map from 'lodash/map';
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
-import extendTable from '@/components/table-page/extend-table'
-let tableEle = [
-  {title: 'm_tableKey_logPath', value: 'log_path', display: true},
-  {title: 'm_field_type', value: 'monitor_type', display: true},
-]
-const btn = [
-  {btn_name: 'm_button_view', btn_func: 'editF'},
-]
-let tableDbEle = [
-  {title: 'm_field_displayName', value: 'display_name', display: true},
-  {title: 'field.metric', value: 'metric', display: true},
-  {title: 'm_field_type', value: 'monitor_type', display: true}
-]
-const btnDb = [
-  {btn_name: 'm_button_view', btn_func: 'editDbItem'}
-]
 export default {
   name: '',
   data () {
     return {
       MODALHEIGHT: 300,
       showManagement: false,
-      totalData: [],
       regulationOption: [
         {label: this.$t('m_regular_match'), value: 1},
         {label: this.$t('m_irregular_matching'), value: 0}
@@ -254,7 +254,7 @@ export default {
         modalTitle: 'm_metric_regular',
         noBtn: true,
         config: [
-          {label: 'field.metric', value: 'metric', placeholder: '', disabled: true, type: 'text'},
+          {label: 'm_field_metric', value: 'metric', placeholder: '', disabled: true, type: 'text'},
           {label: 'm_tableKey_description', value: 'display_name', placeholder: '', disabled: true, type: 'text'},
           {label: 'm_tableKey_regular', value: 'regular', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: true, type: 'text'},
           {name:'ruleConfig',type:'slot'}
@@ -281,16 +281,6 @@ export default {
       },
       // DB config 
       showDbManagement: false,
-      pageDbConfig: {
-        table: {
-          tableData: [],
-          tableEle: tableDbEle,
-          // filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'id',
-          btn: btnDb,
-          handleFloat:true
-        }
-      },
       dbModelConfig: {
         isShow: false,
         isAdd: true,
@@ -322,6 +312,126 @@ export default {
         },
         pathOptions: []
       },
+      allPageContentData: [],
+      logFileTableColumns: [
+        {
+          title: this.$t('m_configuration_name'),
+          width: 150,
+          key: 'name',
+          render: (h, params) => {
+            return (
+              params.row.name ? 
+                <Tooltip placement="right" max-width="300" content={params.row.name}>
+                  <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
+                </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_associated_template'),
+          width: 200,
+          ellipsis: true,
+          tooltip: true,
+          key: 'log_monitor_template_name',
+          render: (h, params) => {
+            return (
+              params.row.log_monitor_template_name ? 
+                <Tooltip placement="top" max-width="300" content={params.row.log_monitor_template_name}>
+                  <div class="table-ellipsis" style="width: 180px">{params.row.log_monitor_template_name}</div>
+                </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_metric_key'),
+          minWidth: 300,
+          ellipsis: true,
+          tooltip: true,
+          key: 'log_type_display',
+          render: (h, params) => {
+            let metricStr = '';
+            let metricHtml = '';
+            if (params.row.metric_list.length) {
+              const metricArr = map(params.row.metric_list, 'metric');
+              metricStr = metricArr.join(',');
+              metricHtml = '<p>' + metricArr.join('<br>') + '</p>'
+            }
+            return (
+              metricStr ? 
+              <Tooltip placement="top" max-width="400">
+                <div slot="content" style="white-space: normal;">
+                  <div domPropsInnerHTML={metricHtml}></div>
+                </div>
+                <div class="table-ellipsis" style="width: 280px">{metricStr}</div>
+              </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_metric_config_type'),
+          width: 150,
+          key: 'log_type_display'
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user'
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
+        },
+        {
+          title: this.$t('m_table_action'),
+          width: 83,
+          key: 'index',
+          render: (h, params) => {
+            return (
+              <div>
+                <Button size="small" class="mr-1"  type="info" on-click={() =>{this.currentLogFileIndex = params.row.logFileIndex; this.editRuleItem(params.row)}}>
+                    <Icon type="md-eye" size="16" />
+                </Button>
+              </div>
+            )
+          }
+        }
+      ],
+      typeToName: { // 模版枚举
+        custom: this.$t('m_custom_regex'),
+        regular: this.$t('m_standard_regex'),
+        json: this.$t('m_standard_json'),
+      },
+      dataBaseTableColumns: [
+        {
+          title: this.$t('m_metric_name'),
+          width: 250,
+          key: 'display_name'
+        },
+        {
+          title: this.$t('m_metric_key'),
+          width: 350,
+          key: 'metric'
+        },
+        {
+          title: this.$t('m_field_type'),
+          key: 'monitor_type'
+        },
+        {
+          title: this.$t('m_table_action'),
+          width: 250,
+          key: 'index',
+          render: (h, params) => {
+            return (
+              <div>
+                <Button size="small" type="info" on-click={() =>{this.editDbItem(params.row)}}>
+                    <Icon type="md-eye" size="16" />
+                </Button>
+              </div>
+            )
+          }
+        }
+      ],
+      dataBaseTableData: []
     }
   },
   methods: {
@@ -329,7 +439,8 @@ export default {
     getDbDetail (targetId) {
       const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + targetId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.pageDbConfig.table.tableData = responseData
+        // this.pageDbConfig.table.tableData = responseData;
+        this.dataBaseTableData = responseData;
         this.showDbManagement = true
       }, {isNeedloading:false})
     },
@@ -409,28 +520,6 @@ export default {
         this.$refs.businessMonitorGroupConfigRef.loadPage('view', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
-    getExtendInfo (item) {
-      const guid = item.guid
-      // // eslint-disable-next-line no-redeclare
-      let index = null
-      this.totalData.forEach((td, tdIndex) => {
-        const res = td.tableData.config.findIndex(x => x.guid === guid)
-        if (res !== -1) {
-          index = tdIndex
-        }
-      })
-      item.metric_groups.forEach(xx => xx.pId = item.guid)
-      this.totalData[index].tableConfig.table.isExtend.detailConfig[0].data = item.metric_groups.map(group => {
-        const typeToName = {
-          custom: this.$t('m_custom_regex'),
-          regular: this.$t('m_standard_regex'),
-          json: this.$t('m_standard_json'),
-        }
-        group.log_type_display = typeToName[group.log_type]
-        return group
-      })
-      this.totalData[index].tableConfig.table.isExtend.parentData = item
-    },
     getDetail (targrtId) {
       this.showManagement = false
       this.showDbManagement = false
@@ -441,62 +530,19 @@ export default {
       }
       const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.totalData = responseData.map(d => {
-          let tmp = {}
-          tmp.tableData = d
-          tmp.tableConfig = {
-            table: {
-              tableData: d.config,
-              tableEle: tableEle,
-              // filterMoreBtn: 'filterMoreBtn',
-              primaryKey: 'id',
-              btn: btn,
-              handleFloat:true,
-              isExtend: {
-                parentData: null,
-                func: 'getExtendInfo',
-                data: {},
-                slot: 'tableExtend',
-                detailConfig: [{
-                  isExtendF: true,
-                  title: '',
-                  config: [
-                    {title: 'm_configuration_name', value: 'name', display: true},
-                    {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
-                    {title: 'm_metric_config_type', value: 'log_type_display', display: true},
-                    {title: 'm_updatedBy', value: 'update_user', display: true},
-                    {title: 'm_title_updateTime', value: 'update_time', display: true},
-                    {title: 'm_table_action',btn:[
-                      {btn_name: 'm_button_view', btn_func: 'editRuleItem'}
-                    ]}
-                  ],
-                  data: [1],
-                  scales: ['25%', '20%', '15%', '20%', '20%']
-                }]
-              }
-              // isCustomMetricExtend: {
-              //   parentData: null,
-              //   func: 'getExtendInfo',
-              //   data: {},
-              //   slot: 'rulesTableExtend',
-              //   detailConfig: [{
-              //     isExtendF: true,
-              //     title: '',
-              //     config: [
-              //       {title: 'm_tableKey_regular', value: 'regular', display: true},
-              //       {title: 'field.metric', value: 'metric', display: true},
-              //       {title: 'm_field_aggType', value: 'agg_type', display: true},
-              //       {title: 'm_table_action',btn:[
-              //         {btn_name: 'm_button_view', btn_func: 'editCustomMetricItem'}
-              //       ]}
-              //     ],
-              //     data: [1],
-              //     scales: ['25%', '20%', '15%', '20%', '20%']
-              //   }]
-              // }
-            }
+        
+        this.allPageContentData = responseData.map((res, index) => {
+          if (index === 0) {
+            res.logFileCollapseValue = ['0'];
+          } else {
+            res.logFileCollapseValue = [];
           }
-          return tmp
+          res.config.forEach(item => {
+            item.metric_groups.forEach(group => {
+              group.log_type_display = this.typeToName[group.log_type];
+            })
+          })
+          return res
         })
         this.showManagement = true
         this.$root.$store.commit('changeTableExtendActive', -1)
@@ -507,12 +553,47 @@ export default {
     this.MODALHEIGHT = document.body.scrollHeight - 300
   },
   components: {
-    extendTable,
     CustomRegex,
     BusinessMonitorGroupConfig
   }
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped lang="less">
+.log-file-collapse-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.use-underline-title {
+    display: inline-block;
+    font-weight: 700;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -20px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      -webkit-box-sizing: content-box;
+      box-sizing: content-box;
+    }
+  }
+
+.content-header {
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  .use-underline-title {
+    .underline {
+      margin-top: -12px;
+    }
+  }
+}
 </style>
