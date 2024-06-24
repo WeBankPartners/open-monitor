@@ -17,7 +17,7 @@
             </h4>
             <h4 class="modal-title" v-if="!modelConfig.modalTitle">{{$t(modelConfig.modalTitle) + '--'}}
               <label v-if="modelConfig.isAdd">
-                <span>{{$t('button.add')}}</span>
+                <span>{{$t('m_button_add')}}</span>
               </label>
               <label v-else>
                 <span>{{$t('m_button_edit')}}</span>

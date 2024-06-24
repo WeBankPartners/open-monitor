@@ -52,7 +52,7 @@ export default {
             {value: 'search', type: 'input', placeholder: 'm_placeholder_input', style: ''}],
           btn_group: [
             {btn_name: 'm_button_search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-            {btn_name: 'button.add', btn_func: 'addRole', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
+            {btn_name: 'm_button_add', btn_func: 'addRole', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
           ],
           filters: {
             search: ''
@@ -80,7 +80,7 @@ export default {
       },
       modelConfig: {
         modalId: 'add_role_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [
           {label: 'm_tableKey_name', value: 'name', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
