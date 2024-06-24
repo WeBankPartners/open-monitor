@@ -28,7 +28,7 @@
       </template>
       <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
         <p slot="title">
-          {{$t('button.add')}}
+          {{$t('m_button_add')}}
         </p>
         <div style="margin:8px;text-align:center">
           <Icon @click="addCluster" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />
@@ -62,7 +62,7 @@
       </template>
       <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
         <p slot="title">
-          {{$t('button.add')}}
+          {{$t('m_button_add')}}
         </p>
         <div style="margin:8px;text-align:center">
           <Icon @click="addItem" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />

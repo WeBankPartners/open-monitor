@@ -658,6 +658,8 @@
   "m_resourceLevel_alarmFiring": "告警异常",
   "m_resourceLevel_alarmRecover": "告警恢复",
   "m_resourceLevel_level_search_name": "请输入层级名称",
-  "m_resourceLevel_level_search_endpoint": "请选择对象"
+  "m_resourceLevel_level_search_endpoint": "请选择对象",
+  "m_sql_script": "SQL脚本",
+  "m_database_map": "数据库映射"
 }
 

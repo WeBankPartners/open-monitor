@@ -657,5 +657,7 @@
   "m_resourceLevel_alarmFiring": "Alarm Firing",
   "m_resourceLevel_alarmRecover": "Alarm Recover",
   "m_resourceLevel_level_search_name": "Enter Level Name",
-  "m_resourceLevel_level_search_endpoint": "Select Endpoint"
+  "m_resourceLevel_level_search_endpoint": "Select Endpoint",
+  "m_sql_script": "SQL script",
+  "m_database_map": "Database Map"
 }

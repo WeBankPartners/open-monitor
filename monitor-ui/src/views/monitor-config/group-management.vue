@@ -86,7 +86,7 @@
               {value: 'search', type: 'input', placeholder: 'm_placeholder_input', style: ''}],
             btn_group: [
               {btn_name: 'm_button_search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
+              {btn_name: 'm_button_add', btn_func: 'add', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
             ],
             filters: {
               name__icontains: '',
