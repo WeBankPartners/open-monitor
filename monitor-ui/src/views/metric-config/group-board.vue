@@ -54,7 +54,7 @@
               <Option v-for="item in legendOptions" :value="item.value" :label="item.label" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
-          <FormItem :label="$t('field.metric')">
+          <FormItem :label="$t('m_field_metric')">
             <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
               <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :label="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
             </Select>
@@ -90,7 +90,7 @@
       :mask-closable="false"
       @on-ok="saveTitle"
       @on-cancel="titleManagement.title = ''"
-      :title="titleManagement.isAdd ? $t('button.add') : $t('m_button_edit')">
+      :title="titleManagement.isAdd ? $t('m_button_add') : $t('m_button_edit')">
       <Form :label-width="80">
         <FormItem :label="$t('m_field_title')">
           <Input v-model="titleManagement.title"/>

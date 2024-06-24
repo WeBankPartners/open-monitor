@@ -37,7 +37,7 @@
               closable
               @click.native="test(query, queryIndex)"
               @on-close="removeQuery(queryIndex)"
-            >{{$t('m_field_endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+            >{{$t('m_field_endpoint')}}：{{query.endpoint}}; {{$t('m_field_metric')}}：{{query.metric}}</Tag>
           </div>
           <div class="condition-zone">
             <ul>
@@ -83,7 +83,7 @@
                   </div>
                 </li>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_metric')}}</div>
                 <div class="condition">
                   <Select
                     v-model="templateQuery.metric"
