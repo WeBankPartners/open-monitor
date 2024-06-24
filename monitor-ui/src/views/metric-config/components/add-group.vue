@@ -56,7 +56,7 @@
             </template>
           </FormItem>
           <!--表达式-->
-          <FormItem :label="$t('field.metric')" required>
+          <FormItem :label="$t('m_field_metric')" required>
             <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
@@ -301,7 +301,7 @@ export default {
         return this.$Message.error(this.$t('m_scope') + this.$t('m_tips_required'))
       }
       if (!this.metricConfigData.prom_expr) {
-        return this.$Message.error(this.$t('field.metric') + this.$t('m_tips_required'))
+        return this.$Message.error(this.$t('m_field_metric') + this.$t('m_tips_required'))
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType

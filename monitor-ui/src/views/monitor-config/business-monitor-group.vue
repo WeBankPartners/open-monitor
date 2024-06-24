@@ -33,26 +33,87 @@
             </div>
           </div>
           <Button type="success" class="btn-right" @click="add">
-            {{ $t('button.add') }}
+            {{ $t('m_button_add') }}
           </Button>
         </div>
       </div>
 
-      <PageTable :pageConfig="pageConfig">
-        <div slot='tableExtend'>
-          <div style="margin: 12px 0;float: right;">
-            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" style="margin: 0 12px;">{{ $t('m_use_custom') }}</Button>
-            <Button type="success" @click="addMetricConfig(pageConfig.table.isExtend.parentData)">{{ $t('m_use_template') }}</Button>
-          </div>
-          <div>
-            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
-          </div>
-        </div>
-      </PageTable>
+      <Collapse v-model="logFileCollapseValue">
+        <Panel v-for="(item, index) in logFileCollapseData" 
+          :key="index"  
+          :name="index + ''">
+            <div class="log-file-collapse-content">
+              <div>
+                <div class="use-underline-title mr-4">
+                  {{item.log_path}}
+                  <span class="underline"></span>
+                </div>
+                <Tag color="blue">{{ item.monitor_type }}</Tag>
+              </div>
+              <div class="log-file-collapse-button" @click="(e) => {e.stopPropagation()}">
+                <Tooltip :content="$t('m_use_custom')" placement="bottom" transfer>
+                  <Button
+                    size="small"
+                    type="success"
+                    @click.stop="addByCustom(item)"
+                  >
+                    <Icon type="ios-add-circle" size="16" />
+                  </Button>
+                </Tooltip>
+                <Dropdown 
+                  placement="left"
+                  :key="index"
+                  class="chart-option-menu" 
+                  @on-click="(guid) => {
+                    selectedTemp = guid;
+                    parentGuid = item.guid;
+                    okTempSelect()
+                  }">
+                  <Button type="success" size="small">
+                    <Icon type="ios-link" size="16" />
+                  </Button>
+                  <template #list>
+                    <DropdownMenu>
+                      <DropdownItem v-for="(option, key) in allTemplateList"
+                        :name="option.guid" 
+                        :key="key"
+                        :disabled="option.disabled">
+                        {{option.name}}
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </template>
+                </Dropdown>
+                <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
+                    <Icon type="md-create" size="16" />
+                </Button>
+                <!-- <Button size="small" type="error" class="mr-2" @click.stop="deleteConfirmModal(item)">
+                  <Icon type="md-trash" size="16"></Icon>
+                </Button> -->
+                <Poptip
+                  confirm
+                  :title="$t('m_delConfirm_tip')"
+                  placement="left-end"
+                  @on-ok="deleteLogFiltItem(item)">
+                  <Button size="small" type="error" class="mr-2">
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
+              </div>
+            </div>
+            <template #content>
+              <Table
+                class="log-file-table"
+                size="small"
+                :columns="logFileTableColumns"
+                :data="item.metric_groups"
+              />
+            </template>
+        </Panel>
+      </Collapse>
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="addAndEditModal.isAdd ? $t('button.add') : $t('m_button_edit')"
+      :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
       :mask-closable="false"
       :width="730"
       >
@@ -84,7 +145,7 @@
             size="small"
             style="width:650px"
             long
-            >{{ $t('button.add') }}{{$t('m_tableKey_logPath')}}</Button
+            >{{ $t('m_button_add') }}{{$t('m_tableKey_logPath')}}</Button
           >
         </div>
         <div v-else style="margin: 8px 0">
@@ -150,8 +211,8 @@
               <Tooltip :content="$t('m_key')" :delay="1000">
                 <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               </Tooltip>
-              <Tooltip :content="$t('field.metric') + ' , e.g:code'" :delay="1000">
-                <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
+              <Tooltip :content="$t('m_field_metric') + ' , e.g:code'" :delay="1000">
+                <Input v-model="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select v-model="item.agg_type" filterable clearable style="width:100px">
@@ -208,37 +269,13 @@
             type="success"
             size="small"
             long
-            >{{ $t('addMetricConfig') }}123</Button
+            >{{ $t('addMetricConfig') }}</Button
           >
         </div>
       </div>
       <div slot="footer">
         <Button @click="cancelRule">{{$t('m_button_cancel')}}</Button>
         <Button @click="saveRule" type="primary">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
-    <Modal
-      v-model="isShowWarning"
-      :title="$t('m_delConfirm_title')"
-      :mask-closable="false"
-      @on-ok="ok"
-      @on-cancel="cancel">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delConfirm_tip')}}: {{ selectedData.log_path || ''}}</p>
-        </div>
-      </div>
-    </Modal>
-    <Modal
-      v-model="isShowWarningDelete"
-      :title="$t('m_delConfirm_title')"
-      :mask-closable="false"
-      @on-ok="okDelRow"
-      @on-cancel="cancleDelRow">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delConfirm_tip')}}: {{ selectedData.name || selectedData.display_name || '' }}</p>
-        </div>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
@@ -322,17 +359,22 @@
       </div>
     </ModalComponent>
     <!-- DB config -->
-    <section v-if="showManagement" style="margin-top: 16px;">
+    <section v-if="showManagement" style="margin-top: 16px; padding-bottom: 30px">
       <div class="w-header" slot="title" style="display: flex;justify-content: space-between;">
         <div class="title">
           {{$t('m_db')}}
           <span class="underline"></span>
         </div>
         <Button type="success" class="btn-right" @click="addDb" style="margin: 8px 0">
-          {{ $t('button.add') }}
+          {{ $t('m_button_add') }}
         </Button>
       </div>
-      <PageTable :pageConfig="pageDbConfig" style="margin-top:8px"></PageTable>
+      <Table
+        class="log-file-table"
+        size="small"
+        :columns="dataBaseTableColumns"
+        :data="dataBaseTableData"
+      />
     </section>
     <Modal
       v-model="dbModelConfig.isShow"
@@ -345,7 +387,7 @@
           <FormItem :label="$t('m_field_displayName')">
             <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
-          <FormItem :label="$t('field.metric')">
+          <FormItem :label="$t('m_field_metric')">
             <Input v-model="dbModelConfig.addRow.metric" style="width:520px" />
           </FormItem>
           <FormItem label="SQL">
@@ -421,66 +463,26 @@
         </div>
       </div>
     </Modal>
-
-    <!-- 新增指标配置 -->
-    <Modal v-model="showTemplateSelect" :title="$t('m_select_template')" :mask-closable="false">
-      <Form :label-width="120">
-        <FormItem :label="$t('m_log_template')">
-          <Select style="width: 80%" v-model="selectedTemp" filterable ref="selectRef" @on-open-change="clearQuery">
-            <OptionGroup :label="$t('m_standard_json')">
-              <Option v-for="item in templateList.json_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
-            </OptionGroup>
-            <OptionGroup :label="$t('m_standard_regex')">
-              <Option v-for="item in templateList.regular_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
-            </OptionGroup>
-            <!-- <OptionGroup :label="$t('m_custom_regex')">
-              <Option value="customGuid" key="customGuid">{{ $t('m_custom_regex')}}</Option>
-            </OptionGroup> -->
-          </Select>
-        </FormItem>
-      </Form>
-      <template #footer>
-        <Button @click="showTemplateSelect = false">{{ $t('m_button_cancel') }}</Button>
-        <Button @click="okTempSelect" :disabled="selectedTemp === ''" type="primary">{{ $t('m_button_confirm') }}</Button>
-      </template>
-    </Modal>
     <CustomRegex ref="customRegexRef" @reloadMetricData="reloadMetricData"></CustomRegex>
     <BusinessMonitorGroupConfig ref="businessMonitorGroupConfigRef" @reloadMetricData="reloadMetricData"></BusinessMonitorGroupConfig>
   </div>
 </template>
 
 <script>
+import cloneDeep from 'lodash/cloneDeep';
+import map from 'lodash/map';
+import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
-import extendTable from '@/components/table-page/extend-table'
 import axios from 'axios'
-let tableEle = [
-  {title: 'm_tableKey_logPath', value: 'log_path', display: true},
-  {title: 'm_field_type', value: 'monitor_type', display: true},
-]
-const btn = [
-  {btn_name: 'm_button_edit', btn_func: 'editF'},
-  {btn_name: 'm_button_remove', btn_func: 'deleteConfirmModal', color: 'red'},
-  // {btn_name: 'm_import', btn_func: 'importConfig'}
-]
 
-let tableDbEle = [
-  {title: 'm_metric_name', value: 'display_name', display: true},
-  {title: 'm_metric_key', value: 'metric', display: true},
-  {title: 'm_field_type', value: 'monitor_type', display: true}
-]
-const btnDb = [
-  {btn_name: 'm_button_edit', btn_func: 'editDbItem'},
-  {btn_name: 'm_button_remove', btn_func: 'deleteDbConfirmModal', color: 'red'}
-]
 export default {
   name: '',
   data () {
     return {
-      showTemplateSelect: false,
       selectedTemp: '', // 新增选中的模版
       parentGuid: '', // 新增在该数据下
       templateList: {
@@ -489,43 +491,9 @@ export default {
       },
       token: null,
       MODALHEIGHT: 300,
-      isShowWarning: false,
       targrtId: '',
       targetDetail: {},
       showManagement: false,
-      pageConfig: {
-        table: {
-          tableData: [],
-          tableEle: tableEle,
-          // filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'id',
-          btn: btn,
-          handleFloat:true,
-          isExtend: {
-            parentData: null,
-            func: 'getExtendInfo',
-            data: {},
-            slot: 'tableExtend',
-            detailConfig: [{
-              isExtendF: true,
-              title: '',
-              config: [
-                {title: 'm_configuration_name', value: 'name', display: true},
-                {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
-                {title: 'm_metric_config_type', value: 'log_type_display', display: true},
-                {title: 'm_updatedBy', value: 'update_user', display: true},
-                {title: 'm_title_updateTime', value: 'update_time', display: true},
-                {title: 'm_table_action',btn:[
-                  {btn_name: 'm_button_edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'm_button_remove', btn_func: 'delRuleconfirmModal', color: 'red'}
-                ]}
-              ],
-              data: [1],
-              scales: ['25%', '20%', '15%', '20%', '20%']
-            }]
-          }
-        }
-      },
       addAndEditModal: {
         isShow: false,
         isAdd: false,
@@ -559,7 +527,6 @@ export default {
       },
       selectedData: {},
       selectedIndex: null,
-      isShowWarningDelete: false,
       deleteType: '',
       showCustomRegConfig: false,
       customMetricsModelConfig: {
@@ -569,7 +536,7 @@ export default {
         modalTitle: 'm_metric_regular',
         saveFunc: 'saveCustomMetric',
         config: [
-          {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text', max: 50},
+          {label: 'm_field_metric', value: 'metric', placeholder: '', disabled: false, type: 'text', max: 50},
           {label: 'm_field_displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
           // {label: 'm_tableKey_regular', value: 'regular', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
@@ -594,17 +561,6 @@ export default {
       modelTip: {
         key: '',
         value: 'metric'
-      },
-      // DB config 
-      pageDbConfig: {
-        table: {
-          tableData: [],
-          tableEle: tableDbEle,
-          // filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'id',
-          btn: btnDb,
-          handleFloat:true
-        }
       },
       dbModelConfig: {
         isShow: false,
@@ -633,7 +589,143 @@ export default {
         custom: this.$t('m_custom_regex'),
         regular: this.$t('m_standard_regex'),
         json: this.$t('m_standard_json'),
-      }
+      },
+      logFileCollapseData: [],
+      logFileCollapseValue: ['0'],
+      logFileTableColumns: [
+        {
+          title: this.$t('m_configuration_name'),
+          width: 150,
+          key: 'name',
+          render: (h, params) => {
+            return (
+              params.row.name ? 
+                <Tooltip placement="right" max-width="300" content={params.row.name}>
+                  <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
+                </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_associated_template'),
+          width: 200,
+          ellipsis: true,
+          tooltip: true,
+          key: 'log_monitor_template_name',
+          render: (h, params) => {
+            return (
+              params.row.log_monitor_template_name ? 
+                <Tooltip placement="top" max-width="300" content={params.row.log_monitor_template_name}>
+                  <div class="table-ellipsis" style="width: 180px">{params.row.log_monitor_template_name}</div>
+                </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_metric_key'),
+          minWidth: 300,
+          ellipsis: true,
+          tooltip: true,
+          key: 'log_type_display',
+          render: (h, params) => {
+            let metricStr = '';
+            let metricHtml = '';
+            if (params.row.metric_list.length) {
+              const metricArr = map(params.row.metric_list, 'metric');
+              metricStr = metricArr.join(',');
+              metricHtml = '<p>' + metricArr.join('<br>') + '</p>';
+            }
+            return (
+              metricStr ? 
+                <Tooltip placement="top" max-width="400">
+                  <div slot="content" style="white-space: normal;">
+                    <div domPropsInnerHTML={metricHtml}></div>
+                  </div>
+                  <div class="table-ellipsis" style="width: 280px">{metricStr}</div>
+                </Tooltip> : <div>-</div>
+            )
+          }
+        },
+        {
+          title: this.$t('m_metric_config_type'),
+          width: 150,
+          key: 'log_type_display'
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user'
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
+        },
+        {
+          title: this.$t('m_table_action'),
+          width: 150,
+          key: 'index',
+          render: (h, params) => {
+            return (
+              <div>
+                <Button size="small" class="mr-1"  type="primary" on-click={() =>{this.currentLogFileIndex = params.row.logFileIndex; this.editRuleItem(params.row)}}>
+                    <Icon type="md-create" size="16"></Icon>
+                </Button>
+                <Poptip
+                  confirm
+                  title={this.$t('m_delConfirm_tip')}
+                  placement="left-end"
+                  on-on-ok={() => {this.currentLogFileIndex = params.row.logFileIndex; this.deleteType = 'rules'; this.okDelRow(params.row)}}>
+                  <Button size="small" type="error" class="mr-2">
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
+              </div>
+            )
+          }
+        }
+      ],
+      currentLogFileIndex: 0,
+      dataBaseTableColumns: [
+        {
+          title: this.$t('m_metric_name'),
+          width: 250,
+          key: 'display_name'
+        },
+        {
+          title: this.$t('m_metric_key'),
+          width: 350,
+          key: 'metric'
+        },
+        {
+          title: this.$t('m_field_type'),
+          key: 'monitor_type'
+        },
+        {
+          title: this.$t('m_table_action'),
+          width: 250,
+          key: 'index',
+          render: (h, params) => {
+            return (
+              <div>
+                <Button size="small" class="mr-1"  type="primary" on-click={() =>{this.editDbItem(params.row)}}>
+                    <Icon type="md-create" size="16"></Icon>
+                </Button>
+                <Poptip
+                  confirm
+                  title={this.$t('m_delConfirm_tip')}
+                  placement="left-end"
+                  on-on-ok={() => {this.deleteType = 'db'; this.okDelRow(params.row)}}>
+                  <Button size="small" type="error" class="mr-2">
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
+              </div>
+            )
+          }
+        }
+      ],
+      dataBaseTableData: [],
+      allTemplateList: []
     }
   },
   computed: {
@@ -646,7 +738,20 @@ export default {
   },
   mounted () {
     this.MODALHEIGHT = document.body.scrollHeight - 300
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null;
+    this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
+      this.templateList.json_list = resp.json_list;
+      this.templateList.regular_list = resp.regular_list;
+      this.allTemplateList = [{
+        name: this.$t('m_standard_json'),
+        value: 'm_standard_json',
+        disabled: true
+      }, ...resp.json_list, {
+        name: this.$t('m_standard_regex'),
+        value: 'm_standard_regex',
+        disabled: true
+      }, ...resp.regular_list]
+    })
   },
   methods: {
     importConfig (rowData) {
@@ -737,7 +842,7 @@ export default {
     getDbDetail (targetId) {
       const api = this.$root.apiCenter.getTargetDbDetail + '/group/' + targetId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.pageDbConfig.table.tableData = responseData
+        this.dataBaseTableData = responseData;
       }, {isNeedloading:false})
     },
     // other config
@@ -809,60 +914,34 @@ export default {
       this.customMetricsModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.$root.JQ('#custom_metrics').modal('show')
     },
-    delCustomMetricConfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarningDelete = true
-      this.deleteType = 'custom_metrics'
-    },
     editRuleItem (rowData) {
-      // this.cancelReg()
-      // this.ruleModelConfig.isAdd = false
-      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      // this.ruleModelConfig.isShow = true
-
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
       } else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
-    deleteDbConfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarningDelete = true
-      this.deleteType = 'db'
-    },
-    delRuleconfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarningDelete = true
-      this.deleteType = 'rules'
-    },
-    okDelRow () {
+    okDelRow (item) {
       if (this.deleteType === 'custom_metrics') {
-        this.delCustomMericsItem(this.selectedData)
+        this.delCustomMericsItem(item)
       } else if (this.deleteType === 'db') {
-        this.delDbItem(this.selectedData)
+        this.delDbItem(item)
       } else {
-        this.delRuleItem(this.selectedData)
+        this.delRuleItem(item)
       }
     },
     delCustomMericsItem (rowData) {
       const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        // this.getDetail(this.targrtId)
         this.reloadMetricData(rowData.log_metric_monitor)
       })
-    },
-    cancleDelRow () {
-      this.isShowWarningDelete = false
     },
     delRuleItem (rowData) {
       const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.isShowWarningDelete = false
         this.reloadMetricData(rowData.log_metric_monitor)
-        // this.getDetail(this.targrtId)
       })
     },
     cancelRule () {
@@ -881,16 +960,17 @@ export default {
         this.$Message.success(this.$t('m_tips_success'))
         this.ruleModelConfig.isShow = false
         this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
-        // this.getDetail(this.targrtId)
       })
     },
     reloadMetricData (guid) {
       const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
-        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
-        group.log_type_display = this.typeToName[group.log_type]
-        return group
-      })
+        const metricGroups = responseData.metric_groups.map(group => {
+          group.log_type_display = this.typeToName[group.log_type];
+          group.logFileIndex = this.currentLogFileIndex;
+          return group
+        })
+        Vue.set(this.logFileCollapseData[this.currentLogFileIndex], 'metric_groups', metricGroups);
       })
     },
     singleAddF (rowData) {
@@ -900,26 +980,8 @@ export default {
       this.ruleModelConfig.isAdd = true
       this.ruleModelConfig.isShow = true
     },
-    getExtendInfo(item){
-      const path = `${this.$root.apiCenter.getLogMetricByPath}/${item.guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
-        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
-          group.log_type_display = this.typeToName[group.log_type]
-          return group
-        })
-        this.pageConfig.table.isExtend.parentData = item
-      })
-      this.pageConfig.table.isExtend.parentData = item
-    },
-    deleteConfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarning = true
-    },
-    ok () {
-      this.delF(this.selectedData)
-    },
-    cancel () {
-      this.isShowWarning = false
+    deleteLogFiltItem (item) {
+      this.delF(item)
     },
     delF (rowData) {
       const api = this.$root.apiCenter.deletePath + '/' + rowData.guid
@@ -1087,20 +1149,17 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
         this.targetDetail = responseData
-        this.pageConfig.table.tableData = responseData.config
+        this.logFileCollapseData = cloneDeep(responseData.config);
+        this.logFileCollapseData.forEach((item, index) => {
+          const groups = item.metric_groups;
+          groups.forEach(group => {
+            group.log_type_display = this.typeToName[group.log_type];
+            group.logFileIndex = index;
+          })
+        })
         this.$root.$store.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
       this.getDbDetail(targrtId)
-    },
-    // 新增指标配置--开始
-    addMetricConfig (item) {
-      this.parentGuid = item.guid
-      this.selectedTemp = ''
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
-        this.templateList.json_list = resp.json_list
-        this.templateList.regular_list = resp.regular_list
-        this.showTemplateSelect = true
-      })
     },
     // 新增自定指标指标
     addByCustom (item) {
@@ -1109,7 +1168,6 @@ export default {
       this.okTempSelect()
     },
     okTempSelect () {
-      this.showTemplateSelect = false
       if (this.selectedTemp === 'customGuid') {
         this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
       } else {
@@ -1124,7 +1182,6 @@ export default {
     // 新增指标配置--结束
   },
   components: {
-    extendTable,
     RegTest,
     CustomRegex,
     BusinessMonitorGroupConfig
@@ -1132,7 +1189,10 @@ export default {
 }
 </script>
 
-<style>
+<style lang="less">
+.ivu-table-wrapper {
+  overflow: inherit;
+}
 .ivu-form-item {
   margin-bottom: 4px;
 }
@@ -1167,5 +1227,61 @@ export default {
       box-sizing: content-box;
     }
   }
+}
+.ivu-collapse-header {
+  display: flex;
+  align-items: center;
+}
+
+.log-file-table {
+  .table-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.log-file-collapse-content {
+  .ivu-dropdown-menu {
+    max-height: 300px;
+    overflow: auto;
+  }
+}
+
+</style>
+
+<style lang="less" scoped>
+
+.use-underline-title {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 10px;
+  .underline {
+    display: block;
+    margin-top: -20px;
+    margin-left: -6px;
+    width: 100%;
+    padding: 0 6px;
+    height: 12px;
+    border-radius: 12px;
+    background-color: #c6eafe;
+    -webkit-box-sizing: content-box;
+    box-sizing: content-box;
+  }
+}
+
+.log-file-collapse-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .use-underline-title {
+    font-size: 14px;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 </style>

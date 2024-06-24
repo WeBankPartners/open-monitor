@@ -40,7 +40,7 @@
               {{ $t('m_import') }}
             </Button>
           </Upload>
-          <Button type="success" @click="handleAdd">{{$t('button.add')}}</Button>
+          <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
         </div>
       </Col>
     </Row>
@@ -87,7 +87,7 @@ export default {
       tableData: [],
       tableColumns: [
         {
-          title: this.$t('field.metric'), // 指标
+          title: this.$t('m_field_metric'), // 指标
           key: 'metric',
           width: 250
         },

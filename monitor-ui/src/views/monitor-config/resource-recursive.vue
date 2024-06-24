@@ -96,7 +96,7 @@
               <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow> 
               {{ item.option_text }}</Option>
           </Select>
-          <Button @click="addObjectItem">{{$t('button.add')}}</Button>
+          <Button @click="addObjectItem">{{$t('m_button_add')}}</Button>
         </FormItem>
         <FormItem :label="$t('m_selected_object')" style="max-height:500px;overflow:auto">
           <template v-for="(obj, objIndex) in selectedObject">
@@ -157,7 +157,7 @@
               <Option v-for="item in roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
           </Select>
-          <button class="btn-cancel-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
+          <button class="btn-cancel-f" @click="addSelectReceivers">{{$t('m_button_add')}}</button>
         </div>
         <div style="margin: 8px 0">
           <label style="width:110px">{{$t('m_button_receiversInput')}}:</label>
@@ -166,7 +166,7 @@
             type="text" 
             :placeholder="$t('m_button_receiversInputTip')"
             class="form-control search-input c-dark"/>
-          <button class="btn-cancel-f" @click="addInputReceivers">{{$t('button.add')}}</button>
+          <button class="btn-cancel-f" @click="addInputReceivers">{{$t('m_button_add')}}</button>
         </div>
       <div slot="footer">
         <button class="btn-cancel-f" @click="isAlarmReceivers = false">{{$t('m_button_cancel')}}</button>
