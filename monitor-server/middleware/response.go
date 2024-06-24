@@ -119,3 +119,7 @@ func ReturnTokenError(c *gin.Context) {
 func ReturnTokenAuthorityError(c *gin.Context) {
 	ReturnError(c, 403, GetMessageMap(c).TokenAuthorityError, nil)
 }
+
+func ReturnDashboardNameRepeatError(c *gin.Context) {
+	ReturnError(c, 500, GetMessageMap(c).DashboardNameRepeatError, nil)
+}

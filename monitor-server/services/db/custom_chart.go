@@ -16,6 +16,11 @@ func GetCustomChartById(id string) (chart *models.CustomChart, err error) {
 	return
 }
 
+func QueryCustomChartByName(name string) (list []*models.CustomChart, err error) {
+	err = x.SQL("select * from custom_chart where name = ? and public=1", name).Find(&list)
+	return
+}
+
 func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, err error) {
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	var params []interface{}
