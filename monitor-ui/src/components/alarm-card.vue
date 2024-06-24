@@ -139,7 +139,7 @@
         </div>
       </li>
       <li>
-        <label class="card-label" v-html="$t('field.metric')"></label>
+        <label class="card-label" v-html="$t('m_field_metric')"></label>
         <div class="card-content" style="display: flex">
            <div class="mr-2" v-for="(metric, index) in data.alarm_metric_list" :key=index>
             {{ metric }}
