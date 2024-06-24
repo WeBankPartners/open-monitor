@@ -10,6 +10,7 @@
       <Menu
         @on-select="handleSelectMenu"
         theme="dark"
+        :accordion="false"
         :active-name="activeName"
         :open-names="openNames"
         style="width:140px;height:100%;"
@@ -52,12 +53,12 @@ export default {
   },
   created () {
     this.menuList.forEach(i => {
-    for (let j of i.children) {
-      if (j.path === this.$route.fullPath) {
-        this.activeName = j.name
-        this.openNames = [i.name]
+      for (let j of i.children) {
+        if (j.path === this.$route.fullPath) {
+          this.activeName = j.name
+          this.openNames = [i.name]
+        }
       }
-    }
     })
   },
   mounted () {
