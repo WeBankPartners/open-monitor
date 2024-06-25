@@ -15,7 +15,6 @@
             clearable 
             remote
             ref="select"
-            :remote-method="getTargrtList"
             @on-change="search"
             @on-clear="typeChange"
             >
@@ -70,21 +69,23 @@ export default {
     }
   },
   
-  async mounted () {
-   this.getTargrtList()
+  mounted () {
+   this.getTargrtList();
   },
   beforeDestroy () {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
     typeChange () {
-      this.clearTargrt()
-      this.getTargrtList()
+      this.clearTargrt();
+      this.getTargrtList();
     },
     getTargrtList () {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.targetOptions = responseData
+        this.targetOptions = responseData;
+        this.targrtId = this.targetOptions[0].guid;
+        this.search();
       }, {isNeedloading:false})
     },
     clearTargrt () {
@@ -100,7 +101,7 @@ export default {
       }
     },
     openDoc () {
-      window.open('http://webankpartners.gitee.io/wecube-docs/manual-open-monitor-config/#_6')
+      window.open('https://webankpartners.github.io/wecube-docs/manual-open-monitor-config-metrics/')
     }
   },
   components: {
