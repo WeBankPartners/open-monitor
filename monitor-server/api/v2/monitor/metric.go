@@ -10,7 +10,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -256,7 +255,7 @@ func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
 		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
 		return
 	}
-	byteArr, _ = io.ReadAll(resp.Body)
+	byteArr, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return
 }
