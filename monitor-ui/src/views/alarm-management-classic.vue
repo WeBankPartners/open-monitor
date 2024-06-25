@@ -72,7 +72,7 @@ export default {
           }
         },
         {
-          title: this.$t('field.metric'),
+          title: this.$t('m_field_metric'),
           key: 'alarm_metric_list_join'
         },
         {

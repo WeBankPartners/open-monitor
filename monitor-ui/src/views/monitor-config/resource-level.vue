@@ -56,7 +56,7 @@ export default {
       activedLevel: [],
       modelConfig: {
         modalId: 'add_panel_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [
           {label: 'm_field_guid', value: 'guid', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},

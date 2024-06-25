@@ -62,7 +62,7 @@
         >
         </Input>
         <Button class="mr-5" @click="handleReset" type="default">{{ $t('m_reset') }}</Button>
-        <Button type="success" @click="addBoardItem">{{$t('button.add')}}</Button>
+        <Button type="success" @click="addBoardItem">{{$t('m_button_add')}}</Button>
         <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
           {{$t('m_button_setDashboard')}}
         </button>
@@ -151,7 +151,7 @@
               type="success"
               size="small"
               long
-              >{{ $t('button.add') }}</Button
+              >{{ $t('m_button_add') }}</Button
             >
           </div>
         </template>
@@ -528,6 +528,7 @@ li {
 .all-card-item {
   display: flex;
   flex-wrap: wrap;
+  padding-bottom: 50px;
   .all-card-item-content {
     min-height: 160px;
     height: 160px;
