@@ -3,7 +3,7 @@
     <Modal v-model="showModel" :title="$t('m_menu_configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(view ? $t('m_button_view') : (isAdd ? $t('button.add') : $t('m_modify'))) + $t('m_menu_configuration')}}
+          {{(view ? $t('m_button_view') : (isAdd ? $t('m_button_add') : $t('m_modify'))) + $t('m_menu_configuration')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
