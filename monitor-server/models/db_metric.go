@@ -55,7 +55,6 @@ type MetricComparison struct {
 }
 
 type MetricComparisonDto struct {
-	Guid           string `json:"guid" xorm:"guid"`
 	Metric         string `json:"metric" xorm:"metric"`                   // 原始指标名称
 	MonitorType    string `json:"monitorType" xorm:"monitor_type"`        // 原始指标类型
 	ComparisonType string `json:"comparisonType" xorm:"comparison_type"`  // 对比类型: day 日环比, week 周, 月周比 month
