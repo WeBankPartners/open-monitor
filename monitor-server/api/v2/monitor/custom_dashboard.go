@@ -628,7 +628,7 @@ func ImportCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if customDashboard != nil {
+	if customDashboard != nil && customDashboard.Id != 0 {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
 		return
 	}
