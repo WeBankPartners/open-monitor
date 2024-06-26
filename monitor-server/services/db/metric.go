@@ -343,13 +343,13 @@ func AddComparisonMetric(param models.MetricComparisonDto, metric *models.Metric
 	now := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{newMetricId, metric.Metric, metric.MetricType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
-	actions = append(actions, &Action{Sql: "insert into metric_comparison_exporter(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
+	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, param.CalcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
 	return Transaction(actions)
 }
 
 func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error) {
-	err = x.SQL("select m.metric,m.prom_expr as origin_prom_expr,mc.guid as prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison_exporter mc on m.guid = mc.orgin_origin_metric_id").Find(&list)
+	err = x.SQL("select m.metric,m.prom_expr as origin_prom_expr,mc.guid as prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on m.guid = mc.origin_metric_id").Find(&list)
 	return
 }
 
