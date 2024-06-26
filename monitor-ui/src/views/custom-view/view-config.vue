@@ -50,11 +50,15 @@
 
           <div class="header-tools">
             <template v-if="isEditStatus">
-              <Button type="primary" @click="savePanelInfo">{{$t('m_button_saveConfig')}}</Button>
+              <Button type="info" @click.stop="exportPanel">
+                <Icon type="md-cloud-upload" size="20"></Icon>
+                {{$t('m_export')}}
+              </Button>
+              <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
             </template> 
 
-            <Button type="info" @click="showAlarm?closeAlarmDisplay():openAlarmDisplay()">
-              <Icon :type="showAlarm?'md-eye-off':'md-eye'" size="20"></Icon>
+            <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
+              {{$t('m_alert')}}
             </Button>
           </div>
         </div>
@@ -78,7 +82,13 @@
             <span @click="selectGroup(item)">
               {{ `${item}` }}
             </span>
-            <Icon v-if="isEditStatus" class="ml-2" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="15" />
+            <Poptip
+              confirm
+              :title="$t('m_delConfirm_tip')"
+              placement="left-end"
+              @on-ok="confirmDeleteGroup(item, index)">
+              <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" />
+            </Poptip>
           </div>
           <span>
             <Button
@@ -185,9 +195,13 @@
                     <Tooltip :content="$t('m_placeholder_chartConfiguration')" theme="light" transfer placement="top">
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
-                    <Tooltip :content="$t('m_placeholder_deleteChart')" theme="light" transfer placement="top">
-                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" @click.stop="removeGrid(item)" aria-hidden="true"></i>
-                    </Tooltip>
+                    <Poptip
+                      confirm
+                      :title="$t('m_delConfirm_tip')"
+                      placement="left-end"
+                      @on-ok="confirmRemoveGrid(item)">
+                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" aria-hidden="true"></i>
+                    </Poptip>
                   </div>
                 </div>
                 <section style="height: 90%;">
@@ -220,17 +234,6 @@
       @on-close="closeChartInfoDrawer">
       <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
-    <Modal
-      v-model="isShowWarning"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="confirmRemoveGrid"
-      @on-cancel="cancel">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
-        </div>
-      </div>
-    </Modal>
 
     <!-- 分组新增 -->
     <Modal v-model="showGroupMgmt" :title="$t('m_edit_screen_group')" :mask-closable="false">
@@ -262,19 +265,14 @@
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
-    <!-- 删除组 -->
-    <Modal
-      v-model="isShowDeleteGroupWarning"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="confirmDeleteGroup"
-      @on-cancel="isShowDeleteGroupWarning = false">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delete_tip')}}: {{ deleteGroup }}</p>
-        </div>
-      </div>
-    </Modal>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" />
+    <ExportChartModal 
+      :isModalShow="isModalShow"
+      :pannelId="pannelId"
+      :panalName="panalName"
+      @close="() => isModalShow = false"
+      >
+    </ExportChartModal>
   </div>
 </template>
 
@@ -293,6 +291,8 @@ import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
+import ExportChartModal from './export-chart-modal.vue'
+
 export default {
   name: '',
   props: {
@@ -311,13 +311,9 @@ export default {
   },
   data() {
     return {
-      isShowDeleteGroupWarning: false,
-      deleteGroup: null,
-      deleteGroupIndex: -1,
       refreshNow: false,
       parentRouteData: {},
       editData: null,
-      isShowWarning: false,
       deleteConfirm: {
         id: '',
         method: ''
@@ -396,7 +392,8 @@ export default {
       userRolesOptions: [],
       boardMgmtRoles: [],
       boardUseRoles: [],
-      initTitle: ''
+      initTitle: '',
+      isModalShow: false
     }
   },
   computed: {
@@ -431,7 +428,6 @@ export default {
         } else {
           this.viewCondition.timeTnterval = res.timeRange || -3600;
           this.viewCondition.autoRefresh = res.refreshWeek || 10;
-
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
@@ -637,11 +633,8 @@ export default {
         return
       }
     },
-    removeGrid(item) {
-      this.isShowWarning = true
+    async confirmRemoveGrid (item) {
       this.deleteConfirm.id = item.id
-    },
-    async confirmRemoveGrid () {
       const params = this.processPannelParams()
       remove(params.charts, {id: this.deleteConfirm.id});
       if (!isEmpty(params.charts)) {
@@ -650,9 +643,6 @@ export default {
       await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params);
       this.getPannelList();
       this.getAllChartOptionList();
-    },
-    cancel () {
-      this.isShowWarning = false
     },
     async gridPlus(item) {
       if (!this.isShowGridPlus(item)) return 
@@ -762,15 +752,10 @@ export default {
         this.panelGroupInfo.push(group)
       })
     },
-    removeGroup (item, index) {
-      this.isShowDeleteGroupWarning = true
-      this.deleteGroup = item
-      this.deleteGroupIndex = index
-    },
-    confirmDeleteGroup () {
-      this.panel_group_list.splice(this.deleteGroupIndex, 1)
+    confirmDeleteGroup (group, index) {
+      this.panel_group_list.splice(index, 1)
       this.layoutData.forEach(d => {
-        if (d.group === this.deleteGroup) {
+        if (d.group === group) {
           d.group = ''
         }
       })
@@ -906,7 +891,6 @@ export default {
         }, 0)
       }
     },
-
     processPannelParams() {
       const charts = [];
       this.layoutData.forEach(item =>{
@@ -931,7 +915,6 @@ export default {
         refreshWeek: this.viewCondition.autoRefresh
       }
     },
-
     requestReturnPromise(method, api, params) {
       return new Promise(resolve => {
         this.request(method, api, params, res => {
@@ -939,7 +922,6 @@ export default {
           })
       })
     },
-    
     startEditTitle(item) {
       this.initTitle = item.i
       this.editChartId = item.id
@@ -1060,6 +1042,9 @@ export default {
       setTimeout(() => {
         this.refreshNow = !this.refreshNow;
       }, 500)
+    },
+    exportPanel() {
+      this.isModalShow = true;
     }
   },
   components: {
@@ -1070,12 +1055,17 @@ export default {
     ViewConfigAlarm,
     ViewChart,
     EditView,
-    AuthDialog
+    AuthDialog,
+    ExportChartModal
   },
 }
 </script>
 
 <style lang="less">
+.ivu-poptip-popper {
+  color: #515a6e
+}
+
 .chart-config-info {
   .ivu-dropdown-item-disabled {
     color: inherit
@@ -1145,8 +1135,9 @@ export default {
   font-size: 13px;
 }
 .header-grid {
+  display: flex;
   flex-grow: 1;
-  text-align: end;
+  justify-content: flex-end;
   line-height: 32px;
   i {
     margin: 0 4px;
