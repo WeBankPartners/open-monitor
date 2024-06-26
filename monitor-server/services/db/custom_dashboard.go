@@ -434,7 +434,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 		if customDashboard, err = GetCustomDashboardById(param.Id); err != nil {
 			return
 		}
-		if customDashboard != nil {
+		if customDashboard != nil && customDashboard.Id != 0 {
 			return
 		}
 	}
@@ -516,7 +516,7 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 				// 查询每个指标是否存在,不存在需要记录下来
 				if series.MetricGuid != "" {
 					metricGuid := ""
-					if _, err = x.SQL("select id from metric where id=?", series.MetricGuid).Get(&metricGuid); err != nil {
+					if _, err = x.SQL("select guid from metric where guid=?", series.MetricGuid).Get(&metricGuid); err != nil {
 						return
 					}
 					if metricGuid == "" {
