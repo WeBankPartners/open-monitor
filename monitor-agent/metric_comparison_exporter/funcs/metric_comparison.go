@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/rpc"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
@@ -40,6 +41,7 @@ func StartCalcMetricComparisonCron() {
 
 // ReceiveMetricComparisonData 接受同环比数据
 func ReceiveMetricComparisonData(w http.ResponseWriter, r *http.Request) {
+	log.Println("start receive metric comparison data!")
 	var err error
 	var requestParamBuff []byte
 	var response models.Response
@@ -73,7 +75,11 @@ func MetricComparisonSaveConfig(requestParamBuff []byte) (err error) {
 
 func LoadMetricComparisonConfig() {
 	if requestParamBuff, err := ioutil.ReadFile(metricComparisonFilePath); err == nil {
-		json.Unmarshal(requestParamBuff, &metricComparisonList)
+		if err2 := json.Unmarshal(requestParamBuff, &metricComparisonList); err2 != nil {
+			log.Printf("json Unmarshal err:%+v", err2)
+		}
+	} else {
+		log.Printf("read metric_comparison_cache.json err:%+v", err)
 	}
 }
 
@@ -94,6 +100,8 @@ func calcMetricComparisonData() {
 			End:    time.Now().Unix(),
 			PromQl: metricComparison.OriginPromExpr,
 		}); err != nil {
+			log.Printf("prometheus query_range err:%+v", err)
+			return
 		}
 		// 根据数据计算 同环比
 		switch metricComparison.ComparisonType {
