@@ -3,7 +3,7 @@ package rpc
 import (
 	"bytes"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -21,7 +21,7 @@ func HttpGet(url string) (byteArr []byte, err error) {
 		err = fmt.Errorf("try to do http request fail,%s ", respErr.Error())
 		return
 	}
-	byteArr, _ = io.ReadAll(resp.Body)
+	byteArr, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return
 }
@@ -39,7 +39,7 @@ func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
 		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
 		return
 	}
-	byteArr, _ = io.ReadAll(resp.Body)
+	byteArr, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return
 }
