@@ -1,9 +1,9 @@
 <template>
   <div class="single-chart">
-    <div v-show="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
-    </div>
-    <div v-show="noDataTip" class="echart echart-no-data-tip">
-      <span>{{this.$t('m_nodata_tips')}}</span>
+    <div v-show="noDataType === 'normal'" :id="elId" class="echart" :style="chartInfo.style" />
+    <div v-show="noDataType !== 'normal'" class="echart echart-no-data-tip">
+      <span v-if="noDataType === 'noConfig'">{{this.$t('m_noConfig')}}</span>
+      <span v-else>{{this.$t('m_noData')}}</span>
     </div>
   </div>
 </template>
@@ -18,10 +18,10 @@ export default {
     return {
       elId: null,
       chartTitle: null,
-      noDataTip: false,
       config: '',
       myChart: '',
-      interval: ''
+      interval: '',
+      noDataType: "normal" // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
     }
   },
   props: {
@@ -59,9 +59,9 @@ export default {
       }
     },
     getchartdata () {
-      this.noDataTip = false
+      this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
-        this.noDataTip = true
+        this.noDataType = 'noConfig'
         return
       }
       this.isAutoRefresh()
@@ -77,9 +77,9 @@ export default {
         'POST',this.$root.apiCenter.metricConfigPieView.api, params,
         responseData => {
           if (responseData.legend && responseData.legend.length === 0) {
-            this.noDataTip = true
+            this.noDataType = 'noData'
           } else {
-            this.noDataTip = false
+            this.noDataType = 'normal'
             drawPieChart(this, responseData)
           }
         },
