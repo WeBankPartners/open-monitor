@@ -553,55 +553,7 @@ export default {
         },
         stepOptions: collectionInterval,
         ipOptions: [],
-        endpointType: [{
-            label: 'host',
-            value: 'host'
-          },
-          {
-            label: 'mysql',
-            value: 'mysql'
-          },
-          {
-            label: 'redis',
-            value: 'redis'
-          },
-          {
-            label: 'java',
-            value: 'java'
-          },
-          {
-            label: 'process',
-            value: 'process'
-          },
-          {
-            label: 'nginx',
-            value: 'nginx'
-          },
-          {
-            label: 'windows',
-            value: 'windows'
-          },
-          {
-            label: 'ping',
-            value: 'ping'
-          },
-          {
-            label: 'telnet',
-            value: 'telnet'
-          },
-          {
-            label: 'http',
-            value: 'http'
-          },
-          {
-            label: 'snmp',
-            value: 'snmp'
-          },
-          {
-            label: 'other',
-            value: 'other'
-          }
-        ],
+        endpointType: [],
       },
       processConfigModel: {
         modalId: 'process_config_model',
@@ -719,55 +671,23 @@ export default {
         this.endpointRejectModel.ipOptions = res.data
       })
     },
-    editF (rowData) {
-      this.endpointRejectModel.endpointType = [{
-            label: 'host',
-            value: 'host'
-          },
-          {
-            label: 'mysql',
-            value: 'mysql'
-          },
-          {
-            label: 'redis',
-            value: 'redis'
-          },
-          {
-            label: 'java',
-            value: 'java'
-          },
-          {
-            label: 'process',
-            value: 'process'
-          },
-          {
-            label: 'nginx',
-            value: 'nginx'
-          },
-          {
-            label: 'windows',
-            value: 'windows'
-          },
-          {
-            label: 'ping',
-            value: 'ping'
-          },
-          {
-            label: 'telnet',
-            value: 'telnet'
-          },
-          {
-            label: 'http',
-            value: 'http'
-          },
-          {
-            label: 'snmp',
-            value: 'snmp'
-          },
-          {
-            label: 'other',
-            value: 'other'
-        }]
+    async editF (rowData) {
+      let params = {
+        page: 1,
+        size: 10000,
+      }
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
+        this.endpointRejectModel.endpointType = res.map(item => {
+          return {
+            label: item,
+            value: item
+          }
+        })
+        this.endpointRejectModel.endpointType.push({
+          label: 'other',
+          value: 'other'
+        })
+      })
       this.modelTip.value = rowData.guid
       this.endpointRejectModel.isAdd = false
       const api = `/monitor/api/v2/monitor/endpoint/get/${rowData.guid}`
@@ -1015,7 +935,25 @@ export default {
       }
       return dataList
     },
-    endpointReject() {
+    async endpointReject() {
+      let params = {
+        page: 1,
+        size: 10000,
+      }
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
+        this.endpointRejectModel.endpointType = res.map(item => {
+          return {
+            label: item,
+            value: item
+          }
+        })
+        this.endpointRejectModel.endpointType.push(
+          {
+            label: 'other',
+            value: 'other'
+          }
+        )
+      })
       this.endpointRejectModel.isAdd = true
       this.endpointRejectModel.addRow.type = 'host'
       this.endpointRejectModel.addRow.step = 10
