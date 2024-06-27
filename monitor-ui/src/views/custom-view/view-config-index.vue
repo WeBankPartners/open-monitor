@@ -62,13 +62,40 @@
         >
         </Input>
         <Button class="mr-5" @click="handleReset" type="default">{{ $t('m_reset') }}</Button>
-        <Button type="success" @click="addBoardItem">{{$t('button.add')}}</Button>
+        <Upload 
+          action="/monitor/api/v2/dashboard/custom/import"
+          name="file"
+          style="display: none"
+          with-credentials
+          :headers="uploadHeaders"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed"
+          :data="importExtraData"
+          accept=".json">
+          <Button />
+        </Upload>
+        <Button type="success" @click="addBoardItem">{{$t('m_button_add')}}</Button>
+        <Dropdown 
+          placement="bottom-start"
+          @on-click="importPanel">
+          <Button type="primary">
+              {{$t('m_import')}}
+          </Button>
+          <template #list>
+            <DropdownMenu>
+              <DropdownItem v-for="(item, index) in importTypeOptions"
+                :name="item.value" 
+                :key="index">
+                {{ $t(item.name) }}
+              </DropdownItem>
+            </DropdownMenu>
+          </template>
+        </Dropdown>
         <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
           {{$t('m_button_setDashboard')}}
         </button>
       </div>
     </div>
-
     <div class="mt-3">
       <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
       <Row class="all-card-item" :gutter="15" v-else>
@@ -101,15 +128,24 @@
                 <Icon type="md-eye" />
               </Button>
               <template v-if="item.permission === 'mgmt'">
+                <Button size="small" type="info" @click.stop="exportPanel(item)">
+                  <Icon type="md-cloud-upload" />
+                </Button>
                 <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
                   <Icon type="md-create" />
                 </Button>
                 <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
                   <Icon type="md-person" />
                 </Button>
-                <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
-                  <Icon type="md-trash" />
-                </Button>
+                <Poptip
+                  confirm
+                  :title="$t('m_delConfirm_tip')"
+                  placement="left-end"
+                  @on-ok="onDeleteConfirm(item)">
+                  <Button size="small" type="error">
+                    <Icon type="md-trash" />
+                  </Button>
+                </Poptip>
               </template>
             </div>
           </Card>
@@ -123,7 +159,6 @@
         :page-size="pagination.pageSize"
         show-total
       />
-
       <ModalComponent :modelConfig="authorizationModel">
         <template #authorization>
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
@@ -151,15 +186,14 @@
               type="success"
               size="small"
               long
-              >{{ $t('button.add') }}</Button
+              >{{ $t('m_button_add') }}</Button
             >
           </div>
         </template>
       </ModalComponent>
-
       <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveTemplate">
         <template #content-top>
-          <div v-if="isAddViewType" class="auth-dialog-content">
+          <div v-if="isAuthModalNameShow" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
             <Input style="width:calc(100% - 60px);" :maxlength="30" show-word-limit v-model.trim="addViewName"></Input>
           </div>
@@ -191,17 +225,13 @@
           </section>
         </div>
       </ModalComponent>
-      <Modal
-        v-model="isShowWarning"
-        :title="$t('m_delConfirm_title')"
-        @on-ok="onDeleteConfirm"
-        @on-cancel="onCancelDelete">
-        <div class="modal-body" style="padding:10px 20px;">
-          <div style="text-align:center">
-            <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
-          </div>
-        </div>
-      </Modal>
+      <ExportChartModal 
+        :isModalShow="isModalShow"
+        :pannelId="pannelId"
+        :panalName="panalName"
+        @close="() => isModalShow = false"
+        >
+      </ExportChartModal>
     </div>
   </div>
 </template>
@@ -212,11 +242,17 @@ import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
 import ScrollTag from '@/components/scroll-tag.vue'
+import ExportChartModal from './export-chart-modal.vue'
+import { getToken } from '@/assets/js/cookies.ts'
 export default {
   name: '',
+  computed: {
+    isAuthModalNameShow() {
+      return this.authViewType === 'add'
+    }
+  },
   data() {
     return {
-      isShowWarning: false,
       dataList: [],
       processConfigModel: {
         modalId: 'set_dashboard_modal',
@@ -289,8 +325,27 @@ export default {
       mgmtRolesOptions: [], 
       userRolesOptions: [],
       addViewName: '',
-      isAddViewType: true,
-      boardId: null
+      authViewType: 'add', // 枚举值为add(面板新增)，edit(面板编辑), import(面板导入)
+      boardId: null,
+      importTypeOptions: [
+        {
+          name: "m_samename_coverage",
+          value: "cover"
+        }, 
+        {
+          name: "m_samename_add",
+          value: "insert"
+        }
+      ],
+      importPanelType: "", // 枚举值为cover 同名覆盖,insert 同名新增
+      importExtraData: {},
+      uploadHeaders: {
+        'X-Auth-Token': getToken() || null,
+        'Authorization': 'Bearer ' + localStorage.getItem('monitor-accessToken')
+      },
+      isModalShow: false,
+      pannelId: null,
+      panalName: ''
     }
   },
   mounted(){
@@ -306,7 +361,7 @@ export default {
     }
   },
   methods: {
-    handleReset () {
+    handleReset () {      
       const resetObj = {
         name: "",
         id: "",
@@ -324,7 +379,6 @@ export default {
     addEmptyAuth () {
       this.authorizationModel.result.push({role_id: '', permission: 'use'})
     },
-
     processConfigSave () {
       let params = []
       this.processConfigModel.dashboardConfig.forEach(item => {
@@ -383,25 +437,17 @@ export default {
       return resArr
     },
     addBoardItem () {
-      this.isAddViewType = true;
+      this.authViewType = 'add';
       this.addViewName = '';
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions);
     },
     editBoardAuth(item) {
-      this.isAddViewType = false;
+      this.authViewType = 'edit';
       this.boardId = item.id;
       this.$refs.authDialog.startAuth(item.mgmtRoles, item.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
     },
-    
-    deleteConfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarning = true
-    },
-    onDeleteConfirm () {
-      this.removeTemplate(this.selectedData)
-    },
-    onCancelDelete () {
-      this.isShowWarning = false
+    onDeleteConfirm (item) {
+      this.removeTemplate(item)
     },
     removeTemplate (item) {
       let params = {id: item.id}
@@ -442,13 +488,11 @@ export default {
       }
       this.$router.push({name:'viewConfig',params})
     },
-
     onFilterConditionChange: debounce(function () {
       this.getViewList()
     }, 300),
-
     saveTemplate(mgmtRoles, useRoles) {
-      if (this.isAddViewType && !this.addViewName ) {
+      if (this.isAuthModalNameShow && !this.addViewName ) {
         this.$nextTick(() => {
           this.$Message.warning(this.$t('m_name') + this.$t('m_cannot_be_empty'))
           this.$refs.authDialog.flowRoleManageModal = true
@@ -465,25 +509,63 @@ export default {
         useRoles: this.userRoles
       }
       let path = '';
-      if (this.isAddViewType) {
+      if (this.authViewType === 'import') {
+        this.importExtraData = {
+          rule: this.importPanelType,
+          useRoles: this.userRoles,
+          mgmtRoles: this.mgmtRoles[0]
+        }
+        document.querySelector('.ivu-upload-input').click();
+        return
+      }
+      if (this.authViewType === 'add') {
         params.name = this.addViewName;
         path = '/monitor/api/v2/dashboard/custom';
-      } else {
+      } else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
         params.id = this.boardId;
         path = '/monitor/api/v2/dashboard/custom/permission'
       }
       this.request('POST', path, params, (val) => {
         this.getViewList();
-        if (this.isAddViewType) {
+        if (this.authViewType === 'add') {
           this.goToPanal(val, 'edit')
         }
       })
+    },
+    importPanel(type) {
+      this.importPanelType = type
+      this.authViewType = 'import';
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions);
+    },
+    uploadSucess(res) {
+      if (!isEmpty(res.data)) {
+        let content = '';
+        for(let key in res.data) {
+          content = key + '(图表名)不存在以下指标: ' + res.data[key].join(';') + '。 '
+        }
+        this.$Message.warning({
+          content,
+          duration: 3
+        })
+      } else {
+        this.$Message.success(this.$t('m_tips_success'))
+      }
+      this.getViewList();
+    },
+    uploadFailed (error, file) {
+      this.$Message.warning(file.message)
+    },
+    exportPanel(item) {
+      this.panalName = item.name;
+      this.pannelId = item.id;
+      this.isModalShow = true;
     }
   },
   components: {
     AuthDialog,
-    ScrollTag
+    ScrollTag,
+    ExportChartModal
   }
 }
 </script>
@@ -511,10 +593,7 @@ export default {
 .port-title {
   width: 40%;
   font-size: 14px;
-  // padding: 2px 0 2px 4px;
-  // border: 1px solid @blue-2;
 }
-
 .port-config {
   display: flex;
   margin-top: 4px;
@@ -528,6 +607,7 @@ li {
 .all-card-item {
   display: flex;
   flex-wrap: wrap;
+  padding-bottom: 50px;
   .all-card-item-content {
     min-height: 160px;
     height: 160px;
