@@ -4,7 +4,7 @@
     <div style="text-align: end;">
       <button type="button" @click="addDbMonitor" class="btn btn-sm btn-confirm-f">
         <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
+        {{$t('m_button_add')}}
       </button>
     </div>
     <div style="height:500px;overflow-y:auto">
