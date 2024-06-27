@@ -242,7 +242,7 @@
           type="success"
           size="small"
           long
-          >{{ $t('button.add') }}</Button
+          >{{ $t('m_button_add') }}</Button
         >
       </div>
     </template>
@@ -439,7 +439,7 @@ export default {
               }
             },
             {
-              title: this.$t('field.metric'),
+              title: this.$t('m_field_metric'),
               key: 'alarm_metric_list_join'
             },
             {
@@ -491,7 +491,7 @@ export default {
       },
       modelConfig: {
         modalId: 'add_object_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [{
           name: 'advancedConfig',
@@ -670,7 +670,7 @@ export default {
       this.groupMsg = {}
       this.showGroupMsg = false
       this.pageConfig.researchConfig.btn_group.push({
-        btn_name: 'button.add',
+        btn_name: 'm_button_add',
         btn_func: 'endpointReject',
         class: 'btn-cancel-f',
         btn_icon: 'fa fa-plus'
@@ -681,7 +681,7 @@ export default {
         this.groupMsg = this.$route.params.group
         this.showGroupMsg = true
         this.pageConfig.researchConfig.btn_group.push({
-          btn_name: 'button.add',
+          btn_name: 'm_button_add',
           btn_func: 'add',
           class: 'btn-cancel-f',
           btn_icon: 'fa fa-plus'

@@ -8,7 +8,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(view ? $t('m_button_view') : (isAdd ? $t('button.add') : $t('m_button_edit'))) + $t('m_custom_regex')}}
+          {{(view ? $t('m_button_view') : (isAdd ? $t('m_button_add') : $t('m_button_edit'))) + $t('m_custom_regex')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
