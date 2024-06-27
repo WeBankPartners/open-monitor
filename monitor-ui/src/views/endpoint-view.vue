@@ -15,7 +15,7 @@
       :mask-closable="false"
       :footer-hide="true"
       :fullscreen="isfullscreen"
-      :title="$t('button.historicalAlert')">
+      :title="$t('m_button_historicalAlert')">
       <div slot="header" class="custom-modal-header">
         <span>
           {{$t('alarmHistory')}}
@@ -77,7 +77,7 @@ export default {
               key: 'status'
             },
             {
-              title: this.$t('menu.configuration'),
+              title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
               render: (h, params) => {
                 return (
@@ -86,7 +86,7 @@ export default {
               }
             },
             {
-              title: this.$t('field.endpoint'),
+              title: this.$t('m_field_endpoint'),
               key: 'endpoint'
             },
             {
@@ -94,7 +94,7 @@ export default {
               key: 'content'
             },
             {
-              title: this.$t('tableKey.s_priority'),
+              title: this.$t('m_tableKey_s_priority'),
               key: 's_priority',
               width: 100,
               render: (h, params) => {
@@ -104,11 +104,11 @@ export default {
               }
             },
             {
-              title: this.$t('field.metric'),
+              title: this.$t('m_field_metric'),
               key: 'alarm_metric_list_join'
             },
             {
-              title: this.$t('field.threshold'),
+              title: this.$t('m_field_threshold'),
               key: 'alarm_detail',
               width: 200,
               ellipsis: true,
@@ -125,7 +125,7 @@ export default {
               }
             },
             {
-              title: this.$t('tableKey.start'),
+              title: this.$t('m_tableKey_start'),
               key: 'start_string',
               width: 120,
             },
