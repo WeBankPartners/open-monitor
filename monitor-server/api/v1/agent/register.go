@@ -770,6 +770,10 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "param instance name illegal"
 		return result
 	}
+	if strings.Contains(param.Type, "_") {
+		result.validateMessage = "ExporterType illegal "
+		return result
+	}
 	if param.Ip == "" {
 		result.validateMessage = "Default ip can not empty "
 		return result
