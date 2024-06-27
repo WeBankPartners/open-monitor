@@ -416,11 +416,15 @@ export default {
     },
     getDetail (targrtId) {
       this.targrtId = targrtId
+      this.targetDetail = []
+      this.pageConfig.table.tableData = []
       const api = `/monitor/api/v2/service/log_keyword/list/endpoint/${targrtId}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
-        this.targetDetail = responseData[0]
-        this.pageConfig.table.tableData = responseData[0].config
+        if (responseData.length > 0) {
+          this.targetDetail = responseData[0]
+          this.pageConfig.table.tableData = responseData[0].config
+        }
         this.$root.$store.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
     }
