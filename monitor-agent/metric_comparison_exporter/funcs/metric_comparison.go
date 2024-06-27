@@ -61,9 +61,11 @@ func ReceiveMetricComparisonData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = json.Unmarshal(requestParamBuff, &metricComparisonList); err != nil {
+		log.Printf("json Unmarshal err:%+v", err)
 		return
 	}
 	if err = MetricComparisonSaveConfig(requestParamBuff); err != nil {
+		log.Printf("metricComparison config err:%+v", err)
 		return
 	}
 }
@@ -75,9 +77,7 @@ func MetricComparisonSaveConfig(requestParamBuff []byte) (err error) {
 
 func LoadMetricComparisonConfig() {
 	if requestParamBuff, err := ioutil.ReadFile(metricComparisonFilePath); err == nil {
-		if err2 := json.Unmarshal(requestParamBuff, &metricComparisonList); err2 != nil {
-			log.Printf("json Unmarshal err:%+v", err2)
-		}
+		json.Unmarshal(requestParamBuff, &metricComparisonList)
 	} else {
 		log.Printf("read metric_comparison_cache.json err:%+v", err)
 	}
@@ -86,6 +86,7 @@ func LoadMetricComparisonConfig() {
 func calcMetricComparisonData() {
 	var curResultList, historyResultList []*models.PrometheusQueryObj
 	var err error
+	var historyEnd int64
 	metricComparisonHttpLock.RLock()
 	defer metricComparisonHttpLock.RUnlock()
 	if len(metricComparisonList) == 0 {
@@ -93,11 +94,12 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
+		now := time.Now()
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  getQueryPrometheusStart(time.Now().Unix(), metricComparison.CalcPeriod),
-			End:    time.Now().Unix(),
+			Start:  getQueryPrometheusStart(now.Unix(), metricComparison.CalcPeriod),
+			End:    now.Unix(),
 			PromQl: metricComparison.OriginPromExpr,
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
@@ -105,7 +107,21 @@ func calcMetricComparisonData() {
 		}
 		// 根据数据计算 同环比
 		switch metricComparison.ComparisonType {
-
+		case "day":
+			historyEnd = now.Unix() - 86400
+		case "week":
+			historyEnd = now.Unix() - 86400*7
+		case "month":
+			historyEnd = now.AddDate(0, -1, 0).Unix()
+		}
+		// 查询对比历史数据
+		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
+			Start:  getQueryPrometheusStart(historyEnd, metricComparison.CalcPeriod),
+			End:    historyEnd,
+			PromQl: metricComparison.OriginPromExpr,
+		}); err != nil {
+			log.Printf("prometheus query_range err:%+v", err)
+			return
 		}
 		switch metricComparison.CalcMethod {
 
@@ -120,10 +136,11 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 	var resByteArr []byte
 	resultList = []*models.PrometheusQueryObj{}
 	requestUrl, _ := url.Parse("http://127.0.0.1:9090/api/v1/query_range")
+	//requestUrl, _ := url.Parse("http://106.52.160.142:9090/api/v1/query_range")
 	urlParams := url.Values{}
 	urlParams.Set("start", fmt.Sprintf("%d", param.Start))
 	urlParams.Set("end", fmt.Sprintf("%d", param.End))
-	urlParams.Set("step", fmt.Sprintf("%d", 10))
+	urlParams.Set("step", "10")
 	urlParams.Set("query", param.PromQl)
 	requestUrl.RawQuery = urlParams.Encode()
 	if resByteArr, err = rpc.HttpGet(requestUrl.String()); err != nil {
@@ -133,6 +150,7 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		return
 	}
 	if result.Status != "success" {
+		log.Printf("param:%s,%+v\n", requestUrl.String(), string(resByteArr))
 		err = fmt.Errorf("prometheus response status=%s \n", result.Status)
 		return
 	}
@@ -154,21 +172,22 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 			resultList = append(resultList, &tmpResultObj)
 		}
 	}
-
 	return
 }
 
 func getQueryPrometheusStart(timestamp int64, calcPeriod string) int64 {
 	var start int64
 	switch calcPeriod {
-	case "1min":
+	case "1m":
 		start = timestamp - 60
-	case "5min":
+	case "5m":
 		start = timestamp - 300
-	case "10min":
+	case "10m":
 		start = timestamp - 600
 	case "1h":
 		start = timestamp - 3600
+	default:
+		start = timestamp
 	}
 	return start
 }

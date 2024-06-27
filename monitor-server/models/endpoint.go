@@ -73,3 +73,25 @@ type MetricImportResultDto struct {
 	FailList    []string `json:"fail_list"`    // 失败
 	Message     string   `json:"message"`      // 描述
 }
+
+type MetricComparisonExtend struct {
+	MetricId           string `json:"metricId" xorm:"metric_id"` // 指标Id
+	Metric             string `json:"metric" xorm:"metric"`
+	MonitorType        string `json:"monitor_type" xorm:"monitor_type"`
+	TagOwner           string `json:"tag_owner" xorm:"tag_owner"`
+	ServiceGroup       string `json:"service_group" xorm:"service_group"`
+	Workspace          string `json:"workspace" xorm:"workspace"`
+	CreateTime         string `json:"create_time" xorm:"create_time"`
+	UpdateTime         string `json:"update_time" xorm:"update_time"`
+	CreateUser         string `json:"create_user" xorm:"create_user"`
+	UpdateUser         string `json:"update_user" xorm:"update_user"`
+	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricTemplate  string `json:"log_metric_template" xorm:"log_metric_template"`
+	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
+	MetricType         string `json:"metric_type" xorm:"-"`           // 指标类型
+	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
+	PromExpr           string `json:"promExpr" xorm:"prom_expr"`      // 同环比指标prom表达式
+	CalcType           string `json:"calcType" xorm:"calc_type"`      // 计算数值: diff 差值,diff_percent 差值百分比
+	CalcMethod         string `json:"calcMethod" xorm:"calc_method"`  // 计算方法: avg平均,sum求和
+	CalcPeriod         string `json:"calcPeriod" xorm:"calc_period"`  // 计算周期
+}
