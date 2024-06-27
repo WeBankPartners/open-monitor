@@ -8,7 +8,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(isAdd ? $t('button.add') : $t('m_button_edit')) + $t('m_template')}}
+          {{(isAdd ? $t('m_button_add') : $t('m_button_edit')) + $t('m_template')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
