@@ -134,6 +134,59 @@ func MetricDelete(id string) error {
 	return err
 }
 
+func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService string) (result []*models.MetricComparisonExtend, err error) {
+	var params []interface{}
+	baseSql := "select m.*,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on mc.origin_metric_id = m.guid "
+	if guid != "" {
+		baseSql += " and m.guid=? "
+		params = append(params, guid)
+	} else {
+		if serviceGroup != "" {
+			if monitorType == "" {
+				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+			}
+			if onlyService == "Y" {
+				baseSql = "select m.*,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on mc.origin_metric_id = m.guid amd m.monitor_type=? and m.service_group=?"
+				params = []interface{}{monitorType, serviceGroup}
+			} else {
+				baseSql = "select m.*,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on mc.origin_metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
+				params = []interface{}{monitorType, serviceGroup}
+			}
+		} else {
+			baseSql = "select m.*,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on mc.origin_metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
+			params = []interface{}{monitorType}
+		}
+	}
+	result = []*models.MetricComparisonExtend{}
+	baseSql = baseSql + " order by m.update_time desc"
+	err = x.SQL(baseSql, params...).Find(&result)
+	if err != nil {
+		return
+	}
+	for _, metric := range result {
+		if strings.TrimSpace(metric.ServiceGroup) == "" {
+			metric.MetricType = string(models.MetricTypeCommon)
+		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
+			metric.MetricType = string(models.MetricTypeBusiness)
+			if serviceGroup != "" {
+				var name string
+				if _, err = x.SQL("select name from log_metric_group where guid = ?", metric.LogMetricGroup).Get(&name); err != nil {
+					return
+				}
+				metric.LogMetricGroupName = name
+			}
+		} else {
+			// 业务配置类型 兜底
+			if strings.TrimSpace(metric.LogMetricConfig) != "" || strings.TrimSpace(metric.LogMetricTemplate) != "" {
+				metric.MetricType = string(models.MetricTypeBusiness)
+			} else {
+				metric.MetricType = string(models.MetricTypeCustom)
+			}
+		}
+	}
+	return
+}
+
 func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result []*models.MetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select * from metric where 1=1 "
@@ -146,14 +199,14 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select * from metric where monitor_type=? and service_group=?"
+				baseSql = "select * from metric m where monitor_type=? and service_group=? and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				baseSql = "select * from metric where monitor_type=? and (service_group is null or service_group=?)"
+				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else {
-			baseSql = "select * from metric where monitor_type=? and service_group is null"
+			baseSql = "select * from metric m where monitor_type=? and service_group is null and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
 			params = []interface{}{monitorType}
 		}
 	}
@@ -342,7 +395,7 @@ func AddComparisonMetric(param models.MetricComparisonDto, metric *models.Metric
 	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
-		Param: []interface{}{newMetricId, metric.Metric, metric.MetricType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+		Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, param.CalcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
 	return Transaction(actions)
