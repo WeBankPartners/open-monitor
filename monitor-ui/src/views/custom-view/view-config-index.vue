@@ -243,7 +243,7 @@ import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
 import ScrollTag from '@/components/scroll-tag.vue'
 import ExportChartModal from './export-chart-modal.vue'
-import { getToken } from '@/assets/js/cookies.ts'
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 export default {
   name: '',
   computed: {
@@ -341,7 +341,7 @@ export default {
       importExtraData: {},
       uploadHeaders: {
         'X-Auth-Token': getToken() || null,
-        'Authorization': 'Bearer ' + localStorage.getItem('monitor-accessToken')
+        'Authorization': this.getAuthorization()
       },
       isModalShow: false,
       pannelId: null,
@@ -372,6 +372,13 @@ export default {
       this.searchMap = Object.assign({}, this.searchMap, resetObj)
       this.pagination.currentPage = 1;
       this.getViewList()
+    },
+    getAuthorization() {
+      if (localStorage.getItem('monitor-accessToken')) {
+        return 'Bearer ' + localStorage.getItem('monitor-accessToken')
+      } else {
+        return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null;
+      }
     },
     deleteAuth (index) {
       this.authorizationModel.result.splice(index, 1)
@@ -499,6 +506,12 @@ export default {
         })
         return
       }
+      if (this.authViewType === 'import') {
+        this.$nextTick(() => {
+          this.$refs.authDialog.flowRoleManageModal = true;
+          document.querySelector('.ivu-upload-input').click();
+        })
+      }
       this.mgmtRoles = mgmtRoles;
       this.userRoles = useRoles;
       this.submitData()
@@ -515,7 +528,6 @@ export default {
           useRoles: this.userRoles,
           mgmtRoles: this.mgmtRoles[0]
         }
-        document.querySelector('.ivu-upload-input').click();
         return
       }
       if (this.authViewType === 'add') {
@@ -551,6 +563,7 @@ export default {
       } else {
         this.$Message.success(this.$t('m_tips_success'))
       }
+      this.$refs.authDialog.flowRoleManageModal = false;
       this.getViewList();
     },
     uploadFailed (error, file) {
