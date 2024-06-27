@@ -659,5 +659,11 @@
   "m_resourceLevel_level_search_name": "Enter Level Name",
   "m_resourceLevel_level_search_endpoint": "Select Endpoint",
   "m_sql_script": "SQL script",
-  "m_database_map": "Database Map"
+  "m_database_map": "Database Map",
+  "m_samename_coverage": "Same Name Cover",
+  "m_samename_add": "Same Name Add",
+  "m_select_export_chart": "Select Export Chart",
+  "m_unclassified": "Unclassified",
+  "m_noConfig": "Please configure chart",
+  "m_all_checked_or_cancel": "Select All Or Uncheck"
 }
