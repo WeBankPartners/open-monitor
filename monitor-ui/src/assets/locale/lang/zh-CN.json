@@ -660,6 +660,12 @@
   "m_resourceLevel_level_search_name": "请输入层级名称",
   "m_resourceLevel_level_search_endpoint": "请选择对象",
   "m_sql_script": "SQL脚本",
-  "m_database_map": "数据库映射"
+  "m_database_map": "数据库映射",
+  "m_samename_coverage": "同名覆盖",
+  "m_samename_add": "同名新增",
+  "m_select_export_chart": "选择导出图表",
+  "m_unclassified": "未分组",
+  "m_noConfig": "请配置图表",
+  "m_all_checked_or_cancel": "全部选中或取消"
 }
 
