@@ -28,6 +28,18 @@ func ListMetric(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
+func ListMetricComparison(c *gin.Context) {
+	guid := c.Query("guid")
+	monitorType := c.Query("monitorType")
+	serviceGroup := c.Query("serviceGroup")
+	onlyService := c.Query("onlyService")
+	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
 
 func GetSysMetricTemplate(c *gin.Context) {
 	workspace := c.Query("workspace")
