@@ -1,11 +1,12 @@
 <template>
   <div class="single-chart">
-    <div v-show="!noDataTip">
+    <div v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
     </div>
     </div>
-    <div v-show="noDataTip" class="echart echart-no-data-tip">
-      <span>{{this.$t('m_nodata_tips')}}</span>
+    <div v-show="noDataType !== 'normal'" class="echart echart-no-data-tip">
+      <span v-if="noDataType === 'noConfig'">{{this.$t('m_noConfig')}}</span>
+      <span v-else>{{this.$t('m_noData')}}</span>
     </div>
   </div>
 </template>
@@ -20,10 +21,10 @@ export default {
     return {
       elId: null,
       chartTitle: null,
-      noDataTip: false,
       config: '',
       myChart: '',
-      interval: ''
+      interval: '',
+      noDataType: 'normal' // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
     }
   },
   props: {
@@ -94,9 +95,9 @@ export default {
       }
     },
     getchartdata () {
-      this.noDataTip = false
+      this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
-        this.noDataTip = true
+        this.noDataType = 'noConfig'
         return
       }
       const params = {
@@ -105,18 +106,17 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
-          this.noDataTip = true
+          this.noDataType = 'noData'
         } else {
           responseData.yaxis.unit =  this.chartInfo.panalUnit  
           this.elId = this.chartInfo.elId
-          this.noDataTip = false
+          this.noDataType = 'normal'
           const chartConfig = {title:false, eye: false,clear: true,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams};
           this.$nextTick( () => {
             readyToDraw(this, responseData, this.chartIndex, chartConfig)
             this.scrollHandle()
           })
         }
-        
       }, { isNeedloading: false })
     }
   },
