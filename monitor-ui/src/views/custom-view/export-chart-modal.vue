@@ -34,7 +34,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import remove from 'lodash/remove'
 import find from 'lodash/find'
 import axios from 'axios'
-import { getToken } from '@/assets/js/cookies.ts'
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 
 export default {
   name: "",
@@ -130,15 +130,23 @@ export default {
       this.isExportModalShow = true;
       this.checkedNodeIdList = cloneDeep(this.allNodeIdList);
     },
+    getAuthorization() {
+      if (localStorage.getItem('monitor-accessToken')) {
+        return 'Bearer ' + localStorage.getItem('monitor-accessToken')
+      } else {
+        return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null;
+      }
+    },
     onExportChartConfirm() {
       const params = {
         id: this.pannelId,
         chartIds: this.checkedNodeIdList
       }
       const api = '/monitor/api/v2/dashboard/custom/export';
+      
       const headers = {
         'X-Auth-Token': getToken() || null,
-        'Authorization': 'Bearer ' + localStorage.getItem('monitor-accessToken')
+        'Authorization': this.getAuthorization()
       }
       axios.post(api, params, {
         headers
