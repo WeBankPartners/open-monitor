@@ -190,7 +190,7 @@
             :disabled="!endpointValue || !monitorType || !metricGuid"
             @click="addConfiguration"
             type="success"
-          >{{$t('button.add')}}</Button>
+          >{{$t('m_button_add')}}</Button>
         </div>
       </div>
     </div>
