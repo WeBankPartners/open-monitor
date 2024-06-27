@@ -41,3 +41,29 @@ type DbMetricMonitorQueryObj struct {
 	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
 }
+
+type MetricComparison struct {
+	Guid           string `json:"guid" xorm:"guid"`
+	ComparisonType string `json:"comparisonType" xorm:"comparison_type"`
+	CalcType       string `json:"calcType" xorm:"calc_type"`
+	CalcMethod     string `json:"calcMethod" xorm:"calc_method"`
+	CalcPeriod     string `json:"calcPeriod" xorm:"calc_period"`
+	MetricId       string `json:"metricId" xorm:"metric_id"`
+	OriginMetricId string `json:"originMetricId" xorm:"origin_metric_id"`
+	CreateUser     string `json:"createUser" xorm:"create_user"`
+	CreateTime     string `json:"createTime" xorm:"create_time"`
+}
+
+type MetricComparisonDto struct {
+	Metric         string `json:"metric" xorm:"metric"`                   // 原始指标名称
+	MonitorType    string `json:"monitorType" xorm:"monitor_type"`        // 原始指标类型
+	ComparisonType string `json:"comparisonType" xorm:"comparison_type"`  // 对比类型: day 日环比, week 周, 月周比 month
+	OriginPromExpr string `json:"originPromExpr" xorm:"origin_prom_expr"` // 原始指标prom表达式
+	PromExpr       string `json:"promExpr" xorm:"prom_expr"`              // 同环比指标prom表达式
+	CalcType       string `json:"calcType" xorm:"calc_type"`              // 计算数值: diff 差值,diff_percent 差值百分比
+	CalcMethod     string `json:"calcMethod" xorm:"calc_method"`          // 计算方法: avg平均,sum求和
+	CalcPeriod     string `json:"calcPeriod" xorm:"calc_period"`          // 计算周期
+	MetricId       string `json:"metricId" xorm:"metric_id"`              // 指标Id
+	CreateUser     string `json:"createUser" xorm:"create_user"`
+	CreateTime     string `json:"createTime" xorm:"create_time"`
+}

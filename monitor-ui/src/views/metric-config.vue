@@ -66,7 +66,7 @@
                   </div>
                 </div>
                 <Form :label-width="80">
-                  <FormItem :label="$t('field.metric')">
+                  <FormItem :label="$t('m_field_metric')">
                     <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
                       <Button type="success" style="width:95%;background-color:#19be6b" @click="addMetric" size="small">
                         <Icon type="ios-add" size="24"></Icon>
@@ -114,7 +114,7 @@
                         </Select>
                       </template>
                     </FormItem>
-                    <FormItem :label="$t('field.metric')">
+                    <FormItem :label="$t('m_field_metric')">
                       <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="6" />
                     </FormItem>
                   </template>
@@ -181,7 +181,7 @@
                           <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
                         </Select>
                       </FormItem>
-                      <FormItem :label="$t('field.metric')">
+                      <FormItem :label="$t('m_field_metric')">
                         <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
                           <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
                         </Select>
@@ -221,7 +221,7 @@
             :mask-closable="false"
             @on-ok="saveTitle"
             @on-cancel="titleManagement.title = ''"
-            :title="titleManagement.isAdd ? $t('button.add') : $t('m_button_edit')">
+            :title="titleManagement.isAdd ? $t('m_button_add') : $t('m_button_edit')">
             <Form :label-width="80">
               <FormItem :label="$t('m_field_title')">
                 <Input v-model="titleManagement.title"/>
