@@ -12,28 +12,7 @@
       </Col>
       <Col :span="16">
         <div class="btn-group">
-          <!--导出-->
-          <!-- <Button
-            type="info"
-            @click.stop="exportData"
-          >
-            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-            {{ $t("m_export") }}
-          </Button> -->
-          <!--导入-->
-          <!-- <Upload 
-          :action="uploadUrl" 
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed">
-            <Button type="primary">
-              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
-              {{ $t('m_import') }}
-            </Button>
-          </Upload> -->
+          <MetricChange @reloadData="reloadData"></MetricChange>
           <!--新增-->
           <Button type="success" @click="handleAdd">{{ $t('m_button_add') }}</Button>
         </div>
@@ -50,13 +29,22 @@
       </div>
     </Modal>
     <AddGroupDrawer
-      v-if="addVisible"
+      v-if="addVisible && metricType==='originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :data="row"
       :operator="type"
       @fetchList="getList()"
     ></AddGroupDrawer>
+    <YearOverYear
+      v-if="addVisible && metricType==='comparisonMetrics'"
+      :visible.sync="addVisible"
+      :monitorType="monitorType"
+      :data="row"
+      :operator="type"
+      :metricList="tableData"
+      @fetchList="getList()"
+    ></YearOverYear>
   </div>
 </template>
 
@@ -64,14 +52,18 @@
 import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import MetricChange from './components/metric-change.vue'
 import AddGroupDrawer from './components/add-group.vue'
+import YearOverYear from './components/year-over-year.vue'
 export default {
   components: {
-    AddGroupDrawer
+    AddGroupDrawer,
+    YearOverYear,
+    MetricChange
   },
   data () {
     return {
-      token: null,
+      metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       monitorType: '',
       serviceGroup: '',
       monitorTypeOptions: [],
@@ -187,25 +179,25 @@ export default {
       deleteVisible: false
     }
   },
-  computed: {
-    uploadUrl: function() {
-      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
-    }
-  },
   mounted () {
     this.getMonitorType()
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
     this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
   },
   methods: {
+    reloadData (metricType) {
+      this.metricType = metricType
+      this.getList()
+    },
     getList () {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
         serviceGroup: this.serviceGroup
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
+      const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
+      console.log(api)
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, responseData => {
         this.tableData = responseData
       }, {isNeedloading: true})
     },
@@ -218,66 +210,6 @@ export default {
     },
     changeMonitorType () {
       this.getList()
-    },
-    exportData () {
-      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
-      axios({
-        method: 'GET',
-        url: api,
-        headers: {
-          'Authorization': this.token
-        }
-      }).then((response) => {
-        if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
-            // Microsoft Edge and Microsoft Internet Explorer 10-11
-            window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
-            if ('download' in document.createElement('a')) { // 非IE下载
-              let elink = document.createElement('a')
-              elink.download = fileName
-              elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)  
-              document.body.appendChild(elink)
-              elink.click()
-              URL.revokeObjectURL(elink.href) // 释放URL 对象
-              document.body.removeChild(elink)
-            } else { // IE10+下载
-              navigator.msSaveOrOpenBlob(blob, fileName)
-            }
-          }
-        }
-      })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      })
-    },
-    uploadSucess (val) {
-      if (val.status === 'OK') {
-        if (val.data) {
-          if (val.data.fail_list.length > 0) {
-            this.$Notice.error({
-              duration: 0,
-              render: () => {
-                return <div>
-                  {this.$t('m_metric_export_errorTips')}
-                  <span style="color:red;">{val.data.fail_list.join('、')}</span>
-                  {this.$t('m_metric')}
-                </div>
-              }
-            })
-          } else {
-            this.$Message.success(this.$t('m_tips_success'))
-          }
-        }
-        this.getList()
-      }
-    },
-    uploadFailed (error, file) {
-      this.$Message.warning(file.message)
     },
     handleAdd () {
       this.type = 'add'
