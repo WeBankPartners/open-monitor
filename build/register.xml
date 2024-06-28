@@ -101,7 +101,7 @@
         <systemParameter name="MONITOR_PROMETHEUS_ARCHIVE_DAY" scopeType="global" defaultValue="30"/>
         <systemParameter name="MONITOR_AGENT_MANAGER_REMOTE_MODE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_NOTIFY_TREEVENT_ENABLE" scopeType="global" defaultValue="N"/>
-        <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue="9090:9090"/>
+        <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue=""/>
     </systemParameters>
 
 
