@@ -8,63 +8,74 @@
       @on-close="handleCancel"
       class="monitor-add-group"
     >
+      {{ metricConfigData }}
       <div slot="header" class="w-header">
-        <div class="title">{{ (operator === 'add' ? $t('m_button_add'):$t('m_button_edit'))+$t('m_original_metric') }}<span class="underline"></span></div>
+        <div class="title">{{ (operator === 'add' ? $t('m_button_add'):$t('m_button_edit'))+$t('m_year_over_year_metrics') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
-          <!--名称-->
-          <FormItem :label="$t('m_tableKey_name')" required>
-            <Input :disabled="operator === 'edit'" v-model="metricConfigData.metric"></Input>
-          </FormItem>
-          <!--作用域-->
-          <FormItem :label="$t('m_scope')" required>
-            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business'" @on-change="changeWorkspace">
-              <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
-              <Option value="any_object">{{ $t('m_any_object') }}</Option>
+          <!--原始指标-->
+          <FormItem :label="$t('m_original_metric')">
+            <Select filterable v-model="metricConfigData.metricId" :transfer="true" @on-change="handleEndPointChange">
+              <Option v-for="item in metricList" :value="item.guid" :key="item.guid">{{ item.metric }}</Option>
             </Select>
           </FormItem>
-          <!--推荐配置-->
-          <FormItem :label="$t('m_recommend')">
-            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business'" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
-              <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
+          <!-- 原始指标类型 -->
+          <FormItem :label="$t('m_original_metric_type')">
+            <Tag size="medium" type="border" :color=metricTypeConfig.color>{{metricTypeConfig.label || '-'}}</Tag>
+          </FormItem>
+          <!-- 对比类型 -->
+          <FormItem :label="$t('m_comparison_types')">
+            <RadioGroup v-model="metricConfigData.comparisonType">
+              <Radio label="day">
+                <span>{{ $t('m_dod_comparison') }}</span>
+              </Radio>
+              <Radio label="week">
+                <span>{{ $t('m_wow_comparison') }}</span>
+              </Radio>
+              <Radio label="month">
+                <span>{{ $t('m_mom_comparison') }}</span>
+              </Radio>
+            </RadioGroup>
+          </FormItem>
+          <!-- 计算数值 -->
+          <FormItem :label="$t('m_calc_value')">
+            <!-- <CheckboxGroup v-model="metricConfigData.calcType">
+              <Checkbox label="diff">
+                <span>{{ $t('m_difference') }}</span>
+              </Checkbox>
+              <Checkbox label="diff_percent">
+                <span>{{ $t('m_percentage_difference') }}</span>
+              </Checkbox>
+            </CheckboxGroup> -->
+          </FormItem>
+          <!--计算方法-->
+          <FormItem :label="$t('m_calc_method')">
+            <Select filterable v-model="metricConfigData.calcMethod" :transfer="true">
+              <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
-          <!--采集数据-->
-          <FormItem v-if="templatePl" :label="$t('m_collected_data')">
-            {{templatePl}}
-            <template v-for="param in metricTemplateParams">
-              <Select
-                v-model="param.value"
-                @on-open-change="getCollectedMetric"
-                @on-change="changeCollectedMetric(param)"
-                :disabled="metricConfigData.metric_type === 'business'"
-                filterable
-                :key="param.label"
-                :placeholder="param.label"
-                class="select-dropdown"
-              >
-                <Option 
-                  style="white-space: normal;"
-                  v-for="(item, itemIndex) in collectedMetricOptions" 
-                  :value="item.option_value" 
-                  :key="item.option_value + itemIndex">
-                  {{ item.option_text }}
-                </Option>
-              </Select>
-            </template>
-          </FormItem>
-          <!--表达式-->
-          <FormItem :label="$t('m_field_metric')" required>
-            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
+          <!--计算周期-->
+          <FormItem :label="$t('m_calculation_period')">
+            <!-- <Select 
+              filterable
+              v-model="metricConfigData.calcPeriod">
+              <Option 
+                v-for="item in aggStepOptions" 
+                :value="item.value" 
+                :label="item.label" 
+                :key="item.value">
+                {{ item.label }}
+              </Option>
+            </Select> -->
           </FormItem>
           <!--预览对象-->
-          <FormItem :label="$t('m_preview') + $t('m_endpoint')">
+          <!-- <FormItem :label="$t('m_preview') + $t('m_endpoint')">
             <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
-          </FormItem>
+          </FormItem> -->
           <!--预览区-->
           <div :id="echartId" class="echart"></div>
         </Form>
@@ -80,6 +91,7 @@
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
+
 export default {
   props: {
     visible: {
@@ -102,27 +114,37 @@ export default {
     operator: {
       type: String,
       default: 'add'
+    },
+    metricList: {
+      type: Array,
+      default: () => []
     }
   },
   data () {
     return {
-      workspace: '', // 作用域
-      templatePl: '', // 推荐配置
-      metricTemplate: [], // 推荐配置下拉列表
-      metricTemplateParams: [],
-      collectedMetricOptions: [], // 采集数据下拉列表
+      metricTypeConfig: {},
       metricConfigData: {
-        guid: null,
-        metric: '', // 名称
-        monitor_type: '', // 类型
-        panel_id: null,
-        prom_expr: '', // 表达式
-        endpoint: '' // 对象
+        metricId: null, // 原始指标Id
+        comparisonType: 'day', // 对比类型
+        calcType: 'diff', // 计算数值
+        calcMethod: 'avg', // 计算方法
+        calcPeriod: '1m', // 计算周期
       },
       endpoint: '',
       endpointOptions: [],
       echartId: '',
-      maxHeight: 500
+      maxHeight: 500,
+      calcMethodOption: [
+        {label: this.$t('m_average'), value: 'avg'},
+        {label: this.$t('m_sum'), value: 'sum'}
+      ],
+      aggStepOptions: [
+        {label: '60S', value: 60},
+        {label: '300S', value: 300},
+        {label: '600S', value: 600},
+        {label: '1800S', value: 1800},
+        {label: '3600S', value: 3600}
+      ]
     }
   },
   computed: {
@@ -250,12 +272,15 @@ export default {
     // 选择预览对象
     handleEndPointChange (val) {
       if (!val) return
-      this.getChartData()
-      // if (this.workspace === 'all_object') {
-      //   this.getChartData()
-      // } else {
-      //   this.getEndpoint()
-      // }
+      const findOriMetric = this.metricList.find(item => item.guid === val)
+      
+      const typeList = [
+        { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
+        { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
+        { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+      ]
+      this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
+      // this.getChartData()
     },
     // 渲染echart
     async getChartData () {
@@ -294,23 +319,14 @@ export default {
       )
     },
     handleSubmit () {
-      if (!this.metricConfigData.metric) {
-        return this.$Message.error(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
-      }
-      if (!this.workspace) {
-        return this.$Message.error(this.$t('m_scope') + this.$t('m_tips_required'))
-      }
-      if (!this.metricConfigData.prom_expr) {
-        return this.$Message.error(this.$t('m_field_metric') + this.$t('m_tips_required'))
+      if (!this.metricConfigData.metricId) {
+        return this.$Message.error(this.$t('m_original_metric') + this.$t('m_tips_required'))
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
-      this.metricConfigData.monitor_type = this.monitorType
-      this.metricConfigData.service_group = this.serviceGroup
-      this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         type,
-        this.$root.apiCenter.metricManagement,
-        [this.metricConfigData],
+        this.$root.apiCenter.comparisonMetricMgmt,
+        this.metricConfigData,
         () => {
           this.$Message.success(this.$t('m_tips_success'))
           this.$emit('update:visible', false)
