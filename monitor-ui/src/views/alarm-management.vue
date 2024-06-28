@@ -82,7 +82,18 @@
         </div>
       </div>
     </Modal>
-    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <Modal
+      :width="600"
+      :title="$t('m_remark')"
+      v-model="showRemarkModal">
+      <div>
+        <Input v-model="modelConfig.addRow.message" type="textarea" placeholder="" />
+      </div>
+      <div slot="footer">
+        <Button :disabled="modelConfig.addRow.message===''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>
+        <Button @click="cancelRemark">{{$t('m_button_cancel')}}</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -132,14 +143,8 @@ export default {
 
       outerTotal: 0,
 
+      showRemarkModal: false,
       modelConfig: {
-        modalId: 'remark_Modal',
-        modalTitle: 'm_remark',
-        saveFunc: 'remarkAlarm',
-        isAdd: true,
-        config: [
-          {label: 'm_remark', value: 'message', placeholder: '', v_validate: '', disabled: false, type: 'textarea'}
-        ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           id: '',
           message: '',
@@ -303,14 +308,17 @@ export default {
         message: item.custom_message,
         is_custom: false
       }
-      this.$root.JQ('#remark_Modal').modal('show')
+      this.showRemarkModal = true
     },
     remarkAlarm () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm()
-        this.$root.JQ('#remark_Modal').modal('hide')
+        this.showRemarkModal = false
       })
+    },
+    cancelRemark () {
+      this.showRemarkModal = false
     },
     // goToEndpointView (alarmItem) {
     //   const endpointObject = {
