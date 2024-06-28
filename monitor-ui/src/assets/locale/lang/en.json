@@ -666,5 +666,18 @@
   "m_select_export_chart": "Select Export Chart",
   "m_unclassified": "Unclassified",
   "m_noConfig": "Please configure chart",
-  "m_all_checked_or_cancel": "Select All Or Uncheck"
+  "m_all_checked_or_cancel": "Select All Or Uncheck",
+  "m_original_metric": "Original Metric",
+  "m_original_metric_type": "Original Metric Type",
+  "m_year_over_year_metrics": " Year-over-Year Metrics",
+  "m_comparison_types": "Comparison Types",
+  "m_dod_comparison": "Day-over-Day Comparison",
+  "m_wow_comparison": "Week-over-Week Comparison",
+  "m_mom_comparison": "Month-over-Month Comparison",
+  "m_calc_value": "Calculation Value",
+  "m_calc_method": "Calculation Method",
+  "m_difference": "Difference",
+  "m_percentage_difference": "Percentage Difference",
+  "m_average": "Average",
+  "m_sum": "Sum"
 }
