@@ -68,7 +68,8 @@ type LogMetricEndpointRelTable struct {
 
 type LogMetricQueryObj struct {
 	ServiceGroupTable
-	Config []*LogMetricMonitorObj `json:"config"`
+	Config   []*LogMetricMonitorObj `json:"config"`
+	DBConfig []*DbMetricMonitorObj  `json:"db_config"`
 }
 
 type LogMetricMonitorObj struct {
