@@ -195,6 +195,7 @@
     "getGraph": "/monitor/api/v1/dashboard/new/chart",
     "addPanel": "/monitor/api/v1/dashboard/new/panel",
     "metricManagement": "/monitor/api/v1/dashboard/new/metric",
+    "comparisonMetricMgmt": "/monitor/api/v1/dashboard/new/comparison_metric",
     "getMetricByEndpointType": "/monitor/api/v1/dashboard/new/metric",
     "cluster": "/monitor/api/v1/cluster/config",
     "recursiveType": "/monitor/api/v1/dashboard/recursive/endpoint_type/list",
