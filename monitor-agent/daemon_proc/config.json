@@ -50,4 +50,12 @@
   "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
+},{
+  "name": "metric_comparison_exporter",
+  "args": [],
+  "maxTry": 10,
+  "workDir": "/app/monitor/metric_comparison_exporter",
+  "stdOutLog": "logs/app.log",
+  "localBin": true,
+  "withBash": false
 }]
