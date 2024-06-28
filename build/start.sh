@@ -102,6 +102,8 @@ mkdir -p logs
 cd ../db_data_exporter
 mkdir -p logs
 #nohup ./db_data_exporter > logs/app.log 2>&1 &
+cd ../metric_comparison_exporter
+mkdir -p logs
 cd ../monitor/
 mkdir -p logs
 sleep 2
