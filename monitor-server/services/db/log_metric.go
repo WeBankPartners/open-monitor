@@ -46,6 +46,10 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 		}
 		result.Config = append(result.Config, &tmpConfig)
 	}
+	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup)
+	if err != nil {
+		err = fmt.Errorf("query db metric config fail,%s ", err.Error())
+	}
 	return
 }
 
@@ -782,6 +786,25 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 			}
 		}
 	}
+	for _, dbConfig := range param.DBConfig {
+		tmpDBMetricGuid := fmt.Sprintf("%s__%s", dbConfig.Metric, dbConfig.ServiceGroup)
+		if tmpMetric, existFlag := serviceGroupMetricMap[tmpDBMetricGuid]; existFlag {
+			err = fmt.Errorf("Metric: %s duplicate ", tmpMetric)
+			return
+		}
+		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getCreateDBMetricMonitorByImport(dbConfig, nowTime, operator)
+		if tmpErr != nil {
+			err = tmpErr
+			return
+		}
+		actions = append(actions, tmpActions...)
+		for _, v := range tmpAffectHosts {
+			affectHostMap[v] = 1
+		}
+		for _, v := range tmpAffectEndpointGroup {
+			affectEndpointGroupMap[v] = 1
+		}
+	}
 	var affectHostList, affectEndpointGroupList []string
 	for k, _ := range affectHostMap {
 		affectHostList = append(affectHostList, k)
@@ -926,6 +949,11 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			actions = append(actions, tmpActions...)
 		}
 	}
+	return
+}
+
+func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTime, operator string) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
+	actions = getCreateDBMetricActions(inputObj, operator, nowTime)
 	return
 }
 
