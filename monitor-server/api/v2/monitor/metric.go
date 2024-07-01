@@ -231,6 +231,24 @@ func AddComparisonMetric(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
+func DeleteComparisonMetric(c *gin.Context) {
+	var err error
+	id := c.Param("id")
+	if strings.TrimSpace(id) == "" {
+		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	if err = db.DeleteComparisonMetric(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if err = syncMetricComparisonData(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
 // syncMetricComparisonData 同步同环比指标数据
 func syncMetricComparisonData() (err error) {
 	var list []*models.MetricComparisonDto

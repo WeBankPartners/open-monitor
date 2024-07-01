@@ -81,6 +81,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodPut, HandlerFunc: dashboard_new.ChartUpdate},
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodDelete, HandlerFunc: dashboard_new.ChartDelete},
 		&handlerFuncObj{Url: "/dashboard/new/comparison_metric", Method: http.MethodPost, HandlerFunc: monitor.AddComparisonMetric},
+		&handlerFuncObj{Url: "/dashboard/new/comparison_metric/:id", Method: http.MethodDelete, HandlerFunc: monitor.DeleteComparisonMetric},
 	)
 	// Agent 对象管理
 	httpHandlerFuncList = append(httpHandlerFuncList,
