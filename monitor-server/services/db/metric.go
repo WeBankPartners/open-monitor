@@ -141,7 +141,7 @@ func MetricDelete(id string) error {
 	return err
 }
 
-func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup string) (result []*models.MetricComparisonExtend, err error) {
+func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint string) (result []*models.MetricComparisonExtend, err error) {
 	var params []interface{}
 	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid "
 	if guid != "" {
@@ -162,6 +162,15 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		} else if endpointGroup != "" {
 			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
 			params = []interface{}{endpointGroup}
+		} else if endpoint != "" {
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from ("
+			baseSql = baseSql + "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
+			baseSql = baseSql + " union "
+			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
+			baseSql = baseSql + " union "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + ") m join metric_comparison mc on mc.metric_id = m.guid"
+			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
 			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
 			params = []interface{}{monitorType}

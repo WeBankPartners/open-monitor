@@ -36,7 +36,8 @@ func ListMetricComparison(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	onlyService := c.Query("onlyService")
 	endpointGroup := c.Query("endpointGroup")
-	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup)
+	endpoint := c.Query("endpoint")
+	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
