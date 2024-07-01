@@ -152,7 +152,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid amd m.monitor_type=? and m.service_group=?"
+				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
 				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
