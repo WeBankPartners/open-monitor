@@ -78,6 +78,7 @@ type MetricImportResultDto struct {
 }
 
 type MetricComparisonExtend struct {
+	Guid               string   `json:"guid" xorm:"guid"`          // 指标Id
 	MetricId           string   `json:"metricId" xorm:"metric_id"` // 指标Id
 	Metric             string   `json:"metric" xorm:"metric"`
 	MonitorType        string   `json:"monitor_type" xorm:"monitor_type"`
