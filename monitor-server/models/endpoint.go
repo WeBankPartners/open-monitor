@@ -67,6 +67,8 @@ type MetricTable struct {
 	EndpointGroup      string `json:"endpoint_group" xorm:"endpoint_group"`
 	MetricType         string `json:"metric_type" xorm:"-"`           // 指标类型
 	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
+	GroupType          string `json:"group_type" xorm:"-"`            // 组类型
+	GroupName          string `json:"group_name" xorm:"-"`            // 组名
 }
 
 type MetricImportResultDto struct {
