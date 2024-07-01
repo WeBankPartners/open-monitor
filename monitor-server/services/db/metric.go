@@ -109,6 +109,7 @@ func MetricDelete(id string) error {
 	metric := metricQuery[0].Metric
 	var actions []*Action
 	// 删除同环比 指标
+	actions = append(actions, &Action{Sql: "delete from metric_comparison where  metric_id = ?", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric_comparison where  origin_metric_id = ?", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid in (select metric_id from metric_comparison where origin_metric_id = ?)", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{id}})
