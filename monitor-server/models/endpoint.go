@@ -75,24 +75,25 @@ type MetricImportResultDto struct {
 }
 
 type MetricComparisonExtend struct {
-	MetricId           string `json:"metricId" xorm:"metric_id"` // 指标Id
-	Metric             string `json:"metric" xorm:"metric"`
-	MonitorType        string `json:"monitor_type" xorm:"monitor_type"`
-	TagOwner           string `json:"tag_owner" xorm:"tag_owner"`
-	ServiceGroup       string `json:"service_group" xorm:"service_group"`
-	Workspace          string `json:"workspace" xorm:"workspace"`
-	CreateTime         string `json:"create_time" xorm:"create_time"`
-	UpdateTime         string `json:"update_time" xorm:"update_time"`
-	CreateUser         string `json:"create_user" xorm:"create_user"`
-	UpdateUser         string `json:"update_user" xorm:"update_user"`
-	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
-	LogMetricTemplate  string `json:"log_metric_template" xorm:"log_metric_template"`
-	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
-	MetricType         string `json:"metric_type" xorm:"-"`           // 指标类型
-	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
-	PromExpr           string `json:"promExpr" xorm:"prom_expr"`      // 同环比指标prom表达式
-	CalcType           string `json:"calcType" xorm:"calc_type"`      // 计算数值: diff 差值,diff_percent 差值百分比
-	CalcMethod         string `json:"calcMethod" xorm:"calc_method"`  // 计算方法: avg平均,sum求和
-	CalcPeriod         int    `json:"calcPeriod" xorm:"calc_period"`  // 计算周期
-	ComparisonType     string `json:"comparisonType"`                 // 对比类型: day 日环比, week 周, 月周比 month
+	MetricId           string   `json:"metricId" xorm:"metric_id"` // 指标Id
+	Metric             string   `json:"metric" xorm:"metric"`
+	MonitorType        string   `json:"monitor_type" xorm:"monitor_type"`
+	TagOwner           string   `json:"tag_owner" xorm:"tag_owner"`
+	ServiceGroup       string   `json:"service_group" xorm:"service_group"`
+	Workspace          string   `json:"workspace" xorm:"workspace"`
+	CreateTime         string   `json:"create_time" xorm:"create_time"`
+	UpdateTime         string   `json:"update_time" xorm:"update_time"`
+	CreateUser         string   `json:"create_user" xorm:"create_user"`
+	UpdateUser         string   `json:"update_user" xorm:"update_user"`
+	LogMetricConfig    string   `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricTemplate  string   `json:"log_metric_template" xorm:"log_metric_template"`
+	LogMetricGroup     string   `json:"log_metric_group" xorm:"log_metric_group"`
+	MetricType         string   `json:"metric_type" xorm:"-"`                  // 指标类型
+	LogMetricGroupName string   `json:"log_metric_group_name" xorm:"-"`        // 配置的模版名
+	PromExpr           string   `json:"promExpr" xorm:"prom_expr"`             // 同环比指标prom表达式
+	OriginCalcType     string   `json:"-" xorm:"calc_type"`                    // 计算数值: diff 差值,diff_percent 差值百分比,可以多选,逗号隔开
+	CalcType           []string `json:"calcType" xorm:"-"`                     // 计算数值: diff 差值,diff_percent 差值百分比,数组
+	CalcMethod         string   `json:"calcMethod" xorm:"calc_method"`         // 计算方法: avg平均,sum求和
+	CalcPeriod         int      `json:"calcPeriod" xorm:"calc_period"`         // 计算周期
+	ComparisonType     string   `json:"comparisonType" xorm:"comparison_type"` // 对比类型: day 日环比, week 周, 月周比 month
 }
