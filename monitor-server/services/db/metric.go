@@ -437,8 +437,13 @@ func AddComparisonMetric(param models.MetricComparisonParam, metric *models.Metr
 	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	if metric.ServiceGroup == "" {
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+		if metric.EndpointGroup == "" {
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+		} else {
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+		}
 	} else {
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
