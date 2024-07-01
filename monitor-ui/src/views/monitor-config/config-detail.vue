@@ -549,9 +549,9 @@ export default {
           minWidth: 150,
           render: (h, params) => {
             const typeList = [
-              { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
+              { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
               { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-              { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+              { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
             ]
             return (
               <Select
