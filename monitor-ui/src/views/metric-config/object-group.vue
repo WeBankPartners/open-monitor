@@ -96,14 +96,14 @@ export default {
           }
         },
         {
-          title: this.$t('m_field_type'), // 类型
+          title: this.$t('m_configuration_page'), // 配置页面title: this.$t('m_field_type'), // 类型
           key: 'metric_type',
           width: 160,
           render: (h, params) => {
             const typeList = [
-              { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
+              { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
               { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-              { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+              { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
             return <Tag size="medium" type="border" color={find.color}>{find.label || '-'}</Tag>
