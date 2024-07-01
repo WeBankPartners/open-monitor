@@ -31,4 +31,5 @@ type ErrorMessageObj struct {
 	LogGroupNameIllegalError         string `json:"log_group_name_illegal_error"`
 	DashboardNameRepeatError         string `json:"dashboard_name_repeat_error"`
 	DashboardIdExistError            string `json:"dashboard_id_exist_error"`
+	ImportDashboardNameExistError    string `json:"import_dashboard_name_exist_error"`
 }
