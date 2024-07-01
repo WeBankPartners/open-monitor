@@ -10,8 +10,8 @@ import (
 func main() {
 	port := flag.Int("p", 8181, "http listen port")
 	flag.Parse()
-	go StartHttpServer(*port)
 	go funcs.StartCalcMetricComparisonCron()
+	StartHttpServer(*port)
 }
 
 func StartHttpServer(port int) {
