@@ -8,7 +8,6 @@
       @on-close="handleCancel"
       class="monitor-add-group"
     >
-      {{ metricConfigData }}
       <div slot="header" class="w-header">
         <div class="title">{{ (operator === 'add' ? $t('m_button_add'):$t('m_button_edit'))+$t('m_year_over_year_metrics') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
@@ -17,7 +16,7 @@
         <Form :label-width="100" label-position="left">
           <!--原始指标-->
           <FormItem :label="$t('m_original_metric')">
-            <Select filterable v-model="metricConfigData.metricId" :transfer="true" @on-change="handleEndPointChange">
+            <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit'" :transfer="true" @on-change="getMetricType">
               <Option v-for="item in metricList" :value="item.guid" :key="item.guid">{{ item.metric }}</Option>
             </Select>
           </FormItem>
@@ -28,38 +27,39 @@
           <!-- 对比类型 -->
           <FormItem :label="$t('m_comparison_types')">
             <RadioGroup v-model="metricConfigData.comparisonType">
-              <Radio label="day">
+              <Radio label="day" :disabled="operator === 'edit'">
                 <span>{{ $t('m_dod_comparison') }}</span>
               </Radio>
-              <Radio label="week">
+              <Radio label="week" :disabled="operator === 'edit'">
                 <span>{{ $t('m_wow_comparison') }}</span>
               </Radio>
-              <Radio label="month">
+              <Radio label="month" :disabled="operator === 'edit'">
                 <span>{{ $t('m_mom_comparison') }}</span>
               </Radio>
             </RadioGroup>
           </FormItem>
           <!-- 计算数值 -->
           <FormItem :label="$t('m_calc_value')">
-            <!-- <CheckboxGroup v-model="metricConfigData.calcType">
+            <CheckboxGroup v-model="metricConfigData.calcType">
               <Checkbox label="diff">
                 <span>{{ $t('m_difference') }}</span>
               </Checkbox>
               <Checkbox label="diff_percent">
                 <span>{{ $t('m_percentage_difference') }}</span>
               </Checkbox>
-            </CheckboxGroup> -->
+            </CheckboxGroup>
           </FormItem>
           <!--计算方法-->
           <FormItem :label="$t('m_calc_method')">
-            <Select filterable v-model="metricConfigData.calcMethod" :transfer="true">
+            <Select filterable v-model="metricConfigData.calcMethod" :disabled="operator === 'edit'" :transfer="true">
               <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
           <!--计算周期-->
           <FormItem :label="$t('m_calculation_period')">
-            <!-- <Select 
+            <Select 
               filterable
+              :disabled="operator === 'edit'"
               v-model="metricConfigData.calcPeriod">
               <Option 
                 v-for="item in aggStepOptions" 
@@ -68,7 +68,7 @@
                 :key="item.value">
                 {{ item.label }}
               </Option>
-            </Select> -->
+            </Select>
           </FormItem>
           <!--预览对象-->
           <!-- <FormItem :label="$t('m_preview') + $t('m_endpoint')">
@@ -115,20 +115,21 @@ export default {
       type: String,
       default: 'add'
     },
-    metricList: {
-      type: Array,
-      default: () => []
+    originalMetricsId: { // 原始指标中新增同环比传递的指标
+      type: String,
+      default: ''
     }
   },
   data () {
     return {
+      metricList: [], // 原始指标列表
       metricTypeConfig: {},
       metricConfigData: {
-        metricId: null, // 原始指标Id
+        metricId: 'cpu.detail.percent2__host', // 原始指标Id
         comparisonType: 'day', // 对比类型
-        calcType: 'diff', // 计算数值
+        calcType: ['diff'], // 计算数值
         calcMethod: 'avg', // 计算方法
-        calcPeriod: '1m', // 计算周期
+        calcPeriod: 60, // 计算周期
       },
       endpoint: '',
       endpointOptions: [],
@@ -136,6 +137,8 @@ export default {
       maxHeight: 500,
       calcMethodOption: [
         {label: this.$t('m_average'), value: 'avg'},
+        {label: this.$t('m_min'), value: 'min'},
+        {label: this.$t('m_max'), value: 'max'},
         {label: this.$t('m_sum'), value: 'sum'}
       ],
       aggStepOptions: [
@@ -157,24 +160,42 @@ export default {
       }
     }
   },
-  watch: {
-    workspace (val) {
-      if (val) {
-        this.getMetricTemplate()
-      }
-    }
-  },
-  mounted () {
-    this.getEndpoint()
+  async mounted () {
+    this.metricConfigData.metricId = this.originalMetricsId
+    await this.getEndpoint()
+    await this.getMetricList()
     this.initDrawerHeight()
     if (this.operator === 'edit') {
-      this.workspace = this.data.workspace
-      this.metricConfigData = {
-        ...this.data
-      }
+      this.getConfigData()
     }
   },
   methods: {
+    // 获取原始指标列表
+    async getMetricList () {
+      const params = {
+        monitorType: this.monitorType,
+        onlyService: 'Y',
+        serviceGroup: this.serviceGroup
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
+        this.metricList = responseData
+        this.getMetricType(this.metricConfigData.metricId)
+      }, {isNeedloading: true})
+    },
+    // 获取回显数据
+    getConfigData () {
+      const params = {
+        monitorType: this.monitorType,
+        onlyService: 'Y',
+        serviceGroup: this.serviceGroup,
+        guid: this.data.metricId
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric_comparison/list', params, responseData => {
+        if (responseData.length === 1) {
+          this.metricConfigData = responseData[0]
+        }
+      }, {isNeedloading: true})
+    },
     initDrawerHeight () {
       this.maxHeight = document.body.clientHeight - 150
       window.addEventListener(
@@ -182,77 +203,6 @@ export default {
         debounce(() => {
           this.maxHeight = document.body.clientHeight - 150
         }, 100)
-      )
-    },
-    // 选择作用域
-    changeWorkspace () {
-      this.templatePl = ''
-      this.metricTemplateParams = []
-      this.metricConfigData.prom_expr = ''
-    },
-    // 选择推荐配置
-    changeTemplatePl (val) {
-      const find = this.metricTemplate.find(item => item.prom_expr === val)
-      this.metricTemplateParams = find && find.param.split(',').map(p => {
-        return {
-          value: '',
-          label: p
-        }
-      })
-      if (find && find.name === 'custom') {
-        // this.metricConfigData.prom_expr += val
-      } else {
-        this.metricConfigData.prom_expr = val
-      }
-    },
-    // 清空推荐配置
-    clearTemplatePl () {
-      this.templatePl = ''
-      this.metricConfigData.endpoint = ''
-      this.metricTemplateParams = []
-    },
-    // 获取推荐配置列表
-    getMetricTemplate () {
-      const params = {
-        workspace: this.workspace
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
-        '/monitor/api/v2/sys/parameter/metric_template',
-        params,
-        res => {
-          this.metricTemplate = res
-        },
-        { isNeedloading: false }
-      )
-    },
-    // 选择采集数据
-    changeCollectedMetric (val) {
-      if (val.value) {
-        const find = this.metricTemplate.find(m => m.prom_expr === this.templatePl)
-        if (find && find.name === 'custom') {
-          this.metricConfigData.prom_expr += val.value 
-        }
-        this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll('undefined', '')
-        this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll(val.label, val.value)
-      }
-    },
-    // 获取采集数据列表
-    getCollectedMetric () {
-      const params = {
-        monitor_type: this.monitorType,
-        guid: this.endpoint,
-        service_group: this.serviceGroup,
-        workspace: this.workspace
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST',
-        this.$root.apiCenter.getMetricOptions,
-        params,
-        responseData => {
-          this.collectedMetricOptions = responseData
-        },
-        { isNeedloading: false }
       )
     },
     // 获取预览对象列表
@@ -270,14 +220,13 @@ export default {
         })
     },
     // 选择预览对象
-    handleEndPointChange (val) {
+    async getMetricType (val) {
       if (!val) return
       const findOriMetric = this.metricList.find(item => item.guid === val)
-      
       const typeList = [
-        { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
+        { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
         { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-        { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+        { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
       ]
       this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
       // this.getChartData()
