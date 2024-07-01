@@ -679,5 +679,10 @@
   "m_difference": "Difference",
   "m_percentage_difference": "Percentage Difference",
   "m_average": "Average",
-  "m_sum": "Sum"
+  "m_sum": "Sum",
+  "m_max": "Maximum",
+  "m_min": "Minimum",
+  "m_metric_list": "Metric List",
+  "m_basic_type": "Basic Type",
+  "m_configuration_page": "Configuration Page"
 }
