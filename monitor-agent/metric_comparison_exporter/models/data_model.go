@@ -2,6 +2,12 @@ package models
 
 import "fmt"
 
+type MetricComparisonRes struct {
+	MetricMap map[string]string
+	Name      string
+	Value     string
+}
+
 type MetricComparisonDto struct {
 	Guid           string `json:"guid"`
 	Metric         string `json:"metric"`         // 原始指标名称
@@ -9,10 +15,10 @@ type MetricComparisonDto struct {
 	ComparisonType string `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
 	OriginPromExpr string `json:"originPromExpr"` // 原始指标prom表达式
 	PromExpr       string `json:"promExpr"`       // 同环比指标prom表达式
-	CalcType       string `json:"calcType"`
-	CalcMethod     string `json:"calcMethod"`
-	CalcPeriod     string `json:"calcPeriod"`
-	MetricId       string `json:"metricId"` // 原始指标Id
+	CalcType       string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
+	CalcMethod     string `json:"calcMethod"`     // 计算方法: avg平均,sum求和,max最大,min最小
+	CalcPeriod     int    `json:"calcPeriod"`     // 计算周期,单位s
+	MetricId       string `json:"metricId"`       // 原始指标Id
 	CreateUser     string `json:"createUser"`
 	CreateTime     string `json:"createTime"`
 }
