@@ -93,5 +93,6 @@ type MetricComparisonExtend struct {
 	PromExpr           string `json:"promExpr" xorm:"prom_expr"`      // 同环比指标prom表达式
 	CalcType           string `json:"calcType" xorm:"calc_type"`      // 计算数值: diff 差值,diff_percent 差值百分比
 	CalcMethod         string `json:"calcMethod" xorm:"calc_method"`  // 计算方法: avg平均,sum求和
-	CalcPeriod         string `json:"calcPeriod" xorm:"calc_period"`  // 计算周期
+	CalcPeriod         int    `json:"calcPeriod" xorm:"calc_period"`  // 计算周期
+	ComparisonType     string `json:"comparisonType"`                 // 对比类型: day 日环比, week 周, 月周比 month
 }
