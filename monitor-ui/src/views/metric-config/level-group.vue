@@ -293,7 +293,8 @@ export default {
       row: {},
       type: '', // add、edit
       addVisible: false,
-      deleteVisible: false
+      deleteVisible: false,
+      originalMetricsId: ''
     }
   },
   computed: {
