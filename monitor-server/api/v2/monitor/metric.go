@@ -21,7 +21,8 @@ func ListMetric(c *gin.Context) {
 	monitorType := c.Query("monitorType")
 	serviceGroup := c.Query("serviceGroup")
 	onlyService := c.Query("onlyService")
-	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService)
+	endpointGroup := c.Query("endpointGroup")
+	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -54,7 +55,8 @@ func GetSysMetricTemplate(c *gin.Context) {
 func ExportMetric(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	monitorType := c.Query("monitorType")
-	result, err := db.MetricListNew("", monitorType, serviceGroup, "Y")
+	endpointGroup := c.Query("endpointGroup")
+	result, err := db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -103,8 +105,9 @@ func ImportMetric(c *gin.Context) {
 		return
 	}
 	serviceGroup := c.Query("serviceGroup")
-	if serviceGroup == "" {
-		middleware.ReturnValidateError(c, "serviceGroup can not empty")
+	endPointGroup := c.Query("endpointGroup")
+	if serviceGroup == "" || endPointGroup == "" {
+		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup can not empty")
 		return
 	}
 	for _, obj := range paramObj {
@@ -116,7 +119,7 @@ func ImportMetric(c *gin.Context) {
 			result.FailList = append(result.FailList, obj.Metric)
 		}
 	}
-	if subFaiList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), newParamObj); err != nil {
+	if subFaiList, err = db.MetricImport(serviceGroup, endPointGroup, middleware.GetOperateUser(c), newParamObj); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -195,8 +198,8 @@ func QueryMetricTagValue(c *gin.Context) {
 	middleware.ReturnSuccessData(c, result)
 }
 
-// AddComparisonMetric 添加同环比监控配置
-func AddComparisonMetric(c *gin.Context) {
+// AddOrUpdateComparisonMetric 添加更新同环比监控配置
+func AddOrUpdateComparisonMetric(c *gin.Context) {
 	var param models.MetricComparisonParam
 	var metric *models.MetricTable
 	var err error
@@ -220,9 +223,18 @@ func AddComparisonMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
-	if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
+	if strings.TrimSpace(param.MetricComparisonId) == "" {
+		// 新增同环比
+		if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+	} else {
+		// 更新同环比
+		if err = db.UpdateComparisonMetric(param.MetricComparisonId, param.CalcType); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
 	}
 	if err = syncMetricComparisonData(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
