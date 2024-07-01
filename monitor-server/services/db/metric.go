@@ -183,6 +183,11 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService string
 				metric.MetricType = string(models.MetricTypeCustom)
 			}
 		}
+		if strings.TrimSpace(metric.OriginCalcType) != "" {
+			metric.CalcType = strings.Split(metric.OriginCalcType, ",")
+		} else {
+			metric.CalcType = []string{}
+		}
 	}
 	return
 }
