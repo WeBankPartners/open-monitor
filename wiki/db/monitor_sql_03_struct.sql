@@ -12,3 +12,5 @@ CREATE TABLE IF NOT EXISTS `metric_comparison` (
     CONSTRAINT `fore_metric_comparison_metric_id` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`guid`),
     CONSTRAINT `fore_metric_comparison_origin_metric_id` FOREIGN KEY (`origin_metric_id`) REFERENCES `metric` (`guid`)
 )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '指标同环比';
+
+alter table metric add column endpoint_group varchar(64)  default NULL COMMENT '对象组';
