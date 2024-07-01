@@ -109,8 +109,8 @@ func MetricDelete(id string) error {
 	metric := metricQuery[0].Metric
 	var actions []*Action
 	// 删除同环比 指标
-	actions = append(actions, &Action{Sql: "delete from metric where guid in (select metric_id from metric_comparison where origin_metric_id = ?)", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric_comparison where  origin_metric_id = ?", Param: []interface{}{id}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid in (select metric_id from metric_comparison where origin_metric_id = ?)", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{id}})
 	var charts []*models.ChartTable
 	err = x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", metricQuery[0].MetricType).Find(&charts)
