@@ -140,9 +140,9 @@ func MetricDelete(id string) error {
 	return err
 }
 
-func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService string) (result []*models.MetricComparisonExtend, err error) {
+func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup string) (result []*models.MetricComparisonExtend, err error) {
 	var params []interface{}
-	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid "
+	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid "
 	if guid != "" {
 		baseSql += " and m.guid=? "
 		params = append(params, guid)
@@ -158,6 +158,9 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService string
 				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
+		} else if endpointGroup != "" {
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
+			params = []interface{}{endpointGroup}
 		} else {
 			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
 			params = []interface{}{monitorType}
@@ -198,7 +201,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService string
 	return
 }
 
-func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup string) (result []*models.MetricTable, err error) {
+func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint string) (result []*models.MetricTable, err error) {
 	var params []interface{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -219,6 +222,15 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup s
 		} else if endpointGroup != "" {
 			baseSql = "select * from metric m where service_group is null and endpoint_group = ? and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 			params = []interface{}{endpointGroup}
+		} else if endpoint != "" {
+			baseSql = "select * from ("
+			baseSql = "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
+			baseSql = baseSql + " union "
+			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
+			baseSql = baseSql + " union "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + ") m where not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
 			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 			params = []interface{}{monitorType}
@@ -250,6 +262,18 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup s
 				metric.MetricType = string(models.MetricTypeCustom)
 			}
 		}
+		if endpoint != "" {
+			if strings.TrimSpace(metric.ServiceGroup) != "" {
+				metric.GroupType = "level"
+				metric.GroupName = metric.ServiceGroup
+			} else if strings.TrimSpace(metric.EndpointGroup) != "" {
+				metric.GroupType = "object"
+				metric.GroupName = metric.EndpointGroup
+			} else {
+				metric.GroupType = "system"
+				metric.GroupName = metric.MonitorType
+			}
+		}
 	}
 	return
 }
@@ -257,7 +281,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup s
 func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
 	var failList []string
 	var err error
-	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup)
+	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "")
 	if getExistErr != nil {
 		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
