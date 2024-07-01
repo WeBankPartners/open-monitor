@@ -1,65 +1,30 @@
 <template>
-  <div ref="maxheight" class="monitor-general-group">
+  <div ref="maxheight" class="monitor-level-group">
     <Row>
       <Col :span="8">
-        <!--对象类型-->
+        <!--对象-->
         <span style="font-size: 14px;">
-          {{$t('m_tableKey_endpoint_type')}}：
+          {{$t('m_endpoint')}}:
         </span>
-        <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
-          <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
+        <Select
+          style="width:300px;"
+          v-model="endpoint"
+          filterable 
+          @on-change="changeEndpointGroup"
+        >
+          <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="option.guid" :key="index">
+            <TagShow :list="endpointOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+            {{option.guid}}
+          </Option>
         </Select>
       </Col>
       <Col :span="16">
         <div class="btn-group">
-          <!--导出-->
-          <!-- <Button
-            type="info"
-            @click.stop="exportData"
-          >
-            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-            {{ $t("m_export") }}
-          </Button> -->
-          <!--导入-->
-          <!-- <Upload 
-          :action="uploadUrl" 
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed">
-            <Button type="primary">
-              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
-              {{ $t('m_import') }}
-            </Button>
-          </Upload> -->
-          <!--新增-->
-          <Button type="success" @click="handleAdd">{{ $t('button.add') }}</Button>
+          <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
         </div>
       </Col>
     </Row>
-    123
-    <img style="width: 100px;height:100px" src="https://raw.githubusercontent.com/pobu168/wecube-platform/master/wecube-portal/src/assets/logo.png"></img> 
-    345
-    <Table size="small" :columns="tableColumns" :data="tableData" class="general-table"/>
-    <Modal
-      v-model="deleteVisible"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="submitDelete"
-      @on-cancel="deleteVisible = false">
-      <div class="modal-body" style="padding: 10px 20px">
-        <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
-      </div>
-    </Modal>
-    <AddGroupDrawer
-      v-if="addVisible"
-      :visible.sync="addVisible"
-      :monitorType="monitorType"
-      :data="row"
-      :operator="type"
-      @fetchList="getList()"
-    ></AddGroupDrawer>
+    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
   </div>
 </template>
 
@@ -67,41 +32,43 @@
 import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
-import AddGroupDrawer from './components/add-group.vue'
+import TagShow from '@/components/Tag-show.vue'
+import MetricChange from './components/metric-change.vue'
 export default {
   components: {
-    AddGroupDrawer
+    TagShow,
+    MetricChange
   },
   data () {
     return {
+      metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       token: null,
-      monitorType: '',
+      monitorType: 'process',
       serviceGroup: '',
-      monitorTypeOptions: [],
+      endpoint: '',
+      endpointOptions: [],
       maxHeight: 500,
       tableData: [],
       tableColumns: [
         {
-          title: this.$t('field.metric'), // 指标
+          title: this.$t('m_field_metric'), // 指标
           key: 'metric',
-          width: 250
+          width: 250,
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_scope'), // 作用域
           key: 'workspace',
-          width: 160,
+          width: 150,
           render: (h, params) => {
-            const workspaceMap = {
-              all_object: this.$t('m_all_object'), // 全部对象
-              any_object: this.$t('m_any_object') // 层级对象
-            }
-            return <Tag size="medium">{workspaceMap[params.row.workspace] || '-'}</Tag>
-          }
+            return <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>
+          },
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_configuration_page'), // 配置页面
           key: 'metric_type',
-          width: 160,
+          width: 150,
           render: (h, params) => {
             const typeList = [
               { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
@@ -109,208 +76,161 @@ export default {
               { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
-            return <Tag size="medium" type="border" color={find.color}>{find.label || '-'}</Tag>
-          }
+            return <Tag color={find.color} type="border" size="medium">{find.label || '-'}</Tag>
+          },
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_tableKey_expr'), // 表达式
           key: 'prom_expr',
-          minWidth: 400,
+          minWidth: 250,
           render: (h, params) => {
             return (
               <Tooltip max-width="300" content={params.row.prom_expr} transfer>
                 <span class="eclipse">{params.row.prom_expr || '-'}</span>
               </Tooltip>
             )
-          }
+          },
+          showType: ['originalMetrics']
+        },
+        {
+          title: this.$t('m_comparison_types'), // 对比类型
+          key: 'comparisonType',
+          width: 160,
+          render: (h, params) => {
+            const comparisonTypeToDisplay = {
+              'day': this.$t('m_dod_comparison'),
+              'week': this.$t('m_wow_comparison'),
+              'month': this.$t('m_mom_comparison'),
+              '-': '-'
+            }
+            return <span>{comparisonTypeToDisplay[params.row.comparisonType || '-']}</span>
+          },
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_calc_value'), // 计算数值
+          key: 'calcType',
+          render: (h, params) => {
+            const calcTypeToDisplay = {
+              'diff': this.$t('m_difference'),
+              'diff_percent': this.$t('m_percentage_difference')
+            }
+            const calcTypeCache = (params.row.calcType || []).map(t => calcTypeToDisplay[t]).join('，')
+            return <span>{calcTypeCache || '-'}</span>
+          },
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_calc_method'), // 计算方法
+          key: 'calcMethod',
+          width: 160,
+          render: (h, params) => {
+            const calcMethodToDisplay = {
+              'avg': this.$t('m_average'),
+              'min': this.$t('m_min'),
+              'max': this.$t('m_max'),
+              'sum': this.$t('m_sum'),
+              '-': '-'
+            }
+            return <span>{calcMethodToDisplay[params.row.calcMethod || '-']}</span>
+          },
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_calculation_period'), // 计算周期
+          key: 'calcPeriod',
+          width: 160,
+          render: (h, params) => {
+            return <span>{params.row.calcPeriod || '-'}S</span>
+          },
+          showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_update_time'), // 更新时间
           key: 'update_time',
-          width: 160,
+          width: 150,
           render: (h, params) => {
             return <span>{params.row.update_time || '-'}</span>
-          }
+          },
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_updatedBy'), // 更新人
           key: 'update_user',
-          width: 160,
+          width: 150,
           render: (h, params) => {
             return <span>{params.row.update_user || '-'}</span>
-          }
+          },
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
-          title: this.$t('m_table_action'),
-          key: 'action',
-          width: 100,
-          
-          fixed: 'right',
+          title: this.$t('m_business_configuration'), // 业务配置
+          key: 'log_metric_group_name',
+          width: 200,
           render: (h, params) => {
-            return (
-              <div style="display:flex;justify-content:center;">
-                {
-                  /* 编辑 */
-                  <Tooltip content={this.$t('m_button_edit')} placement="bottom" transfer>
-                    <Button
-                      size="small"
-                      type="primary"
-                      onClick={() => {
-                        this.handleEdit(params.row)
-                      }}
-                      style="margin-right:5px;"
-                    >
-                      <Icon type="md-create" size="16"></Icon>
-                    </Button>
-                  </Tooltip>
-                }
-                {
-                  /* 删除 */
-                  <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
-                    <Button
-                      size="small"
-                      type="error"
-                      onClick={() => {
-                        this.handleDelete(params.row)
-                      }}
-                      style="margin-right:5px;"
-                    >
-                      <Icon type="md-trash" size="16"></Icon>
-                    </Button>
-                  </Tooltip>
-                }
-              </div>
-            )
-          }
+            return <span>{params.row.log_metric_group_name || '-'}</span>
+          },
+          showType: ['originalMetrics']
         }
       ],
+      workspaceMap: {
+        all_object: this.$t('m_all_object'), // 全部对象
+        any_object: this.$t('m_any_object') // 层级对象
+      },
       row: {},
       type: '', // add、edit
-      addVisible: false,
-      deleteVisible: false
     }
   },
-  computed: {
-    uploadUrl: function() {
-      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
-    }
-  },
-  mounted () {
-    this.getMonitorType()
+  async mounted () {
+    await this.getEndpointList()
+    this.endpoint = this.endpointOptions[0].guid
+    this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
     this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
   },
   methods: {
-    getList () {
-      const params = {
-        monitorType: this.monitorType,
-        onlyService: 'Y',
-        serviceGroup: this.serviceGroup
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
-        this.tableData = responseData
-      }, {isNeedloading: true})
-    },
-    getMonitorType () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', (responseData) => {
-        this.monitorTypeOptions = responseData || []
-        this.monitorType = this.monitorTypeOptions[0]
-        this.getList()
-      }, {isNeedloading: false})
-    },
-    changeMonitorType () {
+    reloadData (metricType) {
+      this.metricType = metricType
       this.getList()
     },
-    exportData () {
-      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
-      axios({
-        method: 'GET',
-        url: api,
-        headers: {
-          'Authorization': this.token
-        }
-      }).then((response) => {
-        if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
-            // Microsoft Edge and Microsoft Internet Explorer 10-11
-            window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
-            if ('download' in document.createElement('a')) { // 非IE下载
-              let elink = document.createElement('a')
-              elink.download = fileName
-              elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)  
-              document.body.appendChild(elink)
-              elink.click()
-              URL.revokeObjectURL(elink.href) // 释放URL 对象
-              document.body.removeChild(elink)
-            } else { // IE10+下载
-              navigator.msSaveOrOpenBlob(blob, fileName)
-            }
-          }
-        }
-      })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      })
+    changeEndpointGroup () {
+      this.getList()
     },
-    uploadSucess (val) {
-      if (val.status === 'OK') {
-        if (val.data) {
-          if (val.data.fail_list.length > 0) {
-            this.$Notice.error({
-              duration: 0,
-              render: () => {
-                return <div>
-                  {this.$t('m_metric_export_errorTips')}
-                  <span style="color:red;">{val.data.fail_list.join('、')}</span>
-                  {this.$t('m_metric')}
-                </div>
-              }
-            })
-          } else {
-            this.$Message.success(this.$t('m_tips_success'))
-          }
-        }
-        this.getList()
+    getList () {
+      const params = {
+        endpoint: this.endpoint
       }
-    },
-    uploadFailed (error, file) {
-      this.$Message.warning(file.message)
-    },
-    handleAdd () {
-      this.type = 'add'
-      this.addVisible = true
-    },
-    handleEdit (row) {
-      this.type = 'edit'
-      this.row = row
-      this.addVisible = true
-    },
-    handleDelete (row) {
-      this.row = row
-      this.deleteVisible = true
-    },
-    submitDelete () {
+      const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'DELETE',
-        `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}`,
+        'GET',
+        api,
+        params,
+        responseData => {
+          this.tableData = responseData
+        },
+        { isNeedloading: true }
+      )
+    },
+    getEndpointList () {
+      const api = '/monitor/api/v1/alarm/endpoint/list?__orders=-created_date&page=1&size=1000000'
+      return this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'GET',
+        api,
         '',
-        () => {
-          this.$Message.success(this.$t('m_tips_success'))
-          this.getList()
-        })
+        responseData => {
+          this.endpointOptions = responseData.data || []
+        },
+        { isNeedloading:false }
+      )
     }
   }
 }
 </script>
 
 <style lang="less">
-.monitor-general-group {
+.monitor-level-group {
   .eclipse {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -321,13 +241,13 @@ export default {
 }
 </style>
 <style lang="less" scoped>
-.monitor-general-group {
+.monitor-level-group {
   padding-bottom: 20px;
   .btn-group {
     display: flex;
     justify-content: flex-end;
   }
-  .general-table {
+  .level-table {
     margin-top: 12px;
   }
 }
