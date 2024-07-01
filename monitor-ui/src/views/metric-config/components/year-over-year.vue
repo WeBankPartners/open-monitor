@@ -118,7 +118,11 @@ export default {
     originalMetricsId: { // 原始指标中新增同环比传递的指标
       type: String,
       default: ''
-    }
+    },
+    endpointGroup:{
+      type: String,
+      default: ''
+    },
   },
   data () {
     return {
@@ -161,10 +165,11 @@ export default {
     }
   },
   async mounted () {
-    this.metricConfigData.metricId = this.originalMetricsId
+    this.metricConfigData.metricId = this.originalMetricsId || ''
     await this.getEndpoint()
     await this.getMetricList()
     this.initDrawerHeight()
+    console.log(this.operator)
     if (this.operator === 'edit') {
       this.getConfigData()
     }
@@ -175,7 +180,8 @@ export default {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
         this.metricList = responseData
@@ -188,11 +194,14 @@ export default {
         monitorType: this.monitorType,
         onlyService: 'Y',
         serviceGroup: this.serviceGroup,
-        guid: this.data.metricId
+        guid: this.data.guid,
+        endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric_comparison/list', params, responseData => {
+        console.log(responseData)
         if (responseData.length === 1) {
           this.metricConfigData = responseData[0]
+          console.log(123, this.metricConfigData)
         }
       }, {isNeedloading: true})
     },
@@ -271,7 +280,8 @@ export default {
       if (!this.metricConfigData.metricId) {
         return this.$Message.error(this.$t('m_original_metric') + this.$t('m_tips_required'))
       }
-      const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
+      const type = 'POST'
+      this.metricConfigData.endpoint_group = this.endpointGroup
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         type,
         this.$root.apiCenter.comparisonMetricMgmt,
