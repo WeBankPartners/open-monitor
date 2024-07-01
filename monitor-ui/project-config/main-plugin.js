@@ -65,7 +65,7 @@ const implicitRoute = {
   },
   'monitorConfigIndex/metricConfig': {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
-    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'Customize' }
+    childBreadcrumb: { 'zh-CN': '指标列表', 'en-US': 'Metric List' }
   },
   'monitorConfigIndex/groupBoard': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
