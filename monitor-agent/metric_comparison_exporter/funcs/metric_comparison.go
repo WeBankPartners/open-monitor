@@ -98,7 +98,7 @@ func calcMetricComparisonData() {
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  getQueryPrometheusStart(now.Unix(), metricComparison.CalcPeriod),
+			Start:  now.Unix() - int64(metricComparison.CalcPeriod),
 			End:    now.Unix(),
 			PromQl: metricComparison.OriginPromExpr,
 		}); err != nil {
@@ -116,7 +116,7 @@ func calcMetricComparisonData() {
 		}
 		// 查询对比历史数据
 		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  getQueryPrometheusStart(historyEnd, metricComparison.CalcPeriod),
+			Start:  historyEnd - int64(metricComparison.CalcPeriod),
 			End:    historyEnd,
 			PromQl: metricComparison.OriginPromExpr,
 		}); err != nil {
@@ -124,7 +124,11 @@ func calcMetricComparisonData() {
 			return
 		}
 		switch metricComparison.CalcMethod {
+		case "avg":
 
+		case "sum":
+		case "max":
+		case "min":
 		}
 		fmt.Println(len(curResultList))
 		fmt.Println(len(historyResultList))
@@ -173,21 +177,4 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		}
 	}
 	return
-}
-
-func getQueryPrometheusStart(timestamp int64, calcPeriod string) int64 {
-	var start int64
-	switch calcPeriod {
-	case "1m":
-		start = timestamp - 60
-	case "5m":
-		start = timestamp - 300
-	case "10m":
-		start = timestamp - 600
-	case "1h":
-		start = timestamp - 3600
-	default:
-		start = timestamp
-	}
-	return start
 }
