@@ -197,7 +197,7 @@ func QueryMetricTagValue(c *gin.Context) {
 
 // AddComparisonMetric 添加同环比监控配置
 func AddComparisonMetric(c *gin.Context) {
-	var param models.MetricComparisonDto
+	var param models.MetricComparisonParam
 	var metric *models.MetricTable
 	var err error
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -208,7 +208,7 @@ func AddComparisonMetric(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "metricId")
 		return
 	}
-	if strings.TrimSpace(param.ComparisonType) == "" || strings.TrimSpace(param.CalcType) == "" {
+	if strings.TrimSpace(param.ComparisonType) == "" || len(param.CalcType) == 0 {
 		middleware.ReturnParamEmptyError(c, "comparisonType or calcType")
 		return
 	}

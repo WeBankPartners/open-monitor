@@ -390,8 +390,12 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	return
 }
 
-func AddComparisonMetric(param models.MetricComparisonDto, metric *models.MetricTable, operator string) (err error) {
+func AddComparisonMetric(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (err error) {
 	var actions []*Action
+	var calcType string
+	if len(param.CalcType) > 0 {
+		calcType = strings.Join(param.CalcType, ",")
+	}
 	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	if metric.ServiceGroup == "" {
@@ -402,7 +406,7 @@ func AddComparisonMetric(param models.MetricComparisonDto, metric *models.Metric
 			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
-		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, param.CalcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
+		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
 	return Transaction(actions)
 }
 
@@ -411,9 +415,9 @@ func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error
 	return
 }
 
-func getComparisonMetricId(originMetricId, comparisonType, calcMethod, calcPeriod string) string {
+func getComparisonMetricId(originMetricId, comparisonType, calcMethod string, calcPeriod int) string {
 	if comparisonType == "" {
 		return ""
 	}
-	return originMetricId + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + calcPeriod
+	return originMetricId + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
 }
