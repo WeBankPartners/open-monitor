@@ -680,7 +680,11 @@
   "m_difference": "差值",
   "m_percentage_difference": "差值百分比",
   "m_average": "平均",
-  "m_sum": "求和"
-  
+  "m_sum": "求和",
+  "m_max": "最大值",
+  "m_min": "最小值",
+  "m_metric_list": "指标列表",
+  "m_basic_type": "基础类型",
+  "m_configuration_page": "配置页面"
 }
 
