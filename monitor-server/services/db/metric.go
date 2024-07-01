@@ -425,7 +425,7 @@ func UpdateComparisonMetric(metricComparisonId string, calcTypeList []string) (e
 	if len(calcTypeList) > 0 {
 		calcType = strings.Join(calcTypeList, ",")
 	}
-	_, err = x.Exec("update metric_comparison set comparison_type=? where guid = ?", calcType, metricComparisonId)
+	_, err = x.Exec("update metric_comparison set calc_type=? where guid = ?", calcType, metricComparisonId)
 	return
 }
 
