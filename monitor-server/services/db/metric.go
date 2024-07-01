@@ -224,7 +224,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			params = []interface{}{endpointGroup}
 		} else if endpoint != "" {
 			baseSql = "select * from ("
-			baseSql = "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
+			baseSql = baseSql + "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
