@@ -206,17 +206,17 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup s
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select * from metric m where monitor_type=? and service_group=? and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
+				baseSql = "select * from metric m where monitor_type=? and service_group=? and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
+				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else if endpointGroup != "" {
-			baseSql = "select * from metric m where service_group is null and endpoint_group = ? and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
+			baseSql = "select * from metric m where service_group is null and endpoint_group = ? and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 			params = []interface{}{endpointGroup}
 		} else {
-			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null and not exists (select guid from metric_comparison mc where mc.origin_metric_id = m.guid)"
+			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 			params = []interface{}{monitorType}
 		}
 	}
