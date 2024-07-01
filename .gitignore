@@ -27,6 +27,7 @@ monitor-agent/archive_mysql_tool/archive_mysql_tool
 monitor-agent/transgateway/transgateway
 monitor-agent/db_data_exporter/db_data_exporter
 monitor-agent/daemon_proc/daemon_proc
+monitor-agent/metric_comparison_exporter/metric_comparison_exporter
 
 #tmp
 monitor-ui/.history/*
