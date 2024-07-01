@@ -22,7 +22,8 @@ func ListMetric(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	onlyService := c.Query("onlyService")
 	endpointGroup := c.Query("endpointGroup")
-	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup)
+	endpoint := c.Query("endpoint")
+	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -34,7 +35,8 @@ func ListMetricComparison(c *gin.Context) {
 	monitorType := c.Query("monitorType")
 	serviceGroup := c.Query("serviceGroup")
 	onlyService := c.Query("onlyService")
-	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService)
+	endpointGroup := c.Query("endpointGroup")
+	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -56,7 +58,7 @@ func ExportMetric(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	monitorType := c.Query("monitorType")
 	endpointGroup := c.Query("endpointGroup")
-	result, err := db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup)
+	result, err := db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
