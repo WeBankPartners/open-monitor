@@ -109,8 +109,9 @@ func MetricDelete(id string) error {
 	metric := metricQuery[0].Metric
 	var actions []*Action
 	// 删除同环比 指标
-	actions = append(actions, &Action{Sql: "delete from metric where guid in (select metric_id from metric_comparison where origin_metric_id = ?)", Param: []interface{}{id}})
+	actions = append(actions, &Action{Sql: "delete from metric_comparison where  metric_id = ?", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric_comparison where  origin_metric_id = ?", Param: []interface{}{id}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid in (select metric_id from metric_comparison where origin_metric_id = ?)", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{id}})
 	var charts []*models.ChartTable
 	err = x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", metricQuery[0].MetricType).Find(&charts)
@@ -152,17 +153,17 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
+				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
+				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else if endpointGroup != "" {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
 			params = []interface{}{endpointGroup}
 		} else {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
 			params = []interface{}{monitorType}
 		}
 	}
@@ -224,7 +225,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			params = []interface{}{endpointGroup}
 		} else if endpoint != "" {
 			baseSql = "select * from ("
-			baseSql = "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
+			baseSql = baseSql + "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
@@ -437,8 +438,13 @@ func AddComparisonMetric(param models.MetricComparisonParam, metric *models.Metr
 	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	if metric.ServiceGroup == "" {
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+		if metric.EndpointGroup == "" {
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+		} else {
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+		}
 	} else {
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
