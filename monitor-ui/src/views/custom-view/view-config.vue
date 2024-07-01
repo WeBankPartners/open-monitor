@@ -1072,6 +1072,13 @@ export default {
   }
 }
 
+.chart-option-menu {
+  .ivu-dropdown-menu {
+    max-height: 600px;
+    overflow: scroll;
+  }
+}
+
 .references-button {
   background-color: #edf4fe;
   border-color: #b5d0fb;
@@ -1231,5 +1238,9 @@ export default {
     white-space: nowrap;
     display: inline-block;
     vertical-align: bottom;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
   }
 </style>
