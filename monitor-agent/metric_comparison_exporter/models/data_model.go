@@ -2,6 +2,12 @@ package models
 
 import "fmt"
 
+type MetricComparisonRes struct {
+	MetricMap map[string]string
+	Name      string
+	Value     string
+}
+
 type MetricComparisonDto struct {
 	Guid           string `json:"guid"`
 	Metric         string `json:"metric"`         // 原始指标名称
