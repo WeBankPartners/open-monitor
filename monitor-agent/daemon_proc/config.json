@@ -51,7 +51,7 @@
   "localBin": true,
   "withBash": false
 },{
-  "name": "metric_comparison_exporter",
+  "name": "metric_comparison",
   "args": [],
   "maxTry": 10,
   "workDir": "/app/monitor/metric_comparison_exporter",
