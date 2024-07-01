@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
@@ -9,8 +10,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,6 +21,7 @@ import (
 var (
 	metricComparisonHttpLock   = new(sync.RWMutex)
 	metricComparisonResultLock = new(sync.RWMutex)
+	metricComparisonRes        []*models.MetricComparisonRes
 	metricComparisonList       []*models.MetricComparisonDto
 )
 
@@ -27,7 +31,27 @@ const (
 
 // HandlePrometheus 封装数据给Prometheus采集
 func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
-	w.Write(nil)
+	var buff bytes.Buffer
+	var i int
+	buff.WriteString("# HELP metric comparison. \n")
+	metricComparisonResultLock.RLock()
+	for _, v := range metricComparisonRes {
+		buff.WriteString(fmt.Sprintf("%s{", v.Name))
+		if len(v.MetricMap) > 0 {
+			i = 0
+			for key, value := range v.MetricMap {
+				if i < len(v.MetricMap)-1 {
+					buff.WriteString(fmt.Sprintf("%s=\"%s\",", key, value))
+				} else {
+					buff.WriteString(fmt.Sprintf("%s=\"%s\"}", key, value))
+				}
+				i++
+			}
+		}
+		//buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", v.Name,
+	}
+	metricComparisonResultLock.RUnlock()
+	w.Write(buff.Bytes())
 }
 
 func StartCalcMetricComparisonCron() {
@@ -100,7 +124,7 @@ func calcMetricComparisonData() {
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
 			Start:  now.Unix() - int64(metricComparison.CalcPeriod),
 			End:    now.Unix(),
-			PromQl: metricComparison.OriginPromExpr,
+			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
 			return
@@ -118,20 +142,31 @@ func calcMetricComparisonData() {
 		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
 			Start:  historyEnd - int64(metricComparison.CalcPeriod),
 			End:    historyEnd,
-			PromQl: metricComparison.OriginPromExpr,
+			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
 			return
 		}
-		switch metricComparison.CalcMethod {
-		case "avg":
-
-		case "sum":
-		case "max":
-		case "min":
+		if len(curResultList) == 0 || len(historyResultList) == 0 {
+			log.Printf("prometheus query data empty")
+			return
 		}
-		fmt.Println(len(curResultList))
-		fmt.Println(len(historyResultList))
+		/*	for _, data := range curResultList {
+			for _, historyData := range historyResultList {
+				if data.Metric == historyData.Metric {
+					switch metricComparison.CalcMethod {
+					case "avg":
+					case "sum":
+					case "max":
+					case "min":
+					}
+				}
+			}
+		}*/
+		// 写数据
+		metricComparisonResultLock.Lock()
+		metricComparisonRes = []*models.MetricComparisonRes{}
+		metricComparisonResultLock.Unlock()
 	}
 }
 
@@ -177,4 +212,15 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		}
 	}
 	return
+}
+
+func parsePromQL(promQl string) string {
+	if strings.Contains(promQl, "$") {
+		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+		fetchTag := re.FindAll([]byte(promQl), -1)
+		for _, vv := range fetchTag {
+			promQl = strings.Replace(promQl, string(vv), "=~\".*\"", -1)
+		}
+	}
+	return promQl
 }
