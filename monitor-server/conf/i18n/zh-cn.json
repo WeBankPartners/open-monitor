@@ -19,6 +19,7 @@
   "strategy_name_import_duplicate_error": "导入失败，名称: %s 重复",
   "log_group_name_duplicate_error": "配置名%s重复，请修改配置名后重新提交",
   "log_group_name_illegal_error": "配置名%s不合法，请修改配置名后重新提交",
-  "dashboard_name_repeat_error": "保存失败:同名看板已存在"
-  "dashboard_id_exist_error": "导入失败:看板ID已存在"
+  "dashboard_name_repeat_error": "保存失败:同名看板已存在",
+  "dashboard_id_exist_error": "导入失败:看板ID已存在",
+  "import_dashboard_name_exist_error": "导入失败,看板名称: %s 已存在"
 }
