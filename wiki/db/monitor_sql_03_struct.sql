@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS `metric_comparison` (
     `comparison_type` varchar(64) default null COMMENT '对比类型: diff 差值,diff_percent 差值百分比',
     `calc_type` varchar(64) default null COMMENT '计算数值: diff 差值,diff_percent 差值百分比',
     `calc_method` varchar(64) default null COMMENT '计算方法: avg平均,sum求和',
-    `calc_period` varchar(64) default null COMMENT '计算周期',
+    `calc_period` int(11) default 0 COMMENT '计算周期',
     `metric_id` varchar(128) default null COMMENT '指标id',
     `origin_metric_id` varchar(128) default null COMMENT '原始指标id',
     `create_user` varchar(64)  default null COMMENT '创建人',
