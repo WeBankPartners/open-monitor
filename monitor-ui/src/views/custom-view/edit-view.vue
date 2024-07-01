@@ -638,7 +638,8 @@ export default {
       chartPublic: false,
       chartAddTagOptions: {},
       chartAddTags: [],
-      getEndpointSearch: ''
+      getEndpointSearch: '',
+      selectedEndpointOptionItem: {}
     }
   },
   computed: {
@@ -819,6 +820,16 @@ export default {
         }
         this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
             this.endpointOptions = res;
+            let tempItem
+            if (!isEmpty(this.selectedEndpointOptionItem) && this.selectedEndpointOptionItem.option_value) {
+              tempItem = find(res, {
+                option_value: this.selectedEndpointOptionItem.option_value
+              })
+              if (!tempItem) {
+                this.endpointOptions = [this.selectedEndpointOptionItem, ...res]
+              }
+              this.selectedEndpointOptionItem = {}
+            }
             resolve(res)
           }
         )
@@ -855,6 +866,9 @@ export default {
 
     },
     searchTypeByEndpoint(value) {
+      this.selectedEndpointOptionItem = find(cloneDeep(this.endpointOptions), {
+        option_value: value
+      })
       setTimeout(() => {
         this.getEndpointSearch = ''; 
         this.debounceGetEndpointList()
