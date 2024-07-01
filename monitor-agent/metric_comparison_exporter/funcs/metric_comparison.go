@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
@@ -9,8 +10,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,6 +21,7 @@ import (
 var (
 	metricComparisonHttpLock   = new(sync.RWMutex)
 	metricComparisonResultLock = new(sync.RWMutex)
+	metricComparisonRes        []*models.MetricComparisonRes
 	metricComparisonList       []*models.MetricComparisonDto
 )
 
@@ -27,7 +31,27 @@ const (
 
 // HandlePrometheus 封装数据给Prometheus采集
 func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
-	w.Write(nil)
+	var buff bytes.Buffer
+	var i int
+	buff.WriteString("# HELP metric comparison. \n")
+	metricComparisonResultLock.RLock()
+	for _, v := range metricComparisonRes {
+		buff.WriteString(fmt.Sprintf("%s{", v.Name))
+		if len(v.MetricMap) > 0 {
+			i = 0
+			for key, value := range v.MetricMap {
+				if i < len(v.MetricMap)-1 {
+					buff.WriteString(fmt.Sprintf("%s=\"%s\",", key, value))
+				} else {
+					buff.WriteString(fmt.Sprintf("%s=\"%s\"}", key, value))
+				}
+				i++
+			}
+		}
+		//buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", v.Name,
+	}
+	metricComparisonResultLock.RUnlock()
+	w.Write(buff.Bytes())
 }
 
 func StartCalcMetricComparisonCron() {
@@ -61,9 +85,11 @@ func ReceiveMetricComparisonData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = json.Unmarshal(requestParamBuff, &metricComparisonList); err != nil {
+		log.Printf("json Unmarshal err:%+v", err)
 		return
 	}
 	if err = MetricComparisonSaveConfig(requestParamBuff); err != nil {
+		log.Printf("metricComparison config err:%+v", err)
 		return
 	}
 }
@@ -75,9 +101,7 @@ func MetricComparisonSaveConfig(requestParamBuff []byte) (err error) {
 
 func LoadMetricComparisonConfig() {
 	if requestParamBuff, err := ioutil.ReadFile(metricComparisonFilePath); err == nil {
-		if err2 := json.Unmarshal(requestParamBuff, &metricComparisonList); err2 != nil {
-			log.Printf("json Unmarshal err:%+v", err2)
-		}
+		json.Unmarshal(requestParamBuff, &metricComparisonList)
 	} else {
 		log.Printf("read metric_comparison_cache.json err:%+v", err)
 	}
@@ -86,6 +110,7 @@ func LoadMetricComparisonConfig() {
 func calcMetricComparisonData() {
 	var curResultList, historyResultList []*models.PrometheusQueryObj
 	var err error
+	var historyEnd int64
 	metricComparisonHttpLock.RLock()
 	defer metricComparisonHttpLock.RUnlock()
 	if len(metricComparisonList) == 0 {
@@ -93,25 +118,55 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
+		now := time.Now()
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  getQueryPrometheusStart(time.Now().Unix(), metricComparison.CalcPeriod),
-			End:    time.Now().Unix(),
-			PromQl: metricComparison.OriginPromExpr,
+			Start:  now.Unix() - int64(metricComparison.CalcPeriod),
+			End:    now.Unix(),
+			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
 			return
 		}
 		// 根据数据计算 同环比
 		switch metricComparison.ComparisonType {
-
+		case "day":
+			historyEnd = now.Unix() - 86400
+		case "week":
+			historyEnd = now.Unix() - 86400*7
+		case "month":
+			historyEnd = now.AddDate(0, -1, 0).Unix()
 		}
-		switch metricComparison.CalcMethod {
-
+		// 查询对比历史数据
+		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
+			Start:  historyEnd - int64(metricComparison.CalcPeriod),
+			End:    historyEnd,
+			PromQl: parsePromQL(metricComparison.OriginPromExpr),
+		}); err != nil {
+			log.Printf("prometheus query_range err:%+v", err)
+			return
 		}
-		fmt.Println(len(curResultList))
-		fmt.Println(len(historyResultList))
+		if len(curResultList) == 0 || len(historyResultList) == 0 {
+			log.Printf("prometheus query data empty")
+			return
+		}
+		/*	for _, data := range curResultList {
+			for _, historyData := range historyResultList {
+				if data.Metric == historyData.Metric {
+					switch metricComparison.CalcMethod {
+					case "avg":
+					case "sum":
+					case "max":
+					case "min":
+					}
+				}
+			}
+		}*/
+		// 写数据
+		metricComparisonResultLock.Lock()
+		metricComparisonRes = []*models.MetricComparisonRes{}
+		metricComparisonResultLock.Unlock()
 	}
 }
 
@@ -120,10 +175,11 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 	var resByteArr []byte
 	resultList = []*models.PrometheusQueryObj{}
 	requestUrl, _ := url.Parse("http://127.0.0.1:9090/api/v1/query_range")
+	//requestUrl, _ := url.Parse("http://106.52.160.142:9090/api/v1/query_range")
 	urlParams := url.Values{}
 	urlParams.Set("start", fmt.Sprintf("%d", param.Start))
 	urlParams.Set("end", fmt.Sprintf("%d", param.End))
-	urlParams.Set("step", fmt.Sprintf("%d", 10))
+	urlParams.Set("step", "10")
 	urlParams.Set("query", param.PromQl)
 	requestUrl.RawQuery = urlParams.Encode()
 	if resByteArr, err = rpc.HttpGet(requestUrl.String()); err != nil {
@@ -133,6 +189,7 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		return
 	}
 	if result.Status != "success" {
+		log.Printf("param:%s,%+v\n", requestUrl.String(), string(resByteArr))
 		err = fmt.Errorf("prometheus response status=%s \n", result.Status)
 		return
 	}
@@ -154,21 +211,16 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 			resultList = append(resultList, &tmpResultObj)
 		}
 	}
-
 	return
 }
 
-func getQueryPrometheusStart(timestamp int64, calcPeriod string) int64 {
-	var start int64
-	switch calcPeriod {
-	case "1min":
-		start = timestamp - 60
-	case "5min":
-		start = timestamp - 300
-	case "10min":
-		start = timestamp - 600
-	case "1h":
-		start = timestamp - 3600
+func parsePromQL(promQl string) string {
+	if strings.Contains(promQl, "$") {
+		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+		fetchTag := re.FindAll([]byte(promQl), -1)
+		for _, vv := range fetchTag {
+			promQl = strings.Replace(promQl, string(vv), "=~\".*\"", -1)
+		}
 	}
-	return start
+	return promQl
 }
