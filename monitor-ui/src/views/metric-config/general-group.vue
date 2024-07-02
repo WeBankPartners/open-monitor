@@ -92,9 +92,9 @@ export default {
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
-          title: this.$t('m_configuration_page'), // 类型
+          title: this.$t('m_configuration_page'), // 配置页面
           key: 'metric_type',
-          width: 160,
+          width: 140,
           render: (h, params) => {
             const typeList = [
               { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
@@ -122,7 +122,7 @@ export default {
         {
           title: this.$t('m_comparison_types'), // 对比类型
           key: 'comparisonType',
-          width: 160,
+          width: 100,
           render: (h, params) => {
             const comparisonTypeToDisplay = {
               'day': this.$t('m_dod_comparison'),
@@ -137,6 +137,7 @@ export default {
         {
           title: this.$t('m_calc_value'), // 计算数值
           key: 'calcType',
+          width: 160,
           render: (h, params) => {
             const calcTypeToDisplay = {
               'diff': this.$t('m_difference'),
@@ -150,7 +151,7 @@ export default {
         {
           title: this.$t('m_calc_method'), // 计算方法
           key: 'calcMethod',
-          width: 160,
+          width: 100,
           render: (h, params) => {
             const calcMethodToDisplay = {
               'avg': this.$t('m_average'),
@@ -166,7 +167,7 @@ export default {
         {
           title: this.$t('m_calculation_period'), // 计算周期
           key: 'calcPeriod',
-          width: 160,
+          width: 100,
           render: (h, params) => {
             return <span>{params.row.calcPeriod || '-'}S</span>
           },
