@@ -387,6 +387,18 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	return
 }
 
+func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param models.ComparisonChartQueryParam) (result *models.EChartOption, err error) {
+	result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	for _, query := range queryList {
+		if query.Cluster != "" && query.Cluster != "default" {
+			query.Cluster = db.GetClusterAddress(query.Cluster)
+		}
+		//tmpSerials := ds.PrometheusData(query)
+
+	}
+	return
+}
+
 func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
 	serials := []*models.SerialModel{}
 	var err error
@@ -505,7 +517,7 @@ func GetComparisonChartData(c *gin.Context) {
 	var err error
 	var metric *models.MetricTable
 	var queryList []*models.QueryMonitorData
-	var result = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	var result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -545,13 +557,15 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 		return
 	}
-	/*if err = GetChartQueryData(queryList, &param, &result); err != nil {
+	/*if result, err = GetChartComparisonQueryData(queryList, param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}*/
 	result.Title = "10001"
 	result.Xaxis = make(map[string]interface{})
-	result.Legend = []string{"240612_req_count:log_sys{code=addUser}", "240612_req_count:log_sys{code=deleteUser}", "240612_req_count:log_sys{code=login}"}
+	result.Legend = []string{"240612_req_count:log_sys{code=addUser}", "240612_req_count:log_sys{code=deleteUser}", "240612_req_count:log_sys{code=login}",
+		"240612_req_count:log_sys{code=addUser}-comparison-percent", "240612_req_count:log_sys{code=deleteUser}-comparison-percent", "240612_req_count:log_sys{code=login}-comparison-percent",
+	}
 	result.Series = append(result.Series, &models.SerialModel{
 		Type: "line",
 		Name: "240612_req_count:log_sys{code=addUser}",
@@ -607,7 +621,7 @@ func GetComparisonChartData(c *gin.Context) {
 	})
 	result.Series = append(result.Series, &models.SerialModel{
 		Type:       "bar",
-		Name:       "240612_req_count:log_sys{code=addUser}-comparison-percent",
+		Name:       "240612_req_count:log_sys{code=deleteUser}-comparison-percent",
 		YAxisIndex: 1,
 		Data: [][]float64{
 			{1719905721000, 0.67},
