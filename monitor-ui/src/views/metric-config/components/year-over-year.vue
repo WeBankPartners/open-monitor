@@ -15,7 +15,7 @@
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
           <!--原始指标-->
-          <FormItem :label="$t('m_original_metric')">
+          <FormItem :label="$t('m_original_metric')" required>
             <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit'" :transfer="true" @on-change="getMetricType">
               <Option v-for="item in metricList" :value="item.guid" :key="item.guid">{{ item.metric }}</Option>
             </Select>
@@ -25,7 +25,7 @@
             <Tag size="medium" type="border" :color=metricTypeConfig.color>{{metricTypeConfig.label || '-'}}</Tag>
           </FormItem>
           <!-- 对比类型 -->
-          <FormItem :label="$t('m_comparison_types')">
+          <FormItem :label="$t('m_comparison_types')" required>
             <RadioGroup v-model="metricConfigData.comparisonType">
               <Radio label="day" :disabled="operator === 'edit'">
                 <span>{{ $t('m_dod_comparison') }}</span>
@@ -39,7 +39,7 @@
             </RadioGroup>
           </FormItem>
           <!-- 计算数值 -->
-          <FormItem :label="$t('m_calc_value')">
+          <FormItem :label="$t('m_calc_value')" required>
             <CheckboxGroup v-model="metricConfigData.calcType">
               <Checkbox label="diff">
                 <span>{{ $t('m_difference') }}</span>
@@ -50,13 +50,13 @@
             </CheckboxGroup>
           </FormItem>
           <!--计算方法-->
-          <FormItem :label="$t('m_calc_method')">
+          <FormItem :label="$t('m_calc_method')" required>
             <Select filterable v-model="metricConfigData.calcMethod" :disabled="operator === 'edit'" :transfer="true">
               <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
           <!--计算周期-->
-          <FormItem :label="$t('m_calculation_period')">
+          <FormItem :label="$t('m_calculation_period')" required>
             <Select 
               filterable
               :disabled="operator === 'edit'"
@@ -82,7 +82,7 @@
       </div>
       <div class="drawer-footer">
         <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
-        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
+        <Button type="primary" class="primary" :disabled="metricConfigData.metricId===''||metricConfigData.calcType.length===0" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
