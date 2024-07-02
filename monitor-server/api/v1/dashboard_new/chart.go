@@ -418,12 +418,12 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 			for i, model := range tmpSerials2 {
 				serialModel := &models.SerialModel{
 					Type: model.Type,
-					Name: model.Name + "_diff_comparison",
+					Name: getNewName(model.Name, "diff"),
 					Data: make([][]float64, len(model.Data)),
 				}
 				serialModel2 := &models.SerialModel{
 					Type: model.Type,
-					Name: model.Name + "_diff_percent_comparison",
+					Name: getNewName(model.Name, "diff_percent"),
 					Data: make([][]float64, len(model.Data)),
 				}
 				if i < len(tmpSerials) && len(model.Data) > 0 && len(tmpSerials[i].Data) > 0 {
@@ -478,6 +478,19 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 	result.Xaxis = make(map[string]interface{})
 	result.Yaxis = models.YaxisModel{Unit: ""}
 	return
+}
+
+func getNewName(name, calcType string) string {
+	var newName string
+	if strings.TrimSpace(name) != "" {
+		start2 := strings.Index(name, "}")
+		if start2 == -1 {
+			newName = name + fmt.Sprintf("{calc_type=%s}", calcType)
+		} else {
+			newName = name[0:start2-1] + fmt.Sprintf(",calc_type=%s}", calcType)
+		}
+	}
+	return newName
 }
 
 func convertArray2Map(arr []string) map[string]bool {
