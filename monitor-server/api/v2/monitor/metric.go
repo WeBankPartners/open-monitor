@@ -56,13 +56,24 @@ func GetSysMetricTemplate(c *gin.Context) {
 }
 
 func ExportMetric(c *gin.Context) {
+	var err error
+	var result interface{}
 	serviceGroup := c.Query("serviceGroup")
 	monitorType := c.Query("monitorType")
 	endpointGroup := c.Query("endpointGroup")
-	result, err := db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
-	if err != nil {
-		middleware.ReturnHandleError(c, err.Error(), err)
-		return
+	comparison := c.Query("comparison")
+	if comparison == "Y" {
+		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	} else {
+		result, err = db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
 	}
 	b, marshalErr := json.Marshal(result)
 	if marshalErr != nil {
@@ -84,7 +95,8 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnHandleError(c, "file open error ", err)
 		return
 	}
-	var paramObj, newParamObj []*models.MetricTable
+	var paramObj, newParamObj []*models.MetricComparisonExtend
+	var comparison bool
 	var metricMap = make(map[string]bool)
 	var result = &models.MetricImportResultDto{
 		SuccessList: []string{},
@@ -109,11 +121,11 @@ func ImportMetric(c *gin.Context) {
 	}
 	serviceGroup := c.Query("serviceGroup")
 	endPointGroup := c.Query("endpointGroup")
-	if serviceGroup == "" || endPointGroup == "" {
+	if serviceGroup == "" && endPointGroup == "" {
 		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup can not empty")
 		return
 	}
-	for _, obj := range paramObj {
+	for i, obj := range paramObj {
 		if !metricMap[obj.Metric] {
 			metricMap[obj.Metric] = true
 			newParamObj = append(newParamObj, obj)
@@ -121,11 +133,28 @@ func ImportMetric(c *gin.Context) {
 		} else {
 			result.FailList = append(result.FailList, obj.Metric)
 		}
+		if i == 0 && strings.TrimSpace(obj.MetricId) != "" {
+			comparison = true
+		}
 	}
-	if subFaiList, err = db.MetricImport(serviceGroup, endPointGroup, middleware.GetOperateUser(c), newParamObj); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
+	if comparison {
+		// 走同环比导入逻辑
+		if subFaiList, err = db.MetricComparisonImport(middleware.GetOperateUser(c), newParamObj); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		if err = syncMetricComparisonData(); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+	} else {
+		// 走原始指标的导入逻辑
+		if subFaiList, err = db.MetricImport(serviceGroup, endPointGroup, middleware.GetOperateUser(c), ConvertMetricComparison2MetricList(newParamObj)); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
 	}
+
 	if len(subFaiList) > 0 {
 		result.FailList = append(result.FailList, subFaiList...)
 	}
@@ -303,4 +332,34 @@ func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
 	byteArr, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return
+}
+
+func ConvertMetricComparison2MetricList(metricComparisonList []*models.MetricComparisonExtend) []*models.MetricTable {
+	var list []*models.MetricTable
+	if len(metricComparisonList) > 0 {
+		for _, metricComparison := range metricComparisonList {
+			list = append(list, &models.MetricTable{
+				Guid:               metricComparison.Guid,
+				Metric:             metricComparison.MetricId,
+				MonitorType:        metricComparison.MonitorType,
+				PromExpr:           metricComparison.PromExpr,
+				TagOwner:           metricComparison.TagOwner,
+				ServiceGroup:       metricComparison.ServiceGroup,
+				Workspace:          metricComparison.Workspace,
+				CreateTime:         metricComparison.CreateTime,
+				UpdateTime:         metricComparison.UpdateTime,
+				CreateUser:         metricComparison.CreateUser,
+				UpdateUser:         metricComparison.UpdateUser,
+				LogMetricConfig:    metricComparison.LogMetricConfig,
+				LogMetricTemplate:  metricComparison.LogMetricTemplate,
+				LogMetricGroup:     metricComparison.LogMetricGroup,
+				EndpointGroup:      metricComparison.EndpointGroup,
+				MetricType:         metricComparison.MetricType,
+				LogMetricGroupName: metricComparison.LogMetricGroupName,
+				GroupType:          metricComparison.GroupType,
+				GroupName:          metricComparison.GroupName,
+			})
+		}
+	}
+	return list
 }
