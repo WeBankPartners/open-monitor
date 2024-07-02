@@ -163,7 +163,8 @@ export default {
         type: '',
         id: '',
         title: '',
-      }
+      },
+      originalMetricsId: ''
     }
   },
   mounted() {
