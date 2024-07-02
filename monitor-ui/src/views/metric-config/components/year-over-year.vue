@@ -26,7 +26,7 @@
           </FormItem>
           <!-- 对比类型 -->
           <FormItem :label="$t('m_comparison_types')" required>
-            <RadioGroup v-model="metricConfigData.comparisonType">
+            <RadioGroup v-model="metricConfigData.comparisonType" @on-change="getChartData">
               <Radio label="day" :disabled="operator === 'edit'">
                 <span>{{ $t('m_dod_comparison') }}</span>
               </Radio>
@@ -40,7 +40,7 @@
           </FormItem>
           <!-- 计算数值 -->
           <FormItem :label="$t('m_calc_value')" required>
-            <CheckboxGroup v-model="metricConfigData.calcType">
+            <CheckboxGroup v-model="metricConfigData.calcType" @on-change="getChartData">
               <Checkbox label="diff">
                 <span>{{ $t('m_difference') }}</span>
               </Checkbox>
@@ -51,7 +51,7 @@
           </FormItem>
           <!--计算方法-->
           <FormItem :label="$t('m_calc_method')" required>
-            <Select filterable v-model="metricConfigData.calcMethod" :disabled="operator === 'edit'" :transfer="true">
+            <Select filterable v-model="metricConfigData.calcMethod" @on-change="getChartData" :disabled="operator === 'edit'" :transfer="true">
               <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
@@ -60,6 +60,7 @@
             <Select 
               filterable
               :disabled="operator === 'edit'"
+              @on-change="getChartData"
               v-model="metricConfigData.calcPeriod">
               <Option 
                 v-for="item in aggStepOptions" 
@@ -71,13 +72,13 @@
             </Select>
           </FormItem>
           <!--预览对象-->
-          <!-- <FormItem :label="$t('m_preview') + $t('m_endpoint')">
-            <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
+          <FormItem :label="$t('m_preview') + $t('m_endpoint')">
+            <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="getChartData">
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
-          </FormItem> -->
+          </FormItem>
           <!--预览区-->
-          <div :id="echartId" class="echart"></div>
+          <div id="echartId" class="echart"></div>
         </Form>
       </div>
       <div class="drawer-footer">
@@ -90,8 +91,8 @@
 
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
-import { readyToDraw } from '@/assets/config/chart-rely'
-
+import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+import * as echarts from 'echarts'
 export default {
   props: {
     visible: {
@@ -129,11 +130,12 @@ export default {
       metricList: [], // 原始指标列表
       metricTypeConfig: {},
       metricConfigData: {
-        metricId: 'cpu.detail.percent2__host', // 原始指标Id
+        metricId: '', // 原始指标Id
         comparisonType: 'day', // 对比类型
         calcType: ['diff'], // 计算数值
         calcMethod: 'avg', // 计算方法
         calcPeriod: 60, // 计算周期
+        endpoint: ''
       },
       endpoint: '',
       endpointOptions: [],
@@ -216,7 +218,9 @@ export default {
     getEndpoint () {
       const params = {
         type: this.monitorType,
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        monitorType: this.monitorType,
+        endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
@@ -238,40 +242,31 @@ export default {
         ]
         this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
       }
-      // this.getChartData()
+      this.getChartData()
     },
     // 渲染echart
     async getChartData () {
-      generateUuid().then((elId)=>{
-        this.echartId = `id_${elId}`
-      })
-      let params = {
-        aggregate: 'none',
-        time_second: -1800,
-        start: 0,
-        end: 0,
-        title: '',
-        unit: '',
-        data: []
+      let {endpoint, metricId, comparisonType, calcType, calcMethod, calcPeriod} = this.metricConfigData
+      if ([undefined, ''].includes(endpoint) || calcType.length === 0 || metricId === '') {
+        var myChart = echarts.init(document.getElementById('echartId'))
+        myChart.clear()
+        return
       }
-      const find = this.endpointOptions.find(e => e.guid === this.metricConfigData.endpoint)
-      params.data = [{
-        endpoint: (find && find.guid) || '',
-        app_object: this.serviceGroup,
-        endpoint_type: this.monitorType,
-        prom_ql: this.metricConfigData.prom_expr,
-        metric: this.metricConfigData.prom_expr === '' ? this.metricConfigData.metric : ''
-      }]
+      let params = {
+        endpoint,
+        metricId,
+        comparisonType,
+        calcType,
+        calcMethod,
+        calcPeriod,
+        timeSecond: -360
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
-        this.$root.apiCenter.metricConfigView.api,
+        '/monitor/api/v1/dashboard/comparison_chart',
         params,
         responseData => {
-          const chartConfig = {
-            eye: false,
-            clear: true
-          }
-          readyToDraw(this, responseData, 1, chartConfig, this.echartId)
+          readyToDraw(this, responseData, 1, {}, 'echartId')
         },
         { isNeedloading: false }
       )
