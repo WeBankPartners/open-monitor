@@ -22,11 +22,13 @@ func GetEndpointTypeList() (result []string, err error) {
 	return
 }
 
-func GetEndpointByType(endpointType, serviceGroup string) (result []*models.EndpointNewTable, err error) {
+func GetEndpointByType(endpointType, serviceGroup, endpointGroup string) (result []*models.EndpointNewTable, err error) {
 	result = []*models.EndpointNewTable{}
 	if serviceGroup != "" {
 		serviceGroupList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", endpointType).Find(&result)
+	} else if endpointGroup != "" {
+		err = x.SQL("select guid from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&result)
 	} else {
 		err = x.SQL("select guid from endpoint_new where monitor_type=?", endpointType).Find(&result)
 	}
