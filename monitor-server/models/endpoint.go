@@ -89,6 +89,7 @@ type MetricComparisonExtend struct {
 	UpdateTime         string   `json:"update_time" xorm:"update_time"`
 	CreateUser         string   `json:"create_user" xorm:"create_user"`
 	UpdateUser         string   `json:"update_user" xorm:"update_user"`
+	EndpointGroup      string   `json:"endpoint_group" xorm:"endpoint_group"`
 	LogMetricConfig    string   `json:"log_metric_config" xorm:"log_metric_config"`
 	LogMetricTemplate  string   `json:"log_metric_template" xorm:"log_metric_template"`
 	LogMetricGroup     string   `json:"log_metric_group" xorm:"log_metric_group"`
@@ -101,4 +102,6 @@ type MetricComparisonExtend struct {
 	CalcMethod         string   `json:"calcMethod" xorm:"calc_method"`                  // 计算方法: avg平均,sum求和
 	CalcPeriod         int      `json:"calcPeriod" xorm:"calc_period"`                  // 计算周期
 	ComparisonType     string   `json:"comparisonType" xorm:"comparison_type"`          // 对比类型: day 日环比, week 周, 月周比 month
+	GroupType          string   `json:"group_type" xorm:"-"`                            // 组类型
+	GroupName          string   `json:"group_name" xorm:"-"`                            // 组名
 }
