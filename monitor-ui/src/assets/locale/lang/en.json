@@ -684,5 +684,7 @@
   "m_min": "Minimum",
   "m_metric_list": "Metric List",
   "m_basic_type": "Basic Type",
-  "m_configuration_page": "Configuration Page"
+  "m_configuration_page": "Configuration Page",
+  "m_group_type": "Group Type",
+  "m_group_name_": "Group Name"
 }
