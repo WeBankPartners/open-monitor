@@ -53,7 +53,7 @@ export default {
         {
           title: this.$t('m_field_metric'), // 指标
           key: 'metric',
-          width: 250,
+          minWidth: 250,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {

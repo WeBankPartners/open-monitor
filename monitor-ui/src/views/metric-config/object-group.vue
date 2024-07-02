@@ -109,7 +109,7 @@ export default {
         {
           title: this.$t('m_field_metric'), // 指标
           key: 'metric',
-          width: 250,
+          minWidth: 250,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
@@ -294,7 +294,7 @@ export default {
   },
   computed: {
     uploadUrl: function() {
-      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}`
+      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
     }
   },
   async mounted () {
@@ -341,7 +341,7 @@ export default {
       )
     },
     exportData () {
-      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}`
+      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
       axios({
         method: 'GET',
         url: api,
