@@ -388,15 +388,107 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 }
 
 func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param models.ComparisonChartQueryParam) (result *models.EChartOption, err error) {
+	var serials []*models.SerialModel
+	var difference int64
 	result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	calcTypeMap := convertArray2Map(param.CalcType)
 	for _, query := range queryList {
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
-		//tmpSerials := ds.PrometheusData(query)
-
+		tmpSerials := ds.PrometheusData(query)
+		if len(tmpSerials) > 0 {
+			serials = append(serials, tmpSerials...)
+		}
+		switch param.ComparisonType {
+		case "day":
+			difference = 86400
+		case "week":
+			difference = 86400 * 7
+		case "month":
+			// 预览数据,一个月当作30d处理
+			difference = 86400 * 30
+		}
+		query.Start = query.Start - difference
+		query.End = query.End - difference
+		tmpSerials2 := ds.PrometheusData(query)
+		var comparisonSerialList []*models.SerialModel
+		// 计算同环比数据
+		if len(tmpSerials2) > 0 && len(tmpSerials) > 0 {
+			for i, model := range tmpSerials2 {
+				serialModel := &models.SerialModel{
+					Type: model.Type,
+					Name: model.Name + "_diff_comparison",
+					Data: make([][]float64, len(model.Data)),
+				}
+				serialModel2 := &models.SerialModel{
+					Type: model.Type,
+					Name: model.Name + "_diff_percent_comparison",
+					Data: make([][]float64, len(model.Data)),
+				}
+				if i < len(tmpSerials) && len(model.Data) > 0 && len(tmpSerials[i].Data) > 0 {
+					for k, arr := range model.Data {
+						if len(arr) == 2 && k < len(tmpSerials[i].Data) && len(tmpSerials[i].Data[k]) == 2 && arr[0]+float64(difference)*1000 == tmpSerials[i].Data[k][0] {
+							if calcTypeMap["diff"] {
+								serialModel.Data[k] = append(serialModel.Data[k], []float64{tmpSerials[i].Data[k][0], arr[1] - tmpSerials[i].Data[k][1]}...)
+							}
+							if calcTypeMap["diff_percent"] {
+								val := float64(0)
+								if tmpSerials[i].Data[k][1] != 0 {
+									val = ((arr[1] - tmpSerials[i].Data[k][1]) * 1.0 / tmpSerials[i].Data[k][1]) * 100
+								}
+								serialModel2.Data[k] = append(serialModel2.Data[k], []float64{tmpSerials[i].Data[k][0], val}...)
+							}
+						}
+					}
+				}
+				if len(serialModel.Data) > 0 {
+					comparisonSerialList = append(comparisonSerialList, serialModel)
+					if len(calcTypeMap) > 1 {
+						comparisonSerialList = append(comparisonSerialList, serialModel2)
+					}
+				}
+			}
+		}
+		if len(comparisonSerialList) > 0 {
+			serials = append(serials, comparisonSerialList...)
+		}
 	}
+	processDisplayMap := make(map[string]string)
+	for i, s := range serials {
+		if strings.Contains(s.Name, "$metric") {
+			queryIndex := i
+			if i >= len(queryList) {
+				queryIndex = len(queryList) - 1
+			}
+			s.Name = strings.Replace(s.Name, "$metric", queryList[queryIndex].Metric[0], -1)
+		}
+		if processName, b := processDisplayMap[s.Name]; b {
+			s.Name = processName
+		}
+		result.Legend = append(result.Legend, s.Name)
+		if result.Title == "${auto}" {
+			result.Title = s.Name[:strings.Index(s.Name, "{")]
+		}
+		_, tmpJsonMarshalErr := json.Marshal(s)
+		if tmpJsonMarshalErr == nil {
+			result.Series = append(result.Series, s)
+		}
+	}
+	result.Xaxis = make(map[string]interface{})
+	result.Yaxis = models.YaxisModel{Unit: ""}
 	return
+}
+
+func convertArray2Map(arr []string) map[string]bool {
+	hashMap := make(map[string]bool)
+	if len(arr) == 0 {
+		return hashMap
+	}
+	for _, s := range arr {
+		hashMap[s] = true
+	}
+	return hashMap
 }
 
 func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
@@ -518,6 +610,7 @@ func GetComparisonChartData(c *gin.Context) {
 	var metric *models.MetricTable
 	var queryList []*models.QueryMonitorData
 	var result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	now := time.Now()
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -534,12 +627,10 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
-	if param.Start == 0 && param.End == 0 && param.TimeSecond < 0 {
-		param.End = time.Now().Unix()
-		param.Start = param.End + param.TimeSecond
-	}
-	param.Step = 10
 	queryParam = &models.ChartQueryParam{
+		Start: now.Unix() + param.TimeSecond,
+		End:   now.Unix(),
+		Step:  10,
 		Data: []*models.ChartQueryConfigObj{{
 			Endpoint:     param.Endpoint,
 			Metric:       metric.Metric,
@@ -557,11 +648,11 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 		return
 	}
-	/*if result, err = GetChartComparisonQueryData(queryList, param); err != nil {
+	if result, err = GetChartComparisonQueryData(queryList, param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
-	}*/
-	result.Title = "10001"
+	}
+	/*result.Title = "10001"
 	result.Xaxis = make(map[string]interface{})
 	result.Legend = []string{"240612_req_count:log_sys{code=addUser}", "240612_req_count:log_sys{code=deleteUser}", "240612_req_count:log_sys{code=login}",
 		"240612_req_count:log_sys{code=addUser}-comparison-percent", "240612_req_count:log_sys{code=deleteUser}-comparison-percent", "240612_req_count:log_sys{code=login}-comparison-percent",
@@ -645,6 +736,6 @@ func GetComparisonChartData(c *gin.Context) {
 			{1719905771000, 0.54},
 			{1719905771000, 0.44},
 		},
-	})
+	})*/
 	middleware.ReturnSuccessData(c, result)
 }
