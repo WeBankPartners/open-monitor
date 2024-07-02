@@ -207,6 +207,18 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		} else {
 			metric.CalcType = []string{}
 		}
+		if endpoint != "" {
+			if strings.TrimSpace(metric.ServiceGroup) != "" {
+				metric.GroupType = "level"
+				metric.GroupName = metric.ServiceGroup
+			} else if strings.TrimSpace(metric.EndpointGroup) != "" {
+				metric.GroupType = "object"
+				metric.GroupName = metric.EndpointGroup
+			} else {
+				metric.GroupType = "system"
+				metric.GroupName = metric.MonitorType
+			}
+		}
 	}
 	return
 }
