@@ -80,6 +80,7 @@
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
+import * as echarts from 'echarts';
 export default {
   props: {
     visible: {
@@ -254,6 +255,10 @@ export default {
     },
     // 选择预览对象
     handleEndPointChange (val) {
+      if (this.echartId) {
+        const myChart = echarts.init(document.getElementById(this.echartId))
+        myChart.clear()
+      }
       if (!val) return
       this.getChartData()
       // if (this.workspace === 'all_object') {
