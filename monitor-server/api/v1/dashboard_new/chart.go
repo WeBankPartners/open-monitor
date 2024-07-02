@@ -497,3 +497,140 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	result.Yaxis = models.YaxisModel{Unit: param.Unit}
 	return err
 }
+
+// GetComparisonChartData 获取同环比预览数据
+func GetComparisonChartData(c *gin.Context) {
+	var param models.ComparisonChartQueryParam
+	var queryParam *models.ChartQueryParam
+	var err error
+	var metric *models.MetricTable
+	var queryList []*models.QueryMonitorData
+	var result = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(param.MetricId) == "" {
+		middleware.ReturnParamEmptyError(c, "metricId")
+		return
+	}
+	if metric, err = db.GetMetric(param.MetricId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if metric == nil {
+		middleware.ReturnValidateError(c, "metricId is invalid")
+		return
+	}
+	if param.Start == 0 && param.End == 0 && param.TimeSecond < 0 {
+		param.End = time.Now().Unix()
+		param.Start = param.End + param.TimeSecond
+	}
+	param.Step = 10
+	queryParam = &models.ChartQueryParam{
+		Data: []*models.ChartQueryConfigObj{{
+			Endpoint:     param.Endpoint,
+			Metric:       metric.Metric,
+			PromQl:       metric.PromExpr,
+			AppObject:    metric.ServiceGroup,
+			EndpointType: metric.MonitorType,
+			MonitorType:  metric.MonitorType,
+		}},
+	}
+	if queryList, err = GetChartConfigByCustom(queryParam); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(queryList) == 0 {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	/*if err = GetChartQueryData(queryList, &param, &result); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}*/
+	result.Title = "10001"
+	result.Xaxis = make(map[string]interface{})
+	result.Legend = []string{"240612_req_count:log_sys{code=addUser}", "240612_req_count:log_sys{code=deleteUser}", "240612_req_count:log_sys{code=login}"}
+	result.Series = append(result.Series, &models.SerialModel{
+		Type: "line",
+		Name: "240612_req_count:log_sys{code=addUser}",
+		Data: [][]float64{
+			{1719905721000, 1},
+			{1719905731000, 5},
+			{1719905741000, 6},
+			{1719905751000, 3},
+			{1719905761000, 2},
+			{1719905771000, 1},
+			{1719905771000, 0},
+		},
+	})
+	result.Series = append(result.Series, &models.SerialModel{
+		Type: "line",
+		Name: "240612_req_count:log_sys{code=deleteUser}",
+		Data: [][]float64{
+			{1719905721000, 1},
+			{1719905731000, 8},
+			{1719905741000, 10},
+			{1719905751000, 6},
+			{1719905761000, 7},
+			{1719905771000, 3},
+			{1719905771000, 4},
+		},
+	})
+	result.Series = append(result.Series, &models.SerialModel{
+		Type: "line",
+		Name: "240612_req_count:log_sys{code=login}",
+		Data: [][]float64{
+			{1719905721000, 2},
+			{1719905731000, 3},
+			{1719905741000, 1},
+			{1719905751000, 5},
+			{1719905761000, 3},
+			{1719905771000, 1},
+			{1719905771000, 8},
+		},
+	})
+	result.Series = append(result.Series, &models.SerialModel{
+		Type:       "bar",
+		Name:       "240612_req_count:log_sys{code=addUser}-comparison-percent",
+		YAxisIndex: 1,
+		Data: [][]float64{
+			{1719905721000, 0.23},
+			{1719905731000, 0.1},
+			{1719905741000, 0.34},
+			{1719905751000, 0.55},
+			{1719905761000, 0.02},
+			{1719905771000, 0.12},
+			{1719905771000, 0.44},
+		},
+	})
+	result.Series = append(result.Series, &models.SerialModel{
+		Type:       "bar",
+		Name:       "240612_req_count:log_sys{code=addUser}-comparison-percent",
+		YAxisIndex: 1,
+		Data: [][]float64{
+			{1719905721000, 0.67},
+			{1719905731000, 0.88},
+			{1719905741000, 0.14},
+			{1719905751000, 0.25},
+			{1719905761000, 0.02},
+			{1719905771000, 0.62},
+			{1719905771000, 0.24},
+		},
+	})
+	result.Series = append(result.Series, &models.SerialModel{
+		Type: "bar",
+		Name: "240612_req_count:log_sys{code=login}-comparison-percent",
+		Data: [][]float64{
+			{1719905721000, 0.77},
+			{1719905731000, 0.56},
+			{1719905741000, 0.23},
+			{1719905751000, 0.72},
+			{1719905761000, 0.11},
+			{1719905771000, 0.54},
+			{1719905771000, 0.44},
+		},
+	})
+	middleware.ReturnSuccessData(c, result)
+}
