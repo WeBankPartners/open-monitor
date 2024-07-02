@@ -58,11 +58,13 @@ func GetSysMetricTemplate(c *gin.Context) {
 func ExportMetric(c *gin.Context) {
 	var err error
 	var result interface{}
+	var fileNamePrefix = "metric_"
 	serviceGroup := c.Query("serviceGroup")
 	monitorType := c.Query("monitorType")
 	endpointGroup := c.Query("endpointGroup")
 	comparison := c.Query("comparison")
 	if comparison == "Y" {
+		fileNamePrefix = "metric_comparison_"
 		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
@@ -80,7 +82,7 @@ func ExportMetric(c *gin.Context) {
 		middleware.ReturnHandleError(c, "export metric fail, json marshal object error", marshalErr)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s_%s.json", "metric_", serviceGroup, time.Now().Format("20060102150405")))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s_%s.json", fileNamePrefix, serviceGroup, time.Now().Format("20060102150405")))
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
