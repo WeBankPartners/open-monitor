@@ -300,6 +300,40 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 	return
 }
 
+// MetricComparisonImport  同环比指标导入
+func MetricComparisonImport(operator string, inputMetrics []*models.MetricComparisonExtend) (failList []string, err error) {
+	failList = []string{}
+	var actions []*Action
+	for _, metric := range inputMetrics {
+		// 1.先查询原始指标是否存在,不存在该指标记录为失败
+		targetMetric := &models.MetricTable{}
+		if _, err = x.SQL("select * from metric where guid =?", metric.MetricId).Get(targetMetric); err != nil {
+			return
+		}
+		if targetMetric == nil || targetMetric.Metric == "" {
+			failList = append(failList, metric.Metric)
+			continue
+		}
+		// 2. 查询同环比指标是否存在
+		guid := ""
+		if _, err = x.SQL("select guid from metric where guid=?", metric.Guid).Get(&guid); err != nil {
+			return
+		}
+		if guid != "" {
+			failList = append(failList, metric.Metric)
+			continue
+		}
+		// 新增同环比
+		if subActions := GetAddComparisonMetricActions(convertMetric2ComparisonParam(metric), targetMetric, operator); len(subActions) > 0 {
+			actions = append(actions, subActions...)
+		}
+	}
+	if len(actions) > 0 {
+		err = Transaction(actions)
+	}
+	return
+}
+
 func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
 	var failList []string
 	var err error
@@ -450,8 +484,8 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	return
 }
 
-func AddComparisonMetric(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (err error) {
-	var actions []*Action
+func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (actions []*Action) {
+	actions = []*Action{}
 	var calcType string
 	if len(param.CalcType) > 0 {
 		calcType = strings.Join(param.CalcType, ",")
@@ -472,6 +506,12 @@ func AddComparisonMetric(param models.MetricComparisonParam, metric *models.Metr
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
+	return
+}
+
+func AddComparisonMetric(param models.MetricComparisonParam, metric *models.MetricTable, operator string) error {
+	var actions []*Action
+	actions = GetAddComparisonMetricActions(param, metric, operator)
 	return Transaction(actions)
 }
 
@@ -501,4 +541,19 @@ func getComparisonMetricId(originMetricId, comparisonType, calcMethod string, ca
 		return ""
 	}
 	return originMetricId + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
+}
+
+func convertMetric2ComparisonParam(comparison *models.MetricComparisonExtend) models.MetricComparisonParam {
+	if comparison == nil {
+		return models.MetricComparisonParam{}
+	}
+	return models.MetricComparisonParam{
+		Metric:         comparison.Metric,
+		MonitorType:    comparison.MonitorType,
+		ComparisonType: comparison.ComparisonType,
+		PromExpr:       comparison.PromExpr,
+		CalcType:       comparison.CalcType,
+		CalcMethod:     comparison.CalcMethod,
+		CalcPeriod:     comparison.CalcPeriod,
+	}
 }
