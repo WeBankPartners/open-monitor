@@ -43,6 +43,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/tags", Method: http.MethodGet, HandlerFunc: dashboard.GetTags},
 		&handlerFuncObj{Url: "/dashboard/search", Method: http.MethodGet, HandlerFunc: dashboard.MainSearch},
 		&handlerFuncObj{Url: "/dashboard/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetChartData},
+		&handlerFuncObj{Url: "/dashboard/comparison_chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetComparisonChartData},
 		&handlerFuncObj{Url: "/dashboard/config/chart/title", Method: http.MethodPost, HandlerFunc: dashboard.UpdateChartsTitle},
 		// 自定义视图
 		&handlerFuncObj{Url: "/dashboard/pie/chart", Method: http.MethodPost, HandlerFunc: dashboard.GetPieChart},
