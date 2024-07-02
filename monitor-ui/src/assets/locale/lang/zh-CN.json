@@ -685,6 +685,8 @@
   "m_min": "最小值",
   "m_metric_list": "指标列表",
   "m_basic_type": "基础类型",
-  "m_configuration_page": "配置页面"
+  "m_configuration_page": "配置页面",
+  "m_group_type": "组类型",
+  "m_group_name_": "组名"
 }
 
