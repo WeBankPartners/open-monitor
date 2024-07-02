@@ -68,7 +68,7 @@ export default {
         {
           title: this.$t('m_configuration_page'), // 配置页面
           key: 'metric_type',
-          width: 150,
+          width: 140,
           render: (h, params) => {
             const typeList = [
               { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
@@ -79,6 +79,46 @@ export default {
             return <Tag color={find.color} type="border" size="medium">{find.label || '-'}</Tag>
           },
           showType: ['originalMetrics', 'comparisonMetrics']
+        },
+        {
+          title: this.$t('m_calc_method'), // 计算方法
+          key: 'calcMethod',
+          width: 100,
+          render: (h, params) => {
+            const calcMethodToDisplay = {
+              'avg': this.$t('m_average'),
+              'min': this.$t('m_min'),
+              'max': this.$t('m_max'),
+              'sum': this.$t('m_sum'),
+              '-': '-'
+            }
+            return <span>{calcMethodToDisplay[params.row.calcMethod || '-']}</span>
+          },
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_group_type'), // 组类型
+          key: 'group_type',
+          width: 80,
+          render: (h, params) => {
+            const groupTypeToDisplay = {
+              'level': this.$t('m_field_resourceLevel'),
+              'object': this.$t('m_object_group'),
+              'system': this.$t('m_basic_group'),
+              '-': '-'
+            }
+            return <span>{groupTypeToDisplay[params.row.group_type || '-']}</span>
+          },
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_group_name_'), // 组名
+          key: 'group_type',
+          width: 80,
+          render: (h, params) => {
+            return <span>{params.row.group_name || '-'}</span>
+          },
+          showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_tableKey_expr'), // 表达式
@@ -111,6 +151,7 @@ export default {
         {
           title: this.$t('m_calc_value'), // 计算数值
           key: 'calcType',
+          width: 160,
           render: (h, params) => {
             const calcTypeToDisplay = {
               'diff': this.$t('m_difference'),
@@ -124,7 +165,7 @@ export default {
         {
           title: this.$t('m_calc_method'), // 计算方法
           key: 'calcMethod',
-          width: 160,
+          width: 100,
           render: (h, params) => {
             const calcMethodToDisplay = {
               'avg': this.$t('m_average'),
@@ -140,7 +181,7 @@ export default {
         {
           title: this.$t('m_calculation_period'), // 计算周期
           key: 'calcPeriod',
-          width: 160,
+          width: 100,
           render: (h, params) => {
             return <span>{params.row.calcPeriod || '-'}S</span>
           },
@@ -163,15 +204,6 @@ export default {
             return <span>{params.row.update_user || '-'}</span>
           },
           showType: ['originalMetrics', 'comparisonMetrics']
-        },
-        {
-          title: this.$t('m_business_configuration'), // 业务配置
-          key: 'log_metric_group_name',
-          width: 200,
-          render: (h, params) => {
-            return <span>{params.row.log_metric_group_name || '-'}</span>
-          },
-          showType: ['originalMetrics']
         }
       ],
       workspaceMap: {
