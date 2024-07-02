@@ -169,7 +169,6 @@ export default {
     await this.getEndpoint()
     await this.getMetricList()
     this.initDrawerHeight()
-    console.log(this.operator)
     if (this.operator === 'edit') {
       this.getConfigData()
     }
@@ -198,10 +197,9 @@ export default {
         endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric_comparison/list', params, responseData => {
-        console.log(responseData)
         if (responseData.length === 1) {
           this.metricConfigData = responseData[0]
-          console.log(123, this.metricConfigData)
+          this.getMetricType(this.metricConfigData.metricId)
         }
       }, {isNeedloading: true})
     },
@@ -232,12 +230,14 @@ export default {
     async getMetricType (val) {
       if (!val) return
       const findOriMetric = this.metricList.find(item => item.guid === val)
-      const typeList = [
-        { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
-        { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-        { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
-      ]
-      this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
+      if (findOriMetric) {
+        const typeList = [
+          { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
+          { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
+          { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
+        ]
+        this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
+      }
       // this.getChartData()
     },
     // 渲染echart
