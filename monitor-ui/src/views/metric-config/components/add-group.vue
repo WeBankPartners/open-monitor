@@ -102,7 +102,11 @@ export default {
     operator: {
       type: String,
       default: 'add'
-    }
+    },
+    endpoint_group:{
+      type: String,
+      default: ''
+    },
   },
   data () {
     return {
@@ -115,6 +119,7 @@ export default {
         guid: null,
         metric: '', // 名称
         monitor_type: '', // 类型
+        endpoint_group: '', // 对象组
         panel_id: null,
         prom_expr: '', // 表达式
         endpoint: '' // 对象
@@ -305,6 +310,8 @@ export default {
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
+      this.metricConfigData.endpoint_group = this.endpoint_group
+      
       this.metricConfigData.service_group = this.serviceGroup
       this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(
