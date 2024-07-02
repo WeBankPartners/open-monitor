@@ -104,9 +104,10 @@ type YaxisModel struct {
 }
 
 type SerialModel struct {
-	Type string      `json:"type"`
-	Name string      `json:"name"`
-	Data [][]float64 `json:"data"`
+	Type       string      `json:"type"`
+	YAxisIndex int         `json:"yAxisIndex"`
+	Name       string      `json:"name"`
+	Data       [][]float64 `json:"data"`
 }
 
 type EChartOption struct {
@@ -547,4 +548,17 @@ type CustomDashboardExportDto struct {
 
 type CustomDashboardImportRes struct {
 	ChartMap map[string][]string
+}
+
+type ComparisonChartQueryParam struct {
+	Endpoint       string   `json:"endpoint"`       // 选择机器
+	MetricId       string   `json:"metricId"`       //指标Id
+	ComparisonType string   `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
+	CalcType       []string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
+	CalcMethod     string   `json:"calcMethod"`     // 计算方法: avg平均,sum求和,max最大,min最小
+	CalcPeriod     int      `json:"calcPeriod"`     // 计算周期,单位s
+	TimeSecond     int64    `json:"timeSecond"`     // 时间范围
+	Start          int64    `json:"start"`
+	End            int64    `json:"end"`
+	Step           int      `json:"-"`
 }
