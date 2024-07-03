@@ -397,9 +397,6 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
 		tmpSerials := ds.PrometheusData(query)
-		if len(tmpSerials) > 0 {
-			serials = append(serials, tmpSerials...)
-		}
 		switch param.ComparisonType {
 		case "day":
 			difference = 86400
