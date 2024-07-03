@@ -304,7 +304,7 @@ export default {
       this.deleteVisible = true
     },
     submitDelete () {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.metricId}`
+      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'DELETE',
         api,
