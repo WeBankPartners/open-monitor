@@ -33,7 +33,6 @@ const (
 func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 	var buff bytes.Buffer
 	var i int
-	buff.WriteString("# HELP metric comparison. \n")
 	metricComparisonResultLock.RLock()
 	for _, v := range metricComparisonRes {
 		buff.WriteString(fmt.Sprintf("%s{", v.Name))
@@ -43,14 +42,14 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 				if i < len(v.MetricMap)-1 {
 					buff.WriteString(fmt.Sprintf("%s=\"%s\",", key, value))
 				} else {
-					buff.WriteString(fmt.Sprintf("%s=\"%s\"}", key, value))
+					buff.WriteString(fmt.Sprintf("%s=\"%s\"} %0.2f", key, value, v.Value))
 				}
 				i++
 			}
 		}
-		//buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", v.Name,
 	}
 	metricComparisonResultLock.RUnlock()
+	log.Printf("%s\n", buff.Bytes())
 	w.Write(buff.Bytes())
 }
 
@@ -111,6 +110,7 @@ func calcMetricComparisonData() {
 	var curResultList, historyResultList []*models.PrometheusQueryObj
 	var err error
 	var historyEnd int64
+	var tempMetricComparisonList []*models.MetricComparisonRes
 	metricComparisonHttpLock.RLock()
 	defer metricComparisonHttpLock.RUnlock()
 	if len(metricComparisonList) == 0 {
@@ -119,6 +119,7 @@ func calcMetricComparisonData() {
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
 		now := time.Now()
+		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
@@ -151,21 +152,91 @@ func calcMetricComparisonData() {
 			log.Printf("prometheus query data empty")
 			return
 		}
-		/*	for _, data := range curResultList {
+		for _, data := range curResultList {
 			for _, historyData := range historyResultList {
-				if data.Metric == historyData.Metric {
+				if len(data.Metric) > 0 && len(historyData.Metric) > 0 && data.Metric.ToTagString() == historyData.Metric.ToTagString() {
+					if len(data.Values) == 0 || len(historyData.Values) == 0 {
+						break
+					}
+					var dataVal, historyDataVal float64
+					metricComparisonRes1 := &models.MetricComparisonRes{
+						MetricMap: make(map[string]string),
+						Name:      metricComparison.PromExpr,
+					}
+					metricComparisonRes2 := &models.MetricComparisonRes{
+						MetricMap: make(map[string]string),
+						Name:      metricComparison.PromExpr,
+					}
+					for _, metricObj := range data.Metric {
+						metricComparisonRes1.MetricMap[metricObj.Key] = metricObj.Value
+						metricComparisonRes2.MetricMap[metricObj.Key] = metricObj.Value
+					}
 					switch metricComparison.CalcMethod {
 					case "avg":
+						var sum1, sum2 float64
+						for _, arr := range data.Values {
+							if len(arr) == 2 {
+								sum1 = sum1 + arr[1]
+							}
+						}
+						for _, arr := range historyData.Values {
+							if len(arr) == 2 {
+								sum2 = sum2 + arr[1]
+							}
+						}
+						dataVal = sum1 / float64(len(data.Values))
+						historyDataVal = sum2 / float64(len(historyData.Values))
 					case "sum":
+						for _, arr := range data.Values {
+							if len(arr) == 2 {
+								dataVal = dataVal + arr[1]
+							}
+						}
+						for _, arr := range historyData.Values {
+							if len(arr) == 2 {
+								historyDataVal = historyDataVal + arr[1]
+							}
+						}
 					case "max":
+						for _, arr := range data.Values {
+							if len(arr) == 2 && dataVal < arr[1] {
+								dataVal = arr[1]
+							}
+						}
+						for _, arr := range historyData.Values {
+							if len(arr) == 2 && historyDataVal < arr[1] {
+								historyDataVal = arr[1]
+							}
+						}
 					case "min":
+						for _, arr := range data.Values {
+							if len(arr) == 2 && dataVal > arr[1] {
+								dataVal = arr[1]
+							}
+						}
+						for _, arr := range historyData.Values {
+							if len(arr) == 2 && historyDataVal > arr[1] {
+								historyDataVal = arr[1]
+							}
+						}
 					}
+					if calcTypeMap["diff"] {
+						metricComparisonRes1.MetricMap["calc_type"] = "diff"
+						metricComparisonRes1.Value = dataVal - historyDataVal
+						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes1)
+					}
+					if calcTypeMap["diff_percent"] {
+						metricComparisonRes2.MetricMap["calc_type"] = "diff_percent"
+						metricComparisonRes1.Value = (dataVal - historyDataVal) * 100 / historyDataVal
+						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes2)
+					}
+					break
 				}
 			}
-		}*/
+		}
 		// 写数据
 		metricComparisonResultLock.Lock()
-		metricComparisonRes = []*models.MetricComparisonRes{}
+		metricComparisonRes = tempMetricComparisonList
 		metricComparisonResultLock.Unlock()
 	}
 }
@@ -223,4 +294,15 @@ func parsePromQL(promQl string) string {
 		}
 	}
 	return promQl
+}
+
+func getCalcTypeMap(calcType string) map[string]bool {
+	hashMap := make(map[string]bool)
+	if strings.TrimSpace(calcType) != "" {
+		arr := strings.Split(calcType, ",")
+		for _, s := range arr {
+			hashMap[s] = true
+		}
+	}
+	return hashMap
 }
