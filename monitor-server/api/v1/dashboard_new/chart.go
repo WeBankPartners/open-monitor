@@ -417,15 +417,15 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 		if len(tmpSerials2) > 0 && len(tmpSerials) > 0 {
 			for i, model := range tmpSerials2 {
 				serialModel := &models.SerialModel{
-					Type:       "bar",
-					YAxisIndex: 1,
-					Name:       getNewName(model.Name, "diff"),
-					Data:       make([][]float64, len(model.Data)),
+					Type: "line",
+					Name: getNewName(model.Name, "diff"),
+					Data: make([][]float64, len(model.Data)),
 				}
 				serialModel2 := &models.SerialModel{
-					Type: "line",
-					Name: getNewName(model.Name, "diff_percent"),
-					Data: make([][]float64, len(model.Data)),
+					Type:       "bar",
+					YAxisIndex: 1,
+					Name:       getNewName(model.Name, "diff_percent"),
+					Data:       make([][]float64, len(model.Data)),
 				}
 				if i < len(tmpSerials) && len(model.Data) > 0 && len(tmpSerials[i].Data) > 0 {
 					for k, arr := range model.Data {
