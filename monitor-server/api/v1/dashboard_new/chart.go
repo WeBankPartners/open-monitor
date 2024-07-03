@@ -428,13 +428,14 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 					for k, arr := range model.Data {
 						if len(arr) == 2 && k < len(tmpSerials[i].Data) && len(tmpSerials[i].Data[k]) == 2 && arr[0]+float64(difference)*1000 == tmpSerials[i].Data[k][0] {
 							if calcTypeMap["diff"] {
-								serialModel.Data[k] = append(serialModel.Data[k], []float64{tmpSerials[i].Data[k][0], arr[1] - tmpSerials[i].Data[k][1]}...)
+								serialModel.Data[k] = append(serialModel.Data[k], []float64{tmpSerials[i].Data[k][0], RoundToOneDecimal(arr[1] - tmpSerials[i].Data[k][1])}...)
 							}
 							if calcTypeMap["diff_percent"] {
 								val := float64(0)
 								if tmpSerials[i].Data[k][1] != 0 {
 									val = ((arr[1] - tmpSerials[i].Data[k][1]) * 1.0 / tmpSerials[i].Data[k][1]) * 100
 								}
+								val = RoundToOneDecimal(val)
 								serialModel2.Data[k] = append(serialModel2.Data[k], []float64{tmpSerials[i].Data[k][0], val}...)
 							}
 						}
@@ -476,6 +477,13 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 	result.Xaxis = make(map[string]interface{})
 	result.Yaxis = models.YaxisModel{Unit: ""}
 	return
+}
+
+func RoundToOneDecimal(value float64) float64 {
+	v := strconv.FormatFloat(value, 'f', 1, 64)
+	fmt.Println(v)
+	floatValue, _ := strconv.ParseFloat(v, 64)
+	return floatValue
 }
 
 func getNewName(name, calcType string) string {
