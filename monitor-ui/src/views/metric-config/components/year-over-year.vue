@@ -259,7 +259,7 @@ export default {
         calcType,
         calcMethod,
         calcPeriod,
-        timeSecond: -360
+        timeSecond: -calcPeriod
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
