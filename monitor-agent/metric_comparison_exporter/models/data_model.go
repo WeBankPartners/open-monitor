@@ -4,8 +4,8 @@ import "fmt"
 
 type MetricComparisonRes struct {
 	MetricMap map[string]string
-	Name      string
-	Value     string
+	Name      string  // 名称
+	Value     float64 //结果
 }
 
 type MetricComparisonDto struct {
