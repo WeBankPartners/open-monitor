@@ -442,11 +442,11 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 						}
 					}
 				}
-				if len(serialModel.Data) > 0 {
+				if calcTypeMap["diff"] {
 					comparisonSerialList = append(comparisonSerialList, serialModel)
-					if len(calcTypeMap) > 1 {
-						comparisonSerialList = append(comparisonSerialList, serialModel2)
-					}
+				}
+				if calcTypeMap["diff_percent"] {
+					comparisonSerialList = append(comparisonSerialList, serialModel2)
 				}
 			}
 		}
@@ -665,90 +665,5 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	/*result.Title = "10001"
-	result.Xaxis = make(map[string]interface{})
-	result.Legend = []string{"240612_req_count:log_sys{code=addUser}", "240612_req_count:log_sys{code=deleteUser}", "240612_req_count:log_sys{code=login}",
-		"240612_req_count:log_sys{code=addUser}-comparison-percent", "240612_req_count:log_sys{code=deleteUser}-comparison-percent", "240612_req_count:log_sys{code=login}-comparison-percent",
-	}
-	result.Series = append(result.Series, &models.SerialModel{
-		Type: "line",
-		Name: "240612_req_count:log_sys{code=addUser}",
-		Data: [][]float64{
-			{1719905721000, 1},
-			{1719905731000, 5},
-			{1719905741000, 6},
-			{1719905751000, 3},
-			{1719905761000, 2},
-			{1719905771000, 1},
-			{1719905771000, 0},
-		},
-	})
-	result.Series = append(result.Series, &models.SerialModel{
-		Type: "line",
-		Name: "240612_req_count:log_sys{code=deleteUser}",
-		Data: [][]float64{
-			{1719905721000, 1},
-			{1719905731000, 8},
-			{1719905741000, 10},
-			{1719905751000, 6},
-			{1719905761000, 7},
-			{1719905771000, 3},
-			{1719905771000, 4},
-		},
-	})
-	result.Series = append(result.Series, &models.SerialModel{
-		Type: "line",
-		Name: "240612_req_count:log_sys{code=login}",
-		Data: [][]float64{
-			{1719905721000, 2},
-			{1719905731000, 3},
-			{1719905741000, 1},
-			{1719905751000, 5},
-			{1719905761000, 3},
-			{1719905771000, 1},
-			{1719905771000, 8},
-		},
-	})
-	result.Series = append(result.Series, &models.SerialModel{
-		Type:       "bar",
-		Name:       "240612_req_count:log_sys{code=addUser}-comparison-percent",
-		YAxisIndex: 1,
-		Data: [][]float64{
-			{1719905721000, 0.23},
-			{1719905731000, 0.1},
-			{1719905741000, 0.34},
-			{1719905751000, 0.55},
-			{1719905761000, 0.02},
-			{1719905771000, 0.12},
-			{1719905771000, 0.44},
-		},
-	})
-	result.Series = append(result.Series, &models.SerialModel{
-		Type:       "bar",
-		Name:       "240612_req_count:log_sys{code=deleteUser}-comparison-percent",
-		YAxisIndex: 1,
-		Data: [][]float64{
-			{1719905721000, 0.67},
-			{1719905731000, 0.88},
-			{1719905741000, 0.14},
-			{1719905751000, 0.25},
-			{1719905761000, 0.02},
-			{1719905771000, 0.62},
-			{1719905771000, 0.24},
-		},
-	})
-	result.Series = append(result.Series, &models.SerialModel{
-		Type: "bar",
-		Name: "240612_req_count:log_sys{code=login}-comparison-percent",
-		Data: [][]float64{
-			{1719905721000, 0.77},
-			{1719905731000, 0.56},
-			{1719905741000, 0.23},
-			{1719905751000, 0.72},
-			{1719905761000, 0.11},
-			{1719905771000, 0.54},
-			{1719905771000, 0.44},
-		},
-	})*/
 	middleware.ReturnSuccessData(c, result)
 }
