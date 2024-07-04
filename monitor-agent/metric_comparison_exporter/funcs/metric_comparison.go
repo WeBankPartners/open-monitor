@@ -42,14 +42,16 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 				if i < len(v.MetricMap)-1 {
 					buff.WriteString(fmt.Sprintf("%s=\"%s\",", key, value))
 				} else {
-					buff.WriteString(fmt.Sprintf("%s=\"%s\"} %0.2f", key, value, v.Value))
+					buff.WriteString(fmt.Sprintf("%s=\"%s\"} %0.2f \n", key, value, v.Value))
 				}
 				i++
 			}
 		}
 	}
 	metricComparisonResultLock.RUnlock()
-	log.Printf("%s\n", buff.Bytes())
+	if buff.Len() > 0 {
+		log.Printf("%s\n", buff.Bytes())
+	}
 	w.Write(buff.Bytes())
 }
 
@@ -84,12 +86,14 @@ func ReceiveMetricComparisonData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = json.Unmarshal(requestParamBuff, &metricComparisonList); err != nil {
-		log.Printf("json Unmarshal err:%+v", err)
+		log.Printf("json Unmarshal err:%+v\n", err)
 		return
 	}
 	if err = MetricComparisonSaveConfig(requestParamBuff); err != nil {
-		log.Printf("metricComparison config err:%+v", err)
+		log.Printf("metricComparison config err:%+v\n", err)
 		return
+	} else {
+		log.Println("metricComparison config save success!")
 	}
 }
 
@@ -145,11 +149,11 @@ func calcMetricComparisonData() {
 			End:    historyEnd,
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
-			log.Printf("prometheus query_range err:%+v", err)
+			log.Printf("prometheus query_range err:%+v\n", err)
 			return
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
-			log.Printf("prometheus query data empty")
+			log.Println("prometheus query data empty")
 			return
 		}
 		for _, data := range curResultList {
@@ -222,12 +226,12 @@ func calcMetricComparisonData() {
 					}
 					if calcTypeMap["diff"] {
 						metricComparisonRes1.MetricMap["calc_type"] = "diff"
-						metricComparisonRes1.Value = dataVal - historyDataVal
+						metricComparisonRes1.Value = RoundToOneDecimal(dataVal - historyDataVal)
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes1)
 					}
 					if calcTypeMap["diff_percent"] {
 						metricComparisonRes2.MetricMap["calc_type"] = "diff_percent"
-						metricComparisonRes1.Value = (dataVal - historyDataVal) * 100 / historyDataVal
+						metricComparisonRes1.Value = RoundToOneDecimal((dataVal - historyDataVal) * 100 / historyDataVal)
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes2)
 					}
 					break
@@ -305,4 +309,10 @@ func getCalcTypeMap(calcType string) map[string]bool {
 		}
 	}
 	return hashMap
+}
+
+func RoundToOneDecimal(value float64) float64 {
+	v := strconv.FormatFloat(value, 'f', 1, 64)
+	floatValue, _ := strconv.ParseFloat(v, 64)
+	return floatValue
 }
