@@ -132,7 +132,7 @@ func calcMetricComparisonData() {
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
-			return
+			continue
 		}
 		// 根据数据计算 同环比
 		switch metricComparison.ComparisonType {
@@ -150,11 +150,11 @@ func calcMetricComparisonData() {
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v\n", err)
-			return
+			continue
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
 			log.Println("prometheus query data empty")
-			return
+			continue
 		}
 		for _, data := range curResultList {
 			for _, historyData := range historyResultList {
