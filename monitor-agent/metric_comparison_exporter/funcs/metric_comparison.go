@@ -222,12 +222,12 @@ func calcMetricComparisonData() {
 					}
 					if calcTypeMap["diff"] {
 						metricComparisonRes1.MetricMap["calc_type"] = "diff"
-						metricComparisonRes1.Value = dataVal - historyDataVal
+						metricComparisonRes1.Value = RoundToOneDecimal(dataVal - historyDataVal)
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes1)
 					}
 					if calcTypeMap["diff_percent"] {
 						metricComparisonRes2.MetricMap["calc_type"] = "diff_percent"
-						metricComparisonRes1.Value = (dataVal - historyDataVal) * 100 / historyDataVal
+						metricComparisonRes1.Value = RoundToOneDecimal((dataVal - historyDataVal) * 100 / historyDataVal)
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes2)
 					}
 					break
@@ -305,4 +305,10 @@ func getCalcTypeMap(calcType string) map[string]bool {
 		}
 	}
 	return hashMap
+}
+
+func RoundToOneDecimal(value float64) float64 {
+	v := strconv.FormatFloat(value, 'f', 1, 64)
+	floatValue, _ := strconv.ParseFloat(v, 64)
+	return floatValue
 }
