@@ -42,7 +42,7 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 				if i < len(v.MetricMap)-1 {
 					buff.WriteString(fmt.Sprintf("%s=\"%s\",", key, value))
 				} else {
-					buff.WriteString(fmt.Sprintf("%s=\"%s\"} %0.2f", key, value, v.Value))
+					buff.WriteString(fmt.Sprintf("%s=\"%s\"} %0.2f \n", key, value, v.Value))
 				}
 				i++
 			}
@@ -118,6 +118,7 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
+		log.Printf("metricComparison:%+v\n", metricComparison)
 		now := time.Now()
 		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
