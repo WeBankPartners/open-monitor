@@ -62,7 +62,7 @@ type MetricComparisonDto struct {
 	PromExpr       string `json:"promExpr" xorm:"prom_expr"`              // 同环比指标prom表达式
 	CalcType       string `json:"calcType" xorm:"calc_type"`              // 计算数值: diff 差值,diff_percent 差值百分比
 	CalcMethod     string `json:"calcMethod" xorm:"calc_method"`          // 计算方法: avg平均,sum求和,max最大,min最小
-	CalcPeriod     string `json:"calcPeriod" xorm:"calc_period"`          // 计算周期
+	CalcPeriod     int    `json:"calcPeriod" xorm:"calc_period"`          // 计算周期
 	MetricId       string `json:"metricId" xorm:"metric_id"`              // 指标Id
 	CreateUser     string `json:"createUser" xorm:"create_user"`
 	CreateTime     string `json:"createTime" xorm:"create_time"`
