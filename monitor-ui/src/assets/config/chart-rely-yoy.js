@@ -120,6 +120,7 @@ export const drawChart = function(that,config,userConfig, elId) {
     yAxis: [
       {
         type: 'value',
+        alignTicks: true,
         axisLabel: {
           textStyle: {
             color: chartTextColor
