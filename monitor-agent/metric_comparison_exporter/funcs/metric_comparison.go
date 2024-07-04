@@ -26,7 +26,7 @@ var (
 )
 
 const (
-	metricComparisonFilePath = "metric_comparison_cache.json"
+	metricComparisonFilePath = "config/metric_comparison_cache.json"
 )
 
 // HandlePrometheus 封装数据给Prometheus采集
