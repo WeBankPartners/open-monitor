@@ -49,7 +49,9 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	metricComparisonResultLock.RUnlock()
-	log.Printf("%s\n", buff.Bytes())
+	if buff.Len() > 0 {
+		log.Printf("%s\n", buff.Bytes())
+	}
 	w.Write(buff.Bytes())
 }
 
@@ -84,12 +86,14 @@ func ReceiveMetricComparisonData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = json.Unmarshal(requestParamBuff, &metricComparisonList); err != nil {
-		log.Printf("json Unmarshal err:%+v", err)
+		log.Printf("json Unmarshal err:%+v\n", err)
 		return
 	}
 	if err = MetricComparisonSaveConfig(requestParamBuff); err != nil {
-		log.Printf("metricComparison config err:%+v", err)
+		log.Printf("metricComparison config err:%+v\n", err)
 		return
+	} else {
+		log.Println("metricComparison config save success!")
 	}
 }
 
@@ -118,7 +122,6 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
-		log.Printf("metricComparison:%+v\n", metricComparison)
 		now := time.Now()
 		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
@@ -146,11 +149,11 @@ func calcMetricComparisonData() {
 			End:    historyEnd,
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
-			log.Printf("prometheus query_range err:%+v", err)
+			log.Printf("prometheus query_range err:%+v\n", err)
 			return
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
-			log.Printf("prometheus query data empty")
+			log.Println("prometheus query data empty")
 			return
 		}
 		for _, data := range curResultList {
