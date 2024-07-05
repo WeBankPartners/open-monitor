@@ -173,7 +173,7 @@
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Button v-if="item.public" size="small" class="mr-1 references-button">{{$t('m_shallow_copy')}}</Button>
+                    <Button v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Button>
                     <span @click.stop="">
                       <Select v-model="item.group" 
                         style="width:100px;" 
@@ -1097,11 +1097,18 @@ export default {
 }
 
 .header-grid-tools {
+  display: flex;
+  align-items: center;
   i {
     font-size: 18px !important
   }
 }
-
+.header-tools {
+  .ivu-btn-info {
+    background-color: #aa8aea;
+    border-color: #aa8aea;
+  }
+}
 </style>
 
 <style scoped lang="less">
