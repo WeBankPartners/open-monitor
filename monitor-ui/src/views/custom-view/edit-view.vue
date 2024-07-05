@@ -550,7 +550,7 @@ export default {
       metricOptions: [],
       chartTemplateOptions: [
         {
-          label: this.$t('m_customize'),
+          label: this.$t('m_metric_list'),
           key: 'one',
           value: {
             'aggregate': 'none',
@@ -623,7 +623,7 @@ export default {
       },
       metricTypeMap: {
         common: {
-          label: this.$t('m_basic_group'),
+          label: this.$t('m_basic_type'),
           color: '#2d8cf0'
         },
         business: {
@@ -631,7 +631,7 @@ export default {
           color: '#81b337'
         },
         custom: {
-          label: this.$t('m_customize'),
+          label: this.$t('m_metric_list'),
           color: '#b886f8'
         }
       },
