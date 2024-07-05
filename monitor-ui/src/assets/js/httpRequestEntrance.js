@@ -47,7 +47,7 @@ function errorMessage(content) {
 const throwError = res => {
   Vue.prototype.$Notice.warning({
     title: 'Error',
-    desc: (res.data && 'status:' + res.data.status + '<br/> message:' + res.data.message) || 'error',
+    desc: (res.data &&  + res.data.status + '<br/> ' + res.data.message) || 'error',
     duration: 10
   })
 }
@@ -168,7 +168,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig, err
     // if (!window.request && error.response && error.response.status === 401) {
     //   router.push({path: '/login'})
     // }
-    
     if (typeof customHttpConfig === 'function') {
       errCallback = customHttpConfig
     }
