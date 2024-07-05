@@ -30,6 +30,28 @@ func ListMetric(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
+
+func ListMetricCount(c *gin.Context) {
+	var err error
+	var countRes models.MetricCountRes
+	var metricList []*models.MetricTable
+	var metricComparisonList []*models.MetricComparisonExtend
+	monitorType := c.Query("monitorType")
+	serviceGroup := c.Query("serviceGroup")
+	endpointGroup := c.Query("endpointGroup")
+	onlyService := c.Query("onlyService")
+	endpoint := c.Query("endpoint")
+	if metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+	}
+	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+	}
+	countRes.Count = len(metricList)
+	countRes.ComparisonCount = len(metricComparisonList)
+	middleware.ReturnSuccessData(c, countRes)
+}
+
 func ListMetricComparison(c *gin.Context) {
 	guid := c.Query("guid")
 	monitorType := c.Query("monitorType")
