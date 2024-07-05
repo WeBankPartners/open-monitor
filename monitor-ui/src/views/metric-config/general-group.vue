@@ -324,7 +324,7 @@ export default {
     handleAddYearOverYear (row) {
       this.metricType = 'comparisonMetrics'
       this.addVisible = true
-      this.operator = 'add'
+      this.type = 'add'
       this.originalMetricsId = row.guid
       this.$refs.metricChangeRef.metricTypeChange(this.metricType)
     },
