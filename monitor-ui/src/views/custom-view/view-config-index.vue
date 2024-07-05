@@ -127,10 +127,10 @@
               <Button size="small" type="info" @click="goToPanal(item, 'view')">
                 <Icon type="md-eye" />
               </Button>
+              <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
+                <Icon type="md-cloud-upload" />
+              </Button>
               <template v-if="item.permission === 'mgmt'">
-                <Button size="small" type="info" @click.stop="exportPanel(item)">
-                  <Icon type="md-cloud-upload" />
-                </Button>
                 <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
                   <Icon type="md-create" />
                 </Button>
@@ -595,6 +595,11 @@ export default {
   .ivu-card-head {
     padding: 12px;
   }
+}
+
+.export-button.ivu-btn-info {
+  background-color: #aa8aea;
+  border-color: #aa8aea;
 }
 
 </style>
