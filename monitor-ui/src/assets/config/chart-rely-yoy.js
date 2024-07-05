@@ -65,7 +65,7 @@ export const drawChart = function(that,config,userConfig, elId) {
           }
           arr.join(" ");
           const seriesName = arr.join('<br>')
-          let valueDisplay = item.componentSubType === 'line' ? (Math.floor(item.data[1] * 1000) / 1000) : (item.data[1] + '%')
+          let valueDisplay = item.componentSubType === 'line' ? (item.data[1] + '%') : (Math.floor(item.data[1] * 1000) / 1000)
           res = res+`<div><div style=' display: inline-block;width: 10px; 
           height: 10px;border: 1px solid transparent;border-radius:50%;
           background-color:${item.color};'  ></div>${valueDisplay} ${seriesName}
