@@ -117,7 +117,7 @@ func QueryCustomDashboardListByName(name string) (customDashboardList []*models.
 func GetDashboardPermissionMap(dashboard int, permission string) (permissionMap map[string]bool, err error) {
 	var list []*models.CustomDashBoardRoleRel
 	permissionMap = make(map[string]bool)
-	err = x.SQL("select id from custom_dashboard_role_rel where custom_dashboard_id = ? and permission = ?", dashboard, permission).Find(&list)
+	err = x.SQL("select role_id from custom_dashboard_role_rel where custom_dashboard_id = ? and permission = ?", dashboard, permission).Find(&list)
 	if len(list) > 0 {
 		for _, perm := range list {
 			permissionMap[perm.RoleId] = true
@@ -388,11 +388,11 @@ func SyncData() (err error) {
 	return
 }
 
-func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
+func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
 	var customDashboardList []*models.CustomDashboardTable
-	var newDashboardId int64
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
 	var result sql.Result
+	var newDashboardId int64
 	now := time.Now().Format(models.DatetimeFormat)
 	importRes = &models.CustomDashboardImportRes{ChartMap: make(map[string][]string)}
 	if customDashboardList, err = QueryCustomDashboardListByName(param.Name); err != nil {
@@ -425,31 +425,17 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 		param.Name = param.Name + "(1)"
 		tempList, _ := QueryCustomDashboardListByName(param.Name)
 		if len(tempList) > 0 {
-			err = fmt.Errorf("dashboard name:%s has exist", param.Name)
-			return
-		}
-	} else {
-		// 没有同名,看板Id复用,如果Id已存在直接返回报错
-		newDashboardId = int64(param.Id)
-		if customDashboard, err = GetCustomDashboardById(param.Id); err != nil {
-			return
-		}
-		if customDashboard != nil && customDashboard.Id != 0 {
+			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, param.Name)
 			return
 		}
 	}
-	if newDashboardId == 0 {
-		result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
-			param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek)
-		if err != nil {
-			return
-		}
-		if newDashboardId, err = result.LastInsertId(); err != nil {
-			return
-		}
-	} else {
-		actions = append(actions, &Action{Sql: "insert into custom_dashboard(id,name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newDashboardId, param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek}})
+	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
+		param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek)
+	if err != nil {
+		return
+	}
+	if newDashboardId, err = result.LastInsertId(); err != nil {
+		return
 	}
 	// 插入看板权限表
 	subDashboardPermActions = GetInsertCustomDashboardRoleRelSQL(int(newDashboardId), []string{mgmtRole}, useRoles)
