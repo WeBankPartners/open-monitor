@@ -17,10 +17,6 @@
           </Button>
         </div>
       </template>
-      <Checkbox v-model="exportTreeChecked"
-        @on-change="onExportTreeCheckedChange"
-        >{{ $t('m_all_checked_or_cancel') }}
-      </Checkbox>
       <Tree :data="exportChartList"
         show-checkbox 
         multiple
@@ -49,11 +45,6 @@ export default {
     isModalShow: {
       type: Boolean,
       default: false
-    }
-  },
-  computed: {
-    exportTreeChecked() {
-      return JSON.stringify(this.allNodeIdList) === JSON.stringify(this.checkedNodeIdList)
     }
   },
   watch: {
@@ -154,8 +145,8 @@ export default {
         if (response.status < 400) {
           this.checkedNodeIdList = [];
           this.closeModal();
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let content = JSON.stringify(response.data);
+          let fileName = this.panalName;
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
@@ -183,14 +174,6 @@ export default {
     onExportModalClose() {
       this.checkedNodeIdList = [];
       this.closeModal();
-    },
-    onExportTreeCheckedChange(val) {
-      this.changeTreeChecked(this.exportChartList, val);
-      if (val) {
-        this.checkedNodeIdList = cloneDeep(this.allNodeIdList);
-      } else {
-        this.checkedNodeIdList = [];
-      }
     },
     changeTreeChecked(arr, val) {
       for(let i=0; i<arr.length; i++) {
