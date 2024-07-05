@@ -1,10 +1,10 @@
 <template>
   <div class="btn-group-custom">
     <div class="btn-group-item" @click="metricTypeChange('originalMetrics')" :class="{'active-metric-type': metricType === 'originalMetrics'}">
-      原始指标
+      {{ $t('m_original_metric') }}
     </div>
     <div class="btn-group-item" @click="metricTypeChange('comparisonMetrics')" :class="{'active-metric-type': metricType === 'comparisonMetrics'}">
-      同环比指标
+      {{ $t('m_year_over_year_metrics') }}
     </div>
   </div>
 </template>

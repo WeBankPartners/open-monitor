@@ -14,6 +14,9 @@
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
+          <FormItem :label="$t('m_metric')" v-if="operator === 'edit'" required>
+            <Input disabled v-model="metricConfigData.guid"></Input>
+          </FormItem>
           <!--原始指标-->
           <FormItem :label="$t('m_original_metric')" required>
             <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit'" :transfer="true" @on-change="getMetricType">
