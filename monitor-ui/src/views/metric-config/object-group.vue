@@ -106,10 +106,16 @@ export default {
       maxHeight: 500,
       tableData: [],
       tableColumns: [
-        {
-          title: this.$t('m_field_metric'), // 指标
-          key: 'metric',
+      {
+          title: this.$t('m_year_over_year_metrics'), // 指标
+          key: 'guid',
           minWidth: 250,
+          showType: ['comparisonMetrics']
+        },
+        {
+          title: this.$t('m_metric'), // 指标
+          key: 'metric',
+          minWidth: 200,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
