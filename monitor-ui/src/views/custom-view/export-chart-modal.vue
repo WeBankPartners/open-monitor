@@ -17,10 +17,6 @@
           </Button>
         </div>
       </template>
-      <Checkbox v-model="exportTreeChecked"
-        @on-change="onExportTreeCheckedChange"
-        >{{ $t('m_all_checked_or_cancel') }}
-      </Checkbox>
       <Tree :data="exportChartList"
         show-checkbox 
         multiple
@@ -49,11 +45,6 @@ export default {
     isModalShow: {
       type: Boolean,
       default: false
-    }
-  },
-  computed: {
-    exportTreeChecked() {
-      return JSON.stringify(this.allNodeIdList) === JSON.stringify(this.checkedNodeIdList)
     }
   },
   watch: {
@@ -183,14 +174,6 @@ export default {
     onExportModalClose() {
       this.checkedNodeIdList = [];
       this.closeModal();
-    },
-    onExportTreeCheckedChange(val) {
-      this.changeTreeChecked(this.exportChartList, val);
-      if (val) {
-        this.checkedNodeIdList = cloneDeep(this.allNodeIdList);
-      } else {
-        this.checkedNodeIdList = [];
-      }
     },
     changeTreeChecked(arr, val) {
       for(let i=0; i<arr.length; i++) {
