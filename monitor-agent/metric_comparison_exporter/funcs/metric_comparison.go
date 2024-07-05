@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/rpc"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/rpc"
 )
 
 var (
@@ -153,7 +154,7 @@ func calcMetricComparisonData() {
 			continue
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
-			log.Println("prometheus query data empty")
+			log.Printf("%s prometheus query data empty\n", metricComparison.Metric)
 			continue
 		}
 		for _, data := range curResultList {
