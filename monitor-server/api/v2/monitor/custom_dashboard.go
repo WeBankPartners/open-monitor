@@ -555,7 +555,7 @@ func ExportCustomDashboard(c *gin.Context) {
 		middleware.ReturnHandleError(c, "export custom dashboard fail, json marshal object error", marshalErr)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%d_%s.json", result.Id, time.Now().Format("20060102150405")))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", result.Name, time.Now().Format("20060102150405")))
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
@@ -624,7 +624,8 @@ func ImportCustomDashboard(c *gin.Context) {
 			return
 		}
 	}
-	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles); err != nil {
+	errMsgObj := middleware.GetMessageMap(c)
+	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles, errMsgObj); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
