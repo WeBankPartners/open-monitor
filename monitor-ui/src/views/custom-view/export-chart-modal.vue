@@ -154,8 +154,8 @@ export default {
         if (response.status < 400) {
           this.checkedNodeIdList = [];
           this.closeModal();
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let content = JSON.stringify(response.data);
+          let fileName = this.panalName;
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
