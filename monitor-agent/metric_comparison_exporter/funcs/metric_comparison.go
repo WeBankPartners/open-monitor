@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/rpc"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/models"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/metric_comparison/rpc"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 )
 
 const (
-	metricComparisonFilePath = "data/metric_comparison_cache.json"
+	metricComparisonFilePath = "config/metric_comparison_cache.json"
 )
 
 // HandlePrometheus 封装数据给Prometheus采集
@@ -132,7 +133,7 @@ func calcMetricComparisonData() {
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v", err)
-			return
+			continue
 		}
 		// 根据数据计算 同环比
 		switch metricComparison.ComparisonType {
@@ -150,11 +151,11 @@ func calcMetricComparisonData() {
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v\n", err)
-			return
+			continue
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
-			log.Println("prometheus query data empty")
-			return
+			log.Printf("%s prometheus query data empty\n", metricComparison.Metric)
+			continue
 		}
 		for _, data := range curResultList {
 			for _, historyData := range historyResultList {
@@ -202,23 +203,43 @@ func calcMetricComparisonData() {
 							}
 						}
 					case "max":
-						for _, arr := range data.Values {
+						for i, arr := range data.Values {
+							// 初始化值
+							if i == 0 && len(arr) == 2 {
+								dataVal = arr[1]
+								continue
+							}
 							if len(arr) == 2 && dataVal < arr[1] {
 								dataVal = arr[1]
 							}
 						}
-						for _, arr := range historyData.Values {
+						for i, arr := range historyData.Values {
+							// 初始化值
+							if i == 0 && len(arr) == 2 {
+								historyDataVal = arr[1]
+								continue
+							}
 							if len(arr) == 2 && historyDataVal < arr[1] {
 								historyDataVal = arr[1]
 							}
 						}
 					case "min":
-						for _, arr := range data.Values {
+						for i, arr := range data.Values {
+							// 初始化值
+							if i == 0 && len(arr) == 2 {
+								dataVal = arr[1]
+								continue
+							}
 							if len(arr) == 2 && dataVal > arr[1] {
 								dataVal = arr[1]
 							}
 						}
-						for _, arr := range historyData.Values {
+						for i, arr := range historyData.Values {
+							// 初始化值
+							if i == 0 && len(arr) == 2 {
+								historyDataVal = arr[1]
+								continue
+							}
 							if len(arr) == 2 && historyDataVal > arr[1] {
 								historyDataVal = arr[1]
 							}
@@ -226,12 +247,14 @@ func calcMetricComparisonData() {
 					}
 					if calcTypeMap["diff"] {
 						metricComparisonRes1.MetricMap["calc_type"] = "diff"
-						metricComparisonRes1.Value = RoundToOneDecimal(dataVal - historyDataVal)
+						metricComparisonRes1.Value = dataVal - historyDataVal
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes1)
 					}
 					if calcTypeMap["diff_percent"] {
 						metricComparisonRes2.MetricMap["calc_type"] = "diff_percent"
-						metricComparisonRes1.Value = RoundToOneDecimal((dataVal - historyDataVal) * 100 / historyDataVal)
+						if historyDataVal != 0 {
+							metricComparisonRes2.Value = (dataVal - historyDataVal) * 100 / historyDataVal
+						}
 						tempMetricComparisonList = append(tempMetricComparisonList, metricComparisonRes2)
 					}
 					break
@@ -309,10 +332,4 @@ func getCalcTypeMap(calcType string) map[string]bool {
 		}
 	}
 	return hashMap
-}
-
-func RoundToOneDecimal(value float64) float64 {
-	v := strconv.FormatFloat(value, 'f', 1, 64)
-	floatValue, _ := strconv.ParseFloat(v, 64)
-	return floatValue
 }
