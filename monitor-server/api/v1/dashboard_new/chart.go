@@ -441,7 +441,7 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 						}
 					}
 					if calcTypeMap["diff"] {
-						comparisonSerialList = append(comparisonSerialList, serialModel)
+						comparisonSerialList = append(comparisonSerialList, newSerialModel)
 					}
 					if calcTypeMap["diff_percent"] {
 						comparisonSerialList = append(comparisonSerialList, newSerialModel2)
