@@ -1,11 +1,14 @@
 package db
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"io/ioutil"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -62,8 +65,12 @@ func MetricUpdate(param []*models.MetricTable, operator string) (err error) {
 		}
 		if metric.ServiceGroup != "" {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_user=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, operator, nowTime, metric.Guid}})
+			actions = append(actions, &Action{Sql: "update metric set service_group=?,workspace=?,update_user=?,update_time=? where guid in (select metric_id from metric_comparison where origin_metric_id=?)",
+				Param: []interface{}{metric.ServiceGroup, metric.Workspace, operator, nowTime, metric.Guid}})
 		} else {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, operator, nowTime, metric.Guid}})
+			actions = append(actions, &Action{Sql: "update metric set update_user=?,update_time=? where guid in (select metric_id from metric_comparison where origin_metric_id=?)",
+				Param: []interface{}{operator, nowTime, metric.Guid}})
 		}
 		metricGuidList = append(metricGuidList, metric.Guid)
 	}
@@ -556,4 +563,45 @@ func convertMetric2ComparisonParam(comparison *models.MetricComparisonExtend) mo
 		CalcMethod:     comparison.CalcMethod,
 		CalcPeriod:     comparison.CalcPeriod,
 	}
+}
+
+// SyncMetricComparisonData 同步同环比指标数据
+func SyncMetricComparisonData() (err error) {
+	var list []*models.MetricComparisonDto
+	var resByteArr []byte
+	var response models.Response
+	if list, err = GetComparisonMetricDtoList(); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		param, _ := json.Marshal(list)
+		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", param); err != nil {
+			return
+		}
+		if err = json.Unmarshal(resByteArr, &response); err != nil {
+			return
+		}
+		if response.Status != "OK" {
+			err = fmt.Errorf(response.Message)
+		}
+	}
+	return
+}
+
+// HttpPost Post请求
+func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
+	req, reqErr := http.NewRequest(http.MethodPost, url, bytes.NewReader(postBytes))
+	if reqErr != nil {
+		err = fmt.Errorf("new http reqeust fail,%s ", reqErr.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
+		return
+	}
+	byteArr, _ = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return
 }
