@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -167,7 +166,7 @@ func ImportMetric(c *gin.Context) {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
-		if err = syncMetricComparisonData(); err != nil {
+		if err = db.SyncMetricComparisonData(); err != nil {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
@@ -292,7 +291,7 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 			return
 		}
 	}
-	if err = syncMetricComparisonData(); err != nil {
+	if err = db.SyncMetricComparisonData(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -310,52 +309,11 @@ func DeleteComparisonMetric(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if err = syncMetricComparisonData(); err != nil {
+	if err = db.SyncMetricComparisonData(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	middleware.ReturnSuccess(c)
-}
-
-// syncMetricComparisonData 同步同环比指标数据
-func syncMetricComparisonData() (err error) {
-	var list []*models.MetricComparisonDto
-	var resByteArr []byte
-	var response models.Response
-	if list, err = db.GetComparisonMetricDtoList(); err != nil {
-		return
-	}
-	if len(list) > 0 {
-		param, _ := json.Marshal(list)
-		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", param); err != nil {
-			return
-		}
-		if err = json.Unmarshal(resByteArr, &response); err != nil {
-			return
-		}
-		if response.Status != "OK" {
-			err = fmt.Errorf(response.Message)
-		}
-	}
-	return
-}
-
-// HttpPost Post请求
-func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
-	req, reqErr := http.NewRequest(http.MethodPost, url, bytes.NewReader(postBytes))
-	if reqErr != nil {
-		err = fmt.Errorf("new http reqeust fail,%s ", reqErr.Error())
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, respErr := http.DefaultClient.Do(req)
-	if respErr != nil {
-		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
-		return
-	}
-	byteArr, _ = ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	return
 }
 
 func ConvertMetricComparison2MetricList(metricComparisonList []*models.MetricComparisonExtend) []*models.MetricTable {

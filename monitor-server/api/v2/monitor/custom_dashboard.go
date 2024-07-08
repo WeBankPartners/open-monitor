@@ -555,7 +555,7 @@ func ExportCustomDashboard(c *gin.Context) {
 		middleware.ReturnHandleError(c, "export custom dashboard fail, json marshal object error", marshalErr)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", result.Name, time.Now().Format("20060102150405")))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", result.Id, time.Now().Format("20060102150405")))
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
@@ -567,13 +567,14 @@ func ImportCustomDashboard(c *gin.Context) {
 	var permissionMap map[string]bool
 	var hasPerm bool
 	rule, _ := c.GetPostForm("rule")
-	useRoles, _ := c.GetPostFormArray("useRoles")
+	useRoleStr, _ := c.GetPostForm("useRoles")
 	mgmtRole, _ := c.GetPostForm("mgmtRoles")
 	file, err := c.FormFile("file")
-	if rule == "" || len(useRoles) == 0 || mgmtRole == "" {
+	if rule == "" || len(useRoleStr) == 0 || mgmtRole == "" {
 		middleware.ReturnParamEmptyError(c, "rule or permission")
 		return
 	}
+	useRoles := strings.Split(useRoleStr, ",")
 	if err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
