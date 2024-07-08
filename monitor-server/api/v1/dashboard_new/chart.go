@@ -9,6 +9,7 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -390,13 +391,18 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param models.ComparisonChartQueryParam) (result *models.EChartOption, err error) {
 	var serials []*models.SerialModel
 	var difference int64
-	result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	result = &models.EChartOption{
+		Legend: []string{},
+		Xaxis:  make(map[string]interface{}),
+		Yaxis:  models.YaxisModel{Unit: ""},
+		Series: []*models.SerialModel{},
+	}
 	calcTypeMap := convertArray2Map(param.CalcType)
 	for _, query := range queryList {
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
-		tmpSerials := ds.PrometheusData(query)
+		curResultList := ds.PrometheusData(query)
 		switch param.ComparisonType {
 		case "day":
 			difference = 86400
@@ -408,44 +414,43 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 		}
 		query.Start = query.Start - difference
 		query.End = query.End - difference
-		tmpSerials2 := ds.PrometheusData(query)
+		historyResultList := ds.PrometheusData(query)
 		var comparisonSerialList []*models.SerialModel
 		// 计算同环比数据
-		if len(tmpSerials2) > 0 && len(tmpSerials) > 0 {
-			for i, model := range tmpSerials2 {
-				serialModel := &models.SerialModel{
-					Type: "bar",
-					Name: getNewName(model.Name, "diff"),
-					Data: make([][]float64, len(model.Data)),
-				}
-				serialModel2 := &models.SerialModel{
-					Type:       "line",
-					YAxisIndex: 1,
-					Name:       getNewName(model.Name, "diff_percent"),
-					Data:       make([][]float64, len(model.Data)),
-				}
-				if i < len(tmpSerials) && len(model.Data) > 0 && len(tmpSerials[i].Data) > 0 {
-					for k, arr := range model.Data {
-						if len(arr) == 2 && k < len(tmpSerials[i].Data) && len(tmpSerials[i].Data[k]) == 2 && arr[0]+float64(difference)*1000 == tmpSerials[i].Data[k][0] {
-							if calcTypeMap["diff"] {
-								serialModel.Data[k] = append(serialModel.Data[k], []float64{tmpSerials[i].Data[k][0], RoundToOneDecimal(arr[1] - tmpSerials[i].Data[k][1])}...)
-							}
-							if calcTypeMap["diff_percent"] {
-								val := float64(0)
-								if tmpSerials[i].Data[k][1] != 0 {
-									val = ((arr[1] - tmpSerials[i].Data[k][1]) * 1.0 / tmpSerials[i].Data[k][1]) * 100
-								}
-								val = RoundToOneDecimal(val)
-								serialModel2.Data[k] = append(serialModel2.Data[k], []float64{tmpSerials[i].Data[k][0], val}...)
-							}
-						}
+		if len(historyResultList) == 0 || len(curResultList) == 0 {
+			return
+		}
+		for _, serialModel := range curResultList {
+			for _, historySerialModel := range historyResultList {
+				if len(serialModel.Data) > 0 && len(historySerialModel.Data) > 0 && serialModel.Name == historySerialModel.Name {
+					// 以默认6个条数据为一组,根据规则成一条记录返回
+					serialModel := &models.SerialModel{
+						Type: "bar",
+						Name: getNewName(serialModel.Name, "diff"),
+						Data: [][]float64{},
 					}
-				}
-				if calcTypeMap["diff"] {
-					comparisonSerialList = append(comparisonSerialList, serialModel)
-				}
-				if calcTypeMap["diff_percent"] {
-					comparisonSerialList = append(comparisonSerialList, serialModel2)
+					serialModel2 := &models.SerialModel{
+						Type:       "line",
+						YAxisIndex: 1,
+						Name:       getNewName(serialModel.Name, "diff_percent"),
+						Data:       [][]float64{},
+					}
+					count := int(math.Ceil(float64(getMax(len(serialModel.Data), len(historySerialModel.Data)) * 1.0 / models.PreviewPointCount * (param.CalcPeriod / 10))))
+					for i := 1; i <= count; i++ {
+						/*var dataVal, historyDataVal float64
+						start := (i - 1) * models.PreviewPointCount * (param.CalcPeriod / 10)
+						end := i * models.PreviewPointCount * (param.CalcPeriod / 10)
+						for j := start; j < end; j++ {
+
+						}*/
+					}
+					if calcTypeMap["diff"] {
+						comparisonSerialList = append(comparisonSerialList, serialModel)
+					}
+					if calcTypeMap["diff_percent"] {
+						comparisonSerialList = append(comparisonSerialList, serialModel2)
+					}
+					break
 				}
 			}
 		}
@@ -474,8 +479,7 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 			result.Series = append(result.Series, s)
 		}
 	}
-	result.Xaxis = make(map[string]interface{})
-	result.Yaxis = models.YaxisModel{Unit: ""}
+
 	return
 }
 
@@ -647,7 +651,7 @@ func GetComparisonChartData(c *gin.Context) {
 		return
 	}
 	queryParam = &models.ChartQueryParam{
-		Start: now.Unix() + param.TimeSecond,
+		Start: now.Unix() + int64(-models.PreviewPointCount*param.CalcPeriod),
 		End:   now.Unix(),
 		Step:  10,
 		Data: []*models.ChartQueryConfigObj{{
@@ -672,4 +676,15 @@ func GetComparisonChartData(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccessData(c, result)
+}
+
+func getMax(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
+func mergePrometheusData() []*models.SerialModel {
+	return nil
 }

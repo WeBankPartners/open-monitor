@@ -71,12 +71,15 @@ func MetricUpdate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.MetricUpdate(param, middleware.GetOperateUser(c))
-	if err != nil {
+	if err = db.MetricUpdate(param, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		middleware.ReturnSuccess(c)
+		return
 	}
+	if err = db.SyncMetricComparisonData(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func MetricDelete(c *gin.Context) {

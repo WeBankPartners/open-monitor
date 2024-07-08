@@ -553,6 +553,8 @@ type CustomDashboardImportRes struct {
 type ComparisonChartQueryParam struct {
 	Endpoint       string   `json:"endpoint"`       // 选择机器
 	MetricId       string   `json:"metricId"`       // 指标Id
+	CalcMethod     string   `json:"calcMethod"`     // 计算方法
+	CalcPeriod     int      `json:"calcPeriod"`     // 计算周期
 	ComparisonType string   `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
 	CalcType       []string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
 	TimeSecond     int64    `json:"timeSecond"`     // 时间范围
