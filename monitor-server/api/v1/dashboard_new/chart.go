@@ -9,7 +9,6 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -402,7 +401,7 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
-		curResultList := ds.PrometheusData(query)
+		curResultList := mergePrometheusData(param.CalcPeriod, param.CalcMethod, ds.PrometheusData(query))
 		switch param.ComparisonType {
 		case "day":
 			difference = 86400
@@ -414,7 +413,7 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 		}
 		query.Start = query.Start - difference
 		query.End = query.End - difference
-		historyResultList := ds.PrometheusData(query)
+		historyResultList := mergePrometheusData(param.CalcPeriod, param.CalcMethod, ds.PrometheusData(query))
 		var comparisonSerialList []*models.SerialModel
 		// 计算同环比数据
 		if len(historyResultList) == 0 || len(curResultList) == 0 {
@@ -423,32 +422,29 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 		for _, serialModel := range curResultList {
 			for _, historySerialModel := range historyResultList {
 				if len(serialModel.Data) > 0 && len(historySerialModel.Data) > 0 && serialModel.Name == historySerialModel.Name {
-					// 以默认6个条数据为一组,根据规则成一条记录返回
-					serialModel := &models.SerialModel{
+					newSerialModel := &models.SerialModel{
 						Type: "bar",
 						Name: getNewName(serialModel.Name, "diff"),
 						Data: [][]float64{},
 					}
-					serialModel2 := &models.SerialModel{
+					newSerialModel2 := &models.SerialModel{
 						Type:       "line",
 						YAxisIndex: 1,
 						Name:       getNewName(serialModel.Name, "diff_percent"),
 						Data:       [][]float64{},
 					}
-					count := int(math.Ceil(float64(getMax(len(serialModel.Data), len(historySerialModel.Data)) * 1.0 / models.PreviewPointCount * (param.CalcPeriod / 10))))
-					for i := 1; i <= count; i++ {
-						/*var dataVal, historyDataVal float64
-						start := (i - 1) * models.PreviewPointCount * (param.CalcPeriod / 10)
-						end := i * models.PreviewPointCount * (param.CalcPeriod / 10)
-						for j := start; j < end; j++ {
-
-						}*/
+					for i, dataArr := range serialModel.Data {
+						if i < len(historySerialModel.Data) && len(dataArr) == 2 && len(historySerialModel.Data[i]) == 2 {
+							diff := dataArr[1] - historySerialModel.Data[i][1]
+							newSerialModel.Data = append(newSerialModel.Data, []float64{dataArr[1], RoundToOneDecimal(diff)})
+							newSerialModel2.Data = append(newSerialModel2.Data, []float64{dataArr[1], RoundToOneDecimal(diff * 100 / historySerialModel.Data[i][1])})
+						}
 					}
 					if calcTypeMap["diff"] {
 						comparisonSerialList = append(comparisonSerialList, serialModel)
 					}
 					if calcTypeMap["diff_percent"] {
-						comparisonSerialList = append(comparisonSerialList, serialModel2)
+						comparisonSerialList = append(comparisonSerialList, newSerialModel2)
 					}
 					break
 				}
@@ -485,7 +481,6 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 
 func RoundToOneDecimal(value float64) float64 {
 	v := strconv.FormatFloat(value, 'f', 1, 64)
-	fmt.Println(v)
 	floatValue, _ := strconv.ParseFloat(v, 64)
 	return floatValue
 }
@@ -678,13 +673,78 @@ func GetComparisonChartData(c *gin.Context) {
 	middleware.ReturnSuccessData(c, result)
 }
 
-func getMax(a, b int) int {
-	if a > b {
-		return b
+// mergePrometheusData 按 mergeCount整合数据
+func mergePrometheusData(calcPeriod int, calcMethod string, originSerialList []*models.SerialModel) []*models.SerialModel {
+	var targetSerialList []*models.SerialModel
+	mergeCount := calcPeriod / 10
+	if len(originSerialList) > 0 {
+		for _, model := range originSerialList {
+			newModel := &models.SerialModel{
+				Type: model.Type,
+				Name: model.Name,
+				Data: [][]float64{},
+			}
+			if len(model.Data) > 0 {
+				for i, _ := range model.Data {
+					if i > 0 && i%mergeCount == 0 {
+						newDataArr := getCalcValue(calcMethod, model.Data[i-mergeCount:i])
+						newModel.Data = append(newModel.Data, newDataArr...)
+					}
+				}
+				if len(newModel.Data) == 0 {
+					newModel.Data = append(newModel.Data, model.Data[0])
+				}
+			}
+			targetSerialList = append(targetSerialList, newModel)
+		}
 	}
-	return a
+	return targetSerialList
 }
 
-func mergePrometheusData() []*models.SerialModel {
-	return nil
+func getCalcValue(calcMethod string, data [][]float64) [][]float64 {
+	if len(data) == 0 {
+		return [][]float64{}
+	}
+	var dataVal float64
+	var arr [][]float64
+	switch calcMethod {
+	case "avg":
+		var sum1 float64
+		for _, arr := range data {
+			if len(arr) == 2 {
+				sum1 = sum1 + arr[1]
+			}
+		}
+		dataVal = sum1 / float64(len(data))
+	case "sum":
+		for _, arr := range data {
+			if len(arr) == 2 {
+				dataVal = dataVal + arr[1]
+			}
+		}
+	case "max":
+		for i, arr := range data {
+			// 初始化值
+			if i == 0 && len(arr) == 2 {
+				dataVal = arr[1]
+				continue
+			}
+			if len(arr) == 2 && dataVal < arr[1] {
+				dataVal = arr[1]
+			}
+		}
+	case "min":
+		for i, arr := range data {
+			// 初始化值
+			if i == 0 && len(arr) == 2 {
+				dataVal = arr[1]
+				continue
+			}
+			if len(arr) == 2 && dataVal > arr[1] {
+				dataVal = arr[1]
+			}
+		}
+	}
+	arr = append(arr, []float64{data[len(data)-1][0], dataVal})
+	return arr
 }
