@@ -436,8 +436,8 @@ func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param mod
 					for i, dataArr := range serialModel.Data {
 						if i < len(historySerialModel.Data) && len(dataArr) == 2 && len(historySerialModel.Data[i]) == 2 {
 							diff := dataArr[1] - historySerialModel.Data[i][1]
-							newSerialModel.Data = append(newSerialModel.Data, []float64{dataArr[1], RoundToOneDecimal(diff)})
-							newSerialModel2.Data = append(newSerialModel2.Data, []float64{dataArr[1], RoundToOneDecimal(diff * 100 / historySerialModel.Data[i][1])})
+							newSerialModel.Data = append(newSerialModel.Data, []float64{dataArr[0], RoundToOneDecimal(diff)})
+							newSerialModel2.Data = append(newSerialModel2.Data, []float64{dataArr[0], RoundToOneDecimal(diff * 100 / historySerialModel.Data[i][1])})
 						}
 					}
 					if calcTypeMap["diff"] {
