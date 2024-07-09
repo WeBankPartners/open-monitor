@@ -7,6 +7,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -505,18 +506,30 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.Workspace, now, now, operator, operator}})
 		} else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
 		}
 	} else {
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+			Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
 	return
+}
+
+// NewPromExpr 需要将 . 替换成 _
+func NewPromExpr(newMetricId string) string {
+	var err error
+	if newMetricId == "" {
+		return ""
+	}
+	newMetricId = strings.ReplaceAll(newMetricId, ".", "_")
+	if err = datasource.CheckPrometheusQL(newMetricId); err != nil {
+	}
+	return newMetricId
 }
 
 func AddComparisonMetric(param models.MetricComparisonParam, metric *models.MetricTable, operator string) error {
