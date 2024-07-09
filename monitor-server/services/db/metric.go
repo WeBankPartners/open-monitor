@@ -523,8 +523,8 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
-	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,origin_metric,create_user,create_time) values(?,?,?,?,?,?,?,?,?,?)",
-		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, metric.Metric, operator, now}})
+	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,origin_metric,origin_prom_expr,create_user,create_time) values(?,?,?,?,?,?,?,?,?,?,?)",
+		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, metric.Metric, metric.PromExpr, operator, now}})
 	return
 }
 
@@ -559,7 +559,7 @@ func DeleteComparisonMetric(id string) (err error) {
 }
 
 func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error) {
-	err = x.SQL("select m.metric,m.prom_expr as origin_prom_expr,mc.metric_id as prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on m.guid = mc.origin_metric_id").Find(&list)
+	err = x.SQL("select m.metric,mc.origin_prom_expr as origin_prom_expr,m.prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on m.guid = mc.origin_metric_id").Find(&list)
 	return
 }
 
