@@ -183,10 +183,19 @@
         </div>
       </div>
     </Modal>
+    <Modal
+      v-model="showEndpointView"
+      :mask-closable="false"
+      :footer-hide="true"
+      :fullscreen="true"
+      :title="$t('m_menu_endpointView')">
+      <EndpointViewComponent ref="endpointViewComponentRef"></EndpointViewComponent>
+    </Modal>
   </Card>
 </template>
 
 <script>
+import EndpointViewComponent from '@/components/endpoint-view-component'
 export default {
   props: {
     data: Object,
@@ -200,7 +209,13 @@ export default {
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
         "serviceGroup": "m_field_resourceLevel"
-      }
+      },
+      showEndpointView: false // 弹窗展示对象视图
+    }
+  },
+  watch: {
+    showEndpointView: function (val) {
+      this.$refs.endpointViewComponentRef.disabledEndpoint(val)
     }
   },
   methods: {
@@ -209,10 +224,8 @@ export default {
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split("_").slice(-1)[0],
       };
-      localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
-      this.$router.push({ path: "/endpointView" });
-      // const news = this.$router.resolve({name: 'endpointView'})
-      // window.open(news.href, '_blank')
+      this.showEndpointView = true
+      this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
     },
     goToNotify (item) {
       if (item.notify_status === 'notStart') {
@@ -259,6 +272,9 @@ export default {
       this.$Message.success(this.$t('m_copied_to_clipboard'))
     }
   },
+  components: {
+    EndpointViewComponent
+  }
 };
 </script>
 <style scoped lang="less">
