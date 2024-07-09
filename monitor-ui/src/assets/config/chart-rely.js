@@ -412,7 +412,7 @@ export const drawPieChart = function(that, responseData) {
         {
             type: 'pie',
             radius: '65%',
-            center: ['50%', '40%'],
+            center: ['50%', '45%'],
             selectedMode: 'single',
             data: responseData.data,
             emphasis: {
