@@ -9,6 +9,7 @@
           clearable 
           remote
           ref="select"
+          :disabled="endpointExternal"
           :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
           @on-change="updateData"
@@ -22,12 +23,12 @@
       </li>
       <template v-if="!is_mom_yoy">
         <li class="search-li">
-          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
+          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('m_placeholder_refresh')">
+          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
@@ -54,10 +55,10 @@
         </button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
+        <button type="button" v-if="isShow&&endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
+        <button type="button" v-if="isShow && !endpointExternal" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
       </li>
    </ul>
   </div>
@@ -83,7 +84,8 @@ export default {
       disableTime: false,
       autoRefreshConfig: autoRefreshConfig,
       is_mom_yoy: false,
-      params: {}
+      params: {},
+      endpointExternal: false
     }
   },
   computed: {
@@ -110,7 +112,7 @@ export default {
   },
   mounted() {
     this.getEndpointList('.')
-    const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData')) 
+    const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData'))
     localStorage.removeItem('jumpCallData')
     const outerData = jumpCallData || this.$route.params
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
@@ -186,7 +188,14 @@ export default {
         this.getChartsConfig()
       })
     },
-    async getChartsConfig () {
+    disabledEndpoint (val) {
+      this.endpointExternal = val
+    },
+    async getChartsConfig (endpointObj) {
+      if (endpointObj) {
+        this.endpoint = endpointObj.option_value
+        this.endpointObject = endpointObj
+      }
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }

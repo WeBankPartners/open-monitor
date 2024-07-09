@@ -149,16 +149,6 @@ export default {
       this.paginationInfo.pageSize = pageSize
       this.getAlarmdata(this.cacheParams.id)
     },
-    goToEndpointView (alarmItem) {
-      const endpointObject = {
-        option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split('_').slice(-1)[0]
-      }
-      localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
-      this.$router.push({path: '/endpointView'})
-      // const news = this.$router.resolve({name: 'endpointView'})
-      // window.open(news.href, '_blank')
-    },
     goToNotify (item) {
       let params = {
         id: item.id
