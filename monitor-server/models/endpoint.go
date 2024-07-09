@@ -80,7 +80,8 @@ type MetricImportResultDto struct {
 type MetricComparisonExtend struct {
 	Guid               string   `json:"guid" xorm:"guid"`          // 指标Id
 	MetricId           string   `json:"metricId" xorm:"metric_id"` // 指标Id
-	Metric             string   `json:"metric" xorm:"metric"`
+	Metric             string   `json:"metric" xorm:"metric"`      // 原始指标
+	OriginMetric       string   `json:"-" xorm:"origin_metric"`
 	MonitorType        string   `json:"monitor_type" xorm:"monitor_type"`
 	TagOwner           string   `json:"tag_owner" xorm:"tag_owner"`
 	ServiceGroup       string   `json:"service_group" xorm:"service_group"`
