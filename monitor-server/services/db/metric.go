@@ -190,6 +190,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		return
 	}
 	for _, metric := range result {
+		metric.Metric = getOriginMetric(metric.Metric, metric.ComparisonType, metric.CalcMethod, metric.CalcPeriod)
 		if strings.TrimSpace(metric.ServiceGroup) == "" {
 			metric.MetricType = string(models.MetricTypeCommon)
 		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
@@ -494,23 +495,24 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 
 func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (actions []*Action) {
 	actions = []*Action{}
-	var calcType string
+	var calcType, metricName string
 	if len(param.CalcType) > 0 {
 		calcType = strings.Join(param.CalcType, ",")
 	}
 	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
+	metricName = getComparisonMetric(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator}})
 		} else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
 		}
 	} else {
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metric.Metric, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+			Param: []interface{}{newMetricId, metricName, metric.MonitorType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
@@ -549,6 +551,28 @@ func getComparisonMetricId(originMetricId, comparisonType, calcMethod string, ca
 		return ""
 	}
 	return originMetricId + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
+}
+
+func getComparisonMetric(metric, comparisonType, calcMethod string, calcPeriod int) string {
+	if comparisonType == "" {
+		return ""
+	}
+	return metric + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
+}
+
+func getOriginMetric(metric, comparisonType, calcMethod string, calcPeriod int) string {
+	if metric == "" {
+		return ""
+	}
+	if comparisonType == "" {
+		return metric
+	}
+	suffix := "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
+	index := strings.Index(metric, suffix)
+	if index == -1 {
+		return metric
+	}
+	return metric[:index]
 }
 
 func convertMetric2ComparisonParam(comparison *models.MetricComparisonExtend) models.MetricComparisonParam {
