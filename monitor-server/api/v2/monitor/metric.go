@@ -278,6 +278,11 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
+	promQl := db.NewPromExpr(db.GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod))
+	if err = datasource.CheckPrometheusQL(promQl); err != nil {
+		middleware.ReturnValidateError(c, "metric is invalid")
+		return
+	}
 	if strings.TrimSpace(param.MetricComparisonId) == "" {
 		// 新增同环比
 		if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
