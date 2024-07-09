@@ -7,6 +7,7 @@ CREATE TABLE  `metric_comparison` (
     `metric_id` varchar(128) default null COMMENT '指标id',
     `origin_metric_id` varchar(128) default null COMMENT '原始指标id',
     `origin_metric` varchar(64) default null COMMENT '原始指标名称',
+    `origin_prom_expr` tinytext default null COMMENT '原始指标表达式',
     `create_user` varchar(64)  default null COMMENT '创建人',
     `create_time` datetime  default null COMMENT '创建时间',
     PRIMARY KEY (`guid`),
