@@ -151,7 +151,7 @@ func MetricDelete(id string) error {
 
 func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint string) (result []*models.MetricComparisonExtend, err error) {
 	var params []interface{}
-	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid "
+	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid "
 	if guid != "" {
 		baseSql += " and m.guid=? "
 		params = append(params, guid)
@@ -161,17 +161,17 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
+				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
+				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.monitor_type=? and (m.service_group is null or m.service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else if endpointGroup != "" {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and m.service_group is null and endpoint_group = ?"
 			params = []interface{}{endpointGroup}
 		} else if endpoint != "" {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from ("
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric  from ("
 			baseSql = baseSql + "select * from metric where service_group in (select service_group from endpoint_service_rel where endpoint=?)"
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
@@ -180,7 +180,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 			baseSql = baseSql + ") m join metric_comparison mc on mc.metric_id = m.guid"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
 			params = []interface{}{monitorType}
 		}
 	}
@@ -191,7 +191,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		return
 	}
 	for _, metric := range result {
-		metric.Metric = getOriginMetric(metric.Metric, metric.ComparisonType, metric.CalcMethod, metric.CalcPeriod)
+		metric.Metric = metric.OriginMetric
 		if strings.TrimSpace(metric.ServiceGroup) == "" {
 			metric.MetricType = string(models.MetricTypeCommon)
 		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
@@ -523,8 +523,8 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
-	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
-		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
+	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,origin_metric,create_user,create_time) values(?,?,?,?,?,?,?,?,?,?)",
+		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, metric.Metric, operator, now}})
 	return
 }
 
