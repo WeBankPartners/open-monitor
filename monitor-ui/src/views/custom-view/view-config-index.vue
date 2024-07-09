@@ -554,11 +554,11 @@ export default {
       if (!isEmpty(res.data)) {
         let content = '';
         for(let key in res.data) {
-          content = key + '(图表名)不存在以下指标: ' + res.data[key].join(';') + '。 '
+          content += key + '(图表名)不存在以下指标: ' + res.data[key].join(';') + '。 '
         }
         this.$Message.warning({
           content,
-          duration: 3
+          duration: 5
         })
       } else {
         this.$Message.success(this.$t('m_tips_success'))
