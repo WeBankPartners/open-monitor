@@ -333,8 +333,15 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 			failList = append(failList, metric.Metric)
 			continue
 		}
+		param := convertMetric2ComparisonParam(metric)
+		newMetricId := GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+		promExpr := NewPromExpr(newMetricId)
+		if err = datasource.CheckPrometheusQL(promExpr); err != nil {
+			failList = append(failList, metric.Metric)
+			continue
+		}
 		// 新增同环比
-		if subActions := GetAddComparisonMetricActions(convertMetric2ComparisonParam(metric), targetMetric, operator); len(subActions) > 0 {
+		if subActions := GetAddComparisonMetricActions(param, targetMetric, operator); len(subActions) > 0 {
 			actions = append(actions, subActions...)
 		}
 	}
@@ -496,24 +503,25 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 
 func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (actions []*Action) {
 	actions = []*Action{}
-	var calcType, metricName string
+	var calcType, metricName, promExpr string
 	if len(param.CalcType) > 0 {
 		calcType = strings.Join(param.CalcType, ",")
 	}
-	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+	newMetricId := GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	metricName = getComparisonMetric(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+	promExpr = NewPromExpr(newMetricId)
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.Workspace, now, now, operator, operator}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator}})
 		} else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
 		}
 	} else {
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metricName, metric.MonitorType, NewPromExpr(newMetricId), metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
@@ -522,14 +530,10 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 
 // NewPromExpr 需要将 . 替换成 _
 func NewPromExpr(newMetricId string) string {
-	var err error
 	if newMetricId == "" {
 		return ""
 	}
-	newMetricId = strings.ReplaceAll(newMetricId, ".", "_")
-	if err = datasource.CheckPrometheusQL(newMetricId); err != nil {
-	}
-	return newMetricId
+	return strings.ReplaceAll(newMetricId, ".", "_")
 }
 
 func AddComparisonMetric(param models.MetricComparisonParam, metric *models.MetricTable, operator string) error {
@@ -559,7 +563,7 @@ func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error
 	return
 }
 
-func getComparisonMetricId(originMetricId, comparisonType, calcMethod string, calcPeriod int) string {
+func GetComparisonMetricId(originMetricId, comparisonType, calcMethod string, calcPeriod int) string {
 	if comparisonType == "" {
 		return ""
 	}
