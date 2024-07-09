@@ -470,8 +470,8 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 				// 新增看板图表关系表
 				actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 					guid.CreateGuid(), newDashboardId, list[0].Guid, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
+				continue
 			}
-			continue
 		}
 		// 新增图表和图表配置
 		actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
@@ -498,20 +498,43 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 		})
 		actions = append(actions, GetInsertCustomChartPermissionSQL(permissionList)...)
 		if len(chart.ChartSeries) > 0 {
+			var exist bool
 			for _, series := range chart.ChartSeries {
 				// 查询每个指标是否存在,不存在需要记录下来
+				exist = true
 				if series.MetricGuid != "" {
 					metricGuid := ""
 					if _, err = x.SQL("select guid from metric where guid=?", series.MetricGuid).Get(&metricGuid); err != nil {
 						return
 					}
 					if metricGuid == "" {
-						if len(importRes.ChartMap[chart.Name]) == 0 {
-							importRes.ChartMap[chart.Name] = []string{}
-						}
-						importRes.ChartMap[chart.Name] = append(importRes.ChartMap[chart.Name], series.Metric)
-						continue
+						exist = false
 					}
+				} else {
+					// 指标guid为空,则通过metric+MonitorType+ServiceGroup三个都要匹配上则认为指标存在
+					var metricList []*models.MetricTable
+					if err = x.SQL("select * from metric where metric =? and monitor_type =?", series.Metric, series.MonitorType).Find(&metricList); err != nil {
+						return
+					}
+					if len(metricList) == 0 {
+						exist = false
+					} else {
+						exist = false
+						for _, metricTable := range metricList {
+							if metricTable.ServiceGroup == series.ServiceGroup {
+								exist = true
+								break
+							}
+						}
+					}
+				}
+				// 指标不存在,统计不存在指标返回
+				if !exist {
+					if len(importRes.ChartMap[chart.Name]) == 0 {
+						importRes.ChartMap[chart.Name] = []string{}
+					}
+					importRes.ChartMap[chart.Name] = append(importRes.ChartMap[chart.Name], series.Metric)
+					continue
 				}
 				seriesId := guid.CreateGuid()
 				actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
