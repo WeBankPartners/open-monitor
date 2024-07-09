@@ -559,7 +559,7 @@ func DeleteComparisonMetric(id string) (err error) {
 }
 
 func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error) {
-	err = x.SQL("select m.metric,mc.origin_prom_expr as origin_prom_expr,m.prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on m.guid = mc.origin_metric_id").Find(&list)
+	err = x.SQL("select mc.origin_metric,mc.origin_prom_expr as origin_prom_expr,m.prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison mc on m.guid = mc.metric_id").Find(&list)
 	return
 }
 
