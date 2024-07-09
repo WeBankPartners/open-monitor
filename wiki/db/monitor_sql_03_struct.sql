@@ -6,6 +6,7 @@ CREATE TABLE  `metric_comparison` (
     `calc_period` int(11) default 0 COMMENT '计算周期',
     `metric_id` varchar(128) default null COMMENT '指标id',
     `origin_metric_id` varchar(128) default null COMMENT '原始指标id',
+    `origin_metric` varchar(64) default null COMMENT '原始指标名称',
     `create_user` varchar(64)  default null COMMENT '创建人',
     `create_time` datetime  default null COMMENT '创建时间',
     PRIMARY KEY (`guid`),
