@@ -544,7 +544,11 @@ func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrat
 
 func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
 	var strategyRows []*models.AlarmStrategyMetricObj
-	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?", endpointGroup).Find(&strategyRows)
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&strategyRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy table fail with endpointGroup:%s ,err:%s ", endpointGroup, err.Error())
+		return
+	}
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
 	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
