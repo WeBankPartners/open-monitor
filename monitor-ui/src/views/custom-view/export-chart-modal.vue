@@ -146,7 +146,7 @@ export default {
           this.checkedNodeIdList = [];
           this.closeModal();
           let content = JSON.stringify(response.data);
-          let fileName = this.panalName;
+          let fileName = this.panalName + '.json'      
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
