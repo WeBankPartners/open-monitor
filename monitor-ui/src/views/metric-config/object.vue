@@ -25,6 +25,26 @@
       </Col>
     </Row>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
+    <AddGroupDrawer
+      v-if="addVisible && metricType==='originalMetrics'"
+      :visible.sync="addVisible"
+      :monitorType="monitorType"
+      :endpoint_group="endpoint"
+      :serviceGroup="serviceGroup"
+      :data="row"
+      operator="edit"
+    ></AddGroupDrawer>
+    <YearOverYear
+      ref="yearOverYearRef"
+      v-if="addVisible && metricType==='comparisonMetrics'"
+      :visible.sync="addVisible"
+      :monitorType="monitorType"
+      :originalMetricsId="originalMetricsId"
+      :serviceGroup="serviceGroup"
+      :data="row"
+      operator="edit"
+      :endpointGroup="endpoint"
+    ></YearOverYear>
   </div>
 </template>
 
@@ -33,17 +53,21 @@ import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
+import AddGroupDrawer from './components/add-group.vue'
+import YearOverYear from './components/year-over-year.vue'
 import MetricChange from './components/metric-change.vue'
 export default {
   components: {
     TagShow,
-    MetricChange
+    MetricChange,
+    AddGroupDrawer,
+    YearOverYear
   },
   data () {
     return {
       metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       token: null,
-      monitorType: 'process',
+      monitorType: '',
       serviceGroup: '',
       endpoint: '',
       endpointOptions: [],
@@ -194,6 +218,15 @@ export default {
           showType: ['comparisonMetrics']
         },
         {
+          title: this.$t('m_business_configuration'), // 业务配置
+          key: 'log_metric_group_name',
+          width: 200,
+          render: (h, params) => {
+            return <span>{params.row.log_metric_group_name || '-'}</span>
+          },
+          showType: ['originalMetrics']
+        },
+        {
           title: this.$t('m_update_time'), // 更新时间
           key: 'update_time',
           width: 150,
@@ -210,6 +243,34 @@ export default {
             return <span>{params.row.update_user || '-'}</span>
           },
           showType: ['originalMetrics', 'comparisonMetrics']
+        },
+        {
+          title: this.$t('m_table_action'),
+          key: 'action',
+          width: 100,
+          fixed: 'right',
+          render: (h, params) => {
+            return (
+              <div style="display:flex;">
+                 {
+                  /* 查看 */
+                  <Tooltip content={this.$t('m_button_view')} placement="bottom" transfer>
+                    <Button
+                      size="small"
+                      type="info"
+                      onClick={() => {
+                        this.showConfigModal(params.row)
+                      }}
+                      style="margin-right:5px;"
+                    >
+                      <Icon type="md-eye" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                }
+              </div>
+            )
+          },
+          showType: ['originalMetrics', 'comparisonMetrics']
         }
       ],
       workspaceMap: {
@@ -217,7 +278,7 @@ export default {
         any_object: this.$t('m_any_object') // 层级对象
       },
       row: {},
-      type: '', // add、edit
+      addVisible: false, // 是否显示查看
     }
   },
   async mounted () {
@@ -262,6 +323,12 @@ export default {
         },
         { isNeedloading:false }
       )
+    },
+    showConfigModal (row) {
+      this.row = row
+      this.originalMetricsId = row.guid
+      this.monitorType = row.monitor_type
+      this.addVisible = true
     }
   }
 }
