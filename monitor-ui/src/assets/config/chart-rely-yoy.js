@@ -120,6 +120,7 @@ export const drawChart = function(that,config,userConfig, elId) {
     yAxis: [
       {
         type: 'value',
+        name: that.$t('m_difference'),
         alignTicks: true,
         axisLabel: {
           textStyle: {
@@ -165,6 +166,7 @@ export const drawChart = function(that,config,userConfig, elId) {
       },
       {
         type: 'value',
+        name: that.$t('m_percentage_difference'),
         axisLabel: {
           textStyle: {
             color: chartTextColor
