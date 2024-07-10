@@ -528,6 +528,14 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 						}
 					}
 				}
+				if strings.TrimSpace(series.Endpoint) != "" {
+					// 监控对象不存在,记录下来
+					var endpointObj *models.EndpointTable
+					_, err = x.SQL("SELECT * FROM endpoint WHERE id=?", series.Endpoint).Get(endpointObj)
+					if endpointObj == nil || endpointObj.Name == "" {
+						exist = false
+					}
+				}
 				// 指标不存在,统计不存在指标返回
 				if !exist {
 					if len(importRes.ChartMap[chart.Name]) == 0 {
