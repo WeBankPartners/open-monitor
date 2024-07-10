@@ -129,7 +129,7 @@ export default {
         {
           title: this.$t('m_group_type'), // 组类型
           key: 'group_type',
-          width: 80,
+          width: 90,
           render: (h, params) => {
             const groupTypeToDisplay = {
               'level': this.$t('m_field_resourceLevel'),
@@ -244,34 +244,34 @@ export default {
           },
           showType: ['originalMetrics', 'comparisonMetrics']
         },
-        {
-          title: this.$t('m_table_action'),
-          key: 'action',
-          width: 100,
-          fixed: 'right',
-          render: (h, params) => {
-            return (
-              <div style="display:flex;">
-                 {
-                  /* 查看 */
-                  <Tooltip content={this.$t('m_button_view')} placement="bottom" transfer>
-                    <Button
-                      size="small"
-                      type="info"
-                      onClick={() => {
-                        this.showConfigModal(params.row)
-                      }}
-                      style="margin-right:5px;"
-                    >
-                      <Icon type="md-eye" size="16"></Icon>
-                    </Button>
-                  </Tooltip>
-                }
-              </div>
-            )
-          },
-          showType: ['originalMetrics', 'comparisonMetrics']
-        }
+        // {
+        //   title: this.$t('m_table_action'),
+        //   key: 'action',
+        //   width: 100,
+        //   fixed: 'right',
+        //   render: (h, params) => {
+        //     return (
+        //       <div style="display:flex;">
+        //          {
+        //           /* 查看 */
+        //           <Tooltip content={this.$t('m_button_view')} placement="bottom" transfer>
+        //             <Button
+        //               size="small"
+        //               type="info"
+        //               onClick={() => {
+        //                 this.showConfigModal(params.row)
+        //               }}
+        //               style="margin-right:5px;"
+        //             >
+        //               <Icon type="md-eye" size="16"></Icon>
+        //             </Button>
+        //           </Tooltip>
+        //         }
+        //       </div>
+        //     )
+        //   },
+        //   showType: ['originalMetrics', 'comparisonMetrics']
+        // }
       ],
       workspaceMap: {
         all_object: this.$t('m_all_object'), // 全部对象
