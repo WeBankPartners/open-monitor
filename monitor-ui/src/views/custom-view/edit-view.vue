@@ -602,6 +602,8 @@ export default {
         {label: this.$t('m_line_chart'), value: 'line'},
         {label: this.$t('m_bar_chart'), value: 'bar'},
         {label: this.$t('m_area_chart'), value: 'area'},
+        {label: this.$t('m_two_y_axes'), value: 'twoYaxes'}
+        
       ],
       pieTypeOptions: [
         {
