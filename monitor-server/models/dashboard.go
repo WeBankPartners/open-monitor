@@ -250,6 +250,7 @@ type ChartQueryParam struct {
 	Data            []*ChartQueryConfigObj  `json:"data"`
 	Compare         *ChartQueryCompareParam `json:"compare"`
 	CustomChartGuid string                  `json:"custom_chart_guid"`
+	ComparisonFlag  string                  `json:"comparison_flag"`
 }
 
 type ChartQueryConfigObj struct {

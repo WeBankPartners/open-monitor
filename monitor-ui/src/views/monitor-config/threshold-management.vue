@@ -10,11 +10,12 @@
           v-model="targetId"
           filterable
           clearable 
-          remote
           ref="select"
-          :remote-method="getTargrtList"
-          @on-change="search"
-          @on-clear="typeChange"
+          @on-query-change="e => {
+            getTargetOptionsSearch = e; 
+            debounceGetTargetOptions()
+          }"
+          @on-change="searchTableDetail"
           >
           <Option v-for="(option, index) in targetOptions" 
             :value="option.option_value" 
@@ -70,21 +71,21 @@
       </div>
     </div>
     <div v-show="showTargetManagement" class="table-zone">
-      <template v-for="(itemType, index) in thresholdTypes">
-        <thresholdDetail 
+      <thresholdDetail 
           ref='thresholdDetail'
-          v-if="type === itemType"
-          :key=index
-          :type=type
+          :type="type"
           @feedbackInfo="feedbackInfo"
         >
-        </thresholdDetail>
-      </template>
+      </thresholdDetail>
     </div>
   </div>
 </template>
 
 <script>
+import isEmpty from 'lodash/isEmpty'
+import debounce from 'lodash/debounce'
+import find from 'lodash/find'
+import cloneDeep from 'lodash/cloneDeep'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -105,7 +106,8 @@ export default {
       targetOptions: [],
       showTargetManagement: false,
       thresholdTypes: ['group', 'endpoint', 'service'],
-      dataEmptyTip: false
+      dataEmptyTip: false,
+      getTargetOptionsSearch: ''
     }
   },
   computed: {
@@ -115,7 +117,8 @@ export default {
   },
   async mounted () {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.getTargrtList()
+    this.getTargetOptionsSearch = '';
+    this.initTargetByType()
   },
   beforeDestroy () {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -123,6 +126,13 @@ export default {
   methods: {
     feedbackInfo (val) {
       this.dataEmptyTip = val
+    },
+    async initTargetByType() {
+      await this.getTargetOptions();
+      if (!isEmpty(this.targetOptions)) {
+        this.targetId = this.targetOptions[0].option_value;
+        this.searchTableDetail();
+      }
     },
     exportThreshold () {
       const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
@@ -162,7 +172,7 @@ export default {
     },
     uploadSucess () {
       this.$Message.success(this.$t('m_tips_success'))
-      this.search()
+      this.searchTableDetail()
     },
     uploadFailed (error, file) {
       this.$Message.warning({
@@ -172,29 +182,43 @@ export default {
     },
     typeChange () {
       this.clearTargrt()
-      this.getTargrtList()
+      this.initTargetByType()
     },
-    getTargrtList () {
-      this.$refs.select.queryProp = ''
-      const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.targetOptions = responseData
-      }, {isNeedloading:false})
+    getTargetOptions () {
+      return new Promise(resolve => {
+        const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${this.getTargetOptionsSearch}`
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+          this.targetOptions = cloneDeep(responseData);
+          window.targetOptions = this.targetOptions;
+          resolve(this.targetOptions)
+        }, {isNeedloading:false})
+      })
     },
     clearTargrt () {
       this.targetOptions = []
       this.targetId = ''
       this.showTargetManagement = false
-      this.$refs.select.query = ''
+      this.getTargetOptionsSearch = ''
     },
-    search () {
+    searchTableDetail () {
       if (this.targetId) {
         this.showTargetManagement = true
         const find = this.targetOptions.find(item => item.option_value === this.targetId)
-        this.$refs.thresholdDetail[0].setMonitorType(find.type);
-        this.$refs.thresholdDetail[0].getDetail(this.targetId);
+        this.$refs.thresholdDetail.setMonitorType(find.type);
+        this.$refs.thresholdDetail.getDetail(this.targetId);
+        setTimeout(async () => {
+          this.getTargetOptionsSearch = '';
+          await this.getTargetOptions();
+        }, 500)
       }
-    }
+    },
+    debounceGetTargetOptions: debounce(async function() {
+      const targetItem = find(this.targetOptions, {
+        option_value: this.targetId
+      })
+      if (targetItem && this.getTargetOptionsSearch !== targetItem.option_text) return
+      await this.getTargetOptions()
+    }, 400)
   },
   components: {
     TagShow,
