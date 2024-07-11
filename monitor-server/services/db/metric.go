@@ -232,7 +232,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 	return
 }
 
-func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint string) (result []*models.MetricTable, err error) {
+func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query string) (result []*models.MetricTable, err error) {
 	var params []interface{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -244,15 +244,14 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
-				baseSql = "select * from metric m where monitor_type=? and service_group=? and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+				baseSql = "select * from metric m where monitor_type=? and service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				//baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
-				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?)"
+				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else if endpointGroup != "" {
-			baseSql = "select * from metric m where service_group is null and endpoint_group = ? and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+			baseSql = "select * from metric m where service_group is null and endpoint_group = ? "
 			params = []interface{}{endpointGroup}
 		} else if endpoint != "" {
 			baseSql = "select * from ("
@@ -261,11 +260,14 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
-			baseSql = baseSql + ") m where not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+			baseSql = baseSql + ") m where 1=1"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
 			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 			params = []interface{}{monitorType}
+		}
+		if query != "all" {
+			baseSql = baseSql + " and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 		}
 	}
 	result = []*models.MetricTable{}
@@ -354,7 +356,7 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
 	var failList []string
 	var err error
-	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "")
+	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "", "all")
 	if getExistErr != nil {
 		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
@@ -574,22 +576,7 @@ func getComparisonMetric(metric, comparisonType, calcMethod string, calcPeriod i
 	if comparisonType == "" {
 		return ""
 	}
-	return metric + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
-}
-
-func getOriginMetric(metric, comparisonType, calcMethod string, calcPeriod int) string {
-	if metric == "" {
-		return ""
-	}
-	if comparisonType == "" {
-		return metric
-	}
-	suffix := "_" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
-	index := strings.Index(metric, suffix)
-	if index == -1 {
-		return metric
-	}
-	return metric[:index]
+	return metric + "__" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
 }
 
 func convertMetric2ComparisonParam(comparison *models.MetricComparisonExtend) models.MetricComparisonParam {
