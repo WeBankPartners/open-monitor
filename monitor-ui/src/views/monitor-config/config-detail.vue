@@ -1,206 +1,74 @@
 <template>
   <div>
-    <template v-for="(tableItem, tableIndex) in totalPageConfig">
-      <section :key="tableIndex + 'f'">
-        <Card style="margin-bottom: 16px;">
-          <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
-            <div class="title">
-              {{tableItem.display_name}}
-              <span class="underline"></span>
-            </div>
-            <Tag color="gold" v-if="tableItem.service_group===''">{{ $t('m_base_group') }}</Tag>
-            <Tag color="blue" v-else>{{ $t('m_field_resourceLevel') }}</Tag>
-          </div>
-          <span slot="extra" v-if="isEditState">
-            <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('m_button_add') }}</Button>
-            <Button type="primary" @click="updateNotify(tableItem)">{{ $t('m_button_save') }}</Button>
-          </span>
-          <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
-          <Table
-            size="small"
-            :columns="alarmItemTableColumns"
-            :data="tableItem.tableData"
-            :span-method="(e) => handleMergeSpan(e, tableIndex)"
-          />
-          <div class="alarm-tips" style="margin-top:16px">
-            <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
-            <Tooltip :max-width="400" placement="right">
-              <p slot=content>
-                {{ $t('m_alarm_tips') }}
-              </p>
-              <Icon type="ios-help-circle-outline" style="margin-left:4px" />
-            </Tooltip>
-          </div>
-          <div>
-            <template v-if="tableItem.notify.length > 0">
-              <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
-                <Row>
-                  <Col span="2">
-                    <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
-                  </Col>
-                  <Col span="6" style="">
-                    <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
-                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                    </Select>
-                  </Col>
-                  <Col span="5">
-                    <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
-                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                    </Select>
-                  </Col>
-                  <Col span="5">
-                    <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
-                      <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-                    </Select>
-                  </Col>
-                  <Col span="5">
-                    <Input 
-                      v-model="item.description"
-                      clearable 
-                      :disabled="!isEditState"
-                      style="width:99%"
-                      type="text" 
-                      maxlength="50"
-                      :placeholder="$t('m_tableKey_description')"/>
-                  </Col>
-                </Row>
-              </div>
-            </template>
-          </div>
-        </Card>
-      </section>
-    </template>
-    <!-- 已废弃 -->
-    <ModalComponent :modelConfig="modelConfig">
-      <div slot="metricSelect" class="extentClass">  
-        <div v-if="isModalShow" class="left-content">
-          <div class="use-underline-title mb-3">
-            {{$t('m_alarm_config')}}
+    <div v-for="(tableItem, tableIndex) in totalPageConfig" :key="tableIndex + 'f'">
+      <Card style="margin-bottom: 16px;">
+        <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
+          <div class="title">
+            {{tableItem.display_name}}
             <span class="underline"></span>
           </div>
-          <Form ref="formData" :model="formData" :rules="ruleValidate" :label-width="100">
-            <FormItem :label="$t('m_alarmName')" prop="name">
-                <Input v-model="formData.name" :disabled="!isEditState" :maxlength="10"></Input>
-            </FormItem>
-            <FormItem :label="$t('m_tableKey_s_priority')" prop="priority">
-                <Select 
-                  v-model="formData.priority"
-                  :disabled="!isEditState">
-                  <Option 
-                    v-for="item in modelConfig.priorityList"
-                    :value="item.value" 
-                    :label="item.label"
-                    :key="item.value">
-                    {{ $t(item.label) }}</Option>
-                </Select>
-            </FormItem>
-            <FormItem :label="$t('m_tableKey_status')" prop="notify_enable">
-                <Select 
-                  :disabled="!isEditState"
-                  v-model="formData.notify_enable" >
-                  <Option 
-                    v-for="item in modelConfig.notifyEnableOption" 
-                    :value="item.value" 
-                    :label="item.label"
-                    :key="item.value">
-                    {{ item.label }}</Option>
-                </Select>
-            </FormItem>
-            <FormItem :label="$t('delay')" prop="notify_delay_second">
-                <Select 
-                  filterable 
-                  :disabled="!isEditState"
-                  v-model="formData.notify_delay_second">
-                  <Option 
-                    v-for="item in modelConfig.notifyDelayOption" 
-                    :value="item.value" 
-                    :key="item.value">
-                    {{ item.label }}
-                  </Option>
-                </Select>
-            </FormItem>
-            <FormItem :label="$t('m_active_window')" prop="active_window">
-                <TimePicker 
-                  v-model="formData.active_window" 
-                  :clearable="false" 
-                  format="HH:mm" 
-                  :disabled="!isEditState"
-                  type="timerange" 
-                  placement="bottom-end" 
-                  style="width: 168px">
-                </TimePicker>
-            </FormItem>
-            <FormItem :label="$t('m_tableKey_content')" prop="content">
-                <Input 
-                  type="textarea" 
-                  :disabled="!isEditState"
-                  v-model="formData.content"
-                  :maxlength="200">
-                </Input>
-            </FormItem>
-            <span class='arrange-config-Title'>{{$t('m_alarm_schedulingNotification')}}({{$t('m_current_alarm')}})</span>
-            <div 
-              v-for="(item, index) in formData.notify"
-              :key="index + 'S'"
-              class="arrange-item"
-              >
-              <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
-              <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
-                <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('m_field_role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('m_callback_mode')" :delay="1000">
-                <Select v-model="item.proc_callback_mode" :disabled="!isEditState" style="width: 100px" :placeholder="$t('m_callback_mode')">
-                  <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
-                <input 
-                  v-model="item.description" 
-                  :disabled="!isEditState"
-                  style="width: 100px"
-                  type="text" 
-                  maxlength="50"
-                  :placeholder="$t('m_tableKey_description')"
-                  class="form-control model-input search-input c-dark"/>
-              </Tooltip>
+          <Tag color="gold" v-if="tableItem.service_group===''">{{ $t('m_base_group') }}</Tag>
+          <Tag color="blue" v-else>{{ $t('m_field_resourceLevel') }}</Tag>
+        </div>
+        <span slot="extra" v-if="isEditState">
+          <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('m_button_add') }}</Button>
+          <Button type="primary" @click="updateNotify(tableItem)">{{ $t('m_button_save') }}</Button>
+        </span>
+        <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
+        <Table
+          size="small"
+          :columns="alarmItemTableColumns"
+          :data="tableItem.tableData"
+          :span-method="(e) => handleMergeSpan(e, tableIndex)"
+        />
+        <div class="alarm-tips" style="margin-top:16px">
+          <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
+          <Tooltip :max-width="400" placement="right">
+            <p slot=content>
+              {{ $t('m_alarm_tips') }}
+            </p>
+            <Icon type="ios-help-circle-outline" style="margin-left:4px" />
+          </Tooltip>
+        </div>
+        <div>
+          <template v-if="tableItem.notify.length > 0">
+            <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
+              <Row>
+                <Col span="2">
+                  <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                </Col>
+                <Col span="6" style="">
+                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
+                    <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                    <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Input 
+                    v-model="item.description"
+                    clearable 
+                    :disabled="!isEditState"
+                    style="width:99%"
+                    type="text" 
+                    maxlength="50"
+                    :placeholder="$t('m_tableKey_description')"/>
+                </Col>
+              </Row>
             </div>
-          </Form>
+          </template>
         </div>
-        <div class="right-content">
-          <div class="use-underline-title mb-3">
-            {{$t('m_field_metric')}}{{$t('m_field_threshold')}}
-            <span class="underline"></span>
-          </div>
-          <Table
-            style="width:100%;"
-            :border="false"
-            size="small"
-            :columns="metricItemTableColumns"
-            :data="formData.conditions"
-          />
-          <Button
-            @click.stop="onAddIconClick"
-            :disabled="!isEditState"
-            type="success"
-            size="small"
-            class="mt-2"
-            ghost
-            icon="md-add"
-          ></Button>
-        </div>
-      </div>
-      <div slot="btn">
-        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('m_button_save')}}</Button>
-        <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
-      </div>
-    </ModalComponent>
+      </Card>
+    </div>
+    <div></div>
     <!-- 新增告警列表 -->
     <Modal
       :width="1200"
@@ -557,6 +425,11 @@ export default {
               <Select
                 value={params.row.metric}
                 disabled={!this.isEditState}
+                on-on-open-change={e => {
+                  if (e) {
+                    this.getMetricList()
+                  }
+                }}
                 on-on-change={v => {
                   if (v) {
                     this.getTagList(v, params.index)
@@ -951,8 +824,8 @@ export default {
     },
     getMetricListPath(data) {
       return this.type === 'service' 
-        ? `/monitor/api/v2/monitor/metric/list?monitorType=${data.monitor_type}&serviceGroup=${this.targetId}` 
-        : `/monitor/api/v2/monitor/metric/list?monitorType=${this.monitorType}`;
+        ? `/monitor/api/v2/monitor/metric/list?monitorType=${data.monitor_type}&serviceGroup=${this.targetId}&query=all` 
+        : `/monitor/api/v2/monitor/metric/list?monitorType=${this.monitorType}&query=all`;
     },
     getSymbolAndValue(str) {
       if (!str.length) return {};
@@ -1212,7 +1085,6 @@ export default {
         })
       })
     },
-
     async getTagList(metricId, tableIndex) {
       const item = this.formData.conditions[tableIndex];
       item.tagOptions = await this.findTagsByMetric(metricId);
@@ -1229,6 +1101,12 @@ export default {
         }
         Vue.set(item, 'tags', tags)
       }
+    },
+    getMetricList() {
+      const api = this.getMetricListPath(this.selectedData);
+      this.request('GET', api, '', res => {
+        this.modelConfig.metricList = res
+      })
     }
   },
   computed: {
