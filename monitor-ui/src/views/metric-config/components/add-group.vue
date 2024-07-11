@@ -60,7 +60,7 @@
             <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
-          <FormItem :label="$t('m_preview') + $t('m_endpoint')">
+          <FormItem :label="$t('m_preview') +' '+ $t('m_endpoint')">
             <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
@@ -243,7 +243,8 @@ export default {
     getEndpoint () {
       const params = {
         type: this.monitorType,
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        endpointGroup: this.endpoint_group
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
