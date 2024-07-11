@@ -532,6 +532,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 			param.Step = tmpStep
 			continue
 		}
+		query.ComparisonFlag = param.ComparisonFlag
 		tmpSerials := ds.PrometheusData(query)
 		// 如果归档数据可用，尝试从归档数据中补全数据
 		if db.ArchiveEnable {
