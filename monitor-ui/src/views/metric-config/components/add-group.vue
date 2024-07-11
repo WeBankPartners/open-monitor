@@ -15,8 +15,12 @@
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
           <!--名称-->
-          <FormItem :label="$t('m_tableKey_name')" required>
-            <Input :disabled="operator === 'edit'" v-model="metricConfigData.metric"></Input>
+          <FormItem :label="$t('m_metric_key')" required>
+            <Input 
+              :disabled="operator === 'edit'" 
+              v-model="metricConfigData.metric"
+              :placeholder="$t('m_metric_key_placeholder_second')"
+            ></Input>
           </FormItem>
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
@@ -304,8 +308,8 @@ export default {
       )
     },
     handleSubmit () {
-      if (!this.metricConfigData.metric) {
-        return this.$Message.error(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
+      if (!(/^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/.test(this.metricConfigData.metric))) {
+        return this.$Message.error(this.$t('m_metric_key') + ':' + this.$t('m_regularization_check_failed_tips'))
       }
       if (!this.workspace) {
         return this.$Message.error(this.$t('m_scope') + this.$t('m_tips_required'))
