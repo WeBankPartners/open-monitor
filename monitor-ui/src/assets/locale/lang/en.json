@@ -686,5 +686,6 @@
   "m_basic_type": "Basic Type",
   "m_configuration_page": "Configuration Page",
   "m_group_type": "Group Type",
-  "m_group_name_": "Group Name"
+  "m_group_name_": "Group Name",
+  "m_two_y_axes": "Two Y-axis"
 }
