@@ -384,7 +384,7 @@
   "m_success": "成功",
   "m_fail": "失败",
   "m_metric_code": "指标编码",
-  "m_metric_prefix_code_validate": "请输入1到6个字符的字母、数字、下划线或短横线",
+  "m_metric_prefix_code_validate": "请输入1到6个字符的字母(开头)、数字",
   "m_metric_group": "指标组",
   "m_metric_config_type": "指标配置类型",
   "m_add_one_tip": "请至少添加一条",
@@ -687,6 +687,12 @@
   "m_basic_type": "基础类型",
   "m_configuration_page": "配置页面",
   "m_group_type": "组类型",
-  "m_group_name_": "组名"
+  "m_group_name_": "组名",
+  "m_metric_code_placeholder": "仅支持英文(开头）、数字",
+  "m_regularization_check_failed_tips": "只能英文开头，中间可以有英文数字下划线，英文和数字结尾的字符串",
+  "m_metric_key_placeholder": "英文(开头)、数字、下划线",
+  "m_metric_key_placeholder_second": "仅支持英文(开头）、数字、下划线'_'",
+  "m_original_metric_key": "原始指标key",
+  "m_enter_name_tips": "请输入对象名"
 }
 
