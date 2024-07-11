@@ -385,7 +385,7 @@
   "m_success": "Success",
   "m_fail": "Fail",
   "m_metric_code": "Metric Code",
-  "m_metric_prefix_code_validate": "Enter 1 To 6 Characters Of Letters, Numbers, Underscores, Or Dashes",
+  "m_metric_prefix_code_validate": "Please enter 1 to 6 letters (beginning) or numbers",
   "m_metric_group": "Metric Group",
   "m_metric_config_type": "Metric Config Type",
   "m_add_one_tip": "Please Add At Least One",
@@ -687,5 +687,11 @@
   "m_configuration_page": "Configuration Page",
   "m_group_type": "Group Type",
   "m_group_name_": "Group Name",
-  "m_two_y_axes": "Two Y-axis"
+  "m_two_y_axes": "Two Y-axis",
+  "m_metric_code_placeholder": "Only supports English (at the beginning) and numbers",
+  "m_regularization_check_failed_tips": "It can only start with English, and can have English, numbers, and underscores in the middle, and end with English and numbers",
+  "m_metric_key_placeholder": "English (at the beginning), numbers, underscores",
+  "m_metric_key_placeholder_second": "Only English (at the beginning), numbers, and underscores '_' are supported",
+  "m_original_metric_key": "Original indicator key",
+  "m_enter_name_tips": "Please enter the object name"
 }
