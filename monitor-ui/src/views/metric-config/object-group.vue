@@ -113,10 +113,16 @@ export default {
           showType: ['comparisonMetrics']
         },
         {
-          title: this.$t('m_metric'), // 指标
+          title: this.$t('m_metric'), // 原始指标-指标
           key: 'metric',
           minWidth: 200,
-          showType: ['originalMetrics', 'comparisonMetrics']
+          showType: ['originalMetrics']
+        },
+        {
+          title: this.$t('m_metric'), // 同环比指标-指标
+          key: 'origin_metric',
+          minWidth: 200,
+          showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_scope'), // 作用域
