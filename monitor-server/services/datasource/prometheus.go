@@ -105,6 +105,14 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		var serial m.SerialModel
 		serial.Type = "line"
 		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result), query.CustomDashboard)
+		// 同环比 指标
+		if query.ComparisonFlag == "Y" {
+			if otr.Metric["calc_type"] == "diff" {
+				serial.Type = "bar"
+			} else if otr.Metric["calc_type"] == "diff_percent" {
+				serial.YAxisIndex = 1
+			}
+		}
 		var sdata m.DataSort
 		for _, v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
