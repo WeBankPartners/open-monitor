@@ -120,6 +120,7 @@ export default {
               <Input
                 value={params.row.name}
                 disabled={this.view}
+                placeholder={this.$t('m_metric_key_placeholder')}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'name', v)
                   this.paramKeyChange()
@@ -239,6 +240,7 @@ export default {
               <Input
                 value={params.row.metric}
                 disabled={this.view}
+                placeholder={this.$t('m_metric_key_placeholder')}
                 onInput={v => {
                   this.changeVal('metric_list', params.index, 'metric', v)
                 }}
@@ -435,10 +437,24 @@ export default {
         }
         this.configInfo.log_metric_monitor = parentGuid
       }
-
       this.showModal = true
     },
+    regularCheckValue(arr = [], key) {
+      const regex = /^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/
+      for(let i=0; i<arr.length; i++) {
+        if (!regex.test(arr[i][key])) {
+          return false
+        }
+      }
+      return true
+    },
     paramsValidate (tmpData) {
+      if (!this.regularCheckValue(tmpData.param_list, 'name')) {
+        return this.$Message.warning(`${this.$t('m_parameter_key')}: ${this.$t('m_regularization_check_failed_tips')}`)
+      }
+      if (!this.regularCheckValue(tmpData.metric_list, 'metric')) {
+        return this.$Message.warning(`${this.$t('m_metric_key')}: ${this.$t('m_regularization_check_failed_tips')}`)
+      }
       if (tmpData.name === '') {
         this.$Message.warning(`${this.$t('m_tableKey_name')}${this.$t('m_cannot_be_empty')}`)
         return true
