@@ -191,7 +191,6 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		return
 	}
 	for _, metric := range result {
-		metric.Metric = metric.OriginMetric
 		if strings.TrimSpace(metric.ServiceGroup) == "" {
 			metric.MetricType = string(models.MetricTypeCommon)
 		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
@@ -512,7 +511,7 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	newMetricId := GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	now := time.Now().Format(models.DatetimeFormat)
 	metricName = getComparisonMetric(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
-	promExpr = NewPromExpr(newMetricId)
+	promExpr = NewPromExpr(metricName)
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
