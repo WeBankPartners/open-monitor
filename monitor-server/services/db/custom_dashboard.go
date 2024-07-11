@@ -481,22 +481,24 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 		// 新增看板图表关系表
 		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
-		// 新增图表权限
-		for _, useRole := range useRoles {
+		if chart.Public {
+			// 新增图表权限
+			for _, useRole := range useRoles {
+				permissionList = append(permissionList, &models.CustomChartPermission{
+					Guid:           guid.CreateGuid(),
+					DashboardChart: newChartId,
+					RoleId:         useRole,
+					Permission:     string(models.PermissionUse),
+				})
+			}
 			permissionList = append(permissionList, &models.CustomChartPermission{
 				Guid:           guid.CreateGuid(),
 				DashboardChart: newChartId,
-				RoleId:         useRole,
-				Permission:     string(models.PermissionUse),
+				RoleId:         mgmtRole,
+				Permission:     string(models.PermissionMgmt),
 			})
+			actions = append(actions, GetInsertCustomChartPermissionSQL(permissionList)...)
 		}
-		permissionList = append(permissionList, &models.CustomChartPermission{
-			Guid:           guid.CreateGuid(),
-			DashboardChart: newChartId,
-			RoleId:         mgmtRole,
-			Permission:     string(models.PermissionMgmt),
-		})
-		actions = append(actions, GetInsertCustomChartPermissionSQL(permissionList)...)
 		if len(chart.ChartSeries) > 0 {
 			var exist bool
 			for _, series := range chart.ChartSeries {
