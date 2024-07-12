@@ -94,7 +94,8 @@
 
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
-import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+// import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
 export default {
   props: {
@@ -222,7 +223,6 @@ export default {
       const params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup,
-        monitorType: this.monitorType,
         endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -269,7 +269,9 @@ export default {
         '/monitor/api/v1/dashboard/comparison_chart',
         params,
         responseData => {
-          readyToDraw(this, responseData, 1, {}, 'echartId')
+          // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
+          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes'};
+          readyToDraw(this, responseData, 1, chartConfig, 'echartId')
         },
         { isNeedloading: false }
       )
