@@ -210,8 +210,8 @@ export const drawChart = function(that,config,userConfig, elId) {
       },
     },  
     toolbox: {
-      right: finalConfig.chartType !== 'twoYaxes' ? '4%': '120px',
-      top: '4px',
+      right: '4%',
+      top: '10px',
       feature: {
         // dataZoom: {
         //     yAxisIndex: 'none'
@@ -272,8 +272,6 @@ export const drawChart = function(that,config,userConfig, elId) {
     yAxis: [
       {
         type: 'value',
-        name: finalConfig.chartType !== 'twoYaxes' ? '': that.$t('m_difference'),
-        alignTicks: true,
         axisLabel: {
           textStyle: {
             color: chartTextColor
@@ -316,38 +314,10 @@ export const drawChart = function(that,config,userConfig, elId) {
           }
         }
       },
-      {
-        type: 'value',
-        name: finalConfig.chartType !== 'twoYaxes' ? '': that.$t('m_percentage_difference'),
-        axisLabel: {
-          textStyle: {
-            color: chartTextColor
-          },
-          show: true,
-          interval: 'auto',
-          formatter: (value) => {
-            return value + '%'
-          }
-        },
-        show: true,
-        axisLine:{
-          lineStyle:{
-            color:'#a1a1a2'
-          }
-        }, 
-        splitLine: {
-          show: true,
-          lineStyle:{
-            color: ['#a1a1a2'],
-            width: 1,
-           type: 'solid'
-          }
-        }
-      }
     ],
     series: config.series
   }
-  if (finalConfig.chartType !== 'twoYaxes' && finalConfig.chartType !== config.series[0]) {
+  if (finalConfig.chartType !== config.series[0]) {
     config.series.forEach(se => {
       se.type = finalConfig.chartType
     })
