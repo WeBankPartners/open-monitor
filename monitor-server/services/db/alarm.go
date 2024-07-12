@@ -31,14 +31,14 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	}
 	querySql := `SELECT t5.* FROM (
 			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint t1 
+			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
 			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint t1 
+			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
