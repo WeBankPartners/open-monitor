@@ -687,6 +687,7 @@
   "m_configuration_page": "Configuration Page",
   "m_group_type": "Group Type",
   "m_group_name_": "Group Name",
+  "m_two_y_axes": "Two Y-axis",
   "m_metric_code_placeholder": "Only supports English (at the beginning) and numbers",
   "m_regularization_check_failed_tips": "It can only start with English, and can have English, numbers, and underscores in the middle, and end with English and numbers",
   "m_metric_key_placeholder": "English (at the beginning), numbers, underscores",
