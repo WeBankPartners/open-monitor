@@ -1,20 +1,22 @@
 <template>
-  <div class="diy-tag" 
-    :style="{color: getGroupColor(tagName) + ' !important',
-      borderColor: getGroupColor(tagName) + ' !important'}">
+  <div class="diy-tag"
+       :style="{color: getGroupColor(tagName) + ' !important',
+                borderColor: getGroupColor(tagName) + ' !important'}"
+  >
     {{tagName}}
   </div>
 </template>
 <script>
 import {endpointTag} from '@/assets/config/common-config'
 export default {
+  name: 'TagShow',
   data() {
     return {
-      endpointTag: endpointTag,
+      endpointTag,
       cacheColor: {}
     }
   },
-  props:{
+  props: {
     index: {
       default: 0,
       type: Number
@@ -34,35 +36,35 @@ export default {
   },
   methods: {
     stringToColor(str) {
-      let hash = 0;
+      let hash = 0
       for (let i = 0; i < str.length; i++) {
-          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        hash = str.charCodeAt(i) + ((hash << 5) - hash)
       }
-      let color = '#';
+      let color = '#'
       for (let i = 0; i < 3; i++) {
-          let value = (hash >> (i * 8)) & 0xFF;
-          // Add some offset to make the color darker
-          value = Math.min(value + 50, 255);
-          color += ('00' + value.toString(16)).substr(-2);
+        let value = (hash >> (i * 8)) & 0xFF
+        // Add some offset to make the color darker
+        value = Math.min(value + 50, 255)
+        color += ('00' + value.toString(16)).substr(-2)
       }
 
       // Convert hex color to RGB
-      let r = parseInt(color.substr(1, 2), 16);
-      let g = parseInt(color.substr(3, 2), 16);
-      let b = parseInt(color.substr(5, 2), 16);
+      const r = parseInt(color.substr(1, 2), 16)
+      const g = parseInt(color.substr(3, 2), 16)
+      const b = parseInt(color.substr(5, 2), 16)
 
       // Calculate brightness and saturation
-      let y = 0.299 * r + 0.587 * g + 0.114 * b;
-      let s = 1 - 3 * Math.min(r, g, b) / (r + g + b);
+      const y = 0.299 * r + 0.587 * g + 0.114 * b
+      const s = 1 - 3 * Math.min(r, g, b) / (r + g + b)
 
       // If the brightness is too high or the saturation is too low, generate a new color
       if (y > 150 || s < 0.2) {
-          return this.stringToColor(str + 'a');
+        return this.stringToColor(str + 'a')
       }
 
-      return color;
+      return color
     },
-    getGroupColor (str) {
+    getGroupColor(str) {
       return this.stringToColor(str)
     }
   }
