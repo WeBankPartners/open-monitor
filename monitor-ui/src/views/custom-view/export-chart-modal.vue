@@ -1,28 +1,30 @@
 <template>
   <Modal
-      v-model="isExportModalShow"
-      :title="$t('m_select_export_chart')"
-      @on-visible-change="onVisibleChange">
-      <template #footer>
-        <div>
-          <Button
-            type="default"
-            @click="onExportModalClose" 
-          >{{ $t('m_button_cancel') }}</Button>
-          <Button 
-            @click="onExportChartConfirm" 
-            :disabled="checkedNodeIdList.length === 0"
-            type="primary">
-            {{ $t('m_save') }}
-          </Button>
-        </div>
-      </template>
-      <Tree :data="exportChartList"
-        show-checkbox 
-        multiple
-        @on-check-change="onTreeCheckChange"	
-      />
-    </Modal>
+    v-model="isExportModalShow"
+    :title="$t('m_select_export_chart')"
+    @on-visible-change="onVisibleChange"
+  >
+    <template #footer>
+      <div>
+        <Button
+          type="default"
+          @click="onExportModalClose"
+        >{{ $t('m_button_cancel') }}</Button>
+        <Button
+          @click="onExportChartConfirm"
+          :disabled="checkedNodeIdList.length === 0"
+          type="primary"
+        >
+          {{ $t('m_save') }}
+        </Button>
+      </div>
+    </template>
+    <Tree :data="exportChartList"
+          show-checkbox
+          multiple
+          @on-check-change="onTreeCheckChange"
+    />
+  </Modal>
 </template>
 
 <script>
@@ -33,7 +35,7 @@ import axios from 'axios'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 
 export default {
-  name: "",
+  name: '',
   props: {
     pannelId: {
       type: Number
@@ -48,11 +50,12 @@ export default {
     }
   },
   watch: {
-    isModalShow: function (val) {
+    isModalShow(val) {
       if (val) {
-        this.getTreeList();
-      } else {
-        this.isExportModalShow = false;
+        this.getTreeList()
+      }
+      else {
+        this.isExportModalShow = false
       }
     }
   },
@@ -74,21 +77,22 @@ export default {
       })
     },
     processChartList(chartList = []) {
-      this.allNodeIdList = [];
-      let children = [];
-      for(let i=0; i < chartList.length; i++) {
-        const item = chartList[i];
+      this.allNodeIdList = []
+      const children = []
+      for (let i=0; i < chartList.length; i++) {
+        const item = chartList[i]
         this.allNodeIdList.push(item.id)
-        let resObj = find(children, {
+        const resObj = find(children, {
           title: item.group
         })
         if (resObj) {
-          resObj.children = resObj.children || [];
+          resObj.children = resObj.children || []
           resObj.children.push({
             title: item.name,
             id: item.id
           })
-        } else {
+        }
+        else {
           children.push({
             title: item.group,
             expand: true,
@@ -105,9 +109,9 @@ export default {
         title: ''
       })
       if (unclassifiedChart) {
-        const tempChart = cloneDeep(unclassifiedChart);
-        tempChart.title = this.$t('m_unclassified');
-        remove(children, val => val.title === '');
+        const tempChart = cloneDeep(unclassifiedChart)
+        tempChart.title = this.$t('m_unclassified')
+        remove(children, val => val.title === '')
         children.push(tempChart)
       }
       this.exportChartList = [
@@ -117,67 +121,69 @@ export default {
           checked: true,
           children
         }
-      ];
-      this.isExportModalShow = true;
-      this.checkedNodeIdList = cloneDeep(this.allNodeIdList);
+      ]
+      this.isExportModalShow = true
+      this.checkedNodeIdList = cloneDeep(this.allNodeIdList)
     },
     getAuthorization() {
       if (localStorage.getItem('monitor-accessToken')) {
         return 'Bearer ' + localStorage.getItem('monitor-accessToken')
-      } else {
-        return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null;
       }
+      return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+
     },
     onExportChartConfirm() {
       const params = {
         id: this.pannelId,
         chartIds: this.checkedNodeIdList
       }
-      const api = '/monitor/api/v2/dashboard/custom/export';
-      
+      const api = '/monitor/api/v2/dashboard/custom/export'
+
       const headers = {
         'X-Auth-Token': getToken() || null,
-        'Authorization': this.getAuthorization()
+        Authorization: this.getAuthorization()
       }
       axios.post(api, params, {
         headers
       }).then(response => {
         if (response.status < 400) {
-          this.checkedNodeIdList = [];
-          this.closeModal();
-          let content = JSON.stringify(response.data);
-          let fileName = this.panalName + '.json'      
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
+          this.checkedNodeIdList = []
+          this.closeModal()
+          const content = JSON.stringify(response.data)
+          const fileName = this.panalName + '.json'
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
+          }
+          else {
             if ('download' in document.createElement('a')) { // 非IE下载
-              let elink = document.createElement('a')
+              const elink = document.createElement('a')
               elink.download = fileName
               elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)  
+              elink.href = URL.createObjectURL(blob)
               document.body.appendChild(elink)
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            } else { // IE10+下载
+            }
+            else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
         }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      });
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
     onExportModalClose() {
-      this.checkedNodeIdList = [];
-      this.closeModal();
+      this.checkedNodeIdList = []
+      this.closeModal()
     },
     changeTreeChecked(arr, val) {
-      for(let i=0; i<arr.length; i++) {
-        const item = arr[i];
+      for (let i=0; i<arr.length; i++) {
+        const item = arr[i]
         item.checked = val
         if (item.children && item.children.length > 0) {
           this.changeTreeChecked(item.children, val)

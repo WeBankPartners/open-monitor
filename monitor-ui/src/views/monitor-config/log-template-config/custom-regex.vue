@@ -13,69 +13,69 @@
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
+      <div :class="isfullscreen ? 'modal-container-fullscreen' : 'modal-container-normal'">
         <Row>
           <Col span="8">
-            <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
-            <Form :label-width="120">
-              <FormItem :label="$t('m_configuration_name')">
-                <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
-                  <Input
-                    v-model="configInfo.name"
-                    maxlength="30"
-                    show-word-limit
-                    style="width: 96%"
-                    :disabled="view"
-                  />
-                  <span style="color: red">*</span>
-                </Tooltip>
-              </FormItem>
-              <FormItem :label="$t('m_log_example')">
+          <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
+          <Form :label-width="120">
+            <FormItem :label="$t('m_configuration_name')">
+              <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
                 <Input
-                  v-model="configInfo.demo_log"
-                  type="textarea"
-                  :rows="15"
+                  v-model="configInfo.name"
+                  maxlength="30"
+                  show-word-limit
                   style="width: 96%"
                   :disabled="view"
                 />
-                <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
-                  {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
-                </div>
-              </FormItem>
-            </Form>
+                <span style="color: red">*</span>
+              </Tooltip>
+            </FormItem>
+            <FormItem :label="$t('m_log_example')">
+              <Input
+                v-model="configInfo.demo_log"
+                type="textarea"
+                :rows="15"
+                style="width: 96%"
+                :disabled="view"
+              />
+              <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
+                {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
+              </div>
+            </FormItem>
+          </Form>
           </Col>
           <Col span="16" style="border-left: 2px solid rgb(232 234 236)">
-            <div style="margin-left: 8px">
-              <!-- 采集参数 -->
-              <div>
-                <Divider orientation="left" size="small">{{ $t('m_parameter_collection') }}</Divider>
-                <Table
-                  style="position: inherit;"
-                  size="small"
-                  :columns="columnsForParameterCollection"
-                  :data="configInfo.param_list"
-                  width="100%"
-                ></Table>
-                <div style="text-align: right;margin: 0 33px;">
-                  <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="margin:12px">{{ $t('m_match') }}</Button>
-                  <Button type="success" :disabled="view" @click="addParameterCollection" ghost size="small" icon="md-add"></Button>
-                </div>
-              </div>
-              <!-- 计算指标 -->
-              <div>
-                <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
-                <Table
-                  style="position: inherit;"
-                  size="small"
-                  :columns="columnsForComputeMetrics"
-                  :data="configInfo.metric_list"
-                  width="100%"
-                ></Table>
-                <div style="text-align: right;margin: 0 24px;">
-                  <Button type="success" :disabled="view" @click="addComputeMetrics" ghost size="small" icon="md-add" style="margin: 12px;"></Button>
-                </div>
+          <div style="margin-left: 8px">
+            <!-- 采集参数 -->
+            <div>
+              <Divider orientation="left" size="small">{{ $t('m_parameter_collection') }}</Divider>
+              <Table
+                style="position: inherit;"
+                size="small"
+                :columns="columnsForParameterCollection"
+                :data="configInfo.param_list"
+                width="100%"
+              ></Table>
+              <div style="text-align: right;margin: 0 33px;">
+                <Button type="primary" :disabled="configInfo.demo_log === '' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="margin:12px">{{ $t('m_match') }}</Button>
+                <Button type="success" :disabled="view" @click="addParameterCollection" ghost size="small" icon="md-add"></Button>
               </div>
             </div>
+            <!-- 计算指标 -->
+            <div>
+              <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
+              <Table
+                style="position: inherit;"
+                size="small"
+                :columns="columnsForComputeMetrics"
+                :data="configInfo.metric_list"
+                width="100%"
+              ></Table>
+              <div style="text-align: right;margin: 0 24px;">
+                <Button type="success" :disabled="view" @click="addComputeMetrics" ghost size="small" icon="md-add" style="margin: 12px;"></Button>
+              </div>
+            </div>
+          </div>
           </Col>
         </Row>
       </div>
@@ -91,13 +91,13 @@
 <script>
 import TagMapConfig from './tag-map-config.vue'
 export default {
-  name: "standard-regex",
+  name: 'standard-regex',
   data() {
     return {
       showModal: false,
       isfullscreen: true,
       isParmasChanged: false,
-      parentGuid: '', //上级唯一标识
+      parentGuid: '', // 上级唯一标识
       isAdd: true,
       view: false, // 仅查看，供对象类型查看使用
       configInfo: {
@@ -107,68 +107,58 @@ export default {
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_parameter_key')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.name}
-                disabled={this.view}
-                placeholder={this.$t('m_metric_key_placeholder')}
-                onInput={v => {
-                  this.changeVal('param_list', params.index, 'name', v)
-                  this.paramKeyChange()
-                }}
-              />
-            )
-          }
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_parameter_key')}</span>
+            </span>
+          ),
+          render: (h, params) => (
+            <Input
+              value={params.row.name}
+              disabled={this.view}
+              placeholder={this.$t('m_metric_key_placeholder')}
+              onInput={v => {
+                this.changeVal('param_list', params.index, 'name', v)
+                this.paramKeyChange()
+              }}
+            />
+          )
         },
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_extract_regular')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="500">
-                <div slot="content">
-                  <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
-                </div>
-                <Input
-                  value={params.row.regular}
-                  disabled={this.view}
-                  onInput={v => {
-                    this.changeVal('param_list', params.index, 'regular', v)
-                  }}
-                />
-              </Tooltip>
-            )
-          }
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_extract_regular')}</span>
+            </span>
+          ),
+          render: (h, params) => (
+            <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="500">
+              <div slot="content">
+                <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
+              </div>
+              <Input
+                value={params.row.regular}
+                disabled={this.view}
+                onInput={v => {
+                  this.changeVal('param_list', params.index, 'regular', v)
+                }}
+              />
+            </Tooltip>
+          )
         },
         {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_matching_result')}</span>
-              </span>
-            )
-          },
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_matching_result')}</span>
+            </span>
+          ),
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
@@ -206,70 +196,60 @@ export default {
           key: 'action',
           width: 80,
           align: 'left',
-          render: (h, params) => {
-            return (
-              <div style="text-align: left; cursor: pointer;display: inline-flex;">
-                <Button
-                  size="small"
-                  type="error"
-                  style="margin-right:5px;"
-                  disabled={this.view}
-                  onClick={() => this.deleteAction('param_list', params.index)}
-                >
-                  <Icon type="md-trash" size="16"></Icon>
-                </Button>
-              </div>
-            )
-          }
+          render: (h, params) => (
+            <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Button
+                size="small"
+                type="error"
+                style="margin-right:5px;"
+                disabled={this.view}
+                onClick={() => this.deleteAction('param_list', params.index)}
+              >
+                <Icon type="md-trash" size="16"></Icon>
+              </Button>
+            </div>
+          )
         }
       ],
       columnsForComputeMetrics: [
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_metric_key')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.metric}
-                disabled={this.view}
-                placeholder={this.$t('m_metric_key_placeholder')}
-                onInput={v => {
-                  this.changeVal('metric_list', params.index, 'metric', v)
-                }}
-              />
-            )
-          }
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_metric_key')}</span>
+            </span>
+          ),
+          render: (h, params) => (
+            <Input
+              value={params.row.metric}
+              disabled={this.view}
+              placeholder={this.$t('m_metric_key_placeholder')}
+              onInput={v => {
+                this.changeVal('metric_list', params.index, 'metric', v)
+              }}
+            />
+          )
         },
         {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_statistical_parameters')}</span>
-              </span>
-            )
-          },
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_statistical_parameters')}</span>
+            </span>
+          ),
           render: (h, params) => {
-            const keys = this.configInfo.param_list.map(p => {
-              return p.name
-            })
+            const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
             return (
               <Select
                 filterable
                 value={params.row.log_param_name}
                 disabled={this.view}
-                on-on-change={(v) => {
+                on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'log_param_name', v)
                 }}
               >
@@ -286,9 +266,7 @@ export default {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
           render: (h, params) => {
-            const keys = this.configInfo.param_list.map(p => {
-              return p.name
-            })
+            const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
             return (
               <Select
@@ -296,7 +274,7 @@ export default {
                 value={params.row.tag_config}
                 disabled={this.view}
                 multiple
-                on-on-change={(v) => {
+                on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'tag_config', v)
                 }}
               >
@@ -312,14 +290,12 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_computed_type')}</span>
-              </span>
-            )
-          },
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_computed_type')}</span>
+            </span>
+          ),
           render: (h, params) => {
             const canOnlySelectCount = this.isNumericValue[params.row.log_param_name]
             const selectOptions = [
@@ -350,7 +326,7 @@ export default {
                 disabled={params.row.log_param_name===''}
                 value={params.row.agg_type}
                 disabled={this.view}
-                on-on-change={(v) => {
+                on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
                 }}
               >
@@ -368,21 +344,19 @@ export default {
           key: 'action',
           width: 80,
           align: 'left',
-          render: (h, params) => {
-            return (
-              <div style="text-align: left; cursor: pointer;display: inline-flex;">
-                <Button
-                  size="small"
-                  type="error"
-                  style="margin-right:5px;"
-                  disabled={this.view}
-                  onClick={() => this.deleteAction('metric_list', params.index)}
-                >
-                  <Icon type="md-trash" size="16"></Icon>
-                </Button>
-              </div>
-            )
-          }
+          render: (h, params) => (
+            <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Button
+                size="small"
+                type="error"
+                style="margin-right:5px;"
+                disabled={this.view}
+                onClick={() => this.deleteAction('metric_list', params.index)}
+              >
+                <Icon type="md-trash" size="16"></Icon>
+              </Button>
+            </div>
+          )
         }
       ],
       editTagMappingIndex: -1, // 正在编辑的参数采集
@@ -390,18 +364,19 @@ export default {
     }
   },
   methods: {
-    loadPage (actionType, templateGuid, parentGuid, configGuid) {
+    loadPage(actionType, templateGuid, parentGuid, configGuid) {
       this.isfullscreen = true
       this.parentGuid = parentGuid
       // actionType add/edit
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
-      // configGuid, 配置唯一标志 
+      // configGuid, 配置唯一标志
       this.isAdd = actionType === 'add'
       this.view = actionType === 'view'
       if (configGuid) {
         this.getConfig(configGuid)
-      } else {
+      }
+      else {
         this.configInfo = {
           guid: '',
           log_metric_monitor: '',
@@ -418,7 +393,7 @@ export default {
               demo_match_value: '',
               string_map: [
                 {
-                  regulative: 0,  //匹配类型： 0 是非正则，1是正则
+                  regulative: 0, // 匹配类型： 0 是非正则，1是正则
                   source_value: '', // 源值
                   target_value: '', // 映射值
                 }
@@ -441,14 +416,14 @@ export default {
     },
     regularCheckValue(arr = [], key) {
       const regex = /^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/
-      for(let i=0; i<arr.length; i++) {
+      for (let i=0; i<arr.length; i++) {
         if (!regex.test(arr[i][key])) {
           return false
         }
       }
       return true
     },
-    paramsValidate (tmpData) {
+    paramsValidate(tmpData) {
       if (!this.regularCheckValue(tmpData.param_list, 'name')) {
         return this.$Message.warning(`${this.$t('m_parameter_key')}: ${this.$t('m_regularization_check_failed_tips')}`)
       }
@@ -463,24 +438,18 @@ export default {
         this.$Message.warning(`${this.$t('m_add_one_tip')}: ${this.$t('m_parameter_collection')}`)
         return true
       }
-      const is_param_list_empty = tmpData.param_list.some((element) => {
-        return element.name === '' || element.regular === ''
-      })
+      const is_param_list_empty = tmpData.param_list.some(element => element.name === '' || element.regular === '')
       if (is_param_list_empty) {
         this.$Message.warning(`${this.$t('m_parameter_collection')}: ${this.$t('m_fields_cannot_be_empty')}`)
         return true
       }
-      const is_demo_match_value_empty = tmpData.param_list.some((element) => {
-        return element.demo_match_value === ''
-      })
+      const is_demo_match_value_empty = tmpData.param_list.some(element => element.demo_match_value === '')
       if (is_demo_match_value_empty) {
         this.$Message.warning(`${this.$t('m_matching_result')}: ${this.$t('m_cannot_be_empty')}`)
         return true
       }
 
-      const hasDuplicatesParamList = tmpData.param_list.some((element, index) => {
-        return tmpData.param_list.findIndex((item) => item.name === element.name) !== index
-      })
+      const hasDuplicatesParamList = tmpData.param_list.some((element, index) => tmpData.param_list.findIndex(item => item.name === element.name) !== index)
       if (hasDuplicatesParamList) {
         this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
         return true
@@ -491,16 +460,12 @@ export default {
         return true
       }
 
-      const is_metric_list_empty = tmpData.metric_list.some((element) => {
-        return element.metric === '' || element.log_param_name === '' || element.agg_type === ''
-      })
+      const is_metric_list_empty = tmpData.metric_list.some(element => element.metric === '' || element.log_param_name === '' || element.agg_type === '')
       if (is_metric_list_empty) {
         this.$Message.warning(`${this.$t('m_compute_metrics')}: ${this.$t('m_fields_cannot_be_empty')}`)
         return true
       }
-      const hasDuplicatesMetricList = tmpData.metric_list.some((element, index) => {
-        return tmpData.metric_list.findIndex((item) => item.metric === element.metric) !== index
-      })
+      const hasDuplicatesMetricList = tmpData.metric_list.some((element, index) => tmpData.metric_list.findIndex(item => item.metric === element.metric) !== index)
       if (hasDuplicatesMetricList) {
         this.$Message.warning(`${this.$t('m_metric_key')}${this.$t('m_cannot_be_repeated')}`)
         return true
@@ -508,10 +473,10 @@ export default {
       return false
     },
     // 更新筛选标签中的值
-    paramKeyChange () {
+    paramKeyChange() {
       const paramsNameArray = this.configInfo.param_list.map(p => p.name)
       this.configInfo.metric_list.forEach(metric => {
-        let tmpTag = []
+        const tmpTag = []
         metric.tag_config.forEach(tag => {
           if (paramsNameArray.includes(tag)) {
             tmpTag.push(tag)
@@ -520,36 +485,38 @@ export default {
         metric.tag_config = tmpTag
       })
     },
-    saveConfig () {
-      let tmpData = JSON.parse(JSON.stringify(this.configInfo))
-      if (this.paramsValidate(tmpData)) return
+    saveConfig() {
+      const tmpData = JSON.parse(JSON.stringify(this.configInfo))
+      if (this.paramsValidate(tmpData)) {
+        return
+      }
       delete tmpData.create_user
       delete tmpData.create_time
       delete tmpData.update_user
       delete tmpData.update_time
-      let methodType = this.isAdd ? 'POST' : 'PUT'
+      const methodType = this.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.customLogMetricConfig, tmpData, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.showModal = false
         this.$emit('reloadMetricData', this.parentGuid)
       })
     },
-    getConfig (guid) {
+    getConfig(guid) {
       const api = this.$root.apiCenter.customLogMetricConfig + '/' + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.configInfo = resp
         {/* 整理计算类型可选项 */}
         const param_list = this.configInfo.param_list || []
         param_list.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
         })
-        this.configInfo.param_list.forEach((r) => {
+        this.configInfo.param_list.forEach(r => {
           r.regular_font_result = this.regRes(r.regular)
         })
         this.showModal = true
       })
     },
-    changeVal (params, index, key, val) {
+    changeVal(params, index, key, val) {
       this.configInfo[params][index][key] = val
       if (params === 'param_list' && key === 'regular') {
         this.configInfo[params][index].regular_font_result = this.regRes(val)
@@ -558,19 +525,20 @@ export default {
         this.configInfo[params][index]['agg_type'] = ''
       }
     },
-    regRes (val)  {
+    regRes(val) {
       try {
         const reg = new RegExp(val, 'g')
         const match = reg.exec(this.configInfo.demo_log)
         if (match) {
-          return this.configInfo.demo_log.replace(match[1], "<span style='color:red'>" + match[1] + '</span>')
+          return this.configInfo.demo_log.replace(match[1], '<span style=\'color:red\'>' + match[1] + '</span>')
         }
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
-      } catch (err) {
+      }
+      catch (err) {
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       }
     },
-    generateBackstageTrial () {
+    generateBackstageTrial() {
       if (this.configInfo.demo_log === '') {
         this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
         return
@@ -586,7 +554,7 @@ export default {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {
@@ -595,13 +563,13 @@ export default {
         this.configInfo.metric_list.forEach(item => {
           item.agg_type = ''
         })
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     },
-    isNumericString (str) {
-      return !isNaN(parseFloat(str)) && isFinite(str);
+    isNumericString(str) {
+      return !isNaN(parseFloat(str)) && isFinite(str)
     },
-    //#region 参数采集
-    addParameterCollection () {
+    // #region 参数采集
+    addParameterCollection() {
       this.configInfo.param_list.push({
         guid: '',
         name: '',
@@ -620,17 +588,17 @@ export default {
       })
     },
     // 编辑标签映射
-    editTagMapping (index) {
+    editTagMapping(index) {
       this.editTagMappingIndex = index
-      let tagMap = this.configInfo.param_list[index].string_map || []
+      const tagMap = this.configInfo.param_list[index].string_map || []
       this.$refs.tagMapConfigRef.loadPage(tagMap)
     },
-    setTagMap (arr) {
+    setTagMap(arr) {
       this.configInfo.param_list[this.editTagMappingIndex].string_map = arr
     },
-    //#endregion
-    //#region 计算指标 
-    addComputeMetrics () {
+    // #endregion
+    // #region 计算指标
+    addComputeMetrics() {
       this.configInfo.metric_list.push({
         log_param_name: '',
         metric: '',
@@ -639,8 +607,8 @@ export default {
         tag_config: []
       })
     },
-    //#endregion
-    deleteAction (key, index) {
+    // #endregion
+    deleteAction(key, index) {
       this.configInfo[key].splice(index, 1)
     }
   },
