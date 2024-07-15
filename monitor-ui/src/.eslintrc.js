@@ -118,7 +118,7 @@ module.exports = {
         ],
         "max-params": [
             1,
-            5
+            10
         ],
         "max-lines": [
             1,
