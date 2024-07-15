@@ -62,7 +62,7 @@
         >
         </Input>
         <Button class="mr-5" @click="handleReset" type="default">{{ $t('m_reset') }}</Button>
-        <Upload 
+        <Upload
           action="/monitor/api/v2/dashboard/custom/import"
           name="file"
           style="display: none"
@@ -71,21 +71,24 @@
           :on-success="uploadSucess"
           :on-error="uploadFailed"
           :data="importExtraData"
-          accept=".json">
+          accept=".json"
+        >
           <Button />
         </Upload>
         <Button type="success" @click="addBoardItem">{{$t('m_button_add')}}</Button>
-        <Dropdown 
+        <Dropdown
           placement="bottom-start"
-          @on-click="importPanel">
+          @on-click="importPanel"
+        >
           <Button type="primary">
-              {{$t('m_import')}}
+            {{$t('m_import')}}
           </Button>
           <template #list>
             <DropdownMenu>
               <DropdownItem v-for="(item, index) in importTypeOptions"
-                :name="item.value" 
-                :key="index">
+                            :name="item.value"
+                            :key="index"
+              >
                 {{ $t(item.name) }}
               </DropdownItem>
             </DropdownMenu>
@@ -100,55 +103,56 @@
       <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
       <Row class="all-card-item" :gutter="15" v-else>
         <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
-          <Card>
-            <div slot="title" class="panal-title">
-              <span class="panal-title-name">{{ item.name }}</span>
-              <span class="panal-title-update">
-                <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
-                <span class="mt-1">{{item.updateTime}}</span>
-              </span>
-            </div>
-            <div class="all-card-item-content mb-1">
-              <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
-                  <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
-                  <div v-if="keyItem.type === 'string'">
-                    {{item[keyItem.key]}}
-                  </div>
-                  <div v-if="keyItem.type === 'array'">
-                    <div v-if="item[keyItem.key].length" class="card-content-array">
-                      <ScrollTag :list="item[keyItem.key]"></ScrollTag>
-                    </div>
-                    <div v-else>-</div>
-                  </div>
+        <Card>
+          <div slot="title" class="panal-title">
+            <span class="panal-title-name">{{ item.name }}</span>
+            <span class="panal-title-update">
+              <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
+              <span class="mt-1">{{item.updateTime}}</span>
+            </span>
+          </div>
+          <div class="all-card-item-content mb-1">
+            <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index">
+              <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
+              <div v-if="keyItem.type === 'string'">
+                {{item[keyItem.key]}}
+              </div>
+              <div v-if="keyItem.type === 'array'">
+                <div v-if="item[keyItem.key].length" class="card-content-array">
+                  <ScrollTag :list="item[keyItem.key]"></ScrollTag>
+                </div>
+                <div v-else>-</div>
               </div>
             </div>
-            <div class="card-divider"></div>
-            <div class="card-content-footer">
-              <Button size="small" type="info" @click="goToPanal(item, 'view')">
-                <Icon type="md-eye" />
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-content-footer">
+            <Button size="small" type="info" @click="goToPanal(item, 'view')">
+              <Icon type="md-eye" />
+            </Button>
+            <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
+              <Icon type="md-cloud-upload" />
+            </Button>
+            <template v-if="item.permission === 'mgmt'">
+              <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
+                <Icon type="md-create" />
               </Button>
-              <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
-                <Icon type="md-cloud-upload" />
+              <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
+                <Icon type="md-person" />
               </Button>
-              <template v-if="item.permission === 'mgmt'">
-                <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
-                  <Icon type="md-create" />
+              <Poptip
+                confirm
+                :title="$t('m_delConfirm_tip')"
+                placement="left-end"
+                @on-ok="onDeleteConfirm(item)"
+              >
+                <Button size="small" type="error">
+                  <Icon type="md-trash" />
                 </Button>
-                <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
-                  <Icon type="md-person" />
-                </Button>
-                <Poptip
-                  confirm
-                  :title="$t('m_delConfirm_tip')"
-                  placement="left-end"
-                  @on-ok="onDeleteConfirm(item)">
-                  <Button size="small" type="error">
-                    <Icon type="md-trash" />
-                  </Button>
-                </Poptip>
-              </template>
-            </div>
-          </Card>
+              </Poptip>
+            </template>
+          </div>
+        </Card>
         </Col>
       </Row>
       <Page
@@ -172,7 +176,7 @@
                 ></Button>
                 <Select v-model="item.role_id" filterable style="width:200px">
                   <Option v-for="item in userRolesOptions" :value="item.id" :key="item.id">
-                  {{item.display_name}}</Option>
+                    {{item.display_name}}</Option>
                 </Select>
                 <Select v-model="item.permission" filterable style="width:200px">
                   <Option v-for="permission in ['mgmt', 'use']" :value="permission" :key="permission">{{
@@ -186,8 +190,7 @@
               type="success"
               size="small"
               long
-              >{{ $t('m_button_add') }}</Button
-            >
+            >{{ $t('m_button_add') }}</Button>
           </div>
         </template>
       </ModalComponent>
@@ -225,19 +228,19 @@
           </section>
         </div>
       </ModalComponent>
-      <ExportChartModal 
+      <ExportChartModal
         :isModalShow="isModalShow"
         :pannelId="pannelId"
         :panalName="panalName"
         @close="() => isModalShow = false"
-        >
+      >
       </ExportChartModal>
     </div>
   </div>
 </template>
 
 <script>
-import debounce from 'lodash/debounce';
+import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
@@ -274,7 +277,10 @@ export default {
         isAdd: true,
         saveFunc: 'authorizationSave',
         config: [
-          {name:'authorization',type:'slot'}
+          {
+            name: 'authorization',
+            type: 'slot'
+          }
         ],
         addRow: {
           role: []
@@ -285,34 +291,34 @@ export default {
       dashboard_id: '',
       pathMap: {},
       searchMap: {
-        permission: "",
-        name: "",
-        id: "",
+        permission: '',
+        name: '',
+        id: '',
         useRoles: [],
         mgmtRoles: [],
-        updateUser: ""
+        updateUser: ''
       },
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       cardContentList: [
         {
-          key: "id",
-          label: "m_id",
-          type: "string"
-        }, 
-        {
-          key: "displayMgmtRoles",
-          label: "m_manage_role",
-          type: "array"
+          key: 'id',
+          label: 'm_id',
+          type: 'string'
         },
         {
-          key: "displayUseRoles",
-          label: "m_use_role",
-          type: "array"
+          key: 'displayMgmtRoles',
+          label: 'm_manage_role',
+          type: 'array'
         },
         {
-          key: "mainPage",
-          label: "m_home_application",
-          type: "array"
+          key: 'displayUseRoles',
+          label: 'm_use_role',
+          type: 'array'
+        },
+        {
+          key: 'mainPage',
+          label: 'm_home_application',
+          type: 'array'
         }
       ],
       pagination: {
@@ -322,26 +328,26 @@ export default {
       },
       mgmtRoles: [],
       userRoles: [],
-      mgmtRolesOptions: [], 
+      mgmtRolesOptions: [],
       userRolesOptions: [],
       addViewName: '',
       authViewType: 'add', // 枚举值为add(面板新增)，edit(面板编辑), import(面板导入)
       boardId: null,
       importTypeOptions: [
         {
-          name: "m_samename_coverage",
-          value: "cover"
-        }, 
+          name: 'm_samename_coverage',
+          value: 'cover'
+        },
         {
-          name: "m_samename_add",
-          value: "insert"
+          name: 'm_samename_add',
+          value: 'insert'
         }
       ],
-      importPanelType: "", // 枚举值为cover 同名覆盖,insert 同名新增
+      importPanelType: '', // 枚举值为cover 同名覆盖,insert 同名新增
       importExtraData: {},
       uploadHeaders: {
         'X-Auth-Token': getToken() || null,
-        'Authorization': this.getAuthorization()
+        Authorization: this.getAuthorization()
       },
       isModalShow: false,
       pannelId: null,
@@ -349,9 +355,9 @@ export default {
     }
   },
   mounted(){
-    this.pathMap = this.$root.apiCenter.template;
-    this.pagination.pageSize = 18;
-    this.pagination.currentPage = 1;
+    this.pathMap = this.$root.apiCenter.template
+    this.pagination.pageSize = 18
+    this.pagination.currentPage = 1
     this.getViewList()
     this.getAllRoles()
     if (this.$route.query.isCreate) {
@@ -361,33 +367,36 @@ export default {
     }
   },
   methods: {
-    handleReset () {      
+    handleReset() {
       const resetObj = {
-        name: "",
-        id: "",
+        name: '',
+        id: '',
         useRoles: [],
         mgmtRoles: [],
-        updateUser: ""
+        updateUser: ''
       }
       this.searchMap = Object.assign({}, this.searchMap, resetObj)
-      this.pagination.currentPage = 1;
+      this.pagination.currentPage = 1
       this.getViewList()
     },
     getAuthorization() {
       if (localStorage.getItem('monitor-accessToken')) {
         return 'Bearer ' + localStorage.getItem('monitor-accessToken')
-      } else {
-        return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null;
       }
+      return (window.request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+
     },
-    deleteAuth (index) {
+    deleteAuth(index) {
       this.authorizationModel.result.splice(index, 1)
     },
-    addEmptyAuth () {
-      this.authorizationModel.result.push({role_id: '', permission: 'use'})
+    addEmptyAuth() {
+      this.authorizationModel.result.push({
+        role_id: '',
+        permission: 'use'
+      })
     },
-    processConfigSave () {
-      let params = []
+    processConfigSave() {
+      const params = []
       this.processConfigModel.dashboardConfig.forEach(item => {
         params.push({
           role_name: item.role_name,
@@ -400,18 +409,18 @@ export default {
         this.getViewList()
       })
     },
-    authorization (item) {
+    authorization(item) {
       this.dashboard_id = item.id
       const params = {
         dashboard_id: item.id
       }
-      this.request('GET','/monitor/api/v1/dashboard/custom/role/get', params, (res) => {
+      this.request('GET','/monitor/api/v1/dashboard/custom/role/get', params, res => {
         this.authorizationModel.result = res
         this.$root.JQ('#authorization_model').modal('show')
       })
     },
-    authorizationSave () {
-      let params = {
+    authorizationSave() {
+      const params = {
         dashboard_id: this.dashboard_id,
         permission_list: this.authorizationModel.result
       }
@@ -420,7 +429,7 @@ export default {
         this.$root.JQ('#authorization_model').modal('hide')
       })
     },
-    getAllRoles () {
+    getAllRoles() {
       const params = {
         page: 1,
         size: 1000
@@ -429,59 +438,60 @@ export default {
         this.userRolesOptions = this.processRolesList(res.data)
       })
       this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
-        this.mgmtRolesOptions = this.processRolesList(res);
+        this.mgmtRolesOptions = this.processRolesList(res)
       })
     },
     processRolesList(list = []) {
-      if (isEmpty(list)) return [];
-      const resArr = cloneDeep(list).map(item => {
-        return {
-          ...item,
-          key: item.name,
-          label: item.displayName || item.display_name
-        }
-      })
+      if (isEmpty(list)) {
+        return []
+      }
+      const resArr = cloneDeep(list).map(item => ({
+        ...item,
+        key: item.name,
+        label: item.displayName || item.display_name
+      }))
       return resArr
     },
-    addBoardItem () {
-      this.authViewType = 'add';
-      this.addViewName = '';
-      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions);
+    addBoardItem() {
+      this.authViewType = 'add'
+      this.addViewName = ''
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     editBoardAuth(item) {
-      this.authViewType = 'edit';
-      this.boardId = item.id;
-      this.$refs.authDialog.startAuth(item.mgmtRoles, item.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
+      this.authViewType = 'edit'
+      this.boardId = item.id
+      this.$refs.authDialog.startAuth(item.mgmtRoles, item.useRoles, this.mgmtRolesOptions, this.userRolesOptions)
     },
-    onDeleteConfirm (item) {
+    onDeleteConfirm(item) {
       this.removeTemplate(item)
     },
-    removeTemplate (item) {
-      let params = {id: item.id}
+    removeTemplate(item) {
+      const params = {id: item.id}
       this.request('DELETE',this.pathMap.deleteV2, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getViewList()
       })
     },
-    getViewList () {
+    getViewList() {
       const params = Object.assign(cloneDeep(this.searchMap), {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
-      });
+      })
       if (!params.id || isNaN(Number(params.id))) {
         params.id = 0
-      } else {
+      }
+      else {
         params.id = Number(params.id)
       }
       if (params.permission === 'all') {
         params.permission = ''
       }
       this.request('POST',this.pathMap.listV2, params, responseData => {
-        this.dataList = responseData.contents;
-        this.pagination.totalRows = responseData.pageInfo.totalRows;
+        this.dataList = responseData.contents
+        this.pagination.totalRows = responseData.pageInfo.totalRows
       })
     },
-    setDashboard () {
+    setDashboard() {
       this.request('GET',this.pathMap.portalConfig, '', responseData => {
         this.processConfigModel.dashboardConfig = responseData
         this.$root.JQ('#set_dashboard_modal').modal('show')
@@ -493,13 +503,16 @@ export default {
         panalItem,
         pannelId: panalItem.id
       }
-      this.$router.push({name:'viewConfig',params})
+      this.$router.push({
+        name: 'viewConfig',
+        params
+      })
     },
     onFilterConditionChange: debounce(function () {
       this.getViewList()
     }, 300),
     saveTemplate(mgmtRoles, useRoles) {
-      if (this.isAuthModalNameShow && !this.addViewName ) {
+      if (this.isAuthModalNameShow && !this.addViewName) {
         this.$nextTick(() => {
           this.$Message.warning(this.$t('m_name') + this.$t('m_cannot_be_empty'))
           this.$refs.authDialog.flowRoleManageModal = true
@@ -508,12 +521,12 @@ export default {
       }
       if (this.authViewType === 'import') {
         this.$nextTick(() => {
-          this.$refs.authDialog.flowRoleManageModal = true;
-          document.querySelector('.ivu-upload-input').click();
+          this.$refs.authDialog.flowRoleManageModal = true
+          document.querySelector('.ivu-upload-input').click()
         })
       }
-      this.mgmtRoles = mgmtRoles;
-      this.userRoles = useRoles;
+      this.mgmtRoles = mgmtRoles
+      this.userRoles = useRoles
       this.submitData()
     },
     submitData() {
@@ -521,7 +534,7 @@ export default {
         mgmtRoles: this.mgmtRoles,
         useRoles: this.userRoles
       }
-      let path = '';
+      let path = ''
       if (this.authViewType === 'import') {
         this.importExtraData = {
           rule: this.importPanelType,
@@ -531,15 +544,16 @@ export default {
         return
       }
       if (this.authViewType === 'add') {
-        params.name = this.addViewName;
-        path = '/monitor/api/v2/dashboard/custom';
-      } else if (this.authViewType === 'edit') {
+        params.name = this.addViewName
+        path = '/monitor/api/v2/dashboard/custom'
+      }
+      else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
-        params.id = this.boardId;
+        params.id = this.boardId
         path = '/monitor/api/v2/dashboard/custom/permission'
       }
-      this.request('POST', path, params, (val) => {
-        this.getViewList();
+      this.request('POST', path, params, val => {
+        this.getViewList()
         if (this.authViewType === 'add') {
           this.goToPanal(val, 'edit')
         }
@@ -547,32 +561,33 @@ export default {
     },
     importPanel(type) {
       this.importPanelType = type
-      this.authViewType = 'import';
-      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions);
+      this.authViewType = 'import'
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     uploadSucess(res) {
       if (!isEmpty(res.data)) {
-        let content = '';
-        for(let key in res.data) {
+        let content = ''
+        for (const key in res.data) {
           content += key + '(图表名)不存在以下指标: ' + res.data[key].join(';') + '。 '
         }
         this.$Message.warning({
           content,
           duration: 5
         })
-      } else {
+      }
+      else {
         this.$Message.success(this.$t('m_tips_success'))
       }
-      this.$refs.authDialog.flowRoleManageModal = false;
-      this.getViewList();
+      this.$refs.authDialog.flowRoleManageModal = false
+      this.getViewList()
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning(file.message)
     },
     exportPanel(item) {
-      this.panalName = item.name;
-      this.pannelId = item.id;
-      this.isModalShow = true;
+      this.panalName = item.name
+      this.pannelId = item.id
+      this.isModalShow = true
     }
   },
   components: {
@@ -618,7 +633,7 @@ export default {
 }
 li {
   list-style: none;
-} 
+}
 .operational-zone {
   margin: 0 16px 16px 16px;
 }
@@ -638,7 +653,6 @@ li {
     }
   }
 }
-
 
 .panal-list {
   margin-bottom: 15px;
