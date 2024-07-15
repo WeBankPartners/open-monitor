@@ -381,6 +381,7 @@ export default {
       ],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       lineTypeOption: {
+        twoYaxes: 2,
         line: 1,
         area: 0
       },
