@@ -2,7 +2,7 @@
   <div class="single-chart">
     <div v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
-    </div>
+      </div>
     </div>
     <div v-show="noDataType !== 'normal'" class="echart echart-no-data-tip">
       <span v-if="noDataType === 'noConfig'">{{this.$t('m_noConfig')}}</span>
@@ -13,7 +13,7 @@
 
 <script>
 // 引入 ECharts 主模块
-import {readyToDraw} from  '@/assets/config/chart-rely'
+import {readyToDraw} from '@/assets/config/chart-rely'
 
 export default {
   name: '',
@@ -35,38 +35,39 @@ export default {
   },
   watch: {
     params: {
-      handler () {
-        this.isAutoRefresh();
-        this.getchartdata();
+      handler() {
+        this.isAutoRefresh()
+        this.getchartdata()
       },
       deep: true
     },
     refreshNow: {
-      handler () {
-        this.getchartdata();
+      handler() {
+        this.getchartdata()
       }
     }
   },
   mounted() {
-    this.getchartdata();
-    this.isAutoRefresh();
-    window.addEventListener("scroll", this.scrollHandle, true)
-    window.addEventListener("visibilitychange", this.isTabActive, true)
+    this.getchartdata()
+    this.isAutoRefresh()
+    window.addEventListener('scroll', this.scrollHandle, true)
+    window.addEventListener('visibilitychange', this.isTabActive, true)
   },
   destroyed() {
     this.clearInterval()
     window.removeEventListener('scroll', this.scrollHandle, true)
-    window.removeEventListener("visibilitychange", this.isTabActive, true)
+    window.removeEventListener('visibilitychange', this.isTabActive, true)
   },
   methods: {
-    isTabActive () {
-       if (document.hidden) {
+    isTabActive() {
+      if (document.hidden) {
         this.clearInterval()
-      } else {
+      }
+      else {
         this.isAutoRefresh()
       }
     },
-    clearInterval () {
+    clearInterval() {
       clearInterval(this.interval)
       this.interval = null
     },
@@ -80,21 +81,22 @@ export default {
         if (this.interval === null) {
           this.isAutoRefresh()
         }
-      } else {
+      }
+      else {
         clearInterval(this.interval)
         this.interval = null
       }
     },
-    isAutoRefresh () {
+    isAutoRefresh() {
       clearInterval(this.interval)
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
-        this.interval = setInterval(()=>{
-          this.getchartdata();
+        this.interval = setInterval(() => {
+          this.getchartdata()
           this.isAutoRefresh()
         },this.params.autoRefresh * 1000)
       }
     },
-    getchartdata () {
+    getchartdata() {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -107,12 +109,21 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
-        } else {
-          responseData.yaxis.unit =  this.chartInfo.panalUnit  
+        }
+        else {
+          responseData.yaxis.unit = this.chartInfo.panalUnit
           this.elId = this.chartInfo.elId
           this.noDataType = 'normal'
-          const chartConfig = {title:false, eye: false,clear: true,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams};
-          this.$nextTick( () => {
+          const chartConfig = {
+            title: false,
+            eye: false,
+            clear: true,
+            dataZoom: false,
+            lineBarSwitch: true,
+            chartType: this.chartInfo.chartType,
+            params: this.chartInfo.chartParams
+          }
+          this.$nextTick(() => {
             readyToDraw(this, responseData, this.chartIndex, chartConfig)
             this.scrollHandle()
           })
