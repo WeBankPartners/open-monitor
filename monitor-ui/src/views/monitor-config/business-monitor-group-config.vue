@@ -24,8 +24,16 @@
                   <span style="color: red">*</span>
                 </Tooltip>
               </FormItem>
-              <FormItem :label="$t('m_metric_code')">
-                <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:96%"></Input>
+              <FormItem :label="$t('m_metric_code') ">
+                <Input 
+                  v-model.trim="businessConfig.metric_prefix_code" 
+                  maxlength="6" 
+                  :disabled="!isAdd || view" 
+                  show-word-limit 
+                  :placeholder="$t('m_metric_code_placeholder')"
+                  style="width:96%"
+                >
+                </Input>
                 <span style="color: red">*</span>
               </FormItem>
             </Form>
@@ -266,7 +274,8 @@ export default {
         return true
       }
       // eslint-disable-next-line no-useless-escape
-      const regex = /^[a-zA-Z0-9_\-]{1,6}$/;
+      // const regex = /^[a-zA-Z0-9_\-]{1,6}$/;
+      const regex = /^[A-Za-z][A-Za-z0-9]{0,5}$/;
       
       if (!regex.test(tmpData.metric_prefix_code)) {
         this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_metric_prefix_code_validate')}`)
