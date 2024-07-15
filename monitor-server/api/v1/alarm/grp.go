@@ -117,21 +117,24 @@ func DeleteGrp(c *gin.Context) {
 }
 
 func ListGrpEndpoint(c *gin.Context) {
-	search := c.Query("search")
-	page, _ := strconv.Atoi(c.Query("page"))
-	size, _ := strconv.Atoi(c.Query("size"))
-	grp, _ := strconv.Atoi(c.Query("grp"))
-	if page <= 0 || size <= 0 {
+	var param m.EndpointListParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Page <= 0 || param.Size <= 0 {
 		mid.ReturnParamEmptyError(c, "page and size")
 		return
 	}
-	query := m.AlarmEndpointQuery{Search: search, Page: page, Size: size, Grp: grp}
-	err := db.ListAlarmEndpoints(&query)
+	query := m.AlarmEndpointQuery{Search: param.Search, Page: param.Page,
+		Size: param.Size, Grp: param.Grp, EndpointGroup: param.EndpointGroup, BasicType: param.BasicType}
+	err = db.ListAlarmEndpoints(&query)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm endpoints", err)
 		return
 	}
-	mid.ReturnSuccessData(c, m.TableData{Data: query.Result, Num: query.ResultNum, Page: page, Size: size})
+	mid.ReturnSuccessData(c, m.TableData{Data: query.Result, Num: query.ResultNum, Page: param.Page, Size: param.Size})
 }
 
 func ListGrpEndpointOptions(c *gin.Context) {
