@@ -961,7 +961,7 @@ export default {
       const params = {
         monitorType: this.monitorType,
         serviceGroup: this.endpointValue,
-        query: this.chartConfigForm.lineType === 'twoYaxes' ? '' : 'all'
+        query: this.chartConfigForm.lineType === 'twoYaxes' ? 'comparison' : 'all'
       }
       this.request('GET', api, params, res => {
         this.metricOptions = this.filterHasUsedMetric(res)
