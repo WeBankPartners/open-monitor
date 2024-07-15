@@ -30,15 +30,15 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		countParams = append(countParams, query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
-			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
+			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags,t4.create_user,t4.update_user,t4.update_time FROM (
+			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags,t1.create_user,t1.update_user,t1.update_time FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
-			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
+			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
+			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
@@ -79,6 +79,31 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		query.ResultNum = 0
 	}
 	return err
+}
+
+func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
+	var list []*m.EndpointRow
+	var endpointGroupMap = make(map[string]bool)
+	var basicTypeMap = make(map[string]bool)
+	if err = x.SQL("select t2.endpoint_group,t1.monitor_type from endpoint_new t1 LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint").Find(&list); err != nil {
+		return
+	}
+	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
+	if len(list) > 0 {
+		for _, endpoint := range list {
+			if strings.TrimSpace(endpoint.EndpointGroup) != "" {
+				endpointGroupMap[endpoint.EndpointGroup] = true
+			}
+			if strings.TrimSpace(endpoint.MonitorType) != "" {
+				basicTypeMap[endpoint.MonitorType] = true
+			}
+		}
+	}
+	options.EndpointGroup = convertMap2string(endpointGroupMap)
+	options.BasicType = convertMap2string(basicTypeMap)
+	sort.Strings(options.EndpointGroup)
+	sort.Strings(options.BasicType)
+	return
 }
 
 func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
@@ -1805,4 +1830,15 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 		}
 	}
 	return
+}
+
+func convertMap2string(hashMap map[string]bool) []string {
+	var arr []string
+	if len(hashMap) == 0 {
+		return arr
+	}
+	for key, _ := range hashMap {
+		arr = append(arr, key)
+	}
+	return arr
 }
