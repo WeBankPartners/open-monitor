@@ -60,6 +60,7 @@ const throwError = res => {
 function httpRequestEntrance(method, url, data, callback, customHttpConfig, errCallback) {
   // 处理接口http请求个性化配置
   const config = mergeObj(customHttpConfig)
+  let finalCallBack = errCallback
   if (config.isNeedloading) {
     loadingCount++
     loading.start()
@@ -177,10 +178,10 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
       //   router.push({path: '/login'})
       // }
       if (typeof customHttpConfig === 'function') {
-        errCallback = customHttpConfig
+        finalCallBack = customHttpConfig
       }
-      if (typeof errCallback === 'function' && err.response && err.response.data) {
-        return errCallback(new Error(err.response && err.response.data ? err.response.data.message : ''))
+      if (typeof finalCallBack === 'function' && err.response && err.response.data) {
+        return finalCallBack(new Error(err.response && err.response.data ? err.response.data.message : ''))
       }
     })
 }

@@ -9,15 +9,15 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (operator === 'add' ? $t('m_button_add'):$t('m_button_edit'))+$t('m_original_metric') }}<span class="underline"></span></div>
+        <div class="title">{{ (operator === 'add' ? $t('m_button_add') : $t('m_button_edit')) + $t('m_original_metric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
-      <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
+      <div class="content" :style="{maxHeight: maxHeight + 'px'}">
         <Form :label-width="100" label-position="left">
           <!--名称-->
           <FormItem :label="$t('m_metric_key')" required>
-            <Input 
-              :disabled="operator === 'edit'" 
+            <Input
+              :disabled="operator === 'edit'"
               v-model="metricConfigData.metric"
               :placeholder="$t('m_metric_key_placeholder_second')"
             ></Input>
@@ -49,11 +49,12 @@
                 :placeholder="param.label"
                 class="select-dropdown"
               >
-                <Option 
+                <Option
                   style="white-space: normal;"
-                  v-for="(item, itemIndex) in collectedMetricOptions" 
-                  :value="item.option_value" 
-                  :key="item.option_value + itemIndex">
+                  v-for="(item, itemIndex) in collectedMetricOptions"
+                  :value="item.option_value"
+                  :key="item.option_value + itemIndex"
+                >
                   {{ item.option_text }}
                 </Option>
               </Select>
@@ -64,7 +65,7 @@
             <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
-          <FormItem :label="$t('m_preview') +' '+ $t('m_endpoint')">
+          <FormItem :label="$t('m_preview') + ' ' + $t('m_endpoint')">
             <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
@@ -84,7 +85,7 @@
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
-import * as echarts from 'echarts';
+import * as echarts from 'echarts'
 export default {
   props: {
     visible: {
@@ -108,12 +109,12 @@ export default {
       type: String,
       default: 'add'
     },
-    endpoint_group:{
+    endpoint_group: {
       type: String,
       default: ''
     },
   },
-  data () {
+  data() {
     return {
       workspace: '', // 作用域
       templatePl: '', // 推荐配置
@@ -137,22 +138,22 @@ export default {
   },
   computed: {
     drawerVisible: {
-      get () {
+      get() {
         return this.visible
       },
-      set (val) {
+      set(val) {
         this.$emit('update:visible', val)
       }
     }
   },
   watch: {
-    workspace (val) {
+    workspace(val) {
       if (val) {
         this.getMetricTemplate()
       }
     }
   },
-  mounted () {
+  mounted() {
     this.getEndpoint()
     this.initDrawerHeight()
     if (this.operator === 'edit') {
@@ -163,7 +164,7 @@ export default {
     }
   },
   methods: {
-    initDrawerHeight () {
+    initDrawerHeight() {
       this.maxHeight = document.body.clientHeight - 150
       window.addEventListener(
         'resize',
@@ -173,34 +174,33 @@ export default {
       )
     },
     // 选择作用域
-    changeWorkspace () {
+    changeWorkspace() {
       this.templatePl = ''
       this.metricTemplateParams = []
       this.metricConfigData.prom_expr = ''
     },
     // 选择推荐配置
-    changeTemplatePl (val) {
+    changeTemplatePl(val) {
       const find = this.metricTemplate.find(item => item.prom_expr === val)
-      this.metricTemplateParams = find && find.param.split(',').map(p => {
-        return {
-          value: '',
-          label: p
-        }
-      })
+      this.metricTemplateParams = find && find.param.split(',').map(p => ({
+        value: '',
+        label: p
+      }))
       if (find && find.name === 'custom') {
         // this.metricConfigData.prom_expr += val
-      } else {
+      }
+      else {
         this.metricConfigData.prom_expr = val
       }
     },
     // 清空推荐配置
-    clearTemplatePl () {
+    clearTemplatePl() {
       this.templatePl = ''
       this.metricConfigData.endpoint = ''
       this.metricTemplateParams = []
     },
     // 获取推荐配置列表
-    getMetricTemplate () {
+    getMetricTemplate() {
       const params = {
         workspace: this.workspace
       }
@@ -215,18 +215,18 @@ export default {
       )
     },
     // 选择采集数据
-    changeCollectedMetric (val) {
+    changeCollectedMetric(val) {
       if (val.value) {
         const find = this.metricTemplate.find(m => m.prom_expr === this.templatePl)
         if (find && find.name === 'custom') {
-          this.metricConfigData.prom_expr += val.value 
+          this.metricConfigData.prom_expr += val.value
         }
         this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll('undefined', '')
         this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll(val.label, val.value)
       }
     },
     // 获取采集数据列表
-    getCollectedMetric () {
+    getCollectedMetric() {
       const params = {
         monitor_type: this.monitorType,
         guid: this.endpoint,
@@ -244,7 +244,7 @@ export default {
       )
     },
     // 获取预览对象列表
-    getEndpoint () {
+    getEndpoint() {
       const params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup,
@@ -256,15 +256,18 @@ export default {
         params,
         responseData => {
           this.endpointOptions = responseData
-        })
+        }
+      )
     },
     // 选择预览对象
-    handleEndPointChange (val) {
+    handleEndPointChange(val) {
       if (this.echartId) {
         const myChart = echarts.init(document.getElementById(this.echartId))
         myChart.clear()
       }
-      if (!val) return
+      if (!val) {
+        return
+      }
       this.getChartData()
       // if (this.workspace === 'all_object') {
       //   this.getChartData()
@@ -273,11 +276,11 @@ export default {
       // }
     },
     // 渲染echart
-    async getChartData () {
-      generateUuid().then((elId)=>{
+    async getChartData() {
+      generateUuid().then(elId => {
         this.echartId = `id_${elId}`
       })
-      let params = {
+      const params = {
         aggregate: 'none',
         time_second: -1800,
         start: 0,
@@ -308,7 +311,7 @@ export default {
         { isNeedloading: false }
       )
     },
-    handleSubmit () {
+    handleSubmit() {
       if (!(/^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/.test(this.metricConfigData.metric))) {
         return this.$Message.error(this.$t('m_metric_key') + ':' + this.$t('m_regularization_check_failed_tips'))
       }
@@ -321,7 +324,7 @@ export default {
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
       this.metricConfigData.endpoint_group = this.endpoint_group
-      
+
       this.metricConfigData.service_group = this.serviceGroup
       this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -332,9 +335,10 @@ export default {
           this.$Message.success(this.$t('m_tips_success'))
           this.$emit('update:visible', false)
           this.$emit('fetchList')
-        })
+        }
+      )
     },
-    handleCancel () {
+    handleCancel() {
       this.$emit('update:visible', false)
     }
   }
