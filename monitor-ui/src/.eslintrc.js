@@ -1,288 +1,280 @@
 module.exports = {
-    "ignorePatterns": [
-        "node_modules/"
-    ],
-    "rules": {
-        "comma-dangle": 0,
-        "eqeqeq": [
-            2,
-            "always"
-        ],
-        "indent": [
-            2,
-            2,
-            {
-                "VariableDeclarator": 1,
-                "SwitchCase": 1
-            }
-        ],
-        "no-useless-escape": 0,
-        "quotes": [
-            2,
-            "single"
-        ],
-        "semi": ['error', 'never'],
-        "no-extra-semi": 0,
-        "spaced-comment": [
-            2,
-            "always",
-            {
-                "markers": [
-                    "/"
-                ]
-            }
-        ],
-        "space-infix-ops": 0,
-        "no-async-promise-executor": 0,
-        "space-before-function-paren": [
-            2,
-            {
-                "anonymous": "always",
-                "named": "never",
-                "asyncArrow": "always"
-            }
-        ],
-        "key-spacing": [
-            2,
-            {
-                "beforeColon": false,
-                "afterColon": true
-            }
-        ],
-        "keyword-spacing": [
-            2,
-            {
-                "before": true,
-                "after": true
-            }
-        ],
-        "comma-spacing": 0,
-        "space-in-parens": [
-            2,
-            "never"
-        ],
-        "arrow-spacing": [
-            2,
-            {
-                "before": true,
-                "after": true
-            }
-        ],
-        "arrow-parens": [
-            2,
-            "as-needed"
-        ],
-        "max-depth": [
-            2,
-            8
-        ],
-        "handle-callback-err": [
-            2,
-            "^(err|error)$"
-        ],
-        "no-eval": 2,
-        "no-with": 2,
-        "no-extra-boolean-cast": 2,
-        "no-trailing-spaces": 2,
-        "no-spaced-func": 2,
-        "semi-spacing": [
-            2,
-            {
-                "before": false,
-                "after": true
-            }
-        ],
-        "space-before-blocks": 0,
-        "no-param-reassign": [
-            2,
-            {
-                "props": false
-            }
-        ],
-        "no-multiple-empty-lines": [
-            2,
-            {
-                "max": 1,
-                "maxBOF": 0,
-                "maxEOF": 0
-            }
-        ],
-        "no-var": 2,
-        "no-multi-spaces": 2,
-        "operator-linebreak": [
-            "error",
-            "before",
-            {
-                "overrides": {
-                    "=": "none"
-                }
-            }
-        ],
-        "max-params": [
-            2,
-            5
-        ],
-        "max-lines": [
-            2,
-            {
-                "max": 4000,
-                "skipBlankLines": true,
-                "skipComments": true
-            }
-        ],
-        "no-constant-condition": 2,
-        "object-curly-spacing": 0,
-        "array-bracket-spacing": [
-            2,
-            "never"
-        ],
-        "curly": [
-            2,
-            "all"
-        ],
-        "eol-last": [
-            2,
-            "always"
-        ],
-        "prefer-const": 2,
-        "no-else-return": 2,
-        "brace-style": [
-            1,
-            "stroustrup",
-            {}
-        ],
-        "newline-per-chained-call": [
-            "error",
-            {
-                "ignoreChainWithDepth": 2
-            }
-        ],
-        "object-shorthand": [
-            2,
-            "always",
-            {
-                "ignoreConstructors": false,
-                "avoidQuotes": true
-            }
-        ],
-        "array-callback-return": 2,
-        "object-curly-newline": [
-            2,
-            {
-                "ObjectExpression": {
-                    "minProperties": 4,
-                    "multiline": true,
-                    "consistent": true
-                },
-                "ObjectPattern": {
-                    "minProperties": 4,
-                    "multiline": true,
-                    "consistent": true
-                },
-                "ImportDeclaration": {
-                    "minProperties": 4,
-                    "multiline": true,
-                    "consistent": true
-                },
-                "ExportDeclaration": {
-                    "minProperties": 4,
-                    "multiline": true,
-                    "consistent": true
-                }
-            }
-        ],
-        "function-call-argument-newline": [
-            2,
-            "consistent"
-        ],
-        "function-paren-newline": [
-            2,
-            "multiline-arguments"
-        ],
-        "object-property-newline": [
-            2,
-            {
-                "allowAllPropertiesOnSameLine": false
-            }
-        ],
-        "quote-props": [
-            2,
-            "as-needed",
-            {
-                "keywords": false,
-                "unnecessary": true,
-                "numbers": false
-            }
-        ],
-        "array-bracket-newline": [
-            "off",
-            "consistent"
-        ],
-        "array-element-newline": [
-            "off",
-            {
-                "multiline": true,
-                "minItems": 3
-            }
-        ],
-        "no-console": [
-            "error",
-            {
-                "allow": [
-                    "error",
-                    "warn",
-                    "info"
-                ]
-            }
-        ],
-        "arrow-body-style": [
-            "error",
-            "as-needed",
-            {
-                "requireReturnForObjectLiteral": false
-            }
-        ],
-        "vue/html-indent": [
-            2,
-            2
-        ],
-        "vue/html-closing-bracket-newline": [
-            2,
-            {
-                "singleline": "never",
-                "multiline": "always"
-            }
-        ],
-        "vue/html-self-closing": [
-            2,
-            {
-                "html": {
-                    "void": "always"
-                }
-            }
-        ],
-        "vue/multi-word-component-names": 0,
-        "vue/component-name-in-template-casing": [
-            2,
-            "kebab-case",
-            {
-                "registeredComponentsOnly": false
-            }
-        ],
-        "vue/object-curly-spacing": 2,
-        "vue/space-infix-ops": 2,
-        "vue/key-spacing": [
-            2,
-            {
-                "beforeColon": false,
-                "afterColon": true
-            }
-        ],
-        "vue/eqeqeq": 2,
-        "vue/comma-dangle": 2,
-        "vue/array-bracket-spacing": [
-            2,
-            "never"
-        ]
-    }
+    // "ignorePatterns": [
+    //     "node_modules/"
+    // ],
+    // "rules": {
+    //     "comma-dangle": 0,
+    //     "eqeqeq": [
+    //         1,
+    //         "always"
+    //     ],
+    //     "indent": [
+    //         1,
+    //         2,
+    //         {
+    //             "VariableDeclarator": 1,
+    //             "SwitchCase": 1
+    //         }
+    //     ],
+    //     "no-useless-escape": 0,
+    //     "quotes": [
+    //         1,
+    //         "single"
+    //     ],
+    //     "semi": ['error', 'never'],
+    //     "no-extra-semi": 0,
+    //     "spaced-comment": [
+    //         1,
+    //         "always",
+    //         {
+    //             "markers": [
+    //                 "/"
+    //             ]
+    //         }
+    //     ],
+    //     "space-infix-ops": 0,
+    //     "no-async-promise-executor": 0,
+    //     "space-before-function-paren": [
+    //         1,
+    //         {
+    //             "anonymous": "always",
+    //             "named": "never",
+    //             "asyncArrow": "always"
+    //         }
+    //     ],
+    //     "key-spacing": [
+    //         1,
+    //         {
+    //             "beforeColon": false,
+    //             "afterColon": true
+    //         }
+    //     ],
+    //     "keyword-spacing": [
+    //         1,
+    //         {
+    //             "before": true,
+    //             "after": true
+    //         }
+    //     ],
+    //     "comma-spacing": 0,
+    //     "space-in-parens": [
+    //         1,
+    //         "never"
+    //     ],
+    //     "arrow-spacing": [
+    //         1,
+    //         {
+    //             "before": true,
+    //             "after": true
+    //         }
+    //     ],
+    //     "arrow-parens": [
+    //         1,
+    //         "as-needed"
+    //     ],
+    //     "max-depth": [
+    //         1,
+    //         8
+    //     ],
+    //     "handle-callback-err": [
+    //         1,
+    //         "^(err|error)$"
+    //     ],
+    //     "no-extra-boolean-cast": 1,
+    //     "no-trailing-spaces": 1,
+    //     "no-spaced-func": 1,
+    //     "semi-spacing": [
+    //         1,
+    //         {
+    //             "before": false,
+    //             "after": true
+    //         }
+    //     ],
+    //     "space-before-blocks": 0,
+    //     "no-param-reassign": [
+    //         1,
+    //         {
+    //             "props": false
+    //         }
+    //     ],
+    //     "no-multiple-empty-lines": [
+    //         1,
+    //         {
+    //             "max": 1,
+    //             "maxBOF": 0,
+    //             "maxEOF": 0
+    //         }
+    //     ],
+    //     "no-var": 1,
+    //     "no-multi-spaces": 1,
+    //     "operator-linebreak": [
+    //         "error",
+    //         "before",
+    //         {
+    //             "overrides": {
+    //                 "=": "none"
+    //             }
+    //         }
+    //     ],
+    //     "max-params": [
+    //         1,
+    //         10
+    //     ],
+    //     "max-lines": [
+    //         1,
+    //         {
+    //             "max": 4000,
+    //             "skipBlankLines": true,
+    //             "skipComments": true
+    //         }
+    //     ],
+    //     "no-constant-condition": 1,
+    //     "object-curly-spacing": 0,
+    //     "array-bracket-spacing": [
+    //         1,
+    //         "never"
+    //     ],
+    //     "curly": [
+    //         1,
+    //         "all"
+    //     ],
+    //     "eol-last": [
+    //         1,
+    //         "always"
+    //     ],
+    //     "prefer-const": 1,
+    //     "no-else-return": 1,
+    //     "brace-style": [
+    //         1,
+    //         "stroustrup",
+    //         {}
+    //     ],
+    //     "newline-per-chained-call": [
+    //         "error",
+    //         {
+    //             "ignoreChainWithDepth": 2
+    //         }
+    //     ],
+    //     "object-shorthand": [
+    //         1,
+    //         "always",
+    //         {
+    //             "ignoreConstructors": false,
+    //             "avoidQuotes": true
+    //         }
+    //     ],
+    //     "array-callback-return": 1,
+    //     "object-curly-newline": [
+    //         1,
+    //         {
+    //             "ObjectExpression": {
+    //                 "minProperties": 4,
+    //                 "multiline": true,
+    //                 "consistent": true
+    //             },
+    //             "ObjectPattern": {
+    //                 "minProperties": 4,
+    //                 "multiline": true,
+    //                 "consistent": true
+    //             },
+    //             "ImportDeclaration": {
+    //                 "minProperties": 4,
+    //                 "multiline": true,
+    //                 "consistent": true
+    //             },
+    //             "ExportDeclaration": {
+    //                 "minProperties": 4,
+    //                 "multiline": true,
+    //                 "consistent": true
+    //             }
+    //         }
+    //     ],
+    //     "function-call-argument-newline": [
+    //         1,
+    //         "consistent"
+    //     ],
+    //     "function-paren-newline": [
+    //         1,
+    //         "multiline-arguments"
+    //     ],
+    //     "object-property-newline": [
+    //         1,
+    //         {
+    //             "allowAllPropertiesOnSameLine": false
+    //         }
+    //     ],
+    //     "quote-props": [
+    //         1,
+    //         "as-needed",
+    //         {
+    //             "keywords": false,
+    //             "unnecessary": true,
+    //             "numbers": false
+    //         }
+    //     ],
+    //     "array-bracket-newline": [
+    //         "off",
+    //         "consistent"
+    //     ],
+    //     "array-element-newline": [
+    //         "off",
+    //         {
+    //             "multiline": true,
+    //             "minItems": 3
+    //         }
+    //     ],
+    //     // "no-console": [
+    //     //     "error",
+    //     //     {
+    //     //         "allow": [
+    //     //             "error",
+    //     //             "warn",
+    //     //             "info"
+    //     //         ]
+    //     //     }
+    //     // ],
+    //     "no-debugger": "warn",
+    //     "arrow-body-style": [
+    //         "error",
+    //         "as-needed",
+    //         {
+    //             "requireReturnForObjectLiteral": false
+    //         }
+    //     ],
+    //     "vue/html-indent": [
+    //         1,
+    //         2
+    //     ],
+    //     "vue/html-closing-bracket-newline": [
+    //         1,
+    //         {
+    //             "singleline": "never",
+    //             "multiline": "always"
+    //         }
+    //     ],
+    //     "vue/html-self-closing": [
+    //         1,
+    //         {
+    //             "html": {
+    //                 "void": "always"
+    //             }
+    //         }
+    //     ],
+    //     "vue/multi-word-component-names": 0,
+    //     "vue/object-curly-spacing": 1,
+    //     "vue/space-infix-ops": 1,
+    //     "vue/key-spacing": [
+    //         1,
+    //         {
+    //             "beforeColon": false,
+    //             "afterColon": true
+    //         }
+    //     ],
+    //     "vue/eqeqeq": 1,
+    //     "vue/comma-dangle": 1,
+    //     "vue/array-bracket-spacing": [
+    //         1,
+    //         "never"
+    //     ]
+    // }
 }
