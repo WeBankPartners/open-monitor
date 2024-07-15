@@ -1,6 +1,6 @@
 <template>
   <div class="" style="display:inline-block">
-   <ul class="search-ul">
+    <ul class="search-ul">
       <li class="search-li">
         <span class="params-title">{{$t('m_field_endpoint')}}：</span>
         <Tag color="blue">{{endpointObject.option_value}}</Tag>
@@ -20,8 +20,8 @@
       <li class="search-li"  style="margin-left:20px">
         <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
         <DatePicker type="datetimerange" :value="dateRange" split-panels format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('m_placeholder_datePicker')" style="width: 320px"></DatePicker>
-      </li> 
-   </ul>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -37,11 +37,11 @@ export default {
       endpointList: [],
       ip: {},
       timeTnterval: -1800,
-      dataPick: dataPick,
+      dataPick,
       dateRange: ['', ''],
       autoRefresh: 10,
       disableTime: false,
-      autoRefreshConfig: autoRefreshConfig,
+      autoRefreshConfig,
       params: {
         // time: this.timeTnterval,
         // group: 1,
@@ -79,7 +79,7 @@ export default {
     }
   },
   methods: {
-    getMainConfig () {
+    getMainConfig() {
       if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
         this.endpointObject = this.$root.$store.state.ip
         this.$root.$store.commit('storeip', {})
@@ -95,7 +95,7 @@ export default {
       //   })
       // })
     },
-    datePick (data) {
+    datePick(data) {
       this.dateRange = data
       this.disableTime = false
       if (this.dateRange[0] && this.dateRange[1]) {
@@ -107,7 +107,7 @@ export default {
       }
       this.getChartsConfig()
     },
-    async getChartsConfig () {
+    async getChartsConfig() {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
@@ -116,7 +116,7 @@ export default {
         this.$root.$store.commit('storeip', {})
       }
       let params = {}
-      if (this.endpointObject.type === 'sys' ) {
+      if (this.endpointObject.type === 'sys') {
         params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
@@ -125,13 +125,13 @@ export default {
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
           guid: this.endpointObject.option_value,
           sys: true
-        }  
+        }
         this.$parent.manageCharts({}, params)
         return
       }
       const res = await this.getMainConfig()
       let url = res.panels.url
-      let key = res.search.name
+      const key = res.search.name
       params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
