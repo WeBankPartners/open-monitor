@@ -16,18 +16,18 @@
  * @param {String} url
  * @param {Object} pageConfig (页面整天参数配置)
  */
-const initTable = (that, method, url, pageConfig) =>{
+const initTable = (that, method, url, pageConfig) => {
   // 将搜索组件和分页组件中条件合并
-  let filters = pageConfig.researchConfig?that.$root.$validate.isEmptyReturn_JSON(that.$root.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
-  let params = that.$root.$validate.deepCopy(pageConfig.pagination)
-  for (let k in filters) {
+  const filters = pageConfig.researchConfig?that.$root.$validate.isEmptyReturn_JSON(that.$root.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
+  const params = that.$root.$validate.deepCopy(pageConfig.pagination)
+  for (const k in filters) {
     params[k] = filters[k]
   }
-  let requestParams = adapterParamsForTabledata(that, params)
-  return that.$httpRequestEntrance.httpRequestEntrance(method, url, requestParams, (responseData) => {
+  const requestParams = adapterParamsForTabledata(that, params)
+  return that.$httpRequestEntrance.httpRequestEntrance(method, url, requestParams, responseData => {
     that.pageConfig.pagination.total = responseData.num
     that.pageConfig.pagination.current = parseInt(params.page)
-    let res = that.$root.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
+    const res = that.$root.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
     that.pageConfig.table.tableData = res
     return that.pageConfig.pagination
   })
@@ -40,10 +40,10 @@ const initTable = (that, method, url, pageConfig) =>{
  *
  * return {Object} requestParams (处理后数据)
  */
-const adapterParamsForTabledata = (that, oriParams) =>{
-  let requestParams = that.$root.$validate.deepCopy(oriParams)
-  let deleteparams = ['current', 'pageSize', 'total', 'pageCount']
-  for (let k in requestParams) {
+const adapterParamsForTabledata = (that, oriParams) => {
+  const requestParams = that.$root.$validate.deepCopy(oriParams)
+  const deleteparams = ['current', 'pageSize', 'total', 'pageCount']
+  for (const k in requestParams) {
     for (let i = 0; i < deleteparams.length; i++){
       if (k === deleteparams[i]) {
         delete requestParams[k]
@@ -60,8 +60,8 @@ const adapterParamsForTabledata = (that, oriParams) =>{
  * @param {Object} AddParams (待渲染对象)
  * @param {Object} that (row数据)
  */
-const manageEditParams = (AddParams, rowparams) =>{
-  for (let key in AddParams) {
+const manageEditParams = (AddParams, rowparams) => {
+  for (const key in AddParams) {
     AddParams[key] = rowparams[key]
   }
   return AddParams
@@ -75,28 +75,28 @@ const manageEditParams = (AddParams, rowparams) =>{
  * @param {String} url
  * @param {Object} pageConfig (页面整天参数配置)
  */
-const initDetailTable = (_this, indexx) =>{
+const initDetailTable = (_this, indexx) => {
   _this.detailPageConfig.detailConfig[indexx].table.tableData = []
-  let methods = _this.detailPageConfig.detailConfig[indexx].pagination.getData.methods
-  let url = _this.detailPageConfig.detailConfig[indexx].pagination.getData.url
+  const methods = _this.detailPageConfig.detailConfig[indexx].pagination.getData.methods
+  const url = _this.detailPageConfig.detailConfig[indexx].pagination.getData.url
   // 将搜索组件和分页组件中条件合并
-  let filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$root.$validate.isEmptyReturn_JSON(_this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
-  let params = Object.assign({}, _this.detailPageConfig.detailConfig[indexx].pagination)
+  const filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$root.$validate.isEmptyReturn_JSON(_this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
+  const params = Object.assign({}, _this.detailPageConfig.detailConfig[indexx].pagination)
   // let params = _this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].pagination)
-  for (let k in filters) {
+  for (const k in filters) {
     params[k] = filters[k]
   }
   params.__offset = (params.current-1)*params.__limit
   // 剔除无需传入后台的字段
-  let deleteparams = ['current', 'pageSize', 'total', 'pageCount','getData']
-  for (let k in params) {
+  const deleteparams = ['current', 'pageSize', 'total', 'pageCount','getData']
+  for (const k in params) {
     for (let i = 0; i < deleteparams.length; i++){
       if (k === deleteparams[i]) {
         delete params[k]
       }
     }
   }
-  _this.$root.$httpRequestEntrance.httpRequestEntrance(methods, url, params, (responseData) => {
+  _this.$root.$httpRequestEntrance.httpRequestEntrance(methods, url, params, responseData => {
     _this.detailPageConfig.detailConfig[indexx].table.tableData = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.data]
     _this.detailPageConfig.detailConfig[indexx].pagination.total = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.count]
   })

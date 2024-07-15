@@ -33,7 +33,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += " AND t2.endpoint_group in ('" + strings.Join(query.EndpointGroup, "','") + "') "
 	}
 	if len(query.BasicType) > 0 {
-		whereSql += " AND t1.monitor_type in ('" + strings.Join(query.BasicType, "','") + "') "
+		whereSql += " AND t1.monitor_type ('" + strings.Join(query.BasicType, "','") + "') "
 	}
 	querySql := `SELECT t5.* FROM (
 			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags,t4.create_user,t4.update_user,t4.update_time FROM (
@@ -432,7 +432,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, endpointFilterList []string) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -455,10 +455,18 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, 
 	if query.SMetric != "" {
 		whereSql += " and s_metric like ? "
 		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
+	} else if len(metricFilterList) > 0 {
+		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
+		whereSql += " and s_metric in (" + metricFilterSql + ") "
+		params = append(params, metricFilterParam...)
 	}
 	if query.AlarmName != "" {
 		whereSql += " and (alarm_name=? or content=?) "
 		params = append(params, query.AlarmName, query.AlarmName)
+	} else if len(alarmNameFilterList) > 0 {
+		alarmFilterSql, alarmFilterParam := createListParams(alarmNameFilterList, "")
+		whereSql += " and ( alarm_name in (" + alarmFilterSql + ")  or content in (" + alarmFilterSql + "))"
+		params = append(params, append(params, alarmFilterParam...)...)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -1834,6 +1842,14 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 		} else {
 			endpointServiceMap[row.Endpoint] = []*m.EndpointServiceRelTable{row}
 		}
+	}
+	return
+}
+
+func GetAlarmStrategyNameList() (list []string, err error) {
+	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
+	if len(list) > 0 {
+
 	}
 	return
 }
