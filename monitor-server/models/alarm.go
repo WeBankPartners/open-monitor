@@ -231,12 +231,15 @@ type AlarmEndpointQuery struct {
 }
 
 type AlarmEndpointObj struct {
-	Id        string      `json:"id"`
-	Guid      string      `json:"guid"`
-	Type      string      `json:"type"`
-	GroupsIds string      `json:"groups_ids"`
-	Tags      string      `json:"tags"`
-	Groups    []*GrpTable `json:"groups"`
+	Id         string      `json:"id"`
+	Guid       string      `json:"guid"`
+	Type       string      `json:"type"`
+	GroupsIds  string      `json:"groups_ids"`
+	Tags       string      `json:"tags"`
+	CreateUser string      `json:"create_user"`
+	UpdateUser string      `json:"update_user"`
+	UpdateTime string      `json:"update_time"`
+	Groups     []*GrpTable `json:"groups"`
 }
 
 type GrpEndpointParam struct {
@@ -618,4 +621,23 @@ type StrategyGroupRow struct {
 	Guid          string `xorm:"guid"`
 	EndpointGroup string `xorm:"endpoint_group"`
 	ServiceGroup  string `xorm:"service_group"`
+}
+
+type EndpointOptions struct {
+	EndpointGroup []string `json:"endpointGroup"` // 对象组
+	BasicType     []string `json:"basicType"`     // 基础类型
+}
+
+type EndpointRow struct {
+	EndpointGroup string `xorm:"endpoint_group"`
+	MonitorType   string `xorm:"monitor_type"`
+}
+
+type EndpointListParam struct {
+	Search        string   `json:"search"`
+	EndpointGroup []string `json:"endpointGroup"` // 对象组
+	BasicType     []string `json:"basicType"`     // 基础类型
+	Page          int      `json:"page"`
+	Size          int      `json:"size"`
+	Grp           int      `json:"grp"`
 }
