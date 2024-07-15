@@ -105,7 +105,7 @@ export default {
       tableColumns: [
         {
           title: this.$t('m_year_over_year_metrics'), // 指标
-          key: 'guid',
+          key: 'metric',
           minWidth: 250,
           showType: ['comparisonMetrics']
         },
