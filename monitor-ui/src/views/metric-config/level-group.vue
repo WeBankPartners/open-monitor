@@ -2,47 +2,48 @@
   <div ref="maxheight" class="monitor-level-group">
     <Row>
       <Col :span="8">
-        <!--层级对象-->
-        <span style="font-size: 14px;">
-          {{$t('m_field_resourceLevel')}}:
-        </span>
-        <Select
-          style="width:300px;"
-          v-model="serviceGroup"
-          filterable 
-          @on-change="changeServiceGroup"
-        >
-          <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
-            <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
-            {{option.display_name}}
-          </Option>
-        </Select>
+      <!--层级对象-->
+      <span style="font-size: 14px;">
+        {{$t('m_field_resourceLevel')}}:
+      </span>
+      <Select
+        style="width:300px;"
+        v-model="serviceGroup"
+        filterable
+        @on-change="changeServiceGroup"
+      >
+        <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
+          <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
+          {{option.display_name}}
+        </Option>
+      </Select>
       </Col>
       <Col :span="16">
-        <div class="btn-group">
-          <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
-          <Button
-            type="info"
-            @click.stop="exportData"
-          >
-            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-            {{ $t("m_export") }}
-          </Button>
-          <Upload 
-          :action="uploadUrl" 
+      <div class="btn-group">
+        <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
+        <Button
+          type="info"
+          @click.stop="exportData"
+        >
+          <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+          {{ $t("m_export") }}
+        </Button>
+        <Upload
+          :action="uploadUrl"
           :show-upload-list="false"
           :max-size="1000"
           with-credentials
           :headers="{'Authorization': token}"
           :on-success="uploadSucess"
-          :on-error="uploadFailed">
-            <Button type="primary">
-              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
-              {{ $t('m_import') }}
-            </Button>
-          </Upload>
-          <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
-        </div>
+          :on-error="uploadFailed"
+        >
+          <Button type="primary">
+            <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+            {{ $t('m_import') }}
+          </Button>
+        </Upload>
+        <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
+      </div>
       </Col>
     </Row>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
@@ -50,13 +51,14 @@
       v-model="deleteVisible"
       :title="$t('m_delConfirm_title')"
       @on-ok="submitDelete"
-      @on-cancel="deleteVisible = false">
+      @on-cancel="deleteVisible = false"
+    >
       <div class="modal-body" style="padding:10px 20px;">
         <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
       </div>
     </Modal>
     <AddGroupDrawer
-      v-if="addVisible && metricType==='originalMetrics'"
+      v-if="addVisible && metricType === 'originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :serviceGroup="serviceGroup"
@@ -66,7 +68,7 @@
     ></AddGroupDrawer>
     <YearOverYear
       ref="yearOverYearRef"
-      v-if="addVisible && metricType==='comparisonMetrics'"
+      v-if="addVisible && metricType === 'comparisonMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :originalMetricsId="originalMetricsId"
@@ -93,7 +95,7 @@ export default {
     YearOverYear,
     MetricChange
   },
-  data () {
+  data() {
     return {
       metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       token: null,
@@ -125,9 +127,7 @@ export default {
           title: this.$t('m_scope'), // 作用域
           key: 'workspace',
           width: 150,
-          render: (h, params) => {
-            return <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>
-          },
+          render: (h, params) => <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
@@ -136,9 +136,21 @@ export default {
           width: 140,
           render: (h, params) => {
             const typeList = [
-              { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
-              { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-              { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
+              {
+                label: this.$t('m_basic_type'),
+                value: 'common',
+                color: '#2d8cf0'
+              },
+              {
+                label: this.$t('m_business_configuration'),
+                value: 'business',
+                color: '#81b337'
+              },
+              {
+                label: this.$t('m_metric_list'),
+                value: 'custom',
+                color: '#b886f8'
+              }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
             return <Tag color={find.color} type="border" size="medium">{find.label || '-'}</Tag>
@@ -149,13 +161,11 @@ export default {
           title: this.$t('m_tableKey_expr'), // 表达式
           key: 'prom_expr',
           minWidth: 250,
-          render: (h, params) => {
-            return (
-              <Tooltip max-width="300" content={params.row.prom_expr} transfer>
-                <span class="eclipse">{params.row.prom_expr || '-'}</span>
-              </Tooltip>
-            )
-          },
+          render: (h, params) => (
+            <Tooltip max-width="300" content={params.row.prom_expr} transfer>
+              <span class="eclipse">{params.row.prom_expr || '-'}</span>
+            </Tooltip>
+          ),
           showType: ['originalMetrics']
         },
         {
@@ -164,9 +174,9 @@ export default {
           width: 100,
           render: (h, params) => {
             const comparisonTypeToDisplay = {
-              'day': this.$t('m_dod_comparison'),
-              'week': this.$t('m_wow_comparison'),
-              'month': this.$t('m_mom_comparison'),
+              day: this.$t('m_dod_comparison'),
+              week: this.$t('m_wow_comparison'),
+              month: this.$t('m_mom_comparison'),
               '-': '-'
             }
             return <span>{comparisonTypeToDisplay[params.row.comparisonType || '-']}</span>
@@ -179,8 +189,8 @@ export default {
           width: 160,
           render: (h, params) => {
             const calcTypeToDisplay = {
-              'diff': this.$t('m_difference'),
-              'diff_percent': this.$t('m_percentage_difference')
+              diff: this.$t('m_difference'),
+              diff_percent: this.$t('m_percentage_difference')
             }
             const calcTypeCache = (params.row.calcType || []).map(t => calcTypeToDisplay[t]).join('，')
             return <span>{calcTypeCache || '-'}</span>
@@ -193,10 +203,10 @@ export default {
           width: 100,
           render: (h, params) => {
             const calcMethodToDisplay = {
-              'avg': this.$t('m_average'),
-              'min': this.$t('m_min'),
-              'max': this.$t('m_max'),
-              'sum': this.$t('m_sum'),
+              avg: this.$t('m_average'),
+              min: this.$t('m_min'),
+              max: this.$t('m_max'),
+              sum: this.$t('m_sum'),
               '-': '-'
             }
             return <span>{calcMethodToDisplay[params.row.calcMethod || '-']}</span>
@@ -207,36 +217,28 @@ export default {
           title: this.$t('m_calculation_period'), // 计算周期
           key: 'calcPeriod',
           width: 100,
-          render: (h, params) => {
-            return <span>{params.row.calcPeriod || '-'}S</span>
-          },
+          render: (h, params) => <span>{params.row.calcPeriod || '-'}S</span>,
           showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_update_time'), // 更新时间
           key: 'update_time',
           width: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_time || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.update_time || '-'}</span>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_updatedBy'), // 更新人
           key: 'update_user',
           width: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_user || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.update_user || '-'}</span>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_business_configuration'), // 业务配置
           key: 'log_metric_group_name',
           width: 200,
-          render: (h, params) => {
-            return <span>{params.row.log_metric_group_name || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.log_metric_group_name || '-'}</span>,
           showType: ['originalMetrics']
         },
         {
@@ -244,13 +246,12 @@ export default {
           key: 'action',
           width: 140,
           fixed: 'right',
-          render: (h, params) => {
-            return (
-              <div style="display:flex;justify-content:center;">
-                 {
-                  this.metricType === 'originalMetrics' &&
+          render: (h, params) => (
+            <div style="display:flex;justify-content:center;">
+              {
+                this.metricType === 'originalMetrics'
                   /* 新增同环比指标 */
-                  <Tooltip content={this.$t('m_button_add')+this.$t('m_year_over_year_metrics')} placement="bottom" transfer>
+                  && <Tooltip content={this.$t('m_button_add')+this.$t('m_year_over_year_metrics')} placement="bottom" transfer>
                     <Button
                       size="small"
                       type="success"
@@ -262,42 +263,41 @@ export default {
                       <Icon type="md-add" size="16"></Icon>
                     </Button>
                   </Tooltip>
-                }
-                {
-                  /* 编辑 */
-                  <Tooltip content={this.$t('m_button_edit')} placement="bottom" transfer>
-                    <Button
-                      size="small"
-                      type="primary"
-                      disabled={params.row.metric_type!=='custom'}
-                      onClick={() => {
-                        this.handleEdit(params.row)
-                      }}
-                      style="margin-right:5px;"
-                    >
-                      <Icon type="md-create" size="16"></Icon>
-                    </Button>
-                  </Tooltip>
-                }
-                {
-                  /* 删除 */
-                  <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
-                    <Button
-                      size="small"
-                      type="error"
-                      disabled={params.row.metric_type!=='custom'}
-                      onClick={() => {
-                        this.handleDelete(params.row)
-                      }}
-                      style="margin-right:5px;"
-                    >
-                      <Icon type="md-trash" size="16"></Icon>
-                    </Button>
-                  </Tooltip>
-                }
-              </div>
-            )
-          },
+              }
+              {
+                /* 编辑 */
+                <Tooltip content={this.$t('m_button_edit')} placement="bottom" transfer>
+                  <Button
+                    size="small"
+                    type="primary"
+                    disabled={params.row.metric_type!=='custom'}
+                    onClick={() => {
+                      this.handleEdit(params.row)
+                    }}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-create" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              }
+              {
+                /* 删除 */
+                <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
+                  <Button
+                    size="small"
+                    type="error"
+                    disabled={params.row.metric_type!=='custom'}
+                    onClick={() => {
+                      this.handleDelete(params.row)
+                    }}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-trash" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              }
+            </div>
+          ),
           showType: ['originalMetrics', 'comparisonMetrics']
         }
       ],
@@ -313,11 +313,11 @@ export default {
     }
   },
   computed: {
-    uploadUrl: function() {
+    uploadUrl() {
       return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
     }
   },
-  async mounted () {
+  async mounted() {
     await this.getRecursiveList()
     this.serviceGroup = this.recursiveOptions[0].guid
     this.getList()
@@ -326,14 +326,14 @@ export default {
     this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
   },
   methods: {
-    reloadData (metricType) {
+    reloadData(metricType) {
       this.metricType = metricType
       this.getList()
     },
-    changeServiceGroup () {
+    changeServiceGroup() {
       this.getList()
     },
-    getList () {
+    getList() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
@@ -350,7 +350,7 @@ export default {
         { isNeedloading: true }
       )
     },
-    getRecursiveList () {
+    getRecursiveList() {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/group'
       return this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
@@ -359,83 +359,84 @@ export default {
         responseData => {
           this.recursiveOptions = responseData || []
         },
-        { isNeedloading:false }
+        { isNeedloading: false }
       )
     },
-    exportData () {
+    exportData() {
       const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
       axios({
         method: 'GET',
         url: api,
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         }
-      }).then((response) => {
+      }).then(response => {
         if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
+          }
+          else {
             if ('download' in document.createElement('a')) { // 非IE下载
-              let elink = document.createElement('a')
+              const elink = document.createElement('a')
               elink.download = fileName
               elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)  
+              elink.href = URL.createObjectURL(blob)
               document.body.appendChild(elink)
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            } else { // IE10+下载
+            }
+            else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
         }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      })
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
-    uploadSucess (val) {
+    uploadSucess(val) {
       if (val.status === 'OK') {
         if (val.data) {
           if (Array.isArray(val.data.fail_list) && val.data.fail_list.length > 0) {
             this.$Notice.error({
               duration: 0,
-              render: () => {
-                return <div>
-                  {this.$t('m_metric_export_errorTips')}
-                  <span style="color:red;"> {val.data.fail_list.join('、')}</span>
-                </div>
-              }
+              render: () => <div>
+                {this.$t('m_metric_export_errorTips')}
+                <span style="color:red;"> {val.data.fail_list.join('、')}</span>
+              </div>
             })
-          } else {
+          }
+          else {
             this.$Message.success(this.$t('m_tips_success'))
           }
         }
         this.getList()
       }
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning(file.message)
     },
-    handleAdd () {
+    handleAdd() {
       this.type = 'add'
       this.addVisible = true
       this.originalMetricsId = ''
     },
-    handleEdit (row) {
+    handleEdit(row) {
       this.type = 'edit'
       this.row = row
       this.addVisible = true
     },
-    handleDelete (row) {
+    handleDelete(row) {
       this.row = row
       this.deleteVisible = true
     },
-    submitDelete () {
+    submitDelete() {
       const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'DELETE',
@@ -444,10 +445,11 @@ export default {
         () => {
           this.$Message.success(this.$t('m_tips_success'))
           this.getList()
-        })
+        }
+      )
     },
     // 同环比入口
-    handleAddYearOverYear (row) {
+    handleAddYearOverYear(row) {
       this.metricType = 'comparisonMetrics'
       this.addVisible = true
       this.type = 'add'

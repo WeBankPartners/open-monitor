@@ -5,19 +5,19 @@
         <div class="chart-view">
           <div class="use-underline-title mb-2">
             {{this.$t('m_preview')}}
-            <span class="underline"/>
+            <span class="underline"></span>
           </div>
           <div v-if="isChartDataError" class="echart error-chart">
             {{this.$t('m_noData')}}
           </div>
           <div v-else>
-            <div :id="elId" class="echart" />
+            <div :id="elId" class="echart" ></div>
           </div>
         </div>
         <div class="chart-config">
           <div class="use-underline-title ml-4 mb-2">
             {{this.$t('m_chart_configuration')}}
-            <span class="underline"/>
+            <span class="underline"></span>
           </div>
 
           <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
@@ -118,7 +118,7 @@
         <div class="w-header" slot="title">
           <div class="title">
             {{this.$t('m_menu_metricConfiguration')}}
-            <span class="underline"/>
+            <span class="underline"></span>
           </div>
         </div>
         <Table
@@ -190,7 +190,7 @@
               </Select>
             </div>
           </div>
-          <div style="width: 250px" v-else/>
+          <div style="width: 250px" v-else></div>
 
           <Button
             v-if="operator !== 'view'"
@@ -655,11 +655,11 @@ export default {
       ],
       pieTypeOptions: [
         {
-          label: '标签',
+          label: this.$t('m_tableKey_tags'),
           value: 'tag'
         },
         {
-          label: '值',
+          label: this.$t('m_value'),
           value: 'value'
         }
       ],

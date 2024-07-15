@@ -8,10 +8,10 @@
 </template>
 
 <script>
-import Menu from "@/components/menu"
+import Menu from '@/components/menu'
 // import { watermark } from '@/assets/js/waterMark'
 export default {
-  name: "index",
+  name: 'index',
   data() {
     return {
     }
@@ -30,7 +30,7 @@ export default {
   components: {
     Menu
   }
-};
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

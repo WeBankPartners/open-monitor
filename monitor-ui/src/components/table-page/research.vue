@@ -18,13 +18,15 @@
         <template v-for="(input_condition, index_input_condition) in pageConfig.researchConfig.input_conditions" >
           <div :key="index_input_condition" class="research-div" >
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
-                  :placeholder="$t(input_condition.placeholder)"
-                  type="text"
-                  @keyup.enter.stop="goToAction('search', pageConfig.researchConfig.filters, $event)"
-                  class="form-control research-input c-dark"
-                  @mouseover="activeInput(input_condition, index_input_condition)">
+                   :placeholder="$t(input_condition.placeholder)"
+                   type="text"
+                   @keyup.enter.stop="goToAction('search', pageConfig.researchConfig.filters, $event)"
+                   class="form-control research-input c-dark"
+                   @mouseover="activeInput(input_condition, index_input_condition)"
+            />
             <i class="fa fa-plus-circle clearIcon" style="font-size:12px;"
-              v-if="showClearIcon(input_condition, index_input_condition)" @click="clearInputCondition(input_condition)"></i>
+               v-if="showClearIcon(input_condition, index_input_condition)" @click="clearInputCondition(input_condition)"
+            ></i>
           </div>
         </template>
         <div class="research-div" style="font-size:12px;">
@@ -32,12 +34,13 @@
         </div>
         <div class="button-div" style="font-size:12px;">
           <template v-for="(btn, index) in pageConfig.researchConfig.btn_group">
-              <button :key='index' type="button" class="btn btn-sm"
-                    @click="goToAction(btn.btn_func, pageConfig.researchConfig.filters, $event)" :class="btn.class">
+            <button :key='index' type="button" class="btn btn-sm"
+                    @click="goToAction(btn.btn_func, pageConfig.researchConfig.filters, $event)" :class="btn.class"
+            >
               <i :class="btn.btn_icon" ></i>
               {{$t(btn.btn_name)}}
             </button>
-            </template>
+          </template>
           <div class="research-div" style="font-size:12px;">
             <slot name="transmitExtraBtn"></slot>
           </div>
@@ -59,66 +62,68 @@
   </div>
 </template>
 <script>
-  // import byakugan from '../../components/common-temp/byakugan'
+// import byakugan from '../../components/common-temp/byakugan'
 
-  export default {
-    name: 'research-component',
-    data() {
-      return {
-        showBtnGroup: false,
-        isBatchBtnsActive: true, //
-        activeClearIcon: null, // 搜索区域当前关键字值
-        activeClearIconNo: null, // 搜索区域序号(只包含简单搜索)
-      }
-    },
-    props: ['pageConfig', 'selectedData'],
-    watch: {
-      selectedData: function (selectedData) {
-        this.isBatchBtnsActive = (selectedData.checkedIds.length > 0 ?  false : true)
-      }
-    },
-    mounted () {
+export default {
+  name: 'research-component',
+  data() {
+    return {
+      showBtnGroup: false,
+      isBatchBtnsActive: true, //
+      activeClearIcon: null, // 搜索区域当前关键字值
+      activeClearIconNo: null, // 搜索区域序号(只包含简单搜索)
+    }
+  },
+  props: ['pageConfig', 'selectedData'],
+  watch: {
+    selectedData(selectedData) {
+      this.isBatchBtnsActive = (selectedData.checkedIds.length > 0 ? false : true)
+    }
+  },
+  mounted() {
 
+  },
+  methods: {
+    // 定位当前搜索框信息
+    activeInput(input_condition, index_input_condition) {
+      this.activeClearIcon = input_condition.value
+      this.activeClearIconNo = index_input_condition
     },
-    methods: {
-      // 定位当前搜索框信息
-      activeInput (input_condition, index_input_condition) {
-        this.activeClearIcon = input_condition.value
-        this.activeClearIconNo = index_input_condition
-      },
-      // 注销当前搜索框信息
-      cancleActiveInput () {
-        this.activeClearIcon = null
-        this.activeClearIconNo = null
-      },
-      // 判断是否显示搜索框清除按钮
-      showClearIcon (input_condition, index_input_condition) {
-        let isInputEmpty = !this.$root.$validate.isEmpty_reset(this.pageConfig.researchConfig.filters[input_condition.value])
-        return (index_input_condition === this.activeClearIconNo && isInputEmpty) ? true : false
-      },
-      // 搜索框清除按钮响应函数
-      clearInputCondition (input_condition) {
-        this.pageConfig.researchConfig.filters[input_condition.value] = ''
-        this.cancleActiveInput()
-        this.$parent.search()
-      },
-      goToAction (func, filters, event) {
-        event.stopPropagation()
-        if (func === 'search') {
-          if (this.pageConfig.researchConfig.superSearch) {
-            this.$refs.superSearch.search()
-          } else {
-            this.$parent[func](filters)
-          }
-        } else {
-          this.$parent.$parent[func](filters)
+    // 注销当前搜索框信息
+    cancleActiveInput() {
+      this.activeClearIcon = null
+      this.activeClearIconNo = null
+    },
+    // 判断是否显示搜索框清除按钮
+    showClearIcon(input_condition, index_input_condition) {
+      const isInputEmpty = !this.$root.$validate.isEmpty_reset(this.pageConfig.researchConfig.filters[input_condition.value])
+      return (index_input_condition === this.activeClearIconNo && isInputEmpty) ? true : false
+    },
+    // 搜索框清除按钮响应函数
+    clearInputCondition(input_condition) {
+      this.pageConfig.researchConfig.filters[input_condition.value] = ''
+      this.cancleActiveInput()
+      this.$parent.search()
+    },
+    goToAction(func, filters, event) {
+      event.stopPropagation()
+      if (func === 'search') {
+        if (this.pageConfig.researchConfig.superSearch) {
+          this.$refs.superSearch.search()
+        }
+        else {
+          this.$parent[func](filters)
         }
       }
-    },
-    components: {
-      // byakugan
+      else {
+        this.$parent.$parent[func](filters)
+      }
     }
+  },
+  components: {
+    // byakugan
   }
+}
 </script>
 
 <style lang="less" scoped>
@@ -204,8 +209,6 @@
     // width: 86px;
     height: 32px;
   }
-
-
 
   .filters-li {
     padding: 0 16px;
