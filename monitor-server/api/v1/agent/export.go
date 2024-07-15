@@ -142,7 +142,7 @@ func ExportAgentNew(c *gin.Context) {
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
 				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
-				inputErr = DeregisterJob(endpointObj)
+				inputErr = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 				endpointGuid = endpointObj.Guid
 			}
 		}
@@ -400,7 +400,7 @@ func updateProcessNew(input processRequestObj, operation, operator string) (resu
 		if tmpEndpointObj.Guid == "" {
 			return
 		}
-		err = DeregisterJob(tmpEndpointObj)
+		err = DeregisterJob(tmpEndpointObj, operator)
 		return
 	}
 	return
