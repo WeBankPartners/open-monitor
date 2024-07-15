@@ -159,7 +159,8 @@ export default {
         title: '',
         unit: '',
         data: [],
-        custom_chart_guid: this.panalData.viewConfig.id
+        custom_chart_guid: this.panalData.viewConfig.id,
+        lineType: this.allParams.panal._activeCharts[0].lineType
       }
       this.panalData.query.forEach(item => {
         params.data.push(item)
