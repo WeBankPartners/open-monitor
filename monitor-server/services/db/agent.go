@@ -143,7 +143,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 	return nil
 }
 
-func DeleteEndpoint(guid string) error {
+func DeleteEndpoint(guid, operator string) error {
 	var actions []*Action
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param: []interface{}{guid}})
@@ -164,7 +164,7 @@ func DeleteEndpoint(guid string) error {
 	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?", Param: []interface{}{guid}})
 	for _, v := range endpointGroup {
-		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?", Param: []interface{}{nowTime, v.EndpointGroup}})
+		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=?,update_user=? where guid=?", Param: []interface{}{nowTime, operator, v.EndpointGroup}})
 	}
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
 	for _, v := range serviceGroup {
@@ -221,7 +221,7 @@ func UpdateEndpointAlarmFlag(isStop bool, exportType, instance, ip, port, pod, k
 	}
 }
 
-func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
+func UpdateRecursivePanel(param m.PanelRecursiveTable, operator string) error {
 	var prt []*m.PanelRecursiveTable
 	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", param.Guid).Find(&prt)
 	if err != nil {
@@ -236,7 +236,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid}})
 		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, nowTime, param.Guid}})
 		endpointList := strings.Split(tmpEndpoint, "^")
-		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, endpointList)...)
+		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, operator, endpointList)...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)
 		if err == nil {
@@ -257,7 +257,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType)
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType}})
 		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.ObjType, UpdateTime: nowTime})...)
-		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, strings.Split(param.Endpoint, "^"))...)
+		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, operator, strings.Split(param.Endpoint, "^"))...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)
 		if err == nil {
@@ -267,7 +267,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 	return err
 }
 
-func UpdateRecursiveEndpoint(guid string, endpoint []string) error {
+func UpdateRecursiveEndpoint(guid, operator string, endpoint []string) error {
 	var prt []*m.PanelRecursiveTable
 	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", guid).Find(&prt)
 	if err != nil {
@@ -296,7 +296,7 @@ func UpdateRecursiveEndpoint(guid string, endpoint []string) error {
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?", Param: []interface{}{strings.Join(newEndpoint, "^"), guid}})
-	actions = append(actions, getUpdateServiceEndpointAction(guid, nowTime, newEndpoint)...)
+	actions = append(actions, getUpdateServiceEndpointAction(guid, nowTime, operator, newEndpoint)...)
 	err = Transaction(actions)
 	return err
 }
