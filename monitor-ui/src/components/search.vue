@@ -1,21 +1,21 @@
 <template>
   <div class="" style="display:inline-block">
-   <ul class="search-ul">
+    <ul class="search-ul">
       <li class="search-li">
         <Select
           style="width:300px;"
           v-model="endpoint"
           filterable
-          clearable 
+          clearable
           remote
           ref="select"
           :disabled="endpointExternal"
           :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
           @on-change="updateData"
-          >
+        >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
-            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
+            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
             {{option.option_text}}
           </Option>
           <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
@@ -49,18 +49,19 @@
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
-          @click="getChartsConfig()">
+                @click="getChartsConfig()"
+        >
           <i class="fa fa-search" ></i>
           {{$t('m_button_search')}}
         </button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow&&endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
+        <button type="button" v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
       </li>
       <li class="search-li">
         <button type="button" v-if="isShow && !endpointExternal" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
       </li>
-   </ul>
+    </ul>
   </div>
 </template>
 
@@ -76,37 +77,36 @@ export default {
       endpointList: [],
       ip: {},
       timeTnterval: -1800,
-      dataPick: dataPick,
+      dataPick,
       dateRange: ['', ''],
       compareFirstDate: ['', ''],
       compareSecondDate: ['', ''],
       autoRefresh: 10,
       disableTime: false,
-      autoRefreshConfig: autoRefreshConfig,
+      autoRefreshConfig,
       is_mom_yoy: false,
       params: {},
       endpointExternal: false
     }
   },
   computed: {
-    isShow: function () {
+    isShow() {
       return !this.$root.$validate.isEmpty_reset(this.endpoint)
     }
   },
   watch: {
-    endpoint: function (val) {
+    endpoint(val) {
       if (val) {
-        this.endpointObject = this.endpointList.find(ep => {
-          return ep.option_value === val
-        })
-      } else {
+        this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
+      }
+      else {
         this.endpointObject = {}
       }
     },
-    isShow: function () {
+    isShow() {
       this.clearEndpoint = []
       this.getEndpointList('.')
-      this.$parent.showCharts = false 
+      this.$parent.showCharts = false
       this.$parent.showRecursive = false
     }
   },
@@ -122,9 +122,9 @@ export default {
       this.endpointList = [{
         active: false,
         id: '',
-        option_text: option_text,
+        option_text,
         option_type_name: outerData.type,
-        option_value: option_value,
+        option_value,
         type: outerData.type
       }]
       this.endpoint = option_value
@@ -140,22 +140,22 @@ export default {
     }
   },
   methods: {
-    getMainConfig () {
+    getMainConfig() {
       if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
         this.endpointObject = this.$root.$store.state.ip
         this.$root.$store.commit('storeip', {})
       }
       const type = this.endpointObject.type
       return new Promise(resolve => {
-        let params = {
-          type: type
+        const params = {
+          type
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, responseData => {
           resolve(responseData)
         })
       })
     },
-    datePick (data) {
+    datePick(data) {
       this.dateRange = data
       this.disableTime = false
       if (this.dateRange[0] && this.dateRange[1]) {
@@ -174,24 +174,24 @@ export default {
       this.compareSecondDate = data
     },
     async getEndpointList(query) {
-      let params = {
+      const params = {
         search: query,
         page: 1,
         size: 1000
       }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
         this.endpointList = responseData
       })
     },
-    updateData () {
+    updateData() {
       this.$nextTick(() => {
         this.getChartsConfig()
       })
     },
-    disabledEndpoint (val) {
+    disabledEndpoint(val) {
       this.endpointExternal = val
     },
-    async getChartsConfig (endpointObj) {
+    async getChartsConfig(endpointObj) {
       if (endpointObj) {
         this.endpoint = endpointObj.option_value
         this.endpointObject = endpointObj
@@ -210,7 +210,7 @@ export default {
         }
       }
       let params = {}
-      if (this.endpointObject.type === 'sys' ) {
+      if (this.endpointObject.type === 'sys') {
         params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
@@ -229,7 +229,7 @@ export default {
       }
       const res = await this.getMainConfig()
       let url = res.panels.url
-      let key = res.search.name
+      const key = res.search.name
       params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
@@ -254,16 +254,20 @@ export default {
         this.disableTime = true
         this.$root.$eventBus.$emit('clearSingleChartInterval')
         this.autoRefresh = 0
-        this.$parent.showCharts = false 
+        this.$parent.showCharts = false
         this.$parent.showRecursive = false
-      } else {
+      }
+      else {
         this.disableTime = false
       }
     },
-    changeRoute () {
-      this.$router.push({name: 'endpointManagement', params: {search: this.endpointObject.option_value}})
+    changeRoute() {
+      this.$router.push({
+        name: 'endpointManagement',
+        params: {search: this.endpointObject.option_value}
+      })
     },
-    historyAlarm () {
+    historyAlarm() {
       this.$parent.historyAlarm(this.endpointObject)
     }
   },

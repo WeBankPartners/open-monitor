@@ -22,7 +22,8 @@
       v-model="isShowWarning"
       :title="$t('m_closeConfirm_title')"
       @on-ok="ok"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
@@ -32,12 +33,13 @@
     <Modal
       :width="600"
       :title="$t('m_remark')"
-      v-model="showRemarkModal">
+      v-model="showRemarkModal"
+    >
       <div>
         <Input v-model="modelConfig.addRow.message" type="textarea" placeholder="" />
       </div>
       <div slot="footer">
-        <Button :disabled="modelConfig.addRow.message===''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>
+        <Button :disabled="modelConfig.addRow.message === ''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>
         <Button @click="cancelRemark">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
@@ -45,7 +47,7 @@
 </template>
 
 <script>
-import AlarmCard from "@/components/alarm-card.vue"
+import AlarmCard from '@/components/alarm-card.vue'
 export default {
   name: '',
   components: {
@@ -82,44 +84,47 @@ export default {
       }
     }
   },
-  mounted () {
-    window.addEventListener("visibilitychange", this.isTabActive, true)
+  mounted() {
+    window.addEventListener('visibilitychange', this.isTabActive, true)
   },
   destroyed() {
     this.clearAlarmInterval()
-    window.removeEventListener("visibilitychange", this.isTabActive, true)
+    window.removeEventListener('visibilitychange', this.isTabActive, true)
   },
   methods: {
-    isTabActive () {
-       if (document.hidden) {
+    isTabActive() {
+      if (document.hidden) {
         this.clearAlarmInterval()
-      } else {
+      }
+      else {
         if (this.cacheParams.id) {
           this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         }
       }
     },
-    clearAlarmInterval () {
+    clearAlarmInterval() {
       clearInterval(this.interval)
     },
-    getAlarm (id, viewCondition, permission) {
-      if (!String(id).length) return
+    getAlarm(id, viewCondition, permission) {
+      if (!String(id).length) {
+        return
+      }
       this.permission = permission
       this.cacheParams.id = id
       this.cacheParams.viewCondition = viewCondition
       this.getAlarmdata(id)
-      this.interval = setInterval(()=>{
+      this.interval = setInterval(() => {
         this.getAlarmdata(id)
       }, (viewCondition.autoRefresh || 10) * 1000)
 
     },
-    getAlarmdata (id) {
-      let params = {
+    getAlarmdata(id) {
+      const params = {
         customDashboardId: id,
         page: this.paginationInfo,
         priority: this.filtersForShow.length === 1 ? this.filtersForShow[0].value : undefined
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, responseData => {
         this.paginationInfo.total = responseData.page.totalRows
         this.paginationInfo.startIndex = responseData.page.startIndex
         this.paginationInfo.pageSize = responseData.page.pageSize
@@ -129,14 +134,14 @@ export default {
         this.high = responseData.high
       }, {isNeedloading: false})
     },
-    addParams (type) {
+    addParams(type) {
       this.filtersForShow = [{
         key: 'priority',
         value: type
       }]
       this.getAlarmdata(this.cacheParams.id)
     },
-    clearFiltersForShow () {
+    clearFiltersForShow() {
       this.filtersForShow = []
       this.getAlarmdata(this.cacheParams.id)
     },
@@ -149,26 +154,26 @@ export default {
       this.paginationInfo.pageSize = pageSize
       this.getAlarmdata(this.cacheParams.id)
     },
-    goToNotify (item) {
-      let params = {
+    goToNotify(item) {
+      const params = {
         id: item.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
-    deleteConfirmModal (rowData) {
+    deleteConfirmModal(rowData) {
       this.selectedData = rowData
       this.isShowWarning = true
     },
-    ok () {
+    ok() {
       this.removeAlarm(this.selectedData)
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
     removeAlarm(alarmItem) {
-      let params = {
+      const params = {
         id: alarmItem.id,
         custom: true
       }
@@ -180,7 +185,7 @@ export default {
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
       })
     },
-    remarkModal (item) {
+    remarkModal(item) {
       this.modelConfig.addRow = {
         id: item.id,
         message: item.custom_message,
@@ -188,14 +193,14 @@ export default {
       }
       this.showRemarkModal = true
     },
-    remarkAlarm () {
+    remarkAlarm() {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         this.showRemarkModal = false
       })
     },
-    cancelRemark () {
+    cancelRemark() {
       this.showRemarkModal = false
     },
   }
@@ -218,7 +223,7 @@ export default {
 }
 li {
   list-style: none;
-} 
+}
 
 label {
   margin-bottom: 0;
