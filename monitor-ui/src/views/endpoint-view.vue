@@ -15,7 +15,7 @@ export default {
   mounted() {
   },
   methods: {
-    //#endregion
+    // #endregion
   },
   components: {
     EndpointViewComponent
