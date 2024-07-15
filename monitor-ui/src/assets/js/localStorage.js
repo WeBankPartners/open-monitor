@@ -1,4 +1,4 @@
-function setLocalstorage (data) {
+function setLocalstorage(data) {
   const accessTokenObj = data.find(d => d.tokenType === 'accessToken')
   const refreshTokenObj = data.find(d => d.tokenType === 'refreshToken')
   localStorage.setItem('monitor-accessToken', accessTokenObj.token)
@@ -7,7 +7,7 @@ function setLocalstorage (data) {
   localStorage.setItem('monitor-refreshTokenExpirationTime', refreshTokenObj.expiration)
 }
 
-function clearLocalstorage () {
+function clearLocalstorage() {
   localStorage.removeItem('monitor-accessToken')
   localStorage.removeItem('monitor-accessTokenExpirationTime')
   localStorage.removeItem('monitor-refreshToken')
