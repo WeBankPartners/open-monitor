@@ -1,13 +1,13 @@
 <template>
-    <div class="page-notice" :class="'page-notice-'+noticeConfig.type">
-        <template v-for="(noticeItem, noticeIndex) in noticeConfig.contents">
-          <p :key="noticeIndex">{{$t(noticeItem.tip)}}</p>
-        </template>      
-      </div>
+  <div class="page-notice" :class="'page-notice-' + noticeConfig.type">
+    <template v-for="(noticeItem, noticeIndex) in noticeConfig.contents">
+      <p :key="noticeIndex">{{$t(noticeItem.tip)}}</p>
+    </template>
+  </div>
 </template>
 <script>
 export default {
-  props:['noticeConfig']
+  props: ['noticeConfig']
 }
 </script>
 
@@ -32,4 +32,3 @@ export default {
   }
   // 页面提示信息样式--结束
 </style>
-

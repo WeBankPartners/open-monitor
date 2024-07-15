@@ -169,11 +169,7 @@ func getCreateServiceGroupAction(param *models.ServiceGroupTable) (actions []*Ac
 	return actions
 }
 
-func UpdateServiceGroup(param *models.ServiceGroupTable) {
-
-}
-
-func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint []string) (actions []*Action) {
+func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime, operator string, endpoint []string) (actions []*Action) {
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?", Param: []interface{}{serviceGroupGuid}})
 	if len(endpoint) == 0 {
 		return actions
@@ -186,13 +182,13 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 	}
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
-		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, endpoint)...)
+		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, operator, endpoint)...)
 		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v}})
 	}
 	return actions
 }
 
-func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime string, endpoint []string) (actions []*Action) {
+func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime, operator string, endpoint []string) (actions []*Action) {
 	actions = []*Action{}
 	var endpointGroup []*models.EndpointGroupTable
 	x.SQL("select guid,monitor_type from endpoint_group where service_group=?", serviceGroupGuid).Find(&endpointGroup)
@@ -207,15 +203,12 @@ func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime string, end
 		tmpMonitorType := v[strings.LastIndex(v, "_")+1:]
 		if _, b := tmpMonitorTypeMap[tmpMonitorType]; !b {
 			endpointGroupGuid := fmt.Sprintf("service_%s_%s", serviceGroupGuid, tmpMonitorType)
-			actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time) value (?,?,?,?,?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid, tmpMonitorType, serviceGroupGuid, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time,create_user,update_user) value (?,?,?,?,?,?,?)",
+				Param: []interface{}{endpointGroupGuid, endpointGroupGuid, tmpMonitorType, serviceGroupGuid, nowTime, operator, operator}})
 			tmpMonitorTypeMap[tmpMonitorType] = 1
 		}
 	}
 	return actions
-}
-
-func DeleteServiceGroup(serviceGroupGuid string) {
-
 }
 
 func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err error) {

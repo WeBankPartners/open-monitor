@@ -9,10 +9,10 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (operator === 'add' ? $t('m_button_add'):$t('m_button_edit'))+$t('m_year_over_year_metrics') }}<span class="underline"></span></div>
+        <div class="title">{{ (operator === 'add' ? $t('m_button_add') : $t('m_button_edit')) + $t('m_year_over_year_metrics') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
-      <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
+      <div class="content" :style="{maxHeight: maxHeight + 'px'}">
         <Form :label-width="110" label-position="left">
           <FormItem :label="$t('m_metric')" v-if="operator === 'edit'" required>
             <Input disabled v-model="metricConfigData.guid"></Input>
@@ -60,16 +60,18 @@
           </FormItem>
           <!--计算周期-->
           <FormItem :label="$t('m_calculation_period')" required>
-            <Select 
+            <Select
               filterable
               :disabled="operator === 'edit'"
               @on-change="getChartData"
-              v-model="metricConfigData.calcPeriod">
-              <Option 
-                v-for="item in aggStepOptions" 
-                :value="item.value" 
-                :label="item.label" 
-                :key="item.value">
+              v-model="metricConfigData.calcPeriod"
+            >
+              <Option
+                v-for="item in aggStepOptions"
+                :value="item.value"
+                :label="item.label"
+                :key="item.value"
+              >
                 {{ item.label }}
               </Option>
             </Select>
@@ -86,14 +88,14 @@
       </div>
       <div class="drawer-footer">
         <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
-        <Button type="primary" class="primary" :disabled="metricConfigData.metricId===''||metricConfigData.calcType.length===0" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
+        <Button type="primary" class="primary" :disabled="metricConfigData.metricId === '' || metricConfigData.calcType.length === 0" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
 </template>
 
 <script>
-import { debounce , generateUuid} from '@/assets/js/utils'
+import { debounce} from '@/assets/js/utils'
 // import { readyToDraw } from '@/assets/config/chart-rely-yoy'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
@@ -124,12 +126,12 @@ export default {
       type: String,
       default: ''
     },
-    endpointGroup:{
+    endpointGroup: {
       type: String,
       default: ''
     },
   },
-  data () {
+  data() {
     return {
       metricList: [], // 原始指标列表
       metricTypeConfig: {},
@@ -146,31 +148,58 @@ export default {
       echartId: '',
       maxHeight: 500,
       calcMethodOption: [
-        {label: this.$t('m_average'), value: 'avg'},
-        {label: this.$t('m_min'), value: 'min'},
-        {label: this.$t('m_max'), value: 'max'},
-        {label: this.$t('m_sum'), value: 'sum'}
+        {
+          label: this.$t('m_average'),
+          value: 'avg'
+        },
+        {
+          label: this.$t('m_min'),
+          value: 'min'
+        },
+        {
+          label: this.$t('m_max'),
+          value: 'max'
+        },
+        {
+          label: this.$t('m_sum'),
+          value: 'sum'
+        }
       ],
       aggStepOptions: [
-        {label: '60S', value: 60},
-        {label: '300S', value: 300},
-        {label: '600S', value: 600},
-        {label: '1800S', value: 1800},
-        {label: '3600S', value: 3600}
+        {
+          label: '60S',
+          value: 60
+        },
+        {
+          label: '300S',
+          value: 300
+        },
+        {
+          label: '600S',
+          value: 600
+        },
+        {
+          label: '1800S',
+          value: 1800
+        },
+        {
+          label: '3600S',
+          value: 3600
+        }
       ]
     }
   },
   computed: {
     drawerVisible: {
-      get () {
+      get() {
         return this.visible
       },
-      set (val) {
+      set(val) {
         this.$emit('update:visible', val)
       }
     }
   },
-  async mounted () {
+  async mounted() {
     this.metricConfigData.metricId = this.originalMetricsId || ''
     await this.getEndpoint()
     await this.getMetricList()
@@ -181,7 +210,7 @@ export default {
   },
   methods: {
     // 获取原始指标列表
-    async getMetricList () {
+    async getMetricList() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
@@ -194,7 +223,7 @@ export default {
       }, {isNeedloading: true})
     },
     // 获取回显数据
-    getConfigData () {
+    getConfigData() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
@@ -209,7 +238,7 @@ export default {
         }
       }, {isNeedloading: true})
     },
-    initDrawerHeight () {
+    initDrawerHeight() {
       this.maxHeight = document.body.clientHeight - 150
       window.addEventListener(
         'resize',
@@ -219,7 +248,7 @@ export default {
       )
     },
     // 获取预览对象列表
-    getEndpoint () {
+    getEndpoint() {
       const params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup,
@@ -231,31 +260,48 @@ export default {
         params,
         responseData => {
           this.endpointOptions = responseData
-        })
+        }
+      )
     },
     // 选择预览对象
-    async getMetricType (val) {
-      if (!val) return
+    async getMetricType(val) {
+      if (!val) {
+        return
+      }
       const findOriMetric = this.metricList.find(item => item.guid === val)
       if (findOriMetric) {
         const typeList = [
-          { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
-          { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-          { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
+          {
+            label: this.$t('m_basic_type'),
+            value: 'common',
+            color: '#2d8cf0'
+          },
+          {
+            label: this.$t('m_business_configuration'),
+            value: 'business',
+            color: '#81b337'
+          },
+          {
+            label: this.$t('m_metric_list'),
+            value: 'custom',
+            color: '#b886f8'
+          }
         ]
         this.metricTypeConfig = typeList.find(item => item.value === findOriMetric.metric_type) || {}
       }
       this.getChartData()
     },
     // 渲染echart
-    async getChartData () {
-      let {endpoint, metricId, comparisonType, calcType, calcMethod, calcPeriod} = this.metricConfigData
+    async getChartData() {
+      const {
+        endpoint, metricId, comparisonType, calcType, calcMethod, calcPeriod
+      } = this.metricConfigData
       if ([undefined, ''].includes(endpoint) || calcType.length === 0 || metricId === '') {
-        var myChart = echarts.init(document.getElementById('echartId'))
+        const myChart = echarts.init(document.getElementById('echartId'))
         myChart.clear()
         return
       }
-      let params = {
+      const params = {
         endpoint,
         metricId,
         comparisonType,
@@ -270,13 +316,18 @@ export default {
         params,
         responseData => {
           // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
-          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes'};
+          const chartConfig = {
+            eye: false,
+            dataZoom: false,
+            lineBarSwitch: true,
+            chartType: 'twoYaxes'
+          }
           readyToDraw(this, responseData, 1, chartConfig, 'echartId')
         },
         { isNeedloading: false }
       )
     },
-    handleSubmit () {
+    handleSubmit() {
       if (!this.metricConfigData.metricId) {
         return this.$Message.error(this.$t('m_original_metric_key') + this.$t('m_tips_required'))
       }
@@ -290,9 +341,10 @@ export default {
           this.$Message.success(this.$t('m_tips_success'))
           this.$emit('update:visible', false)
           this.$emit('fetchList')
-        })
+        }
+      )
     },
-    handleCancel () {
+    handleCancel() {
       this.$emit('update:visible', false)
     }
   }
