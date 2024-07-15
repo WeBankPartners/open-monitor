@@ -36,6 +36,11 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 	var i int
 	metricComparisonResultLock.RLock()
 	for _, v := range metricComparisonRes {
+		// 简单校验同环比暴露指标名称合法性
+		if !checkPrometheusQL(v.Name) {
+			log.Printf("Prometheus %s is invalid\n", v.Name)
+			continue
+		}
 		buff.WriteString(fmt.Sprintf("%s{", v.Name))
 		if len(v.MetricMap) > 0 {
 			i = 0
@@ -54,6 +59,30 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s\n", buff.Bytes())
 	}
 	w.Write(buff.Bytes())
+}
+
+// checkPrometheusQL 简单校验同环比暴露指标名称合法性
+func checkPrometheusQL(name string) bool {
+	if strings.TrimSpace(name) == "" {
+		return false
+	}
+	// 不能以数字开头,不能出现点号和中文
+	regex := regexp.MustCompile(`^\d`)
+	// 判断是否以数字开头
+	if regex.MatchString(name) {
+		return false
+	}
+	if strings.Contains(name, ".") {
+		return false
+	}
+	if containsChinese(name) {
+		return false
+	}
+	return true
+}
+
+func containsChinese(s string) bool {
+	return regexp.MustCompile("[\u4e00-\u9fa5]+").MatchString(s)
 }
 
 func StartCalcMetricComparisonCron() {
@@ -268,6 +297,28 @@ func calcMetricComparisonData() {
 	}
 }
 
+func parsePromQL(promQl string) string {
+	if strings.Contains(promQl, "$") {
+		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+		fetchTag := re.FindAll([]byte(promQl), -1)
+		for _, vv := range fetchTag {
+			promQl = strings.Replace(promQl, string(vv), "=~\".*\"", -1)
+		}
+	}
+	return promQl
+}
+
+func getCalcTypeMap(calcType string) map[string]bool {
+	hashMap := make(map[string]bool)
+	if strings.TrimSpace(calcType) != "" {
+		arr := strings.Split(calcType, ",")
+		for _, s := range arr {
+			hashMap[s] = true
+		}
+	}
+	return hashMap
+}
+
 func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*models.PrometheusQueryObj, err error) {
 	var result models.PrometheusResponse
 	var resByteArr []byte
@@ -310,26 +361,4 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		}
 	}
 	return
-}
-
-func parsePromQL(promQl string) string {
-	if strings.Contains(promQl, "$") {
-		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
-		fetchTag := re.FindAll([]byte(promQl), -1)
-		for _, vv := range fetchTag {
-			promQl = strings.Replace(promQl, string(vv), "=~\".*\"", -1)
-		}
-	}
-	return promQl
-}
-
-func getCalcTypeMap(calcType string) map[string]bool {
-	hashMap := make(map[string]bool)
-	if strings.TrimSpace(calcType) != "" {
-		arr := strings.Split(calcType, ",")
-		for _, s := range arr {
-			hashMap[s] = true
-		}
-	}
-	return hashMap
 }
