@@ -7,7 +7,7 @@
       </div>
     </div>
     <div>
-      <Card style="margin: 8px;width: 390px;display: inline-block;" v-for="card in cardList" :key="'card_'+card.id">
+      <Card style="margin: 8px;width: 390px;display: inline-block;" v-for="card in cardList" :key="'card_' + card.id">
         <div slot="title" class="panal-title">
           <Tooltip :content="card.id" max-width="200">
             <h5 class="ellipsis-text">{{ card.id }}</h5>
@@ -49,7 +49,8 @@
 
     <Modal
       :width="600"
-      v-model="modelParams.isShow">
+      v-model="modelParams.isShow"
+    >
       <div slot="header" class="custom-modal-header">
         <span>
           {{ (modelParams.isAdd ? $t('m_button_add') : $t('m_button_edit')) }}
@@ -69,21 +70,22 @@
               <span style="color:red">*</span>
               {{ $t('m_http_server') }}
             </span>
-            <Input v-model="modelParams.params.address" :placeholder="$t('m_example')+':http://prometheus-kafka-adapter:8080/receive'"></Input>
+            <Input v-model="modelParams.params.address" :placeholder="$t('m_example') + ':http://prometheus-kafka-adapter:8080/receive'"></Input>
           </FormItem>
         </Form>
       </div>
       <div slot="footer">
-        <Button :disabled="modelParams.params.id.trim()===''||modelParams.params.address.trim()===''" type="primary" @click="saveModal">{{$t('m_button_save')}}</Button>
+        <Button :disabled="modelParams.params.id.trim() === '' || modelParams.params.address.trim() === ''" type="primary" @click="saveModal">{{$t('m_button_save')}}</Button>
         <Button @click="cancelModal">{{$t('m_button_cancel')}}</Button>
-    </div>
+      </div>
     </Modal>
 
     <Modal
       v-model="isShowWarning"
       :title="$t('m_delConfirm_title')"
       @on-ok="onDeleteConfirm"
-      @on-cancel="onCancelDelete">
+      @on-cancel="onCancelDelete"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
@@ -111,16 +113,16 @@ export default {
       selectedData: {}
     }
   },
-  mounted () {
+  mounted() {
     this.getList()
   },
   methods: {
-    getList () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.remoteWrite, {}, (resp) => {
+    getList() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.remoteWrite, {}, resp => {
         this.cardList = resp || []
       })
     },
-    addCard () {
+    addCard() {
       this.modelParams.isAdd = true
       this.modelParams.params = {
         id: '', // 配置名
@@ -128,7 +130,7 @@ export default {
       }
       this.modelParams.isShow = true
     },
-    editCard (item) {
+    editCard(item) {
       this.modelParams.isAdd = false
       this.modelParams.params = {
         id: item.id, // 配置名
@@ -136,27 +138,27 @@ export default {
       }
       this.modelParams.isShow = true
     },
-    deleteConfirmModal (rowData) {
+    deleteConfirmModal(rowData) {
       this.selectedData = rowData
       this.isShowWarning = true
     },
-    onDeleteConfirm () {
+    onDeleteConfirm() {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.remoteWrite, this.selectedData, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getList()
       })
     },
-    onCancelDelete () {
+    onCancelDelete() {
       this.isShowWarning = false
     },
-    saveModal () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance(this.modelParams.isAdd ? 'POST' : 'PUT', this.$root.apiCenter.remoteWrite, this.modelParams.params, (resp) => {
+    saveModal() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance(this.modelParams.isAdd ? 'POST' : 'PUT', this.$root.apiCenter.remoteWrite, this.modelParams.params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.cancelModal()
         this.getList()
       })
     },
-    cancelModal () {
+    cancelModal() {
       this.modelParams.isShow = false
     },
   },

@@ -47,7 +47,7 @@
       <div class="col-md-12">
         <div class="zone-chart-title">{{panalTitle}}</div>
         <div v-if="!noDataTip">
-          <div :id="elId" class="echart"  style="height:80vh"/>
+          <div :id="elId" class="echart"  style="height:80vh"></div>
         </div>
         <div v-else class="echart echart-no-data-tip">
           <span>{{this.$t('m_noData')}}</span>
