@@ -478,6 +478,15 @@ type QueryProblemAlarmDto struct {
 	CustomDashboardId int       `json:"custom_dashboard_id"`
 }
 
+type QueryProblemAlarmPageDto struct {
+	Endpoint          []string  `json:"endpoint"`
+	Metric            []string  `json:"metric"`
+	Priority          string    `json:"priority"`
+	Page              *PageInfo `json:"page"`
+	AlarmName         []string  `json:"alarm_name"`
+	CustomDashboardId int       `json:"custom_dashboard_id"`
+}
+
 type QueryHistoryAlarmParam struct {
 	Start    int64     `json:"start" binding:"required"`
 	End      int64     `json:"end" binding:"required"`
@@ -642,4 +651,10 @@ type EndpointListParam struct {
 	Page          int      `json:"page"`
 	Size          int      `json:"size"`
 	Grp           int      `json:"grp"`
+}
+
+type ProblemAlarmOptions struct {
+	EndpointList  []string `json:"endpointList"`
+	MetricList    []string `json:"metricList"`
+	AlarmNameList []string `json:"alarmNameList"`
 }

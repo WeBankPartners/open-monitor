@@ -157,7 +157,7 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 			if tmpErr != nil {
 				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
 			} else {
-				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, operator, true)
 				if tmpErr != nil {
 					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
 				} else {
