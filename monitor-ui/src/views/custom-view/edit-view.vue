@@ -70,7 +70,8 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem :label="$t('m_computed_type')" prop="aggregate">
+              <template v-if="chartConfigForm.lineType !== 'twoYaxes'">
+                <FormItem :label="$t('m_computed_type')" prop="aggregate">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggregate"
@@ -83,24 +84,25 @@
                       {{ item }}
                     </Option>
                   </Select>
-              </FormItem>
-              <FormItem v-if="chartConfigForm.aggregate !== 'none'" :label="$t('m_calculation_period')" prop="aggStep">
-                  <Select 
-                    filterable
-                    v-model="chartConfigForm.aggStep"
-                    @on-change="onAggStepChange" >
-                    <Option 
-                      v-for="item in aggStepOptions" 
-                      :value="item.value" 
-                      :label="item.label" 
-                      :key="item.value">
-                      {{ item.label }}
-                    </Option>
-                  </Select>
-              </FormItem>
-              <FormItem :label="$t('m_unit')" prop="unit">
-                  <Input v-model="chartConfigForm.unit" :maxlength="10"></Input>
-              </FormItem>
+                </FormItem>
+                <FormItem v-if="chartConfigForm.aggregate !== 'none'" :label="$t('m_calculation_period')" prop="aggStep">
+                    <Select 
+                      filterable
+                      v-model="chartConfigForm.aggStep"
+                      @on-change="onAggStepChange" >
+                      <Option 
+                        v-for="item in aggStepOptions" 
+                        :value="item.value" 
+                        :label="item.label" 
+                        :key="item.value">
+                        {{ item.label }}
+                      </Option>
+                    </Select>
+                </FormItem>
+                <FormItem :label="$t('m_unit')" prop="unit">
+                    <Input v-model="chartConfigForm.unit" :maxlength="10"></Input>
+                </FormItem>
+              </template>
             </div>
           </Form>
         </div>
@@ -138,7 +140,7 @@
               {{option.option_text}}
             </Option>
           </Select>
-
+          
           <Select
             v-model="monitorType"
             filterable
@@ -151,7 +153,6 @@
               {{item}}
             </Option>
           </Select>
-
           <Select
             v-model="metricGuid"
             class="metric-guid-select"
@@ -201,7 +202,6 @@
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
   </div>
-  
 </template>
 
 <script>
@@ -218,21 +218,21 @@ import { generateUuid } from "@/assets/js/utils"
 import { generateAdjacentColors } from '@/assets/config/random-color'
 
 const initTableData = [
-    {
-      "endpoint": "",
-      "serviceGroup": "",
-      "endpointName": "",
-      "monitorType": "",
-      "colorGroup": "",
-      "pieDisplayTag": "",
-      "endpointType": "",
-      "metricType": "",
-      "metricGuid": "",
-      "metric": "",
-      "tags": [],
-      "series": []
-    }
-  ]
+  {
+    "endpoint": "",
+    "serviceGroup": "",
+    "endpointName": "",
+    "monitorType": "",
+    "colorGroup": "",
+    "pieDisplayTag": "",
+    "endpointType": "",
+    "metricType": "",
+    "metricGuid": "",
+    "metric": "",
+    "tags": [],
+    "series": []
+  }
+]
 
 export default {
   name: "",
@@ -383,7 +383,7 @@ export default {
           fixed: 'right',
           render: (h, params) => {
             return (
-                <Button disabled={this.operator === 'view'} class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
+              <Button disabled={this.operator === 'view'} class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         }
@@ -620,6 +620,7 @@ export default {
       mgmtRoles: [],
       useRoles: [],
       lineTypeOption: {
+        twoYaxes: 2,
         line: 1,
         area: 0
       },
@@ -900,10 +901,14 @@ export default {
       this.metricGuid = '';
       this.metricOptions = [];
       if (!this.endpointValue || !this.monitorType) return
-      this.request('GET', '/monitor/api/v2/monitor/metric/list', {
+      
+      let api = '/monitor/api/v2/monitor/metric/list'
+      let params = {
         monitorType: this.monitorType,
-        serviceGroup: this.endpointValue
-      }, res => {
+        serviceGroup: this.endpointValue,
+        query: this.chartConfigForm.lineType === 'twoYaxes' ? '' : 'all'
+      }
+      this.request('GET', api, params, res => {
         this.metricOptions = this.filterHasUsedMetric(res);
       })
     },
@@ -1023,12 +1028,13 @@ export default {
     requestReturnPromise(method, api, params) {
       return new Promise(resolve => {
         this.request(method, api, params, res => {
-            resolve(res)
-          })
+          resolve(res)
+        })
       })
     },
     removeTableItem(index) {
       this.$delete(this.tableData, index);
+      this.searchMetricByType()
     },
     resetChartConfig() {
       this.getTableData()
