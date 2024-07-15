@@ -17,18 +17,19 @@
               {{ $t('m_export') }}
             </Button>
             <div style="display: inline-block;margin-bottom: 3px;">
-              <Upload 
-                :action="uploadUrl" 
+              <Upload
+                :action="uploadUrl"
                 :show-upload-list="false"
                 :max-size="1000"
                 with-credentials
                 :headers="{'Authorization': token}"
                 :on-success="uploadSucess"
-                :on-error="uploadFailed">
-                  <Button type="primary" class="btn-left">
-                    <img src="../../assets/img/import.png" class="btn-img" alt="" />
-                    {{ $t('m_import') }}
-                  </Button>
+                :on-error="uploadFailed"
+              >
+                <Button type="primary" class="btn-left">
+                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                  {{ $t('m_import') }}
+                </Button>
               </Upload>
             </div>
           </div>
@@ -39,75 +40,79 @@
       </div>
 
       <Collapse v-model="logFileCollapseValue">
-        <Panel v-for="(item, index) in logFileCollapseData" 
-          :key="index"  
-          :name="index + ''">
-            <div class="log-file-collapse-content">
-              <div>
-                <div class="use-underline-title mr-4">
-                  {{item.log_path}}
-                  <span class="underline"></span>
-                </div>
-                <Tag color="blue">{{ item.monitor_type }}</Tag>
+        <Panel v-for="(item, index) in logFileCollapseData"
+               :key="index"
+               :name="index + ''"
+        >
+          <div class="log-file-collapse-content">
+            <div>
+              <div class="use-underline-title mr-4">
+                {{item.log_path}}
+                <span class="underline"></span>
               </div>
-              <div class="log-file-collapse-button" @click="(e) => {e.stopPropagation()}">
-                <Tooltip :content="$t('m_use_custom')" placement="bottom" transfer>
-                  <Button
-                    size="small"
-                    type="success"
-                    @click.stop="addByCustom(item)"
-                  >
-                    <Icon type="ios-add-circle" size="16" />
-                  </Button>
-                </Tooltip>
-                <Dropdown 
-                  placement="left"
-                  :key="index"
-                  class="chart-option-menu" 
-                  @on-click="(guid) => {
-                    selectedTemp = guid;
-                    parentGuid = item.guid;
-                    okTempSelect()
-                  }">
-                  <Button type="success" size="small">
-                    <Icon type="ios-link" size="16" />
-                  </Button>
-                  <template #list>
-                    <DropdownMenu>
-                      <DropdownItem v-for="(option, key) in allTemplateList"
-                        :name="option.guid" 
-                        :key="key"
-                        :disabled="option.disabled">
-                        {{option.name}}
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </template>
-                </Dropdown>
-                <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
-                    <Icon type="md-create" size="16" />
+              <Tag color="blue">{{ item.monitor_type }}</Tag>
+            </div>
+            <div class="log-file-collapse-button" @click="(e) => {e.stopPropagation()}">
+              <Tooltip :content="$t('m_use_custom')" placement="bottom" transfer>
+                <Button
+                  size="small"
+                  type="success"
+                  @click.stop="addByCustom(item)"
+                >
+                  <Icon type="ios-add-circle" size="16" />
                 </Button>
-                <!-- <Button size="small" type="error" class="mr-2" @click.stop="deleteConfirmModal(item)">
+              </Tooltip>
+              <Dropdown
+                placement="left"
+                :key="index"
+                class="chart-option-menu"
+                @on-click="(guid) => {
+                  selectedTemp = guid;
+                  parentGuid = item.guid;
+                  okTempSelect()
+                }"
+              >
+                <Button type="success" size="small">
+                  <Icon type="ios-link" size="16" />
+                </Button>
+                <template #list>
+                  <DropdownMenu>
+                    <DropdownItem v-for="(option, key) in allTemplateList"
+                                  :name="option.guid"
+                                  :key="key"
+                                  :disabled="option.disabled"
+                    >
+                      {{option.name}}
+                    </DropdownItem>
+                  </DropdownMenu>
+                </template>
+              </Dropdown>
+              <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
+                <Icon type="md-create" size="16" />
+              </Button>
+              <!-- <Button size="small" type="error" class="mr-2" @click.stop="deleteConfirmModal(item)">
                   <Icon type="md-trash" size="16"></Icon>
                 </Button> -->
-                <Poptip
-                  confirm
-                  :title="$t('m_delConfirm_tip')"
-                  placement="left-end"
-                  @on-ok="deleteLogFiltItem(item)">
-                  <Button size="small" type="error" class="mr-2">
-                    <Icon type="md-trash" size="16" />
-                  </Button>
-                </Poptip>
-              </div>
+              <Poptip
+                confirm
+                :title="$t('m_delConfirm_tip')"
+                placement="left-end"
+                @on-ok="deleteLogFiltItem(item)"
+              >
+                <Button size="small" type="error" class="mr-2">
+                  <Icon type="md-trash" size="16" />
+                </Button>
+              </Poptip>
             </div>
-            <template #content>
-              <Table
-                class="log-file-table"
-                size="small"
-                :columns="logFileTableColumns"
-                :data="item.metric_groups"
-              />
-            </template>
+          </div>
+          <template #content>
+            <Table
+              class="log-file-table"
+              size="small"
+              :columns="logFileTableColumns"
+              :data="item.metric_groups"
+            />
+          </template>
         </Panel>
       </Collapse>
     </section>
@@ -116,8 +121,8 @@
       :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
       :mask-closable="false"
       :width="730"
-      >
-      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+    >
+      <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <div>
           <span>{{$t('m_field_type')}}:</span>
           <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 640px">
@@ -145,8 +150,7 @@
             size="small"
             style="width:650px"
             long
-            >{{ $t('m_button_add') }}{{$t('m_tableKey_logPath')}}</Button
-          >
+          >{{ $t('m_button_add') }}{{$t('m_tableKey_logPath')}}</Button>
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
@@ -179,8 +183,7 @@
             size="small"
             style="width:650px"
             long
-            >{{$t('addStringMap')}}</Button
-          >
+          >{{$t('addStringMap')}}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -193,8 +196,8 @@
       :title="$t('m_json_regular')"
       width="840"
       :mask-closable="false"
-      >
-      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+    >
+      <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_tableKey_tags')">
             <Input v-model="ruleModelConfig.addRow.tags" style="width:100%" />
@@ -259,8 +262,7 @@
                 @click="addEmptyItem('string_map', index)"
                 type="success"
                 size="small"
-                >{{ $t('addStringMap') }}</Button
-              >
+              >{{ $t('addStringMap') }}</Button>
             </div>
             <Divider :key="index + 'Q'" />
           </template>
@@ -269,8 +271,7 @@
             type="success"
             size="small"
             long
-            >{{ $t('addMetricConfig') }}</Button
-          >
+          >{{ $t('addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -324,8 +325,7 @@
               type="success"
               size="small"
               long
-              >{{ $t('addStringMap') }}</Button
-            >
+            >{{ $t('addStringMap') }}</Button>
           </div>
         </div>
         <!-- 新增标签 -->
@@ -352,8 +352,7 @@
               type="success"
               size="small"
               long
-              >{{ $t('m_add_tags') }}</Button
-            >
+            >{{ $t('m_add_tags') }}</Button>
           </div>
         </div>
       </div>
@@ -381,8 +380,8 @@
       :title="$t('m_db')"
       width="700"
       :mask-closable="false"
-      >
-      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+    >
+      <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_field_displayName')">
             <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
@@ -431,8 +430,7 @@
             size="small"
             long
             style="width:610px"
-            >{{ $t('addMetricConfig') }}</Button
-          >
+          >{{ $t('addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -446,18 +444,20 @@
       :title="$t('m_import')"
       :mask-closable="false"
       @on-ok="isShowGroupMetricUpload = false"
-      @on-cancel="isShowGroupMetricUpload = false">
+      @on-cancel="isShowGroupMetricUpload = false"
+    >
       <div class="modal-body" style="padding:30px">
-        <div style="display: inline-block;margin-bottom: 3px;"> 
-          <Upload 
-          :action="uploadGroupMetricUrl" 
-          accept=".xlsx,.csv"
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{Authorization: token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed">
+        <div style="display: inline-block;margin-bottom: 3px;">
+          <Upload
+            :action="uploadGroupMetricUrl"
+            accept=".xlsx,.csv"
+            :show-upload-list="false"
+            :max-size="1000"
+            with-credentials
+            :headers="{Authorization: token}"
+            :on-success="uploadSucess"
+            :on-error="uploadFailed"
+          >
             <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
           </Upload>
         </div>
@@ -469,8 +469,8 @@
 </template>
 
 <script>
-import cloneDeep from 'lodash/cloneDeep';
-import map from 'lodash/map';
+import cloneDeep from 'lodash/cloneDeep'
+import map from 'lodash/map'
 import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
@@ -481,7 +481,7 @@ import axios from 'axios'
 
 export default {
   name: '',
-  data () {
+  data() {
     return {
       selectedTemp: '', // 新增选中的模版
       parentGuid: '', // 新增在该数据下
@@ -510,8 +510,14 @@ export default {
       showAddAndEditModal: false,
       activeData: {},
       regulationOption: [
-        {label: this.$t('m_regular_match'), value: 1},
-        {label: this.$t('m_irregular_matching'), value: 0}
+        {
+          label: this.$t('m_regular_match'),
+          value: 1
+        },
+        {
+          label: this.$t('m_irregular_matching'),
+          value: 0
+        }
       ],
       showRegConfig: false,
       ruleModelConfig: {
@@ -536,10 +542,26 @@ export default {
         modalTitle: 'm_metric_regular',
         saveFunc: 'saveCustomMetric',
         config: [
-          {label: 'm_field_metric', value: 'metric', placeholder: '', disabled: false, type: 'text', max: 50},
-          {label: 'm_field_displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
+          {
+            label: 'm_field_metric',
+            value: 'metric',
+            placeholder: '',
+            disabled: false,
+            type: 'text',
+            max: 50
+          },
+          {
+            label: 'm_field_displayName',
+            value: 'display_name',
+            placeholder: '',
+            disabled: false,
+            type: 'text'
+          },
           // {label: 'm_tableKey_regular', value: 'regular', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {name:'ruleConfig',type:'slot'}
+          {
+            name: 'ruleConfig',
+            type: 'slot'
+          }
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           log_metric_monitor: '',
@@ -553,8 +575,14 @@ export default {
         slotConfig: {
           aggOption: ['sum', 'avg', 'count', 'max', 'min'],
           regulationOption: [
-            {label: this.$t('m_regular_match'), value: 1},
-            {label: this.$t('m_irregular_matching'), value: 0}
+            {
+              label: this.$t('m_regular_match'),
+              value: 1
+            },
+            {
+              label: this.$t('m_irregular_matching'),
+              value: 0
+            }
           ]
         }
       },
@@ -576,11 +604,26 @@ export default {
         }
       },
       monitorTypeOptions: [
-        {label: 'process', value: 'process'},
-        {label: 'java', value: 'java'},
-        {label: 'nginx', value: 'nginx'},
-        {label: 'http', value: 'http'},
-        {label: 'mysql', value: 'mysql'}
+        {
+          label: 'process',
+          value: 'process'
+        },
+        {
+          label: 'java',
+          value: 'java'
+        },
+        {
+          label: 'nginx',
+          value: 'nginx'
+        },
+        {
+          label: 'http',
+          value: 'http'
+        },
+        {
+          label: 'mysql',
+          value: 'mysql'
+        }
       ],
       stepOptions: [10, 30, 60, 300, 600],
       isShowGroupMetricUpload: false,
@@ -597,14 +640,12 @@ export default {
           title: this.$t('m_configuration_name'),
           width: 150,
           key: 'name',
-          render: (h, params) => {
-            return (
-              params.row.name ? 
-                <Tooltip placement="right" max-width="300" content={params.row.name}>
-                  <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
-                </Tooltip> : <div>-</div>
-            )
-          }
+          render: (h, params) => (
+            params.row.name
+              ? <Tooltip placement="right" max-width="300" content={params.row.name}>
+                <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
+              </Tooltip> : <div>-</div>
+          )
         },
         {
           title: this.$t('m_associated_template'),
@@ -612,14 +653,12 @@ export default {
           ellipsis: true,
           tooltip: true,
           key: 'log_monitor_template_name',
-          render: (h, params) => {
-            return (
-              params.row.log_monitor_template_name ? 
-                <Tooltip placement="top" max-width="300" content={params.row.log_monitor_template_name}>
-                  <div class="table-ellipsis" style="width: 180px">{params.row.log_monitor_template_name}</div>
-                </Tooltip> : <div>-</div>
-            )
-          }
+          render: (h, params) => (
+            params.row.log_monitor_template_name
+              ? <Tooltip placement="top" max-width="300" content={params.row.log_monitor_template_name}>
+                <div class="table-ellipsis" style="width: 180px">{params.row.log_monitor_template_name}</div>
+              </Tooltip> : <div>-</div>
+          )
         },
         {
           title: this.$t('m_metric_key'),
@@ -628,16 +667,16 @@ export default {
           tooltip: true,
           key: 'log_type_display',
           render: (h, params) => {
-            let metricStr = '';
-            let metricHtml = '';
+            let metricStr = ''
+            let metricHtml = ''
             if (params.row.metric_list.length) {
-              const metricArr = map(params.row.metric_list, 'metric');
-              metricStr = metricArr.join(',');
-              metricHtml = '<p>' + metricArr.join('<br>') + '</p>';
+              const metricArr = map(params.row.metric_list, 'metric')
+              metricStr = metricArr.join(',')
+              metricHtml = '<p>' + metricArr.join('<br>') + '</p>'
             }
             return (
-              metricStr ? 
-                <Tooltip placement="top" max-width="400">
+              metricStr
+                ? <Tooltip placement="top" max-width="400">
                   <div slot="content" style="white-space: normal;">
                     <div domPropsInnerHTML={metricHtml}></div>
                   </div>
@@ -664,24 +703,26 @@ export default {
           title: this.$t('m_table_action'),
           width: 150,
           key: 'index',
-          render: (h, params) => {
-            return (
-              <div>
-                <Button size="small" class="mr-1"  type="primary" on-click={() =>{this.currentLogFileIndex = params.row.logFileIndex; this.editRuleItem(params.row)}}>
-                    <Icon type="md-create" size="16"></Icon>
+          render: (h, params) => (
+            <div>
+              <Button size="small" class="mr-1" type="primary" on-click={() => {
+                this.currentLogFileIndex = params.row.logFileIndex; this.editRuleItem(params.row)
+              }}>
+                <Icon type="md-create" size="16"></Icon>
+              </Button>
+              <Poptip
+                confirm
+                title={this.$t('m_delConfirm_tip')}
+                placement="left-end"
+                on-on-ok={() => {
+                  this.currentLogFileIndex = params.row.logFileIndex; this.deleteType = 'rules'; this.okDelRow(params.row)
+                }}>
+                <Button size="small" type="error" class="mr-2">
+                  <Icon type="md-trash" size="16" />
                 </Button>
-                <Poptip
-                  confirm
-                  title={this.$t('m_delConfirm_tip')}
-                  placement="left-end"
-                  on-on-ok={() => {this.currentLogFileIndex = params.row.logFileIndex; this.deleteType = 'rules'; this.okDelRow(params.row)}}>
-                  <Button size="small" type="error" class="mr-2">
-                    <Icon type="md-trash" size="16" />
-                  </Button>
-                </Poptip>
-              </div>
-            )
-          }
+              </Poptip>
+            </div>
+          )
         }
       ],
       currentLogFileIndex: 0,
@@ -704,24 +745,26 @@ export default {
           title: this.$t('m_table_action'),
           width: 250,
           key: 'index',
-          render: (h, params) => {
-            return (
-              <div>
-                <Button size="small" class="mr-1"  type="primary" on-click={() =>{this.editDbItem(params.row)}}>
-                    <Icon type="md-create" size="16"></Icon>
+          render: (h, params) => (
+            <div>
+              <Button size="small" class="mr-1" type="primary" on-click={() => {
+                this.editDbItem(params.row)
+              }}>
+                <Icon type="md-create" size="16"></Icon>
+              </Button>
+              <Poptip
+                confirm
+                title={this.$t('m_delConfirm_tip')}
+                placement="left-end"
+                on-on-ok={() => {
+                  this.deleteType = 'db'; this.okDelRow(params.row)
+                }}>
+                <Button size="small" type="error" class="mr-2">
+                  <Icon type="md-trash" size="16" />
                 </Button>
-                <Poptip
-                  confirm
-                  title={this.$t('m_delConfirm_tip')}
-                  placement="left-end"
-                  on-on-ok={() => {this.deleteType = 'db'; this.okDelRow(params.row)}}>
-                  <Button size="small" type="error" class="mr-2">
-                    <Icon type="md-trash" size="16" />
-                  </Button>
-                </Poptip>
-              </div>
-            )
-          }
+              </Poptip>
+            </div>
+          )
         }
       ],
       dataBaseTableData: [],
@@ -729,19 +772,19 @@ export default {
     }
   },
   computed: {
-    uploadUrl: function() {
+    uploadUrl() {
       return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targrtId}`
     },
-    uploadGroupMetricUrl: function() {
+    uploadGroupMetricUrl() {
       return baseURL_config + `/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}`
     }
   },
-  mounted () {
+  mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null;
-    this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
-      this.templateList.json_list = resp.json_list;
-      this.templateList.regular_list = resp.regular_list;
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+    this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, resp => {
+      this.templateList.json_list = resp.json_list
+      this.templateList.regular_list = resp.regular_list
       this.allTemplateList = [{
         name: this.$t('m_standard_json'),
         value: 'm_standard_json',
@@ -754,81 +797,83 @@ export default {
     })
   },
   methods: {
-    importConfig (rowData) {
+    importConfig(rowData) {
       this.groupMetricId = rowData.guid
       this.isShowGroupMetricUpload = true
     },
-    exportData () {
+    exportData() {
       const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targrtId}`
       axios({
         method: 'GET',
         url: api,
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         }
-      }).then((response) => {
+      }).then(response => {
         if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
-          window.navigator.msSaveOrOpenBlob(blob, fileName)
-        } else {
-          if ('download' in document.createElement('a')) { // 非IE下载
-            let elink = document.createElement('a')
-            elink.download = fileName
-            elink.style.display = 'none'
-            elink.href = URL.createObjectURL(blob)  
-            document.body.appendChild(elink)
-            elink.click()
-            URL.revokeObjectURL(elink.href) // 释放URL 对象
-            document.body.removeChild(elink)
-          } else { // IE10+下载
-            navigator.msSaveOrOpenBlob(blob, fileName)
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+          else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              const elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            }
+            else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
           }
         }
-        }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      });
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
-    uploadSucess () {
+    uploadSucess() {
       this.$Message.success(this.$t('m_tips_success'))
       this.getDetail(this.targrtId)
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning(file.message)
     },
     // BD config
-    delDbItem (rowData) {
+    delDbItem(rowData) {
       const api = this.$root.apiCenter.saveTargetDb + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
-    editDbItem (rowData) {
+    editDbItem(rowData) {
       this.getEndpoint(rowData.monitor_type, 'mysql')
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.dbModelConfig.isAdd = false
       this.dbModelConfig.isShow = true
     },
-    addDb () {
+    addDb() {
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
-    saveDb () {
+    saveDb() {
       this.dbModelConfig.addRow.service_group = this.targrtId
       const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.saveTargetDb, this.dbModelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.dbModelConfig.isShow = false
         this.getDbDetail(this.targrtId)
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     },
-    cancelDb () {
+    cancelDb() {
       this.dbModelConfig.isShow = false
       this.dbModelConfig.addRow = {
         service_group: '',
@@ -839,14 +884,14 @@ export default {
         endpoint_rel: []
       }
     },
-    getDbDetail (targetId) {
+    getDbDetail(targetId) {
       const api = this.$root.apiCenter.getTargetDbDetail + '/group/' + targetId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.dataBaseTableData = responseData;
-      }, {isNeedloading:false})
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.dataBaseTableData = responseData
+      }, {isNeedloading: false})
     },
     // other config
-    editF (rowData) {
+    editF(rowData) {
       this.getEndpoint(rowData.monitor_type, 'host')
       this.cancelAddAndEdit()
       this.addAndEditModal.isAdd = false
@@ -860,21 +905,21 @@ export default {
       this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
       this.addAndEditModal.isShow = true
     },
-    updateReg (reg) {
+    updateReg(reg) {
       this.ruleModelConfig.addRow.json_regular = reg
       this.showRegConfig = false
     },
-    cancelReg () {
+    cancelReg() {
       this.showRegConfig = false
     },
-    updateCustomReg (reg) {
+    updateCustomReg(reg) {
       this.customMetricsModelConfig.addRow.regular = reg
       this.showCustomRegConfig = false
     },
-    cancelCustomReg () {
+    cancelCustomReg() {
       this.showCustomRegConfig = false
     },
-    addCustomMetricEmpty (type) {
+    addCustomMetricEmpty(type) {
       if (!this.customMetricsModelConfig.addRow[type]) {
         this.customMetricsModelConfig.addRow[type] = []
       }
@@ -887,13 +932,13 @@ export default {
     deleteCustomMetric(type, index) {
       this.customMetricsModelConfig.addRow[type].splice(index, 1)
     },
-    addCustomMetric (rowData) {
+    addCustomMetric(rowData) {
       this.activeData = rowData
       this.customMetricsModelConfig.isAdd = true
       this.$root.JQ('#custom_metrics').modal('show')
     },
-    saveCustomMetric () {
-      let params = JSON.parse(JSON.stringify(this.customMetricsModelConfig.addRow))
+    saveCustomMetric() {
+      const params = JSON.parse(JSON.stringify(this.customMetricsModelConfig.addRow))
       params.log_metric_monitor = this.activeData.guid
       if (!(params.regular.includes('(') && params.regular.includes(')'))) {
         this.$Message.error(this.$t('m_regular_tip'))
@@ -907,44 +952,47 @@ export default {
         // this.getDetail(this.targrtId)
       })
     },
-    editCustomMetricItem (rowData) {
+    editCustomMetricItem(rowData) {
       this.activeData = rowData
       this.customMetricsModelConfig.isAdd = false
       this.modelTip.value = rowData.display_name
       this.customMetricsModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.$root.JQ('#custom_metrics').modal('show')
     },
-    editRuleItem (rowData) {
+    editRuleItem(rowData) {
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
-      } else {
+      }
+      else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
-    okDelRow (item) {
+    okDelRow(item) {
       if (this.deleteType === 'custom_metrics') {
         this.delCustomMericsItem(item)
-      } else if (this.deleteType === 'db') {
+      }
+      else if (this.deleteType === 'db') {
         this.delDbItem(item)
-      } else {
+      }
+      else {
         this.delRuleItem(item)
       }
     },
-    delCustomMericsItem (rowData) {
+    delCustomMericsItem(rowData) {
       const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.reloadMetricData(rowData.log_metric_monitor)
       })
     },
-    delRuleItem (rowData) {
+    delRuleItem(rowData) {
       const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.reloadMetricData(rowData.log_metric_monitor)
       })
     },
-    cancelRule () {
+    cancelRule() {
       this.ruleModelConfig.addRow = {
         log_metric_monitor: null,
         json_regular: null,
@@ -953,7 +1001,7 @@ export default {
       }
       this.ruleModelConfig.isShow = false
     },
-    saveRule () {
+    saveRule() {
       this.ruleModelConfig.addRow.log_metric_monitor = this.activeData.guid
       const requestType = this.ruleModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
@@ -962,36 +1010,36 @@ export default {
         this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
       })
     },
-    reloadMetricData (guid) {
+    reloadMetricData(guid) {
       const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', path, {}, responseData => {
         const metricGroups = responseData.metric_groups.map(group => {
-          group.log_type_display = this.typeToName[group.log_type];
-          group.logFileIndex = this.currentLogFileIndex;
+          group.log_type_display = this.typeToName[group.log_type]
+          group.logFileIndex = this.currentLogFileIndex
           return group
         })
-        Vue.set(this.logFileCollapseData[this.currentLogFileIndex], 'metric_groups', metricGroups);
+        Vue.set(this.logFileCollapseData[this.currentLogFileIndex], 'metric_groups', metricGroups)
       })
     },
-    singleAddF (rowData) {
+    singleAddF(rowData) {
       this.cancelReg()
       this.cancelRule()
       this.activeData = rowData
       this.ruleModelConfig.isAdd = true
       this.ruleModelConfig.isShow = true
     },
-    deleteLogFiltItem (item) {
+    deleteLogFiltItem(item) {
       this.delF(item)
     },
-    delF (rowData) {
+    delF(rowData) {
       const api = this.$root.apiCenter.deletePath + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
-    okAddAndEdit () {
-      let params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
+    okAddAndEdit() {
+      const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
       const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
       params.service_group = this.targrtId
       if (this.addAndEditModal.isAdd) {
@@ -1001,9 +1049,9 @@ export default {
         this.$Message.success(this.$t('m_tips_success'))
         this.addAndEditModal.isShow = false
         this.getDetail(this.targrtId)
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     },
-    cancelAddAndEdit () {
+    cancelAddAndEdit() {
       this.addAndEditModal.isShow = false
       this.addAndEditModal.pathOptions = []
       this.addAndEditModal.dataConfig = {
@@ -1013,21 +1061,21 @@ export default {
         endpoint_rel: []
       }
     },
-    async getEndpoint (val, type) {
+    async getEndpoint(val, type) {
       this.addAndEditModal.dataConfig.endpoint_rel = []
       this.dbModelConfig.addRow.endpoint_rel = []
       await this.getDefaultConfig(val, type)
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
       const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + val
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     },
-    addEmptyItem (type, index) {
+    addEmptyItem(type, index) {
       switch (type) {
         case 'path': {
           const hasEmpty = this.addAndEditModal.pathOptions.every(item => item.path !== '')
@@ -1035,7 +1083,8 @@ export default {
             this.addAndEditModal.pathOptions.push(
               {path: ''}
             )
-          } else {
+          }
+          else {
             this.$Message.warning('Path Can Not Empty')
           }
           break
@@ -1044,9 +1093,13 @@ export default {
           const hasEmpty = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
           if (hasEmpty) {
             this.addAndEditModal.dataConfig.endpoint_rel.push(
-              {source_endpoint: '', target_endpoint: ''}
+              {
+                source_endpoint: '',
+                target_endpoint: ''
+              }
             )
-          } else {
+          }
+          else {
             this.$Message.warning('Can Not Empty')
           }
           break
@@ -1112,20 +1165,18 @@ export default {
         }
       }
     },
-    async add () {
+    async add() {
       this.cancelAddAndEdit()
       this.addAndEditModal.isAdd = true
       this.addAndEditModal.isShow = true
     },
-    getDefaultConfig (val, type) {
+    getDefaultConfig(val, type) {
       const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        const tmp = responseData.map(r => {
-            return {
-              source_endpoint: r.source_endpoint,
-              target_endpoint: r.target_endpoint
-            }
-          })
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        const tmp = responseData.map(r => ({
+          source_endpoint: r.source_endpoint,
+          target_endpoint: r.target_endpoint
+        }))
         if (type === 'host') {
           tmp.forEach(t => {
             const find = this.addAndEditModal.dataConfig.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
@@ -1133,7 +1184,8 @@ export default {
               this.addAndEditModal.dataConfig.endpoint_rel.push(t)
             }
           })
-        } else {
+        }
+        else {
           tmp.forEach(t => {
             const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
             if (find === undefined) {
@@ -1143,40 +1195,41 @@ export default {
         }
       })
     },
-    getDetail (targrtId) {
+    getDetail(targrtId) {
       this.targrtId = targrtId
       const api = this.$root.apiCenter.getTargetDetail + '/group/' + targrtId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         this.showManagement = true
         this.targetDetail = responseData
-        this.logFileCollapseData = cloneDeep(responseData.config);
+        this.logFileCollapseData = cloneDeep(responseData.config)
         this.logFileCollapseData.forEach((item, index) => {
-          const groups = item.metric_groups;
+          const groups = item.metric_groups
           groups.forEach(group => {
-            group.log_type_display = this.typeToName[group.log_type];
-            group.logFileIndex = index;
+            group.log_type_display = this.typeToName[group.log_type]
+            group.logFileIndex = index
           })
         })
         this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading:true})
+      }, {isNeedloading: true})
       this.getDbDetail(targrtId)
     },
     // 新增自定指标指标
-    addByCustom (item) {
+    addByCustom(item) {
       this.selectedTemp = 'customGuid'
       this.parentGuid = item.guid
       this.okTempSelect()
     },
-    okTempSelect () {
+    okTempSelect() {
       if (this.selectedTemp === 'customGuid') {
         this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
-      } else {
-        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list);
+      }
+      else {
+        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list)
         const findTarget = tmpList.find(tmp => tmp.guid === this.selectedTemp)
         this.$refs.businessMonitorGroupConfigRef.loadPage('add', findTarget.guid, this.parentGuid, '')
       }
     },
-    clearQuery () {
+    clearQuery() {
       this.$refs.selectRef.query = ''
     },
     // 新增指标配置--结束
