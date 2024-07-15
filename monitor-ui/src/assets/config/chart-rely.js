@@ -159,6 +159,10 @@ export const drawChart = function (that,config,userConfig, elId) {
   if (finalConfig.clear) {
     myChart.clear()
   }
+  let isTwoYaxes = false
+  if (finalConfig.params && finalConfig.params.lineType === 2) {
+    isTwoYaxes = true
+  }
   const option = {
     backgroundColor: '#f5f7f9',
     title: {
@@ -212,7 +216,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
     },
     toolbox: {
-      right: finalConfig.chartType !== 'twoYaxes' ? '4%': '120px',
+      right: isTwoYaxes ? '170px' : '4%',
       top: '4px',
       feature: {
         // dataZoom: {
@@ -274,7 +278,7 @@ export const drawChart = function (that,config,userConfig, elId) {
     yAxis: [
       {
         type: 'value',
-        name: finalConfig.chartType !== 'twoYaxes' ? '': that.$t('m_difference'),
+        name: isTwoYaxes ? that.$t('m_difference') : '',
         alignTicks: true,
         axisLabel: {
           textStyle: {
@@ -325,7 +329,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
       {
         type: 'value',
-        name: finalConfig.chartType !== 'twoYaxes' ? '': that.$t('m_percentage_difference'),
+        name: isTwoYaxes ? that.$t('m_percentage_difference') : '',
         axisLabel: {
           textStyle: {
             color: chartTextColor
@@ -352,7 +356,7 @@ export const drawChart = function (that,config,userConfig, elId) {
     ],
     series: config.series
   }
-  if (finalConfig.chartType !== 'twoYaxes' && finalConfig.chartType !== config.series[0]) {
+  if (!isTwoYaxes && finalConfig.chartType !== config.series[0]) {
     config.series.forEach(se => {
       se.type = finalConfig.chartType
     })
