@@ -13,12 +13,12 @@
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
-        <Form :label-width="100" label-position="left">
+        <Form :label-width="110" label-position="left">
           <FormItem :label="$t('m_metric')" v-if="operator === 'edit'" required>
             <Input disabled v-model="metricConfigData.guid"></Input>
           </FormItem>
           <!--原始指标-->
-          <FormItem :label="$t('m_original_metric')" required>
+          <FormItem :label="$t('m_original_metric_key')" required>
             <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit'" :transfer="true" @on-change="getMetricType">
               <Option v-for="item in metricList" :value="item.guid" :key="item.guid">{{ item.metric }}</Option>
             </Select>
@@ -94,7 +94,8 @@
 
 <script>
 import { debounce , generateUuid} from '@/assets/js/utils'
-import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+// import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
 export default {
   props: {
@@ -222,7 +223,6 @@ export default {
       const params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup,
-        monitorType: this.monitorType,
         endpointGroup: this.endpointGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -269,14 +269,16 @@ export default {
         '/monitor/api/v1/dashboard/comparison_chart',
         params,
         responseData => {
-          readyToDraw(this, responseData, 1, {}, 'echartId')
+          // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
+          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes'};
+          readyToDraw(this, responseData, 1, chartConfig, 'echartId')
         },
         { isNeedloading: false }
       )
     },
     handleSubmit () {
       if (!this.metricConfigData.metricId) {
-        return this.$Message.error(this.$t('m_original_metric') + this.$t('m_tips_required'))
+        return this.$Message.error(this.$t('m_original_metric_key') + this.$t('m_tips_required'))
       }
       const type = 'POST'
       this.metricConfigData.endpoint_group = this.endpointGroup
