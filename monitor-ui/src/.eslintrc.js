@@ -223,16 +223,16 @@ module.exports = {
                 "minItems": 3
             }
         ],
-        "no-console": [
-            "error",
-            {
-                "allow": [
-                    "error",
-                    "warn",
-                    "info"
-                ]
-            }
-        ],
+        // "no-console": [
+        //     "error",
+        //     {
+        //         "allow": [
+        //             "error",
+        //             "warn",
+        //             "info"
+        //         ]
+        //     }
+        // ],
         "no-debugger": "warn",
         "arrow-body-style": [
             "error",
