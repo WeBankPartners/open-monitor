@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []int, err error) {
+func UpdateEndpoint(endpoint *m.EndpointTable, extendParam, operator string) (stepList []int, err error) {
 	stepList = append(stepList, endpoint.Step)
 	if endpoint.Cluster == "" {
 		endpoint.Cluster = "default"
@@ -37,7 +37,8 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime, operator, operator}})
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
