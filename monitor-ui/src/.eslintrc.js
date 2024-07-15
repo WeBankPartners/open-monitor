@@ -5,11 +5,11 @@ module.exports = {
     "rules": {
         "comma-dangle": 0,
         "eqeqeq": [
-            2,
+            1,
             "always"
         ],
         "indent": [
-            2,
+            1,
             2,
             {
                 "VariableDeclarator": 1,
@@ -18,13 +18,13 @@ module.exports = {
         ],
         "no-useless-escape": 0,
         "quotes": [
-            2,
+            1,
             "single"
         ],
         "semi": ['error', 'never'],
         "no-extra-semi": 0,
         "spaced-comment": [
-            2,
+            1,
             "always",
             {
                 "markers": [
@@ -35,7 +35,7 @@ module.exports = {
         "space-infix-ops": 0,
         "no-async-promise-executor": 0,
         "space-before-function-paren": [
-            2,
+            1,
             {
                 "anonymous": "always",
                 "named": "never",
@@ -43,14 +43,14 @@ module.exports = {
             }
         ],
         "key-spacing": [
-            2,
+            1,
             {
                 "beforeColon": false,
                 "afterColon": true
             }
         ],
         "keyword-spacing": [
-            2,
+            1,
             {
                 "before": true,
                 "after": true
@@ -58,35 +58,33 @@ module.exports = {
         ],
         "comma-spacing": 0,
         "space-in-parens": [
-            2,
+            1,
             "never"
         ],
         "arrow-spacing": [
-            2,
+            1,
             {
                 "before": true,
                 "after": true
             }
         ],
         "arrow-parens": [
-            2,
+            1,
             "as-needed"
         ],
         "max-depth": [
-            2,
+            1,
             8
         ],
         "handle-callback-err": [
-            2,
+            1,
             "^(err|error)$"
         ],
-        "no-eval": 2,
-        "no-with": 2,
-        "no-extra-boolean-cast": 2,
-        "no-trailing-spaces": 2,
-        "no-spaced-func": 2,
+        "no-extra-boolean-cast": 1,
+        "no-trailing-spaces": 1,
+        "no-spaced-func": 1,
         "semi-spacing": [
-            2,
+            1,
             {
                 "before": false,
                 "after": true
@@ -94,21 +92,21 @@ module.exports = {
         ],
         "space-before-blocks": 0,
         "no-param-reassign": [
-            2,
+            1,
             {
                 "props": false
             }
         ],
         "no-multiple-empty-lines": [
-            2,
+            1,
             {
                 "max": 1,
                 "maxBOF": 0,
                 "maxEOF": 0
             }
         ],
-        "no-var": 2,
-        "no-multi-spaces": 2,
+        "no-var": 1,
+        "no-multi-spaces": 1,
         "operator-linebreak": [
             "error",
             "before",
@@ -119,33 +117,33 @@ module.exports = {
             }
         ],
         "max-params": [
-            2,
+            1,
             5
         ],
         "max-lines": [
-            2,
+            1,
             {
                 "max": 4000,
                 "skipBlankLines": true,
                 "skipComments": true
             }
         ],
-        "no-constant-condition": 2,
+        "no-constant-condition": 1,
         "object-curly-spacing": 0,
         "array-bracket-spacing": [
-            2,
+            1,
             "never"
         ],
         "curly": [
-            2,
+            1,
             "all"
         ],
         "eol-last": [
-            2,
+            1,
             "always"
         ],
-        "prefer-const": 2,
-        "no-else-return": 2,
+        "prefer-const": 1,
+        "no-else-return": 1,
         "brace-style": [
             1,
             "stroustrup",
@@ -158,16 +156,16 @@ module.exports = {
             }
         ],
         "object-shorthand": [
-            2,
+            1,
             "always",
             {
                 "ignoreConstructors": false,
                 "avoidQuotes": true
             }
         ],
-        "array-callback-return": 2,
+        "array-callback-return": 1,
         "object-curly-newline": [
-            2,
+            1,
             {
                 "ObjectExpression": {
                     "minProperties": 4,
@@ -192,21 +190,21 @@ module.exports = {
             }
         ],
         "function-call-argument-newline": [
-            2,
+            1,
             "consistent"
         ],
         "function-paren-newline": [
-            2,
+            1,
             "multiline-arguments"
         ],
         "object-property-newline": [
-            2,
+            1,
             {
                 "allowAllPropertiesOnSameLine": false
             }
         ],
         "quote-props": [
-            2,
+            1,
             "as-needed",
             {
                 "keywords": false,
@@ -235,6 +233,7 @@ module.exports = {
                 ]
             }
         ],
+        "no-debugger": "warn",
         "arrow-body-style": [
             "error",
             "as-needed",
@@ -243,18 +242,18 @@ module.exports = {
             }
         ],
         "vue/html-indent": [
-            2,
+            1,
             2
         ],
         "vue/html-closing-bracket-newline": [
-            2,
+            1,
             {
                 "singleline": "never",
                 "multiline": "always"
             }
         ],
         "vue/html-self-closing": [
-            2,
+            1,
             {
                 "html": {
                     "void": "always"
@@ -262,26 +261,19 @@ module.exports = {
             }
         ],
         "vue/multi-word-component-names": 0,
-        "vue/component-name-in-template-casing": [
-            2,
-            "kebab-case",
-            {
-                "registeredComponentsOnly": false
-            }
-        ],
-        "vue/object-curly-spacing": 2,
-        "vue/space-infix-ops": 2,
+        "vue/object-curly-spacing": 1,
+        "vue/space-infix-ops": 1,
         "vue/key-spacing": [
-            2,
+            1,
             {
                 "beforeColon": false,
                 "afterColon": true
             }
         ],
-        "vue/eqeqeq": 2,
-        "vue/comma-dangle": 2,
+        "vue/eqeqeq": 1,
+        "vue/comma-dangle": 1,
         "vue/array-bracket-spacing": [
-            2,
+            1,
             "never"
         ]
     }
