@@ -14,7 +14,8 @@
       :mask-closable="false"
       :footer-hide="true"
       :fullscreen="isfullscreen"
-      :title="$t('m_button_historicalAlert')">
+      :title="$t('m_button_historicalAlert')"
+    >
       <div slot="header" class="custom-modal-header">
         <span>
           {{$t('alarmHistory')}}
@@ -34,16 +35,16 @@ import Recursive from '@/views/recursive-view/recursive'
 import MaxChart from '@/components/max-chart'
 const alarmLevelMap = {
   low: {
-    label: "m_low",
-    buttonType: "green"
+    label: 'm_low',
+    buttonType: 'green'
   },
   medium: {
-    label: "m_medium",
-    buttonType: "gold"
+    label: 'm_medium',
+    buttonType: 'gold'
   },
   high: {
-    label: "m_high",
-    buttonType: "red"
+    label: 'm_high',
+    buttonType: 'red'
   }
 }
 export default {
@@ -81,11 +82,9 @@ export default {
             {
               title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
-              render: (h, params) => {
-                return (
-                  <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
-                )
-              }
+              render: (h, params) => (
+                <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+              )
             },
             {
               title: this.$t('m_field_endpoint'),
@@ -99,11 +98,9 @@ export default {
               title: this.$t('m_tableKey_s_priority'),
               key: 's_priority',
               width: 100,
-              render: (h, params) => {
-                return (
-                  <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-                )
-              }
+              render: (h, params) => (
+                <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+              )
             },
             {
               title: this.$t('m_field_metric'),
@@ -115,16 +112,14 @@ export default {
               width: 200,
               ellipsis: true,
               tooltip: true,
-              render: (h, params) => {
-                return (
-                  <Tooltip transfer={true} placement="bottom-start" max-width="300">
-                    <div slot="content">
-                      <div domPropsInnerHTML={params.row.alarm_detail}></div>
-                    </div>
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
                     <div domPropsInnerHTML={params.row.alarm_detail}></div>
-                  </Tooltip>
-                )
-              }
+                  </div>
+                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_tableKey_start'),
@@ -140,29 +135,27 @@ export default {
                 if (params.row.end_string === '0001-01-01 00:00:00') {
                   res = '-'
                 }
-                return h('span', res);
+                return h('span', res)
               }
             },
             {
               title: this.$t('m_remark'),
               key: 'custom_message',
               width: 120,
-              render: (h, params) => {
-                return(
-                  <div>{params.row.custom_message || '-'}</div>
-                )
-              }
+              render: (h, params) => (
+                <div>{params.row.custom_message || '-'}</div>
+              )
             },
           ]
         }
       },
       strategyNameMaps: {
-        "endpointGroup": "m_base_group",
-        "serviceGroup": "m_field_resourceLevel"
+        endpointGroup: 'm_base_group',
+        serviceGroup: 'm_field_resourceLevel'
       }
     }
   },
-  created () {
+  created() {
     this.$root.$eventBus.$on('callMaxChart', data => {
       this.zoomChart(data)
     })
@@ -175,17 +168,17 @@ export default {
     this.refreshConfig()
   },
   methods: {
-    disabledEndpoint (val) {
+    disabledEndpoint(val) {
       if (this.$refs.search) {
-        this.$refs.search.disabledEndpoint(val) 
-      } 
+        this.$refs.search.disabledEndpoint(val)
+      }
     },
-    refreshConfig (endpointObj) {
+    refreshConfig(endpointObj) {
       if (this.$refs.search) {
-        this.$refs.search.getChartsConfig(endpointObj) 
-      } 
+        this.$refs.search.getChartsConfig(endpointObj)
+      }
     },
-    manageCharts (chartsConfig, params) {
+    manageCharts(chartsConfig, params) {
       if (params.sys) {
         this.params = params
         this.showCharts = false
@@ -195,7 +188,7 @@ export default {
       this.charts.chartsConfig = []
       chartsConfig.forEach(item => {
         item.autoRefresh = params.autoRefresh
-        let chart = {
+        const chart = {
           tabTape: {
             label: item.title,
             name: item.title + '_',
@@ -203,7 +196,7 @@ export default {
           btns: item.tags.option,
           tagsUrl: item.tags.url,
           charts: item.charts,
-          params: params
+          params
         }
         this.charts.chartsConfig.push(chart)
       })
@@ -211,23 +204,23 @@ export default {
       this.showRecursive = false
       this.$refs.parentCharts&&this.$refs.parentCharts.refreshCharts()
     },
-    recursiveView (params) {
+    recursiveView(params) {
       this.recursiveViewConfig = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
     },
-    zoomChart (data) {
+    zoomChart(data) {
       this.showMaxChart = true
       this.$refs.maxChart.getChartData(data)
     },
-    //#region 历史告警
+    // #region 历史告警
     historyAlarm(rowData) {
-      let params = {
+      const params = {
         id: rowData.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, responseData => {
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
       })
       this.isfullscreen = false
@@ -236,30 +229,29 @@ export default {
     changeResultData(dataList) {
       if (dataList && !isEmpty(dataList)) {
         dataList.forEach(item => {
-          item.strategyGroupsInfo = '-';
-          item.alarm_metric_list_join = '-';
+          item.strategyGroupsInfo = '-'
+          item.alarm_metric_list_join = '-'
           if (!isEmpty(item.strategy_groups)) {
-            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
-              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
-            }, '')
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur) => res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> ', '')
           }
 
           if (!isEmpty(item.alarm_metric_list)) {
             item.alarm_metric_list_join = item.alarm_metric_list.join(',')
           }
-        });
+        })
       }
       return dataList
     },
-    fullscreenChange () {
+    fullscreenChange() {
       this.isfullscreen = !this.isfullscreen
       if (this.isfullscreen) {
         this.fullscreenTableHight = document.documentElement.clientHeight - 160
-      } else {
+      }
+      else {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },
-    //#endregion
+    // #endregion
   },
   components: {
     Search,
