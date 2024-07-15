@@ -448,25 +448,43 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		endpointFilterList = append(endpointFilterList, query.Endpoint)
 	}
 	if len(endpointFilterList) > 0 {
-		endpointFilterSql, endpointFilterParam := createListParams(endpointFilterList, "")
-		whereSql += " and endpoint in (" + endpointFilterSql + ") "
-		params = append(params, endpointFilterParam...)
+		whereSql += " and (  "
+		for i, f := range endpointFilterList {
+			if i == 0 {
+				whereSql += fmt.Sprintf(" endpoint like '%%%s%%'", f)
+			} else {
+				whereSql += fmt.Sprintf(" or endpoint like '%%%s%%'", f)
+			}
+		}
+		whereSql += " ) "
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric like ? "
-		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
-	} else if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
-		whereSql += " and s_metric in (" + metricFilterSql + ") "
-		params = append(params, metricFilterParam...)
+		metricFilterList = append(metricFilterList, query.SMetric)
+	}
+	if len(metricFilterList) > 0 {
+		whereSql += " and (  "
+		for i, f := range metricFilterList {
+			if i == 0 {
+				whereSql += fmt.Sprintf(" s_metric like '%%%s%%'", f)
+			} else {
+				whereSql += fmt.Sprintf(" or s_metric like '%%%s%%'", f)
+			}
+		}
+		whereSql += " ) "
 	}
 	if query.AlarmName != "" {
 		whereSql += " and (alarm_name=? or content=?) "
 		params = append(params, query.AlarmName, query.AlarmName)
 	} else if len(alarmNameFilterList) > 0 {
-		alarmFilterSql, alarmFilterParam := createListParams(alarmNameFilterList, "")
-		whereSql += " and ( alarm_name in (" + alarmFilterSql + ")  or content in (" + alarmFilterSql + "))"
-		params = append(params, append(params, alarmFilterParam...)...)
+		whereSql += " and (  "
+		for i, f := range alarmNameFilterList {
+			if i == 0 {
+				whereSql += fmt.Sprintf(" (alarm_name like '%%%s%%' or content like '%%%s%%')", f, f)
+			} else {
+				whereSql += fmt.Sprintf(" or (alarm_name like '%%%s%%' or content like '%%%s%%')", f, f)
+			}
+		}
+		whereSql += " ) "
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -575,9 +593,9 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.AlarmName == "" {
-		if query.Endpoint == "" {
-			if query.SMetric == "" || query.SMetric == "custom" {
+	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
+		if query.Endpoint == "" && len(endpointList) == 0 {
+			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
 					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
 						result = append(result, v)
@@ -1848,9 +1866,6 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 
 func GetAlarmStrategyNameList() (list []string, err error) {
 	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
-	if len(list) > 0 {
-
-	}
 	return
 }
 
