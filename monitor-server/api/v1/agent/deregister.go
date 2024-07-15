@@ -128,7 +128,7 @@ func CustomRegister(c *gin.Context) {
 		endpointObj.Ip = param.HostIp
 		endpointObj.ExportType = "custom"
 		endpointObj.Step = 10
-		_, err := db.UpdateEndpoint(&endpointObj, "")
+		_, err := db.UpdateEndpoint(&endpointObj, "", mid.GetOperateUser(c))
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "endpoint", err)
 		} else {
