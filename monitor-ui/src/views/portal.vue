@@ -12,9 +12,9 @@
           :placeholder="$t('requestMoreData')"
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
-          >
+        >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
-            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
+            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
             {{option.option_text}}
           </Option>
           <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
@@ -22,7 +22,8 @@
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
-          @click="routerChange">
+                @click="routerChange"
+        >
           <i class="fa fa-search" ></i>
           {{$t('m_button_search')}}
         </button>
@@ -43,36 +44,38 @@ export default {
     }
   },
   watch: {
-    endpoint: function (val) {
+    endpoint(val) {
       if (val) {
-        this.endpointObject = this.endpointList.find(ep => {
-          return ep.option_value === val
-        })
-      } else {
+        this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
+      }
+      else {
         this.endpointObject = {}
       }
     },
   },
-  mounted () {
+  mounted() {
     this.getEndpointList()
   },
   methods: {
     getEndpointList(query='.') {
-      let params = {
+      const params = {
         search: query,
         page: 1,
         size: 1000
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
         this.endpointList = responseData
       })
     },
-    routerChange (){
+    routerChange(){
       if (!this.endpointObject) {
         return
       }
-      this.$router.push({ name: 'endpointView',params: this.endpointObject})
-    }, 
+      this.$router.push({
+        name: 'endpointView',
+        params: this.endpointObject
+      })
+    },
   },
   components: {
     TagShow
