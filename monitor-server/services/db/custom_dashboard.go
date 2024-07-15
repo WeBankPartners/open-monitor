@@ -533,7 +533,9 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 				if strings.TrimSpace(series.Endpoint) != "" && series.ServiceGroup == "" {
 					// 监控对象不存在,记录下来
 					var endpointObj models.EndpointTable
-					_, err = x.SQL("SELECT * FROM endpoint_new WHERE guid=?", series.Endpoint).Get(&endpointObj)
+					if _, err = x.SQL("SELECT * FROM endpoint_new WHERE guid=?", series.Endpoint).Get(&endpointObj); err != nil {
+						return
+					}
 					if endpointObj.Name == "" {
 						exist = false
 					}
