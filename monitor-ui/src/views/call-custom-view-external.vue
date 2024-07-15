@@ -1,10 +1,11 @@
 <template>
   <div>
-     <view-config 
-      v-if="viewId" 
-      permissionType='view' 
+    <view-config
+      v-if="viewId"
+      permissionType='view'
       :boardId="viewId"
-      pageType="link" />
+      pageType="link"
+    />
   </div>
 </template>
 
@@ -25,34 +26,34 @@ export default {
     // this.refreshToken()
   },
   methods: {
-    paramsCheck (query) {
+    paramsCheck(query) {
       this.viewId = Number(query.viewId)
       // this.token = query.token
     },
-    refreshToken () {
+    refreshToken() {
       fetch('/auth/v1/api/token', {
         method: 'GET',
         headers: {
-          'Authorization': 'Bearer ' + this.token,
+          Authorization: 'Bearer ' + this.token,
           // 其他自定义 header
         }
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-        return response.json() // 解析 JSON 格式的响应数据
-      })
-      .then(data => {
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok')
+          }
+          return response.json() // 解析 JSON 格式的响应数据
+        })
+        .then(data => {
         // 处理获取到的数据
-        if (data.status === 'OK') {
-          setLocalstorage(data.data)
-        }
-      })
-      .catch(error => {
+          if (data.status === 'OK') {
+            setLocalstorage(data.data)
+          }
+        })
+        .catch(error => {
         // 捕获异常
-        console.error('There was a problem with the fetch operation:', error)
-      })
+          console.error('There was a problem with the fetch operation:', error)
+        })
     }
   },
   components: {
@@ -89,7 +90,7 @@ header {
   i {
     margin: 0 4px;
     cursor: pointer;
-  } 
+  }
 }
 .vue-grid-item {
   border-radius: 4px;

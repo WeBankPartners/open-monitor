@@ -4,7 +4,7 @@
     <Card :key="'k8s'" :bordered="true" :dis-hover="true">
       <p slot="title">K8S</p>
       <template v-for="cluster in clusterList">
-        <Card style="width:20%;display:inline-block;margin:16px;" :key="'k8s_'+cluster.id">
+        <Card style="width:20%;display:inline-block;margin:16px;" :key="'k8s_' + cluster.id">
           <p slot="title">
             {{cluster.cluster_name.split(':')[0]}}
           </p>
@@ -17,7 +17,7 @@
           <ul>
             <li style="margin:8px;list-style: none;">
               <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-              {{$t('m_field_ip')}}:
+                {{$t('m_field_ip')}}:
               </div>
               <div style="width:30%;display:inline-block;">
                 {{cluster.api_server}}
@@ -38,7 +38,7 @@
     <Card :key="'snmp'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
       <p slot="title">SNMP</p>
       <template v-for="item in snmpList">
-        <Card style="width:20%;display:inline-block;margin:16px;" :key="'snmp_'+item.id">
+        <Card style="width:20%;display:inline-block;margin:16px;" :key="'snmp_' + item.id">
           <p slot="title">
             {{item.id}}
           </p>
@@ -51,7 +51,7 @@
           <ul>
             <li style="margin:8px;list-style: none;">
               <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-              {{$t('m_field_ip')}}:
+                {{$t('m_field_ip')}}:
               </div>
               <div style="width:30%;display:inline-block;">
                 {{item.address}}
@@ -71,12 +71,13 @@
     </Card>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
     <ModalComponent :modelConfig="modelItemConfig"></ModalComponent>
-    <Modal 
-      v-model="isShowWarning" 
+    <Modal
+      v-model="isShowWarning"
       :title="$t('m_delConfirm_title')"
       :mask-closable="false"
-      @on-ok="ok" 
-      @on-cancel="cancel">
+      @on-ok="ok"
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{selectedData.name || selectedData.id}}{{$t('m_delConfirm_tip')}}</p>
@@ -100,7 +101,7 @@ export default {
         modalTitle: 'm_proxy_exporter',
         isAdd: true,
         config: [
-            {
+          {
             label: 'clusterName',
             value: 'cluster_name',
             placeholder: 'm_tips_required',
@@ -147,7 +148,7 @@ export default {
         isAdd: true,
         saveFunc: 'saveItem',
         config: [
-            {
+          {
             label: 'm_field_id',
             value: 'id',
             placeholder: 'm_tips_required',
@@ -188,7 +189,7 @@ export default {
           modules: 'if_mib'
         },
         v_select_configs: {
-            scrape_interval: collectionInterval
+          scrape_interval: collectionInterval
         },
       },
       selectedData: {},
@@ -199,28 +200,28 @@ export default {
       }
     }
   },
-  mounted () {
+  mounted() {
     this.getClusterList()
     this.getSnmpList()
   },
   methods: {
-    addCluster () {
+    addCluster() {
       this.modelConfig.isAdd = true
       this.$root.JQ('#cluster_Modal').modal('show')
     },
-    addPost () {
+    addPost() {
       this.modelConfig.addRow.api_server = this.modelConfig.addRow.ip + ':' + this.modelConfig.addRow.port
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/add', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
     },
-    getClusterList () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/list', '', (responseData) => {
+    getClusterList() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/list', '', responseData => {
         this.clusterList = responseData
       })
     },
-    deleteCluster (params) {
+    deleteCluster(params) {
       this.selectedData = params
       this.selectedDataType = 'k8s'
       this.isShowWarning = true
@@ -237,14 +238,15 @@ export default {
           this.isShowWarning = false
           this.getClusterList()
         })
-      } else if (this.selectedDataType === 'snmp') {
+      }
+      else if (this.selectedDataType === 'snmp') {
         this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', '/monitor/api/v1/config/new/snmp', this.selectedData, () => {
           this.isShowWarning = false
           this.getSnmpList()
         })
       }
     },
-    editCluster (cluster) {
+    editCluster(cluster) {
       this.modelTip.value = cluster.cluster_name
       this.modelConfig.isAdd = false
       this.modelConfig.addRow.id = cluster.id
@@ -254,18 +256,18 @@ export default {
       this.modelConfig.addRow.token = cluster.token
       this.$root.JQ('#cluster_Modal').modal('show')
     },
-    editPost () {
+    editPost() {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
     },
-    getSnmpList () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', '', (responseData) => {
+    getSnmpList() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', '', responseData => {
         this.snmpList = responseData
       })
     },
-    addItem () {
+    addItem() {
       this.modelItemConfig.isAdd = true
       this.modelItemConfig.addRow.id = null
       this.modelItemConfig.addRow.address = null
@@ -273,28 +275,29 @@ export default {
       this.modelItemConfig.addRow.modules = 'if_mib'
       this.$root.JQ('#item_Modal').modal('show')
     },
-    editItem (item) {
+    editItem(item) {
       this.modelTip.value = item.id
       this.modelItemConfig.isAdd = false
       this.modelItemConfig.addRow.id = item.id
       this.modelItemConfig.addRow.address = item.address
       this.modelItemConfig.addRow.scrape_interval = item.scrape_interval
       this.modelItemConfig.addRow.modules = item.modules
-      
+
       this.$root.JQ('#item_Modal').modal('show')
     },
-    deleteItem (params) {
+    deleteItem(params) {
       this.selectedData = params
       this.selectedDataType = 'snmp'
       this.isShowWarning = true
     },
-    saveItem () {
+    saveItem() {
       if (this.modelItemConfig.isAdd) {
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()
         })
-      } else {
+      }
+      else {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()
@@ -307,6 +310,5 @@ export default {
 </script>
 
 <style scoped lang="less">
-
 
 </style>

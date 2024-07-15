@@ -11,7 +11,7 @@ export default {
     return {
     }
   },
-  props:{
+  props: {
     title: String
   }
 }
@@ -21,6 +21,6 @@ export default {
   h3 {
     color: #116EF9;
     font-size: 36px;
-    padding: 10px 0;  
+    padding: 10px 0;
   }
 </style>

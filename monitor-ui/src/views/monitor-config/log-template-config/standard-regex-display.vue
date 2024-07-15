@@ -1,77 +1,77 @@
 <template>
   <Row>
     <Col span="8" style="border-right: 2px solid rgb(232 234 236)">
-      <Form :label-width="120" style="margin-top:12px">
-        <FormItem :label="$t('m_template_name')">
-          <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
-            <Input
-              v-model="configInfo.name"
-              maxlength="30"
-              show-word-limit
-              style="width: 96%"
-              disabled
-            />
-            <span style="color: red">*</span>
-          </Tooltip>
-        </FormItem>
-        <!-- <FormItem>
-          <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="bottom: 72px;right: 36px;position: relative;">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
-        </FormItem> -->
-        <template v-if="showTemplate===true">
-          <FormItem :label="$t('m_updatedBy')">
-            {{ configInfo.update_user }}
-          </FormItem>
-          <FormItem :label="$t('m_title_updateTime')">
-            {{ configInfo.update_time }}
-          </FormItem>
-        </template>
-        <FormItem :label="$t('m_log_example')" v-if="showTemplate===true">
+    <Form :label-width="120" style="margin-top:12px">
+      <FormItem :label="$t('m_template_name')">
+        <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
           <Input
-            v-model="configInfo.demo_log"
-            type="textarea"
-            :rows="11"
+            v-model="configInfo.name"
+            maxlength="30"
+            show-word-limit
             style="width: 96%"
             disabled
           />
-          <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
-            {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
-          </div>
+          <span style="color: red">*</span>
+        </Tooltip>
+      </FormItem>
+      <!-- <FormItem>
+          <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="bottom: 72px;right: 36px;position: relative;">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
+        </FormItem> -->
+      <template v-if="showTemplate === true">
+        <FormItem :label="$t('m_updatedBy')">
+          {{ configInfo.update_user }}
         </FormItem>
-      </Form>
+        <FormItem :label="$t('m_title_updateTime')">
+          {{ configInfo.update_time }}
+        </FormItem>
+      </template>
+      <FormItem :label="$t('m_log_example')" v-if="showTemplate === true">
+        <Input
+          v-model="configInfo.demo_log"
+          type="textarea"
+          :rows="11"
+          style="width: 96%"
+          disabled
+        />
+        <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
+          {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
+        </div>
+      </FormItem>
+    </Form>
     </Col>
     <Col span="16">
-      <div style="margin-left: 8px">
-        <!-- 采集参数 -->
-        <div  v-if="showTemplate===true">
-          <Divider orientation="left" size="small">{{ $t('m_parameter_collection') }}</Divider>
-          <Table
-            style="position: inherit;"
-            size="small"
-            :columns="columnsForParameterCollection"
-            :data="configInfo.param_list"
-            width="100%"
-          ></Table>
-          <!-- <Button type="primary" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button> -->
-        </div>
-        <!-- 计算指标 -->
-        <div>
-          <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
-          <Table
-            size="small"
-            :columns="columnsForComputeMetrics"
-            :data="configInfo.metric_list"
-            width="100%"
-          ></Table>
-          
-        </div>
+    <div style="margin-left: 8px">
+      <!-- 采集参数 -->
+      <div  v-if="showTemplate === true">
+        <Divider orientation="left" size="small">{{ $t('m_parameter_collection') }}</Divider>
+        <Table
+          style="position: inherit;"
+          size="small"
+          :columns="columnsForParameterCollection"
+          :data="configInfo.param_list"
+          width="100%"
+        ></Table>
+        <!-- <Button type="primary" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button> -->
       </div>
+      <!-- 计算指标 -->
+      <div>
+        <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
+        <Table
+          size="small"
+          :columns="columnsForComputeMetrics"
+          :data="configInfo.metric_list"
+          width="100%"
+        ></Table>
+
+      </div>
+    </div>
     </Col>
   </Row>
 </template>
 
 <script>
 export default {
-  name: "standard-regex",
+  name: 'standard-regex',
   data() {
     return {
       isParmasChanged: false,
@@ -193,38 +193,32 @@ export default {
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_extract_regular')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.regular}
-                disabled
-                onInput={v => {
-                  this.changeRegex(params.index, v)
-                }}
-              />
-            )
-          }
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_extract_regular')}</span>
+            </span>
+          ),
+          render: (h, params) => (
+            <Input
+              value={params.row.regular}
+              disabled
+              onInput={v => {
+                this.changeRegex(params.index, v)
+              }}
+            />
+          )
         },
         {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('m_matching_result')}</span>
-              </span>
-            )
-          },
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_matching_result')}</span>
+            </span>
+          ),
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
@@ -246,13 +240,11 @@ export default {
           title: this.$t('m_metric_key'),
           key: 'metric',
           width: 140,
-          render: (h, params) => {
-            return (
-              <span>
-                <span>{this.prefixCode}_{params.row.metric}</span>
-              </span>
-            )
-          }
+          render: (h, params) => (
+            <span>
+              <span>{this.prefixCode}_{params.row.metric}</span>
+            </span>
+          )
         },
         {
           title: this.$t('m_statistical_parameters'),
@@ -261,13 +253,11 @@ export default {
         {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
-          render: (h, params) => {
-            return (
-              <span>
-                {params.row.tag_config.join(',')}
-              </span>
-            )
-          }
+          render: (h, params) => (
+            <span>
+              {params.row.tag_config.join(',')}
+            </span>
+          )
         },
         {
           title: this.$t('m_computed_type'),
@@ -288,16 +278,16 @@ export default {
     configInfo: Object,
     prefixCode: String
   },
-  mounted () {},
+  mounted() {},
   methods: {
-    hideTemplate () {
+    hideTemplate() {
       this.showTemplate = false
       this.isfullscreen = false
     },
-    changeTemplateStatus () {
+    changeTemplateStatus() {
       this.showTemplate = !this.showTemplate
     },
-    returnCurrentStatus () {
+    returnCurrentStatus() {
       return this.showTemplate
     }
   }
