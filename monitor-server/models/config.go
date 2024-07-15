@@ -188,6 +188,7 @@ type GlobalConfig struct {
 	MonitorAlarmMailEnable       string              `json:"monitor_alarm_mail_enable"`
 	MonitorAlarmCallbackLevelMin string              `json:"monitor_alarm_callback_level_min"`
 	MonitorNotifyTreeventEnable  string              `json:"monitor_notify_treevent_enable"`
+	EncryptSeed                  string              `json:"encrypt_seed"`
 }
 
 var (
