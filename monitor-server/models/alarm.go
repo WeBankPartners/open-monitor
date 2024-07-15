@@ -222,12 +222,14 @@ type TableData struct {
 }
 
 type AlarmEndpointQuery struct {
-	Search    string
-	Page      int
-	Size      int
-	Grp       int
-	Result    []*AlarmEndpointObj
-	ResultNum int
+	Search        string
+	Page          int
+	Size          int
+	Grp           int
+	EndpointGroup []string // 对象组
+	BasicType     []string // 基础类型
+	Result        []*AlarmEndpointObj
+	ResultNum     int
 }
 
 type AlarmEndpointObj struct {
