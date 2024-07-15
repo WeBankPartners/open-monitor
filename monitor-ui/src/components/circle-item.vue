@@ -20,7 +20,7 @@
     </vue-ellipse-progress>
     <div class="item">
       <div class="title">{{ $attrs.title }}</div>
-      <div class="value" :class="{ ['text-' + $attrs.type]: true }">
+      <div class="value" :class="{['text-' + $attrs.type]: true}">
         {{ $attrs.value }}
       </div>
     </div>
@@ -28,55 +28,55 @@
 </template>
 
 <script>
-import { VueEllipseProgress } from "vue-ellipse-progress";
+import { VueEllipseProgress } from 'vue-ellipse-progress'
 
 const colorMappings = {
   total: {
-    start: "#116ef9",
-    end: "#c1d8fa",
+    start: '#116ef9',
+    end: '#c1d8fa',
   },
   low: {
-    start: "#66cc66",
-    end: "#9ce89c",
+    start: '#66cc66',
+    end: '#9ce89c',
   },
   medium: {
-    start: "#f19d38",
-    end: "#f1c188",
+    start: '#f19d38',
+    end: '#f1c188',
   },
   high: {
-    start: "#da4e2b",
-    end: "#f19881",
+    start: '#da4e2b',
+    end: '#f19881',
   },
-};
+}
 export default {
-  name: "circle-item",
+  name: 'circle-item',
   components: { VueEllipseProgress },
   computed: {
     progressValue() {
-      const { value, total } = this.$attrs;
-      if (isNaN(total) || total == 0) {
-        return 0;
+      const { value, total } = this.$attrs
+      if (isNaN(total) || total === 0) {
+        return 0
       }
-      return (parseInt(value, 10) * 100) / parseInt(total, 10);
+      return (parseInt(value, 10) * 100) / parseInt(total, 10)
     },
     gradient() {
-      const { type } = this.$attrs;
+      const { type } = this.$attrs
       return {
         radial: false,
         colors: [
           {
             color: colorMappings[type].start,
-            offset: "0",
+            offset: '0',
           },
           {
             color: colorMappings[type].end,
-            offset: "100",
+            offset: '100',
           },
         ],
-      };
+      }
     }
   },
-};
+}
 </script>
 
 <style lang="less" scoped>
