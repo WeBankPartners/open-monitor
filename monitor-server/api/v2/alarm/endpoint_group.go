@@ -35,7 +35,7 @@ func CreateEndpointGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateEndpointGroup(&param)
+	err := db.CreateEndpointGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -49,7 +49,7 @@ func UpdateEndpointGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateEndpointGroup(&param)
+	err := db.UpdateEndpointGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -83,7 +83,7 @@ func UpdateGroupEndpoint(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateGroupEndpoint(&param, false)
+	err := db.UpdateGroupEndpoint(&param, middleware.GetOperateUser(c), false)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
