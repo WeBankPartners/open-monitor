@@ -267,6 +267,8 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		}
 		if query != "all" {
 			baseSql = baseSql + " and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+		} else if query == "comparison" {
+			baseSql = baseSql + " and exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 		}
 	}
 	result = []*models.MetricTable{}
