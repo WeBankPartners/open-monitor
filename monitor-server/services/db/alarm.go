@@ -29,6 +29,12 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += " AND t2.grp_id=? "
 		countParams = append(countParams, query.Grp)
 	}
+	if len(query.EndpointGroup) > 0 {
+		whereSql += " AND t2.endpoint_group in ('" + strings.Join(query.EndpointGroup, "','") + "') "
+	}
+	if len(query.BasicType) > 0 {
+		whereSql += " AND t1.monitor_type in ('" + strings.Join(query.BasicType, "','") + "') "
+	}
 	querySql := `SELECT t5.* FROM (
 			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags,t4.create_user,t4.update_user,t4.update_time FROM (
 			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags,t1.create_user,t1.update_user,t1.update_time FROM endpoint_new t1 
@@ -50,7 +56,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	err := x.SQL(querySql, queryParams...).Find(&result)
 	err = x.SQL(countSql, countParams...).Find(&count)
 	if len(result) > 0 {
-		groupTableData := []*m.EndpointGroupTable{}
+		var groupTableData []*m.EndpointGroupTable
 		x.SQL("select * from endpoint_group").Find(&groupTableData)
 		for _, v := range result {
 			if v.GroupsIds != "" {
