@@ -694,6 +694,9 @@
   "m_metric_key_placeholder": "英文(开头)、数字、下划线",
   "m_metric_key_placeholder_second": "仅支持英文(开头）、数字、下划线'_'",
   "m_original_metric_key": "原始指标key",
-  "m_enter_name_tips": "请输入对象名"
+  "m_enter_name_tips": "请输入对象名",
+  "m_creator": "创建人",
+  "m_permissions": "权限",
+  "m_filter": "筛选"
 }
 
