@@ -265,7 +265,9 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null"
 			params = []interface{}{monitorType}
 		}
-		if query != "all" {
+		if query == "comparison" {
+			baseSql = baseSql + " and exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+		} else if query != "all" {
 			baseSql = baseSql + " and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 		}
 	}
