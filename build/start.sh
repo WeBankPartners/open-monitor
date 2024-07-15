@@ -37,6 +37,7 @@ sed -i "s~{{MONITOR_ARCHIVE_UNIT_SPEED}}~$MONITOR_ARCHIVE_UNIT_SPEED~g" archive_
 sed -i "s~{{MONITOR_ARCHIVE_CONCURRENT_NUM}}~$MONITOR_ARCHIVE_CONCURRENT_NUM~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MAX_HTTP_OPEN}}~$MONITOR_ARCHIVE_MAX_HTTP_OPEN~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_AGENT_MANAGER_REMOTE_MODE}}~$MONITOR_AGENT_MANAGER_REMOTE_MODE~g" agent_manager/conf.json
+sed -i "s~{{ENCRYPT_SEED}}~$ENCRYPT_SEED~g" monitor/conf/default.json
 
 
 if [ $GATEWAY_URL ]
