@@ -250,6 +250,7 @@ type ChartQueryParam struct {
 	Data            []*ChartQueryConfigObj  `json:"data"`
 	Compare         *ChartQueryCompareParam `json:"compare"`
 	CustomChartGuid string                  `json:"custom_chart_guid"`
+	LineType        int                     `json:"lineType"` // lineType=2 表示同环比数据
 }
 
 type ChartQueryConfigObj struct {
