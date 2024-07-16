@@ -33,7 +33,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += " AND t2.endpoint_group in ('" + strings.Join(query.EndpointGroup, "','") + "') "
 	}
 	if len(query.BasicType) > 0 {
-		whereSql += " AND t1.monitor_type ('" + strings.Join(query.BasicType, "','") + "') "
+		whereSql += " AND t1.monitor_type in ('" + strings.Join(query.BasicType, "','") + "') "
 	}
 	querySql := `SELECT t5.* FROM (
 			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags,t4.create_user,t4.update_user,t4.update_time FROM (
@@ -453,20 +453,18 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		params = append(params, endpointFilterParam...)
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric like ? "
-		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
-	} else if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
+		metricFilterList = append(metricFilterList, query.SMetric)
+	}
+	if len(metricFilterList) > 0 {
+		metricFilterSql, metricFilterParam := createListParams(endpointFilterList, "")
 		whereSql += " and s_metric in (" + metricFilterSql + ") "
 		params = append(params, metricFilterParam...)
 	}
 	if query.AlarmName != "" {
-		whereSql += " and (alarm_name=? or content=?) "
-		params = append(params, query.AlarmName, query.AlarmName)
-	} else if len(alarmNameFilterList) > 0 {
-		alarmFilterSql, alarmFilterParam := createListParams(alarmNameFilterList, "")
-		whereSql += " and ( alarm_name in (" + alarmFilterSql + ")  or content in (" + alarmFilterSql + "))"
-		params = append(params, append(params, alarmFilterParam...)...)
+		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
+		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
+		params = append(params, append(params, alarmNameFilterParam...)...)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -575,9 +573,9 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.AlarmName == "" {
-		if query.Endpoint == "" {
-			if query.SMetric == "" || query.SMetric == "custom" {
+	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
+		if query.Endpoint == "" && len(endpointList) == 0 {
+			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
 					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
 						result = append(result, v)
@@ -1848,9 +1846,6 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 
 func GetAlarmStrategyNameList() (list []string, err error) {
 	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
-	if len(list) > 0 {
-
-	}
 	return
 }
 
