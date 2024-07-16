@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div class="all-content">
     <section v-if="showManagement" style="margin-top: 16px;">
       <div class="w-header" slot="title" style="display: flex;justify-content: space-between; margin-bottom: 12px;">
         <div class="title">
@@ -1334,7 +1334,9 @@ export default {
   }
 }
 
-::-webkit-scrollbar {
-  display: none;
+.all-content {
+  ::-webkit-scrollbar {
+    display: none;
+  }
 }
 </style>
