@@ -431,6 +431,15 @@ func GetSimpleMetric(metricId string) (metricRow *models.MetricTable, err error)
 	return
 }
 
+func GetOriginMetricByComparisonId(metricId string) (metricRow *models.MetricTable, err error) {
+	var metricList []*models.MetricTable
+	err = x.SQL("select * from metric where guid in (select origin_metric_id from metric_comparison where metric_id = ?)", metricId).Find(&metricList)
+	if len(metricList) > 0 {
+		metricRow = metricList[0]
+	}
+	return
+}
+
 func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 	if metricRow == nil {
 		return
