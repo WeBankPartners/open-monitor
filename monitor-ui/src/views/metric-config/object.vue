@@ -2,31 +2,31 @@
   <div ref="maxheight" class="monitor-level-group">
     <Row>
       <Col :span="8">
-        <!--对象-->
-        <span style="font-size: 14px;">
-          {{$t('m_endpoint')}}:
-        </span>
-        <Select
-          style="width:300px;"
-          v-model="endpoint"
-          filterable 
-          @on-change="changeEndpointGroup"
-        >
-          <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="option.guid" :key="index">
-            <TagShow :list="endpointOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
-            {{option.guid}}
-          </Option>
-        </Select>
+      <!--对象-->
+      <span style="font-size: 14px;">
+        {{$t('m_endpoint')}}:
+      </span>
+      <Select
+        style="width:300px;"
+        v-model="endpoint"
+        filterable
+        @on-change="changeEndpointGroup"
+      >
+        <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="option.guid" :key="index">
+          <TagShow :list="endpointOptions" name="type" :tagName="option.type" :index="index"></TagShow>
+          {{option.guid}}
+        </Option>
+      </Select>
       </Col>
       <Col :span="16">
-        <div class="btn-group">
-          <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
-        </div>
+      <div class="btn-group">
+        <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
+      </div>
       </Col>
     </Row>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
     <AddGroupDrawer
-      v-if="addVisible && metricType==='originalMetrics'"
+      v-if="addVisible && metricType === 'originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :endpoint_group="endpoint"
@@ -36,7 +36,7 @@
     ></AddGroupDrawer>
     <YearOverYear
       ref="yearOverYearRef"
-      v-if="addVisible && metricType==='comparisonMetrics'"
+      v-if="addVisible && metricType === 'comparisonMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :originalMetricsId="originalMetricsId"
@@ -49,8 +49,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
 import AddGroupDrawer from './components/add-group.vue'
@@ -63,7 +61,7 @@ export default {
     AddGroupDrawer,
     YearOverYear
   },
-  data () {
+  data() {
     return {
       metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       token: null,
@@ -74,9 +72,9 @@ export default {
       maxHeight: 500,
       tableData: [],
       tableColumns: [
-      {
+        {
           title: this.$t('m_year_over_year_metrics'), // 指标
-          key: 'guid',
+          key: 'metric',
           minWidth: 250,
           showType: ['comparisonMetrics']
         },
@@ -96,9 +94,7 @@ export default {
           title: this.$t('m_scope'), // 作用域
           key: 'workspace',
           width: 150,
-          render: (h, params) => {
-            return <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>
-          },
+          render: (h, params) => <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
@@ -107,9 +103,21 @@ export default {
           width: 140,
           render: (h, params) => {
             const typeList = [
-              { label: this.$t('m_basic_type'), value: 'common', color: '#2d8cf0' },
-              { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
-              { label: this.$t('m_metric_list'), value: 'custom', color: '#b886f8' }
+              {
+                label: this.$t('m_basic_type'),
+                value: 'common',
+                color: '#2d8cf0'
+              },
+              {
+                label: this.$t('m_business_configuration'),
+                value: 'business',
+                color: '#81b337'
+              },
+              {
+                label: this.$t('m_metric_list'),
+                value: 'custom',
+                color: '#b886f8'
+              }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
             return <Tag color={find.color} type="border" size="medium">{find.label || '-'}</Tag>
@@ -122,10 +130,10 @@ export default {
           width: 100,
           render: (h, params) => {
             const calcMethodToDisplay = {
-              'avg': this.$t('m_average'),
-              'min': this.$t('m_min'),
-              'max': this.$t('m_max'),
-              'sum': this.$t('m_sum'),
+              avg: this.$t('m_average'),
+              min: this.$t('m_min'),
+              max: this.$t('m_max'),
+              sum: this.$t('m_sum'),
               '-': '-'
             }
             return <span>{calcMethodToDisplay[params.row.calcMethod || '-']}</span>
@@ -138,9 +146,9 @@ export default {
           width: 90,
           render: (h, params) => {
             const groupTypeToDisplay = {
-              'level': this.$t('m_field_resourceLevel'),
-              'object': this.$t('m_object_group'),
-              'system': this.$t('m_basic_type'),
+              level: this.$t('m_field_resourceLevel'),
+              object: this.$t('m_object_group'),
+              system: this.$t('m_basic_type'),
               '-': '-'
             }
             return <span>{groupTypeToDisplay[params.row.group_type || '-']}</span>
@@ -151,22 +159,18 @@ export default {
           title: this.$t('m_group_name_'), // 组名
           key: 'group_type',
           width: 80,
-          render: (h, params) => {
-            return <span>{params.row.group_name || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.group_name || '-'}</span>,
           showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_tableKey_expr'), // 表达式
           key: 'prom_expr',
           minWidth: 250,
-          render: (h, params) => {
-            return (
-              <Tooltip max-width="300" content={params.row.prom_expr} transfer>
-                <span class="eclipse">{params.row.prom_expr || '-'}</span>
-              </Tooltip>
-            )
-          },
+          render: (h, params) => (
+            <Tooltip max-width="300" content={params.row.prom_expr} transfer>
+              <span class="eclipse">{params.row.prom_expr || '-'}</span>
+            </Tooltip>
+          ),
           showType: ['originalMetrics']
         },
         {
@@ -175,9 +179,9 @@ export default {
           width: 160,
           render: (h, params) => {
             const comparisonTypeToDisplay = {
-              'day': this.$t('m_dod_comparison'),
-              'week': this.$t('m_wow_comparison'),
-              'month': this.$t('m_mom_comparison'),
+              day: this.$t('m_dod_comparison'),
+              week: this.$t('m_wow_comparison'),
+              month: this.$t('m_mom_comparison'),
               '-': '-'
             }
             return <span>{comparisonTypeToDisplay[params.row.comparisonType || '-']}</span>
@@ -190,8 +194,8 @@ export default {
           width: 160,
           render: (h, params) => {
             const calcTypeToDisplay = {
-              'diff': this.$t('m_difference'),
-              'diff_percent': this.$t('m_percentage_difference')
+              diff: this.$t('m_difference'),
+              diff_percent: this.$t('m_percentage_difference')
             }
             const calcTypeCache = (params.row.calcType || []).map(t => calcTypeToDisplay[t]).join('，')
             return <span>{calcTypeCache || '-'}</span>
@@ -204,10 +208,10 @@ export default {
           width: 100,
           render: (h, params) => {
             const calcMethodToDisplay = {
-              'avg': this.$t('m_average'),
-              'min': this.$t('m_min'),
-              'max': this.$t('m_max'),
-              'sum': this.$t('m_sum'),
+              avg: this.$t('m_average'),
+              min: this.$t('m_min'),
+              max: this.$t('m_max'),
+              sum: this.$t('m_sum'),
               '-': '-'
             }
             return <span>{calcMethodToDisplay[params.row.calcMethod || '-']}</span>
@@ -218,36 +222,28 @@ export default {
           title: this.$t('m_calculation_period'), // 计算周期
           key: 'calcPeriod',
           width: 100,
-          render: (h, params) => {
-            return <span>{params.row.calcPeriod || '-'}S</span>
-          },
+          render: (h, params) => <span>{params.row.calcPeriod || '-'}S</span>,
           showType: ['comparisonMetrics']
         },
         {
           title: this.$t('m_business_configuration'), // 业务配置
           key: 'log_metric_group_name',
           width: 200,
-          render: (h, params) => {
-            return <span>{params.row.log_metric_group_name || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.log_metric_group_name || '-'}</span>,
           showType: ['originalMetrics']
         },
         {
           title: this.$t('m_update_time'), // 更新时间
           key: 'update_time',
           width: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_time || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.update_time || '-'}</span>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_updatedBy'), // 更新人
           key: 'update_user',
           width: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_user || '-'}</span>
-          },
+          render: (h, params) => <span>{params.row.update_user || '-'}</span>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
         // {
@@ -287,7 +283,7 @@ export default {
       addVisible: false, // 是否显示查看
     }
   },
-  async mounted () {
+  async mounted() {
     await this.getEndpointList()
     this.endpoint = this.endpointOptions[0].guid
     this.getList()
@@ -296,14 +292,14 @@ export default {
     this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
   },
   methods: {
-    reloadData (metricType) {
+    reloadData(metricType) {
       this.metricType = metricType
       this.getList()
     },
-    changeEndpointGroup () {
+    changeEndpointGroup() {
       this.getList()
     },
-    getList () {
+    getList() {
       const params = {
         endpoint: this.endpoint
       }
@@ -318,7 +314,7 @@ export default {
         { isNeedloading: true }
       )
     },
-    getEndpointList () {
+    getEndpointList() {
       const api = '/monitor/api/v1/alarm/endpoint/list?__orders=-created_date&page=1&size=1000000'
       return this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
@@ -327,10 +323,10 @@ export default {
         responseData => {
           this.endpointOptions = responseData.data || []
         },
-        { isNeedloading:false }
+        { isNeedloading: false }
       )
     },
-    showConfigModal (row) {
+    showConfigModal(row) {
       this.row = row
       this.originalMetricsId = row.guid
       this.monitorType = row.monitor_type
