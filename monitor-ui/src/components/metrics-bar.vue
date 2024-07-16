@@ -1,5 +1,5 @@
 <template>
-  <div class="metrics-bar" :class="{ 'single': $attrs.metrics && $attrs.metrics.length === 1 }" v-show="$attrs.metrics && $attrs.metrics.length > 0">
+  <div class="metrics-bar" :class="{'single': $attrs.metrics && $attrs.metrics.length === 1}" v-show="$attrs.metrics && $attrs.metrics.length > 0">
     <div
       class="bar-item"
       v-for="(mtc, idx) in $attrs.metrics"
@@ -7,7 +7,7 @@
       :style="{
         background: barColors[idx % 13],
         height: '15px',
-        width: `${(100 * mtc.value) / $attrs.total}%`,
+        width: `${(100 * mtc.value) / $attrs.total}%`
       }"
       @click="handleClick(mtc)"
     >
@@ -27,30 +27,33 @@ export default {
   data() {
     return {
       barColors: [
-        "#DE4B7D",
-        "#E57A50",
-        "#D8CF6B",
-        "#AFC8E4",
-        "#002B55",
-        "#EC6820",
-        "#98B63F",
-        "#0199D3",
-        "#03519F",
-        "#535557",
-        "#60C7C4",
-        "#A7D9BF",
-        "#FFDB3B",
+        '#DE4B7D',
+        '#E57A50',
+        '#D8CF6B',
+        '#AFC8E4',
+        '#002B55',
+        '#EC6820',
+        '#98B63F',
+        '#0199D3',
+        '#03519F',
+        '#535557',
+        '#60C7C4',
+        '#A7D9BF',
+        '#FFDB3B',
       ],
-    };
+    }
   },
   methods: {
     handleClick({ name, value }) {
       if (+value > 0) {
-        this.$emit('onFilter', { key: 'metric', value: name })
+        this.$emit('onFilter', {
+          key: 'metric',
+          value: name
+        })
       }
     }
   }
-};
+}
 </script>
 
 <style scoped lang="less">

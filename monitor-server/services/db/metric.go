@@ -246,7 +246,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 				baseSql = "select * from metric m where monitor_type=? and service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
 			} else {
-				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?) and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
 		} else if endpointGroup != "" {
@@ -265,7 +265,9 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			baseSql = "select * from metric m where monitor_type=? and service_group is null and endpoint_group is null"
 			params = []interface{}{monitorType}
 		}
-		if query != "all" {
+		if query == "comparison" {
+			baseSql = baseSql + " and exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
+		} else if query != "all" {
 			baseSql = baseSql + " and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 		}
 	}
@@ -499,6 +501,10 @@ func getPromTagParamList(promQl string) (tagList []string) {
 func GetMetric(id string) (metric *models.MetricTable, err error) {
 	metric = &models.MetricTable{}
 	_, err = x.SQL("select * from metric where guid=?", id).Get(metric)
+	return
+}
+func GetAllMetricNameList() (list []string, err error) {
+	err = x.SQL("select distinct metric from metric ").Find(&list)
 	return
 }
 
