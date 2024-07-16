@@ -24,7 +24,7 @@
             <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
           </li>
         </ul>
-        <div class="top-right-search" @click="(e) => e.stopPropagation()">
+        <div class="top-right-search">
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
           <Button :disabled="!filtersForShow.some(f => f.key === 'metric' || f.key === 'priority')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
           <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
