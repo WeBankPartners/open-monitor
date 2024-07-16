@@ -503,6 +503,10 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	_, err = x.SQL("select * from metric where guid=?", id).Get(metric)
 	return
 }
+func GetAllMetricNameList() (list []string, err error) {
+	err = x.SQL("select distinct metric from metric ").Find(&list)
+	return
+}
 
 func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (actions []*Action) {
 	actions = []*Action{}
