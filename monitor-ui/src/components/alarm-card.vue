@@ -5,14 +5,14 @@
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
         <img
-          v-if="data.s_priority == 'high'"
+          v-if="data.s_priority === 'high'"
           class="bg"
           src="../assets/img/icon_alarm_H_cube.png"
           style="margin-right: 8px; cursor: pointer"
           @click="addParams('priority', data.s_priority)"
         />
         <img
-          v-else-if="data.s_priority == 'medium'"
+          v-else-if="data.s_priority === 'medium'"
           class="bg"
           src="../assets/img/icon_alarm_M_cube.png"
           style="margin-right: 8px; cursor: pointer"
@@ -30,11 +30,11 @@
             <div class="custom-title">
               {{data.alarm_name}}
               <img
-                  v-if="!$attrs.hideFilter"
-                  class="filter-icon-flex"
-                  @click="addParams('alarm_name', data.alarm_name)"
-                  src="../assets/img/icon_filter.png"
-                />
+                v-if="!$attrs.hideFilter"
+                class="filter-icon-flex"
+                @click="addParams('alarm_name', data.alarm_name)"
+                src="../assets/img/icon_filter.png"
+              />
             </div>
           </Tooltip>
         </template>
@@ -69,7 +69,7 @@
         <div slot="content" style="white-space: normal;padding:12px">
           <p>{{ $t('m_tableKey_description') }}: {{ data.notify_message }}</p>
         </div>
-        <img v-if="data.notify_id !==''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
+        <img v-if="data.notify_id !== ''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
       </Poptip>
       <Tooltip :content="$t('m_menu_endpointView')">
         <Icon
@@ -93,7 +93,7 @@
           type="ios-pricetags"
           size="18"
           class="fa-operate"
-          :color="data.custom_message!==''?'#2d8cf0':''"
+          :color="data.custom_message !== '' ? '#2d8cf0' : ''"
           @click="remarkModal(data)"
         />
       </Tooltip>
@@ -106,7 +106,7 @@
             <div class="ellipsis">
               <Tooltip :content="data.content" :max-width="300">
                 <div slot="content">
-                  <div v-html="data.content || '-'"></div>  
+                  <div v-html="data.content || '-'"></div>
                 </div>
                 <div v-html="data.content || '-'" class="ellipsis-text" style="width: 450px;"></div>
               </Tooltip>
@@ -141,7 +141,7 @@
       <li>
         <label class="card-label" v-html="$t('m_field_metric')"></label>
         <div class="card-content" style="display: flex">
-           <div class="mr-2" v-for="(metric, index) in data.alarm_metric_list" :key=index>
+          <div class="mr-2" v-for="(metric, index) in data.alarm_metric_list" :key=index>
             {{ metric }}
             <img
               v-if="!$attrs.hideFilter"
@@ -176,7 +176,8 @@
       v-model="isShowStartFlow"
       :title="$t('m_initiate_orchestration')"
       @on-ok="confirmStartFlow"
-      @on-cancel="isShowStartFlow = false">
+      @on-cancel="isShowStartFlow = false"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red;text-align: left;">{{startFlowTip}}</p>
@@ -188,7 +189,8 @@
       :mask-closable="false"
       :footer-hide="true"
       :fullscreen="true"
-      :title="$t('m_menu_endpointView')">
+      :title="$t('m_menu_endpointView')"
+    >
       <EndpointViewComponent ref="endpointViewComponentRef"></EndpointViewComponent>
     </Modal>
   </Card>
@@ -205,16 +207,16 @@ export default {
       isShowStartFlow: false,
       startFlowTip: '',
       alertId: '',
-      test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 ***REMOVED***[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]",
+      test: 'system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 ***REMOVED***[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]',
       strategyNameMaps: {
-        "endpointGroup": "m_base_group",
-        "serviceGroup": "m_field_resourceLevel"
+        endpointGroup: 'm_base_group',
+        serviceGroup: 'm_field_resourceLevel'
       },
       showEndpointView: false // 弹窗展示对象视图
     }
   },
   watch: {
-    showEndpointView: function (val) {
+    showEndpointView(val) {
       this.$refs.endpointViewComponentRef.disabledEndpoint(val)
     }
   },
@@ -222,22 +224,23 @@ export default {
     goToEndpointView(alarmItem) {
       const endpointObject = {
         option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split("_").slice(-1)[0],
-      };
+        type: alarmItem.endpoint.split('_').slice(-1)[0],
+      }
       this.showEndpointView = true
       this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
     },
-    goToNotify (item) {
+    goToNotify(item) {
       if (item.notify_status === 'notStart') {
         this.startFlowTip = `${this.$t('m_button_confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
-      } else if (item.notify_status === 'started') {
+      }
+      else if (item.notify_status === 'started') {
         this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('m_button_confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
       }
       this.alertId = item.id
       this.isShowStartFlow = true
     },
-    confirmStartFlow () {
-      let params = {
+    confirmStartFlow() {
+      const params = {
         id: this.alertId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
@@ -245,9 +248,9 @@ export default {
       },{isNeedloading: false})
     },
     deleteConfirmModal(rowData, isBatch) {
-      this.$parent.isBatch = isBatch;
-      this.$parent.selectedData = rowData;
-      this.$parent.isShowWarning = true;
+      this.$parent.isBatch = isBatch
+      this.$parent.selectedData = rowData
+      this.$parent.isShowWarning = true
     },
     remarkModal(item) {
       this.$emit('openRemarkModal', item)
@@ -259,11 +262,11 @@ export default {
       // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
-      this.$parent.filters[key] = value;
-      this.$parent.getAlarm();
+      this.$parent.filters[key] = value
+      this.$parent.getAlarm()
     },
-    copyEndpoint (data) {
-      let inputElement = document.createElement('input')
+    copyEndpoint(data) {
+      const inputElement = document.createElement('input')
       inputElement.value = data.alarm_obj_name
       document.body.appendChild(inputElement)
       inputElement.select()
@@ -275,7 +278,7 @@ export default {
   components: {
     EndpointViewComponent
   }
-};
+}
 </script>
 <style scoped lang="less">
 /deep/ .ivu-card-head {
