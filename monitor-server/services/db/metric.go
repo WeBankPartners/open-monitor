@@ -532,9 +532,9 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	}
 	if strings.Contains(metric.PromExpr, "instance=\"$address\"") {
 		if strings.Contains(promExpr, "{") {
-			promExpr = promExpr[:len(promExpr)-1] + ",guid=\"$guid\"}"
+			promExpr = promExpr[:len(promExpr)-1] + ",e_guid=\"$guid\"}"
 		} else {
-			promExpr = promExpr + "{guid=\"$guid\"}"
+			promExpr = promExpr + "{e_guid=\"$guid\"}"
 		}
 	}
 	if metric.ServiceGroup == "" {
