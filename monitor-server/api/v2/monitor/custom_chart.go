@@ -608,11 +608,24 @@ func GetChartSeriesColor(c *gin.Context) {
 		if len(tagValue) > 0 {
 			for _, data := range querySeriesConfigList {
 				var promQ = data.PromQ
-				for i, tag := range tagValue {
-					if i == 0 {
-						data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
-					} else {
-						data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+				if promQ == "" {
+					continue
+				}
+				if strings.Contains(data.PromQ, "{") {
+					for i, tag := range tagValue {
+						if i == 0 {
+							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+						} else {
+							data.PromQ = data.PromQ + " or " + promQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+						}
+					}
+				} else {
+					for i, tag := range tagValue {
+						if i == 0 {
+							data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
+						} else {
+							data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+						}
 					}
 				}
 			}
