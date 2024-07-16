@@ -4,6 +4,7 @@
       <Input
         v-model="searchForm.search"
         style="width: 15%"
+        clearable
         :placeholder="$t('m_enter_name_tips')"
         @on-change="onFilterConditionChange"
       >
@@ -656,7 +657,7 @@ export default {
           key: 'action',
           width: 220,
           render: (h, params) => (
-            <div>
+            <div style="display: flex">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
                 <Button size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
