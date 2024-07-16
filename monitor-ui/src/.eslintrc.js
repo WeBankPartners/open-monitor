@@ -236,7 +236,7 @@ module.exports = {
                 ]
             }
         ],
-        "no-debugger": "warn",
+        "no-debugger": "off",
         "arrow-body-style": [
             "error",
             "as-needed",
