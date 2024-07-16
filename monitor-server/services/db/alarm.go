@@ -29,16 +29,22 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += " AND t2.grp_id=? "
 		countParams = append(countParams, query.Grp)
 	}
+	if len(query.EndpointGroup) > 0 {
+		whereSql += " AND t2.endpoint_group in ('" + strings.Join(query.EndpointGroup, "','") + "') "
+	}
+	if len(query.BasicType) > 0 {
+		whereSql += " AND t1.monitor_type in ('" + strings.Join(query.BasicType, "','") + "') "
+	}
 	querySql := `SELECT t5.* FROM (
-			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
+			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags,t4.create_user,t4.update_user,t4.update_time FROM (
+			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags,t1.create_user,t1.update_user,t1.update_time FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
-			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint_new t1 
+			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
+			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags FROM endpoint_new t1 
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
@@ -50,7 +56,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	err := x.SQL(querySql, queryParams...).Find(&result)
 	err = x.SQL(countSql, countParams...).Find(&count)
 	if len(result) > 0 {
-		groupTableData := []*m.EndpointGroupTable{}
+		var groupTableData []*m.EndpointGroupTable
 		x.SQL("select * from endpoint_group").Find(&groupTableData)
 		for _, v := range result {
 			if v.GroupsIds != "" {
@@ -79,6 +85,31 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		query.ResultNum = 0
 	}
 	return err
+}
+
+func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
+	var list []*m.EndpointRow
+	var endpointGroupMap = make(map[string]bool)
+	var basicTypeMap = make(map[string]bool)
+	if err = x.SQL("select t2.endpoint_group,t1.monitor_type from endpoint_new t1 LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint").Find(&list); err != nil {
+		return
+	}
+	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
+	if len(list) > 0 {
+		for _, endpoint := range list {
+			if strings.TrimSpace(endpoint.EndpointGroup) != "" {
+				endpointGroupMap[endpoint.EndpointGroup] = true
+			}
+			if strings.TrimSpace(endpoint.MonitorType) != "" {
+				basicTypeMap[endpoint.MonitorType] = true
+			}
+		}
+	}
+	options.EndpointGroup = convertMap2string(endpointGroupMap)
+	options.BasicType = convertMap2string(basicTypeMap)
+	sort.Strings(options.EndpointGroup)
+	sort.Strings(options.BasicType)
+	return
 }
 
 func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
@@ -401,7 +432,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, endpointFilterList []string) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -422,12 +453,18 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, 
 		params = append(params, endpointFilterParam...)
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric like ? "
-		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
+		metricFilterList = append(metricFilterList, query.SMetric)
+	}
+	if len(metricFilterList) > 0 {
+		metricFilterSql, metricFilterParam := createListParams(endpointFilterList, "")
+		whereSql += " and s_metric in (" + metricFilterSql + ") "
+		params = append(params, metricFilterParam...)
 	}
 	if query.AlarmName != "" {
-		whereSql += " and (alarm_name=? or content=?) "
-		params = append(params, query.AlarmName, query.AlarmName)
+		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
+		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
+		params = append(params, append(params, alarmNameFilterParam...)...)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -536,9 +573,9 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, 
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.AlarmName == "" {
-		if query.Endpoint == "" {
-			if query.SMetric == "" || query.SMetric == "custom" {
+	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
+		if query.Endpoint == "" && len(endpointList) == 0 {
+			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
 					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
 						result = append(result, v)
@@ -1805,4 +1842,20 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 		}
 	}
 	return
+}
+
+func GetAlarmStrategyNameList() (list []string, err error) {
+	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
+	return
+}
+
+func convertMap2string(hashMap map[string]bool) []string {
+	var arr []string
+	if len(hashMap) == 0 {
+		return arr
+	}
+	for key, _ := range hashMap {
+		arr = append(arr, key)
+	}
+	return arr
 }

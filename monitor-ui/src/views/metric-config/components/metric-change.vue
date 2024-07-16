@@ -11,13 +11,13 @@
 
 <script>
 export default {
-  data () {
+  data() {
     return {
       metricType: 'originalMetrics',
     }
   },
   methods: {
-    metricTypeChange (type) {
+    metricTypeChange(type) {
       this.metricType = type
       this.$emit('reloadData', this.metricType)
     }
@@ -46,7 +46,7 @@ export default {
 }
 .btn-group-custom {
   margin-right: 16px;
-} 
+}
 .btn-group-custom .btn-group-item:first-child {
   border-radius: 4px 0 0 4px;
 }

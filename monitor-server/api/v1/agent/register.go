@@ -35,7 +35,7 @@ type returnData struct {
 func RegisterAgentNew(c *gin.Context) {
 	var param m.RegisterParamNew
 	if err := c.ShouldBindJSON(&param); err == nil {
-		validateMessage, _, err := AgentRegister(param)
+		validateMessage, _, err := AgentRegister(param, mid.GetOperateUser(c))
 		if validateMessage != "" {
 			mid.ReturnValidateError(c, validateMessage)
 			return
@@ -85,7 +85,7 @@ func startSyncAgentManagerJob(url string) {
 	}
 }
 
-func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err error) {
+func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, guid string, err error) {
 	if AgentManagerServer == "" && param.AgentManager {
 		return validateMessage, guid, fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
@@ -131,7 +131,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 		tmpExtendBytes, _ := json.Marshal(rData.extendParam)
 		extendString = string(tmpExtendBytes)
 	}
-	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString)
+	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString, operator)
 	if err != nil {
 		return validateMessage, guid, err
 	}
@@ -157,7 +157,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 			if tmpErr != nil {
 				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
 			} else {
-				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, operator, true)
 				if tmpErr != nil {
 					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
 				} else {
