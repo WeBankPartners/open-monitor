@@ -102,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList, ","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList, ","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type}, mid.GetOperateUser(c))
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
@@ -230,7 +230,7 @@ func ExportPanelDelete(c *gin.Context) {
 					continue
 				}
 				if len(endpointStringList) > 0 {
-					cErr = db.UpdateRecursiveEndpoint(v.Guid, endpointStringList)
+					cErr = db.UpdateRecursiveEndpoint(v.Guid, mid.GetOperateUser(c), endpointStringList)
 				}
 			}
 			if cErr != nil {

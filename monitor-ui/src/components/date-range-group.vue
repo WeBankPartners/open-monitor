@@ -52,41 +52,46 @@ export default {
       default: 'hour'
     }
   },
-  data () {
+  data() {
     return {
       dateTime: [],
       dateTypeList: []
     }
   },
-  mounted () {
-    this.dateTypeList = this.groupList.map(val => {
-      return {
-        label: `近${val}h`,
-        value: val
-      }
-    })
+  mounted() {
+    this.dateTypeList = this.groupList.map(val => ({
+      label: `近${val}h`,
+      value: val
+    }))
   },
   methods: {
     // 自定义时间控件转化时间格式值
-    handleDateTypeChange (dateType) {
+    handleDateTypeChange(dateType) {
       const cur = dayjs().format('YYYY-MM-DD')
       if (dateType === 1) {
-        const pre = dayjs().subtract(3, 'day').format('YYYY-MM-DD')
+        const pre = dayjs().subtract(3, 'day')
+          .format('YYYY-MM-DD')
         this.dateTime = [pre, cur]
-      } else if (dateType === 2) {
-        const pre = dayjs().subtract(7, 'day').format('YYYY-MM-DD')
+      }
+      else if (dateType === 2) {
+        const pre = dayjs().subtract(7, 'day')
+          .format('YYYY-MM-DD')
         this.dateTime = [pre, cur]
-      } else if (dateType === 3) {
-        const pre = dayjs().subtract(1, 'month').format('YYYY-MM-DD')
+      }
+      else if (dateType === 3) {
+        const pre = dayjs().subtract(1, 'month')
+          .format('YYYY-MM-DD')
         this.dateTime = [pre, cur]
-      } else if (dateType === 4) {
+      }
+      else if (dateType === 4) {
         this.dateTime = []
       }
     },
-    handleDateRange (dateArr) {
+    handleDateRange(dateArr) {
       if (dateArr && dateArr[0] && dateArr[1]) {
         this.dateTime = [...dateArr]
-      } else {
+      }
+      else {
         this.dateTime = []
       }
     }

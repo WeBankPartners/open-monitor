@@ -97,7 +97,8 @@ func init() {
 	// Config 配置
 	httpHandlerFuncList = append(httpHandlerFuncList,
 		// 对象配置
-		&handlerFuncObj{Url: "/alarm/endpoint/list", Method: http.MethodGet, HandlerFunc: alarm.ListGrpEndpoint},
+		&handlerFuncObj{Url: "/alarm/endpoint/list", Method: http.MethodPost, HandlerFunc: alarm.ListGrpEndpoint},
+		&handlerFuncObj{Url: "/alarm/endpoint/options", Method: http.MethodGet, HandlerFunc: alarm.ListGrpEndpointOptions},
 		&handlerFuncObj{Url: "/alarm/endpoint/update", Method: http.MethodPost, HandlerFunc: alarm.EditGrpEndpoint},
 		&handlerFuncObj{Url: "/alarm/process/list", Method: http.MethodGet, HandlerFunc: alarm.GetEndpointProcessConfig},
 		&handlerFuncObj{Url: "/alarm/process/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateEndpointProcessConfig},
@@ -130,6 +131,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/action/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateTplAction},
 		// 告警列表
 		&handlerFuncObj{Url: "/alarm/history", Method: http.MethodGet, HandlerFunc: alarm.GetHistoryAlarm},
+		&handlerFuncObj{Url: "/alarm/problem/options", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarmOptions},
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
