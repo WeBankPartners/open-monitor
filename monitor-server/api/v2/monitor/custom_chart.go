@@ -616,7 +616,7 @@ func GetChartSeriesColor(c *gin.Context) {
 						if i == 0 {
 							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
 						} else {
-							data.PromQ = data.PromQ + " or " + promQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type='" + tag + "'}"
 						}
 					}
 				} else {
