@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="all-content">
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
@@ -538,8 +538,10 @@ export default {
     overflow: scroll;
   }
 }
-::-webkit-scrollbar {
-  display: none;
+.all-content {
+  ::-webkit-scrollbar {
+    display: none;
+  }
 }
 </style>
 
