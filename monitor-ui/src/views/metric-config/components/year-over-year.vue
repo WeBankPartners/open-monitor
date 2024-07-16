@@ -15,7 +15,7 @@
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">
         <Form :label-width="110" label-position="left">
           <FormItem :label="$t('m_metric')" v-if="operator === 'edit'" required>
-            <Input disabled v-model="metricConfigData.guid"></Input>
+            <Input disabled v-model="metricConfigData.guid"/>
           </FormItem>
           <!--原始指标-->
           <FormItem :label="$t('m_original_metric_key')" required>
@@ -320,7 +320,9 @@ export default {
             eye: false,
             dataZoom: false,
             lineBarSwitch: true,
-            chartType: 'twoYaxes'
+            params: {
+              lineType: 2
+            }
           }
           readyToDraw(this, responseData, 1, chartConfig, 'echartId')
         },
