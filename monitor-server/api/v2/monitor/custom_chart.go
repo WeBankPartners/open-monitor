@@ -597,6 +597,27 @@ func GetChartSeriesColor(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, buildQueryConfigErr)
 		return
 	}
+	if len(param.Tags) > 0 && len(querySeriesConfigList) > 0 {
+		var tagValue []string
+		for _, tag := range param.Tags {
+			if tag.TagName == "calc_type" {
+				tagValue = tag.TagValue
+				break
+			}
+		}
+		if len(tagValue) > 0 {
+			for _, data := range querySeriesConfigList {
+				var promQ = data.PromQ
+				for i, tag := range tagValue {
+					if i == 0 {
+						data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
+					} else {
+						data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+					}
+				}
+			}
+		}
+	}
 	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
 	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
