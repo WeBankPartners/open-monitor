@@ -520,15 +520,15 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	promExpr = NewPromExpr(metricName)
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
 		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group) values (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.EndpointGroup}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.EndpointGroup, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
 		}
 	} else {
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
 	}
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,origin_metric,origin_prom_expr,create_user,create_time) values(?,?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, metric.Metric, metric.PromExpr, operator, now}})
