@@ -11,7 +11,7 @@
       <TabPane :label="$t('m_object_group')" name="3">
       </TabPane>
       <!--对象-->
-      <TabPane :label="$t('m_object_design')+'('+$t('m_ready_only')+')'" name="4">
+      <TabPane :label="$t('m_object_design') + '(' + $t('m_ready_only') + ')'" name="4">
       </TabPane>
     </Tabs>
     <GeneralGroup v-if="activeName === '1'"></GeneralGroup>
@@ -33,7 +33,7 @@ export default {
     ObjectGroup,
     Object
   },
-  data () {
+  data() {
     return {
       activeName: '1'
     }

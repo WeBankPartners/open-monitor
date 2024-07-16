@@ -102,7 +102,7 @@ func ExportAgentNew(c *gin.Context) {
 				v.Password = tmpPassword
 			}
 		}
-		var registerParam m.RegisterParamNew
+		var param m.RegisterParamNew
 		var validateMessage, endpointGuid string
 		var inputErr error
 		tmpStep := 10
@@ -113,22 +113,22 @@ func ExportAgentNew(c *gin.Context) {
 			}
 		}
 		if tmpAgentType == "host" {
-			registerParam = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Cluster: v.Cluster, Port: "9100", AddDefaultGroup: true, AgentManager: false, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Cluster: v.Cluster, Port: "9100", AddDefaultGroup: true, AgentManager: false, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
 		} else if tmpAgentType == "snmp" {
-			registerParam = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
+			param = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
 		} else {
-			registerParam = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
-			registerParam.Url = v.Url
-			registerParam.Method = v.Method
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
+			param.Url = v.Url
+			param.Method = v.Method
 		}
 		if action == "register" {
-			registerParam.Tags = v.Tags
-			validateMessage, endpointGuid, inputErr = AgentRegister(registerParam)
+			param.Tags = v.Tags
+			validateMessage, endpointGuid, inputErr = AgentRegister(param, mid.GetOperateUser(c))
 			if validateMessage != "" {
 				validateMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, validateMessage)
 			}
 			if validateMessage == "" && inputErr == nil && v.AppLogPaths != "" {
-				inputErr = autoAddAppPathConfig(registerParam, v.AppLogPaths)
+				inputErr = autoAddAppPathConfig(param, v.AppLogPaths)
 			}
 		} else {
 			var endpointObj m.EndpointTable
@@ -142,7 +142,7 @@ func ExportAgentNew(c *gin.Context) {
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
 				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
-				inputErr = DeregisterJob(endpointObj)
+				inputErr = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 				endpointGuid = endpointObj.Guid
 			}
 		}
@@ -347,7 +347,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 			return
 		}
 		for _, input := range param.Inputs {
-			subResult, subError := updateProcessNew(input, operation)
+			subResult, subError := updateProcessNew(input, operation, mid.GetOperateUser(c))
 			results = append(results, subResult)
 			if subError != nil {
 				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
@@ -359,7 +359,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 	}
 }
 
-func updateProcessNew(input processRequestObj, operation string) (result processResultOutputObj, err error) {
+func updateProcessNew(input processRequestObj, operation, operator string) (result processResultOutputObj, err error) {
 	result.Guid = input.Guid
 	result.CallbackParameter = input.CallbackParameter
 	defer func() {
@@ -385,7 +385,7 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 	}
 	if operation == "add" {
 		registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
-		validateMessage, guid, tmpErr := AgentRegister(registerParam)
+		validateMessage, guid, tmpErr := AgentRegister(registerParam, operator)
 		if validateMessage != "" {
 			return result, fmt.Errorf("Param validate error,%s ", validateMessage)
 		}
@@ -400,7 +400,7 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 		if tmpEndpointObj.Guid == "" {
 			return
 		}
-		err = DeregisterJob(tmpEndpointObj)
+		err = DeregisterJob(tmpEndpointObj, operator)
 		return
 	}
 	return
