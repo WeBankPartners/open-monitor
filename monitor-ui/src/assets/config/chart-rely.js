@@ -26,7 +26,7 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
   const metricSysColorInChartConfig = {}
   if (chartConfig.params) {
     lineType = chartConfig.params.lineType
-    chartConfig.params.data.forEach(item => {
+    chartConfig.params.data&&chartConfig.params.data.forEach(item => {
       // 通过endpoint中‘.’的个数，判定是主机还是层级对象
       if (item.endpoint.split('.').length >= 3) {
         isHostOrSys = true
