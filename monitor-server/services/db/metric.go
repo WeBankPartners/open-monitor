@@ -537,6 +537,19 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 			promExpr = promExpr + "{e_guid=\"$guid\"}"
 		}
 	}
+	tagParamList := getPromTagParamList(metric.PromExpr)
+	if len(tagParamList) > 0 {
+		for _, v := range tagParamList {
+			if strings.HasPrefix(v, "$t_") {
+				if strings.Contains(promExpr, "{") {
+					promExpr = promExpr[:len(promExpr)-1] + "," + v[3:] + "=" + v + "}"
+				} else {
+					promExpr = promExpr + "{" + v[3:] + "=" + v + "}"
+				}
+			}
+		}
+	}
+
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?)",
