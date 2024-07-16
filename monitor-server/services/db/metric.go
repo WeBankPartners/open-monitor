@@ -542,9 +542,9 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 		for _, v := range tagParamList {
 			if strings.HasPrefix(v, "$t_") {
 				if strings.Contains(promExpr, "{") {
-					promExpr = promExpr[:len(promExpr)-1] + "," + v[3:] + "=" + v + "}"
+					promExpr = promExpr[:len(promExpr)-1] + "," + v[3:] + "=\"" + v + "\"}"
 				} else {
-					promExpr = promExpr + "{" + v[3:] + "=" + v + "}"
+					promExpr = promExpr + "{" + v[3:] + "=\"" + v + "\"}"
 				}
 			}
 		}
