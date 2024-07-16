@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="all-content">
     <div>
       <header>
         <div class="header-name">
@@ -1277,7 +1277,9 @@ export default {
     vertical-align: bottom;
   }
 
+.all-content {
   ::-webkit-scrollbar {
     display: none;
   }
+}
 </style>
