@@ -6,7 +6,7 @@
         {{$t('m_filter')}}
       </div>
       <template #list>
-        <Form ref="fliters" :label-width="70" class="drop-down-content" @click.stop="e => e.stopPropagation()">
+        <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
           <FormItem :label="$t('m_alarmName')">
             <Select
               v-model="filters.alarm_name"
