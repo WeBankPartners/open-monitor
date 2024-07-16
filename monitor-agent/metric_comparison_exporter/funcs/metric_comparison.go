@@ -202,6 +202,9 @@ func calcMetricComparisonData() {
 						Name:      metricComparison.PromExpr,
 					}
 					for _, metricObj := range data.Metric {
+						if metricObj.Key == "__name__" {
+							continue
+						}
 						metricComparisonRes1.MetricMap[metricObj.Key] = metricObj.Value
 						metricComparisonRes2.MetricMap[metricObj.Key] = metricObj.Value
 					}
