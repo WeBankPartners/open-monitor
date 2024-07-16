@@ -195,11 +195,11 @@ func calcMetricComparisonData() {
 					var dataVal, historyDataVal float64
 					metricComparisonRes1 := &models.MetricComparisonRes{
 						MetricMap: make(map[string]string),
-						Name:      metricComparison.PromExpr,
+						Name:      metricComparison.Metric,
 					}
 					metricComparisonRes2 := &models.MetricComparisonRes{
 						MetricMap: make(map[string]string),
-						Name:      metricComparison.PromExpr,
+						Name:      metricComparison.Metric,
 					}
 					for _, metricObj := range data.Metric {
 						if metricObj.Key == "__name__" {
