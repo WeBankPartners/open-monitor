@@ -456,15 +456,17 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		metricFilterList = append(metricFilterList, query.SMetric)
 	}
 	if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(endpointFilterList, "")
+		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
 		whereSql += " and s_metric in (" + metricFilterSql + ") "
 		params = append(params, metricFilterParam...)
 	}
 	if query.AlarmName != "" {
 		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+	}
+	if len(alarmNameFilterList) > 0 {
 		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
 		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
-		params = append(params, append(params, alarmNameFilterParam...)...)
+		params = append(append(params, alarmNameFilterParam...), alarmNameFilterParam...)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
