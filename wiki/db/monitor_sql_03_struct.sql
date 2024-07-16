@@ -65,3 +65,8 @@ alter table log_keyword_config add column active_window varchar(255) default nul
 alter table log_keyword_config add column create_time varchar(32) default null;
 alter table endpoint_new add column create_user varchar(64) default null COMMENT '创建人';
 alter table endpoint_new add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table endpoint_group add column create_user varchar(64) default null COMMENT '创建人';
+alter table endpoint_group add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table role ADD UNIQUE (name);
