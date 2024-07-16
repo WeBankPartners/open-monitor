@@ -13,27 +13,28 @@
                   <ul>
                     <template v-for="(item,index) in optionsTable">
                       <li :key="index" class="col-md-6 ul-li-style" style="float: left">
-                      <label class="ivu-checkbox-wrapper ivu-checkbox-group-item ivu-checkbox-wrapper-checked">
-                        <!--固定显示-开始-->
-                        <template v-if="item.frozen">
-                          <span class="ivu-checkbox ivu-checkbox-checked">
-                          <span class="checkbox-checked-disabled"></span>
-                          </span>
-                          <span>{{item.title}}</span>
-                        </template>
-                        <!--固定显示-结束-->
-                        <!--任意显示-开始-->
-                        <template v-else>
-                          <span :class="{'ivu-checkbox':true ,'ivu-checkbox-checked':item.display}"
-                            @click="item.display = !item.display">
-                            <span class="ivu-checkbox-inner"></span>
-                            <input type="checkbox" class="ivu-checkbox-input" :value="index">
-                          </span>
-                          <span>{{item.title}}</span>
-                        </template>
+                        <label class="ivu-checkbox-wrapper ivu-checkbox-group-item ivu-checkbox-wrapper-checked">
+                          <!--固定显示-开始-->
+                          <template v-if="item.frozen">
+                            <span class="ivu-checkbox ivu-checkbox-checked">
+                              <span class="checkbox-checked-disabled"></span>
+                            </span>
+                            <span>{{item.title}}</span>
+                          </template>
+                          <!--固定显示-结束-->
+                          <!--任意显示-开始-->
+                          <template v-else>
+                            <span :class="{'ivu-checkbox': true ,'ivu-checkbox-checked': item.display}"
+                                  @click="item.display = !item.display"
+                            >
+                              <span class="ivu-checkbox-inner"></span>
+                              <input type="checkbox" class="ivu-checkbox-input" :value="index"/>
+                            </span>
+                            <span>{{item.title}}</span>
+                          </template>
                         <!--任意显示-结束-->
-                      </label>
-                    </li>
+                        </label>
+                      </li>
                     </template>
                   </ul>
                 </CheckboxGroup>
@@ -50,48 +51,48 @@
   </div>
 </template>
 <script>
-  export default {
-    name: 'update-lists',
-    data() {
-      return {
-        checkedItem: [], // 选中的列
-        optionsTable:[],
-      }
-    },
-    props: ['table'],
-    mounted() {
+export default {
+  name: 'update-lists',
+  data() {
+    return {
+      checkedItem: [], // 选中的列
+      optionsTable: [],
+    }
+  },
+  props: ['table'],
+  mounted() {
 
-    },
-    methods: {
-      showCustomTh () {
-        this.optionsTable = []
-        this.table.tableEle.forEach((item, index) => {
-          if (item.display === true) {
-            this.checkedItem.push(index)
-          }
-          let obj = {}
-          for(let key in item){
-            obj[key] = item[key]
-          }
-          this.optionsTable.push(obj)
-        })
-        this.$root.JQ('#custom_th_Modal').modal('show')
-      },
-      changeTableTr () {
-        this.table.tableEle = this.optionsTable
-        // 将自定义列表信息更新至vuex缓存
-        let column = {
-          name: this.$router.history.current.name,
-          params: this.table.tableEle,
+  },
+  methods: {
+    showCustomTh() {
+      this.optionsTable = []
+      this.table.tableEle.forEach((item, index) => {
+        if (item.display === true) {
+          this.checkedItem.push(index)
         }
-        this.$parent.changeTdNumber()
-        // this.tdNumber = this.gettdsLength()
-        this.$root.$store.commit('catchColumn', column)
-        this.$root.JQ('#custom_th_Modal').modal('hide')
-      },
+        const obj = {}
+        for (const key in item){
+          obj[key] = item[key]
+        }
+        this.optionsTable.push(obj)
+      })
+      this.$root.JQ('#custom_th_Modal').modal('show')
     },
-    components: {}
-  }
+    changeTableTr() {
+      this.table.tableEle = this.optionsTable
+      // 将自定义列表信息更新至vuex缓存
+      const column = {
+        name: this.$router.history.current.name,
+        params: this.table.tableEle,
+      }
+      this.$parent.changeTdNumber()
+      // this.tdNumber = this.gettdsLength()
+      this.$root.$store.commit('catchColumn', column)
+      this.$root.JQ('#custom_th_Modal').modal('hide')
+    },
+  },
+  components: {}
+}
 </script>
 
 <style lang="less" scoped>

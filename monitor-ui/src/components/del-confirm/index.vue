@@ -24,32 +24,32 @@
 </template>
 <script>
 export default {
-    data() {
-      return {
-        confirmInfo: {
-          msg: '',
-          callback: null
-        }
-      }
-    },
-    created() {
-      this.$root.$eventBus.$on('hideConfirmModal', () => {
-        this.cancel()
-      })
-    },
-    methods: {
-      add(confirmInfo = {}) {
-        this.$root.JQ('#deleteConfirmId').modal('show')
-        this.confirmInfo = confirmInfo
-      },
-      cancel() {
-        this.$root.JQ('#deleteConfirmId').modal('hide')
-      },
-      exect() {
-        this.confirmInfo.callback()
-        this.$root.JQ('#deleteConfirmId').modal('hide')
+  data() {
+    return {
+      confirmInfo: {
+        msg: '',
+        callback: null
       }
     }
+  },
+  created() {
+    this.$root.$eventBus.$on('hideConfirmModal', () => {
+      this.cancel()
+    })
+  },
+  methods: {
+    add(confirmInfo = {}) {
+      this.$root.JQ('#deleteConfirmId').modal('show')
+      this.confirmInfo = confirmInfo
+    },
+    cancel() {
+      this.$root.JQ('#deleteConfirmId').modal('hide')
+    },
+    exect() {
+      this.confirmInfo.callback()
+      this.$root.JQ('#deleteConfirmId').modal('hide')
+    }
+  }
 }
 
 </script>

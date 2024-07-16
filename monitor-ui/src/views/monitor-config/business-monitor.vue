@@ -12,17 +12,18 @@
             style="width:300px;"
             v-model="targrtId"
             filterable
-            clearable 
+            clearable
             remote
             ref="select"
             @on-change="search"
             @on-clear="typeChange"
+          >
+            <Option v-for="(option, index) in targetOptions"
+                    :value="option.guid"
+                    :key="index"
+                    :label="option.display_name"
             >
-            <Option v-for="(option, index) in targetOptions" 
-              :value="option.guid" 
-              :key="index"
-              :label="option.display_name">
-              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
               {{option.display_name}}
             </Option>
           </Select>
@@ -30,15 +31,16 @@
         <li class="search-li" style="cursor: pointer;">
           <span style="font-size: 14px;" @click="openDoc">
             <i
-              class="fa fa-book" 
-              aria-hidden="true" 
-              style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
+              class="fa fa-book"
+              aria-hidden="true"
+              style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px"
+            >
             </i>
             {{$t('operationDoc')}}
           </span>
         </li>
       </ul>
-    </div> 
+    </div>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <template v-if="type === 'group'">
         <groupManagement ref="group"></groupManagement>
@@ -60,47 +62,53 @@ export default {
     return {
       type: 'group',
       typeList: [
-        {label: this.$t('m_field_resourceLevel'), value: 'group'},
-        {label: this.$t('m_tableKey_endpoint'), value: 'endpoint'}
+        {
+          label: this.$t('m_field_resourceLevel'),
+          value: 'group'
+        },
+        {
+          label: this.$t('m_tableKey_endpoint'),
+          value: 'endpoint'
+        }
       ],
       targrtId: '',
       targetOptions: [],
       showTargetManagement: false
     }
   },
-  
-  mounted () {
-   this.getTargrtList();
+
+  mounted() {
+    this.getTargrtList()
   },
-  beforeDestroy () {
+  beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    typeChange () {
-      this.clearTargrt();
-      this.getTargrtList();
+    typeChange() {
+      this.clearTargrt()
+      this.getTargrtList()
     },
-    getTargrtList () {
+    getTargrtList() {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.targetOptions = responseData;
-        this.targrtId = this.targetOptions[0].guid;
-        this.search();
-      }, {isNeedloading:false})
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.targetOptions = responseData
+        this.targrtId = this.targetOptions[0].guid
+        this.search()
+      }, {isNeedloading: false})
     },
-    clearTargrt () {
+    clearTargrt() {
       this.targetOptions = []
       this.targrtId = ''
       this.showTargetManagement = false
       this.$refs.select.query = ''
     },
-    search () {
+    search() {
       if (this.targrtId) {
         this.showTargetManagement = true
         this.$refs[this.type].getDetail(this.targrtId)
       }
     },
-    openDoc () {
+    openDoc() {
       window.open('https://webankpartners.github.io/wecube-docs/manual-open-monitor-config-metrics/')
     }
   },
@@ -144,11 +152,11 @@ export default {
 
   .search-input-content {
     display: inline-block;
-    vertical-align: middle; 
+    vertical-align: middle;
   }
   .tag-width {
     cursor: auto;
     width: 55px;
     text-align: center;
-  } 
+  }
 </style>
