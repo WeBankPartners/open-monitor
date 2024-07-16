@@ -71,131 +71,131 @@
       </div>
       <div>
         <section class="zone-config-operation">
-            <div class="tag-display"  v-for="(query, queryIndex) in chartQueryList" :key="queryIndex">
-              <Tag
-                color="primary"
-                type="border"
-                :name="queryIndex"
-                closable
-                @click.native="editQueryParams(query, queryIndex)"
-                @on-close="removeQuery(queryIndex)"
-              >{{$t('m_field_endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('m_field_metric')}}：{{query.metric}}</Tag>
-            </div>
-            <div v-if="fixSelect" class="condition-zone">
-              <ul>
-                <!--对象-->
-                <li>
-                  <div class="condition condition-title c-black-gray">{{$t('m_field_endpoint')}}</div>
-                  <div class="condition">
-                    <Select
-                      style="width:300px"
-                      v-model="templateQuery.endpoint"
-                      filterable
-                      clearable
-                      :placeholder="$t('requestMoreData')"
-                      @on-open-change="getEndpointList('.', $event)"
-                      @on-change="selectEndpoint"
-                      @on-query-change="handleRemoteEndpoint"
-                      @on-clear="metricDefaultColor=[]"
+          <div class="tag-display"  v-for="(query, queryIndex) in chartQueryList" :key="queryIndex">
+            <Tag
+              color="primary"
+              type="border"
+              :name="queryIndex"
+              closable
+              @click.native="editQueryParams(query, queryIndex)"
+              @on-close="removeQuery(queryIndex)"
+            >{{$t('m_field_endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('m_field_metric')}}：{{query.metric}}</Tag>
+          </div>
+          <div v-if="fixSelect" class="condition-zone">
+            <ul>
+              <!--对象-->
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_endpoint')}}</div>
+                <div class="condition">
+                  <Select
+                    style="width:300px"
+                    v-model="templateQuery.endpoint"
+                    filterable
+                    clearable
+                    :placeholder="$t('requestMoreData')"
+                    @on-open-change="getEndpointList('.', $event)"
+                    @on-change="selectEndpoint"
+                    @on-query-change="handleRemoteEndpoint"
+                    @on-clear="metricDefaultColor = []"
+                  >
+                    <Option
+                      v-for="(option, index) in options"
+                      :value="option.option_value"
+                      :label="option.option_text"
+                      :key="index"
                     >
-                      <Option
-                        v-for="(option, index) in options"
-                        :value="option.option_value"
-                        :label="option.option_text"
-                        :key="index"
-                      >
-                        <TagShow :list="options" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
-                      <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
-                    </Select>
-                  </div>
-                </li>
-                <!--类型-->
-                <li v-if="showRecursiveType">
-                  <div class="condition condition-title c-black-gray">{{$t('m_field_type')}}</div>
-                  <div class="condition">
-                    <Select
-                      v-model="templateQuery.endpoint_type"
-                      style="width:300px"
-                      filterable
-                      clearable
-                      @on-clear="metricDefaultColor=[]"
-                    >
-                      <Option
-                        v-for="(item,index) in recursiveTypeOptions"
-                        :value="item"
-                        :key="item+index"
-                      >{{ item }}</Option>
-                    </Select>
-                  </div>
-                </li>
-                <!--指标-->
-                <li>
-                  <div class="condition condition-title c-black-gray">{{$t('m_field_metric')}}</div>
-                  <div class="condition">
-                    <Select
-                      v-model="templateQuery.metric"
-                      style="width:300px"
-                      filterable
-                      multiple
-                      clearable
-                      :label-in-value="true"
-                      @on-change="changeMetric"
-                      @on-open-change="metricSelectOpen(templateQuery.endpoint)"
-                    >
-                      <Option
-                        v-for="(item,index) in metricList"
-                        :value="item.metric"
-                        :key="item.metric+index"
-                      >{{ item.metric }}</Option>
-                    </Select>
-                  </div>
-                </li>
-                <li>
-                  <div class="condition condition-title c-black-gray">{{$t('m_default_color')}}</div>
-                  <div class="condition">
-                    <template v-for="mdc in metricDefaultColor">
-                      <div :key="mdc.metric">
-                        <Tooltip :content="mdc.metric" max-width="300">
-                          <Tag>{{mdc.metric.length > 50 ? mdc.metric.substring(0,50) + '...' : mdc.metric}}</Tag>
-                          <div slot="content" style="white-space: normal;">
-                            <p>{{mdc.metric}}</p>
-                          </div>
-                        </Tooltip>
-                        <ColorPicker v-model="mdc.defaultColor" />
-                        {{mdc.defaultColor}}
-                      </div>
-                    </template>
-                  </div>
-                </li>
-                <li v-if="templateQuery.metricToColor.length >0">
-                  <div class="condition condition-title" style="vertical-align: top;">{{$t('m_custom_config')}}</div>
-                  <div class="condition">
-                    <template v-for="(mc, index) in templateQuery.metricToColor">
-                      <div :key="index">
-                        <Tooltip :content="mc.metric" max-width="300">
-                          <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
-                          <div slot="content" style="white-space: normal;">
-                            <p>{{mc.metric}}</p>
-                          </div>
-                        </Tooltip>
-                        <ColorPicker v-model="mc.color" />
-                        {{mc.color}}
-                      </div>
-                    </template>
-                  </div>
-                </li>
-                <!--单位-->
-                <li>
-                  <div class="condition condition-title">{{$t('m_field_unit')}}</div>
-                  <div class="condition">
-                    <Input v-model="panalUnit" placeholder="" style="width: 300px" />
-                  </div>
-                  <button class="btn btn-cancel-f" @click="addQuery()">{{$t('m_button_addConfig')}}</button>
-                  <button class="btn btn-cancel-f" @click="clearParams">{{$t('m_clear')}}</button>
-                </li>
-              </ul>
-            </div>
-            <!-- <div class="loading-zone" v-else>
+                      <TagShow :list="options" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
+                    <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
+                  </Select>
+                </div>
+              </li>
+              <!--类型-->
+              <li v-if="showRecursiveType">
+                <div class="condition condition-title c-black-gray">{{$t('m_field_type')}}</div>
+                <div class="condition">
+                  <Select
+                    v-model="templateQuery.endpoint_type"
+                    style="width:300px"
+                    filterable
+                    clearable
+                    @on-clear="metricDefaultColor = []"
+                  >
+                    <Option
+                      v-for="(item,index) in recursiveTypeOptions"
+                      :value="item"
+                      :key="item + index"
+                    >{{ item }}</Option>
+                  </Select>
+                </div>
+              </li>
+              <!--指标-->
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_metric')}}</div>
+                <div class="condition">
+                  <Select
+                    v-model="templateQuery.metric"
+                    style="width:300px"
+                    filterable
+                    multiple
+                    clearable
+                    :label-in-value="true"
+                    @on-change="changeMetric"
+                    @on-open-change="metricSelectOpen(templateQuery.endpoint)"
+                  >
+                    <Option
+                      v-for="(item,index) in metricList"
+                      :value="item.metric"
+                      :key="item.metric + index"
+                    >{{ item.metric }}</Option>
+                  </Select>
+                </div>
+              </li>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('m_default_color')}}</div>
+                <div class="condition">
+                  <template v-for="mdc in metricDefaultColor">
+                    <div :key="mdc.metric">
+                      <Tooltip :content="mdc.metric" max-width="300">
+                        <Tag>{{mdc.metric.length > 50 ? mdc.metric.substring(0,50) + '...' : mdc.metric}}</Tag>
+                        <div slot="content" style="white-space: normal;">
+                          <p>{{mdc.metric}}</p>
+                        </div>
+                      </Tooltip>
+                      <ColorPicker v-model="mdc.defaultColor" />
+                      {{mdc.defaultColor}}
+                    </div>
+                  </template>
+                </div>
+              </li>
+              <li v-if="templateQuery.metricToColor.length > 0">
+                <div class="condition condition-title" style="vertical-align: top;">{{$t('m_custom_config')}}</div>
+                <div class="condition">
+                  <template v-for="(mc, index) in templateQuery.metricToColor">
+                    <div :key="index">
+                      <Tooltip :content="mc.metric" max-width="300">
+                        <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
+                        <div slot="content" style="white-space: normal;">
+                          <p>{{mc.metric}}</p>
+                        </div>
+                      </Tooltip>
+                      <ColorPicker v-model="mc.color" />
+                      {{mc.color}}
+                    </div>
+                  </template>
+                </div>
+              </li>
+              <!--单位-->
+              <li>
+                <div class="condition condition-title">{{$t('m_field_unit')}}</div>
+                <div class="condition">
+                  <Input v-model="panalUnit" placeholder="" style="width: 300px" />
+                </div>
+                <button class="btn btn-cancel-f" @click="addQuery()">{{$t('m_button_addConfig')}}</button>
+                <button class="btn btn-cancel-f" @click="clearParams">{{$t('m_clear')}}</button>
+              </li>
+            </ul>
+          </div>
+          <!-- <div class="loading-zone" v-else>
               <Spin fix></Spin>
             </div> -->
         </section>
@@ -205,12 +205,12 @@
 </template>
 
 <script>
-import { generateUuid } from "@/assets/js/utils"
-import { readyToDraw } from "@/assets/config/chart-rely"
+import { generateUuid } from '@/assets/js/utils'
+import { readyToDraw } from '@/assets/config/chart-rely'
 import TagShow from '@/components/Tag-show.vue'
 import lodash from 'lodash'
 export default {
-  name: "",
+  name: '',
   props: {
     activeGridConfig: {
       type: Object,
@@ -251,53 +251,80 @@ export default {
         {
           label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
           value: {
-            'aggregate': 'sum',
-            'agg_step': 60,
-            'chartType': 'bar',
+            aggregate: 'sum',
+            agg_step: 60,
+            chartType: 'bar',
           }
         },
         {
           label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           value: {
-            'aggregate': 'avg',
-            'agg_step': 60,
-            'chartType': 'line',
-            'lineType': 1
+            aggregate: 'avg',
+            agg_step: 60,
+            chartType: 'line',
+            lineType: 1
           }
         },
         {
           label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           value: {
-            'aggregate': 'max',
-            'agg_step': 60,
-            'chartType': 'line',
-            'lineType': 1
+            aggregate: 'max',
+            agg_step: 60,
+            chartType: 'line',
+            lineType: 1
           }
         },
         {
           label: this.$t('other'),
           value: {
-            'aggregate': 'min',
-            'agg_step': 60,
-            'chartType': 'line',
-            'lineType': 1
+            aggregate: 'min',
+            agg_step: 60,
+            chartType: 'line',
+            lineType: 1
           }
         },
       ]),
       aggStepOptions: [
-        {label: '60S', value: 60},
-        {label: '300S', value: 300},
-        {label: '600S', value: 600},
-        {label: '1800S', value: 1800},
-        {label: '3600S', value: 3600}
+        {
+          label: '60S',
+          value: 60
+        },
+        {
+          label: '300S',
+          value: 300
+        },
+        {
+          label: '600S',
+          value: 600
+        },
+        {
+          label: '1800S',
+          value: 1800
+        },
+        {
+          label: '3600S',
+          value: 3600
+        }
       ],
       chartTypeOption: [
-        {label: this.$t('m_line_chart'), value: 'line'},
-        {label: this.$t('m_bar_chart'), value: 'bar'}
+        {
+          label: this.$t('m_line_chart'),
+          value: 'line'
+        },
+        {
+          label: this.$t('m_bar_chart'),
+          value: 'bar'
+        }
       ],
       lineOption: [
-        {label: this.$t('m_line_chart_s'), value: 1},
-        {label: this.$t('m_area_chart'), value: 0}
+        {
+          label: this.$t('m_line_chart_s'),
+          value: 1
+        },
+        {
+          label: this.$t('m_area_chart'),
+          value: 0
+        }
       ],
       chartQueryList: [
         // {
@@ -310,8 +337,8 @@ export default {
       metricList: [],
       showRecursiveType: false,
       recursiveTypeOptions: [],
-      panalTitle: "Default title",
-      panalUnit: "",
+      panalTitle: 'Default title',
+      panalUnit: '',
 
       oriParams: null,
       params: '', // 保存增加及返回时参数，返回时直接取该值,
@@ -329,8 +356,8 @@ export default {
       if (val && this.options.length > 0) {
         const find = this.options.find(item => item.option_value === val)
         if (find) {
-            this.endpointType = find.type
-          }
+          this.endpointType = find.type
+        }
       }
     },
     // // 解决emplateQuery.endpoint值改变，但是接口查询this.options还未获取到问题
@@ -363,42 +390,49 @@ export default {
     this.initChart()
   },
   methods: {
-    requestAgain () {
+    requestAgain() {
       this.noDataTip = false
-        let params = {
-          aggregate: this.templateQuery.aggregate || 'none',
-          agg_step: this.templateQuery.agg_step || 60,
-          lineType: this.templateQuery.lineType,
-          time_second: -1800,
-          start: 0,
-          end: 0,
-          title: '',
-          unit: '',
-          data: []
+      const params = {
+        aggregate: this.templateQuery.aggregate || 'none',
+        agg_step: this.templateQuery.agg_step || 60,
+        lineType: this.templateQuery.lineType,
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: []
+      }
+      if (this.$root.$validate.isEmpty_reset(this.chartQueryList)) {
+        this.noDataTip = true
+        return
+      }
+      if (this.chartQueryList.length === 0) {
+        this.noDataTip = true
+        return
+      }
+      this.chartQueryList.forEach(item => {
+        params.data.push(item)
+      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',
+        this.$root.apiCenter.metricConfigView.api,
+        params,
+        responseData => {
+          responseData.yaxis.unit = this.panalUnit
+          readyToDraw(this,responseData, 1, {
+            eye: false,
+            chartType: this.templateQuery.chartType,
+            clear: true,
+            params
+          })
         }
-        if (this.$root.$validate.isEmpty_reset(this.chartQueryList)) {
-          this.noDataTip = true
-          return
-        }
-        if (this.chartQueryList.length === 0) {
-          this.noDataTip = true
-          return
-        }
-        this.chartQueryList.forEach(item => {
-          params.data.push(item)
-        })
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
-          responseData => {
-            responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
-          }
-        )
+      )
     },
-    async editQueryParams (queryParams, queryIndex) {
+    async editQueryParams(queryParams, queryIndex) {
       await this.bb(queryParams, queryIndex)
     },
-    async bb (queryParams, queryIndex) {
+    async bb(queryParams, queryIndex) {
       this.metricDefaultColor = []
       this.metricDefaultColor.push({
         metric: queryParams.metric,
@@ -410,8 +444,8 @@ export default {
       this.templateQuery = {
         ...queryParams
       }
-      let params = {
-        search: search,
+      const params = {
+        search,
         page: 1,
         size: 10000
       }
@@ -429,7 +463,7 @@ export default {
           // id为-1展示类型
           if (find && find.id === -1) {
             this.showRecursiveType = true
-            let params = {
+            const params = {
               guid: find.option_value
             }
             this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
@@ -437,19 +471,22 @@ export default {
               this.recursiveTypeOptions = responseData
               this.metricSelectOpen(queryParams.metric)
             })
-          } else {
+          }
+          else {
             this.showRecursiveType = false
             this.metricSelectOpen(queryParams.metric)
           }
         }
       )
     },
-    changeMetric (val) {
+    changeMetric(val) {
       this.templateQuery.metricToColor = []
-      if (!val || val.length === 0) return
+      if (!val || val.length === 0) {
+        return
+      }
 
       val.forEach(v => {
-        const findIndex = this.metricDefaultColor.findIndex(m=> m.metric === v.value)
+        const findIndex = this.metricDefaultColor.findIndex(m => m.metric === v.value)
         if (findIndex === -1) {
           this.metricDefaultColor.push({
             metric: v.value,
@@ -458,7 +495,7 @@ export default {
         }
       })
 
-      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      const tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
       }
@@ -466,7 +503,7 @@ export default {
       tmp.agg_step = 60
       tmp.chartType = 'line'
       const tmpQuery = JSON.parse(JSON.stringify(tmp))
-      let params = {
+      const params = {
         aggregate: 'none',
         agg_step: 60,
         time_second: -1800,
@@ -474,16 +511,16 @@ export default {
         end: 0,
         title: '',
         unit: '',
-        data: tmpQuery.metric.map(m => {
-          return {
-            ...tmpQuery,
-            metric: m
-          }
-        })
+        data: tmpQuery.metric.map(m => ({
+          ...tmpQuery,
+          metric: m
+        }))
       }
 
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST',this.$root.apiCenter.metricConfigView.api, params,
+        'POST',
+        this.$root.apiCenter.metricConfigView.api,
+        params,
         responseData => {
           this.templateQuery.metricToColor = responseData.legend.map(r => {
             const findColor = this.oldMetricToColor.find(o => o.metric === r)
@@ -493,14 +530,14 @@ export default {
             }
             return {
               metric: r,
-              color: color
+              color
             }
           })
         }
       )
     },
     // 选择对象
-    selectEndpoint (val) {
+    selectEndpoint(val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
       this.templateQuery.metricToColor = []
@@ -508,16 +545,16 @@ export default {
       const find = this.options.find(item => item.option_value === val)
       if (find && find.id === -1) {
         this.showRecursiveType = true
-        let params = {
+        const params = {
           guid: find.option_value
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
           this.templateQuery.endpoint_type = responseData[0]
           this.recursiveTypeOptions = responseData
-        }
-      )}
+        })
+      }
     },
-    clearParams () {
+    clearParams() {
       this.templateQuery = {
         endpoint: '',
         metric: '',
@@ -530,8 +567,8 @@ export default {
         metricToColor: []
       }
     },
-    initChart () {
-      let params = {
+    initChart() {
+      const params = {
         templateData: this.parentRouteData,
         panal: this.activeGridConfig
       }
@@ -557,22 +594,22 @@ export default {
         })
       }
     },
-    switchChartType () {
+    switchChartType() {
       if (this.chartQueryList.length === 0) {
         return
       }
       this.updateQuick()
-      let params = {
-          aggregate: this.templateQuery.aggregate || 'none',
-          agg_step: this.templateQuery.agg_step || 60,
-          lineType: this.templateQuery.lineType,
-          time_second: -1800,
-          start: 0,
-          end: 0,
-          title: '',
-          unit: '',
-          data: []
-        }
+      const params = {
+        aggregate: this.templateQuery.aggregate || 'none',
+        agg_step: this.templateQuery.agg_step || 60,
+        lineType: this.templateQuery.lineType,
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: []
+      }
       this.chartQueryList.forEach(item => {
         params.data.push({
           endpoint: item.endpoint,
@@ -583,17 +620,23 @@ export default {
         })
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST',this.$root.apiCenter.metricConfigView.api, params,
+        'POST',
+        this.$root.apiCenter.metricConfigView.api,
+        params,
         responseData => {
           responseData.yaxis.unit = this.panalUnit
-          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, params: params})
+          readyToDraw(this,responseData, 1, {
+            eye: false,
+            chartType: this.templateQuery.chartType,
+            params
+          })
         }
       )
     },
-    updateQuick () {
+    updateQuick() {
       this.rsyncQuick()
     },
-    rsyncQuick () {
+    rsyncQuick() {
       let passed = false
       for (let i = 0; i < this.quickOptions.length; i++) {
         const item = this.quickOptions[i]
@@ -607,10 +650,12 @@ export default {
       }
       !passed && (this.quickQueryValue = this.$t('other'))
     },
-    syncCondition (val) {
+    syncCondition(val) {
       const selected = this.quickOptions.find(item => item.label === val)
       if (selected) {
-        const { aggregate, agg_step, chartType, lineType } = selected.value
+        const {
+          aggregate, agg_step, chartType, lineType
+        } = selected.value
 
         this.templateQuery.aggregate = aggregate || ''
         this.templateQuery.agg_step = agg_step || 60
@@ -622,7 +667,7 @@ export default {
     },
     initPanal() {
       this.panalUnit = this.panalData.panalUnit
-      let params = {
+      const params = {
         aggregate: this.templateQuery.aggregate || 'none',
         agg_step: this.templateQuery.agg_step || 60,
         lineType: this.templateQuery.lineType,
@@ -645,10 +690,17 @@ export default {
       })
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
+          'POST',
+          this.$root.apiCenter.metricConfigView.api,
+          params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType, params: params })
+            readyToDraw(this,responseData, 1, {
+              eye: false,
+              lineBarSwitch: true,
+              chartType: this.templateQuery.chartType,
+              params
+            })
           }
         )
       }
@@ -657,9 +709,13 @@ export default {
       this.chartQueryList = query
     },
     getEndpointList(query, flag) {
-      if (flag === false) return // 下拉框收缩不调用
-      if (this.templateQuery.endpoint) return
-      let params = {
+      if (flag === false) {
+        return
+      } // 下拉框收缩不调用
+      if (this.templateQuery.endpoint) {
+        return
+      }
+      const params = {
         search: query,
         page: 1,
         size: 10000
@@ -673,17 +729,21 @@ export default {
         }
       )
     },
-    handleRemoteEndpoint: lodash.debounce(function(val) {
+    handleRemoteEndpoint: lodash.debounce(function (val) {
       this.getEndpointList(val || '.')
     }, 500),
     // 指标下拉查询
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
-          this.$t("m_tableKey_s_metric") + this.$t("m_tips_required")
+          this.$t('m_tableKey_s_metric') + this.$t('m_tips_required')
         )
-      } else {
-        let params = { monitorType: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType, serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : '' }
+      }
+      else {
+        const params = {
+          monitorType: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType,
+          serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : ''
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.metricList.api,
@@ -696,16 +756,15 @@ export default {
       }
     },
     addQuery() {
-      if (this.templateQuery.endpoint === '' ||
-        this.templateQuery.metric === '' ||
-        this.templateQuery.endpoint === undefined ||
-        this.templateQuery.metric === undefined ||
-        (Array.isArray(this.templateQuery.metric) && this.templateQuery.metric.length === 0))
-      {
+      if (this.templateQuery.endpoint === ''
+        || this.templateQuery.metric === ''
+        || this.templateQuery.endpoint === undefined
+        || this.templateQuery.metric === undefined
+        || (Array.isArray(this.templateQuery.metric) && this.templateQuery.metric.length === 0)) {
         this.$Message.warning(this.$t('m_tip_for_save'))
         return
       }
-      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      const tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
       }
@@ -716,14 +775,12 @@ export default {
       }
 
       const tmpQuery = JSON.parse(JSON.stringify(tmp))
-      let params = tmpQuery.metric.map(m => {
-        return {
-          ...tmpQuery,
-          metric: m,
-          metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m)),
-          defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
-        }
-      })
+      const params = tmpQuery.metric.map(m => ({
+        ...tmpQuery,
+        metric: m,
+        metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m)),
+        defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
+      }))
       // if (this.editIndex !== -1) {
       //   this.chartQueryList[this.editIndex ] = tmp
       // } else {
@@ -732,8 +789,9 @@ export default {
       if (this.editIndex !== -1) {
         // this.removeQuery(this.editIndex)
         this.chartQueryList.splice(this.editIndex, 1)
-      } else {
-        let illegalIndex = []
+      }
+      else {
+        const illegalIndex = []
         params.forEach((p, pIndex) => {
           const findIndex = this.chartQueryList.findIndex(query => query.endpointName === p.endpointName && query.metric === p.metric)
           if (findIndex !== -1) {
@@ -742,7 +800,7 @@ export default {
         })
         if (illegalIndex.length > 0) {
           this.$Message.warning(
-            this.$t("m_same_exists")
+            this.$t('m_same_exists')
           )
           return
         }
@@ -779,19 +837,19 @@ export default {
         this.$root.apiCenter.template.save,
         this.params,
         () => {
-          this.$Message.success(this.$t("m_tips_success"))
+          this.$Message.success(this.$t('m_tips_success'))
           this.$parent.$parent.showChartConfig = false
           this.$parent.$parent.reloadPanal(this.params)
         }
       )
     },
     pp() {
-      let query = []
+      const query = []
 
       this.chartQueryList.forEach(item => {
         query.push(item)
       })
-      let panal = this.oriParams.panal
+      const panal = this.oriParams.panal
       panal.i = this.panalTitle
       const temp = {
         panalTitle: this.panalTitle,
@@ -800,16 +858,17 @@ export default {
         lineType: this.templateQuery.lineType,
         aggregate: this.templateQuery.aggregate,
         agg_step: this.templateQuery.agg_step,
-        query: query,
+        query,
         viewConfig: panal
       }
 
       if (this.panalIndex !== null) {
         this.viewData[this.panalIndex] = temp
-      } else {
+      }
+      else {
         this.viewData.push(temp)
       }
-      let params = {
+      const params = {
         name: this.oriParams.templateData.name,
         id: this.oriParams.templateData.id,
         panel_group_list: this.panel_group_list || [],
@@ -824,7 +883,7 @@ export default {
   components: {
     TagShow
   }
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -886,7 +945,7 @@ li {
     justify-content: space-between;
     align-items: center;
     padding-left: 24px;
-    
+
     .left {
       text-align: left;
     }
@@ -924,4 +983,3 @@ li {
   text-align: left;
 }
 </style>
-

@@ -26,9 +26,9 @@
           filterable
         ></Transfer>
       </div>
-        <div slot="footer">
-            <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
-        </div>
+      <div slot="footer">
+        <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
+      </div>
     </Modal>
   </div>
 </template>
@@ -40,7 +40,7 @@ export default {
       default: false
     }
   },
-  data () {
+  data() {
     return {
       isAdd: false, // 标记编排状态
       flowRoleManageModal: false, // 权限弹窗控制
@@ -53,39 +53,41 @@ export default {
     }
   },
   computed: {
-    disabled () {
+    disabled() {
       if (this.useRolesRequired) {
         return this.mgmtRolesKeyToFlow.length === 0 || this.useRolesKeyToFlow.length === 0
-      } else {
-        return this.mgmtRolesKeyToFlow.length === 0
       }
+
+      return this.mgmtRolesKeyToFlow.length === 0
+
     }
   },
   methods: {
-    renderRoleNameForTransfer (item) {
+    renderRoleNameForTransfer(item) {
       return item.label
     },
-    handleMgmtRoleTransferChange (newTargetKeys, direction, moveKeys) {
+    handleMgmtRoleTransferChange(newTargetKeys) {
       if (newTargetKeys.length > 1) {
         this.$Message.warning(this.$t('m_choose_one'))
-      } else {
+      }
+      else {
         this.mgmtRolesKeyToFlow = newTargetKeys
       }
     },
-    handleUseRoleTransferChange (newTargetKeys, direction, moveKeys) {
+    handleUseRoleTransferChange(newTargetKeys) {
       this.useRolesKeyToFlow = newTargetKeys
     },
-    async confirmRole () {
+    async confirmRole() {
       this.$emit('sendAuth', this.mgmtRolesKeyToFlow, this.useRolesKeyToFlow)
       this.flowRoleManageModal = false
     },
     // 启动入口
-    async startAuth (mgmtRoles, userRoles, mgmtRolesOptions, userRolesOptions) {
-      this.mgmtRolesKeyToFlow = mgmtRoles;
-      this.useRolesKeyToFlow = userRoles;
-        this.allRoles = userRolesOptions;
-        this.currentUserRoles = mgmtRolesOptions
-        this.flowRoleManageModal = true
+    async startAuth(mgmtRoles, userRoles, mgmtRolesOptions, userRolesOptions) {
+      this.mgmtRolesKeyToFlow = mgmtRoles
+      this.useRolesKeyToFlow = userRoles
+      this.allRoles = userRolesOptions
+      this.currentUserRoles = mgmtRolesOptions
+      this.flowRoleManageModal = true
     }
   }
 }

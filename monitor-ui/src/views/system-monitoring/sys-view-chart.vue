@@ -4,7 +4,7 @@
       <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
         <div class="header-name">
         </div>
-        <div class="header-tools"> 
+        <div class="header-tools">
           <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('m_button_back')}}</button>
         </div>
       </div>
@@ -24,27 +24,28 @@
 </template>
 
 <script>
-import { generateUuid } from "@/assets/js/utils";
-import { readyToDraw } from "@/assets/config/chart-rely";
+import { generateUuid } from '@/assets/js/utils'
+import { readyToDraw } from '@/assets/config/chart-rely'
 export default {
-  name: "",
+  name: '',
   data() {
     return {
       elId: null,
       noDataTip: false,
       panalTitle: '',
       panalUnit: ''
-    };
+    }
   },
   created() {
     generateUuid().then(elId => {
-      this.elId = `id_${elId}`;
-    });
+      this.elId = `id_${elId}`
+    })
   },
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "systemMonitoring" });
-    } else {
+      this.$router.push({ path: 'systemMonitoring' })
+    }
+    else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData)) {
         this.initPanal()
       }
@@ -52,36 +53,44 @@ export default {
   },
   methods: {
     initPanal() {
-      this.panalTitle = this.$route.params.templateData.panalTitle;
-      let params = [];
-      this.noDataTip = false;
+      this.panalTitle = this.$route.params.templateData.panalTitle
+      const params = []
+      this.noDataTip = false
       this.$route.params.templateData.query.forEach(item => {
         params.push(
           {
             endpoint: item.endpoint,
             metric: item.metricLabel,
-            time: "-1800"
+            time: '-1800'
           }
-        );
-      });
+        )
+      })
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
+          'POST',
+          this.$root.apiCenter.metricConfigView.api,
+          params,
           responseData => {
 
-            responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {eye: false,clear:true}
+            responseData.yaxis.unit = this.panalUnit
+            const chartConfig = {
+              eye: false,
+              clear: true
+            }
             readyToDraw(this,responseData, 1, chartConfig)
           }
-        );
+        )
       }
     },
     goBack() {
-      this.$router.push({ name: "systemMonitoring", params: this.$route.params.parentData });
+      this.$router.push({
+        name: 'systemMonitoring',
+        params: this.$route.params.parentData
+      })
     }
   },
   components: {}
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -101,4 +110,3 @@ export default {
   display: table-cell;
 }
 </style>
-
