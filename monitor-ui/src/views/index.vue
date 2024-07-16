@@ -9,7 +9,7 @@
 
 <script>
 import Menu from '@/components/menu'
-// import { watermark } from '@/assets/js/waterMark'
+import { watermark } from '@/assets/js/waterMark'
 export default {
   name: 'index',
   data() {
@@ -17,14 +17,14 @@ export default {
     }
   },
   mounted() {
-    // watermark({
-    //   watermark_txt: 'Open-Monitor ' + localStorage.getItem('username'),
-    //   watermark_fontsize: '14px',
-    //   watermark_x_space: 300,
-    //   watermark_y_space: 100,
-    //   watermark_y: 100,
-    //   watermark_alpha: 0.2
-    // })
+    watermark({
+      watermark_txt: 'Open-Monitor ' + localStorage.getItem('username'),
+      watermark_fontsize: '14px',
+      watermark_x_space: 300,
+      watermark_y_space: 100,
+      watermark_y: 100,
+      watermark_alpha: 0.2
+    })
   },
   methods: {},
   components: {
