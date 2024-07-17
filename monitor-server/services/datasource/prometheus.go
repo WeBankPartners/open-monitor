@@ -266,6 +266,12 @@ func appendTagString(name string, metricMap map[string]string, tagList []string)
 	var tmpList m.DefaultSortList
 	if len(tagList) == 0 {
 		for k, v := range metricMap {
+			if k == "exported_instance" || k == "exported_job" {
+				continue
+			}
+			if k == "instance" && v == "127.0.0.1:8181" {
+				continue
+			}
 			tmpList = append(tmpList, &m.DefaultSortObj{Key: k, Value: v})
 		}
 		sort.Sort(tmpList)
@@ -325,9 +331,7 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 			} else {
 				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
 			}
-			if dataLength > 1 {
-				tmpName = appendTagString(tmpName, tagMap, []string{})
-			}
+			tmpName = appendTagString(tmpName, tagMap, []string{})
 		} else if legend == "$custom_metric" {
 			tmpName = metric
 			if dataLength > 1 {
