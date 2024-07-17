@@ -92,11 +92,11 @@ export default {
       type: Boolean,
       default: false
     },
-    monitorType: {
+    monitorType: { // 基础类型关键参数，其他类型传process
       type: String,
       default: ''
     },
-    serviceGroup: {
+    serviceGroup: { // 层级对象关键参数
       type: String,
       default: ''
     },
@@ -114,7 +114,7 @@ export default {
       type: Boolean,
       default: false
     },
-    endpoint_group: {
+    endpoint_group: { // 组关键参数
       type: String,
       default: ''
     },
