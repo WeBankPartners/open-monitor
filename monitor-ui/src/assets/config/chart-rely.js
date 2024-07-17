@@ -450,7 +450,7 @@ export const drawPieChart = function (that, responseData) {
     series: [
       {
         type: 'pie',
-        radius: '65%',
+        radius: '55%',
         center: ['50%', '45%'],
         selectedMode: 'single',
         data: responseData.data,
