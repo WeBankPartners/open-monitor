@@ -304,7 +304,9 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		return
 	}
 	promQl := db.NewPromExpr(db.GetComparisonMetricId(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod))
+	log.Logger.Debug("CheckPrometheusQL", log.String("promQl", promQl))
 	if err = datasource.CheckPrometheusQL(promQl); err != nil {
+		log.Logger.Debug("CheckPrometheusQL error", log.Error(err))
 		middleware.ReturnValidateError(c, "metric is invalid")
 		return
 	}
