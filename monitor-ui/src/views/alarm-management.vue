@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="all-content">
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
@@ -24,8 +24,9 @@
             <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
           </li>
         </ul>
-        <div>
-          <Button :disabled="!filtersForShow.some(f => f.key === 'metric'||f.key === 'priority')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
+        <div class="top-right-search">
+          <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
+          <Button :disabled="!filtersForShow.some(f => f.key === 'metric' || f.key === 'priority')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
           <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
         </div>
       </div>
@@ -36,7 +37,7 @@
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
-          <div class="left" :class="{ 'cover': total === 0 || noData }" v-if="showGraph">
+          <div class="left" :class="{'cover': total === 0 || noData}" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
 
             <template v-if="!noData">
@@ -46,15 +47,15 @@
 
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
-          <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
-            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
-              <template v-for="(filterItem, filterIndex) in filtersForShow">
+          <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
+            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
+            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template>
-              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-            </section>
+              </template> -->
+            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
+            <!-- </section> -->
             <section class="alarm-card-container">
-              <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"></alarm-card>
+              <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
             <div style="margin: 4px 0; text-align:right">
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
@@ -75,7 +76,8 @@
       :title="$t('m_closeConfirm_title')"
       :mask-closable="false"
       @on-ok="ok"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
@@ -85,12 +87,13 @@
     <Modal
       :width="600"
       :title="$t('m_remark')"
-      v-model="showRemarkModal">
+      v-model="showRemarkModal"
+    >
       <div>
         <Input v-model="modelConfig.addRow.message" type="textarea" placeholder="" />
       </div>
       <div slot="footer">
-        <Button :disabled="modelConfig.addRow.message===''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>
+        <Button :disabled="modelConfig.addRow.message === ''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>
         <Button @click="cancelRemark">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
@@ -98,13 +101,14 @@
 </template>
 
 <script>
-import TopStats from "@/components/top-stats.vue"
-import MetricsBar from "@/components/metrics-bar.vue"
-import CircleRotate from "@/components/circle-rotate.vue"
-import CircleLabel from "@/components/circle-label.vue"
-import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue"
+import TopStats from '@/components/top-stats.vue'
+import MetricsBar from '@/components/metrics-bar.vue'
+import CircleRotate from '@/components/circle-rotate.vue'
+import CircleLabel from '@/components/circle-label.vue'
+import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
-import AlarmCard from "@/components/alarm-card.vue"
+import AlarmCard from '@/components/alarm-card.vue'
+import SearchBadge from '../components/search-badge.vue'
 
 export default {
   name: '',
@@ -115,7 +119,8 @@ export default {
     CircleLabel,
     AlarmAssetsBasic,
     ClassicAlarm,
-    AlarmCard
+    AlarmCard,
+    SearchBadge
   },
   data() {
     return {
@@ -156,7 +161,8 @@ export default {
         startIndex: 1,
         pageSize: 10
       },
-      isBatch: false
+      isBatch: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   computed: {
@@ -174,7 +180,7 @@ export default {
           title: this.$t('m_total'),
           total: this.total,
           value: this.total,
-          icon: require("../assets/img/icon_alarm_ttl.png")
+          icon: require('../assets/img/icon_alarm_ttl.png')
         },
         {
           key: 'l_low',
@@ -182,7 +188,7 @@ export default {
           title: this.$t('m_low'),
           total: this.total,
           value: this.low,
-          icon: require("../assets/img/icon_alarm_L.png")
+          icon: require('../assets/img/icon_alarm_L.png')
         },
         {
           key: 'l_medium',
@@ -190,7 +196,7 @@ export default {
           title: this.$t('m_medium'),
           total: this.total,
           value: this.mid,
-          icon: require("../assets/img/icon_alarm_M.png")
+          icon: require('../assets/img/icon_alarm_M.png')
         },
         {
           key: 'l_high',
@@ -198,7 +204,7 @@ export default {
           title: this.$t('m_high'),
           total: this.total,
           value: this.high,
-          icon: require("../assets/img/icon_alarm_H.png")
+          icon: require('../assets/img/icon_alarm_H.png')
         }
       ]
     },
@@ -275,7 +281,7 @@ export default {
   mounted(){
     this.getTodayAlarm()
     this.getAlarm()
-    this.interval = setInterval(()=>{
+    this.interval = setInterval(() => {
       this.getAlarm('keep')
     }, 10000)
     this.$once('hook:beforeDestroy', () => {
@@ -284,25 +290,25 @@ export default {
   },
   methods: {
     getTodayAlarm() {
-      const start = new Date(new Date().toLocaleDateString()).getTime();
-      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const start = new Date(new Date().toLocaleDateString()).getTime()
+      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1
       const params = {
         start: parseInt(start / 1000, 10),
         end: parseInt(end / 1000, 10),
         filter: 'all'
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        "POST",
-        "/monitor/api/v1/alarm/problem/history",
+      this.request(
+        'POST',
+        '/monitor/api/v1/alarm/problem/history',
         params,
-        (responseData) => {
-          this.tlow = responseData.low;
-          this.tmid = responseData.mid;
-          this.thigh = responseData.high;
+        responseData => {
+          this.tlow = responseData.low
+          this.tmid = responseData.mid
+          this.thigh = responseData.high
         }
-      );
+      )
     },
-    remarkModal (item) {
+    remarkModal(item) {
       this.modelConfig.addRow = {
         id: item.id,
         message: item.custom_message,
@@ -310,14 +316,14 @@ export default {
       }
       this.showRemarkModal = true
     },
-    remarkAlarm () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
+    remarkAlarm() {
+      this.request('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm()
         this.showRemarkModal = false
       })
     },
-    cancelRemark () {
+    cancelRemark() {
       this.showRemarkModal = false
     },
     pageIndexChange(pageIndex) {
@@ -330,35 +336,38 @@ export default {
       this.getAlarm('keep')
     },
     getAlarm(ifPageKeep) {
-      if (ifPageKeep != 'keep') {
+      if (ifPageKeep !== 'keep') {
         this.paginationInfo = {
           total: 0,
           startIndex: 1,
           pageSize: 10
         }
       }
-      let params = {
+      const params = {
         page: {
           startIndex: this.paginationInfo.startIndex,
           pageSize: this.paginationInfo.pageSize
         }
       }
-      let keys = Object.keys(this.filters)
+      const keys = Object.keys(this.filters)
       this.filtersForShow = []
-      for (let i = 0; i< keys.length ;i++) {
+      for (let i = 0; i< keys.length; i++) {
         params[keys[i]] = this.filters[keys[i]]
-        this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
+        this.filtersForShow.push({
+          key: keys[i],
+          value: this.filters[keys[i]]
+        })
       }
-      
+
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
         '/monitor/api/v1/alarm/problem/page',
         params,
-        (responseData) => {
-          this.noData = false;
+        responseData => {
+          this.noData = false
           this.resultData = responseData.data
           this.paginationInfo.total = responseData.page.totalRows
           this.paginationInfo.startIndex = responseData.page.startIndex
@@ -372,32 +381,33 @@ export default {
         },
         {isNeedloading: false},
         () => {
-          this.noData = true;
+          this.noData = true
         }
       )
     },
-    compare (prop) {
+    compare(prop) {
       return function (obj1, obj2) {
-        var val1 = obj1[prop];
-        var val2 = obj2[prop];
+        let val1 = obj1[prop]
+        let val2 = obj2[prop]
         if (!isNaN(Number(val1)) && !isNaN(Number(val2))) {
-          val1 = Number(val1);
-          val2 = Number(val2);
+          val1 = Number(val1)
+          val2 = Number(val2)
         }
         if (val1 < val2) {
-          return -1;
-        } else if (val1 > val2) {
-          return 1;
-        } else {
-          return 0;
-        }  
-      } 
+          return -1
+        }
+        else if (val1 > val2) {
+          return 1
+        }
+        return 0
+
+      }
     },
-    showSunburst (originData) {
-      let legendData = []
-      let pieInner = []
+    showSunburst(originData) {
+      const legendData = []
+      const pieInner = []
       if (originData.high) {
-        let high = {
+        const high = {
           name: 'high',
           value: originData.high,
           filterType: 'priority',
@@ -409,7 +419,7 @@ export default {
         pieInner.push(high)
       }
       if (originData.low) {
-        let low = {
+        const low = {
           name: 'low',
           value: originData.low,
           filterType: 'priority',
@@ -421,7 +431,7 @@ export default {
         pieInner.push(low)
       }
       if (originData.mid) {
-        let mid = {
+        const mid = {
           name: 'medium',
           value: originData.mid,
           filterType: 'priority',
@@ -436,13 +446,14 @@ export default {
       const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
       let index = 0
       let pieOuter = []
-      let itemStyleSet = {}
+      const itemStyleSet = {}
       const metricInfo = originData.count
-      let set = new Set()
+      const set = new Set()
       metricInfo.forEach(item => {
         if (set.has(item.name)) {
           item.itemStyle = itemStyleSet[item.name]
-        } else {
+        }
+        else {
           legendData.push(item.name)
           index++
           const itemStyle = {
@@ -458,62 +469,81 @@ export default {
       this.outerMetrics = pieOuter
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
-    addParams ({key, value}) {
+    // 555
+    addParams({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
-    deleteConfirmModal (rowData, isBatch) {
+    deleteConfirmModal(rowData, isBatch) {
       this.isBatch = isBatch
       this.selectedData = rowData
       this.isShowWarning = true
     },
-    ok () {
+    ok() {
       this.removeAlarm(this.selectedData)
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
     removeAlarm(alarmItem) {
-      let params = {
+      const params = {
         id: 0,
         custom: true,
-        metric: "",
-        priority: ""
+        metric: '',
+        priority: ''
       }
       if (this.isBatch) {
-        let find = this.filtersForShow.find(f => f.key === 'metric')
+        const find = this.filtersForShow.find(f => f.key === 'metric')
         if (find) {
           params.metric = find.value
         }
-        let priority = this.filtersForShow.find(f => f.key === 'priority')
+        const priority = this.filtersForShow.find(f => f.key === 'priority')
         if (priority) {
           params.priority = priority.value
         }
-      } else {
+      }
+      else {
         params.id = alarmItem.id
       }
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.request('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.clearAll()
       })
     },
-    clearAll () {
+    clearAll() {
       this.filters = []
       this.getAlarm()
     },
-    exclude (key) {
+    exclude(key) {
       delete this.filters[key]
       this.getAlarm()
     },
-    alarmHistory () {
+    alarmHistory() {
       this.$router.push({name: 'alarmHistory'})
+    },
+    onFiltersChange(filters) {
+      this.filters = filters
+      this.getAlarm()
     }
   }
 }
 </script>
+
+<style lang='less'>
+.drop-down-content {
+  .ivu-select-dropdown {
+    overflow: scroll;
+  }
+}
+.all-content {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+</style>
 
 <style scoped lang="less">
 .echart {
@@ -542,6 +572,10 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    .top-right-search {
+      display: flex;
+      align-items: center;
+    }
 
     .label {
       color: #116EF9;
@@ -566,7 +600,7 @@ export default {
 }
 
 .data-stats-container {
-  
+
   .top-stats-container {
     width: 100%;
     height: 90px;
@@ -578,7 +612,7 @@ export default {
     .metics-metal {
       height: 100%;
       background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
-      
+
       .col {
         position: relative;
         width: 180px;
@@ -678,7 +712,7 @@ export default {
 }
 li {
   list-style: none;
-} 
+}
 
 label {
   margin-bottom: 0;

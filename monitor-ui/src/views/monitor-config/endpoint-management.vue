@@ -1,403 +1,357 @@
 <template>
-<div class="main-content">
-  <PageTable :pageConfig="pageConfig"></PageTable>
-  <ModalComponent :modelConfig="modelConfig">
-    <div slot="advancedConfig" class="extentClass">
-      <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
-        <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
-          <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
-            {{ item.guid }}
-          </Option>
-        </Select>
-      </div>
+  <div class="main-content">
+    <div class="content-seatch">
+      <Input
+        v-model="searchForm.search"
+        style="width: 15%"
+        clearable
+        :placeholder="$t('m_enter_name_tips')"
+        @on-change="onFilterConditionChange"
+      >
+      </Input>
+      <Select
+        v-model="searchForm.endpointGroup"
+        filterable
+        clearable
+        multiple
+        style="width: 25%"
+        :placeholder="$t('m_please_select') + $t('m_object_group')"
+        @on-change="onFilterConditionChange"
+      >
+        <Option v-for="name in objectGroupList" :value="name" :key="name">
+          {{name}}
+        </Option>
+      </Select>
+
+      <Select
+        v-model="searchForm.basicType"
+        multiple
+        filterable
+        clearable
+        style="width: 25%"
+        :placeholder="$t('m_please_select') + $t('m_endpoint_type')"
+        @on-change="onFilterConditionChange"
+      >
+        <Option v-for="name in objectTypeList" :value="name" :key="name">
+          {{name}}
+        </Option>
+      </Select>
+      <Button class="add-content-item" @click="onAddButtonClick"  type="success" >{{$t('m_add')}}</Button>
     </div>
-  </ModalComponent>
-  <Modal
-    v-model="historyAlarmModel"
-    width="1400"
-    :mask-closable="false"
-    :footer-hide="true"
-    :fullscreen="isfullscreen"
-    :title="$t('m_button_historicalAlert')">
-    <div slot="header" class="custom-modal-header">
-      <span>
-        {{$t('alarmHistory')}}
-      </span>
-      <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
-      <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
+
+    <div class="content-table">
+      <Table
+        size="small"
+        :columns="objectTableColumns"
+        :data="objectTableData"
+      />
     </div>
-    <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
-  </Modal>
-  <ModalComponent :modelConfig="endpointRejectModel">
-    <div slot="endpointReject">
-      <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('m_field_type')}}:</label>
-        <Select filterable clearable :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
-          <Option v-for="item in endpointRejectModel.endpointType" :label="item.label" :value="item.value" :key="item.value">
-            {{item.label}}
-          </Option>
-        </Select>
-      </div>
-      <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
-          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
-            {{item.label}}
-          </Option>
-        </Select>
-      </div>
-      <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
-        <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
-        <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.name" name="name" :class="{ 'red-border': veeErrors.has('name') }" type="text" class="col-md-7 form-control model-input c-dark" />
-        <label class="required-tip">*</label>
-        <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
-      </div>
-      <div class="marginbottom params-each" v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type)">
-        <label class="col-md-2 label-name">{{$t('m_button_trusteeship')}}:</label>
-        <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
-      </div>
-      <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
-        <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_button_username')}}:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" name="user" :class="{ 'red-border': veeErrors.has('user') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
-        </div>
+    <Page
+      class="table-pagination"
+      :total="pagination.total"
+      @on-change="(e) => {pagination.page = e; this.getTableList()}"
+      @on-page-size-change="(e) => {pagination.size = e; this.getTableList()}"
+      :current="pagination.page"
+      :page-size="pagination.size"
+      show-total
+      show-sizer
+    />
+
+    <!-- <PageTable :pageConfig="pageConfig"></PageTable> -->
+
+    <ModalComponent :modelConfig="modelConfig">
+      <div>555</div>
+      <div slot="advancedConfig" class="extentClass">
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_button_password')}}:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.password" name="password" :class="{ 'red-border': veeErrors.has('password') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('password')" class="is-danger">{{ veeErrors.first('password')}}</label>
-        </div>
-      </section>
-      <section v-if="endpointRejectModel.addRow.type === 'http'">
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">Method:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.method" name="method" :class="{ 'red-border': veeErrors.has('method') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('method')" class="is-danger">{{ veeErrors.first('method')}}</label>
-        </div>
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">URL:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.url" name="url" :class="{ 'red-border': veeErrors.has('url') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('url')" class="is-danger">{{ veeErrors.first('url')}}</label>
-        </div>
-      </section>
-      <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
-        <label class="col-md-2 label-name">exporter_type: </label>
-        <input v-validate="'required'" v-model="endpointRejectModel.addRow.exporter_type" name="exporter_type" :class="{ 'red-border': veeErrors.has('exporter_type') }" type="text" class="col-md-7 form-control model-input c-dark" />
-        <label class="required-tip">*</label>
-        <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
-      </div>
-      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
-        <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
-        <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" name="port" :class="{ 'red-border': veeErrors.has('port') }" type="text" class="col-md-7 form-control model-input c-dark" />
-        <label class="required-tip">*</label>
-        <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
-      </div>
-      <div class="marginbottom params-each" v-if="(['ping','http','telnet'].includes(endpointRejectModel.addRow.type))">
-        <label class="col-md-2 label-name">{{$t('exporter')}}:</label>
-        <Checkbox v-model="endpointRejectModel.addRow.exporter"></Checkbox>
-      </div>
-      <div v-if="endpointRejectModel.addRow.exporter">
-        <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
-        <input v-validate="'required'" :placeholder="$t('exporter_address_placeholder')" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{ 'red-border': veeErrors.has('export_address') }" type="text" class="col-md-7 form-control model-input c-dark" />
-        <label class="required-tip">*</label>
-        <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
-      </div>
-      <template v-if="endpointRejectModel.addRow.type === 'process'">
-        <div>
-          <label class="col-md-2 label-name">{{$t('processName')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('processName')" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{ 'red-border': veeErrors.has('process_name') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
-        </div>
-        <div>
-          <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
-          <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" type="text" class="col-md-7 form-control model-input c-dark" />
-        </div>
-      </template>
-      <template>
-        <div v-if="endpointRejectModel.addRow.type !== 'process'">
-          <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('m_field_ip')" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{ 'red-border': veeErrors.has('ip') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
-        </div>
-        <div v-else>
-          <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-          <Select filterable v-model="endpointRejectModel.addRow.ip" @on-change="changeIp" style="width:338px">
-            <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
-              {{item.guid}}
+          <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
+          <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
+            <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
+              {{ item.guid }}
             </Option>
           </Select>
         </div>
-      </template>
-    </div>
-  </ModalComponent>
-  <ModalComponent :modelConfig="processConfigModel">
-    <div slot="processConfig">
-      <div class="marginbottom params-each">
-        <div style="color:#fa7821">
-          <span>{{$t('m_button_processConfiguration_tip1')}}</span>
-        </div>
       </div>
-      <section>
-        <div style="display: flex;">
-          <div class="port-title">
-            <span>{{$t('processName')}}:</span>
-          </div>
-          <div class="port-title">
-            <span>{{$t('processTags')}}:</span>
-          </div>
-          <div class="port-title">
-            <span>{{$t('displayName')}}:</span>
-          </div>
-          <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+    </ModalComponent>
+
+    <Modal
+      v-model="historyAlarmModel"
+      width="1400"
+      :mask-closable="false"
+      :footer-hide="true"
+      :fullscreen="isfullscreen"
+      :title="$t('m_button_historicalAlert')"
+    >
+      <div slot="header" class="custom-modal-header">
+        <span>
+          {{$t('alarmHistory')}}
+        </span>
+        <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
+        <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
+      </div>
+      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
+    </Modal>
+
+    <ModalComponent :modelConfig="endpointRejectModel">
+      <div slot="endpointReject">
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_field_type')}}:</label>
+          <Select filterable clearable :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
+            <Option v-for="item in endpointRejectModel.endpointType" :label="item.label" :value="item.value" :key="item.value">
+              {{item.label}}
+            </Option>
+          </Select>
         </div>
-      </section>
-      <section v-for="(pl, plIndex) in processConfigModel.process_list" :key="plIndex">
-        <div class="port-config">
-          <div style="width: 55%">
-            <input type="text" v-model.trim="pl.process_name" class="search-input" style="width: 93%" />
+        <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+          <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode">
+            <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
+              {{item.label}}
+            </Option>
+          </Select>
+        </div>
+        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
+          <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
+          <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
+        </div>
+        <div class="marginbottom params-each" v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type)">
+          <label class="col-md-2 label-name">{{$t('m_button_trusteeship')}}:</label>
+          <Checkbox v-model="endpointRejectModel.addRow.agent_manager" :disabled="isReviewMode"></Checkbox>
+        </div>
+        <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
+          <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('m_button_username')}}:</label>
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" :disabled="isReviewMode" name="user" :class="{'red-border': veeErrors.has('user')}" type="text" class="col-md-7 form-control model-input c-dark" />
             <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
           </div>
-          <div style="width: 51%">
-            <input type="text" v-model.trim="pl.tags" class="search-input" style="width: 93%" />
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('m_button_password')}}:</label>
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.password" :disabled="isReviewMode" name="password" :class="{'red-border': veeErrors.has('password')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('password')" class="is-danger">{{ veeErrors.first('password')}}</label>
           </div>
-          <div style="width: 47%">
-            <input type="text" v-model.trim="pl.display_name" class="search-input" style="width: 93%" />
+        </section>
+        <section v-if="endpointRejectModel.addRow.type === 'http'">
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">Method:</label>
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.method" :disabled="isReviewMode" name="method" :class="{'red-border': veeErrors.has('method')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('method')" class="is-danger">{{ veeErrors.first('method')}}</label>
           </div>
-          <span style="float: right" >
-            <i class="fa fa-trash-o port-config-icon" @click="delProcess(plIndex)" aria-hidden="true"></i>
-          </span>
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">URL:</label>
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.url" :disabled="isReviewMode" name="url" :class="{'red-border': veeErrors.has('url')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('url')" class="is-danger">{{ veeErrors.first('url')}}</label>
+          </div>
+        </section>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
+          <label class="col-md-2 label-name">exporter_type: </label>
+          <input v-validate="'required'" v-model="endpointRejectModel.addRow.exporter_type" :disabled="isReviewMode" name="exporter_type" :class="{'red-border': veeErrors.has('exporter_type')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
-      </section>
-    </div>
-  </ModalComponent>
-  <ModalComponent :modelConfig="portModel">
-    <div slot="port">
-      <section>
-        <div style="display: flex;">
-          <div class="port-title">
-            <span>{{$t('m_field_port')}}:</span>
-          </div>
-          <div class="port-title">
-            <span>{{$t('m_tableKey_description')}}:</span>
-          </div>
+        <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
+          <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
+          <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" :disabled="isReviewMode" name="port" :class="{'red-border': veeErrors.has('port')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>
-      </section>
-
-      <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
-        <div class="port-config">
-          <div style="width: 48%">
-            <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" />
-          </div>
-          <div style="width: 48%">
-            <input type="text" v-model="pm.note" class="search-input" style="width: 100%" />
-          </div>
-          <i class="fa fa-trash-o port-config-icon" v-if="portModel.portMsg.length > 1" @click="removePort(pmIndex)" aria-hidden="true"></i>
-          <i class="fa fa-plus-square-o port-config-icon" @click="addPort" :style="{'visibility': pmIndex+1===portModel.portMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
+        <div class="marginbottom params-each" v-if="(['ping','http','telnet'].includes(endpointRejectModel.addRow.type))">
+          <label class="col-md-2 label-name">{{$t('exporter')}}:</label>
+          <Checkbox v-model="endpointRejectModel.addRow.exporter" :disabled="isReviewMode" />
         </div>
-      </section>
-    </div>
-  </ModalComponent>
-  <Modal v-model="isShowWarning" 
-    :title="$t('m_delConfirm_title')"
-    @on-ok="ok" 
-    @on-cancel="cancel">
-    <div class="modal-body" style="padding:30px">
-      <div style="text-align:center">
-        <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
-      </div>
-    </div>
-  </Modal>
-  <Modal v-model="isShowDataMonitor" :title="$t('m_button_dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
-    <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
-  </Modal>
-
-  <ModalComponent :modelConfig="maintenanceWindowModel">
-    <template #maintenanceWindow>
-      <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
-        <template v-for="(item, index) in maintenanceWindowModel.result">
-          <p :key="index" style="margin:6px 0">
-            <Button
-              @click="deleteMaintenanceWindow(index)"
-              size="small"
-              type="error"
-              icon="md-trash"
-            ></Button>
-            <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
-            <Select v-model="item.weekday" multiple filterable style="width:200px">
-              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle.value" :key="cycle.value">{{
-                $t(cycle.label)
-              }}</Option>
-            </Select>
-          </p>
+        <div v-if="endpointRejectModel.addRow.exporter">
+          <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
+        </div>
+        <template v-if="endpointRejectModel.addRow.type === 'process'">
+          <div>
+            <label class="col-md-2 label-name">{{$t('processName')}}:</label>
+            <input v-validate="'required'" :placeholder="$t('processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
+          </div>
+          <div>
+            <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
+            <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
+          </div>
         </template>
-        <Button
-          @click="addEmptyMaintenanceWindow"
-          type="success"
-          size="small"
-          long
-          >{{ $t('m_button_add') }}</Button
-        >
+        <template>
+          <div v-if="endpointRejectModel.addRow.type !== 'process'">
+            <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
+            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
+          </div>
+          <div v-else>
+            <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" style="width:338px">
+              <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
+                {{item.guid}}
+              </Option>
+            </Select>
+          </div>
+        </template>
       </div>
-    </template>
-  </ModalComponent>
-  <ModalComponent :modelConfig="groupModel">
-    <div slot="endpointOperate">  
-      <Transfer
-      :data="groupModel.groupOptions"
-      :target-keys="groupModel.group"
-      :titles="groupModel.titles"
-      :list-style="groupModel.listStyle"
-      @on-change="handleChange"
-      filterable>
-      </Transfer>
-    </div>
-  </ModalComponent>
-</div>
+    </ModalComponent>
+
+    <ModalComponent :modelConfig="processConfigModel">
+      <div slot="processConfig">
+        <div class="marginbottom params-each">
+          <div style="color:#fa7821">
+            <span>{{$t('m_button_processConfiguration_tip1')}}</span>
+          </div>
+        </div>
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('processName')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('processTags')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('displayName')}}:</span>
+            </div>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+          </div>
+        </section>
+        <section v-for="(pl, plIndex) in processConfigModel.process_list" :key="plIndex">
+          <div class="port-config">
+            <div style="width: 55%">
+              <input type="text" v-model.trim="pl.process_name" class="search-input" style="width: 93%" />
+              <label class="required-tip">*</label>
+            </div>
+            <div style="width: 51%">
+              <input type="text" v-model.trim="pl.tags" class="search-input" style="width: 93%" />
+            </div>
+            <div style="width: 47%">
+              <input type="text" v-model.trim="pl.display_name" class="search-input" style="width: 93%" />
+            </div>
+            <span style="float: right" >
+              <i class="fa fa-trash-o port-config-icon" @click="delProcess(plIndex)" aria-hidden="true"></i>
+            </span>
+          </div>
+        </section>
+      </div>
+    </ModalComponent>
+
+    <ModalComponent :modelConfig="portModel">
+      <div slot="port">
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('m_field_port')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('m_tableKey_description')}}:</span>
+            </div>
+          </div>
+        </section>
+
+        <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
+          <div class="port-config">
+            <div style="width: 48%">
+              <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" />
+            </div>
+            <div style="width: 48%">
+              <input type="text" v-model="pm.note" class="search-input" style="width: 100%" />
+            </div>
+            <i class="fa fa-trash-o port-config-icon" v-if="portModel.portMsg.length > 1" @click="removePort(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addPort" :style="{'visibility': pmIndex + 1 === portModel.portMsg.length ?  'unset' : 'hidden'}" aria-hidden="true"></i>
+          </div>
+        </section>
+      </div>
+    </ModalComponent>
+
+    <Modal v-model="isShowDataMonitor" :title="$t('m_button_dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
+      <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
+    </Modal>
+
+    <ModalComponent :modelConfig="maintenanceWindowModel">
+      <template #maintenanceWindow>
+        <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+          <template v-for="(item, index) in maintenanceWindowModel.result">
+            <p :key="index" style="margin:6px 0">
+              <Button
+                @click="deleteMaintenanceWindow(index)"
+                size="small"
+                type="error"
+                icon="md-trash"
+              ></Button>
+              <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
+              <Select v-model="item.weekday" multiple filterable style="width:200px">
+                <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle.value" :key="cycle.value">{{
+                  $t(cycle.label)
+                }}</Option>
+              </Select>
+            </p>
+          </template>
+          <Button
+            @click="addEmptyMaintenanceWindow"
+            type="success"
+            size="small"
+            long
+          >{{ $t('m_button_add') }}</Button>
+        </div>
+      </template>
+    </ModalComponent>
+
+    <ModalComponent :modelConfig="groupModel">
+      <div slot="endpointOperate">
+        <Transfer
+          :data="groupModel.groupOptions"
+          :target-keys="groupModel.group"
+          :titles="groupModel.titles"
+          :list-style="groupModel.listStyle"
+          @on-change="handleChange"
+          filterable
+        >
+        </Transfer>
+      </div>
+    </ModalComponent>
+  </div>
 </template>
 
 <script>
+import debounce from 'lodash/debounce'
+import isEmpty from 'lodash/isEmpty'
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import { cycleOption, collectionInterval } from '@/assets/config/common-config'
-import isEmpty from 'lodash/isEmpty'
 import {
   interceptParams
 } from '@/assets/js/utils'
-let tableEle = [{
-    title: 'm_tableKey_endpoint',
-    value: 'guid',
-    style: 'width:300px',
-    display: true
-  },
-  {
-    title: 'm_tableKey_group',
-    display: true,
-    tags: {
-      // style: 'width: 300px;'
-    },
-    'render': (item) => {
-      let res = item.groups&&item.groups.map((i) => {
-        return {
-          label: i.name,
-          value: i.name
-        }
-      })
-      return res
-    }
-  }
-]
+
 const alarmLevelMap = {
   low: {
-    label: "m_low",
-    buttonType: "green"
+    label: 'm_low',
+    buttonType: 'green'
   },
   medium: {
-    label: "m_medium",
-    buttonType: "gold"
+    label: 'm_medium',
+    buttonType: 'gold'
   },
   high: {
-    label: "m_high",
-    buttonType: "red"
+    label: 'm_high',
+    buttonType: 'red'
   }
 }
-
-const btn = [{
-    btn_name: 'm_button_thresholdManagement',
-    btn_func: 'thresholdConfig'
-  },
-  {
-    btn_name: 'm_button_edit',
-    btn_func: 'editF'
-  },
-  {
-    btn_name: 'm_button_historicalAlert',
-    btn_func: 'historyAlarm'
-  },
-  {
-    btn_name: 'm_field_group',
-    btn_func: 'groupManagement'
-  },
-  {
-    btn_name: 'm_button_remove',
-    btn_func: 'deleteConfirmModal',
-    color: 'red'
-  },
-  {
-    btn_name: 'm_button_logConfiguration',
-    btn_func: 'logManagement'
-  },
-  {
-    btn_name: 'm_button_portConfiguration',
-    btn_func: 'portManagement'
-  },
-  {
-    btn_name: 'm_button_processConfiguration',
-    btn_func: 'processManagement'
-  },
-  {
-    btn_name: 'm_button_businessConfiguration',
-    btn_func: 'businessManagement'
-  },
-  {
-    btn_name: 'm_button_dataMonitoring',
-    btn_func: 'dataMonitor'
-  },
-  {
-    btn_name: 'm_button_maintenanceWindow',
-    btn_func: 'maintenanceWindow'
-  }
-]
 export default {
   name: '',
+  components: {
+    DataMonitor
+  },
   data() {
     return {
       isfullscreen: false,
       isShowDataMonitor: false,
       dbEndpointId: '',
       dbMonitorData: [],
-
-      isShowWarning: false,
-      pageConfig: {
-        CRUD: '',
-        researchConfig: {
-          input_conditions: [{
-            value: 'search',
-            type: 'input',
-            placeholder: 'm_placeholder_input',
-            style: ''
-          }],
-          btn_group: [{
-            btn_name: 'm_button_search',
-            btn_func: 'search',
-            class: 'btn-confirm-f',
-            btn_icon: 'fa fa-search'
-          }],
-          filters: {
-            search: ''
-          }
-        },
-        table: {
-          tableData: [],
-          tableEle: tableEle,
-          filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'guid',
-          btn: btn,
-          pagination: this.pagination,
-          handleFloat: true,
-        },
-        pagination: {
-          __orders: '-created_date',
-          total: 0,
-          page: 1,
-          size: 10
-        }
-      },
       historyAlarmPageConfig: {
         table: {
           tableData: [],
@@ -414,11 +368,9 @@ export default {
             {
               title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
-              render: (h, params) => {
-                return (
-                  <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
-                )
-              }
+              render: (h, params) => (
+                <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+              )
             },
             {
               title: this.$t('m_field_endpoint'),
@@ -432,11 +384,9 @@ export default {
               title: this.$t('m_tableKey_s_priority'),
               key: 's_priority',
               width: 100,
-              render: (h, params) => {
-                return (
-                  <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-                )
-              }
+              render: (h, params) => (
+                <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+              )
             },
             {
               title: this.$t('m_field_metric'),
@@ -448,16 +398,14 @@ export default {
               width: 200,
               ellipsis: true,
               tooltip: true,
-              render: (h, params) => {
-                return (
-                  <Tooltip transfer={true} placement="bottom-start" max-width="300">
-                    <div slot="content">
-                      <div domPropsInnerHTML={params.row.alarm_detail}></div>
-                    </div>
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
                     <div domPropsInnerHTML={params.row.alarm_detail}></div>
-                  </Tooltip>
-                )
-              }
+                  </div>
+                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_tableKey_start'),
@@ -473,18 +421,16 @@ export default {
                 if (params.row.end_string === '0001-01-01 00:00:00') {
                   res = '-'
                 }
-                return h('span', res);
+                return h('span', res)
               }
             },
             {
               title: this.$t('m_remark'),
               key: 'custom_message',
               width: 120,
-              render: (h, params) => {
-                return(
-                  <div>{params.row.custom_message || '-'}</div>
-                )
-              }
+              render: (h, params) => (
+                <div>{params.row.custom_message || '-'}</div>
+              )
             },
           ]
         }
@@ -523,12 +469,20 @@ export default {
         modalTitle: this.$t('m_field_endpoint'),
         supportStep: true,
         isAdd: true,
+        modalFooter: [],
         saveFunc: 'endpointRejectSave',
         config: [{
-            name: 'endpointReject',
-            type: 'slot'
-          },
-          {label: 'm_field_proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
+          name: 'endpointReject',
+          type: 'slot'
+        },
+        {
+          label: 'm_field_proxy_exporter',
+          value: 'proxy_exporter',
+          option: 'proxy_exporter',
+          hide: true,
+          disabled: false,
+          type: 'select'
+        }
         ],
         addRow: {
           name: '',
@@ -549,7 +503,7 @@ export default {
           tags: ''
         },
         v_select_configs: {
-            proxy_exporter: []
+          proxy_exporter: []
         },
         stepOptions: collectionInterval,
         ipOptions: [],
@@ -583,7 +537,7 @@ export default {
           // businessSet: [],
         },
         result: [],
-        cycleOption: cycleOption
+        cycleOption
       },
       id: null,
       showGroupMsg: false,
@@ -595,7 +549,10 @@ export default {
         modalStyle: 'min-width:900px',
         isAdd: true,
         config: [
-          {name:'endpointOperate',type:'slot'}
+          {
+            name: 'endpointOperate',
+            type: 'slot'
+          }
         ],
         group: [],
         groupOptions: [],
@@ -611,41 +568,165 @@ export default {
       },
       fullscreenTableHight: document.documentElement.clientHeight - 300,
       strategyNameMaps: {
-        "endpointGroup": "m_base_group",
-        "serviceGroup": "m_field_resourceLevel"
-      }
+        endpointGroup: 'm_base_group',
+        serviceGroup: 'm_field_resourceLevel'
+      },
+      searchForm: {
+        search: '',
+        endpointGroup: [],
+        basicType: []
+      },
+      objectGroupList: [],
+      objectTypeList: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      pagination: {
+        __orders: '-created_date',
+        total: 0,
+        page: 1,
+        size: 10
+      },
+      objectTableData: [],
+      objectTableColumns: [
+        {
+          title: this.$t('m_tableKey_endpoint'),
+          width: 280,
+          key: 'guid'
+        },
+        {
+          title: this.$t('m_object_group'),
+          width: 300,
+          key: 'groups',
+          render: (h, params) => (
+            <div>
+              {
+                params.row.groups && params.row.groups.length
+                  ? params.row.groups.map(item => (
+                    <Button
+                      type="info"
+                      size="small"
+                      ghost
+                    >
+                      {item.name}
+                    </Button>
+                  )) : <div>-</div>
+              }
+            </div>
+          )
+        },
+        {
+          title: this.$t('m_basic_type'),
+          width: 150,
+          key: 'type',
+          render: (h, params) => (
+            <div>
+              {
+                params.row.type ? (<TagShow tagName={params.row.type}></TagShow>) : <div>-</div>
+              }
+            </div>
+          )
+        },
+        {
+          title: this.$t('m_creator'),
+          key: 'create_user',
+          render: (h, params) => (
+            <div>
+              {
+                params.row.create_user ? <span>{params.row.create_user}</span> : <span>-</span>
+              }
+            </div>
+          )
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          width: 130,
+          key: 'update_user',
+          render: (h, params) => (
+            <div>
+              {
+                params.row.update_user ? <span>{params.row.update_user}</span> : <span>-</span>
+              }
+            </div>
+          )
+        },
+        {
+          title: this.$t('m_update_time'),
+          key: 'update_time'
+        },
+        {
+          title: this.$t('m_table_action'),
+          key: 'action',
+          width: 220,
+          render: (h, params) => (
+            <div style="display: flex">
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
+                <Button size="small" type="info" on-click={() => {
+                  this.endpointRejectModel.modalFooter = []
+                  this.isReviewMode = true
+                  this.editF(params.row)
+                }}>
+                  <Icon type="md-eye" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
+                <Button size="small" type="primary" on-click={() => {
+                  this.endpointRejectModel.modalFooter = null
+                  this.isReviewMode = false
+                  this.editF(params.row)
+                }}>
+                  <Icon type="md-create" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_maintenanceWindow')}>
+                <Button size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
+                  <Icon type="ios-build" />
+                </Button>
+              </Tooltip>
+              {
+                params.row.type === 'host' ? (
+                  <Tooltip placement="top" max-width="400" content={this.$t('m_button_portConfiguration')}>
+                    <Button v-if="params.row.type === 'host'" size="small" type="warning" on-click={() => this.portManagement(params.row)}>
+                      <Icon type="ios-cube" />
+                    </Button>
+                  </Tooltip>
+                ) : null
+              }
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_historicalAlert')}>
+                <Button size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
+                  <Icon type="md-warning" />
+                </Button>
+              </Tooltip>
+              <Poptip
+                confirm
+                title={this.$t('m_delConfirm_tip')}
+                placement="left-end"
+                on-on-ok={() => this.deleteConfirmModal(params.row)}>
+                <Button size="small" type="error">
+                  <Icon type="md-trash" />
+                </Button>
+              </Poptip>
+            </div>
+          )
+        }
+      ],
+      isReviewMode: false
     }
   },
   mounted() {
-    this.pageConfig.CRUD = this.$root.apiCenter.endpointManagement.list.api
+    // this.pageConfig.CRUD = this.$root.apiCenter.endpointManagement.list.api
     if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.groupMsg = {}
       this.showGroupMsg = false
-      this.pageConfig.researchConfig.btn_group.push({
-        btn_name: 'm_button_add',
-        btn_func: 'endpointReject',
-        class: 'btn-cancel-f',
-        btn_icon: 'fa fa-plus'
-      })
-    } else {
+    }
+    else {
       this.$parent.activeTab = '/monitorConfigIndex/endpointManagement'
       if (Object.prototype.hasOwnProperty.call(this.$route.params, 'group')) {
         this.groupMsg = this.$route.params.group
         this.showGroupMsg = true
-        this.pageConfig.researchConfig.btn_group.push({
-          btn_name: 'm_button_add',
-          btn_func: 'add',
-          class: 'btn-cancel-f',
-          btn_icon: 'fa fa-plus'
-        })
-        this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
-      }
-      if (Object.prototype.hasOwnProperty.call(this.$route.params, 'search')) {
-        this.pageConfig.researchConfig.filters.search = this.$route.params.search
       }
     }
-    this.initData(this.pageConfig.CRUD, this.pageConfig)
     this.getIpList()
+    this.getTableList()
+    this.getAllOptions()
   },
   filters: {
     interceptParams(val) {
@@ -653,36 +734,35 @@ export default {
     }
   },
   methods: {
-    fullscreenChange () {
+    fullscreenChange() {
       this.isfullscreen = !this.isfullscreen
       if (this.isfullscreen) {
         this.fullscreenTableHight = document.documentElement.clientHeight - 160
-      } else {
+      }
+      else {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },
-    changeIp (val) {
+    changeIp(val) {
       const process = this.endpointRejectModel.ipOptions.find(i => i.ip === val)
       this.endpointRejectModel.addRow.step = process.step
     },
-    getIpList () {
+    getIpList() {
       const api = '/monitor/api/v2/monitor/endpoint/query?monitorType=host'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (res) => {
+      this.request('GET', api, '', res => {
         this.endpointRejectModel.ipOptions = res.data
       })
     },
-    async editF (rowData) {
-      let params = {
+    async editF(rowData) {
+      const params = {
         page: 1,
         size: 10000,
       }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
-        this.endpointRejectModel.endpointType = res.map(item => {
-          return {
-            label: item,
-            value: item
-          }
-        })
+      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+        this.endpointRejectModel.endpointType = res.map(item => ({
+          label: item,
+          value: item
+        }))
         this.endpointRejectModel.endpointType.push({
           label: 'other',
           value: 'other'
@@ -691,43 +771,40 @@ export default {
       this.modelTip.value = rowData.guid
       this.endpointRejectModel.isAdd = false
       const api = `/monitor/api/v2/monitor/endpoint/get/${rowData.guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (res) => {
+      this.request('GET', api, '', res => {
         this.endpointRejectModel.addRow = res
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
     managementEndpoint() {
-      let params = {
+      const params = {
         endpoint_id: Number(this.id),
         group_ids: this.groupModel.group.map(Number)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
+      this.request('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#group_modal').modal('hide')
-        this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
-    handleChange (newTargetKeys) {
+    handleChange(newTargetKeys) {
       this.groupModel.group = newTargetKeys
     },
-    async groupManagement (rowData) {
+    async groupManagement(rowData) {
       this.id = rowData.id
-      let params = {
+      const params = {
         page: 1,
         size: 10000,
       }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.list.api, params, res => {
-        this.groupModel.groupOptions = res.data.map(item => {
-          return {
-            label: item.name,
-            key: item.id
-          }
-        })
+      await this.request('GET', this.$root.apiCenter.groupManagement.list.api, params, res => {
+        this.groupModel.groupOptions = res.data.map(item => ({
+          label: item.name,
+          key: item.id
+        }))
       })
       this.groupModel.group = rowData.groups.map(item => item.id)
       this.$root.JQ('#group_modal').modal('show')
     },
-    maintenanceWindowSave () {
+    maintenanceWindowSave() {
       this.maintenanceWindowModel.result.forEach(item => {
         item.weekday = item.weekday.join(',')
       })
@@ -735,17 +812,17 @@ export default {
         endpoint: this.id,
         data: this.maintenanceWindowModel.result
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+      this.request('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
       })
     },
-    maintenanceWindow (rowData) {
+    maintenanceWindow(rowData) {
       this.id = rowData.guid
       const params = {
         endpoint: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, (responseData) => {
+      this.request('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, responseData => {
         this.maintenanceWindowModel.result = []
         responseData.forEach(item => {
           this.maintenanceWindowModel.result.push({
@@ -756,18 +833,21 @@ export default {
         this.$root.JQ('#maintenance_window_model').modal('show')
       })
     },
-    deleteMaintenanceWindow (index) {
+    deleteMaintenanceWindow(index) {
       this.maintenanceWindowModel.result.splice(index, 1)
     },
-    addEmptyMaintenanceWindow () {
-      this.maintenanceWindowModel.result.push({time_list: ['00:00', '00:00'], weekday: ['All']})
+    addEmptyMaintenanceWindow() {
+      this.maintenanceWindowModel.result.push({
+        time_list: ['00:00', '00:00'],
+        weekday: ['All']
+      })
     },
     dataMonitor(row) {
       this.dbEndpointId = row.id
       const params = {
         endpoint_id: this.dbEndpointId
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
+      this.request('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
         this.$refs.dataMonitor.managementData(responseData)
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
@@ -775,7 +855,6 @@ export default {
 
     },
     typeChange(type) {
-      // 
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
         name: '',
         type,
@@ -790,7 +869,7 @@ export default {
         exporter_type: ''
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
-        this.endpointRejectModel.addRow.step = 30 
+        this.endpointRejectModel.addRow.step = 30
       }
       const typeToPort = {
         host: 9100,
@@ -800,47 +879,35 @@ export default {
         windows: 9182
       }
       this.endpointRejectModel.addRow.port = typeToPort[type]
-      let proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
+      const proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
       proxy_exporter.hide = true
       this.endpointRejectModel.supportStep = true
       if (type && type === 'snmp') {
         proxy_exporter.hide = false
         this.endpointRejectModel.supportStep = false
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', {},
-        responseData => {
-          this.endpointRejectModel.v_select_configs.proxy_exporter = responseData.map(item => {
-            return {label: item.id, value: item.id}
-          })
-        })
+        this.request(
+          'GET',
+          '/monitor/api/v1/config/new/snmp',
+          {},
+          responseData => {
+            this.endpointRejectModel.v_select_configs.proxy_exporter = responseData.map(item => ({
+              label: item.id,
+              value: item.id
+            }))
+          }
+        )
       }
-    },
-    initData(url = this.pageConfig.CRUD, params) {
-      this.$root.$tableUtil.initTable(this, 'GET', url, params)
-    },
-    filterMoreBtn(rowData) {
-      // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
-      let moreBtnGroup = ['historyAlarm', 'editF', 'maintenanceWindow', 'deleteConfirmModal']
-      if (rowData.type === 'host') {
-        // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
-        moreBtnGroup.push('portManagement')
-      }
-      // if (rowData.type === 'mysql') {
-      //   moreBtnGroup.push('dataMonitor')
-      // }
-      // if (this.showGroupMsg) {
-      //   moreBtnGroup.push('deleteConfirm')
-      // }
-      return moreBtnGroup
     },
     add() {
       this.modelConfig.slotConfig.resourceOption = []
       this.modelConfig.slotConfig.resourceSelected = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/endpoint/list', {
-        search: '.',
+      const params = {
+        search: '',
         page: 1,
         size: 300
-      }, responseData => {
-        responseData.data.forEach((item) => {
+      }
+      this.request('POST', '/monitor/api/v1/alarm/endpoint/list', params, responseData => {
+        responseData.data.forEach(item => {
           if (item.id !== -1) {
             this.modelConfig.slotConfig.resourceOption.push(item)
           }
@@ -849,43 +916,24 @@ export default {
       })
     },
     addPost() {
-      let params = {
+      const params = {
         grp: this.groupMsg.id,
         endpoints: this.modelConfig.slotConfig.resourceSelected.map(Number),
         operation: 'add'
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+      this.request('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_object_Modal').modal('hide')
-        this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
     deleteConfirmModal(rowData) {
-      this.selectedData = rowData
-      this.isShowWarning = true
-    },
-    ok() {
-      this.delF(this.selectedData)
-    },
-    cancel() {
-      this.isShowWarning = false
-    },
-    deleteConfirm(rowData) {
-      this.$delConfirm({
-        msg: rowData.guid,
-        callback: () => {
-          this.delF(rowData)
-        }
-      })
-    },
-    delF(rowData) {
-      let params = {
+      const params = {
         guid: rowData.guid
       }
-      let url = this.$root.apiCenter.endpointManagement.deregister.api
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
+      const url = this.$root.apiCenter.endpointManagement.deregister.api
+      this.request('POST', url, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.initData(this.pageConfig.CRUD, this.pageConfig)
+        this.getTableList()
       })
     },
     thresholdConfig(rowData) {
@@ -908,10 +956,10 @@ export default {
       })
     },
     historyAlarm(rowData) {
-      let params = {
+      const params = {
         id: rowData.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
+      this.request('GET', this.$root.apiCenter.alarm.history, params, responseData => {
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
       })
       this.isfullscreen = false
@@ -920,33 +968,29 @@ export default {
     changeResultData(dataList) {
       if (dataList && !isEmpty(dataList)) {
         dataList.forEach(item => {
-          item.strategyGroupsInfo = '-';
-          item.alarm_metric_list_join = '-';
+          item.strategyGroupsInfo = '-'
+          item.alarm_metric_list_join = '-'
           if (!isEmpty(item.strategy_groups)) {
-            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
-              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
-            }, '')
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur) => res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> ', '')
           }
 
           if (!isEmpty(item.alarm_metric_list)) {
             item.alarm_metric_list_join = item.alarm_metric_list.join(',')
           }
-        });
+        })
       }
       return dataList
     },
     async endpointReject() {
-      let params = {
+      const params = {
         page: 1,
         size: 10000,
       }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
-        this.endpointRejectModel.endpointType = res.map(item => {
-          return {
-            label: item,
-            value: item
-          }
-        })
+      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+        this.endpointRejectModel.endpointType = res.map(item => ({
+          label: item,
+          value: item
+        }))
         this.endpointRejectModel.endpointType.push(
           {
             label: 'other',
@@ -962,24 +1006,25 @@ export default {
     },
     endpointRejectSave() {
       this.endpointRejectModel.addRow.port += ''
-      let params = this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
+      const params = this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
       this.$validator.validate().then(result => {
-        if (!result) return
+        if (!result) {
+          return
+        }
         if (this.endpointRejectModel.addRow.exporter_type && ['host', 'mysql', 'redis', 'java', 'windows', 'ping', 'telnet', 'http'].includes(this.endpointRejectModel.addRow.exporter_type)) {
           this.$Message.warning('Export port existed!')
           return
-        } else {
-          if (this.endpointRejectModel.addRow.exporter_type) {
-            params.type = this.endpointRejectModel.addRow.exporter_type
-          }
         }
+        if (this.endpointRejectModel.addRow.exporter_type) {
+          params.type = this.endpointRejectModel.addRow.exporter_type
+        }
+
         const methodType = this.endpointRejectModel.isAdd ? 'POST' : 'PUT'
         const api = this.endpointRejectModel.isAdd ? this.$root.apiCenter.endpointManagement.register.api : '/monitor/api/v2/monitor/endpoint/update'
-        this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, params, () => {
+        this.request(methodType, api, params, () => {
           this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
           this.$root.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('m_tips_success'))
-          this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       })
     },
@@ -987,7 +1032,7 @@ export default {
       this.processConfigModel.processName = ''
       this.id = rowData.id
       this.processConfigModel.addRow.processSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/process/list', {
+      this.request('GET', '/monitor/api/v1/alarm/process/list', {
         id: this.id
       }, responseData => {
         if (!responseData.length) {
@@ -1002,9 +1047,7 @@ export default {
       })
     },
     processConfigSave() {
-      const emptyPath = this.processConfigModel.process_list.some(t => {
-        return !t.process_name
-      })
+      const emptyPath = this.processConfigModel.process_list.some(t => !t.process_name)
       if (emptyPath) {
         this.$Message.warning(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
         return
@@ -1014,15 +1057,13 @@ export default {
         process_list: this.processConfigModel.process_list,
         check: true
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/process/update', params, () => {
+      this.request('POST', '/monitor/api/v1/alarm/process/update', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       })
       this.$root.JQ('#process_config_model').modal('hide')
     },
     addProcess() {
-      const emptyPath = this.processConfigModel.process_list.some(t => {
-        return !t.process_name
-      })
+      const emptyPath = this.processConfigModel.process_list.some(t => !t.process_name)
       if (emptyPath) {
         this.$Message.warning(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
         return
@@ -1038,12 +1079,13 @@ export default {
     },
 
     businessManagement(rowData) {
-      this.$router.push({name: 'businessMonitor', params: rowData})
+      this.$router.push({
+        name: 'businessMonitor',
+        params: rowData
+      })
     },
     addBusiness() {
-      const emptyPath = this.businessConfigModel.pathMsg.some(t => {
-        return !t.path
-      })
+      const emptyPath = this.businessConfigModel.pathMsg.some(t => !t.path)
       if (emptyPath) {
         this.$Message.warning(this.$t('m_tableKey_path') + this.$t('m_tips_required'))
         return
@@ -1058,10 +1100,10 @@ export default {
     },
     portManagement(rowData) {
       this.id = rowData.guid
-      let params = {
+      const params = {
         guid: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/endpoint/telnet/get', params, (responseData) => {
+      this.request('GET', '/monitor/api/v1/agent/endpoint/telnet/get', params, responseData => {
         if (!responseData.length) {
           responseData.push({
             port: null,
@@ -1073,9 +1115,7 @@ export default {
       this.$root.JQ('#port_Modal').modal('show')
     },
     addPort() {
-      const emptyPort = this.portModel.portMsg.some(t => {
-        return !t.port === true
-      })
+      const emptyPort = this.portModel.portMsg.some(t => !t.port === true)
       if (emptyPort) {
         this.$Message.warning(this.$t('m_field_port') + this.$t('m_tips_required'))
         return
@@ -1089,7 +1129,7 @@ export default {
       this.portModel.portMsg.splice(pmIndex, 1)
     },
     portSave() {
-      let temp = JSON.parse(JSON.stringify(this.portModel.portMsg.filter(t => {
+      const temp = JSON.parse(JSON.stringify(this.portModel.portMsg.filter(t => {
         if (!t.port === false) {
           return t
         }
@@ -1102,14 +1142,39 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
+      this.request('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })
+    },
+    getTableList() {
+      const params = Object.assign({}, this.searchForm, this.pagination)
+      const path = '/monitor/api/v1/alarm/endpoint/list'
+      this.request('POST', path, params, res => {
+        this.pagination.total = res.num
+        this.pagination.page = parseInt(params.page)
+        this.objectTableData = isEmpty(res.data) ? [] : res.data
+      })
+    },
+    onFilterConditionChange: debounce(function () {
+      this.getTableList()
+    }, 300),
+    onAddButtonClick() {
+      this.endpointRejectModel.modalFooter = null
+      if (this.$route.params.group) {
+        this.add()
+      }
+      else {
+        this.endpointReject()
+      }
+    },
+    getAllOptions() {
+      const path = '/monitor/api/v1/alarm/endpoint/options'
+      this.request('GET', path, {}, res => {
+        this.objectGroupList = res.endpointGroup
+        this.objectTypeList = res.basicType
+      })
     }
-  },
-  components: {
-    DataMonitor
   }
 }
 </script>
@@ -1192,4 +1257,33 @@ export default {
     cursor: pointer;
   }
 }
+
+.content-seatch {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 15px 0;
+  .add-content-item {
+    margin-left: auto;
+  }
+}
+.content-seatch > * {
+  margin-right: 20px;
+}
+.content-table {
+  padding-bottom: 65px;
+}
+.table-pagination {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+}
+</style>
+
+<style lang='less'>
+.ivu-table-wrapper {
+  overflow: inherit;
+}
+
 </style>

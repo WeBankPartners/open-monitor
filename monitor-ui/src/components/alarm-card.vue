@@ -262,7 +262,8 @@ export default {
       // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
-      this.$parent.filters[key] = value
+      this.$parent.filters[key] = this.$parent.filters[key] || []
+      this.$parent.filters[key].push(value)
       this.$parent.getAlarm()
     },
     copyEndpoint(data) {
