@@ -532,6 +532,8 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
 		archiveQueryFlag = true
 	}
+	startTimestamp := float64(param.Start * 1000)
+	endTimestamp := float64(param.End * 1000)
 	for _, query := range queryList {
 		log.Logger.Debug("Query param", log.JsonObj("param", query))
 		if query.Cluster != "" && query.Cluster != "default" {
@@ -581,6 +583,21 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 				serials = append(serials, tmpSerials...)
 				param.Step = tmpStep
 				continue
+			}
+		}
+		// 如果数据前后不是开始结束时间，补齐前后两个点
+		for _, subSerial := range tmpSerials {
+			if len(subSerial.Data) > 0 {
+				tmpSerialDataStart := subSerial.Data[0][0]
+				tmpSerialDataEnd := subSerial.Data[len(subSerial.Data)-1][0]
+				if tmpSerialDataStart > (startTimestamp + 30000) {
+					subSerial.Data = append([][]float64{{startTimestamp, 0}}, subSerial.Data...)
+				}
+				if tmpSerialDataEnd < (endTimestamp - 30000) {
+					subSerial.Data = append(subSerial.Data, []float64{endTimestamp, 0})
+				}
+			} else {
+				subSerial.Data = [][]float64{{startTimestamp, 0}, {endTimestamp, 0}}
 			}
 		}
 		serials = append(serials, tmpSerials...)
