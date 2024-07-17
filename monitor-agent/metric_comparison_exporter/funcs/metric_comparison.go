@@ -96,6 +96,7 @@ func StartCalcMetricComparisonCron() {
 		if counter > 360 {
 			counter = 1
 		}
+		log.Printf("counter:%d\n", counter)
 		go calcMetricComparisonData()
 	}
 }
