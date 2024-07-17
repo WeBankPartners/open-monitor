@@ -42,7 +42,7 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Prometheus %s is invalid\n", v.Name)
 			continue
 		}
-		if len(v.MetricMap) > 0 && v.CalcPeriod == counter*10 {
+		if len(v.MetricMap) > 0 && counter*10%v.CalcPeriod == 0 {
 			buff.WriteString(fmt.Sprintf("%s{", v.Name))
 			i = 0
 			for key, value := range v.MetricMap {
