@@ -6,7 +6,7 @@
         {{$t('m_filter')}}
       </div>
       <template #list>
-        <Form ref="fliters" :label-width="70" class="drop-down-content">
+        <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
           <FormItem :label="$t('m_alarmName')">
             <Select
               v-model="filters.alarm_name"
@@ -96,6 +96,7 @@ export default ({
   },
   mounted(){
     this.getFilterAllOptions()
+    document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
   },
   methods: {
     getFilterAllOptions() {
