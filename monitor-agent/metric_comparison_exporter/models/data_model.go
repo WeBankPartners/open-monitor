@@ -3,9 +3,10 @@ package models
 import "fmt"
 
 type MetricComparisonRes struct {
-	MetricMap map[string]string
-	Name      string  // 名称
-	Value     float64 //结果
+	MetricMap  map[string]string
+	Name       string  // 名称
+	Value      float64 // 结果
+	CalcPeriod int     // 计算周期,60,300,600,1800,3600
 }
 
 type MetricComparisonDto struct {
