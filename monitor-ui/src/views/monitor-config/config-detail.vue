@@ -950,6 +950,7 @@ export default {
       this.isfullscreen = true
       this.currentAlarmListIndex = index
       this.selectedTableData = tableItem
+      this.selectedData = tableItem
       const api = this.getMetricListPath(tableItem)
       this.request('GET', api, '', async responseData => {
         this.modelConfig.metricList = responseData
