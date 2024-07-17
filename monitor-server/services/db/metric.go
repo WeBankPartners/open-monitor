@@ -549,6 +549,11 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 			}
 		}
 	}
+	if strings.Contains(promExpr, "{") {
+		promExpr = promExpr[:len(promExpr)-1] + ",calc_type=\"$t_calc_type\"}"
+	} else {
+		promExpr = promExpr + "{calc_type=\"$t_calc_type\"}"
+	}
 
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
