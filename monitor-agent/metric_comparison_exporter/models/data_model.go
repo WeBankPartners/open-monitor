@@ -3,14 +3,15 @@ package models
 import "fmt"
 
 type MetricComparisonRes struct {
-	MetricMap map[string]string
-	Name      string  // 名称
-	Value     float64 //结果
+	MetricMap  map[string]string
+	Name       string  // 名称
+	Value      float64 // 结果
+	CalcPeriod int     // 计算周期,60,300,600,1800,3600
 }
 
 type MetricComparisonDto struct {
 	Guid           string `json:"guid"`
-	Metric         string `json:"metric"`         // 原始指标名称
+	Metric         string `json:"metric"`         // 指标名称
 	MonitorType    string `json:"monitorType"`    // 原始指标类型
 	ComparisonType string `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
 	OriginPromExpr string `json:"originPromExpr"` // 原始指标prom表达式
