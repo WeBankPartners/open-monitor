@@ -1178,6 +1178,7 @@ export default {
         this.chartConfigForm.chartType = 'line'
       }
       this.resetChartTemplate()
+      this.searchMetricByType()
     },
     onAggregateChange() {
       this.resetChartTemplate()

@@ -315,11 +315,16 @@ export default {
       )
     },
     getEndpointList() {
-      const api = '/monitor/api/v1/alarm/endpoint/list?__orders=-created_date&page=1&size=1000000'
+      const api = '/monitor/api/v1/alarm/endpoint/list'
+      const params = {
+        __orders: '-created_date',
+        page: 1,
+        size: 1000000
+      }
       return this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
+        'POST',
         api,
-        '',
+        params,
         responseData => {
           this.endpointOptions = responseData.data || []
         },

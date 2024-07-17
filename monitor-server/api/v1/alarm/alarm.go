@@ -821,10 +821,6 @@ func QueryHistoryAlarm(c *gin.Context) {
 	var param m.QueryHistoryAlarmParam
 	if err := c.ShouldBindJSON(&param); err == nil {
 		param.Filter = "start"
-		//if param.Filter != "all" && param.Filter != "start" && param.Filter != "end" {
-		//	mid.ReturnValidateError(c, "filter must in [all,start,end]")
-		//	return
-		//}
 		err, result := db.QueryHistoryAlarm(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
