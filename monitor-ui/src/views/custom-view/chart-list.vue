@@ -248,7 +248,7 @@ export default {
 
           fixed: 'right',
           render: (h, params) => (params.row.permission === 'mgmt'
-            ? (<div style="display:flex;justify-content:space-around;">
+            ? (<div style="display:flex;justify-content:flex-start;">
               <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
                 <Icon type="md-create" size="16"></Icon>
               </Button>
