@@ -20,7 +20,6 @@
       </Col>
       <Col :span="16">
       <div class="btn-group">
-        <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
         <Button
           type="info"
           @click.stop="exportData"
@@ -58,24 +57,26 @@
       </div>
     </Modal>
     <AddGroupDrawer
-      v-if="addVisible && metricType === 'originalMetrics'"
+      v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :serviceGroup="serviceGroup"
       :data="row"
       :operator="type"
-      @fetchList="getList()"
+      :viewOnly="viewOnly"
+      @fetchList="reloadData('originalMetrics')"
     ></AddGroupDrawer>
     <YearOverYear
       ref="yearOverYearRef"
-      v-if="addVisible && metricType === 'comparisonMetrics'"
+      v-if="addVisible && showDrawer === 'comparisonMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :originalMetricsId="originalMetricsId"
       :serviceGroup="serviceGroup"
       :data="row"
       :operator="type"
-      @fetchList="getList()"
+      :viewOnly="viewOnly"
+      @fetchList="reloadData('comparisonMetrics')"
     ></YearOverYear>
   </div>
 </template>
@@ -87,13 +88,11 @@ import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
 import AddGroupDrawer from './components/add-group.vue'
 import YearOverYear from './components/year-over-year.vue'
-import MetricChange from './components/metric-change.vue'
 export default {
   components: {
     TagShow,
     AddGroupDrawer,
-    YearOverYear,
-    MetricChange
+    YearOverYear
   },
   data() {
     return {
@@ -244,7 +243,7 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 140,
+          width: 170,
           fixed: 'right',
           render: (h, params) => (
             <div style="display:flex;justify-content:center;">
@@ -265,13 +264,26 @@ export default {
                   </Tooltip>
               }
               {
+                /* 查看 */
+                <Tooltip content={this.$t('m_button_view')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="info"
+                    onClick={() => this.handleEdit(params.row, true)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="ios-eye" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              }
+              {
                 /* 编辑 */
                 <Tooltip content={this.$t('m_button_edit')} placement="bottom" transfer>
                   <Button
                     size="small"
                     type="primary"
                     onClick={() => {
-                      this.handleEdit(params.row)
+                      this.handleEdit(params.row, false)
                     }}
                     style="margin-right:5px;"
                   >
@@ -307,7 +319,9 @@ export default {
       type: '', // add、edit
       addVisible: false,
       deleteVisible: false,
-      originalMetricsId: ''
+      originalMetricsId: '',
+      showDrawer: '', // 控制显示抽屉的类型
+      viewOnly: false, // 仅查看
     }
   },
   computed: {
@@ -347,6 +361,18 @@ export default {
         },
         { isNeedloading: true }
       )
+      this.getMetricTotalNumber()
+    },
+    getMetricTotalNumber() {
+      const params = {
+        monitorType: this.monitorType,
+        onlyService: 'Y',
+        serviceGroup: this.serviceGroup
+      }
+      const api = '/monitor/api/v2/monitor/metric/list/count'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
+        this.$emit('totalCount', response, this.metricType)
+      }, {isNeedloading: false})
     },
     getRecursiveList() {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/group'
@@ -421,12 +447,15 @@ export default {
       this.$Message.warning(file.message)
     },
     handleAdd() {
+      this.showDrawer = this.metricType
       this.type = 'add'
       this.addVisible = true
       this.originalMetricsId = ''
     },
-    handleEdit(row) {
+    handleEdit(row, viewOnly) {
+      this.showDrawer = this.metricType
       this.type = 'edit'
+      this.viewOnly = viewOnly
       this.row = row
       this.addVisible = true
     },
@@ -448,11 +477,10 @@ export default {
     },
     // 同环比入口
     handleAddYearOverYear(row) {
-      this.metricType = 'comparisonMetrics'
+      this.showDrawer = 'comparisonMetrics'
       this.addVisible = true
       this.type = 'add'
       this.originalMetricsId = row.guid
-      this.$refs.metricChangeRef.metricTypeChange(this.metricType)
     },
   }
 }

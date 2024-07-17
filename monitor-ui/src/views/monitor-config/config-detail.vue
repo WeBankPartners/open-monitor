@@ -811,7 +811,7 @@ export default {
         showBtn: true,
         result: {
           role: !val.notify_roles || val.notify_roles.length === 0 ? '-' : val.notify_roles.join(';'),
-          arrange: (!val.proc_callback_name && !val.proc_callback_mode) ? '-' : val.proc_callback_name + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
+          arrange: (!val.proc_callback_name && !val.proc_callback_mode) ? '-' : (val.proc_callback_name ? val.proc_callback_name : '-') + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
           description: val.description || '-'
         }
       }
