@@ -19,24 +19,23 @@
       </Select>
       </Col>
       <Col :span="16">
-      <div class="btn-group">
-        <MetricChange ref="metricChangeRef" @reloadData="reloadData" ></MetricChange>
-      </div>
       </Col>
     </Row>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
     <AddGroupDrawer
-      v-if="addVisible && metricType === 'originalMetrics'"
+      v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :endpoint_group="endpoint"
-      :serviceGroup="serviceGroup"
+      serviceGroup="test"
       :data="row"
       operator="edit"
+      :viewOnly="viewOnly"
+      :isObject="true"
     ></AddGroupDrawer>
     <YearOverYear
       ref="yearOverYearRef"
-      v-if="addVisible && metricType === 'comparisonMetrics'"
+      v-if="addVisible && showDrawer === 'comparisonMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :originalMetricsId="originalMetricsId"
@@ -44,6 +43,8 @@
       :data="row"
       operator="edit"
       :endpointGroup="endpoint"
+      :viewOnly="viewOnly"
+      :isObject="true"
     ></YearOverYear>
   </div>
 </template>
@@ -53,11 +54,9 @@ import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
 import AddGroupDrawer from './components/add-group.vue'
 import YearOverYear from './components/year-over-year.vue'
-import MetricChange from './components/metric-change.vue'
 export default {
   components: {
     TagShow,
-    MetricChange,
     AddGroupDrawer,
     YearOverYear
   },
@@ -65,7 +64,7 @@ export default {
     return {
       metricType: 'originalMetrics', // 原始指标originalMetrics、同环比指标comparisonMetrics
       token: null,
-      monitorType: '',
+      monitorType: 'process',
       serviceGroup: '',
       endpoint: '',
       endpointOptions: [],
@@ -246,34 +245,30 @@ export default {
           render: (h, params) => <span>{params.row.update_user || '-'}</span>,
           showType: ['originalMetrics', 'comparisonMetrics']
         },
-        // {
-        //   title: this.$t('m_table_action'),
-        //   key: 'action',
-        //   width: 100,
-        //   fixed: 'right',
-        //   render: (h, params) => {
-        //     return (
-        //       <div style="display:flex;">
-        //          {
-        //           /* 查看 */
-        //           <Tooltip content={this.$t('m_button_view')} placement="bottom" transfer>
-        //             <Button
-        //               size="small"
-        //               type="info"
-        //               onClick={() => {
-        //                 this.showConfigModal(params.row)
-        //               }}
-        //               style="margin-right:5px;"
-        //             >
-        //               <Icon type="md-eye" size="16"></Icon>
-        //             </Button>
-        //           </Tooltip>
-        //         }
-        //       </div>
-        //     )
-        //   },
-        //   showType: ['originalMetrics', 'comparisonMetrics']
-        // }
+        {
+          title: this.$t('m_table_action'),
+          key: 'action',
+          width: 100,
+          fixed: 'right',
+          render: (h, params) => (
+            <div style="display:flex;">
+              {
+                /* 查看 */
+                <Tooltip content={this.$t('m_button_view')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="info"
+                    onClick={() => this.handleEdit(params.row, true)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="ios-eye" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              }
+            </div>
+          ),
+          showType: ['originalMetrics', 'comparisonMetrics']
+        }
       ],
       workspaceMap: {
         all_object: this.$t('m_all_object'), // 全部对象
@@ -281,6 +276,9 @@ export default {
       },
       row: {},
       addVisible: false, // 是否显示查看
+      originalMetricsId: '',
+      showDrawer: '', // 控制显示抽屉的类型
+      viewOnly: false, // 仅查看
     }
   },
   async mounted() {
@@ -313,6 +311,16 @@ export default {
         },
         { isNeedloading: true }
       )
+      this.getMetricTotalNumber()
+    },
+    getMetricTotalNumber() {
+      const params = {
+        endpoint: this.endpoint
+      }
+      const api = '/monitor/api/v2/monitor/metric/list/count'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
+        this.$emit('totalCount', response, this.metricType)
+      }, {isNeedloading: false})
     },
     getEndpointList() {
       const api = '/monitor/api/v1/alarm/endpoint/list'
@@ -331,12 +339,13 @@ export default {
         { isNeedloading: false }
       )
     },
-    showConfigModal(row) {
+    handleEdit(row, viewOnly) {
+      this.showDrawer = this.metricType
+      this.type = 'edit'
+      this.viewOnly = viewOnly
       this.row = row
-      this.originalMetricsId = row.guid
-      this.monitorType = row.monitor_type
       this.addVisible = true
-    }
+    },
   }
 }
 </script>
