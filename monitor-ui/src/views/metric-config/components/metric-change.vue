@@ -1,10 +1,10 @@
 <template>
   <div class="btn-group-custom">
     <div class="btn-group-item" @click="metricTypeChange('originalMetrics')" :class="{'active-metric-type': metricType === 'originalMetrics'}">
-      {{ $t('m_original_metric') }}
+      {{ $t('m_original_metric') }}({{ count }})
     </div>
     <div class="btn-group-item" @click="metricTypeChange('comparisonMetrics')" :class="{'active-metric-type': metricType === 'comparisonMetrics'}">
-      {{ $t('m_year_over_year_metrics') }}
+      {{ $t('m_year_over_year_metrics') }}({{ comparisonCount }})
     </div>
   </div>
 </template>
@@ -14,12 +14,20 @@ export default {
   data() {
     return {
       metricType: 'originalMetrics',
+      count: 0,
+      comparisonCount: 0
     }
   },
   methods: {
     metricTypeChange(type) {
       this.metricType = type
       this.$emit('reloadData', this.metricType)
+    },
+    setTotalCount(totalCount, currentMetric) {
+      this.metricType = currentMetric
+      const { count, comparisonCount } = totalCount
+      this.count = count || 0
+      this.comparisonCount = comparisonCount || 0
     }
   }
 }
