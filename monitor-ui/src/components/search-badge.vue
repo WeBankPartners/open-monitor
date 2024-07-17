@@ -96,6 +96,7 @@ export default ({
   },
   mounted(){
     this.getFilterAllOptions()
+    document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
   },
   methods: {
     getFilterAllOptions() {
