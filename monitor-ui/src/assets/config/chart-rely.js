@@ -163,6 +163,7 @@ export const drawChart = function (that,config,userConfig, elId) {
   if (finalConfig.params && finalConfig.params.lineType === 2) {
     isTwoYaxes = true
   }
+  const minMax = mgmtYAxesMinMax(config.series)
   const option = {
     backgroundColor: '#f5f7f9',
     title: {
@@ -280,6 +281,8 @@ export const drawChart = function (that,config,userConfig, elId) {
         type: 'value',
         name: isTwoYaxes ? that.$t('m_difference') : '',
         alignTicks: true,
+        max: minMax.y1Max,
+        min: minMax.y1Min,
         axisLabel: {
           textStyle: {
             color: chartTextColor
@@ -330,6 +333,8 @@ export const drawChart = function (that,config,userConfig, elId) {
       {
         type: 'value',
         name: isTwoYaxes ? that.$t('m_percentage_difference') : '',
+        max: minMax.y2Max,
+        min: minMax.y2Min,
         axisLabel: {
           textStyle: {
             color: chartTextColor
@@ -467,4 +472,65 @@ export const drawPieChart = function (that, responseData) {
   const myChart = echarts.init(document.getElementById(that.elId))
   myChart.resize()
   myChart.setOption(option)
+}
+
+const mgmtYAxesMinMax = function (series) {
+  const { maxValue: max1 = 1, minValue: min1 } = findMinMaxForYAxisIndexOne(series, 0)
+  const { maxValue: max2, minValue: min2 } = findMinMaxForYAxisIndexOne(series, 1)
+  if (min1 >= 0 || min2 >= 0) {
+    return false
+  }
+  const ratio = (max1 - min1) / (max2 - min2)
+  const minMax = {}
+  if (max1 < max2 * ratio) {
+    minMax.y1Max = max2 * ratio
+    minMax.y2Max = max2
+  }
+  else {
+    minMax.y1Max = max1
+    minMax.y2Max = max1 / ratio
+  }
+  if (min1 < min2 * ratio) {
+    minMax.y1Min = min1
+    minMax.y2Min = min1 / ratio
+  }
+  else {
+    minMax.y1Min = min2 * ratio
+    minMax.y2Min = min2
+  }
+  minMax.y1Min = (minMax.y1Min * 1.5).toFixed(2)
+  minMax.y2Min = (minMax.y2Min * 1.5).toFixed(2)
+  minMax.y1Max = (minMax.y1Max * 1.5).toFixed(2)
+  minMax.y2Max = (minMax.y2Max * 1.5).toFixed(2)
+  return minMax
+}
+
+const findMinMaxForYAxisIndexOne = function (data, yAxisIndex) {
+  // 过滤出 yAxisIndex 为 1 的数据系列
+  const yAxisIndexOneSeries = data.filter(series => series.yAxisIndex === yAxisIndex)
+
+  // 初始化最大值和最小值变量
+  let maxValue = 1
+  let minValue = 0
+
+  // 遍历所有符合条件的数据系列
+  yAxisIndexOneSeries.forEach(series => {
+    // 获取该系列的数据点
+    const values = series.data
+
+    // 遍历数据点，更新最大值和最小值
+    values.forEach(value => {
+      if (value[1] > maxValue) {
+        maxValue = value[1]
+      }
+      if (value[1] < minValue) {
+        minValue = value[1]
+      }
+    })
+  })
+
+  return {
+    maxValue,
+    minValue
+  }
 }
