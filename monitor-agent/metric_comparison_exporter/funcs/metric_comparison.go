@@ -159,6 +159,9 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
+		if metricComparison.OriginPromExpr == "" {
+			continue
+		}
 		now := time.Now()
 		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
@@ -343,6 +346,10 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 	urlParams.Set("step", "10")
 	urlParams.Set("query", param.PromQl)
 	requestUrl.RawQuery = urlParams.Encode()
+	if param == nil || strings.TrimSpace(param.PromQl) == "" {
+		err = fmt.Errorf("promQl is empty")
+		return
+	}
 	if resByteArr, err = rpc.HttpGet(requestUrl.String()); err != nil {
 		return
 	}
