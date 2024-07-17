@@ -431,6 +431,15 @@ func GetSimpleMetric(metricId string) (metricRow *models.MetricTable, err error)
 	return
 }
 
+func GetOriginMetricByComparisonId(metricId string) (metricRow *models.MetricTable, err error) {
+	var metricList []*models.MetricTable
+	err = x.SQL("select * from metric where guid in (select origin_metric_id from metric_comparison where metric_id = ?)", metricId).Find(&metricList)
+	if len(metricList) > 0 {
+		metricRow = metricList[0]
+	}
+	return
+}
+
 func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 	if metricRow == nil {
 		return
@@ -518,6 +527,34 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	now := time.Now().Format(models.DatetimeFormat)
 	metricName = getComparisonMetric(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
 	promExpr = NewPromExpr(metricName)
+	if metric.ServiceGroup != "" && strings.Contains(metric.PromExpr, "service_group=\""+metric.ServiceGroup+"\"") {
+		promExpr = promExpr + "{service_group=\"" + metric.ServiceGroup + "\"}"
+	}
+	if strings.Contains(metric.PromExpr, "instance=\"$address\"") {
+		if strings.Contains(promExpr, "{") {
+			promExpr = promExpr[:len(promExpr)-1] + ",e_guid=\"$guid\"}"
+		} else {
+			promExpr = promExpr + "{e_guid=\"$guid\"}"
+		}
+	}
+	tagParamList := getPromTagParamList(metric.PromExpr)
+	if len(tagParamList) > 0 {
+		for _, v := range tagParamList {
+			if strings.HasPrefix(v, "$t_") {
+				if strings.Contains(promExpr, "{") {
+					promExpr = promExpr[:len(promExpr)-1] + "," + v[3:] + "=\"" + v + "\"}"
+				} else {
+					promExpr = promExpr + "{" + v[3:] + "=\"" + v + "\"}"
+				}
+			}
+		}
+	}
+	if strings.Contains(promExpr, "{") {
+		promExpr = promExpr[:len(promExpr)-1] + ",calc_type=\"$t_calc_type\"}"
+	} else {
+		promExpr = promExpr + "{calc_type=\"$t_calc_type\"}"
+	}
+
 	if metric.ServiceGroup == "" {
 		if metric.EndpointGroup == "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -581,6 +618,7 @@ func getComparisonMetric(metric, comparisonType, calcMethod string, calcPeriod i
 	if comparisonType == "" {
 		return ""
 	}
+	metric = strings.ReplaceAll(metric, ".", "_")
 	return metric + "__" + comparisonType[0:1] + "_" + calcMethod + "_" + fmt.Sprintf("%d", calcPeriod)
 }
 
