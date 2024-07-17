@@ -456,15 +456,17 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		metricFilterList = append(metricFilterList, query.SMetric)
 	}
 	if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(endpointFilterList, "")
+		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
 		whereSql += " and s_metric in (" + metricFilterSql + ") "
 		params = append(params, metricFilterParam...)
 	}
 	if query.AlarmName != "" {
 		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+	}
+	if len(alarmNameFilterList) > 0 {
 		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
 		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
-		params = append(params, append(params, alarmNameFilterParam...)...)
+		params = append(append(params, alarmNameFilterParam...), alarmNameFilterParam...)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -1345,7 +1347,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 
 func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
-	alarmQuery := []*m.AlarmProblemQuery{}
+	var alarmQuery []*m.AlarmProblemQuery
 	err = x.SQL(sql, params...).Find(&alarmQuery)
 	if len(alarmQuery) > 0 {
 		//var logMonitorStrategyIds []string
@@ -1404,7 +1406,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 	if page != nil && page.PageSize > 0 {
 		si := (page.StartIndex - 1) * page.PageSize
 		ei := page.StartIndex*page.PageSize - 1
-		pageResult := []*m.AlarmProblemQuery{}
+		var pageResult []*m.AlarmProblemQuery
 		for i, v := range alarmQuery {
 			if i >= si && i <= ei {
 				pageResult = append(pageResult, v)
@@ -1473,14 +1475,17 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		return fmt.Errorf("param start or end format fail"), result
 	}
 	var sql, whereSql string
-	if param.Endpoint != "" {
-		whereSql += fmt.Sprintf(" AND endpoint='%s' ", param.Endpoint)
+	if len(param.Endpoint) > 0 {
+		whereSql += fmt.Sprintf(" AND endpoint in ('" + strings.Join(param.Endpoint, "','") + "') ")
 	}
 	if param.Priority != "" {
 		whereSql += fmt.Sprintf(" AND s_priority='%s' ", param.Priority)
 	}
-	if param.Metric != "" {
-		whereSql += fmt.Sprintf(" AND s_metric='%s' ", param.Metric)
+	if len(param.Metric) > 0 {
+		whereSql += fmt.Sprintf(" AND s_metric in ('" + strings.Join(param.Metric, "','") + "') ")
+	}
+	if len(param.AlarmName) > 0 {
+		whereSql += fmt.Sprintf(" AND alarm_name in ('" + strings.Join(param.AlarmName, "','") + "') ")
 	}
 	if param.Filter == "all" {
 		sql = "SELECT * FROM alarm WHERE (start<='" + endString + "' OR end>='" + startString + "') " + whereSql + " ORDER BY id DESC"
@@ -1495,8 +1500,15 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		param.Page = &m.PageInfo{}
 	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
-	if param.Metric != "" && param.Metric != "custom" {
-		customQueryParam.Enable = false
+	if len(param.Metric) > 0 {
+		for _, s := range param.Metric {
+			if s != "custom" {
+				customQueryParam.Enable = false
+				break
+			}
+		}
+	} else {
+		customQueryParam.Enable = true
 	}
 	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam, param.Page)
 	return err, result
