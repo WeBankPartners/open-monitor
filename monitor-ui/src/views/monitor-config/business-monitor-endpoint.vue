@@ -9,6 +9,12 @@
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
         </div>
+        <div class="database-title">
+          <div class="use-underline-title">
+            {{$t('m_log_file')}}
+            <span class="underline"></span>
+          </div>
+        </div>
         <Collapse v-model="item.logFileCollapseValue">
           <Panel v-for="(item, index) in item.config"
                  :key="index"
@@ -40,6 +46,18 @@
           </Panel>
         </Collapse>
       </div>
+
+      <div class="database-title">
+        <div class="use-underline-title">
+          {{$t('m_db')}}
+          <span class="underline"></span>
+        </div>
+      </div>
+      <Table
+        size="small"
+        :columns="dataBaseTableColumns"
+        :data="dataBaseTableData"
+      />
     </section>
     <Modal
       v-model="ruleModelConfig.isShow"
@@ -137,15 +155,6 @@
         <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </ModalComponent>
-    <!-- DB config -->
-    <section v-if="showDbManagement" style="margin-top: 16px;">
-      <Tag size="medium" color="blue">{{$t('m_db')}}</Tag>
-      <Table
-        size="small"
-        :columns="dataBaseTableColumns"
-        :data="dataBaseTableData"
-      />
-    </section>
     <Modal
       v-model="dbModelConfig.isShow"
       :title="$t('m_db')"
@@ -482,7 +491,6 @@ export default {
     getDbDetail(targetId) {
       const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + targetId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        // this.pageDbConfig.table.tableData = responseData;
         this.dataBaseTableData = responseData
         this.showDbManagement = true
       }, {isNeedloading: false})
@@ -567,10 +575,7 @@ export default {
       this.showManagement = false
       this.showDbManagement = false
       this.targrtId = targrtId
-      if (this.targrtId.endsWith('_mysql')) {
-        this.getDbDetail(targrtId)
-        return
-      }
+      this.getDbDetail(targrtId)
       const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
 
@@ -638,6 +643,15 @@ export default {
     .underline {
       margin-top: -12px;
     }
+  }
+}
+
+.database-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px 0;
+  .underline {
+    margin-top: -10px
   }
 }
 </style>
