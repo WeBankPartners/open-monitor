@@ -229,20 +229,32 @@ func QueryMetricTagValue(c *gin.Context) {
 		return
 	}
 	var endpointObj models.EndpointNewTable
-	if param.Endpoint != "" {
+	if param.Endpoint != "" && param.Endpoint != param.ServiceGroup {
 		endpointObj, _ = db.GetEndpointNew(&models.EndpointNewTable{Guid: param.Endpoint})
+	} else if param.ServiceGroup != "" {
+		endpointList, getEndpointListErr := db.GetRecursiveEndpointByTypeNew(param.ServiceGroup, metricRow.MonitorType)
+		if getEndpointListErr != nil {
+			err = fmt.Errorf("Try to get endpoints from object:%s fail,%s ", param.ServiceGroup, getEndpointListErr.Error())
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if len(endpointList) > 0 {
+			endpointObj = *endpointList[0]
+		}
 	}
 	if endpointObj.AgentAddress == "" {
 		endpointObj.AgentAddress = ".*"
 	}
 	metricRow.PromExpr = db.ReplacePromQlKeyword(metricRow.PromExpr, "", &endpointObj, []*models.TagDto{})
 	// 查标签值
+	log.Logger.Debug("QueryPromSeries start", log.String("promExpr", metricRow.PromExpr))
 	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
 	if getSeriesErr != nil {
 		err = fmt.Errorf("query prom series fail,%s ", getSeriesErr)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	log.Logger.Debug("QueryPromSeries end", log.JsonObj("result", seriesMapList))
 	for _, v := range tagList {
 		tmpValueList := []string{}
 		tmpValueDistinctMap := make(map[string]int)
