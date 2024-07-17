@@ -70,3 +70,5 @@ alter table endpoint_group add column create_user varchar(64) default null COMME
 alter table endpoint_group add column update_user varchar(64) default null COMMENT '更新人';
 
 alter table role ADD UNIQUE (name);
+
+alter table log_metric_string_map modify column log_metric_config varchar(64) default null;
