@@ -14,12 +14,12 @@
       </div>
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">
         <Form :label-width="110" label-position="left">
-          <FormItem :label="$t('m_metric')" v-if="operator === 'edit'" required>
+          <FormItem :label="$t('m_metric')" v-if="operator === 'edit' || viewOnly" required>
             <Input disabled v-model="metricConfigData.guid"/>
           </FormItem>
           <!--原始指标-->
           <FormItem :label="$t('m_original_metric_key')" required>
-            <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit'" :transfer="true" @on-change="getMetricType">
+            <Select filterable v-model="metricConfigData.metricId" :disabled="operator === 'edit' || viewOnly" :transfer="true" @on-change="getMetricType">
               <Option v-for="item in metricList" :value="item.guid" :key="item.guid">{{ item.metric }}</Option>
             </Select>
           </FormItem>
@@ -44,17 +44,17 @@
           <!-- 计算数值 -->
           <FormItem :label="$t('m_calc_value')" required>
             <CheckboxGroup v-model="metricConfigData.calcType" @on-change="getChartData">
-              <Checkbox label="diff">
+              <Checkbox label="diff" :disabled="viewOnly">
                 <span>{{ $t('m_difference') }}</span>
               </Checkbox>
-              <Checkbox label="diff_percent">
+              <Checkbox label="diff_percent" :disabled="viewOnly">
                 <span>{{ $t('m_percentage_difference') }}</span>
               </Checkbox>
             </CheckboxGroup>
           </FormItem>
           <!--计算方法-->
           <FormItem :label="$t('m_calc_method')" required>
-            <Select filterable v-model="metricConfigData.calcMethod" @on-change="getChartData" :disabled="operator === 'edit'" :transfer="true">
+            <Select filterable v-model="metricConfigData.calcMethod" @on-change="getChartData" :disabled="operator === 'edit' || viewOnly" :transfer="true">
               <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
@@ -62,7 +62,7 @@
           <FormItem :label="$t('m_calculation_period')" required>
             <Select
               filterable
-              :disabled="operator === 'edit'"
+              :disabled="operator === 'edit' || viewOnly"
               @on-change="getChartData"
               v-model="metricConfigData.calcPeriod"
             >
@@ -88,7 +88,7 @@
       </div>
       <div class="drawer-footer">
         <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
-        <Button type="primary" class="primary" :disabled="metricConfigData.metricId === '' || metricConfigData.calcType.length === 0" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
+        <Button type="primary" class="primary" :disabled="metricConfigData.metricId === '' || metricConfigData.calcType.length === 0 || viewOnly" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
@@ -126,10 +126,19 @@ export default {
       type: String,
       default: ''
     },
+    // 仅查看
+    viewOnly: {
+      type: Boolean,
+      default: false
+    },
     endpointGroup: {
       type: String,
       default: ''
     },
+    isObject: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -211,11 +220,16 @@ export default {
   methods: {
     // 获取原始指标列表
     async getMetricList() {
-      const params = {
+      let params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
         serviceGroup: this.serviceGroup,
         endpointGroup: this.endpointGroup
+      }
+      if (this.isObject) {
+        params = {
+          guid: this.data.metricId
+        }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
         this.metricList = responseData
@@ -249,10 +263,33 @@ export default {
     },
     // 获取预览对象列表
     getEndpoint() {
-      const params = {
-        type: this.monitorType,
-        serviceGroup: this.serviceGroup,
-        endpointGroup: this.endpointGroup
+      let params = {
+        type: this.monitorType, // 基础类型
+        serviceGroup: this.serviceGroup, // 层级对象
+        endpointGroup: this.endpointGroup // 组
+      }
+      if (this.isObject) {
+        if (this.data.group_type === 'level') {
+          params = {
+            type: 'process',
+            serviceGroup: this.data.service_group,
+            endpointGroup: ''
+          }
+        }
+        else if (this.data.group_type === 'system') {
+          params = {
+            type: this.data.group_name,
+            serviceGroup: '',
+            endpointGroup: ''
+          }
+        }
+        else if (this.data.group_type === 'object') {
+          params = {
+            type: 'process',
+            serviceGroup: '',
+            endpointGroup: this.data.endpoint_group
+          }
+        }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',

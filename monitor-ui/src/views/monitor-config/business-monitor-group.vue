@@ -13,7 +13,7 @@
               class="btn-left"
               @click="exportData"
             >
-              <img src="../../assets/img/export.png" class="btn-img" alt="" />
+              <img src="../../assets/img/import.png" class="btn-img" alt="" />
               {{ $t('m_export') }}
             </Button>
             <div style="display: inline-block;margin-bottom: 3px;">
@@ -27,7 +27,7 @@
                 :on-error="uploadFailed"
               >
                 <Button type="primary" class="btn-left">
-                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                  <img src="../../assets/img/export.png" class="btn-img" alt="" />
                   {{ $t('m_import') }}
                 </Button>
               </Upload>
@@ -63,7 +63,7 @@
                 </Button>
               </Tooltip>
               <Dropdown
-                placement="left"
+                placement="left-start"
                 :key="index"
                 class="chart-option-menu"
                 @on-click="(guid) => {
