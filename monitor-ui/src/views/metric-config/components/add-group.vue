@@ -17,21 +17,21 @@
           <!--名称-->
           <FormItem :label="$t('m_metric_key')" required>
             <Input
-              :disabled="operator === 'edit'"
+              :disabled="operator === 'edit' || viewOnly"
               v-model="metricConfigData.metric"
               :placeholder="$t('m_metric_key_placeholder_second')"
             ></Input>
           </FormItem>
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
-            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business'" @on-change="changeWorkspace">
+            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-change="changeWorkspace">
               <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
             </Select>
           </FormItem>
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
-            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business'" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business' || viewOnly" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
               <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
             </Select>
           </FormItem>
@@ -43,7 +43,7 @@
                 v-model="param.value"
                 @on-open-change="getCollectedMetric"
                 @on-change="changeCollectedMetric(param)"
-                :disabled="metricConfigData.metric_type === 'business'"
+                :disabled="metricConfigData.metric_type === 'business' || viewOnly"
                 filterable
                 :key="param.label"
                 :placeholder="param.label"
@@ -62,7 +62,7 @@
           </FormItem>
           <!--表达式-->
           <FormItem :label="$t('m_field_metric')" required>
-            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
+            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business' || viewOnly" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + ' ' + $t('m_endpoint')">
@@ -76,7 +76,7 @@
       </div>
       <div class="drawer-footer">
         <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
-        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
+        <Button type="primary" class="primary" :disabled="viewOnly" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
@@ -109,10 +109,19 @@ export default {
       type: String,
       default: 'add'
     },
+    // 仅查看
+    viewOnly: {
+      type: Boolean,
+      default: false
+    },
     endpoint_group: {
       type: String,
       default: ''
     },
+    isObject: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -245,10 +254,33 @@ export default {
     },
     // 获取预览对象列表
     getEndpoint() {
-      const params = {
+      let params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup,
         endpointGroup: this.endpoint_group
+      }
+      if (this.isObject) {
+        if (this.data.group_type === 'level') {
+          params = {
+            type: 'process',
+            serviceGroup: this.data.service_group,
+            endpointGroup: ''
+          }
+        }
+        else if (this.data.group_type === 'system') {
+          params = {
+            type: this.data.group_name,
+            serviceGroup: '',
+            endpointGroup: ''
+          }
+        }
+        else if (this.data.group_type === 'object') {
+          params = {
+            type: 'process',
+            serviceGroup: '',
+            endpointGroup: this.data.endpoint_group
+          }
+        }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
