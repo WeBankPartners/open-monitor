@@ -270,7 +270,6 @@ export default {
                   <Button
                     size="small"
                     type="primary"
-                    disabled={params.row.metric_type!=='custom'}
                     onClick={() => {
                       this.handleEdit(params.row)
                     }}
@@ -286,7 +285,6 @@ export default {
                   <Button
                     size="small"
                     type="error"
-                    disabled={params.row.metric_type!=='custom'}
                     onClick={() => {
                       this.handleDelete(params.row)
                     }}
