@@ -301,6 +301,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			metricLegend = "$custom_with_tag"
 		}
 		serviceTags := []string{}
+		calcServiceGroupAll := false
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
 			serviceGroupTag = fmt.Sprintf("service_group=\"%s\"", dataConfig.AppObject)
@@ -312,7 +313,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			if len(endpointList) == 0 {
 				continue
 			}
-			param.Data[0].Endpoint = endpointList[0].Guid
+			//param.Data[0].Endpoint = endpointList[0].Guid
 			log.Logger.Debug("getChartConfigByCustom", log.String("app", dataConfig.AppObject), log.String("metric", dataConfig.Metric))
 			isServiceMetric, tmpTags, tmpErr := db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject)
 			if tmpErr != nil {
@@ -323,6 +324,17 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				serviceTags = tmpTags
 				log.Logger.Debug("getChartConfigByCustom $app_metric")
 				metricLegend = "$app_metric"
+			}
+			if dataConfig.Endpoint != "" {
+				if dataConfig.Endpoint == dataConfig.AppObject {
+					endpointList = endpointList[:1]
+					calcServiceGroupAll = true
+				} else {
+					endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+					if endpointObj.MonitorType != "" {
+						endpointList = []*models.EndpointNewTable{&endpointObj}
+					}
+				}
 			}
 		} else {
 			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
@@ -358,19 +370,19 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		}
 		//queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
+			log.Logger.Debug("GetChartConfigByCustom use app metric query", log.JsonObj("config", dataConfig))
+			tmpEndpointGuid := endpointList[0].Guid
+			if calcServiceGroupAll {
+				tmpEndpointGuid = dataConfig.AppObject
+			}
 			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{tmpEndpointGuid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
 			continue
-			//log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
-			//if tmpPromQL == dataConfig.PromQl {
-			//	queryAppendFlag = true
-			//	log.Logger.Debug("prom is same")
-			//	queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
-			//}
 		}
+		log.Logger.Debug("GetChartConfigByCustom use endpoint query", log.JsonObj("config", dataConfig))
 		for _, endpoint := range endpointList {
 			tmpPromQL := dataConfig.PromQl
-			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
+			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) && !calcServiceGroupAll {
 				tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
 				if strings.Contains(tmpPromQL, "service_group,") {
 					tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance,")
@@ -380,8 +392,12 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				}
 				log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
 			}
+			tmpEndpointGuid := endpoint.Guid
+			if calcServiceGroupAll {
+				tmpEndpointGuid = dataConfig.AppObject
+			}
 			tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint, dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{tmpEndpointGuid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 		}
 	}
 	return
