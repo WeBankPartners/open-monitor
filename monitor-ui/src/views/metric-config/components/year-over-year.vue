@@ -105,11 +105,15 @@ export default {
       type: Boolean,
       default: false
     },
-    monitorType: {
+    monitorType: { // 基础类型关键参数，其他类型传process
       type: String,
       default: ''
     },
-    serviceGroup: {
+    serviceGroup: { // 层级对象关键参数
+      type: String,
+      default: ''
+    },
+    endpointGroup: { // 组关键参数
       type: String,
       default: ''
     },
@@ -131,11 +135,7 @@ export default {
       type: Boolean,
       default: false
     },
-    endpointGroup: {
-      type: String,
-      default: ''
-    },
-    isObject: {
+    isObject: { // 对象标志
       type: Boolean,
       default: false
     }
@@ -226,6 +226,7 @@ export default {
         serviceGroup: this.serviceGroup,
         endpointGroup: this.endpointGroup
       }
+      // 对象类型查看使用特殊入参
       if (this.isObject) {
         params = {
           guid: this.data.metricId
@@ -268,6 +269,7 @@ export default {
         serviceGroup: this.serviceGroup, // 层级对象
         endpointGroup: this.endpointGroup // 组
       }
+      // 对象预览根据类型传参获取预览对象列表
       if (this.isObject) {
         if (this.data.group_type === 'level') {
           params = {
@@ -354,6 +356,7 @@ export default {
         responseData => {
           // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
           const chartConfig = {
+            clear: true,
             eye: false,
             dataZoom: false,
             lineBarSwitch: true,
