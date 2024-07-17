@@ -1,30 +1,34 @@
 <template>
   <div>
-    <Modal v-model="flowRoleManageModal" width="700" :title="$t('m_role_drawer_title')" :mask-closable="false">
+    <Modal v-model="flowRoleManageModal" width="800" :title="$t('m_role_drawer_title')" :mask-closable="false">
       <div>
         <slot name="content-top"></slot>
         <div class="role-transfer-title">{{ $t('m_mgmt_role') }}</div>
-        <Transfer
-          :titles="transferTitles"
-          :list-style="transferStyle"
-          :data="currentUserRoles"
-          :target-keys="mgmtRolesKeyToFlow"
-          :render-format="renderRoleNameForTransfer"
-          @on-change="handleMgmtRoleTransferChange"
-          filterable
-        ></Transfer>
+        <div class="role-transfer-content">
+          <Transfer
+            :titles="transferTitles"
+            :list-style="transferStyle"
+            :data="currentUserRoles"
+            :target-keys="mgmtRolesKeyToFlow"
+            :render-format="renderRoleNameForTransfer"
+            @on-change="handleMgmtRoleTransferChange"
+            filterable
+          ></Transfer>
+        </div>
       </div>
       <div style="margin-top: 30px">
         <div class="role-transfer-title">{{ $t('m_use_role') }}</div>
-        <Transfer
-          :titles="transferTitles"
-          :list-style="transferStyle"
-          :data="allRoles"
-          :target-keys="useRolesKeyToFlow"
-          :render-format="renderRoleNameForTransfer"
-          @on-change="handleUseRoleTransferChange"
-          filterable
-        ></Transfer>
+        <div class="role-transfer-content">
+          <Transfer
+            :titles="transferTitles"
+            :list-style="transferStyle"
+            :data="allRoles"
+            :target-keys="useRolesKeyToFlow"
+            :render-format="renderRoleNameForTransfer"
+            @on-change="handleUseRoleTransferChange"
+            filterable
+          ></Transfer>
+        </div>
       </div>
       <div slot="footer">
         <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
@@ -92,3 +96,10 @@ export default {
   }
 }
 </script>
+
+<style lang="less" scoped>
+.role-transfer-content {
+  display: flex;
+  justify-content: center
+}
+</style>
