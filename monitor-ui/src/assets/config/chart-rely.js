@@ -17,6 +17,8 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
+    const myChart = elId && echarts.init(document.getElementById(elId))
+    myChart && myChart.clear()
     return
   }
   let metricToColor = []
@@ -49,7 +51,6 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
       }
       metricToColor = metricToColor.concat(item.metricToColor)
     })
-
     // 处理在最初没数据，后面来数据 metricToColor 为空时的指标颜色处理
     if (isHostOrSys) {
       responseData.series.forEach((item, itemIndex) => {
@@ -86,7 +87,6 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
       })
     }
   }
-
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   const colorSet = []
   for (let i=0; i < colorX.length; i++) {
