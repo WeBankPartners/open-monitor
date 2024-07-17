@@ -190,6 +190,7 @@ func ImportMetric(c *gin.Context) {
 
 func QueryMetricTagValue(c *gin.Context) {
 	var param models.QueryMetricTagParam
+	var orginMetricRow *models.MetricTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -206,7 +207,18 @@ func QueryMetricTagValue(c *gin.Context) {
 		return
 	}
 	var tagList []string
-	tagList, err = db.GetMetricTags(metricRow)
+	// 如果是同环比指标需要用原始指标进去查询
+	if orginMetricRow, err = db.GetOriginMetricByComparisonId(param.MetricId); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if orginMetricRow != nil {
+		// 同环比指标 默认新增 calc_type标签
+		tagList, err = db.GetMetricTags(orginMetricRow)
+		tagList = append(tagList, "calc_type")
+	} else {
+		tagList, err = db.GetMetricTags(metricRow)
+	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -279,7 +291,7 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
-	promQl := db.NewPromExpr(db.GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod))
+	promQl := db.NewPromExpr(db.GetComparisonMetricId(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod))
 	if err = datasource.CheckPrometheusQL(promQl); err != nil {
 		middleware.ReturnValidateError(c, "metric is invalid")
 		return

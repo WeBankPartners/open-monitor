@@ -28,19 +28,19 @@
             >
             </DatePicker>
           </li>
-          <li class="filter-li">
-            <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
-              <i class="fa fa-search"></i>
-              {{ $t("m_button_search") }}
-            </button>
-          </li>
-          <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
-          </li>
+
+          <button class="btn btn-sm btn-confirm-f ml-5" @click="getAlarm">
+            <i class="fa fa-search"></i>
+            {{ $t("m_button_search") }}
+          </button>
+          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
         </ul>
-        <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
-          {{ $t("realTimeAlarm") }}
-        </button>
+        <div class='top-right-search'>
+          <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
+          <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
+            {{ $t("realTimeAlarm") }}
+          </button>
+        </div>
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
@@ -60,12 +60,12 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" v-if="total > 0 && !noData">
-            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
-              <template v-for="(filterItem, filterIndex) in filtersForShow">
+            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
+            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template>
-              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-            </section>
+              </template> -->
+            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
+            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
@@ -86,6 +86,7 @@ import CircleRotate from '@/components/circle-rotate.vue'
 import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import AlarmCard from '@/components/alarm-card.vue'
+import SearchBadge from '../components/search-badge.vue'
 
 export default {
   name: '',
@@ -95,7 +96,8 @@ export default {
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
-    AlarmCard
+    AlarmCard,
+    SearchBadge
   },
   data() {
     return {
@@ -476,6 +478,10 @@ export default {
     getPercentage(val, total) {
       return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2)
     },
+    onFiltersChange(filters) {
+      this.filters = filters
+      this.getAlarm()
+    }
   },
 }
 </script>
@@ -518,6 +524,11 @@ export default {
 
     .btn-confirm-f {
       background: #116ef9;
+    }
+    .top-right-search {
+      display: flex;
+      align-items: center;
+      margin-right: 80px;
     }
   }
 }
