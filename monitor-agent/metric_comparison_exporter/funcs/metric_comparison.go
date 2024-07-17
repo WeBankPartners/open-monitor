@@ -24,6 +24,7 @@ var (
 	metricComparisonResultLock = new(sync.RWMutex)
 	metricComparisonRes        []*models.MetricComparisonRes
 	metricComparisonList       []*models.MetricComparisonDto
+	counter                    = 0 // 定义计数器
 )
 
 const (
@@ -41,8 +42,8 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Prometheus %s is invalid\n", v.Name)
 			continue
 		}
-		buff.WriteString(fmt.Sprintf("%s{", v.Name))
-		if len(v.MetricMap) > 0 {
+		if len(v.MetricMap) > 0 && counter*10%v.CalcPeriod == 0 {
+			buff.WriteString(fmt.Sprintf("%s{", v.Name))
 			i = 0
 			for key, value := range v.MetricMap {
 				if i < len(v.MetricMap)-1 {
@@ -90,6 +91,12 @@ func StartCalcMetricComparisonCron() {
 	t := time.NewTicker(10 * time.Second).C
 	for {
 		<-t
+		counter = counter + 1
+		// 目前页面配置计算周期最大 3600,所以counter最大值 360,大于就重置为1
+		if counter > 360 {
+			counter = 1
+		}
+		log.Printf("counter:%d\n", counter)
 		go calcMetricComparisonData()
 	}
 }
@@ -194,12 +201,14 @@ func calcMetricComparisonData() {
 					}
 					var dataVal, historyDataVal float64
 					metricComparisonRes1 := &models.MetricComparisonRes{
-						MetricMap: make(map[string]string),
-						Name:      metricComparison.PromExpr,
+						MetricMap:  make(map[string]string),
+						Name:       metricComparison.Metric,
+						CalcPeriod: metricComparison.CalcPeriod,
 					}
 					metricComparisonRes2 := &models.MetricComparisonRes{
-						MetricMap: make(map[string]string),
-						Name:      metricComparison.PromExpr,
+						MetricMap:  make(map[string]string),
+						Name:       metricComparison.Metric,
+						CalcPeriod: metricComparison.CalcPeriod,
 					}
 					for _, metricObj := range data.Metric {
 						if metricObj.Key == "__name__" {
