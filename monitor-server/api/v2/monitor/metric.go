@@ -229,7 +229,7 @@ func QueryMetricTagValue(c *gin.Context) {
 		return
 	}
 	var endpointObj models.EndpointNewTable
-	if param.Endpoint != "" {
+	if param.Endpoint != "" && param.Endpoint != param.ServiceGroup {
 		endpointObj, _ = db.GetEndpointNew(&models.EndpointNewTable{Guid: param.Endpoint})
 	} else if param.ServiceGroup != "" {
 		endpointList, getEndpointListErr := db.GetRecursiveEndpointByTypeNew(param.ServiceGroup, metricRow.MonitorType)
