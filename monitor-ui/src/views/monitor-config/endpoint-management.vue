@@ -319,6 +319,7 @@
 </template>
 
 <script>
+import CryptoJS from 'crypto-js'
 import debounce from 'lodash/debounce'
 import isEmpty from 'lodash/isEmpty'
 import DataMonitor from '@/views/monitor-config/data-monitor'
@@ -708,7 +709,8 @@ export default {
           )
         }
       ],
-      isReviewMode: false
+      isReviewMode: false,
+      encryptKey: '' // 加密key
     }
   },
   mounted() {
@@ -1004,7 +1006,8 @@ export default {
       this.endpointRejectModel.addRow.port = 9100
       this.$root.JQ('#endpoint_reject_model').modal('show')
     },
-    endpointRejectSave() {
+    async endpointRejectSave() {
+      await this.getEncryptKey()
       this.endpointRejectModel.addRow.port += ''
       const params = this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
       this.$validator.validate().then(result => {
@@ -1018,7 +1021,15 @@ export default {
         if (this.endpointRejectModel.addRow.exporter_type) {
           params.type = this.endpointRejectModel.addRow.exporter_type
         }
-
+        console.error(1.2, params)
+        if (Object.keys(params).includes('password') && params.password !== '') {
+          const key = CryptoJS.enc.Utf8.parse(this.encryptKey)
+          const config = {
+            iv: CryptoJS.enc.Utf8.parse(Math.trunc(new Date() / 100000) * 100000000),
+            mode: CryptoJS.mode.CBC
+          }
+          params.password = CryptoJS.AES.encrypt(params.password, key, config).toString()
+        }
         const methodType = this.endpointRejectModel.isAdd ? 'POST' : 'PUT'
         const api = this.endpointRejectModel.isAdd ? this.$root.apiCenter.endpointManagement.register.api : '/monitor/api/v2/monitor/endpoint/update'
         this.request(methodType, api, params, () => {
@@ -1026,6 +1037,11 @@ export default {
           this.$root.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('m_tips_success'))
         })
+      })
+    },
+    async getEncryptKey() {
+      await this.request('Get', this.$root.apiCenter.getEncryptKey, '', responseData => {
+        this.encryptKey = responseData
       })
     },
     processManagement(rowData) {
