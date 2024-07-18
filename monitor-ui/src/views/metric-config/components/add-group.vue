@@ -25,8 +25,14 @@
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
             <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-change="changeWorkspace">
-              <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
+              <Option v-if="['level'].includes(fromPage)" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
+            </Select>
+          </FormItem>
+          <!--对象类型-->
+          <FormItem v-if="fromPage === 'level'" :label="$t('m_tableKey_endpoint_type')" required>
+            <Select :disabled="operator === 'edit' || viewOnly" v-model="metricConfigData.endpoint_type" style="width:100%">
+              <Option v-for="item in monitorTypeOptions" :value="item" :key="item">{{ item }}</Option>
             </Select>
           </FormItem>
           <!--推荐配置-->
@@ -88,6 +94,10 @@ import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
 export default {
   props: {
+    fromPage: {
+      type: String,
+      default: ''
+    },
     visible: {
       type: Boolean,
       default: false
@@ -134,6 +144,7 @@ export default {
         guid: null,
         metric: '', // 名称
         monitor_type: '', // 类型
+        endpoint_type: 'process', // 在层级对象页面需要对象类型
         endpoint_group: '', // 对象组
         panel_id: null,
         prom_expr: '', // 表达式
@@ -142,7 +153,8 @@ export default {
       endpoint: '',
       endpointOptions: [],
       echartId: '',
-      maxHeight: 500
+      maxHeight: 500,
+      monitorTypeOptions: []
     }
   },
   computed: {
@@ -164,15 +176,22 @@ export default {
   },
   mounted() {
     this.getEndpoint()
+    this.getEndpointType()
     this.initDrawerHeight()
     if (this.operator === 'edit') {
       this.workspace = this.data.workspace
       this.metricConfigData = {
         ...this.data
       }
+      this.metricConfigData.endpoint_type = this.metricConfigData.monitor_type
     }
   },
   methods: {
+    getEndpointType() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
+        this.monitorTypeOptions = responseData
+      }, {isNeedloading: false})
+    },
     initDrawerHeight() {
       this.maxHeight = document.body.clientHeight - 150
       window.addEventListener(
@@ -237,7 +256,8 @@ export default {
     // 获取采集数据列表
     getCollectedMetric() {
       const params = {
-        monitor_type: this.monitorType,
+        // 在层级对象页面需要使用页面中选择的对象类型
+        monitor_type: this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType,
         guid: this.endpoint,
         service_group: this.serviceGroup,
         workspace: this.workspace
@@ -255,7 +275,8 @@ export default {
     // 获取预览对象列表
     getEndpoint() {
       let params = {
-        type: this.monitorType,
+        // 在层级对象页面需要使用页面中选择的对象类型
+        type: this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType,
         serviceGroup: this.serviceGroup,
         endpointGroup: this.endpoint_group
       }
@@ -325,7 +346,8 @@ export default {
       params.data = [{
         endpoint: (find && find.guid) || '',
         app_object: this.serviceGroup,
-        endpoint_type: this.monitorType,
+        // 在层级对象页面需要使用页面中选择的对象类型
+        endpoint_type: this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType,
         prom_ql: this.metricConfigData.prom_expr,
         metric: this.metricConfigData.prom_expr === '' ? this.metricConfigData.metric : ''
       }]
@@ -354,7 +376,8 @@ export default {
         return this.$Message.error(this.$t('m_field_metric') + this.$t('m_tips_required'))
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
-      this.metricConfigData.monitor_type = this.monitorType
+      // 在层级对象页面需要使用页面中选择的对象类型
+      this.metricConfigData.monitor_type = this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType
       this.metricConfigData.endpoint_group = this.endpoint_group
 
       this.metricConfigData.service_group = this.serviceGroup

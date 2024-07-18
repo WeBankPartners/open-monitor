@@ -1357,8 +1357,13 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 
 func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, affectEndpointGroup []string) {
 	alarmMetricGuid := fmt.Sprintf("%s__%s", metric, serviceGroup)
+	actions, affectEndpointGroup = getDeleteMetricActions(alarmMetricGuid)
+	return
+}
+
+func getDeleteMetricActions(metricGuid string) (actions []*Action, affectEndpointGroup []string) {
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	x.SQL("select t1.guid,t1.endpoint_group,t2.guid as `condition` from alarm_strategy t1 left join alarm_strategy_metric t2 on t1.guid=t2.alarm_strategy where (t1.metric=? or t2.metric=?)", alarmMetricGuid, alarmMetricGuid).Find(&alarmStrategyTable)
+	x.SQL("select t1.guid,t1.endpoint_group,t2.guid as `condition` from alarm_strategy t1 left join alarm_strategy_metric t2 on t1.guid=t2.alarm_strategy where (t1.metric=? or t2.metric=?)", metricGuid, metricGuid).Find(&alarmStrategyTable)
 	for _, v := range alarmStrategyTable {
 		affectEndpointGroup = append(affectEndpointGroup, v.EndpointGroup)
 	}
@@ -1371,11 +1376,11 @@ func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, 
 			actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where guid=?", Param: []interface{}{row.Condition}})
 		}
 	}
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?))", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?)", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?)", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric=? and service_group=?", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?))", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?)", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?)", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric_guid=?", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{metricGuid}})
 	return
 }
 
