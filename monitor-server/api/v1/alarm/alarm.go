@@ -348,14 +348,28 @@ func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj, param *m.AMRespAlert) (exist
 }
 
 func GetHistoryAlarm(c *gin.Context) {
-	endpointId, err := strconv.Atoi(c.Query("id"))
-	if err != nil {
-		mid.ReturnParamTypeError(c, "id", "int")
-		return
-	}
+	idParam := c.Query("id")
+	var err error
 	var ids []string
 	var startTime, endTime time.Time
-	if endpointId < 0 {
+	endpointId, _ := strconv.Atoi(idParam)
+	if endpointId > 0 {
+		endpointObj := m.EndpointTable{Id: endpointId}
+		err = db.GetEndpoint(&endpointObj)
+		if err != nil || endpointObj.Guid == "" {
+			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint id:%d fetch data fail", endpointId))
+			return
+		}
+		ids = append(ids, endpointObj.Guid)
+	} else if idParam != "" {
+		endpointObj := m.EndpointTable{Guid: idParam}
+		err = db.GetEndpoint(&endpointObj)
+		if err != nil || endpointObj.Guid == "" {
+			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint guid:%d fetch data fail", idParam))
+			return
+		}
+		ids = append(ids, endpointObj.Guid)
+	} else {
 		guid := c.Query("guid")
 		if guid == "" {
 			mid.ReturnValidateError(c, "Param guid can not empty when id<0 ")
@@ -367,14 +381,6 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 		ids = recursiveHistoryEndpoint(&recursiveObj)
-	} else {
-		endpointObj := m.EndpointTable{Id: endpointId}
-		err = db.GetEndpoint(&endpointObj)
-		if err != nil || endpointObj.Guid == "" {
-			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint id:%d fetch data fail", endpointId))
-			return
-		}
-		ids = append(ids, endpointObj.Guid)
 	}
 	start := c.Query("start")
 	end := c.Query("end")
@@ -648,7 +654,7 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.Metric == "" && param.Id == 0 && param.Priority == "" {
+	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
