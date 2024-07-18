@@ -13,6 +13,7 @@ import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
+import TagShow from '@/components/Tag-show'
 const eventBus = new Vue()
 
 window.use(vuex)
@@ -113,6 +114,8 @@ window.component('ModalComponent', ModalComponent)
 window.use(VeeValidate)
 import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
+window.use('TagShow', TagShow)
+
 
 import Dashboard from '@/views/dashboard'
 window.addHomepageComponent && window.addHomepageComponent({
