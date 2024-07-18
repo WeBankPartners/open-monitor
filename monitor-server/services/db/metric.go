@@ -244,12 +244,12 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		params = append(params, guid)
 	} else {
 		if serviceGroup != "" {
-			if monitorType == "" {
-				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
-			}
+			//if monitorType == "" {
+			//	return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+			//}
 			if onlyService == "Y" {
-				baseSql = "select * from metric m where monitor_type=? and service_group=?"
-				params = []interface{}{monitorType, serviceGroup}
+				baseSql = "select * from metric m where service_group=?"
+				params = []interface{}{serviceGroup}
 			} else {
 				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
