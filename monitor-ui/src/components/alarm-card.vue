@@ -263,7 +263,9 @@ export default {
     },
     addParams(key, value) {
       this.$parent.filters[key] = this.$parent.filters[key] || []
-      this.$parent.filters[key].push(value)
+      if (!this.$parent.filters[key].includes(value)) {
+        this.$parent.filters[key].push(value)
+      }
       this.$parent.getAlarm()
     },
     copyEndpoint(data) {
