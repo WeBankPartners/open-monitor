@@ -46,6 +46,7 @@
               </Option>
             </Select>
           </FormItem>
+          <Button type="primary" @click.stop="onResetButtonClick">{{$t('m_reset')}}</Button>
         </Form>
       </template>
     </Dropdown>
@@ -56,6 +57,12 @@
 <script>
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
+
+const initFilters = {
+  alarm_name: [],
+  metric: [],
+  endpoint: []
+}
 
 export default ({
   props: {
@@ -76,11 +83,7 @@ export default ({
       filtersEndpointOptions: [],
       filtersMetricOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      filters: {
-        alarm_name: [],
-        metric: [],
-        endpoint: []
-      }
+      filters: cloneDeep(initFilters)
     }
   },
   computed: {
@@ -110,6 +113,10 @@ export default ({
     onFilterConditionChange: debounce(function () {
       this.$emit('filtersChange', cloneDeep(this.filters))
     }, 300),
+    onResetButtonClick() {
+      this.filters = cloneDeep(initFilters)
+      this.onFilterConditionChange()
+    }
   }
 
 })
