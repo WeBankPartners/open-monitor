@@ -712,7 +712,8 @@ export default {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
         const chartConfig = {
           eye: false,
-          clear: true
+          clear: true,
+          lineBarSwitch: true
         }
         readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
       }, {isNeedloading: false})
@@ -743,7 +744,8 @@ export default {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
         const chartConfig = {
           eye: false,
-          clear: true
+          clear: true,
+          lineBarSwitch: true
         }
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
       }, {isNeedloading: false})
