@@ -257,6 +257,51 @@ func DeleteCustomChartConfigSQL(chartId string) (actions []*Action, err error) {
 	return
 }
 
+func DeleteCustomChartSeriesByMetricIdSQL(metricId string) (actions []*Action, err error) {
+	actions = []*Action{}
+	var chartSeriesIds, seriesConfIds, seriesTagIds []string
+	var seriesTagValueIds []int
+	if err = x.SQL("select guid from custom_chart_series where metric_guid = ?", metricId).Find(&chartSeriesIds); err != nil {
+		return
+	}
+	if len(chartSeriesIds) > 0 {
+		chartSeriesSQL, chartSeriesParams := createListParams(chartSeriesIds, "")
+		if err = x.SQL("select guid from custom_chart_series_config where dashboard_chart_config in ("+chartSeriesSQL+")",
+			chartSeriesParams...).Find(&seriesConfIds); err != nil {
+			return
+		}
+		if err = x.SQL("select guid from custom_chart_series_tag where dashboard_chart_config in ("+chartSeriesSQL+")",
+			chartSeriesParams...).Find(&seriesTagIds); err != nil {
+			return
+		}
+		if len(seriesTagIds) > 0 {
+			seriesTagSQL, seriesTagParams := createListParams(seriesTagIds, "")
+			if err = x.SQL("select id from custom_chart_series_tagvalue where dashboard_chart_tag in ("+seriesTagSQL+")",
+				seriesTagParams...).Find(&seriesTagValueIds); err != nil {
+				return
+			}
+		}
+	}
+
+	if len(seriesConfIds) > 0 {
+		for _, confId := range seriesConfIds {
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where guid = ?", Param: []interface{}{confId}})
+		}
+	}
+	if len(seriesTagValueIds) > 0 {
+		for _, tagValueId := range seriesTagValueIds {
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where id = ?", Param: []interface{}{tagValueId}})
+		}
+	}
+	if len(seriesTagIds) > 0 {
+		for _, tagId := range seriesTagIds {
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where guid = ?", Param: []interface{}{tagId}})
+		}
+	}
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric_guid = ?", Param: []interface{}{metricId}})
+	return
+}
+
 func DeleteCustomDashboardChart(chartId string) (err error) {
 	var actions, subActions []*Action
 	if subActions, err = DeleteCustomChartConfigSQL(chartId); err != nil {
