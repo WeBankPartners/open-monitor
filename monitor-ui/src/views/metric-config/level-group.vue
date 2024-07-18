@@ -12,7 +12,7 @@
         filterable
         @on-change="changeServiceGroup"
       >
-        <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
+        <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.display_name" :key="index">
           <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
@@ -64,6 +64,7 @@
       :data="row"
       :operator="type"
       :viewOnly="viewOnly"
+      fromPage="level"
       @fetchList="reloadData('originalMetrics')"
     ></AddGroupDrawer>
     <YearOverYear
@@ -282,6 +283,7 @@ export default {
                   <Button
                     size="small"
                     type="primary"
+                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
                     onClick={() => {
                       this.handleEdit(params.row, false)
                     }}
@@ -297,6 +299,7 @@ export default {
                   <Button
                     size="small"
                     type="error"
+                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
                     onClick={() => {
                       this.handleDelete(params.row)
                     }}
