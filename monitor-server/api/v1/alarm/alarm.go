@@ -475,7 +475,7 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
-	if data.EndpointList, err = db.GetAllEndpointNameList(); err != nil {
+	if data.EndpointList, err = db.GetAllEndpointIdList(); err != nil {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
