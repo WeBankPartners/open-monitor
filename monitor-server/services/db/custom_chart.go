@@ -547,8 +547,15 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 				MetricType:    series.MetricType,
 				MetricGuid:    series.MetricGuid,
 				Metric:        series.Metric,
+				Comparison:    false,
 				Tags:          make([]*models.TagDto, 0),
 				ColorConfig:   make([]*models.ColorConfigDto, 0),
+			}
+			// 判断是否是同环比
+			var tempGuid string
+			_, _ = x.SQL("select guid from metric_comparison where metric_id = ?", series.MetricGuid).Get(&tempGuid)
+			if tempGuid != "" {
+				customChartSeriesDto.Comparison = true
 			}
 			if v, ok := configMap[series.Guid]; ok {
 				seriesConfigList = v

@@ -185,7 +185,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 			baseSql = baseSql + ") m join metric_comparison mc on mc.metric_id = m.guid"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
-			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null"
+			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null and m.endpoint_group is null"
 			params = []interface{}{monitorType}
 		}
 	}
@@ -244,12 +244,12 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		params = append(params, guid)
 	} else {
 		if serviceGroup != "" {
-			if monitorType == "" {
-				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
-			}
+			//if monitorType == "" {
+			//	return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+			//}
 			if onlyService == "Y" {
-				baseSql = "select * from metric m where monitor_type=? and service_group=?"
-				params = []interface{}{monitorType, serviceGroup}
+				baseSql = "select * from metric m where service_group=?"
+				params = []interface{}{serviceGroup}
 			} else {
 				baseSql = "select * from metric m where monitor_type=? and (service_group is null or service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}

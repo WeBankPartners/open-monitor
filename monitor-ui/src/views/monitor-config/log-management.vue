@@ -10,30 +10,31 @@
         <li class="search-li">
           <Select
             style="width:300px;"
-            v-model="targrtId"
+            v-model="targetId"
             filterable
-            clearable 
+            clearable
             remote
             ref="select"
-            :remote-method="getTargrtList"
+            :remote-method="getRemoteMethod"
             @on-change="search"
-            >
+          >
             <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
-              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
               {{option.display_name}}
             </Option>
           </Select>
         </li>
         <li class="search-li">
           <button type="button" class="btn btn-sm btn-confirm-f"
-          :disabled="targrtId === ''"
-          @click="search">
+                  :disabled="targetId === ''"
+                  @click="search"
+          >
             <i class="fa fa-search" ></i>
             {{$t('m_button_search')}}
           </button>
         </li>
       </ul>
-    </section> 
+    </section>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <template v-if="type === 'group'">
         <groupManagement ref="group"></groupManagement>
@@ -46,6 +47,7 @@
 </template>
 
 <script>
+import isEmpty from 'lodash/isEmpty'
 import endpointManagement from './keyword-endpoint.vue'
 import groupManagement from './keyword-service.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -55,43 +57,62 @@ export default {
     return {
       type: 'group',
       typeList: [
-        {label: this.$t('m_field_resourceLevel'), value: 'group'},
-        {label: this.$t('m_tableKey_endpoint'), value: 'endpoint'}
+        {
+          label: this.$t('m_field_resourceLevel'),
+          value: 'group'
+        },
+        {
+          label: this.$t('m_tableKey_endpoint'),
+          value: 'endpoint'
+        }
       ],
-      targrtId: '',
+      targetId: '',
       targetOptions: [],
       showTargetManagement: false
     }
   },
-  
-  async mounted () {
-   this.getTargrtList()
+
+  async mounted() {
+    this.initTargetByType()
   },
-  beforeDestroy () {
+  beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    typeChange () {
+    async initTargetByType() {
+      await this.getTargrtList()
+      if (!isEmpty(this.targetOptions)) {
+        this.targetId = this.targetOptions[0].guid
+        this.search()
+      }
+    },
+    async typeChange() {
       this.clearTargrt()
-      this.getTargrtList()
+      this.initTargetByType()
     },
-    getTargrtList () {
-      const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.targetOptions = responseData
-      }, {isNeedloading:false})
+    getTargrtList() {
+      return new Promise(resolve => {
+        const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.targetOptions = responseData
+          resolve(responseData)
+        }, {isNeedloading: false})
+      })
     },
-    clearTargrt () {
+    clearTargrt() {
       this.targetOptions = []
-      this.targrtId = ''
+      this.targetId = ''
       this.showTargetManagement = false
       this.$refs.select.query = ''
     },
-    search () {
-      if (this.targrtId) {
+    search() {
+      if (this.targetId) {
         this.showTargetManagement = true
-        this.$refs[this.type].getDetail(this.targrtId)
+        this.$refs[this.type].getDetail(this.targetId)
       }
+    },
+    async getRemoteMethod() {
+      await this.getTargrtList()
     }
   },
   components: {
@@ -134,11 +155,11 @@ export default {
 
   .search-input-content {
     display: inline-block;
-    vertical-align: middle; 
+    vertical-align: middle;
   }
   .tag-width {
     cursor: auto;
     width: 55px;
     text-align: center;
-  } 
+  }
 </style>
