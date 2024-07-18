@@ -299,6 +299,9 @@ export default {
         params,
         responseData => {
           this.endpointOptions = responseData
+          if (this.endpointOptions.length > 0) {
+            this.metricConfigData.endpoint = this.endpointOptions[0].guid
+          }
         }
       )
     },
