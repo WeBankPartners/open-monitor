@@ -35,6 +35,7 @@
       :data="row"
       :operator="type"
       :viewOnly="viewOnly"
+      fromPage="generalGroup"
       @fetchList="reloadData('originalMetrics')"
     ></AddGroupDrawer>
     <YearOverYear
