@@ -193,7 +193,11 @@ func calcMetricComparisonData() {
 			continue
 		}
 		if len(curResultList) == 0 || len(historyResultList) == 0 {
-			log.Printf("%s prometheus query data empty\n", metricComparison.Metric)
+			if len(curResultList) == 0 {
+				log.Printf("%s current prometheus query data empty\n", metricComparison.Metric)
+			} else {
+				log.Printf("%s history prometheus query data empty\n", metricComparison.Metric)
+			}
 			continue
 		}
 		for _, data := range curResultList {
