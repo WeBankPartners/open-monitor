@@ -29,6 +29,7 @@ type CustomChartSeriesDto struct {
 	MetricType    string            `json:"metricType"`    // 指标类型
 	MetricGuid    string            `json:"metricGuid"`    // 指标Id
 	Metric        string            `json:"metric"`        // 指标
+	Comparison    bool              `json:"comparison"`    // 指标
 	Tags          []*TagDto         `json:"tags"`          // 标签
 	ColorConfig   []*ColorConfigDto `json:"series"`        // 颜色
 }
