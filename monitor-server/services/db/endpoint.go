@@ -191,13 +191,13 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 	return err
 }
 
-func UpdateEndpointData(endpoint *models.EndpointNewTable) (err error) {
+func UpdateEndpointData(endpoint *models.EndpointNewTable, operator string) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
 	if endpoint.Ip != "" {
-		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
 		x.Exec("update endpoint set ip=? where guid=?", endpoint.Ip, endpoint.Guid)
 	} else {
-		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
 	}
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
