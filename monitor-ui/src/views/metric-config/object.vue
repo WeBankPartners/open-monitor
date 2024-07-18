@@ -12,7 +12,7 @@
         filterable
         @on-change="changeEndpointGroup"
       >
-        <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="option.guid" :key="index">
+        <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.guid" :key="index">
           <TagShow :list="endpointOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.guid}}
         </Option>
@@ -27,7 +27,7 @@
       :visible.sync="addVisible"
       :monitorType="monitorType"
       :endpoint_group="endpoint"
-      serviceGroup="test"
+      serviceGroup=""
       :data="row"
       operator="edit"
       :viewOnly="viewOnly"
