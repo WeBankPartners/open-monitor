@@ -185,10 +185,10 @@ func calcMetricComparisonData() {
 			historyEnd = now.AddDate(0, -1, 0).Unix()
 		}
 		// 查询对比历史数据
-		// 查询范围 再向前 1min,数据通过 时间范围控制,保证是整点分钟
+		// 查询范围 历史数据 再向前向后1min,查询数据时间范围控制有效数据,保证是整点分钟
 		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
 			Start:  historyEnd - int64(metricComparison.CalcPeriod) - 60,
-			End:    historyEnd,
+			End:    historyEnd + 60,
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
 			log.Printf("prometheus query_range err:%+v\n", err)
