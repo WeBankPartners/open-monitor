@@ -21,5 +21,6 @@
   "log_group_name_illegal_error": "Config Name:%s illegal",
   "dashboard_name_repeat_error": "Save failed: A dashboard with the same name already exists",
   "dashboard_id_exist_error": "Import failed:dashboard ID already exists",
-  "import_dashboard_name_exist_error": "Import failed:dashboard Name %s already exists"
+  "import_dashboard_name_exist_error": "Import failed:dashboard Name %s already exists",
+  "metric_not_support_preview": "The object group currently does not support the current type. Please switch to a single object to preview"
 }
