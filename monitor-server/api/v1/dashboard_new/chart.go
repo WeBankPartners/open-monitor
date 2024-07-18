@@ -586,18 +586,22 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 			}
 		}
 		// 如果数据前后不是开始结束时间，补齐前后两个点
-		for _, subSerial := range tmpSerials {
-			if len(subSerial.Data) > 0 {
-				tmpSerialDataStart := subSerial.Data[0][0]
-				tmpSerialDataEnd := subSerial.Data[len(subSerial.Data)-1][0]
-				if tmpSerialDataStart > (startTimestamp + 30000) {
-					subSerial.Data = append([][]float64{{startTimestamp, 0}}, subSerial.Data...)
+		if param.Compare != nil && param.Compare.CompareSubTime > 0 {
+			// 如果是同环比数据就不补数
+		} else {
+			for _, subSerial := range tmpSerials {
+				if len(subSerial.Data) > 0 {
+					tmpSerialDataStart := subSerial.Data[0][0]
+					tmpSerialDataEnd := subSerial.Data[len(subSerial.Data)-1][0]
+					if tmpSerialDataStart > (startTimestamp + 30000) {
+						subSerial.Data = append([][]float64{{startTimestamp, 0}}, subSerial.Data...)
+					}
+					if tmpSerialDataEnd < (endTimestamp - 30000) {
+						subSerial.Data = append(subSerial.Data, []float64{endTimestamp, 0})
+					}
+				} else {
+					subSerial.Data = [][]float64{{startTimestamp, 0}, {endTimestamp, 0}}
 				}
-				if tmpSerialDataEnd < (endTimestamp - 30000) {
-					subSerial.Data = append(subSerial.Data, []float64{endTimestamp, 0})
-				}
-			} else {
-				subSerial.Data = [][]float64{{startTimestamp, 0}, {endTimestamp, 0}}
 			}
 		}
 		serials = append(serials, tmpSerials...)
