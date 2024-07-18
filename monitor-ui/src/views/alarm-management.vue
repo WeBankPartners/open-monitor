@@ -26,7 +26,19 @@
         </ul>
         <div class="top-right-search">
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
-          <Button :disabled="!filtersForShow.some(f => f.key === 'metric' || f.key === 'priority')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
+          <Poptip
+            confirm
+            :title="$t('m_delConfirm_tip')"
+            placement="left-end"
+            @on-ok="deleteConfirmModal()"
+          >
+            <Button
+              :disabled="isEmpty(filters) || (isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
+              class="btn btn-sm btn-cancel-f"
+            >
+              {{$t('m_batch_close')}}
+            </Button>
+          </Poptip>
           <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
         </div>
       </div>
@@ -72,19 +84,6 @@
       </template>
     </ClassicAlarm>
     <Modal
-      v-model="isShowWarning"
-      :title="$t('m_closeConfirm_title')"
-      :mask-closable="false"
-      @on-ok="ok"
-      @on-cancel="cancel"
-    >
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
-        </div>
-      </div>
-    </Modal>
-    <Modal
       :width="600"
       :title="$t('m_remark')"
       v-model="showRemarkModal"
@@ -101,6 +100,7 @@
 </template>
 
 <script>
+import isEmpty from 'lodash/isEmpty'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -127,7 +127,6 @@ export default {
       noData: false,
       showGraph: true,
       alramEmpty: true,
-      isShowWarning: false,
       isClassicModel: false,
       interval: null,
       timeForDataAchieve: null,
@@ -136,7 +135,7 @@ export default {
       actveAlarmIndex: null,
       resultData: [],
       outerMetrics: [],
-      selectedData: '', // 存放选中数据
+      // selectedData: '', // 存放选中数据
 
       low: 0,
       mid: 0,
@@ -162,10 +161,17 @@ export default {
         pageSize: 10
       },
       isBatch: false,
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      isEmpty
     }
   },
   computed: {
+    isBatchCloseDisabled() {
+      debugger
+      console.error(this.filters)
+      debugger
+      return isEmpty(this.filters) || (isEmpty(this.filters.alarm_name) && isEmpty(this.filters.metric) && isEmpty(this.filters.endpoint)) || this.resultData.length === 0
+    },
     total() {
       return this.low + this.mid + this.high
     },
@@ -368,7 +374,7 @@ export default {
         params,
         responseData => {
           this.noData = false
-          this.resultData = responseData.data
+          this.resultData = responseData.data || []
           this.paginationInfo.total = responseData.page.totalRows
           this.paginationInfo.startIndex = responseData.page.startIndex
           this.paginationInfo.pageSize = responseData.page.pageSize
@@ -469,23 +475,15 @@ export default {
       this.outerMetrics = pieOuter
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
-    // 555
     addParams({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
-    deleteConfirmModal(rowData, isBatch) {
-      this.isBatch = isBatch
-      this.selectedData = rowData
-      this.isShowWarning = true
+    deleteConfirmModal() {
+      this.isBatch = true
+      this.removeAlarm()
     },
-    ok() {
-      this.removeAlarm(this.selectedData)
-    },
-    cancel() {
-      this.isShowWarning = false
-    },
-    removeAlarm(alarmItem) {
+    removeAlarm(alarmItem={}) {
       const params = {
         id: 0,
         custom: true,
@@ -509,12 +507,11 @@ export default {
         params.custom = false
       }
       this.request('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.clearAll()
       })
     },
     clearAll() {
-      this.filters = []
+      this.filters = {}
       this.getAlarm()
     },
     exclude(key) {
