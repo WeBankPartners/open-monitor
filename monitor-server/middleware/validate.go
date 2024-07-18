@@ -21,7 +21,8 @@ var (
 	regName             = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
 	regMetric           = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	regDisplayName      = regexp.MustCompile(`.*`)
-	regMetricPrefixCode = regexp.MustCompile(`^[a-zA-Z0-9_\-]{1,6}$`)
+	regMetricPrefixCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9]{0,5}$`)
+	regLogParamName     = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$`)
 	roleEndpointMap     []map[string]int
 	roleEndpointLock    sync.RWMutex
 )
@@ -142,6 +143,13 @@ func IsIllegalMetricPrefixCode(str string) bool {
 		return false
 	}
 	return !regMetricPrefixCode.MatchString(str)
+}
+
+func IsIllegalLogParamNameOrMetric(str string) bool {
+	if str == "" {
+		return false
+	}
+	return !regLogParamName.MatchString(str)
 }
 
 func ValidateActiveWindowString(str string) bool {
