@@ -192,7 +192,8 @@ export default {
         const chartConfig = {
           eye: false,
           dataZoom: false,
-          clear: true
+          clear: true,
+          lineBarSwitch: true
         }
         readyToDraw(this,responseData, viewIndex, chartConfig)
       })
