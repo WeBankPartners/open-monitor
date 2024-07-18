@@ -22,21 +22,35 @@ func GetEndpointTypeList() (result []string, err error) {
 	return
 }
 
-func GetEndpointByType(endpointType, serviceGroup, endpointGroup string) (result []*models.EndpointNewTable, err error) {
+func GetEndpointByType(endpointType, serviceGroup, endpointGroup, workspace string) (result []*models.EndpointNewTable, err error) {
 	result = []*models.EndpointNewTable{}
 	if serviceGroup != "" {
+		serviceGroupObj, getSGErr := getSimpleServiceGroup(serviceGroup)
+		if getSGErr != nil {
+			err = getSGErr
+			return
+		}
 		serviceGroupList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", endpointType).Find(&result)
 		if err == nil {
-			result = append([]*models.EndpointNewTable{{Guid: serviceGroup}}, result...)
+			if workspace == "any_object" {
+				result = append([]*models.EndpointNewTable{{Guid: serviceGroup, Name: serviceGroupObj.DisplayName}}, result...)
+			}
 		}
 	} else if endpointGroup != "" {
 		err = x.SQL("select guid from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&result)
 		if err == nil {
-			result = append([]*models.EndpointNewTable{{Guid: endpointGroup}}, result...)
+			if workspace == "any_object" {
+				result = append([]*models.EndpointNewTable{{Guid: endpointGroup, Name: endpointGroup}}, result...)
+			}
 		}
 	} else {
 		err = x.SQL("select guid from endpoint_new where monitor_type=?", endpointType).Find(&result)
+	}
+	for _, v := range result {
+		if v.Name == "" {
+			v.Name = v.Guid
+		}
 	}
 	return
 }
