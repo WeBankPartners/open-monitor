@@ -352,11 +352,15 @@ func ConvertMetricComparison2MetricList(metricComparisonList []*models.MetricCom
 	var list []*models.MetricTable
 	if len(metricComparisonList) > 0 {
 		for _, metricComparison := range metricComparisonList {
+			var promExpr = metricComparison.ImportPromExpr
+			if promExpr == "" {
+				promExpr = metricComparison.PromExpr
+			}
 			list = append(list, &models.MetricTable{
 				Guid:               metricComparison.Guid,
-				Metric:             metricComparison.MetricId,
+				Metric:             metricComparison.Metric,
 				MonitorType:        metricComparison.MonitorType,
-				PromExpr:           metricComparison.PromExpr,
+				PromExpr:           promExpr,
 				TagOwner:           metricComparison.TagOwner,
 				ServiceGroup:       metricComparison.ServiceGroup,
 				Workspace:          metricComparison.Workspace,
