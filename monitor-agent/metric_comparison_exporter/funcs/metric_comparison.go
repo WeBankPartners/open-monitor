@@ -405,7 +405,7 @@ func filterData(resultList []*models.PrometheusQueryObj, timestamp, calcPeriod i
 		}
 		if len(obj.Values) > 0 {
 			for _, valArr := range obj.Values {
-				if len(valArr) == 2 && valArr[0] >= float64(timestampStart*1000) && valArr[0] <= float64(timestampEnd*1000) {
+				if len(valArr) == 2 && valArr[0] >= float64(timestampStart) && valArr[0] <= float64(timestampEnd) {
 					newObj.Values = append(newObj.Values, valArr)
 				}
 			}
