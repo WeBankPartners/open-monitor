@@ -84,10 +84,13 @@ func MetricUpdate(c *gin.Context) {
 
 func MetricDelete(c *gin.Context) {
 	id := c.Query("id")
-	err := db.MetricDelete(id)
+	withComparison, err := db.MetricDeleteNew(id)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
+		if withComparison {
+			db.SyncMetricComparisonData()
+		}
 		middleware.ReturnSuccess(c)
 	}
 }
