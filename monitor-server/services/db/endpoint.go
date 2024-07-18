@@ -153,8 +153,8 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	return
 }
 
-func GetAllEndpointNameList() (list []string, err error) {
-	err = x.SQL("select distinct name from endpoint_new").Find(&list)
+func GetAllEndpointIdList() (list []string, err error) {
+	err = x.SQL("select  guid from endpoint_new").Find(&list)
 	return
 }
 func CheckEndpointInAgentManager(guid string) bool {
