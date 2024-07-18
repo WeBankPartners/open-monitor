@@ -106,6 +106,43 @@ func getMetricUpdateAction(oldGuid, operator string, newMetricObj *models.Metric
 	return actions
 }
 
+func MetricDeleteNew(id string) (withComparison bool, err error) {
+	metricQuery, getErr := MetricList(id, "", "")
+	if getErr != nil {
+		err = fmt.Errorf("Try to query prom metric table fail,%s ", getErr.Error())
+		return
+	}
+	if len(metricQuery) == 0 {
+		return
+	}
+	metricRow := metricQuery[0]
+	var actions []*Action
+	var affectEndpointGroup []string
+	// 删除同环比 指标
+	tmpActions, tmpEndpointGroup := getMetricComparisonDeleteAction(id)
+	if len(tmpActions) > 0 {
+		withComparison = true
+	}
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+	tmpActions, tmpEndpointGroup = getDeleteMetricActions(id)
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+	tmpActions = getDeleteEndpointDashboardChartMetricAction(metricRow.Metric, metricRow.MetricType)
+	actions = append(actions, tmpActions...)
+	err = Transaction(actions)
+	if err != nil {
+		err = fmt.Errorf("Update database fail,%s ", err.Error())
+	} else {
+		for _, v := range affectEndpointGroup {
+			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
+				log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
+			}
+		}
+	}
+	return
+}
+
 func MetricDelete(id string) error {
 	metricQuery, err := MetricList(id, "", "")
 	if err != nil {
@@ -693,5 +730,47 @@ func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
 	}
 	byteArr, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+	return
+}
+
+func getDeleteEndpointDashboardChartMetricAction(metric, monitorType string) (actions []*Action) {
+	var charts []*models.ChartTable
+	err := x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", monitorType).Find(&charts)
+	if err != nil {
+		log.Logger.Error("getDeleteEndpointDashboardChartMetricAction,try to get charts data fail", log.String("metric", metric), log.Error(err))
+		return
+	}
+	if len(charts) > 0 {
+		for _, chart := range charts {
+			newChartMetricList := []string{}
+			for _, v := range strings.Split(chart.Metric, "^") {
+				if v == metric || v == "" {
+					continue
+				}
+				newChartMetricList = append(newChartMetricList, v)
+			}
+			if len(newChartMetricList) == 0 {
+				actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{chart.Id}})
+			} else {
+				actions = append(actions, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newChartMetricList, "^"), chart.Id}})
+			}
+		}
+	}
+	return
+}
+
+func getMetricComparisonDeleteAction(sourceMetricGuid string) (actions []*Action, affectEndpointGroup []string) {
+	// 删除同环比 指标
+	var metricRows []*models.MetricComparison
+	if err := x.SQL("select metric_id from metric_comparison where origin_metric_id = ?", sourceMetricGuid).Find(&metricRows); err != nil {
+		log.Logger.Error("getMetricComparisonDeleteAction,query metric_comparison fail", log.Error(err))
+		return
+	}
+	for _, row := range metricRows {
+		actions = append(actions, &Action{Sql: "delete from metric_comparison where  metric_id = ?", Param: []interface{}{row.MetricId}})
+		tmpActions, tmpEndpointGroup := getDeleteMetricActions(row.MetricId)
+		actions = append(actions, tmpActions...)
+		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
 	return
 }
