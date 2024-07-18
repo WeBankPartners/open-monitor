@@ -25,7 +25,7 @@
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
             <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-change="changeWorkspace">
-              <Option v-if="['level'].includes(fromPage)" value="all_object">{{ $t('m_all_object') }}</Option>
+              <Option v-if="['level', 'objectGroup'].includes(fromPage)" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
             </Select>
           </FormItem>
@@ -135,7 +135,7 @@ export default {
   },
   data() {
     return {
-      workspace: '', // 作用域
+      workspace: 'any_object', // 作用域
       templatePl: '', // 推荐配置
       metricTemplate: [], // 推荐配置下拉列表
       metricTemplateParams: [],
@@ -206,6 +206,7 @@ export default {
       this.templatePl = ''
       this.metricTemplateParams = []
       this.metricConfigData.prom_expr = ''
+      this.getEndpoint()
     },
     // 选择推荐配置
     changeTemplatePl(val) {
@@ -278,28 +279,32 @@ export default {
         // 在层级对象页面需要使用页面中选择的对象类型
         type: this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType,
         serviceGroup: this.serviceGroup,
-        endpointGroup: this.endpoint_group
+        endpointGroup: this.endpoint_group,
+        workspace: this.workspace
       }
       if (this.isObject) {
         if (this.data.group_type === 'level') {
           params = {
-            type: 'process',
+            type: this.metricConfigData.endpoint_type,
             serviceGroup: this.data.service_group,
-            endpointGroup: ''
+            endpointGroup: '',
+            workspace: this.workspace
           }
         }
         else if (this.data.group_type === 'system') {
           params = {
             type: this.data.group_name,
             serviceGroup: '',
-            endpointGroup: ''
+            endpointGroup: '',
+            workspace: this.workspace
           }
         }
         else if (this.data.group_type === 'object') {
           params = {
             type: 'process',
             serviceGroup: '',
-            endpointGroup: this.data.endpoint_group
+            endpointGroup: this.data.endpoint_group,
+            workspace: this.workspace
           }
         }
       }
