@@ -327,7 +327,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		return
 	}
 	for _, metric := range result {
-		if strings.TrimSpace(metric.ServiceGroup) == "" {
+		if strings.TrimSpace(metric.ServiceGroup) == "" && strings.TrimSpace(metric.EndpointGroup) == "" {
 			metric.MetricType = string(models.MetricTypeCommon)
 		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
 			metric.MetricType = string(models.MetricTypeBusiness)
