@@ -72,3 +72,11 @@ alter table endpoint_group add column update_user varchar(64) default null COMME
 alter table role ADD UNIQUE (name);
 
 alter table log_metric_string_map modify column log_metric_config varchar(64) default null;
+
+SET FOREIGN_KEY_CHECKS=0;
+update chart set metric=replace(metric,'.','_') where metric like '%.%';
+update alarm_strategy set metric=replace(metric,'.','_') where metric in (select guid from metric where metric like '%.%' and service_group is null);
+update alarm_strategy_metric set metric=replace(metric,'.','_') where metric in (select guid from metric where metric like '%.%' and service_group is null);
+update custom_chart_series set metric=replace(metric,'.','_'),metric_guid=replace(metric_guid,'.','_');
+update metric set metric=replace(metric,'.','_'),guid=replace(guid,'.','_') where metric like '%.%' and service_group is null;
+SET FOREIGN_KEY_CHECKS=1;
