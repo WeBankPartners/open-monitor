@@ -152,14 +152,14 @@ export default {
             }
             return <span>{groupTypeToDisplay[params.row.group_type || '-']}</span>
           },
-          showType: ['comparisonMetrics']
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_group_name_'), // 组名
           key: 'group_type',
           width: 80,
           render: (h, params) => <span>{params.row.group_name || '-'}</span>,
-          showType: ['comparisonMetrics']
+          showType: ['originalMetrics', 'comparisonMetrics']
         },
         {
           title: this.$t('m_tableKey_expr'), // 表达式
