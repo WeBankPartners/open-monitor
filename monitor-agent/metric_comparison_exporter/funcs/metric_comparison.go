@@ -166,9 +166,9 @@ func calcMetricComparisonData() {
 		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
-		// 查询范围 再向前 1min,数据通过 时间范围控制,保证是整点分钟
+		// 查询范围,先扩大查询范围,然后过滤 时间范围精准控制,保证是整点分钟
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  now.Unix() - int64(metricComparison.CalcPeriod) - 60,
+			Start:  now.Unix() - 2*int64(metricComparison.CalcPeriod) - 1,
 			End:    now.Unix(),
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
@@ -185,9 +185,9 @@ func calcMetricComparisonData() {
 			historyEnd = now.AddDate(0, -1, 0).Unix()
 		}
 		// 查询对比历史数据
-		// 查询范围 历史数据 再向前向后1min,查询数据时间范围控制有效数据,保证是整点分钟
+		// 查询范围,历史数据 先扩大查询范围,然后过滤 时间范围精准控制,保证是整点分钟
 		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  historyEnd - int64(metricComparison.CalcPeriod) - 60,
+			Start:  historyEnd - 2*int64(metricComparison.CalcPeriod) - 1,
 			End:    historyEnd + 60,
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
@@ -393,13 +393,27 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 
 func filterData(resultList []*models.PrometheusQueryObj, timestamp, calcPeriod int64) []*models.PrometheusQueryObj {
 	var newResultList []*models.PrometheusQueryObj
-	// 将整点分钟的时间转换回Unix时间戳
-	timestampEnd := time.Unix(timestamp, 0).Truncate(time.Minute).Unix()
-	timestampStart := timestampEnd - calcPeriod
+	var timestampStart, timestampEnd int64
+	switch calcPeriod {
+	case 60:
+		// 将整点分钟的时间转换回Unix时间戳
+		timestampEnd = time.Unix(timestamp, 0).Truncate(time.Minute).Unix()
+	default:
+		// 转成 最近N分钟倍数
+		// 获取当前的分钟数
+		t := time.Unix(timestamp, 0)
+		currentMinute := t.Minute()
+		// 计算离当前时间最近的N分钟倍数的分钟数
+		adjustedMinute := currentMinute - (currentMinute % int(calcPeriod/60))
+		// 创建一个新的时间点，使得分钟数为调整后的值
+		adjustedTime := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), adjustedMinute, 0, 0, t.Location())
+		timestampEnd = adjustedTime.Unix()
+	}
+	timestampStart = timestampEnd - calcPeriod
 	for _, obj := range resultList {
 		newObj := &models.PrometheusQueryObj{
-			Start:  obj.Start,
-			End:    obj.End,
+			Start:  timestampStart,
+			End:    timestampEnd,
 			Metric: obj.Metric,
 			Values: [][]float64{},
 		}
@@ -411,7 +425,7 @@ func filterData(resultList []*models.PrometheusQueryObj, timestamp, calcPeriod i
 			}
 		}
 		if len(newObj.Values) > 0 {
-			newResultList = append(newResultList, obj)
+			newResultList = append(newResultList, newObj)
 		}
 	}
 	return newResultList
