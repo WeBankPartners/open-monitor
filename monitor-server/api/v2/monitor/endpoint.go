@@ -274,5 +274,5 @@ func getAgentMangerInstanceConfig(monitorType string) (result *models.AgentConfi
 func GetEncryptSeed(c *gin.Context) {
 	md5sum := cipher.Md5Encode(models.Config().EncryptSeed)
 	result := md5sum[0:16]
-	middleware.ReturnData(c, result)
+	middleware.ReturnSuccessData(c, result)
 }
