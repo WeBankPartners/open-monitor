@@ -233,10 +233,10 @@ export default {
                 </Button>
               </Tooltip>
 
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_maintenanceWindow')}>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_permissions')}>
                 <Button size="small" on-click={() => {
                   this.authorizeF(params.row)
-                }} type="primary">
+                }} type="warning">
                   <Icon type="md-person" />
                 </Button>
               </Tooltip>
