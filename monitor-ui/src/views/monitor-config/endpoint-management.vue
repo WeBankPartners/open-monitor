@@ -957,7 +957,7 @@ export default {
     },
     historyAlarm(rowData) {
       const params = {
-        id: rowData.id
+        id: rowData.guid
       }
       this.request('GET', this.$root.apiCenter.alarm.history, params, responseData => {
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
