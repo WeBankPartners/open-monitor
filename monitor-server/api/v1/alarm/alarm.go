@@ -654,7 +654,7 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.Metric == "" && param.Id == 0 && param.Priority == "" {
+	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
