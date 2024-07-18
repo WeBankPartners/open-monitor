@@ -698,6 +698,7 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Debug("GetComparisonChartData", log.JsonObj("queryList", queryList))
 	if len(queryList) == 0 {
 		middleware.ReturnSuccessData(c, result)
 		return
