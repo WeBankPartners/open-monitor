@@ -111,7 +111,8 @@ export default {
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {
           clear: false,
-          editTitle: false
+          editTitle: false,
+          lineBarSwitch: true
         }
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
