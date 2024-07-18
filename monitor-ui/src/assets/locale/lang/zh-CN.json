@@ -688,7 +688,7 @@
   "m_configuration_page": "配置页面",
   "m_group_type": "组类型",
   "m_group_name_": "组名",
-  "m_two_y_axes": "双轴图",
+  "m_two_y_axes": "差值双轴图",
   "m_metric_code_placeholder": "仅支持英文(开头）、数字",
   "m_regularization_check_failed_tips": "只能英文开头，中间可以有英文数字下划线，英文和数字结尾的字符串",
   "m_metric_key_placeholder": "英文(开头)、数字、下划线",
