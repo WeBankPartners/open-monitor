@@ -6,12 +6,14 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func ListEndpointGroup(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	size, _ := strconv.Atoi(c.Query("size"))
 	search := c.Query("search")
+	monitorType := c.Query("monitor_type")
 	param := models.QueryRequestParam{}
 	if size > 0 {
 		param.Paging = true
@@ -20,6 +22,14 @@ func ListEndpointGroup(c *gin.Context) {
 	if search != "" {
 		param.Filters = []*models.QueryRequestFilterObj{{Name: "guid", Operator: "like", Value: search}}
 	}
+	if monitorType != "" {
+		values := strings.Split(monitorType, ",")
+		if len(param.Filters) == 0 {
+			param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type", Operator: "in", Value: values}}
+		} else {
+			param.Filters = append(param.Filters, &models.QueryRequestFilterObj{Name: "monitor_type", Operator: "in", Value: values})
+		}
+	}
 	pageInfo, rowData, err := db.ListEndpointGroup(&param)
 	returnData := models.TableData{Data: rowData, Page: page, Size: size, Num: pageInfo.TotalRows}
 	if err != nil {
@@ -27,6 +37,16 @@ func ListEndpointGroup(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccessData(c, returnData)
 	}
+}
+
+func EndpointGroupOptions(c *gin.Context) {
+	var err error
+	var result []string
+	if result, err = db.ListEndpointGroupMonitoryType(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func CreateEndpointGroup(c *gin.Context) {
