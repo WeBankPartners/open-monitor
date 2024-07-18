@@ -384,7 +384,7 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 				}
 			}
 			tmpTagList := query.Tags
-			tmpTagList = append(tmpTagList, "t_endpoint", "instance")
+			tmpTagList = append(tmpTagList, "t_endpoint", "instance", "calc_type")
 			tmpName = appendTagString(tmpName, tagMap, tmpTagList)
 		} else {
 			tmpName = metric
