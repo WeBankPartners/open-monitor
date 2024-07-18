@@ -693,5 +693,8 @@
   "m_metric_key_placeholder": "English (at the beginning), numbers, underscores",
   "m_metric_key_placeholder_second": "Only English (at the beginning), numbers, and underscores '_' are supported",
   "m_original_metric_key": "Original indicator key",
-  "m_enter_name_tips": "Please enter the object name"
+  "m_enter_name_tips": "Please enter the object name",
+  "m_creator": "Creator",
+  "m_permissions": "Permissions",
+  "m_filter": "Filter"
 }
