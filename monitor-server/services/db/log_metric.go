@@ -1357,7 +1357,12 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 
 func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, affectEndpointGroup []string) {
 	alarmMetricGuid := fmt.Sprintf("%s__%s", metric, serviceGroup)
-	actions, affectEndpointGroup = getDeleteMetricActions(alarmMetricGuid)
+	tmpActions, tmpEndpointGroups := getMetricComparisonDeleteAction(alarmMetricGuid)
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroups...)
+	tmpActions, tmpEndpointGroups = getDeleteMetricActions(alarmMetricGuid)
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroups...)
 	return
 }
 
