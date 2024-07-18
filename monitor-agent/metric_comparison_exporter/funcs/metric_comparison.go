@@ -336,16 +336,16 @@ func calcMetricComparisonData(exposeCycleMap map[int]bool) {
 				}
 			}
 		}
-		// 写数据
-		metricComparisonResultLock.Lock()
-		metricComparisonRes = tempMetricComparisonList
-		metricComparisonResultLock.Unlock()
-		// 数据有效期10s钟,保证数据只被采集到一次,10s后清空数据
-		time.Sleep(10 * time.Second)
-		metricComparisonResultLock.Lock()
-		metricComparisonRes = []*models.MetricComparisonRes{}
-		metricComparisonResultLock.Unlock()
 	}
+	// 写数据
+	metricComparisonResultLock.Lock()
+	metricComparisonRes = tempMetricComparisonList
+	metricComparisonResultLock.Unlock()
+	// 数据有效期10s钟,保证数据只被采集到一次,10s后清空数据
+	time.Sleep(10 * time.Second)
+	metricComparisonResultLock.Lock()
+	metricComparisonRes = []*models.MetricComparisonRes{}
+	metricComparisonResultLock.Unlock()
 }
 
 func parsePromQL(promQl string) string {
