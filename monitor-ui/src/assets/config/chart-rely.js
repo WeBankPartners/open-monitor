@@ -271,8 +271,8 @@ export const drawChart = function (that,config,userConfig, elId) {
         show: true,
         lineStyle: {
           color: ['#a1a1a2'],
-          width: 1,
-          type: 'solid'
+          type: 'dotted',
+          width: 0.3
         }
       }
     },
@@ -325,8 +325,8 @@ export const drawChart = function (that,config,userConfig, elId) {
           show: true,
           lineStyle: {
             color: ['#a1a1a2'],
-            width: 1,
-            type: 'solid'
+            type: 'dotted',
+            width: 0.3
           }
         }
       },
@@ -353,8 +353,8 @@ export const drawChart = function (that,config,userConfig, elId) {
           show: true,
           lineStyle: {
             color: ['#a1a1a2'],
-            width: 1,
-            type: 'solid'
+            type: 'dotted',
+            width: 0.3
           }
         }
       }
