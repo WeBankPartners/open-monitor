@@ -104,6 +104,9 @@ func GetChartData(c *gin.Context) {
 		queryList, err = GetChartConfigByCustom(&param)
 	}
 	if err != nil {
+		if strings.Contains(err.Error(), "Param data endpoint") {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotSupportPreview)
+		}
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
