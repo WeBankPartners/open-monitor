@@ -79,4 +79,5 @@ update alarm_strategy set metric=replace(metric,'.','_') where metric in (select
 update alarm_strategy_metric set metric=replace(metric,'.','_') where metric in (select guid from metric where metric like '%.%' and service_group is null);
 update custom_chart_series set metric=replace(metric,'.','_'),metric_guid=replace(metric_guid,'.','_');
 update metric set metric=replace(metric,'.','_'),guid=replace(guid,'.','_') where metric like '%.%' and service_group is null;
+update prom_metric set metric=replace(metric,'.','_') where metric like '%.%';
 SET FOREIGN_KEY_CHECKS=1;
