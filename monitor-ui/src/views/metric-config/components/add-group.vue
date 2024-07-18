@@ -366,7 +366,8 @@ export default {
         responseData => {
           const chartConfig = {
             eye: false,
-            clear: true
+            clear: true,
+            lineBarSwitch: true
           }
           readyToDraw(this, responseData, 1, chartConfig, this.echartId)
         },
