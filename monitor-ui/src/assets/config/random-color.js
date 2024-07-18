@@ -61,15 +61,13 @@ const hslToHex = (h, s, l) => {
 }
 
 const generateAdjacentColors = (hexColor, count, degree) => {
-  let [h] = hexToHSL(hexColor)
-  const [s, l] = hexToHSL(hexColor)
+  const [h, s, l] = hexToHSL(hexColor)
   const adjacentColors = []
-
+  let tempH = h
   for (let i = 0; i < count; i++) {
-    h = (h + degree) % 360 // 根据传入的度数进行增加
-    adjacentColors.push(hslToHex(h, s / 100, l / 100))
+    tempH = (tempH + degree) % 360 // 根据传入的度数进行增加
+    adjacentColors.push(hslToHex(tempH, s / 100, l / 100))
   }
-
   return adjacentColors
 }
 

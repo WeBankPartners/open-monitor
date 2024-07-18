@@ -314,6 +314,9 @@ func init() {
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPost, HandlerFunc: config_new.RemoteWriteConfigCreate},
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPut, HandlerFunc: config_new.RemoteWriteConfigUpdate},
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodDelete, HandlerFunc: config_new.RemoteWriteConfigDelete},
+
+		// 获取seed
+		&handlerFuncObj{Url: "/seed", Method: http.MethodGet, HandlerFunc: monitor.GetEncryptSeed},
 	)
 }
 
@@ -448,11 +451,7 @@ func httpLogHandle() gin.HandlerFunc {
 }
 
 func getRemoteIp(c *gin.Context) string {
-	netIp, ok := c.RemoteIP()
-	if ok {
-		return netIp.String()
-	}
-	return c.ClientIP()
+	return c.RemoteIP()
 }
 
 func InitClusterApi() {
