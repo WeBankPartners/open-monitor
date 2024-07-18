@@ -166,8 +166,9 @@ func calcMetricComparisonData() {
 		calcTypeMap := getCalcTypeMap(metricComparison.CalcType)
 		curResultList = []*models.PrometheusQueryObj{}
 		historyResultList = []*models.PrometheusQueryObj{}
+		// 查询范围 再向前 1min,数据通过 时间范围控制,保证是整点分钟
 		if curResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  now.Unix() - int64(metricComparison.CalcPeriod),
+			Start:  now.Unix() - int64(metricComparison.CalcPeriod) - 60,
 			End:    now.Unix(),
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
@@ -184,8 +185,9 @@ func calcMetricComparisonData() {
 			historyEnd = now.AddDate(0, -1, 0).Unix()
 		}
 		// 查询对比历史数据
+		// 查询范围 再向前 1min,数据通过 时间范围控制,保证是整点分钟
 		if historyResultList, err = QueryPrometheusData(&models.PrometheusQueryParam{
-			Start:  historyEnd - int64(metricComparison.CalcPeriod),
+			Start:  historyEnd - int64(metricComparison.CalcPeriod) - 60,
 			End:    historyEnd,
 			PromQl: parsePromQL(metricComparison.OriginPromExpr),
 		}); err != nil {
@@ -200,6 +202,9 @@ func calcMetricComparisonData() {
 			}
 			continue
 		}
+		// 数据过滤,过滤整点时间范围内数据
+		curResultList = filterData(curResultList, now.Unix(), int64(metricComparison.CalcPeriod))
+		historyResultList = filterData(historyResultList, historyEnd, int64(metricComparison.CalcPeriod))
 		for _, data := range curResultList {
 			for _, historyData := range historyResultList {
 				if len(data.Metric) > 0 && len(historyData.Metric) > 0 && data.Metric.ToTagString() == historyData.Metric.ToTagString() {
@@ -384,4 +389,30 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 		}
 	}
 	return
+}
+
+func filterData(resultList []*models.PrometheusQueryObj, timestamp, calcPeriod int64) []*models.PrometheusQueryObj {
+	var newResultList []*models.PrometheusQueryObj
+	// 将整点分钟的时间转换回Unix时间戳
+	timestampEnd := time.Unix(timestamp, 0).Truncate(time.Minute).Unix()
+	timestampStart := timestampEnd - calcPeriod
+	for _, obj := range resultList {
+		newObj := &models.PrometheusQueryObj{
+			Start:  obj.Start,
+			End:    obj.End,
+			Metric: obj.Metric,
+			Values: [][]float64{},
+		}
+		if len(obj.Values) > 0 {
+			for _, valArr := range obj.Values {
+				if len(valArr) == 2 && valArr[0] >= float64(timestampStart*1000) && valArr[0] <= float64(timestampEnd*1000) {
+					newObj.Values = append(newObj.Values, valArr)
+				}
+			}
+		}
+		if len(newObj.Values) > 0 {
+			newResultList = append(newResultList, obj)
+		}
+	}
+	return newResultList
 }
