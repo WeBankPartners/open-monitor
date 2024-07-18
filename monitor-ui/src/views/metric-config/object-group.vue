@@ -12,7 +12,7 @@
         filterable
         @on-change="changeEndpointGroup"
       >
-        <Option v-for="(option, index) in objectGroupOptions" :value="option.guid" :label="option.display_name" :key="index">
+        <Option v-for="(option, index) in objectGroupOptions" :value="option.guid" :label="'[' + option.monitor_type + '] ' + option.display_name" :key="index">
           <TagShow :list="objectGroupOptions" name="type" :tagName="option.monitor_type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
@@ -65,6 +65,7 @@
       :data="row"
       :operator="type"
       :viewOnly="viewOnly"
+      fromPage="objectGroup"
       @fetchList="reloadData('originalMetrics')"
     ></AddGroupDrawer>
     <YearOverYear
@@ -278,6 +279,7 @@ export default {
                   <Button
                     size="small"
                     type="primary"
+                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
                     onClick={() => {
                       this.handleEdit(params.row, false)
                     }}
@@ -293,6 +295,7 @@ export default {
                   <Button
                     size="small"
                     type="error"
+                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
                     onClick={() => {
                       this.handleDelete(params.row)
                     }}
@@ -328,6 +331,7 @@ export default {
   async mounted() {
     await this.getObjectGroupList()
     this.endpointGroup = this.objectGroupOptions[0].guid
+    this.monitorType = this.objectGroupOptions[0].monitor_type
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
@@ -338,7 +342,11 @@ export default {
       this.metricType = metricType
       this.getList()
     },
-    changeEndpointGroup() {
+    changeEndpointGroup(val) {
+      const find = this.objectGroupOptions.find(item => item.guid === val)
+      if (find) {
+        this.monitorType = find.monitor_type
+      }
       this.getList()
     },
     getList() {
