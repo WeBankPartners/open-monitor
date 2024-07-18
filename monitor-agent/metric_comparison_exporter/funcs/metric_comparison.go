@@ -24,7 +24,7 @@ var (
 	metricComparisonResultLock = new(sync.RWMutex)
 	metricComparisonRes        []*models.MetricComparisonRes
 	metricComparisonList       []*models.MetricComparisonDto
-	counter                    = 0 // 定义计数器
+	exposeCycleMap             = make(map[int]bool) //暴露周期map
 )
 
 const (
@@ -42,7 +42,7 @@ func HandlePrometheus(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Prometheus %s is invalid\n", v.Name)
 			continue
 		}
-		if len(v.MetricMap) > 0 && counter*10%v.CalcPeriod == 0 {
+		if len(v.MetricMap) > 0 {
 			buff.WriteString(fmt.Sprintf("%s{", v.Name))
 			i = 0
 			for key, value := range v.MetricMap {
@@ -87,17 +87,35 @@ func containsChinese(s string) bool {
 }
 
 func StartCalcMetricComparisonCron() {
-	LoadMetricComparisonConfig()
-	t := time.NewTicker(10 * time.Second).C
+	if len(metricComparisonList) == 0 {
+		LoadMetricComparisonConfig()
+	}
+	now := time.Now()
+	// 计算到下一分钟整点的时间差
+	nextMinute := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+1, 0, 0, now.Location())
+	timeDiff := nextMinute.Sub(now)
+	time.Sleep(time.Duration(timeDiff.Seconds()+1) * time.Second)
+	// 整点1分钟执行
+	t := time.NewTicker(time.Minute).C
 	for {
 		<-t
-		counter = counter + 1
-		// 目前页面配置计算周期最大 3600,所以counter最大值 360,大于就重置为1
-		if counter > 360 {
-			counter = 1
+		newNow := time.Now()
+		exposeCycleMap = make(map[int]bool)
+		exposeCycleMap[1] = true
+		if newNow.Minute() == 0 {
+			exposeCycleMap[60] = true
+			exposeCycleMap[30] = true
+		} else if newNow.Minute() == 30 {
+			exposeCycleMap[30] = true
 		}
-		log.Printf("counter:%d\n", counter)
-		go calcMetricComparisonData()
+		if newNow.Minute()%10 == 0 {
+			exposeCycleMap[5] = true
+			exposeCycleMap[10] = true
+		} else if newNow.Minute()%5 == 0 {
+			exposeCycleMap[5] = true
+		}
+		log.Printf("exposeCycleMap:%v", exposeCycleMap)
+		go calcMetricComparisonData(exposeCycleMap)
 	}
 }
 
@@ -147,7 +165,7 @@ func LoadMetricComparisonConfig() {
 	}
 }
 
-func calcMetricComparisonData() {
+func calcMetricComparisonData(exposeCycleMap map[int]bool) {
 	var curResultList, historyResultList []*models.PrometheusQueryObj
 	var err error
 	var historyEnd int64
@@ -159,6 +177,10 @@ func calcMetricComparisonData() {
 	}
 	// 根据数据查询原始指标数据
 	for _, metricComparison := range metricComparisonList {
+		// 需要整点计算数据并且暴露,没到对应整点时间不参与本次计算
+		if !exposeCycleMap[metricComparison.CalcPeriod/60] {
+			continue
+		}
 		if metricComparison.OriginPromExpr == "" {
 			continue
 		}
@@ -314,11 +336,16 @@ func calcMetricComparisonData() {
 				}
 			}
 		}
-		// 写数据
-		metricComparisonResultLock.Lock()
-		metricComparisonRes = tempMetricComparisonList
-		metricComparisonResultLock.Unlock()
 	}
+	// 写数据
+	metricComparisonResultLock.Lock()
+	metricComparisonRes = tempMetricComparisonList
+	metricComparisonResultLock.Unlock()
+	// 数据有效期10s钟,保证数据只被采集到一次,10s后清空数据
+	time.Sleep(10 * time.Second)
+	metricComparisonResultLock.Lock()
+	metricComparisonRes = []*models.MetricComparisonRes{}
+	metricComparisonResultLock.Unlock()
 }
 
 func parsePromQL(promQl string) string {

@@ -313,6 +313,7 @@ export default {
         ],
       },
       tableData: [],
+      // modal中的线性表格配置
       lineChartConfigurationColumns: [
         {
           title: this.$t('m_layer_endpoint'),
@@ -766,6 +767,12 @@ export default {
         const item = initialData[i]
         item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
         Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
+
+        // 同环比修改
+        if (item.comparison) {
+          const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
+          item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+        }
       }
       if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
         const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
@@ -979,13 +986,17 @@ export default {
       return options
     },
 
-    processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '') {
+    processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
+      let tempTags = tags
+      if (allItem.comparison && !isEmpty(tags) && tags[0].tagName === 'calc_type' && isEmpty(tags[0].tagValue)) {
+        tempTags = []
+      }
       return {
         metric,
         endpoint,
         serviceGroup,
         monitorType,
-        tags,
+        tags: tempTags,
         chartSeriesGuid
       }
     },
@@ -1044,7 +1055,7 @@ export default {
         const metricItem = find(this.metricOptions, {
           guid: this.metricGuid
         })
-        const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '')
+        const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
         const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
         const colorGroup = this.getRandomColor()
         const item = {
@@ -1284,7 +1295,7 @@ export default {
 
     async updateAllColorLine(index) {
       const item = this.tableData[index]
-      const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid)
+      const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
       this.tableData[index].series = series.map(item => {
         item.color = item.color || this.getRandomColor()
