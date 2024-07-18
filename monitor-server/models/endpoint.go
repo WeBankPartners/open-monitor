@@ -98,11 +98,12 @@ type MetricComparisonExtend struct {
 	LogMetricGroupName string   `json:"log_metric_group_name" xorm:"-"`                 // 配置的模版名
 	MetricComparisonId string   `json:"metricComparisonId" xorm:"metric_comparison_id"` // 同环比指标Id
 	PromExpr           string   `json:"promExpr" xorm:"prom_expr"`                      // 同环比指标prom表达式
-	OriginCalcType     string   `json:"-" xorm:"calc_type"`                             // 计算数值: diff 差值,diff_percent 差值百分比,可以多选,逗号隔开
-	CalcType           []string `json:"calcType" xorm:"-"`                              // 计算数值: diff 差值,diff_percent 差值百分比,数组
-	CalcMethod         string   `json:"calcMethod" xorm:"calc_method"`                  // 计算方法: avg平均,sum求和
-	CalcPeriod         int      `json:"calcPeriod" xorm:"calc_period"`                  // 计算周期
-	ComparisonType     string   `json:"comparisonType" xorm:"comparison_type"`          // 对比类型: day 日环比, week 周, 月周比 month
-	GroupType          string   `json:"group_type" xorm:"-"`                            // 组类型
-	GroupName          string   `json:"group_name" xorm:"-"`                            // 组名
+	ImportPromExpr     string   `json:"prom_expr" xorm:"-"`
+	OriginCalcType     string   `json:"-" xorm:"calc_type"`                    // 计算数值: diff 差值,diff_percent 差值百分比,可以多选,逗号隔开
+	CalcType           []string `json:"calcType" xorm:"-"`                     // 计算数值: diff 差值,diff_percent 差值百分比,数组
+	CalcMethod         string   `json:"calcMethod" xorm:"calc_method"`         // 计算方法: avg平均,sum求和
+	CalcPeriod         int      `json:"calcPeriod" xorm:"calc_period"`         // 计算周期
+	ComparisonType     string   `json:"comparisonType" xorm:"comparison_type"` // 对比类型: day 日环比, week 周, 月周比 month
+	GroupType          string   `json:"group_type" xorm:"-"`                   // 组类型
+	GroupName          string   `json:"group_name" xorm:"-"`                   // 组名
 }
