@@ -115,7 +115,7 @@ func MetricDelete(id string) error {
 		return nil
 	}
 	metric := metricQuery[0].Metric
-	var actions []*Action
+	var actions, subActions []*Action
 	// 删除同环比 指标
 	var metricIds []string
 	if err = x.SQL("select metric_id from metric_comparison where origin_metric_id = ?", id).Find(&metricIds); err != nil {
@@ -126,6 +126,13 @@ func MetricDelete(id string) error {
 	actions = append(actions, &Action{Sql: "delete from metric_comparison where  origin_metric_id = ?", Param: []interface{}{id}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid in ('" + strings.Join(metricIds, "','") + "') "})
 	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{id}})
+	// 删除看板里面引入的当前指标
+	if subActions, err = DeleteCustomChartSeriesByMetricIdSQL(id); err != nil {
+		return err
+	}
+	if len(subActions) > 0 {
+		actions = append(actions, subActions...)
+	}
 	var charts []*models.ChartTable
 	err = x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", metricQuery[0].MetricType).Find(&charts)
 	if err != nil {
@@ -601,9 +608,15 @@ func UpdateComparisonMetric(metricComparisonId string, calcTypeList []string) (e
 }
 
 func DeleteComparisonMetric(id string) (err error) {
-	var actions []*Action
+	var actions, subActions []*Action
 	actions = append(actions, &Action{"delete from metric_comparison where metric_id = ?", []interface{}{id}})
 	actions = append(actions, &Action{"delete from metric where guid = ?", []interface{}{id}})
+	if subActions, err = DeleteCustomChartSeriesByMetricIdSQL(id); err != nil {
+		return
+	}
+	if len(subActions) > 0 {
+		actions = append(actions, subActions...)
+	}
 	return Transaction(actions)
 }
 
