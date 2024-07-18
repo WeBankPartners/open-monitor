@@ -29,7 +29,7 @@ func MetricCreate(c *gin.Context) {
 	}
 	var err error
 	for _, v := range param {
-		if middleware.IsIllegalName(v.Metric) {
+		if middleware.IsIllegalNameNew(v.Metric) {
 			err = fmt.Errorf("metric name illegal")
 			break
 		}
