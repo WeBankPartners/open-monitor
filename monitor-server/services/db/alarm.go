@@ -576,7 +576,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
 	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
-		if query.Endpoint == "" && len(endpointList) == 0 {
+		if query.Endpoint == "" && len(endpointFilterList) == 0 {
 			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
 					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
