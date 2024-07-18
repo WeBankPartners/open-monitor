@@ -568,7 +568,7 @@ func CheckHasChartManagePermission(chartId string, userRoles []string) (permissi
 			}
 		}
 	}
-	// 判断是否拥有删除权限
+	// 公开图表,看是否有图表的管理权限
 	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartId); err != nil {
 		return
 	}
