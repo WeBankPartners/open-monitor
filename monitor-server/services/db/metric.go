@@ -331,13 +331,6 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			metric.MetricType = string(models.MetricTypeCommon)
 		} else if strings.TrimSpace(metric.LogMetricGroup) != "" {
 			metric.MetricType = string(models.MetricTypeBusiness)
-			if serviceGroup != "" {
-				var name string
-				if _, err = x.SQL("select name from log_metric_group where guid = ?", metric.LogMetricGroup).Get(&name); err != nil {
-					return
-				}
-				metric.LogMetricGroupName = name
-			}
 		} else {
 			// 业务配置类型 兜底
 			if strings.TrimSpace(metric.LogMetricConfig) != "" || strings.TrimSpace(metric.LogMetricTemplate) != "" {
@@ -357,6 +350,13 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 				metric.GroupType = "system"
 				metric.GroupName = metric.MonitorType
 			}
+		}
+		if strings.TrimSpace(metric.LogMetricGroup) != "" {
+			var name string
+			if _, err = x.SQL("select name from log_metric_group where guid = ?", metric.LogMetricGroup).Get(&name); err != nil {
+				return
+			}
+			metric.LogMetricGroupName = name
 		}
 	}
 	return
