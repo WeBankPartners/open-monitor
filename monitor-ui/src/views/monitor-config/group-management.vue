@@ -8,6 +8,19 @@
         :placeholder="$t('m_enter_name_tips')"
         @on-change="onFilterConditionChange"
       />
+      <Select
+        v-model="searchForm.monitor_type"
+        multiple
+        filterable
+        clearable
+        style="width: 25%"
+        :placeholder="$t('m_please_select') + $t('m_basic_type')"
+        @on-change="onFilterConditionChange"
+      >
+        <Option v-for="name in objectTypeList" :value="name" :key="name">
+          {{name}}
+        </Option>
+      </Select>
       <Button class="add-content-item" @click="onAddButtonClick"  type="success" >{{$t('m_add')}}</Button>
     </div>
     <div class="content-table">
@@ -157,7 +170,8 @@ export default {
       },
       id: null, // [通用]-待编辑数据id
       searchForm: {
-        search: ''
+        search: '',
+        monitor_type: []
       },
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       pagination: {
@@ -254,14 +268,22 @@ export default {
             </div>
           )
         }
-      ]
+      ],
+      objectTypeList: []
     }
   },
   mounted() {
     this.getTableList()
+    this.getAllOptions()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
+    getAllOptions() {
+      const path = '/monitor/api/v2/alarm/endpoint_group/options'
+      this.request('GET', path, {}, res => {
+        this.objectTypeList = res
+      })
+    },
     async onAddButtonClick() {
       this.modelConfig.isAdd = true
       const params = {
@@ -404,6 +426,7 @@ export default {
     }, 300),
     getTableList() {
       const params = Object.assign({}, this.searchForm, this.pagination)
+      params.monitor_type = params.monitor_type.join(',')
       const path = '/monitor/api/v2/alarm/endpoint_group/query'
       this.request('GET', path, params, res => {
         this.pagination.total = res.num
