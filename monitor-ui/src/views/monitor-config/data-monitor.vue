@@ -1,109 +1,111 @@
 <template>
-<div class=" ">
-  <section>
-    <div style="text-align: end;">
-      <button type="button" @click="addDbMonitor" class="btn btn-sm btn-confirm-f">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-    </div>
-    <div style="height:500px;overflow-y:auto">
-      <template v-for="(tableItem, tableIndex) in totalData">
-        <section :key="tableIndex + 'f'">
-          <div class="section-table-tip">
-            <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || 'Please Set Name'}}
-              <span @click="editPanalName(tableItem.sys_panel_value)"><i class="fa fa-pencil" aria-hidden="true"></i></span>
-            </Tag>
-            <PageTable :pageConfig="tableItem.pageConfig"></PageTable>
-          </div>
-        </section>
-      </template>
-    </div>
-  </section>
-  <Modal
-   v-model="db_add_Modal"
-   :mask-closable="false"
-    :title="$t('m_button_dataMonitoring')" 
-    @on-ok="addDbConfig"
-    @on-cancel="cancelAddDbConfig"
-  >
-    <Form :model="activeSysPanal" :label-width="80">
-      <FormItem :label="$t('m_field_resourceLevel')">
-        <Select filterable clearable v-model="newPanalName" style="width:400px">
-          <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
-        </Select>
-      </FormItem>
-      <FormItem :label="$t('m_tableKey_name')">
-        <Input v-model="activeSysPanal.name" placeholder="" style="width:400px"></Input>
-      </FormItem>
-      <FormItem label="sql">
-        <Input v-model="activeSysPanal.sql" type="textarea" style="width:400px"></Input>
-      </FormItem>
-    </Form>
-  </Modal>
-  <Modal
-   v-model="db_edit_Modal"
-   :mask-closable="false"
-    :title="$t('m_button_dataMonitoring')" 
-    @on-ok="editDbConfig"
-    @on-cancel="cancelEditDbConfig"
-  >
-    <Form :model="activeSysPanal" :label-width="80">
-      <FormItem :label="$t('m_field_resourceLevel')">
-        <Select filterable clearable v-model="newPanalName" style="width:400px">
-          <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
-        </Select>
-      </FormItem>
-      <FormItem :label="$t('m_tableKey_name')">
-        <Input v-model="activeSysPanal.name" placeholder=""></Input>
-      </FormItem>
-      <FormItem label="sql">
-        <Input v-model="activeSysPanal.sql" type="textarea" placeholder=""></Input>
-      </FormItem>
-    </Form>
-  </Modal>
-  <Modal v-model="isShowWarning" 
-    :title="$t('m_delConfirm_title')"
-    @on-ok="ok" 
-    @on-cancel="cancel">
-    <div class="modal-body" style="padding:30px">
-      <div style="text-align:center">
-        <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
+  <div class=" ">
+    <section>
+      <div style="text-align: end;">
+        <button type="button" @click="addDbMonitor" class="btn btn-sm btn-confirm-f">
+          <i class="fa fa-plus"></i>
+          {{$t('m_button_add')}}
+        </button>
       </div>
-    </div>
-  </Modal>
-  <Modal
-    v-model="isShowChangePanalName"
-    :title="$t('m_button_edit')"
-    @on-ok="changePanalName">
-    <Select filterable clearable v-model="newPanalName" style="width:400px">
+      <div style="height:500px;overflow-y:auto">
+        <template v-for="(tableItem, tableIndex) in totalData">
+          <section :key="tableIndex + 'f'">
+            <div class="section-table-tip">
+              <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || 'Please Set Name'}}
+                <span @click="editPanalName(tableItem.sys_panel_value)"><i class="fa fa-pencil" aria-hidden="true"></i></span>
+              </Tag>
+              <PageTable :pageConfig="tableItem.pageConfig"></PageTable>
+            </div>
+          </section>
+        </template>
+      </div>
+    </section>
+    <Modal
+      v-model="db_add_Modal"
+      :mask-closable="false"
+      :title="$t('m_button_dataMonitoring')"
+      @on-ok="addDbConfig"
+      @on-cancel="cancelAddDbConfig"
+    >
+      <Form :model="activeSysPanal" :label-width="80">
+        <FormItem :label="$t('m_field_resourceLevel')">
+          <Select filterable clearable v-model="newPanalName" style="width:400px">
+            <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem :label="$t('m_tableKey_name')">
+          <Input v-model="activeSysPanal.name" placeholder="" style="width:400px"></Input>
+        </FormItem>
+        <FormItem label="sql">
+          <Input v-model="activeSysPanal.sql" type="textarea" style="width:400px"></Input>
+        </FormItem>
+      </Form>
+    </Modal>
+    <Modal
+      v-model="db_edit_Modal"
+      :mask-closable="false"
+      :title="$t('m_button_dataMonitoring')"
+      @on-ok="editDbConfig"
+      @on-cancel="cancelEditDbConfig"
+    >
+      <Form :model="activeSysPanal" :label-width="80">
+        <FormItem :label="$t('m_field_resourceLevel')">
+          <Select filterable clearable v-model="newPanalName" style="width:400px">
+            <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem :label="$t('m_tableKey_name')">
+          <Input v-model="activeSysPanal.name" placeholder=""></Input>
+        </FormItem>
+        <FormItem label="sql">
+          <Input v-model="activeSysPanal.sql" type="textarea" placeholder=""></Input>
+        </FormItem>
+      </Form>
+    </Modal>
+    <Modal v-model="isShowWarning"
+           :title="$t('m_delConfirm_title')"
+           @on-ok="ok"
+           @on-cancel="cancel"
+    >
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
+        </div>
+      </div>
+    </Modal>
+    <Modal
+      v-model="isShowChangePanalName"
+      :title="$t('m_button_edit')"
+      @on-ok="changePanalName"
+    >
+      <Select filterable clearable v-model="newPanalName" style="width:400px">
         <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
-    </Select>
-  </Modal>
-</div>
+      </Select>
+    </Modal>
+  </div>
 </template>
 
 <script>
-let tableEle = [{
-    title: 'm_tableKey_endpoint',
-    value: 'endpoint_guid',
-    display: true
-  },
-  {
-    title: 'm_tableKey_name',
-    value: 'name',
-    display: true
-  },
-  {
-    title: 'sql',
-    value: 'sql',
-    display: true
-  },
-  {
-    title: 'm_field_resourceLevel',
-    value: 'sys_panel',
-    display: true
-  }
+const tableEle = [{
+  title: 'm_tableKey_endpoint',
+  value: 'endpoint_guid',
+  display: true
+},
+{
+  title: 'm_tableKey_name',
+  value: 'name',
+  display: true
+},
+{
+  title: 'sql',
+  value: 'sql',
+  display: true
+},
+{
+  title: 'm_field_resourceLevel',
+  value: 'sys_panel',
+  display: true
+}
 ]
 const btn = [
   {
@@ -149,13 +151,13 @@ export default {
       dbMonitorData.forEach(item => {
         this.totalData.push({
           sys_panel: item.sys_panel,
-          sys_panel_value: item.sys_panel_value, 
+          sys_panel_value: item.sys_panel_value,
           pageConfig: {
             table: {
               tableData: item.data,
-              tableEle: tableEle,
+              tableEle,
               primaryKey: 'id',
-              btn: btn,
+              btn,
               handleFloat: true
             }
           }
@@ -167,7 +169,7 @@ export default {
       this.activeSysPanal.name = ''
       this.activeSysPanal.sql = ''
       // this.activeSysPanal.sys_panel = sys_panel
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
         this.panalNameList.unshift({
           option_text: 'null',
@@ -202,7 +204,7 @@ export default {
       this.isShowWarning = true
     },
     exectRemoveDbmonitor(val) {
-      let params = {
+      const params = {
         id: val.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.delete, params, () => {
@@ -211,7 +213,7 @@ export default {
     },
     editDbMonitor(row) {
       this.activeId = row.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
         this.panalNameList.unshift({
           option_text: 'null',
@@ -224,7 +226,11 @@ export default {
       this.db_edit_Modal = true
     },
     editDbConfig() {
-      let params = Object.assign(this.activeSysPanal, {id: this.activeId,endpoint_id: Number(this.endpointId),sys_panel: this.newPanalName})
+      const params = Object.assign(this.activeSysPanal, {
+        id: this.activeId,
+        endpoint_id: Number(this.endpointId),
+        sys_panel: this.newPanalName
+      })
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, params, () => {
         this.editPost(params)
       })
@@ -242,12 +248,12 @@ export default {
     cancel() {
       this.isShowWarning = false
     },
-    editPanalName (panalName) {
+    editPanalName(panalName) {
       this.newPanalName = panalName
       this.panalName = panalName
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
-         this.panalNameList.unshift({
+        this.panalNameList.unshift({
           option_text: 'null',
           option_value: ''
         })

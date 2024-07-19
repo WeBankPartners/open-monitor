@@ -26,10 +26,10 @@ export default {
     }
   },
   mounted() {
-    // this.$refs.search.getChartsConfig() 
+    // this.$refs.search.getChartsConfig()
   },
   methods: {
-    manageCharts (chartsConfig, params) {
+    manageCharts(chartsConfig, params) {
       if (params.sys) {
         this.params = params
         this.showCharts = false
@@ -39,7 +39,7 @@ export default {
       this.charts.chartsConfig = []
       chartsConfig.forEach(item => {
         item.autoRefresh = params.autoRefresh
-        let chart = {
+        const chart = {
           tabTape: {
             label: item.title,
             name: item.title + '_',
@@ -47,7 +47,7 @@ export default {
           btns: item.tags.option,
           tagsUrl: item.tags.url,
           charts: item.charts,
-          params: params
+          params
         }
         this.charts.chartsConfig.push(chart)
       })
@@ -55,7 +55,7 @@ export default {
       this.showRecursive = false
       this.$refs.parentCharts.refreshCharts()
     },
-    recursiveView (params) {
+    recursiveView(params) {
       this.recursiveViewConfig = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
