@@ -98,14 +98,14 @@ export default {
             v_validate: 'required:true',
             disabled: false,
             type: 'select'
-          },
-          {
-            label: 'm_field_resourceLevel',
-            value: 'service_group',
-            option: 'service_group',
-            disabled: false,
-            type: 'select'
           }
+          // {
+          //   label: 'm_field_resourceLevel',
+          //   value: 'service_group',
+          //   option: 'service_group',
+          //   disabled: false,
+          //   type: 'select'
+          // }
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           display_name: null,

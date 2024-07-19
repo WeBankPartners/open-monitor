@@ -475,7 +475,7 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
-	if data.EndpointList, err = db.GetAllEndpointNameList(); err != nil {
+	if data.EndpointList, err = db.GetAllEndpointIdList(); err != nil {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
@@ -654,20 +654,24 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" {
+	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
-	if strings.ToLower(param.Metric) == "custom" {
-		param.Custom = true
+	var actions []*db.Action
+	actions, err = db.CloseAlarm(param)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
 	}
-	if param.Custom {
-		err = db.CloseOpenAlarm(param)
-	} else {
-		err = db.CloseAlarm(param)
-		if err == nil && param.Priority != "" {
-			err = db.CloseOpenAlarm(param)
-		}
+	customActions, getCustomErr := db.CloseOpenAlarm(param)
+	if getCustomErr != nil {
+		mid.ReturnHandleError(c, getCustomErr.Error(), getCustomErr)
+		return
+	}
+	actions = append(actions, customActions...)
+	if len(actions) > 0 {
+		err = db.Transaction(actions)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
@@ -888,8 +892,11 @@ func NotifyAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
-	if strings.ToLower(param.Metric) == "custom" {
+	for _, v := range param.Metric {
+		if strings.ToLower(v) == "custom" {
+		}
 		param.Custom = true
+		break
 	}
 	err = db.ManualNotifyAlarm(param.Id, mid.GetOperateUser(c))
 	if err != nil {
