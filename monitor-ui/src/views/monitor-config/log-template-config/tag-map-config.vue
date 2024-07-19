@@ -9,26 +9,26 @@
         </Row>
         <Row v-for="(item, itemIndex) in tagMap" :key="itemIndex" style="margin:6px 0">
           <Col span="7">
-            <Select v-model="item.regulative" style="width:90%">
-              <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
-              <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
-            </Select>
+          <Select v-model="item.regulative" style="width:90%">
+            <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
+            <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
+          </Select>
           </Col>
           <Col span="7">
-            <Input v-model.trim="item.source_value" style="width:90%"></Input>
+          <Input v-model.trim="item.source_value" style="width:90%"></Input>
           </Col>
           <Col span="8">
-            <Input v-model.trim="item.target_value" style="width:90%"></Input>
+          <Input v-model.trim="item.target_value" style="width:90%"></Input>
           </Col>
           <Col span="2">
-            <Button
-              type="error"
-              ghost
-              @click="deleteItem(itemIndex)"
-              size="small"
-              style="vertical-align: sub;cursor: pointer"
-              icon="md-trash"
-            ></Button>
+          <Button
+            type="error"
+            ghost
+            @click="deleteItem(itemIndex)"
+            size="small"
+            style="vertical-align: sub;cursor: pointer"
+            icon="md-trash"
+          ></Button>
           </Col>
         </Row>
         <div style="text-align: right;margin-right: 9px;cursor: pointer">
@@ -36,8 +36,8 @@
         </div>
       </div>
       <template #footer>
-        <Button @click="showModel = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="okSelect" type="primary">{{ $t('button.confirm') }}</Button>
+        <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="okSelect" type="primary">{{ $t('m_button_confirm') }}</Button>
       </template>
     </Modal>
   </div>
@@ -46,24 +46,25 @@
 <script>
 export default {
   name: '',
-  data () {
+  data() {
     return {
       showModel: false,
       tagMap: []
     }
   },
   methods: {
-    loadPage (tagMap) {
+    loadPage(tagMap) {
       this.tagMap = tagMap
       this.showModel = true
     },
-    dataValidateFirst () {
+    dataValidateFirst() {
       let res = true
       const infoSet = new Set()
       this.tagMap.forEach(item => {
         if (infoSet.has(item.label)) {
           res = false
-        } else {
+        }
+        else {
           infoSet.add(item.label)
         }
       })
@@ -72,7 +73,7 @@ export default {
       }
       return res
     },
-    okSelect () {
+    okSelect() {
       // const isCanBeSave = this.dataValidateFirst()
       const isCanBeSave = true
       if (!isCanBeSave) {
@@ -80,21 +81,21 @@ export default {
       }
       this.$emit(
         'setTagMap',
-        this.tagMap.filter(t => t.source_value !== '' && t.target_value !== '' )
+        this.tagMap.filter(t => t.source_value !== '' && t.target_value !== '')
       )
       this.showModel = false
     },
-    addItem () {
+    addItem() {
       this.tagMap.push(
         {
-          regulative: 0,  //匹配类型： 0 是非正则，1是正则
+          regulative: 0, // 匹配类型： 0 是非正则，1是正则
           source_value: '', // 源值
           target_value: '', // 映射值
-          value_type: '', //值类型： success 成功，fail 失败
+          value_type: '', // 值类型： success 成功，fail 失败
         }
       )
     },
-    deleteItem (itemIndex) {
+    deleteItem(itemIndex) {
       this.tagMap.splice(itemIndex, 1)
     }
   }

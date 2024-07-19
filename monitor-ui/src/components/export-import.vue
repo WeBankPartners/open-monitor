@@ -1,31 +1,32 @@
 <template>
   <span>
     <Button
-        v-if="isShowExportBtn"
-        type="info"
-        class="btn-left"
-        @click="exportHandler"
-      >
-        <img src="../assets/img/export.png" class="btn-img" alt="" />
-        {{ $t('m_export') }}
-      </Button>
+      v-if="isShowExportBtn"
+      type="info"
+      class="btn-left"
+      @click="exportHandler"
+    >
+      <img src="../assets/img/export.png" class="btn-img" alt="" />
+      {{ $t('m_export') }}
+    </Button>
 
-      <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
-      <div style="display: inline-block;margin-bottom: 3px;" v-if="isShowImportBtn">
-        <Upload 
-          :action="uploadUrl" 
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed">
-            <Button type="primary" class="btn-left">
-              <img src="../assets/img/import.png" class="btn-img" alt="" />
-              {{ $t('m_import') }}
-            </Button>
-        </Upload>
-      </div>
+    <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
+    <div style="display: inline-block;margin-bottom: 3px;" v-if="isShowImportBtn">
+      <Upload
+        :action="uploadUrl"
+        :show-upload-list="false"
+        :max-size="1000"
+        with-credentials
+        :headers="{'Authorization': token}"
+        :on-success="uploadSucess"
+        :on-error="uploadFailed"
+      >
+        <Button type="primary" class="btn-left">
+          <img src="../assets/img/import.png" class="btn-img" alt="" />
+          {{ $t('m_import') }}
+        </Button>
+      </Upload>
+    </div>
   </span>
 </template>
 <script>
@@ -33,7 +34,7 @@ import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import axios from 'axios'
 export default {
   name: '',
-  data () {
+  data() {
     return {
       token: ''
     }
@@ -75,13 +76,13 @@ export default {
       required: false,
       default: ''
     }
-  }, 
-  mounted () {
+  },
+  mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
-    exportHandler () {
+    exportHandler() {
       if (this.validateExportDataEmpty && this.exportData.length === 0) {
         this.$Message.warning(this.$t('m_select_data_tip'))
         return
@@ -93,41 +94,43 @@ export default {
           guidList: this.exportData // 后台会固定取guidList
         },
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         }
-      }).then((response) => {
+      }).then(response => {
         if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
-          window.navigator.msSaveOrOpenBlob(blob, fileName)
-        } else {
-          if ('download' in document.createElement('a')) { // 非IE下载
-            let elink = document.createElement('a')
-            elink.download = fileName
-            elink.style.display = 'none'
-            elink.href = URL.createObjectURL(blob)  
-            document.body.appendChild(elink)
-            elink.click()
-            URL.revokeObjectURL(elink.href) // 释放URL 对象
-            document.body.removeChild(elink)
-          } else { // IE10+下载
-            navigator.msSaveOrOpenBlob(blob, fileName)
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+          else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              const elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            }
+            else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
           }
         }
-        }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
-      })
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
-    uploadSucess (callback) {
-      this.$Message.success(this.$t('tips.success'))
+    uploadSucess() {
+      this.$Message.success(this.$t('m_tips_success'))
       this.$emit('successCallBack')
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning(file.message)
     },
   }
@@ -143,4 +146,3 @@ export default {
   margin-left: 8px;
 }
 </style>
-

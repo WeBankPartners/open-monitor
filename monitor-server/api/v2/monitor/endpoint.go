@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -142,7 +143,7 @@ func UpdateEndpoint(c *gin.Context) {
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
-	err = db.UpdateEndpointData(&newEndpoint)
+	err = db.UpdateEndpointData(&newEndpoint, middleware.GetOperateUser(c))
 	if err != nil {
 		return
 	}
@@ -268,4 +269,10 @@ func getAgentMangerInstanceConfig(monitorType string) (result *models.AgentConfi
 		}
 	}
 	return
+}
+
+func GetEncryptSeed(c *gin.Context) {
+	md5sum := cipher.Md5Encode(models.Config().EncryptSeed)
+	result := md5sum[0:16]
+	middleware.ReturnSuccessData(c, result)
 }
