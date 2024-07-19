@@ -683,15 +683,6 @@ export default {
                   <Icon type="ios-build" />
                 </Button>
               </Tooltip>
-              {
-                params.row.type === 'host' ? (
-                  <Tooltip placement="top" max-width="400" content={this.$t('m_button_portConfiguration')}>
-                    <Button v-if="params.row.type === 'host'" size="small" type="warning" on-click={() => this.portManagement(params.row)}>
-                      <Icon type="ios-cube" />
-                    </Button>
-                  </Tooltip>
-                ) : null
-              }
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_historicalAlert')}>
                 <Button size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
                   <Icon type="md-warning" />

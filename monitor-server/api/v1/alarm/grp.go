@@ -285,6 +285,19 @@ func ImportGrpStrategy(c *gin.Context) {
 func UpdateGrpRole(c *gin.Context) {
 	var param m.RoleGrpDto
 	if err := c.ShouldBindJSON(&param); err == nil {
+		grpObj, getGrpErr := db.GetSimpleGrp(param.GrpId)
+		if getGrpErr != nil {
+			mid.ReturnHandleError(c, getGrpErr.Error(), getGrpErr)
+			return
+		}
+		if grpObj != nil {
+			param.GrpIdInt = grpObj.Id
+		}
+		if grpObj.Id <= 0 {
+			err = fmt.Errorf("group id:%s illegal", param.GrpId)
+			mid.ReturnHandleError(c, err.Error(), err)
+			return
+		}
 		err = db.UpdateGrpRole(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "grp role", err)
@@ -297,9 +310,21 @@ func UpdateGrpRole(c *gin.Context) {
 }
 
 func GetGrpRole(c *gin.Context) {
-	grpId, _ := strconv.Atoi(c.Query("grp_id"))
+	grpIdParam := c.Query("grp_id")
+	grpId, _ := strconv.Atoi(grpIdParam)
+	if grpId <= 0 && grpIdParam != "" {
+		grpObj, getGrpErr := db.GetSimpleGrp(grpIdParam)
+		if getGrpErr != nil {
+			mid.ReturnHandleError(c, getGrpErr.Error(), getGrpErr)
+			return
+		}
+		if grpObj != nil {
+			grpId = grpObj.Id
+		}
+	}
 	if grpId <= 0 {
-		mid.ReturnParamTypeError(c, "grp_id", "int")
+		err := fmt.Errorf("param group id illegal")
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	err, result := db.GetGrpRole(grpId)
