@@ -27,10 +27,14 @@ func ListEndpointGroup(c *gin.Context) {
 	}
 	if monitorType != "" {
 		values := strings.Split(monitorType, ",")
+		var interArr []interface{}
+		for _, value := range values {
+			interArr = append(interArr, value)
+		}
 		if len(param.Filters) == 0 {
-			param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type", Operator: "in", Value: values}}
+			param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type", Operator: "in", Value: interArr}}
 		} else {
-			param.Filters = append(param.Filters, &models.QueryRequestFilterObj{Name: "monitor_type", Operator: "in", Value: values})
+			param.Filters = append(param.Filters, &models.QueryRequestFilterObj{Name: "monitor_type", Operator: "in", Value: interArr})
 		}
 	}
 	pageInfo, rowData, err := db.ListEndpointGroup(&param)
