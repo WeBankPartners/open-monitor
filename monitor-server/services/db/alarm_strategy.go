@@ -544,7 +544,11 @@ func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrat
 
 func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
 	var strategyRows []*models.AlarmStrategyMetricObj
-	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?", endpointGroup).Find(&strategyRows)
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&strategyRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy table fail with endpointGroup:%s ,err:%s ", endpointGroup, err.Error())
+		return
+	}
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
 	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
@@ -1203,6 +1207,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return
 		}
 		actions = append(actions, tmpActions...)
+		actions = append(actions, getStrategyNotifyImportActions(inputGuid, param[0].NotifyList)...)
 	} else if queryType == "service" {
 		var endpointGroupTable []*models.EndpointGroupTable
 		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", inputGuid).Find(&endpointGroupTable)
@@ -1231,6 +1236,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 				break
 			}
 			actions = append(actions, tmpActions...)
+			actions = append(actions, getStrategyNotifyImportActions(tmpMatchEndpointGroup, v.NotifyList)...)
 		}
 		if err != nil {
 			return
@@ -1375,5 +1381,15 @@ func GetSimpleAlarmStrategy(alarmStrategyGuid string) (result *models.AlarmStrat
 		return
 	}
 	result = alarmStrategyRows[0]
+	return
+}
+
+func getStrategyNotifyImportActions(endpointGroup string, notifyList []*models.NotifyObj) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=?", Param: []interface{}{endpointGroup}})
+	for _, v := range notifyList {
+		v.AlarmStrategy = ""
+		v.EndpointGroup = endpointGroup
+	}
+	actions = append(actions, getNotifyListInsertAction(notifyList)...)
 	return
 }

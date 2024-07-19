@@ -23,15 +23,16 @@
             </div>
             <div class="search-zone">
               <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
-              <DatePicker 
-                type="datetimerange" 
-                :value="viewCondition.dateRange" 
-                format="yyyy-MM-dd HH:mm:ss" 
+              <DatePicker
+                type="datetimerange"
+                :value="viewCondition.dateRange"
+                format="yyyy-MM-dd HH:mm:ss"
                 split-panels
-                placement="bottom-start" 
-                @on-change="datePick" 
-                :placeholder="$t('m_placeholder_datePicker')" 
-                style="width: 320px">
+                placement="bottom-start"
+                @on-change="datePick"
+                :placeholder="$t('m_placeholder_datePicker')"
+                style="width: 320px"
+              >
               </DatePicker>
             </div>
             <!-- <div class="search-zone">
@@ -79,32 +80,33 @@
       </div>
       <div style="display:flex">
         <div class="grid-style">
-          <grid-layout 
-          :layout.sync="tmpLayoutData"
-          :col-num="12"
-          :row-height="30"
-          :is-draggable="false"
-          :is-resizable="false"
-          :is-mirrored="false"
-          :vertical-compact="true"
-          :use-css-transforms="true"
+          <grid-layout
+            :layout.sync="tmpLayoutData"
+            :col-num="12"
+            :row-height="30"
+            :is-draggable="false"
+            :is-resizable="false"
+            :is-mirrored="false"
+            :vertical-compact="true"
+            :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
-              class="c-dark"
-              :x="item.x"
-              :y="item.y"
-              :w="item.w"
-              :h="item.h"
-              :i="item.i"
-              :key="index"
-              @resize="resizeEvent"
-              @resized="resizeEvent">
-                        
+                       class="c-dark"
+                       :x="item.x"
+                       :y="item.y"
+                       :w="item.w"
+                       :h="item.h"
+                       :i="item.i"
+                       :key="index"
+                       @resize="resizeEvent"
+                       @resized="resizeEvent"
+            >
+
               <div class="c-dark" style="display:flex;padding:0 32px;">
                 <div class="header-grid header-grid-name">
                   <span>{{item.i}}</span>
                 </div>
-                <div class="header-grid header-grid-tools"> 
+                <div class="header-grid header-grid-tools">
                   <Select v-model="item.group" style="width:100px;" disabled size="small" clearable filterable :placeholder="$t('m_group_name')">
                     <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                   </Select>
@@ -137,8 +139,8 @@
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
         <div style="display:flex;justify-content:center">
-          <i @dblclick="dblChartType('bar')" @click="choiceChartType('bar')" :class="['fa', 'fa-line-chart', activeChartType==='bar' ? 'active-tag': '']" aria-hidden="true"></i>
-          <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
+          <i @dblclick="dblChartType('bar')" @click="choiceChartType('bar')" :class="['fa', 'fa-line-chart', activeChartType === 'bar' ? 'active-tag' : '']" aria-hidden="true"></i>
+          <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType === 'pie' ? 'active-tag' : '']" aria-hidden="true"></i>
         </div>
       </div>
     </ModalComponent>
@@ -146,7 +148,8 @@
       v-model="isShowWarning"
       :title="$t('m_delConfirm_title')"
       @on-ok="confirmRemoveGrid"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
@@ -165,9 +168,7 @@
       <div>
         <Row>
           <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
-            <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
-              >{{ panel.label }}</Checkbox
-            >
+          <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">{{ panel.label }}</Checkbox>
           </Col>
         </Row>
       </div>
@@ -203,7 +204,7 @@
   .active-tag {
     color: @blue-2;
     border-color: @blue-2;
-  } 
+  }
   .i-icon-menu-fold:before {
     content: "\E600";
   }
@@ -241,8 +242,8 @@ export default {
         agg: 'none' // 聚合类型
       },
       disableTime: false,
-      dataPick: dataPick,
-      autoRefreshConfig: autoRefreshConfig,
+      dataPick,
+      autoRefreshConfig,
       viewData: [],
       activeGroup: 'All',
       showGroupMgmt: false,
@@ -257,16 +258,22 @@ export default {
       editChartId: null,
       setChartTypeModel: {
         modalId: 'set_chart_type_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [
-          {name:'setChartType',type:'slot'}
+          {
+            name: 'setChartType',
+            type: 'slot'
+          }
         ],
         addRow: {
           type: null
         },
         modalFooter: [
-          {name: '确定', Func: 'confirmChartType'}
+          {
+            name: '确定',
+            Func: 'confirmChartType'
+          }
         ]
       },
       activeGridConfig: null,
@@ -282,42 +289,42 @@ export default {
     }
   },
   props: ['id'],
-  created () {
+  created() {
     this.zoneWidth = window.screen.width * 0.65
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
       if (this.activeGroup === 'All') {
         return this.layoutData
-      } else {
-        return this.layoutData.filter(d => d.group === this.activeGroup)
       }
+      return this.layoutData.filter(d => d.group === this.activeGroup)
+
     }
   },
   mounted() {
   },
   methods: {
-    getDashData (viewId) {
+    getDashData(viewId) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.singleDash, {id: viewId}, responseData => {
         this.viewId = responseData.id
         this.panalName = responseData.name
         this.editData = responseData
-        this.viewData = JSON.parse(responseData.cfg) 
+        this.viewData = JSON.parse(responseData.cfg)
         this.activeGroup = 'All'
         this.panel_group_list = responseData.panel_group_list || []
         this.initPanals()
         this.cutsomViewId = responseData.id
       })
     },
-    openAlarmDisplay () {
+    openAlarmDisplay() {
       this.showAlarm = !this.showAlarm
       this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
     },
-    closeAlarmDisplay () {
+    closeAlarmDisplay() {
       this.showAlarm = !this.showAlarm
       this.$refs.cutsomViewId.clearAlarmInterval()
     },
-    datePick (data) {
+    datePick(data) {
       this.viewCondition.dateRange = data
       this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
@@ -329,16 +336,18 @@ export default {
       }
       this.initPanals()
     },
-    dateToTimestamp (date) {
-      if (!date) return 0
+    dateToTimestamp(date) {
+      if (!date) {
+        return 0
+      }
       let timestamp = Date.parse(new Date(date))
-      timestamp = timestamp / 1000;
+      timestamp = timestamp / 1000
       return timestamp
     },
-    initPanals () {
-      let tmp = []
-      this.viewData.forEach((item) => {
-        let params = {
+    initPanals() {
+      const tmp = []
+      this.viewData.forEach(item => {
+        const params = {
           aggregate: item.aggregate,
           agg_step: item.agg_step,
           lineType: item.lineType,
@@ -349,11 +358,11 @@ export default {
           unit: '',
           data: []
         }
-        item.query.forEach( _ => {
+        item.query.forEach(_ => {
           params.data.push(_)
         })
-        let height = (item.viewConfig.h+1) * 30-8
-        let _activeCharts = []
+        const height = (item.viewConfig.h+1) * 30-8
+        const _activeCharts = []
         _activeCharts.push({
           style: `height:${height}px;`,
           panalUnit: item.panalUnit,
@@ -365,14 +374,14 @@ export default {
           lineType: item.lineType,
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1])                                  
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1])
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
     },
-    isShowGridPlus (item) {
+    isShowGridPlus(item) {
       // 新增及饼图时屏蔽放大功能
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
         return false
@@ -381,40 +390,43 @@ export default {
     },
     addItem() {
       this.activeGroup = 'All'
-      generateUuid().then((elId)=>{
-        const key = ((new Date()).valueOf()).toString().substring(10)
-        let item = {
-          x:0,
-          y:0,
-          w:6,
-          h:7,
+      generateUuid().then(elId => {
+        const key = ((new Date()).valueOf())
+          .toString()
+          .substring(10)
+        const item = {
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 7,
           i: `default${key}`,
           id: `id_${elId}`
         }
         this.layoutData.push(item)
       })
     },
-    setChartType (item) {
+    setChartType(item) {
       const find = this.layoutData.find(i => i.id === item.id)
       this.activeGridConfig = find
       if (!find._activeCharts) {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
-      } else {
+      }
+      else {
         this.activeChartType = find._activeCharts[0].chartType
         this.chartType = find._activeCharts[0].chartType
         this.editGrid(item)
       }
     },
-    choiceChartType (activeChartType) {
+    choiceChartType(activeChartType) {
       this.activeChartType = activeChartType
       this.chartType = activeChartType
     },
-    dblChartType (activeChartType) {
+    dblChartType(activeChartType) {
       this.activeChartType = activeChartType
       this.chartType = activeChartType
       this.confirmChartType()
     },
-    confirmChartType () {
+    confirmChartType() {
       if (!this.activeChartType) {
         this.$Message.warning('请先设置图标类型！')
         return
@@ -423,8 +435,8 @@ export default {
       this.editGrid()
     },
     editGrid(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.editData
+      this.modifyLayoutData().then(resViewData => {
+        const parentRouteData = this.editData
         const cfg = JSON.parse(parentRouteData.cfg)
         parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
         const oriConfig = JSON.parse(JSON.stringify(cfg))
@@ -436,10 +448,11 @@ export default {
             aggregate = find.aggregate || 'none'
             agg_step = find.agg_step || 60
           }
-          let findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
+          const findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
           findEditData.aggregate = aggregate
           findEditData.agg_step = agg_step
-        } else {
+        }
+        else {
           parentRouteData.cfg = resViewData
         }
         parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
@@ -447,7 +460,8 @@ export default {
         if (['line','bar'].includes(this.activeChartType)) {
           this.chartType = 'line'
           // this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
-        } else {
+        }
+        else {
           this.chartType = 'pie'
           // this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         }
@@ -458,27 +472,31 @@ export default {
       this.isShowWarning = true
       this.deleteConfirm.id = itemxxx.id
     },
-    confirmRemoveGrid () {
+    confirmRemoveGrid() {
       this.layoutData.forEach((item,index) => {
-        if (item.id ===  this.deleteConfirm.id) {
+        if (item.id === this.deleteConfirm.id) {
           this.layoutData.splice(index,1)
         }
       })
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
-      let parentRouteData = this.editData
+      const parentRouteData = this.editData
       parentRouteData.cfg = JSON.stringify(resViewData)
       this.showMaxChart = true
-      this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.editData})
+      this.$refs.viewChart.initChart({
+        templateData: parentRouteData,
+        panal: item,
+        parentData: this.editData
+      })
     },
     async modifyLayoutData() {
-      var resViewData = []
-      this.layoutData.forEach((layoutDataItem) =>{
-        let temp = {
+      const resViewData = []
+      this.layoutData.forEach(layoutDataItem => {
+        const temp = {
           panalTitle: layoutDataItem.i,
           panalUnit: '',
           chartType: this.activeChartType,
@@ -486,7 +504,7 @@ export default {
           viewConfig: layoutDataItem
         }
 
-        this.viewData.forEach((i) =>{
+        this.viewData.forEach(i => {
           if (layoutDataItem.id === i.viewConfig.id) {
             temp.panalUnit = i.panalUnit
             temp.query = i.query
@@ -500,13 +518,13 @@ export default {
       })
       return resViewData
     },
-    resizeEvent: function(i, newH, newW, newHPx, newWPx){
+    resizeEvent(i, newH, newW, newHPx, newWPx){
       resizeEvent(this, i, newH, newW, newHPx, newWPx)
     },
     saveEdit() {
-      let res = []
-      this.layoutData.forEach((layoutDataItem) =>{
-        this.viewData.forEach((i) =>{
+      const res = []
+      this.layoutData.forEach(layoutDataItem => {
+        this.viewData.forEach(i => {
           if (layoutDataItem.id === i.viewConfig.id) {
             res.push({
               panalTitle: i.panalTitle,
@@ -521,7 +539,7 @@ export default {
           }
         })
       })
-      let params = {
+      const params = {
         // name: this.panalName,
         // id: this.editData.id,
         name: this.panalName,
@@ -534,42 +552,42 @@ export default {
         this.$Message.success(this.$t('m_tips_success'))
       })
     },
-    goBack () {
-      this.$router.push({name:'viewConfigIndex'})
+    goBack() {
+      this.$router.push({name: 'viewConfigIndex'})
     },
-    savePanalEdit () {
+    savePanalEdit() {
       if (!this.panalName) {
         this.$Message.warning(this.$t('m_tips_required'))
         return
       }
       this.saveEdit()
     },
-    canclePanalEdit () {
+    canclePanalEdit() {
       this.isEditPanal = false
       this.panalName = this.editData.name
     },
-    //#region 组管理
-    selectGroup (item) {
+    // #region 组管理
+    selectGroup(item) {
       this.activeGroup = item
       this.refreshNow = true
       this.$nextTick(() => {
         this.refreshNow = false
       })
     },
-    addGroup () {
+    addGroup() {
       this.groupName = ''
       this.groupNameIndex = -1
       this.getPanelGroupInfo()
       this.showGroupMgmt = true
     },
-    editGroup (item ,index) {
+    editGroup(item ,index) {
       this.oriGroupName = item
       this.groupName = item
       this.groupNameIndex = index
       this.getPanelGroupInfo()
       this.showGroupMgmt = true
     },
-    getPanelGroupInfo () {
+    getPanelGroupInfo() {
       this.panelGroupInfo = []
       this.layoutData.forEach((d, dIndex) => {
         this.panelGroupInfo.push({
@@ -581,7 +599,7 @@ export default {
         })
       })
     },
-    removeGroup (item, index) {
+    removeGroup(item, index) {
       this.$delConfirm({
         msg: item,
         callback: () => {
@@ -589,7 +607,7 @@ export default {
         }
       })
     },
-    delF (item, index) {
+    delF(item, index) {
       this.panel_group_list.splice(index, 1)
       this.layoutData.forEach(d => {
         if (d.group === item) {
@@ -599,7 +617,7 @@ export default {
       this.savePanalEdit()
       this.activeGroup = 'All'
     },
-    confirmGroupMgmt () {
+    confirmGroupMgmt() {
       if (this.panel_group_list.includes(this.groupName)) {
         this.$Message.warning(this.$t('m_group_name_exist'))
         return
@@ -611,7 +629,8 @@ export default {
             this.layoutData[p.index].group = this.groupName
           }
         })
-      } else {
+      }
+      else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
         this.layoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
@@ -627,7 +646,7 @@ export default {
       this.showGroupMgmt = false
       this.savePanalEdit()
     },
-    //#endregion
+    // #endregion
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -673,7 +692,7 @@ export default {
   i {
     margin: 0 4px;
     cursor: pointer;
-  } 
+  }
 }
 .vue-grid-item {
   border-radius: 4px;
