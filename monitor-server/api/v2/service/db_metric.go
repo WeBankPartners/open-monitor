@@ -44,6 +44,10 @@ func CreateDbMetricMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if middleware.IsIllegalLogParamNameOrMetric(param.Metric) {
+		middleware.ReturnValidateError(c, "metric param invalid")
+		return
+	}
 	param.MetricSql = strings.TrimSpace(param.MetricSql)
 	param.MetricSql = strings.ReplaceAll(param.MetricSql, "\n", " ")
 	err := db.CreateDbMetric(&param, middleware.GetOperateUser(c))

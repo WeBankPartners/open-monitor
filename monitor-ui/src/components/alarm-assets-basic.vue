@@ -17,7 +17,7 @@
 
 <script>
 export default {
-  name: "alarm-assets-basic",
+  name: 'alarm-assets-basic',
 }
 </script>
 

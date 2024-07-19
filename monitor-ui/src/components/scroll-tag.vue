@@ -15,10 +15,10 @@ export default {
     }
   },
   methods: {
-    handleMouseEnter (e) {
+    handleMouseEnter(e) {
       e.target.style.overflowY = 'scroll'
     },
-    handleMouseLeave (e) {
+    handleMouseLeave(e) {
       e.target.style.overflowY = 'hidden'
     }
   }

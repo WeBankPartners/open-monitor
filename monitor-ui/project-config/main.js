@@ -24,9 +24,11 @@ Vue.prototype.apiCenter = apiCenter
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
+import TagShow from '@/components/Tag-show'
 Vue.component('Title', Title)
 Vue.component('PageTable', PageTable)
 Vue.component('ModalComponent', ModalComponent)
+Vue.component('TagShow', TagShow)
 Vue.use(VeeValidate)
 
 Vue.config.productionTip = false
