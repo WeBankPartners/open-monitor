@@ -645,8 +645,8 @@ export default {
           key: 'name',
           render: (h, params) => (
             params.row.name
-              ? <Tooltip placement="right" max-width="300" content={params.row.name}>
-                <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
+              ? <Tooltip placement="right" max-width="300" content={params.row.name + (params.row.metric_prefix_code ? (' [' + params.row.metric_prefix_code + ']') : '') }>
+                <div class="table-ellipsis" style="width: 130px">{params.row.name + (params.row.metric_prefix_code ? (' [' + params.row.metric_prefix_code + ']') : '') } </div>
               </Tooltip> : <div>-</div>
           )
         },
@@ -673,7 +673,7 @@ export default {
             let metricStr = ''
             let metricHtml = ''
             if (params.row.metric_list.length) {
-              const metricArr = map(params.row.metric_list, 'metric')
+              const metricArr = map(params.row.metric_list, 'full_metric')
               metricStr = metricArr.join(',')
               metricHtml = '<p>' + metricArr.join('<br>') + '</p>'
             }
