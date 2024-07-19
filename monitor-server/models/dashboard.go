@@ -104,9 +104,10 @@ type YaxisModel struct {
 }
 
 type SerialModel struct {
-	Type string      `json:"type"`
-	Name string      `json:"name"`
-	Data [][]float64 `json:"data"`
+	Type       string      `json:"type"`
+	YAxisIndex int         `json:"yAxisIndex"`
+	Name       string      `json:"name"`
+	Data       [][]float64 `json:"data"`
 }
 
 type EChartOption struct {
@@ -249,6 +250,7 @@ type ChartQueryParam struct {
 	Data            []*ChartQueryConfigObj  `json:"data"`
 	Compare         *ChartQueryCompareParam `json:"compare"`
 	CustomChartGuid string                  `json:"custom_chart_guid"`
+	LineType        int                     `json:"lineType"` // lineType=2 表示同环比数据
 }
 
 type ChartQueryConfigObj struct {
@@ -529,4 +531,32 @@ type UpdateCustomDashboardPermissionParam struct {
 type SimpleCustomDashboardDto struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+type CustomDashboardExportParam struct {
+	Id       int      `json:"id"`
+	ChartIds []string `json:"chartIds"`
+}
+
+type CustomDashboardExportDto struct {
+	Id          int               `json:"id"`
+	Name        string            `json:"name"`
+	PanelGroups string            `json:"panelGroups"`
+	TimeRange   int               `json:"timeRange"`   //时间范围
+	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
+	Charts      []*CustomChartDto `json:"charts"`      // 图表
+}
+
+type CustomDashboardImportRes struct {
+	ChartMap map[string][]string
+}
+
+type ComparisonChartQueryParam struct {
+	Endpoint       string   `json:"endpoint"`       // 选择机器
+	MetricId       string   `json:"metricId"`       // 指标Id
+	CalcMethod     string   `json:"calcMethod"`     // 计算方法
+	CalcPeriod     int      `json:"calcPeriod"`     // 计算周期
+	ComparisonType string   `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
+	CalcType       []string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
+	TimeSecond     int64    `json:"timeSecond"`     // 时间范围
 }

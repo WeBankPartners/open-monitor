@@ -1,40 +1,42 @@
 // 引入柱状图
-require('echarts/lib/chart/line');
-require('echarts/lib/chart/pie');
-require('echarts/lib/chart/bar');
+require('echarts/lib/chart/line')
+require('echarts/lib/chart/pie')
+require('echarts/lib/chart/bar')
 // 引入提示框和标题组件
-require('echarts/lib/component/tooltip');
-require('echarts/lib/component/title');
-require('echarts/lib/component/legend');
-require('echarts/lib/component/toolbox');
-require('echarts/lib/component/legendScroll');
+require('echarts/lib/component/tooltip')
+require('echarts/lib/component/title')
+require('echarts/lib/component/legend')
+require('echarts/lib/component/toolbox')
+require('echarts/lib/component/legendScroll')
 
 import { generateAdjacentColors } from './random-color'
-const echarts = require('echarts/lib/echarts');
+const echarts = require('echarts/lib/echarts')
 
-export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
-  var legend = []
+export const readyToDraw = function (that, responseData, viewIndex, chartConfig, elId) {
+  const legend = []
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
+    const myChart = elId && echarts.init(document.getElementById(elId))
+    myChart && myChart.clear()
     return
   }
   let metricToColor = []
   let lineType = 1
   let isHostOrSys = false
-  let metricEndpointColorInChartConfig = {}
-  let metricSysColorInChartConfig = {}
+  const metricEndpointColorInChartConfig = {}
+  const metricSysColorInChartConfig = {}
   if (chartConfig.params) {
     lineType = chartConfig.params.lineType
-    chartConfig.params.data.forEach(item => {
+    chartConfig.params.data&&chartConfig.params.data.forEach(item => {
       // 通过endpoint中‘.’的个数，判定是主机还是层级对象
       if (item.endpoint.split('.').length >= 3) {
         isHostOrSys = true
-      } 
+      }
       metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || ''
       metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor || ''
-      let nullColorIndex = []
-      item.metricToColor = item.metricToColor || [];
+      const nullColorIndex = []
+      item.metricToColor = item.metricToColor || []
       item.metricToColor.forEach((m, mIndex) => {
         if (m.color === '') {
           nullColorIndex.push(mIndex)
@@ -42,14 +44,13 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       })
 
       if (nullColorIndex.length > 0 && item.defaultColor && item.defaultColor!== '') {
-        let colors = generateAdjacentColors(item.defaultColor, nullColorIndex.length, 20)
+        const colors = generateAdjacentColors(item.defaultColor, nullColorIndex.length, 20)
         nullColorIndex.forEach((n, nIndex) => {
           item.metricToColor[n].color = colors[nIndex]
         })
       }
       metricToColor = metricToColor.concat(item.metricToColor)
     })
-
     // 处理在最初没数据，后面来数据 metricToColor 为空时的指标颜色处理
     if (isHostOrSys) {
       responseData.series.forEach((item, itemIndex) => {
@@ -58,7 +59,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
           const keys = Object.keys(metricEndpointColorInChartConfig)
           keys.forEach(key => {
             if (item.name.startsWith(key)) {
-              let color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, 20 * (itemIndex - 0.3) )
+              const color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, 20 * (itemIndex - 0.3))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -67,14 +68,15 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
           })
         }
       })
-    } else {
+    }
+    else {
       responseData.series.forEach((item, itemIndex) => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
           const keys = Object.keys(metricSysColorInChartConfig)
           keys.forEach(key => {
             if (item.name.includes(key)) {
-              let color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1) )
+              const color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -85,15 +87,14 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       })
     }
   }
-  
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
-  let colorSet = []
+  const colorSet = []
   for (let i=0; i < colorX.length; i++) {
     let tmpIndex = viewIndex*3 + i
     tmpIndex = tmpIndex%colorX.length
     colorSet.push(colorX[tmpIndex])
   }
-  responseData.series.forEach((item, index)=>{
+  responseData.series.forEach((item, index) => {
     legend.push(item.name)
     item.symbol = 'none'
     item.smooth = false
@@ -104,7 +105,8 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     const find = metricToColor.find(m => m.metric === item.name)
     if (find && find.color !== '') {
       color = find.color
-    } else {
+    }
+    else {
       color = colorSet[index] ? colorSet[index] : '#666699'
     }
     // 堆叠区域图开启
@@ -112,8 +114,8 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
 
     // 渐变图像开启
     item.itemStyle = {
-      normal:{
-        color: color
+      normal: {
+        color
       }
     }
     item.areaStyle = null
@@ -121,26 +123,26 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       item.areaStyle = {
         normal: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-              offset: 0,
-              color: color
+            offset: 0,
+            color
           }, {
-              offset: 1,
-              color: 'white'
+            offset: 1,
+            color: 'white'
           }])
         }
       }
     }
-  }) 
-  let config = {
+  })
+  const config = {
     ...responseData,
-    legend: legend
+    legend
   }
   drawChart(that, config, chartConfig, elId)
 }
 
-export const drawChart = function(that,config,userConfig, elId) {
+export const drawChart = function (that,config,userConfig, elId) {
   const chartTextColor = '#a1a1a2'
-  let originConfig = {
+  const originConfig = {
     title: true,
     eye: true,
     dataZoom: true,
@@ -150,23 +152,28 @@ export const drawChart = function(that,config,userConfig, elId) {
     chartType: 'line',
     zoomCallback: false // 选择区域后是否需要重新请求数据
   }
-  let finalConfig = Object.assign(originConfig, userConfig)
+  const finalConfig = Object.assign(originConfig, userConfig)
   // 基于准备好的dom，初始化echarts实例
-  var myChart = echarts.init(document.getElementById(elId || that.elId))
+  const myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
   if (finalConfig.clear) {
     myChart.clear()
   }
-  let option = {
+  let isTwoYaxes = false
+  if (finalConfig.params && finalConfig.params.lineType === 2) {
+    isTwoYaxes = true
+  }
+  const minMax = mgmtYAxesMinMax(config.series)
+  const option = {
     backgroundColor: '#f5f7f9',
     title: {
       textStyle: {
         fontSize: 16,
         fontWeight: 'bolder',
-        color: chartTextColor          // 主标题文字颜色
+        color: chartTextColor // 主标题文字颜色
       },
       // text: config.title,
-      left:'10%',
+      left: '10%',
       top: '10px'
     },
     tooltip: {
@@ -180,26 +187,26 @@ export const drawChart = function(that,config,userConfig, elId) {
         color: '#000'
       },
       // extraCssText:'width:160px;height:40px;background: red;',
-      formatter: (params)=>{ 
-        var str =''
-        let date = new Date(params[0].data[0])
+      formatter: params => {
+        let str =''
+        const date = new Date(params[0].data[0])
         // let year =  date.getFullYear()
         // let month = (date.getMonth() + 1)>=10?(date.getMonth() + 1):'0'+(date.getMonth() + 1)
         // let day = date.getDate()>=10?date.getDate():'0'+date.getDate()
-        let hours = date.getHours()>=10?date.getHours():'0'+date.getHours()
-        let minutes = date.getMinutes()>=10?date.getMinutes():'0'+date.getMinutes()
-        let seconds = date.getSeconds()>=10?date.getSeconds():'0'+date.getSeconds()
+        const hours = date.getHours()>=10?date.getHours():'0'+date.getHours()
+        const minutes = date.getMinutes()>=10?date.getMinutes():'0'+date.getMinutes()
+        const seconds = date.getSeconds()>=10?date.getSeconds():'0'+date.getSeconds()
         str=hours+':'+minutes+':'+seconds
-        var res = `<div>${str}</div>`
+        let res = `<div>${str}</div>`
         params.forEach(item => {
-          let str = item.seriesName
-          let step = 100
-          let strLen = str.length
-          let arr = []
-          for(var i=0; i<strLen; i=i+step){
-              arr.push(str.substr(i, step));
+          const str = item.seriesName
+          const step = 100
+          const strLen = str.length
+          const arr = []
+          for (let i=0; i<strLen; i=i+step){
+            arr.push(str.substr(i, step))
           }
-          arr.join(" ");
+          arr.join(' ')
           const seriesName = arr.join('<br>')
           res = res+`<div><div style=' display: inline-block;width: 10px; 
           height: 10px;border: 1px solid transparent;border-radius:50%;
@@ -208,10 +215,10 @@ export const drawChart = function(that,config,userConfig, elId) {
         })
         return res
       },
-    },  
+    },
     toolbox: {
-      right: '4%',
-      top: '10px',
+      right: isTwoYaxes ? '170px' : '4%',
+      top: '4px',
       feature: {
         // dataZoom: {
         //     yAxisIndex: 'none'
@@ -219,7 +226,7 @@ export const drawChart = function(that,config,userConfig, elId) {
         // myTool:{
         //   show:true,
         //   title:'查看全部',
-        //   icon: 'path://M432.45,595.444c0,2.177-4.661,6.82-11.305,6.82c-6.475,0-11.306-4.567-11.306-6.82s4.852-6.812,11.306-6.812C427.841,588.632,432.452,593.191,432.45,595.444L432.45,595.444z M421.155,589.876c-3.009,0-5.448,2.495-5.448,5.572s2.439,5.572,5.448,5.572c3.01,0,5.449-2.495,5.449-5.572C426.604,592.371,424.165,589.876,421.155,589.876L421.155,589.876z M421.146,591.891c-1.916,0-3.47,1.589-3.47,3.549c0,1.959,1.554,3.548,3.47,3.548s3.469-1.589,3.469-3.548C424.614,593.479,423.062,591.891,421.146,591.891L421.146,591.891zM421.146,591.891',   
+        //   icon: 'path://M432.45,595.444c0,2.177-4.661,6.82-11.305,6.82c-6.475,0-11.306-4.567-11.306-6.82s4.852-6.812,11.306-6.812C427.841,588.632,432.452,593.191,432.45,595.444L432.45,595.444z M421.155,589.876c-3.009,0-5.448,2.495-5.448,5.572s2.439,5.572,5.448,5.572c3.01,0,5.449-2.495,5.449-5.572C426.604,592.371,424.165,589.876,421.155,589.876L421.155,589.876z M421.146,591.891c-1.916,0-3.47,1.589-3.47,3.549c0,1.959,1.554,3.548,3.47,3.548s3.469-1.589,3.469-3.548C424.614,593.479,423.062,591.891,421.146,591.891L421.146,591.891zM421.146,591.891',
         //   onclick: () => {
         //     that.$emit('sendConfig', that.chartItemx)
         //   }
@@ -228,7 +235,7 @@ export const drawChart = function(that,config,userConfig, elId) {
     },
     legend: {
       textStyle: {
-        color: chartTextColor          // 图例文字颜色
+        color: chartTextColor // 图例文字颜色
       },
       type: 'scroll',
       y: 'bottom',
@@ -250,74 +257,111 @@ export const drawChart = function(that,config,userConfig, elId) {
         textStyle: {
           color: chartTextColor
         },
-        formatter: function (value) {
+        formatter(value) {
           return echarts.format.formatTime('MM-dd\nhh:mm:ss', value)
         }
       },
-      boundaryGap : false,
-      axisLine:{
-        lineStyle:{
-          color:'#a1a1a2'
+      boundaryGap: false,
+      axisLine: {
+        lineStyle: {
+          color: '#a1a1a2'
         }
-      }, 
+      },
       splitLine: {
         show: true,
-        lineStyle:{
+        lineStyle: {
           color: ['#a1a1a2'],
-          width: 1,
-          type: 'solid'
+          type: 'dotted',
+          width: 0.3
         }
       }
     },
     yAxis: [
       {
         type: 'value',
+        name: isTwoYaxes ? that.$t('m_difference') : '',
+        alignTicks: true,
+        max: minMax.y1Max,
+        min: minMax.y1Min,
         axisLabel: {
           textStyle: {
             color: chartTextColor
           },
           show: true,
           interval: 'auto',
-          formatter: (value) => {
+          formatter: value => {
+            let val = value
             let unit = ''
-            if (value > 1024*1024*1024*1024) {
-              value = value / (1024*1024*1024*1024)  
+            if (val > 1024*1024*1024*1024) {
+              val = val / (1024*1024*1024*1024)
               unit = 'T'
-            } else if (value > 1024*1024*1024) {
-              value = value / (1024*1024*1024)  
-              unit = 'G'
-            } else if (value > 1024*1024) {
-              value = value / (1024*1024)  
-              unit = 'M'
-            } else if (value > 1024) {
-              value = value / 1024  
-              unit = 'K'
-            } else {
-              return value + ' ' + config.yaxis.unit
             }
-            let newValue = Number.isInteger(value) ? value : value.toFixed(3)
+            else if (val > 1024*1024*1024) {
+              val = val / (1024*1024*1024)
+              unit = 'G'
+            }
+            else if (val > 1024*1024) {
+              val = val / (1024*1024)
+              unit = 'M'
+            }
+            else if (val > 1024) {
+              val = val / 1024
+              unit = 'K'
+            }
+            else {
+              return val + ' ' + config.yaxis.unit
+            }
+            const newValue = Number.isInteger(val) ? val : val.toFixed(3)
             return newValue + ' ' + unit + config.yaxis.unit
           }
         },
         show: true,
-        axisLine:{
-          lineStyle:{
-            color:'#a1a1a2'
+        axisLine: {
+          lineStyle: {
+            color: '#a1a1a2'
           }
-        }, 
+        },
         splitLine: {
           show: true,
-          lineStyle:{
+          lineStyle: {
             color: ['#a1a1a2'],
-            width: 1,
-           type: 'solid'
+            type: 'dotted',
+            width: 0.3
           }
         }
       },
+      {
+        type: 'value',
+        name: isTwoYaxes ? that.$t('m_percentage_difference') : '',
+        max: minMax.y2Max,
+        min: minMax.y2Min,
+        axisLabel: {
+          textStyle: {
+            color: chartTextColor
+          },
+          show: true,
+          interval: 'auto',
+          formatter: value => value + '%'
+        },
+        show: true,
+        axisLine: {
+          lineStyle: {
+            color: '#a1a1a2'
+          }
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: ['#a1a1a2'],
+            type: 'dotted',
+            width: 0.3
+          }
+        }
+      }
     ],
     series: config.series
   }
-  if (finalConfig.chartType !== config.series[0]) {
+  if (!isTwoYaxes && finalConfig.chartType !== config.series[0]) {
     config.series.forEach(se => {
       se.type = finalConfig.chartType
     })
@@ -325,8 +369,8 @@ export const drawChart = function(that,config,userConfig, elId) {
   if (finalConfig.title) {
     option.title.text = config.title
   }
-  
-  //切换为折线图，切换为柱状图
+
+  // 切换为折线图，切换为柱状图
   if (finalConfig.lineBarSwitch) {
     option.toolbox.feature.magicType = {
       type: ['line', 'bar']
@@ -334,9 +378,9 @@ export const drawChart = function(that,config,userConfig, elId) {
   }
   if (finalConfig.eye) {
     option.toolbox.feature.myTool = {
-      show:true,
-      title: that.$t('button.chart.dataView'),
-      icon: 'path://M432.45,595.444c0,2.177-4.661,6.82-11.305,6.82c-6.475,0-11.306-4.567-11.306-6.82s4.852-6.812,11.306-6.812C427.841,588.632,432.452,593.191,432.45,595.444L432.45,595.444z M421.155,589.876c-3.009,0-5.448,2.495-5.448,5.572s2.439,5.572,5.448,5.572c3.01,0,5.449-2.495,5.449-5.572C426.604,592.371,424.165,589.876,421.155,589.876L421.155,589.876z M421.146,591.891c-1.916,0-3.47,1.589-3.47,3.549c0,1.959,1.554,3.548,3.47,3.548s3.469-1.589,3.469-3.548C424.614,593.479,423.062,591.891,421.146,591.891L421.146,591.891zM421.146,591.891',   
+      show: true,
+      title: that.$t('m_button_chart_dataView'),
+      icon: 'path://M432.45,595.444c0,2.177-4.661,6.82-11.305,6.82c-6.475,0-11.306-4.567-11.306-6.82s4.852-6.812,11.306-6.812C427.841,588.632,432.452,593.191,432.45,595.444L432.45,595.444z M421.155,589.876c-3.009,0-5.448,2.495-5.448,5.572s2.439,5.572,5.448,5.572c3.01,0,5.449-2.495,5.449-5.572C426.604,592.371,424.165,589.876,421.155,589.876L421.155,589.876z M421.146,591.891c-1.916,0-3.47,1.589-3.47,3.549c0,1.959,1.554,3.548,3.47,3.548s3.469-1.589,3.469-3.548C424.614,593.479,423.062,591.891,421.146,591.891L421.146,591.891zM421.146,591.891',
       onclick: () => {
         that.$emit('sendConfig', that.chartInfo)
       }
@@ -344,9 +388,9 @@ export const drawChart = function(that,config,userConfig, elId) {
   }
   if (finalConfig.editTitle) {
     option.toolbox.feature.myEditTitle = {
-      show:true,
-      title: that.$t('button.chart.editTitle'),
-      icon: 'path://M302.026 783.023q-0.761 0-2.282 0.761 88.25 0 352.999 0 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-4.565 4.565-11.412 4.565-156.72 0-470.919 0 0 0-0.761 0 0 0-0.761 0-1.522 0-2.282-0.761 0 0-0.761 0 0 0-0.761 0 0 0 0 0 0 0-0.761-0.761-0.761 0-1.522-0.761-0.761 0-1.522-0.761 0 0-0.761-0.761-0.761-0.761-2.282-2.282-0.761-1.522-1.522-2.282-0.761-0.761-0.761-1.522 0 0 0-0.761 0-0.761-0.761-0.761 0-0.761 0-1.522 0-0.761 0-2.282 0 0 0 0 0 0 0-0.761 0 0 0-0.761 0 0 0-1.522 0 0 0-0.761 0 0 0-0.761 0 0 0.761 0 0 0 0-0.761 7.608-28.909 30.431-115.638 1.522-3.804 4.565-6.847 160.523-159.002 481.57-477.006 4.565-4.565 10.651-4.565 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-159.763 158.241-478.527 473.962-6.086 21.302-23.584 85.968 22.062-5.325 86.728-22.823 119.442-118.681 478.527-473.962 4.565-4.565 10.651-4.565 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-160.523 159.002-482.331 477.006-2.282 3.043-6.847 3.804zM823.918 269.5q0.761-0.761 3.043-3.043 3.043-3.043 6.086-6.847 0.761-0.761 3.043-3.043 22.823-22.062 22.823-53.254 0-31.192-22.823-53.254-22.062-22.062-53.254-22.062-31.192 0-53.254 22.062-4.565 4.565-12.933 12.933 26.627 26.627 107.269 106.508zM166.608 798.999q0 0 0 0.761 0 0 0-0.761zM166.608 796.717q0 0 0 1.522 0 0 0-1.522zM166.608 801.281q0 0 0-1.522 0 0 0 1.522zM167.369 795.195q-0.761 0-0.761 0.761 0 0 0-0.761 0 0 0.761 0z',   
+      show: true,
+      title: that.$t('m_button_chart_editTitle'),
+      icon: 'path://M302.026 783.023q-0.761 0-2.282 0.761 88.25 0 352.999 0 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-4.565 4.565-11.412 4.565-156.72 0-470.919 0 0 0-0.761 0 0 0-0.761 0-1.522 0-2.282-0.761 0 0-0.761 0 0 0-0.761 0 0 0 0 0 0 0-0.761-0.761-0.761 0-1.522-0.761-0.761 0-1.522-0.761 0 0-0.761-0.761-0.761-0.761-2.282-2.282-0.761-1.522-1.522-2.282-0.761-0.761-0.761-1.522 0 0 0-0.761 0-0.761-0.761-0.761 0-0.761 0-1.522 0-0.761 0-2.282 0 0 0 0 0 0 0-0.761 0 0 0-0.761 0 0 0-1.522 0 0 0-0.761 0 0 0-0.761 0 0 0.761 0 0 0 0-0.761 7.608-28.909 30.431-115.638 1.522-3.804 4.565-6.847 160.523-159.002 481.57-477.006 4.565-4.565 10.651-4.565 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-159.763 158.241-478.527 473.962-6.086 21.302-23.584 85.968 22.062-5.325 86.728-22.823 119.442-118.681 478.527-473.962 4.565-4.565 10.651-4.565 6.847 0 11.412 4.565 4.565 4.565 4.565 10.651 0 6.847-4.565 11.412-160.523 159.002-482.331 477.006-2.282 3.043-6.847 3.804zM823.918 269.5q0.761-0.761 3.043-3.043 3.043-3.043 6.086-6.847 0.761-0.761 3.043-3.043 22.823-22.062 22.823-53.254 0-31.192-22.823-53.254-22.062-22.062-53.254-22.062-31.192 0-53.254 22.062-4.565 4.565-12.933 12.933 26.627 26.627 107.269 106.508zM166.608 798.999q0 0 0 0.761 0 0 0-0.761zM166.608 796.717q0 0 0 1.522 0 0 0-1.522zM166.608 801.281q0 0 0-1.522 0 0 0 1.522zM167.369 795.195q-0.761 0-0.761 0.761 0 0 0-0.761 0 0 0.761 0z',
       iconStyle: {
         font: '22px',
         opacity: 0.7
@@ -359,21 +403,21 @@ export const drawChart = function(that,config,userConfig, elId) {
   if (finalConfig.dataZoom) {
     option.toolbox.feature.dataZoom = {
       title: {
-        zoom: that.$t('button.chart.zoom'),
-        back: that.$t('button.chart.back'),
+        zoom: that.$t('m_button_chart_zoom'),
+        back: that.$t('m_button_chart_back'),
       },
       yAxisIndex: 'none'
     }
   }
   // 绘制图表
-  myChart.clear();
+  myChart.clear()
   myChart.setOption(option)
   // 清空所有事件重新绑定
-  myChart.off();
+  myChart.off()
   setTimeout(() => {
     myChart.resize()
   }, 200)
-  
+
   if (finalConfig.zoomCallback) {
     myChart.on('datazoom', function (params) {
       let startValue = null
@@ -389,43 +433,104 @@ export const drawChart = function(that,config,userConfig, elId) {
   }
 }
 
-export const drawPieChart = function(that, responseData) {
-  let option = {
+export const drawPieChart = function (that, responseData) {
+  const option = {
     title: {
-        // text: panalUnit,
-        left: 'center'
+      // text: panalUnit,
+      left: 'center'
     },
     tooltip: {
-        confine: true, // tip控制在图像区内
-        trigger: 'item',
-        formatter: '{b} : {c} ({d}%)'
+      confine: true, // tip控制在图像区内
+      trigger: 'item',
+      formatter: '{b} : {c} ({d}%)'
     },
     legend: {
-        // orient: 'vertical',
-        // top: 'middle',
-        type: 'scroll',
-        bottom: 0,
-        left: 'center',
-        data: responseData.legend
+      // orient: 'vertical',
+      // top: 'middle',
+      type: 'scroll',
+      bottom: 0,
+      left: 'center',
+      data: responseData.legend
     },
     series: [
-        {
-            type: 'pie',
-            radius: '65%',
-            center: ['50%', '40%'],
-            selectedMode: 'single',
-            data: responseData.data,
-            emphasis: {
-                itemStyle: {
-                    shadowBlur: 10,
-                    shadowOffsetX: 0,
-                    shadowColor: 'rgba(0, 0, 0, 0.5)'
-                }
-            }
+      {
+        type: 'pie',
+        radius: '55%',
+        center: ['50%', '45%'],
+        selectedMode: 'single',
+        data: responseData.data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
         }
+      }
     ]
-};
-  var myChart = echarts.init(document.getElementById(that.elId))
+  }
+  const myChart = echarts.init(document.getElementById(that.elId))
   myChart.resize()
   myChart.setOption(option)
+}
+
+const mgmtYAxesMinMax = function (series) {
+  const { maxValue: max1 = 1, minValue: min1 } = findMinMaxForYAxisIndexOne(series, 0)
+  const { maxValue: max2, minValue: min2 } = findMinMaxForYAxisIndexOne(series, 1)
+  if (min1 >= 0 || min2 >= 0) {
+    return false
+  }
+  const ratio = (max1 - min1) / (max2 - min2)
+  const minMax = {}
+  if (max1 < max2 * ratio) {
+    minMax.y1Max = max2 * ratio
+    minMax.y2Max = max2
+  }
+  else {
+    minMax.y1Max = max1
+    minMax.y2Max = max1 / ratio
+  }
+  if (min1 < min2 * ratio) {
+    minMax.y1Min = min1
+    minMax.y2Min = min1 / ratio
+  }
+  else {
+    minMax.y1Min = min2 * ratio
+    minMax.y2Min = min2
+  }
+  minMax.y1Min = (minMax.y1Min * 1.5).toFixed(2)
+  minMax.y2Min = (minMax.y2Min * 1.5).toFixed(2)
+  minMax.y1Max = (minMax.y1Max * 1.5).toFixed(2)
+  minMax.y2Max = (minMax.y2Max * 1.5).toFixed(2)
+  return minMax
+}
+
+const findMinMaxForYAxisIndexOne = function (data, yAxisIndex) {
+  // 过滤出 yAxisIndex 为 1 的数据系列
+  const yAxisIndexOneSeries = data.filter(series => series.yAxisIndex === yAxisIndex)
+
+  // 初始化最大值和最小值变量
+  let maxValue = 1
+  let minValue = 0
+
+  // 遍历所有符合条件的数据系列
+  yAxisIndexOneSeries.forEach(series => {
+    // 获取该系列的数据点
+    const values = series.data
+
+    // 遍历数据点，更新最大值和最小值
+    values.forEach(value => {
+      if (value[1] > maxValue) {
+        maxValue = value[1]
+      }
+      if (value[1] < minValue) {
+        minValue = value[1]
+      }
+    })
+  })
+
+  return {
+    maxValue,
+    minValue
+  }
 }

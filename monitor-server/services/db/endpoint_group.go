@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+func ListEndpointGroupMonitoryType() (result []string, err error) {
+	err = x.SQL("select distinct monitor_type from endpoint_group").Find(&result)
+	return
+}
+
 func ListEndpointGroup(param *models.QueryRequestParam) (pageInfo models.PageInfo, rowData []*models.EndpointGroupTable, err error) {
 	rowData = []*models.EndpointGroupTable{}
 	pageInfo = models.PageInfo{}
@@ -24,31 +29,33 @@ func ListEndpointGroup(param *models.QueryRequestParam) (pageInfo models.PageInf
 	return
 }
 
-func CreateEndpointGroup(param *models.EndpointGroupTable) error {
+func CreateEndpointGroup(param *models.EndpointGroupTable, operator string) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	if param.DisplayName == "" {
 		param.DisplayName = param.Guid
 	}
 	if param.ServiceGroup == "" {
-		actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,description,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Description, param.MonitorType, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,description,monitor_type,update_time,create_user,update_user) value (?,?,?,?,?,?,?)",
+			Param: []interface{}{param.Guid, param.DisplayName, param.Description, param.MonitorType, nowTime, operator, operator}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,description,monitor_type,service_group,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Description, param.MonitorType, param.ServiceGroup, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,description,monitor_type,service_group,update_time,create_user,update_user) value (?,?,?,?,?,?,?,?)",
+			Param: []interface{}{param.Guid, param.DisplayName, param.Description, param.MonitorType, param.ServiceGroup, nowTime, operator, operator}})
 	}
 	actions = append(actions, &Action{Sql: "insert into grp(name,description,endpoint_type,create_at) value (?,?,?,NOW())", Param: []interface{}{param.Guid, param.Description, param.MonitorType}})
 	return Transaction(actions)
 }
 
-func UpdateEndpointGroup(param *models.EndpointGroupTable) error {
+func UpdateEndpointGroup(param *models.EndpointGroupTable, operator string) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	if param.DisplayName == "" {
 		param.DisplayName = param.Guid
 	}
 	if param.ServiceGroup == "" {
-		actions = append(actions, &Action{Sql: "update endpoint_group set display_name=?,description=?,monitor_type=?,service_group=NULL,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.Description, param.MonitorType, nowTime, param.Guid}})
+		actions = append(actions, &Action{Sql: "update endpoint_group set display_name=?,description=?,monitor_type=?,service_group=NULL,update_time=?,update_user=? where guid=?", Param: []interface{}{param.DisplayName, param.Description, param.MonitorType, nowTime, operator, param.Guid}})
 	} else {
-		actions = append(actions, &Action{Sql: "update endpoint_group set display_name=?,description=?,monitor_type=?,service_group=?,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.Description, param.MonitorType, param.ServiceGroup, nowTime, param.Guid}})
+		actions = append(actions, &Action{Sql: "update endpoint_group set display_name=?,description=?,monitor_type=?,service_group=?,update_time=?,update_user=? where guid=?", Param: []interface{}{param.DisplayName, param.Description, param.MonitorType, param.ServiceGroup, nowTime, operator, param.Guid}})
 	}
 	actions = append(actions, &Action{Sql: "update grp set description=? where name=?", Param: []interface{}{param.Description, param.Guid}})
 	return Transaction(actions)
@@ -68,7 +75,7 @@ func GetGroupEndpointRel(endpointGroupGuid string) (result []*models.EndpointGro
 	return
 }
 
-func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool) error {
+func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, operator string, appendFlag bool) error {
 	var actions []*Action
 	if !appendFlag {
 		actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{param.GroupGuid}})
@@ -78,7 +85,7 @@ func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool
 	for i, v := range param.EndpointGuidList {
 		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid}})
 	}
-	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?", Param: []interface{}{nowTime, param.GroupGuid}})
+	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=?,update_user=? where guid=?", Param: []interface{}{nowTime, operator, param.GroupGuid}})
 	err := Transaction(actions)
 	return err
 }
@@ -89,8 +96,13 @@ func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyOb
 }
 
 func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyObj) error {
+	endpointGroupRow, getEndpointGroupErr := GetSimpleEndpointGroup(endpointGroupGuid)
+	if getEndpointGroupErr != nil {
+		return getEndpointGroupErr
+	}
 	for _, v := range param {
 		v.EndpointGroup = endpointGroupGuid
+		v.ServiceGroup = endpointGroupRow.ServiceGroup
 		if v.ProcCallbackKey != "" && v.ProcCallbackName == "" {
 			return fmt.Errorf("procCallbackName can not empty with key:%s ", v.ProcCallbackKey)
 		}
@@ -131,17 +143,6 @@ func GetSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable, err
 	return
 }
 
-func getCreateEndpointGroupAction(serviceGroupGuid, monitorType, nowTime string) (actions []*Action) {
-	endpointGroupGuid := fmt.Sprintf("service_%s_%s", serviceGroupGuid, monitorType)
-	var endpointGroup []*models.EndpointGroupTable
-	x.SQL("select guid from endpoint_group where guid=?", endpointGroupGuid).Find(&endpointGroup)
-	if len(endpointGroup) > 0 {
-		return actions
-	}
-	actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time) value (?,?,?,?,?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid, monitorType, serviceGroupGuid, nowTime}})
-	return actions
-}
-
 func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) {
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
@@ -150,4 +151,16 @@ func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) 
 	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
 	return actions
+}
+
+func GetSimpleGrp(name string) (result *models.GrpTable, err error) {
+	var grpRows []*models.GrpTable
+	err = x.SQL("select * from grp where name=?", name).Find(&grpRows)
+	if err != nil {
+		return
+	}
+	if len(grpRows) > 0 {
+		result = grpRows[0]
+	}
+	return
 }

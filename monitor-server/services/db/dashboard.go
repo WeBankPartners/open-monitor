@@ -195,7 +195,11 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 		}
 	}
 	if strings.Contains(promQl, `$guid`) {
-		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
+		if host.Guid == "" {
+			promQl = strings.Replace(promQl, "=\"$guid\"", "=~\".*\"", -1)
+		} else {
+			promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
+		}
 	}
 	if strings.Contains(promQl, "$pod") {
 		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
@@ -264,7 +268,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 			host.ExportType = "host"
 		}
 		//options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType), Id:host.Id})
-		options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: host.Guid, OptionType: host.ExportType, Id: host.Id})
+		options = append(options, &m.OptionModel{OptionText: host.Guid, OptionValue: host.Guid, OptionType: host.ExportType, Id: host.Id})
 	}
 	return err, options
 }
