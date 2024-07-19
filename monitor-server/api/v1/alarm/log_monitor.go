@@ -2,12 +2,12 @@ package alarm
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/pcre"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"github.com/WeBankPartners/go-common-lib/pcre"
 	"strconv"
 )
 
@@ -17,9 +17,9 @@ import (
 // @Param type query string true "类型，区分是单个对象还是组，枚举endpoint、grp"
 // @Param id query int true "对象或组的id"
 // @Router /api/v1/alarm/log/monitor/list [get]
-func ListLogTpl(c *gin.Context)  {
+func ListLogTpl(c *gin.Context) {
 	searchType := c.Query("type")
-	id,_ := strconv.Atoi(c.Query("id"))
+	id, _ := strconv.Atoi(c.Query("id"))
 	if searchType == "" || id <= 0 {
 		mid.ReturnParamEmptyError(c, "type or id")
 		return
@@ -47,9 +47,9 @@ func ListLogTpl(c *gin.Context)  {
 // @Param strategy query string true "对象数组类型[{'keyword':'关键字','cond':'条件,如 >1','last':'时间范围,如 5min','priority':'优先级,如 high'}]"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/add [post]
-func AddLogStrategy(c *gin.Context)  {
+func AddLogStrategy(c *gin.Context) {
 	var param m.LogMonitorDto
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param.Strategy) == 0 {
 			mid.ReturnParamEmptyError(c, "strategy")
 			return
@@ -62,7 +62,7 @@ func AddLogStrategy(c *gin.Context)  {
 			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
-		_,regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
+		_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
 		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword validate fail")
 			return
@@ -78,7 +78,7 @@ func AddLogStrategy(c *gin.Context)  {
 		logMonitorObj.NotifyEnable = param.Strategy[0].NotifyEnable
 		logMonitorObj.OwnerEndpoint = param.OwnerEndpoint
 		if param.Id <= 0 {
-			_,lms := db.GetLogMonitorTable(0,param.EndpointId, 0, "")
+			_, lms := db.GetLogMonitorTable(0, param.EndpointId, 0, "")
 			for _, v := range lms {
 				if v.Path == param.Path {
 					mid.ReturnValidateError(c, "path exists")
@@ -87,7 +87,7 @@ func AddLogStrategy(c *gin.Context)  {
 			}
 		}
 		logMonitorObj.StrategyId = param.EndpointId
-		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"insert"})
+		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&logMonitorObj}, Operation: "insert"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
 			return
@@ -99,7 +99,7 @@ func AddLogStrategy(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
@@ -111,9 +111,9 @@ func AddLogStrategy(c *gin.Context)  {
 // @Param path query string true "新的日志路径"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/update_path [post]
-func EditLogPath(c *gin.Context)  {
+func EditLogPath(c *gin.Context) {
 	var param m.LogMonitorDto
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if param.Id <= 0 {
 			mid.ReturnParamEmptyError(c, "id")
 			return
@@ -122,19 +122,19 @@ func EditLogPath(c *gin.Context)  {
 			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
-		err,lms := db.GetLogMonitorTable(param.Id, 0, 0, "")
+		err, lms := db.GetLogMonitorTable(param.Id, 0, 0, "")
 		if err != nil || len(lms) == 0 {
 			mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Id))
 			return
 		}
 		oldPath := lms[0].Path
-		_,lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
+		_, lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
 		//var strategyObjs []*m.StrategyTable
 		// Update log_monitor
-		for _,v := range lmsGrp {
+		for _, v := range lmsGrp {
 			//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
-			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword, NotifyEnable: v.NotifyEnable, OwnerEndpoint: param.OwnerEndpoint, Priority: v.Priority}
-			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
+			logMonitorObj := m.LogMonitorTable{Id: v.Id, StrategyId: v.StrategyId, Path: param.Path, Keyword: v.Keyword, NotifyEnable: v.NotifyEnable, OwnerEndpoint: param.OwnerEndpoint, Priority: v.Priority}
+			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&logMonitorObj}, Operation: "update"})
 			if err != nil {
 				log.Logger.Error("Update log monitor alert failed", log.Error(err))
 			}
@@ -145,7 +145,7 @@ func EditLogPath(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
@@ -157,9 +157,9 @@ func EditLogPath(c *gin.Context)  {
 // @Param strategy query string true "对象数组类型[{'id':int类型, 'strategy_id':int类型,'keyword':'关键字','cond':'条件,如 >1','last':'时间范围,如 5min','priority':'优先级,如 high'}]"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/update [post]
-func EditLogStrategy(c *gin.Context)  {
+func EditLogStrategy(c *gin.Context) {
 	var param m.LogMonitorDto
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param.Strategy) == 0 {
 			mid.ReturnParamEmptyError(c, "strategy")
 			return
@@ -168,20 +168,20 @@ func EditLogStrategy(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "priority")
 			return
 		}
-		_,regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
+		_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
 		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword is illegal")
 			return
 		}
 		// Update log_monitor
-		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority,NotifyEnable: param.Strategy[0].NotifyEnable, OwnerEndpoint: param.OwnerEndpoint}
-		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
+		logMonitorObj := m.LogMonitorTable{Id: param.Strategy[0].Id, StrategyId: param.EndpointId, Path: param.Path, Keyword: param.Strategy[0].Keyword, Priority: param.Strategy[0].Priority, NotifyEnable: param.Strategy[0].NotifyEnable, OwnerEndpoint: param.OwnerEndpoint}
+		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&logMonitorObj}, Operation: "update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
 			return
 		}
 		// Call endpoint node exporter
-		err,tplObj := db.GetTpl(param.TplId, 0, 0)
+		err, tplObj := db.GetTpl(param.TplId, 0, 0)
 		if err != nil {
 			mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
 			return
@@ -194,7 +194,7 @@ func EditLogStrategy(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
@@ -204,8 +204,8 @@ func EditLogStrategy(c *gin.Context)  {
 // @Param id query int true "strategy_id"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/delete_path [get]
-func DeleteLogPath(c *gin.Context)  {
-	logMonitorId,err := strconv.Atoi(c.Query("id"))
+func DeleteLogPath(c *gin.Context) {
+	logMonitorId, err := strconv.Atoi(c.Query("id"))
 	if err != nil || logMonitorId <= 0 {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
@@ -215,18 +215,18 @@ func DeleteLogPath(c *gin.Context)  {
 	//	mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
 	//	return
 	//}
-	err,lms := db.GetLogMonitorTable(logMonitorId, 0, 0, "")
+	err, lms := db.GetLogMonitorTable(logMonitorId, 0, 0, "")
 	if err != nil || len(lms) == 0 {
 		mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(logMonitorId))
 		return
 	}
 	oldPath := lms[0].Path
-	_,lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
+	_, lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
 	//var strategyObjs []*m.StrategyTable
 	// Delete log monitor
-	for _,v := range lmsGrp {
+	for _, v := range lmsGrp {
 		//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
-		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:v.Id}}, Operation:"delete"})
+		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&m.LogMonitorTable{Id: v.Id}}, Operation: "delete"})
 		if err != nil {
 			log.Logger.Error("Delete log monitor alert failed", log.Error(err))
 		}
@@ -263,13 +263,13 @@ func DeleteLogPath(c *gin.Context)  {
 // @Param id query int true "id"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/delete [get]
-func DeleteLogStrategy(c *gin.Context)  {
-	logMonitorId,err := strconv.Atoi(c.Query("id"))
+func DeleteLogStrategy(c *gin.Context) {
+	logMonitorId, err := strconv.Atoi(c.Query("id"))
 	if err != nil || logMonitorId <= 0 {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	err,lms := db.GetLogMonitorTable(logMonitorId,0,0,"")
+	err, lms := db.GetLogMonitorTable(logMonitorId, 0, 0, "")
 	if err != nil || len(lms) == 0 {
 		mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(logMonitorId))
 		return
@@ -280,7 +280,7 @@ func DeleteLogStrategy(c *gin.Context)  {
 	//	return
 	//}
 	// Delete log monitor
-	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:logMonitorId}}, Operation:"delete"})
+	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&m.LogMonitorTable{Id: logMonitorId}}, Operation: "delete"})
 	if err != nil {
 		mid.ReturnUpdateTableError(c, "log_monitor", err)
 		return
@@ -311,11 +311,9 @@ func DeleteLogStrategy(c *gin.Context)  {
 	mid.ReturnSuccess(c)
 }
 
-func makeStrategyMsg(path,keyword,cond,last string) (metric,expr,content string) {
+func makeStrategyMsg(path, keyword, cond, last string) (metric, expr, content string) {
 	metric = "log_monitor"
 	expr = fmt.Sprintf("increase(node_log_monitor_count_total{file=\"%s\",keyword=\"%s\",instance=\"$address\"}[%s])", path, keyword, last)
 	content = fmt.Sprintf("{{$labels.instance}} log alarm , log file: %s, keyword: %s , appear {{$value}} times in past %s", path, keyword, cond)
-	return metric,expr,content
+	return metric, expr, content
 }
-
-

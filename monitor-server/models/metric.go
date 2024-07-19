@@ -15,3 +15,8 @@ type MetricTagValueObj struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+type MetricCountRes struct {
+	Count           int `json:"count"`
+	ComparisonCount int `json:"comparisonCount"`
+}
