@@ -386,8 +386,11 @@
           <FormItem :label="$t('m_field_displayName')">
             <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
-          <FormItem :label="$t('m_field_metric')">
-            <Input v-model="dbModelConfig.addRow.metric" style="width:520px" />
+          <FormItem :label="$t('m_metric_key')">
+            <Input v-model="dbModelConfig.addRow.metric"
+                   :placeholder="$t('m_metric_key_placeholder_second')"
+                   style="width:520px"
+            />
           </FormItem>
           <FormItem label="SQL">
             <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
@@ -865,6 +868,9 @@ export default {
       this.dbModelConfig.isShow = true
     },
     saveDb() {
+      if (!(/^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/.test(this.dbModelConfig.addRow.metric))) {
+        return this.$Message.error(this.$t('m_metric_key') + ':' + this.$t('m_regularization_check_failed_tips'))
+      }
       this.dbModelConfig.addRow.service_group = this.targrtId
       const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.saveTargetDb, this.dbModelConfig.addRow, () => {
