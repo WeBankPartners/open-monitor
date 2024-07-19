@@ -29,7 +29,7 @@ func MetricCreate(c *gin.Context) {
 	}
 	var err error
 	for _, v := range param {
-		if middleware.IsIllegalName(v.Metric) {
+		if middleware.IsIllegalNameNew(v.Metric) {
 			err = fmt.Errorf("metric name illegal")
 			break
 		}
@@ -71,20 +71,26 @@ func MetricUpdate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.MetricUpdate(param, middleware.GetOperateUser(c))
-	if err != nil {
+	if err = db.MetricUpdate(param, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		middleware.ReturnSuccess(c)
+		return
 	}
+	if err = db.SyncMetricComparisonData(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func MetricDelete(c *gin.Context) {
 	id := c.Query("id")
-	err := db.MetricDelete(id)
+	withComparison, err := db.MetricDeleteNew(id)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
+		if withComparison {
+			db.SyncMetricComparisonData()
+		}
 		middleware.ReturnSuccess(c)
 	}
 }

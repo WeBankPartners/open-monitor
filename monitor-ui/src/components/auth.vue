@@ -1,34 +1,38 @@
 <template>
   <div>
-    <Modal v-model="flowRoleManageModal" width="700" :title="$t('m_role_drawer_title')" :mask-closable="false">
+    <Modal v-model="flowRoleManageModal" width="800" :title="$t('m_role_drawer_title')" :mask-closable="false">
       <div>
         <slot name="content-top"></slot>
         <div class="role-transfer-title">{{ $t('m_mgmt_role') }}</div>
-        <Transfer
-          :titles="transferTitles"
-          :list-style="transferStyle"
-          :data="currentUserRoles"
-          :target-keys="mgmtRolesKeyToFlow"
-          :render-format="renderRoleNameForTransfer"
-          @on-change="handleMgmtRoleTransferChange"
-          filterable
-        ></Transfer>
+        <div class="role-transfer-content">
+          <Transfer
+            :titles="transferTitles"
+            :list-style="transferStyle"
+            :data="currentUserRoles"
+            :target-keys="mgmtRolesKeyToFlow"
+            :render-format="renderRoleNameForTransfer"
+            @on-change="handleMgmtRoleTransferChange"
+            filterable
+          ></Transfer>
+        </div>
       </div>
       <div style="margin-top: 30px">
         <div class="role-transfer-title">{{ $t('m_use_role') }}</div>
-        <Transfer
-          :titles="transferTitles"
-          :list-style="transferStyle"
-          :data="allRoles"
-          :target-keys="useRolesKeyToFlow"
-          :render-format="renderRoleNameForTransfer"
-          @on-change="handleUseRoleTransferChange"
-          filterable
-        ></Transfer>
-      </div>
-        <div slot="footer">
-            <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
+        <div class="role-transfer-content">
+          <Transfer
+            :titles="transferTitles"
+            :list-style="transferStyle"
+            :data="allRoles"
+            :target-keys="useRolesKeyToFlow"
+            :render-format="renderRoleNameForTransfer"
+            @on-change="handleUseRoleTransferChange"
+            filterable
+          ></Transfer>
         </div>
+      </div>
+      <div slot="footer">
+        <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
+      </div>
     </Modal>
   </div>
 </template>
@@ -40,7 +44,7 @@ export default {
       default: false
     }
   },
-  data () {
+  data() {
     return {
       isAdd: false, // 标记编排状态
       flowRoleManageModal: false, // 权限弹窗控制
@@ -53,40 +57,49 @@ export default {
     }
   },
   computed: {
-    disabled () {
+    disabled() {
       if (this.useRolesRequired) {
         return this.mgmtRolesKeyToFlow.length === 0 || this.useRolesKeyToFlow.length === 0
-      } else {
-        return this.mgmtRolesKeyToFlow.length === 0
       }
+
+      return this.mgmtRolesKeyToFlow.length === 0
+
     }
   },
   methods: {
-    renderRoleNameForTransfer (item) {
+    renderRoleNameForTransfer(item) {
       return item.label
     },
-    handleMgmtRoleTransferChange (newTargetKeys, direction, moveKeys) {
+    handleMgmtRoleTransferChange(newTargetKeys) {
       if (newTargetKeys.length > 1) {
         this.$Message.warning(this.$t('m_choose_one'))
-      } else {
+      }
+      else {
         this.mgmtRolesKeyToFlow = newTargetKeys
       }
     },
-    handleUseRoleTransferChange (newTargetKeys, direction, moveKeys) {
+    handleUseRoleTransferChange(newTargetKeys) {
       this.useRolesKeyToFlow = newTargetKeys
     },
-    async confirmRole () {
+    async confirmRole() {
       this.$emit('sendAuth', this.mgmtRolesKeyToFlow, this.useRolesKeyToFlow)
       this.flowRoleManageModal = false
     },
     // 启动入口
-    async startAuth (mgmtRoles, userRoles, mgmtRolesOptions, userRolesOptions) {
-      this.mgmtRolesKeyToFlow = mgmtRoles;
-      this.useRolesKeyToFlow = userRoles;
-        this.allRoles = userRolesOptions;
-        this.currentUserRoles = mgmtRolesOptions
-        this.flowRoleManageModal = true
+    async startAuth(mgmtRoles, userRoles, mgmtRolesOptions, userRolesOptions) {
+      this.mgmtRolesKeyToFlow = mgmtRoles
+      this.useRolesKeyToFlow = userRoles
+      this.allRoles = userRolesOptions
+      this.currentUserRoles = mgmtRolesOptions
+      this.flowRoleManageModal = true
     }
   }
 }
 </script>
+
+<style lang="less" scoped>
+.role-transfer-content {
+  display: flex;
+  justify-content: center
+}
+</style>

@@ -184,7 +184,7 @@ func UpdateCustomChart(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有删除权限
-	if permission, err = CheckHasChartManagePermission(chartDto.Id, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasChartManagePermission(chartDto.Id, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -266,7 +266,7 @@ func UpdateCustomChartName(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有删除权限
-	if permission, err = CheckHasChartManagePermission(chartNameParam.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasChartManagePermission(chartNameParam.ChartId, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -346,7 +346,7 @@ func DeleteCustomChart(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有删除权限
-	if permission, err = CheckHasChartManagePermission(chartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasChartManagePermission(chartId, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -377,7 +377,7 @@ func SharedCustomChart(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "chartId")
 		return
 	}
-	if permission, err = CheckHasChartManagePermission(param.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasChartManagePermission(param.ChartId, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -544,30 +544,36 @@ func QueryCustomChart(c *gin.Context) {
 	middleware.ReturnPageData(c, pageInfo, dataList)
 }
 
-func CheckHasChartManagePermission(chartId, user string, userRoles []string) (permission bool, err error) {
+func CheckHasChartManagePermission(chartId string, userRoles []string) (permission bool, err error) {
 	var permissionMap map[string]string
 	var chart *models.CustomChart
 	if len(userRoles) == 0 {
 		return
 	}
-	// 判断是否拥有删除权限
+	if chart, err = db.GetCustomChartById(chartId); err != nil {
+		return
+	}
+	if chart == nil {
+		return
+	}
+	// 私有图表,看是否拥有源看板的管理权限
+	if chart.Public == 0 && chart.SourceDashboard != 0 {
+		if permissionMap, err = db.QueryCustomDashboardManagePermissionByDashboard(chart.SourceDashboard); err != nil {
+			return
+		}
+		for _, role := range userRoles {
+			if _, ok := permissionMap[role]; ok {
+				permission = true
+				return
+			}
+		}
+	}
+	// 公开图表,看是否有图表的管理权限
 	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartId); err != nil {
 		return
 	}
-	if len(permissionMap) == 0 {
-		permissionMap = make(map[string]string)
-	}
 	for _, role := range userRoles {
-		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
-			permission = true
-			break
-		}
-	}
-	if !permission && user != "" {
-		if chart, err = db.GetCustomChartById(chartId); err != nil {
-			return
-		}
-		if chart != nil && user == chart.CreateUser {
+		if _, ok := permissionMap[role]; ok {
 			permission = true
 			return
 		}
@@ -596,6 +602,40 @@ func GetChartSeriesColor(c *gin.Context) {
 	if buildQueryConfigErr != nil {
 		middleware.ReturnServerHandleError(c, buildQueryConfigErr)
 		return
+	}
+	if len(param.Tags) > 0 && len(querySeriesConfigList) > 0 {
+		var tagValue []string
+		for _, tag := range param.Tags {
+			if tag.TagName == "calc_type" {
+				tagValue = tag.TagValue
+				break
+			}
+		}
+		if len(tagValue) > 0 {
+			for _, data := range querySeriesConfigList {
+				var promQ = data.PromQ
+				if promQ == "" {
+					continue
+				}
+				if strings.Contains(data.PromQ, "{") {
+					for i, tag := range tagValue {
+						if i == 0 {
+							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+						} else {
+							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type='" + tag + "'}"
+						}
+					}
+				} else {
+					for i, tag := range tagValue {
+						if i == 0 {
+							data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
+						} else {
+							data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+						}
+					}
+				}
+			}
+		}
 	}
 	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
 	if err != nil {
