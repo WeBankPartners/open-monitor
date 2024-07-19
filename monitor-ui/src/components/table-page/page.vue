@@ -19,7 +19,7 @@
     </section>
     <div class="paging" v-if='pageConfig.pagination'>
       <template v-if="pageConfig.researchConfig">
-         <pagination :pagination="pageConfig.pagination" :filters="pageConfig.researchConfig.filters" :pageUrl="pageConfig.CRUD"></pagination>
+        <pagination :pagination="pageConfig.pagination" :filters="pageConfig.researchConfig.filters" :pageUrl="pageConfig.CRUD"></pagination>
       </template>
       <!-- <template v-if="!pageConfig.researchConfig">
         <pagination :pagination="pageConfig.pagination"  :pageUrl="pageConfig.CRUD"></pagination>
@@ -28,80 +28,81 @@
   </div>
 </template>
 <script>
-  // import contentTitle from './title'
-  // import Notice from './notice'
-  import research from './research'
-  import tableTemp from './table'
-  import pagination from './pagination'
+// import contentTitle from './title'
+// import Notice from './notice'
+import research from './research'
+import tableTemp from './table'
+import pagination from './pagination'
 
-  export default {
-    name: 'page',
-    data () {
-      return {
-        url: '',
-        deleteSms:{
-          title:'',
-          show:false,
-          btnText:'获取验证码',
-          verifycode:'',
-          isverify:false,
-          btnDisabled:'',
-          clock:'',
-          phone:localStorage.phone,
-          area_code:'',
-          params:null,
-          noSmscode:false
-        }
+export default {
+  name: 'page',
+  data() {
+    return {
+      url: '',
+      deleteSms: {
+        title: '',
+        show: false,
+        btnText: '获取验证码',
+        verifycode: '',
+        isverify: false,
+        btnDisabled: '',
+        clock: '',
+        phone: localStorage.phone,
+        area_code: '',
+        params: null,
+        noSmscode: false
       }
-    },
-    props: ['pageConfig', 'selectedData'],
-    mounted () {
-    },
-    methods: {
-      initData (url, params) {
-        if(this.pageConfig.researchConfig){
-          this.$root.$tableUtil.initTable(this, 'GET', url, params)
-        }else{
-          this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
-        }
-      },
-      search() {
-        // 搜索时清空已选中数据
-        this.clearSelectedData()
-        // 搜索时强制从第0条开始
-        if(this.pageConfig.pagination){
-          this.pageConfig.pagination.current = 1
-        }
-        this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
-      },
-      //原始删除
-      noSmsDelete(val, delTip){
-        this.url = this.pageConfig.CRUD + '/' + val.id
-        this.$deleting.deleteFunc({
-          delTip: delTip,
-          okCallback: this.ok
-        })
-      },
-      //原始确认删除
-      ok () {
-        this.$root.$tableUtil.deleteF(this, 'DELETE', this.url)
-      },
-      receiveIds (ids) {
-        this.$parent.selectedData = ids
-      },
-      clearSelectedData () {
-        this.$parent.selectedData = {checkedIds: []}
-        this.$refs.refTest.initSelected()
-      }
-    },
-    components: {
-      research,
-      // contentTitle,
-      // Notice,
-      tableTemp,
-      pagination
     }
+  },
+  props: ['pageConfig', 'selectedData'],
+  mounted() {
+  },
+  methods: {
+    initData(url, params) {
+      if (this.pageConfig.researchConfig){
+        this.$root.$tableUtil.initTable(this, 'GET', url, params)
+      }
+      else {
+        this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
+      }
+    },
+    search() {
+      // 搜索时清空已选中数据
+      this.clearSelectedData()
+      // 搜索时强制从第0条开始
+      if (this.pageConfig.pagination){
+        this.pageConfig.pagination.current = 1
+      }
+      this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
+    },
+    // 原始删除
+    noSmsDelete(val, delTip){
+      this.url = this.pageConfig.CRUD + '/' + val.id
+      this.$deleting.deleteFunc({
+        delTip,
+        okCallback: this.ok
+      })
+    },
+    // 原始确认删除
+    ok() {
+      this.$root.$tableUtil.deleteF(this, 'DELETE', this.url)
+    },
+    receiveIds(ids) {
+      this.$parent.selectedData = ids
+    },
+    clearSelectedData() {
+      this.$parent.selectedData = {checkedIds: []}
+      this.$refs.refTest.initSelected()
+    }
+  },
+  components: {
+    research,
+    // contentTitle,
+    // Notice,
+    tableTemp,
+    pagination
   }
+}
 </script>
 
 <style lang="less" scoped>
