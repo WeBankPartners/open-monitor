@@ -99,9 +99,9 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		return serials
 	}
 	for _, otr := range data.Data.Result {
-		if len(otr.Metric) == 0 {
-			continue
-		}
+		//if len(otr.Metric) == 0 {
+		//	continue
+		//}
 		var serial m.SerialModel
 		serial.Type = "line"
 		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result), query.CustomDashboard)
