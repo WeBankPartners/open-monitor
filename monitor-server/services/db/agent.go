@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
@@ -651,6 +652,13 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 func UpdateAgentManagerTable(endpoint m.EndpointTable, user, password, configFile, binPath string, isAdd bool) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM agent_manager WHERE endpoint_guid='%s'", endpoint.Guid)})
+	if password != "" {
+		encodePwd, encodeErr := cipher.AesEnPasswordByGuid(endpoint.Guid, m.Config().EncryptSeed, password, "")
+		if encodeErr != nil {
+			return encodeErr
+		}
+		password = encodePwd
+	}
 	if isAdd {
 		var agentRemotePort string
 		if splitIndex := strings.Index(endpoint.AddressAgent, ":"); splitIndex >= 0 {
@@ -666,6 +674,11 @@ func GetAgentManager(guid string) (result []*m.AgentManagerTable, err error) {
 		err = x.SQL("SELECT * FROM agent_manager where endpoint_guid=?", guid).Find(&result)
 	} else {
 		err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+	}
+	for _, row := range result {
+		if row.Password != "" {
+			row.Password, _ = cipher.AesDePasswordByGuid(row.EndpointGuid, m.Config().EncryptSeed, row.Password)
+		}
 	}
 	return result, err
 }
