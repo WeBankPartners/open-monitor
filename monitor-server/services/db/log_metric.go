@@ -1414,7 +1414,13 @@ func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGro
 					logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, tmpLogMetricParamObj)
 				}
 				for _, tplMetric := range tmpTemplateObj.MetricList {
-					logMetricGroupData.MetricList = append(logMetricGroupData.MetricList, tplMetric.TransToLogMetric())
+					output := tplMetric.TransToLogMetric()
+					if strings.TrimSpace(v.MetricPrefixCode) == "" {
+						output.FullMetric = output.Metric
+					} else {
+						output.FullMetric = fmt.Sprintf("%s_%s", v.MetricPrefixCode, output.Metric)
+					}
+					logMetricGroupData.MetricList = append(logMetricGroupData.MetricList, output)
 				}
 			}
 		} else {
@@ -1463,6 +1469,11 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) == "" {
+			row.FullMetric = row.Metric
+		} else {
+			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
+		}
 		result.MetricList = append(result.MetricList, row)
 	}
 	return
