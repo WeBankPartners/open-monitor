@@ -33,14 +33,14 @@ func GetEndpointByType(endpointType, serviceGroup, endpointGroup, workspace stri
 		serviceGroupList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", endpointType).Find(&result)
 		if err == nil {
-			if workspace == "any_object" {
+			if workspace == "all_object" {
 				result = append([]*models.EndpointNewTable{{Guid: serviceGroup, Name: serviceGroupObj.DisplayName}}, result...)
 			}
 		}
 	} else if endpointGroup != "" {
 		err = x.SQL("select guid from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&result)
 		if err == nil {
-			if workspace == "any_object" {
+			if workspace == "all_object" {
 				result = append([]*models.EndpointNewTable{{Guid: endpointGroup, Name: endpointGroup}}, result...)
 			}
 		}
