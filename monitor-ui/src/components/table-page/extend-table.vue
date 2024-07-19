@@ -13,9 +13,9 @@
           <template v-for="(item,index) in itemConfig.data">
             <tr :key="index">
               <td v-for="(key,i) in itemConfig.config" :key="i">
-                <div v-if='itemConfig.isExtend && i===0' class="extendStyle">
-                  <a v-show="(indexx+'-'+index) != currentActive" @click="loadDetail(item,indexx,index)"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
-                  <a v-show="(indexx+'-'+index) === currentActive" @click="loadDetail(item,indexx,index)" class="active"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
+                <div v-if='itemConfig.isExtend && i === 0' class="extendStyle">
+                  <a v-show="(indexx + '-' + index) !== currentActive" @click="loadDetail(item,indexx,index)"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
+                  <a v-show="(indexx + '-' + index) === currentActive" @click="loadDetail(item,indexx,index)" class="active"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
                 </div>
                 <div v-if='!key.btn'>
                   <div v-for="(obj,index) in item[key.value]" :key='index'  class='textAlign'>
@@ -54,172 +54,179 @@
                       </div>
                     </Tooltip>
                   </div>
-              </div>
-              <div v-if='key.btn' class="">
-                <div style="display:inline-block" v-for="(btn_val,btn_i) in key.btn" :key="btn_i">
-                  <span :id="btn_val.btn_func"
-                      v-if="!item.hide && btn_val.btn_name !='more' && !btn_val.render"
-                      class="btn-operation"
-                      :style="{color: btn_val.color}"
-                      @click="goToOpe(btn_val,item,index,indexx)">
-                    {{$t(btn_val.btn_name)}}
-                  </span>
-                  <span :id="btn_val.btn_func"
-                      v-if="item.hide && btn_val.btn_name !='more' && !btn_val.render && !item.hide[btn_i]"
-                      class="btn-operation"
-                      :style="{color: btn_val.color}"
-                      @click="goToOpe(btn_val,item,index,indexx)">
-                    {{$t(btn_val.btn_name)}}
-                  </span>
-                <span :id="btn_val.btn_func"
-                      v-if="btn_val.btn_name !='more' && btn_val.render"
-                      class="btn-operation"
-                      :style="{color: btn_val.color}"
-                      @click="goToOpe(btn_val,item,index,indexx)">
-                      {{renderValue(item, btn_val)}}
-                </span>
-                <span class="btn-pipe" v-if="item.hide && (!item.hide[btn_i] && !item.hide[btn_i+1] ) && (btn_i != key.btn.length - 1)">
-                  |
-                </span>
-                <span class="btn-pipe" v-if="!item.hide && (btn_i != key.btn.length - 1)">
-                  |
-                </span>
-                <Poptip content="" placement="bottom" trigger="hover">
-                  <div class="batch-operation" v-if="btn_val.btn_name ==='more'">
-                    <div class="btn-group" role="group" @mouseover="btnMore(index)">
-                    <span class="btn-operation">
-                      {{$t('table.more')}}
-                      <Icon type="chevron-down"></Icon>
-                    </span>
-                    </div>
-                  </div>
-                  <div slot="content" class="ui-ul-list">
-                    <ul v-if="showMoreNumber === index">
-                      <template v-for="(btn, moreIndex) in btn_val.more" >
-                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex" :style="{color: btn.color}">{{$t(btn_val.btn_name)}}</li>
-                      </template>
-                    </ul>
-                  </div>
-                </Poptip>
                 </div>
-              </div>
+                <div v-if='key.btn' class="">
+                  <div style="display:inline-block" v-for="(btn_val,btn_i) in key.btn" :key="btn_i">
+                    <span :id="btn_val.btn_func"
+                          v-if="!item.hide && btn_val.btn_name !== 'more' && !btn_val.render"
+                          class="btn-operation"
+                          :style="{color: btn_val.color}"
+                          @click="goToOpe(btn_val,item,index,indexx)"
+                    >
+                      {{$t(btn_val.btn_name)}}
+                    </span>
+                    <span :id="btn_val.btn_func"
+                          v-if="item.hide && btn_val.btn_name !== 'more' && !btn_val.render && !item.hide[btn_i]"
+                          class="btn-operation"
+                          :style="{color: btn_val.color}"
+                          @click="goToOpe(btn_val,item,index,indexx)"
+                    >
+                      {{$t(btn_val.btn_name)}}
+                    </span>
+                    <span :id="btn_val.btn_func"
+                          v-if="btn_val.btn_name !== 'more' && btn_val.render"
+                          class="btn-operation"
+                          :style="{color: btn_val.color}"
+                          @click="goToOpe(btn_val,item,index,indexx)"
+                    >
+                      {{renderValue(item, btn_val)}}
+                    </span>
+                    <span class="btn-pipe" v-if="item.hide && (!item.hide[btn_i] && !item.hide[btn_i + 1] ) && (btn_i !== key.btn.length - 1)">
+                      |
+                    </span>
+                    <span class="btn-pipe" v-if="!item.hide && (btn_i !== key.btn.length - 1)">
+                      |
+                    </span>
+                    <Poptip content="" placement="bottom" trigger="hover">
+                      <div class="batch-operation" v-if="btn_val.btn_name === 'more'">
+                        <div class="btn-group" role="group" @mouseover="btnMore(index)">
+                          <span class="btn-operation">
+                            {{$t('m_table_more')}}
+                            <Icon type="chevron-down"></Icon>
+                          </span>
+                        </div>
+                      </div>
+                      <div slot="content" class="ui-ul-list">
+                        <ul v-if="showMoreNumber === index">
+                          <template v-for="(btn, moreIndex) in btn_val.more" >
+                            <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex" :style="{color: btn.color}">{{$t(btn_val.btn_name)}}</li>
+                          </template>
+                        </ul>
+                      </div>
+                    </Poptip>
+                  </div>
+                </div>
               </td>
             </tr>
-            <tr v-if="(indexx+'-'+index) === currentActive" :key="index+0.5" class='bgc'>
-                <td :colspan='itemConfig.config.length'>
-                  <tdSlot :name='itemConfig.isExtend.slot'> <slot :name='itemConfig.isExtend.slot'></slot> </tdSlot>
-                  <!-- tdslot在main.js中定义 -->
-                </td>
+            <tr v-if="(indexx + '-' + index) === currentActive" :key="index + 0.5" class='bgc'>
+              <td :colspan='itemConfig.config.length'>
+                <tdSlot :name='itemConfig.isExtend.slot'> <slot :name='itemConfig.isExtend.slot'></slot> </tdSlot>
+                <!-- tdslot在main.js中定义 -->
+              </td>
             </tr>
-         </template>
+          </template>
         </tbody>
       </table>
     </div>
   </div>
 </template>
 <script>
-  export default {
-    data () {
-      return {
-        colorblue: 'colorblue',
-        colorred: 'colorred',
-        colorgreen: 'colorgreen',
-        showMoreNumber: null, // 控制更多按钮显示序号
-        currentActive:-1
-      }
-    },
-    props: ['detailConfig'],
-    mounted () {
+export default {
+  data() {
+    return {
+      colorblue: 'colorblue',
+      colorred: 'colorred',
+      colorgreen: 'colorgreen',
+      showMoreNumber: null, // 控制更多按钮显示序号
+      currentActive: -1
+    }
+  },
+  props: ['detailConfig'],
+  mounted() {
 
+  },
+  methods: {
+    shadow(item, val) {
+      this.$router.push({
+        name: val.shadow.path,
+        params: {item}
+      })
     },
-    methods: {
-      shadow (item, val) {
-        this.$router.push({
-          name: val.shadow.path,
-          params: {item: item}
-        })
-      },
-      renderValue: function (item, config) {
-        let func=config.render
-        if (func){
-          return func(item)
+    renderValue(item, config) {
+      const func=config.render
+      if (func){
+        return func(item)
+      }
+      const expr=config.value
+      let item_tmp = item
+      const attrs=expr.split('.')
+      let n=0
+      if (!this.$root.$validate.isEmpty(item)){
+        return ''
+      }
+      for (n in attrs){
+        if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
+          item_tmp = item_tmp[attrs[n]]
         }
-        let expr=config.value
-        let item_tmp = item
-        let attrs=expr.split('.')
-        let n=0
-        if (!this.$root.$validate.isEmpty(item)){
+        else {
           return ''
         }
-        for (n in attrs){
-          if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
-            item_tmp = item_tmp[attrs[n]]
-          }else{
-            return ''
+      }
+      return item_tmp
+    },
+    /* ******** 点击按钮 *****  ******** */
+    goToOpe(btn, value,index,indexx) {
+      const func = btn.btn_func
+      const callback = this.$parent.$parent[func] ? this.$parent.$parent[func] : this.$parent.$parent.$parent.$parent[func]// 作为扩展
+      if (btn.btn_name === '删除'){
+        this.$deleting.deleteFunc({
+          delTip: value[btn.delTip],
+          friendlyReminder: btn.friendlyReminder,
+          okCallback: () => {
+            callback(value,index,indexx)
           }
-        }
-        return item_tmp
-      },
-      /* ******** 点击按钮 *****  ******** */
-      goToOpe (btn, value,index,indexx) {
-        let func = btn.btn_func
-        let callback = this.$parent.$parent[func] ? this.$parent.$parent[func] : this.$parent.$parent.$parent.$parent[func]//作为扩展
-        if(btn.btn_name === '删除'){
-          this.$deleting.deleteFunc({
-            delTip: value[btn.delTip],
-            friendlyReminder:btn.friendlyReminder,
-            okCallback: ()=>{callback(value,index,indexx)}
-          })
-        }else{
-          callback(value,index,indexx)
-        }
-      },
-      // 控制显示当前more按钮选项
-      btnMore (index) {
-        this.showMoreNumber = index
-      },
-      loadDetail(item, indexx, index) {
-        this.currentActive = this.currentActive === indexx+'-'+index ? -1 : indexx+'-'+index
-        if(this.currentActive === -1){
-          return
-        }
-        let func = this.detailConfig[indexx].isExtend.func
-        this.$parent.$parent[func](item,indexx, index)
-        // detail.vue文件中配置 多table,多slot
-        //<detailsPage :detailPageConfig="detailPageConfig">
-        //   <div slot='tableExtend-1' scope="detailPageConfig.detailConfig[0].isExtend.data">
-        //     <div>this is tableExtend-1</div>
-        //     <div>{{detailPageConfig.detailConfig[0].isExtend.data.name}}</div>
-        //   </div>
-        //    <div slot='tableExtend-2' scope="detailPageConfig.detailConfig[0].isExtend.data">
-        //     <div>this is tableExtend-2</div>
-        //     <div>{{detailPageConfig.detailConfig[0].isExtend.data.name}}</div>
-        //   </div>
-        // </detailsPage>
-
-        // 配置
-        // detailConfig:[{
-        //     title: '磁盘列表',
-        //     config:[
-        //       {title: '磁盘名', value: 'name', display: true},
-        //       {title: '磁盘类型', value: 'volume_type', display: true},
-        //       {title: '大小(GB)', value: 'size_gb', display: true},
-        //       {title: '状态', value: 'status_state', display: true},
-        //       {title: '创建时间', value: 'created_date', display: true},
-        //     ],
-        //     data:[],
-        //     isExtend:{func:'getInfo',slot:'tableExtend-1',data:{}}, //重点！！！fun获取展开的数据
-        //     scales:['25%','20%','15%','20%','20%']
-        //   },]
-      },
-      //是否显示省略号
-      ellipsis(value){
-        let valuelength = value?value.length:0
-        let maxlength = 20 
-        return valuelength > maxlength ? true:false
+        })
+      }
+      else {
+        callback(value,index,indexx)
       }
     },
-    components: {}
+    // 控制显示当前more按钮选项
+    btnMore(index) {
+      this.showMoreNumber = index
+    },
+    loadDetail(item, indexx, index) {
+      this.currentActive = this.currentActive === indexx+'-'+index ? -1 : indexx+'-'+index
+      if (this.currentActive === -1){
+        return
+      }
+      const func = this.detailConfig[indexx].isExtend.func
+      this.$parent.$parent[func](item,indexx, index)
+      // detail.vue文件中配置 多table,多slot
+      // <detailsPage :detailPageConfig="detailPageConfig">
+      //   <div slot='tableExtend-1' scope="detailPageConfig.detailConfig[0].isExtend.data">
+      //     <div>this is tableExtend-1</div>
+      //     <div>{{detailPageConfig.detailConfig[0].isExtend.data.name}}</div>
+      //   </div>
+      //    <div slot='tableExtend-2' scope="detailPageConfig.detailConfig[0].isExtend.data">
+      //     <div>this is tableExtend-2</div>
+      //     <div>{{detailPageConfig.detailConfig[0].isExtend.data.name}}</div>
+      //   </div>
+      // </detailsPage>
+
+      // 配置
+      // detailConfig:[{
+      //     title: '磁盘列表',
+      //     config:[
+      //       {title: '磁盘名', value: 'name', display: true},
+      //       {title: '磁盘类型', value: 'volume_type', display: true},
+      //       {title: '大小(GB)', value: 'size_gb', display: true},
+      //       {title: '状态', value: 'status_state', display: true},
+      //       {title: '创建时间', value: 'created_date', display: true},
+      //     ],
+      //     data:[],
+      //     isExtend:{func:'getInfo',slot:'tableExtend-1',data:{}}, //重点！！！fun获取展开的数据
+      //     scales:['25%','20%','15%','20%','20%']
+      //   },]
+    },
+    // 是否显示省略号
+    ellipsis(value){
+      const valuelength = value?value.length:0
+      const maxlength = 20
+      return valuelength > maxlength ? true:false
+    }
+  },
+  components: {}
 }
 </script>
 <style lang="less" scoped>

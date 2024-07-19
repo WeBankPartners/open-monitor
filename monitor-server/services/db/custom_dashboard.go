@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
@@ -105,6 +106,23 @@ func QueryAllRoleDisplayNameMap() (roleMap map[string]string, err error) {
 func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTable, err error) {
 	customDashboard = &models.CustomDashboardTable{}
 	_, err = x.SQL("select id,name,create_user,update_user,panel_groups,time_range,refresh_week from custom_dashboard where id = ?", id).Get(customDashboard)
+	return
+}
+
+func QueryCustomDashboardListByName(name string) (customDashboardList []*models.CustomDashboardTable, err error) {
+	err = x.SQL("select id from custom_dashboard where name = ?", name).Find(&customDashboardList)
+	return
+}
+
+func GetDashboardPermissionMap(dashboard int, permission string) (permissionMap map[string]bool, err error) {
+	var list []*models.CustomDashBoardRoleRel
+	permissionMap = make(map[string]bool)
+	err = x.SQL("select role_id from custom_dashboard_role_rel where custom_dashboard_id = ? and permission = ?", dashboard, permission).Find(&list)
+	if len(list) > 0 {
+		for _, perm := range list {
+			permissionMap[perm.RoleId] = true
+		}
+	}
 	return
 }
 
@@ -370,6 +388,199 @@ func SyncData() (err error) {
 	return
 }
 
+func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
+	var customDashboardList []*models.CustomDashboardTable
+	var actions, subDashboardPermActions, subDashboardChartActions []*Action
+	var result sql.Result
+	var newDashboardId int64
+	now := time.Now().Format(models.DatetimeFormat)
+	importRes = &models.CustomDashboardImportRes{ChartMap: make(map[string][]string)}
+	if customDashboardList, err = QueryCustomDashboardListByName(param.Name); err != nil {
+		return
+	}
+	if len(customDashboardList) > 0 {
+		// 根据rule 判断导入模式, 同名覆盖 or 同名新增
+		if rule == string(models.ImportRuleCover) {
+			historyDashboard := customDashboardList[0]
+			// 覆盖模式:删除以该看板为源看板,并且还没有公开的图表,删除看板的图表关联关系
+			actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_config  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in(select guid from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)))", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{historyDashboard.Id}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{historyDashboard.Id}})
+			// 更新看板操作人和时间
+			actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{now, operator, historyDashboard.Id}})
+			if subDashboardChartActions, importRes, err = handleDashboardChart(param, int64(historyDashboard.Id), operator, now, mgmtRole, useRoles); err != nil {
+				return
+			}
+			if len(subDashboardChartActions) > 0 {
+				actions = append(actions, subDashboardChartActions...)
+			}
+			err = Transaction(actions)
+			return
+		}
+		// 同名新增
+		param.Name = param.Name + "(1)"
+		tempList, _ := QueryCustomDashboardListByName(param.Name)
+		if len(tempList) > 0 {
+			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, param.Name)
+			return
+		}
+	}
+	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
+		param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek)
+	if err != nil {
+		return
+	}
+	if newDashboardId, err = result.LastInsertId(); err != nil {
+		return
+	}
+	// 插入看板权限表
+	subDashboardPermActions = GetInsertCustomDashboardRoleRelSQL(int(newDashboardId), []string{mgmtRole}, useRoles)
+	if len(subDashboardPermActions) > 0 {
+		actions = append(actions, subDashboardPermActions...)
+	}
+	if subDashboardChartActions, importRes, err = handleDashboardChart(param, newDashboardId, operator, now, mgmtRole, useRoles); err != nil {
+		return
+	}
+	if len(subDashboardChartActions) > 0 {
+		actions = append(actions, subDashboardChartActions...)
+	}
+	err = Transaction(actions)
+	return
+}
+
+func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId int64, operator, now, mgmtRole string, useRoles []string) (actions []*Action, importRes *models.CustomDashboardImportRes, err error) {
+	var permissionList []*models.CustomChartPermission
+	var list []*models.CustomChart
+	actions = []*Action{}
+	importRes = &models.CustomDashboardImportRes{ChartMap: make(map[string][]string)}
+	for _, chart := range param.Charts {
+		list = []*models.CustomChart{}
+		permissionList = []*models.CustomChartPermission{}
+		newChartId := guid.CreateGuid()
+		// 如果图表公共,则去图表库中根据名称查询是否已有该图表,有的话添加看板的关联关系即可
+		if chart.Public {
+			if list, err = QueryCustomChartByName(chart.Name); err != nil {
+				return
+			}
+			if len(list) > 0 {
+				// 新增看板图表关系表
+				actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+					guid.CreateGuid(), newDashboardId, list[0].Guid, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
+				continue
+			}
+		}
+		// 新增图表和图表配置
+		actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
+			"create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			newChartId, newDashboardId, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
+			chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate, chart.PieType}})
+		// 新增看板图表关系表
+		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
+		if chart.Public {
+			// 新增图表权限
+			for _, useRole := range useRoles {
+				permissionList = append(permissionList, &models.CustomChartPermission{
+					Guid:           guid.CreateGuid(),
+					DashboardChart: newChartId,
+					RoleId:         useRole,
+					Permission:     string(models.PermissionUse),
+				})
+			}
+			permissionList = append(permissionList, &models.CustomChartPermission{
+				Guid:           guid.CreateGuid(),
+				DashboardChart: newChartId,
+				RoleId:         mgmtRole,
+				Permission:     string(models.PermissionMgmt),
+			})
+			actions = append(actions, GetInsertCustomChartPermissionSQL(permissionList)...)
+		}
+		if len(chart.ChartSeries) > 0 {
+			var exist bool
+			for _, series := range chart.ChartSeries {
+				// 查询每个指标是否存在,不存在需要记录下来
+				exist = true
+				if series.MetricGuid != "" {
+					metricGuid := ""
+					if _, err = x.SQL("select guid from metric where guid=?", series.MetricGuid).Get(&metricGuid); err != nil {
+						return
+					}
+					if metricGuid == "" {
+						exist = false
+					}
+				} else {
+					// 指标guid为空,则通过metric+MonitorType+ServiceGroup三个都要匹配上则认为指标存在
+					var metricList []*models.MetricTable
+					if err = x.SQL("select * from metric where metric =? and monitor_type =?", series.Metric, series.MonitorType).Find(&metricList); err != nil {
+						return
+					}
+					if len(metricList) == 0 {
+						exist = false
+					} else {
+						exist = false
+						for _, metricTable := range metricList {
+							if metricTable.ServiceGroup == series.ServiceGroup {
+								exist = true
+								break
+							}
+						}
+					}
+				}
+				if strings.TrimSpace(series.Endpoint) != "" && series.ServiceGroup == "" {
+					// 监控对象不存在,记录下来
+					var endpointObj models.EndpointTable
+					if _, err = x.SQL("SELECT * FROM endpoint_new WHERE guid=?", series.Endpoint).Get(&endpointObj); err != nil {
+						return
+					}
+					if endpointObj.Name == "" {
+						exist = false
+					}
+				}
+				// 指标不存在,统计不存在指标返回
+				if !exist {
+					if len(importRes.ChartMap[chart.Name]) == 0 {
+						importRes.ChartMap[chart.Name] = []string{}
+					}
+					importRes.ChartMap[chart.Name] = append(importRes.ChartMap[chart.Name], series.Metric)
+					continue
+				}
+				seriesId := guid.CreateGuid()
+				actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+					seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag, series.EndpointType, series.MetricType, series.MetricGuid}})
+				if len(series.ColorConfig) > 0 {
+					for _, colorConfig := range series.ColorConfig {
+						tags := ""
+						if strings.Contains(colorConfig.SeriesName, "{") {
+							start := strings.LastIndex(colorConfig.SeriesName, "{")
+							tags = colorConfig.SeriesName[start+1 : len(colorConfig.SeriesName)-1]
+						}
+						actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{
+							guid.CreateGuid(), seriesId, tags, colorConfig.Color, colorConfig.SeriesName,
+						}})
+					}
+				}
+				if len(series.Tags) > 0 {
+					for _, tag := range series.Tags {
+						tagId := guid.CreateGuid()
+						actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
+							tagId, seriesId, tag.TagName}})
+						if len(tag.TagValue) > 0 {
+							for _, tagValue := range tag.TagValue {
+								actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
 func convertLineTypeIntToString(lineType int) string {
 	switch lineType {
 	case 1:
@@ -380,24 +591,4 @@ func convertLineTypeIntToString(lineType int) string {
 		return "bar"
 	}
 	return ""
-}
-
-func UnBindChart(dashboard int) (err error) {
-	_, err = x.Exec("delete from custom_chart_series_config  where dashboard_chart_config  in(select guid from custom_chart_series ccs where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0 ))", dashboard)
-	if err != nil {
-		return err
-	}
-	_, err = x.Exec("delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", dashboard)
-	if err != nil {
-		return err
-	}
-	_, err = x.Exec("delete from custom_dashboard_chart_rel where custom_dashboard =? and dashboard_chart in (select guid from custom_chart where source_dashboard =? and public = 0)", dashboard, dashboard)
-	if err != nil {
-		return err
-	}
-	_, err = x.Exec("delete from custom_chart where source_dashboard =? and public = 0", dashboard)
-	if err != nil {
-		return err
-	}
-	return
 }

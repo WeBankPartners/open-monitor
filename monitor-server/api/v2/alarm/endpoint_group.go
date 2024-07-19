@@ -6,19 +6,36 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func ListEndpointGroup(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	size, _ := strconv.Atoi(c.Query("size"))
 	search := c.Query("search")
-	param := models.QueryRequestParam{}
+	monitorType := c.Query("monitor_type")
+	param := models.QueryRequestParam{Sorting: &models.QueryRequestSorting{
+		Asc:   false,
+		Field: "update_time",
+	}}
 	if size > 0 {
 		param.Paging = true
 		param.Pageable = &models.PageInfo{PageSize: size, StartIndex: page - 1}
 	}
 	if search != "" {
 		param.Filters = []*models.QueryRequestFilterObj{{Name: "guid", Operator: "like", Value: search}}
+	}
+	if monitorType != "" {
+		values := strings.Split(monitorType, ",")
+		var interArr []interface{}
+		for _, value := range values {
+			interArr = append(interArr, value)
+		}
+		if len(param.Filters) == 0 {
+			param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type", Operator: "in", Value: interArr}}
+		} else {
+			param.Filters = append(param.Filters, &models.QueryRequestFilterObj{Name: "monitor_type", Operator: "in", Value: interArr})
+		}
 	}
 	pageInfo, rowData, err := db.ListEndpointGroup(&param)
 	returnData := models.TableData{Data: rowData, Page: page, Size: size, Num: pageInfo.TotalRows}
@@ -29,13 +46,23 @@ func ListEndpointGroup(c *gin.Context) {
 	}
 }
 
+func EndpointGroupOptions(c *gin.Context) {
+	var err error
+	var result []string
+	if result, err = db.ListEndpointGroupMonitoryType(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
+}
+
 func CreateEndpointGroup(c *gin.Context) {
 	var param models.EndpointGroupTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateEndpointGroup(&param)
+	err := db.CreateEndpointGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -49,7 +76,7 @@ func UpdateEndpointGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateEndpointGroup(&param)
+	err := db.UpdateEndpointGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -83,7 +110,7 @@ func UpdateGroupEndpoint(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateGroupEndpoint(&param, false)
+	err := db.UpdateGroupEndpoint(&param, middleware.GetOperateUser(c), false)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {

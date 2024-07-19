@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 cd $(dirname $0)/../monitor-server
-go build -ldflags "-linkmode external -extldflags -static -s"
+#go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../monitor-agent/agent_manager
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../archive_mysql_tool
@@ -16,3 +16,5 @@ cd ../db_data_exporter
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../daemon_proc
 go build -o daemon_proc
+cd ../metric_comparison_exporter
+go build -ldflags "-linkmode external -extldflags -static -s"
