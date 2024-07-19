@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+func ListEndpointGroupMonitoryType() (result []string, err error) {
+	err = x.SQL("select distinct monitor_type from endpoint_group").Find(&result)
+	return
+}
+
 func ListEndpointGroup(param *models.QueryRequestParam) (pageInfo models.PageInfo, rowData []*models.EndpointGroupTable, err error) {
 	rowData = []*models.EndpointGroupTable{}
 	pageInfo = models.PageInfo{}
@@ -91,8 +96,13 @@ func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyOb
 }
 
 func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyObj) error {
+	endpointGroupRow, getEndpointGroupErr := GetSimpleEndpointGroup(endpointGroupGuid)
+	if getEndpointGroupErr != nil {
+		return getEndpointGroupErr
+	}
 	for _, v := range param {
 		v.EndpointGroup = endpointGroupGuid
+		v.ServiceGroup = endpointGroupRow.ServiceGroup
 		if v.ProcCallbackKey != "" && v.ProcCallbackName == "" {
 			return fmt.Errorf("procCallbackName can not empty with key:%s ", v.ProcCallbackKey)
 		}
