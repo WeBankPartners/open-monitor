@@ -580,10 +580,12 @@ type PluginCloseAlarmOutputObj struct {
 }
 
 type AlarmCloseParam struct {
-	Id       int    `json:"id"`
-	Custom   bool   `json:"custom"`
-	Metric   string `json:"metric"`
-	Priority string `json:"priority"`
+	Id        int      `json:"id"`
+	Custom    bool     `json:"custom"`
+	Metric    []string `json:"metric"`
+	Endpoint  []string `json:"endpoint"`
+	AlarmName []string `json:"alarmName"`
+	Priority  string   `json:"priority"`
 }
 
 type AlarmCondition struct {

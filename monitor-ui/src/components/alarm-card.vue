@@ -80,14 +80,18 @@
           @click="goToEndpointView(data)"
         />
       </Tooltip>
-      <Tooltip :content="$t('close')">
+      <Poptip
+        confirm
+        :title="$t('m_delConfirm_tip')"
+        placement="left"
+        @on-ok="deleteConfirmModal(data, false)"
+      >
         <Icon
           type="ios-eye-off"
           size="18"
           class="fa-operate"
-          @click="deleteConfirmModal(data, false)"
         />
-      </Tooltip>
+      </Poptip>
       <Tooltip :content="$t('m_remark')">
         <Icon
           type="ios-pricetags"
@@ -249,8 +253,7 @@ export default {
     },
     deleteConfirmModal(rowData, isBatch) {
       this.$parent.isBatch = isBatch
-      this.$parent.selectedData = rowData
-      this.$parent.isShowWarning = true
+      this.$parent.removeAlarm(rowData)
     },
     remarkModal(item) {
       this.$emit('openRemarkModal', item)
