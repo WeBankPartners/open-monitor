@@ -11,14 +11,18 @@
             </div>
             <div>
               <!-- <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('m_button_receiversConfiguration')}}</button> -->
-              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedRole')">
-                <Button size="small" type="primary" @click="associatedRole(item)">
+              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedObject')">
+                <Button size="small" type="primary" @click="associatedObject(item)">
                   <Icon type="ios-cube" />
                 </Button>
               </Tooltip>
-
-              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedObject')">
-                <Button size="small" type="warning" @click="associatedObject(item)">
+              <Tooltip placement="top" max-width="400" :content="$t('m_button_edit')">
+                <Button size="small" type="primary" @click="editPanal(item)">
+                  <Icon type="md-create" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedRole')">
+                <Button size="small" type="warning" @click="associatedRole(item)">
                   <Icon type="md-person" />
                 </Button>
               </Tooltip>
@@ -32,12 +36,6 @@
               <Tooltip placement="top" max-width="400" :content="$t('m_add')">
                 <Button size="small" type="success" @click="addPanel(item)">
                   <Icon type="md-add" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" max-width="400" :content="$t('m_button_edit')">
-                <Button size="small" type="primary" @click="editPanal(item)">
-                  <Icon type="md-create" />
                 </Button>
               </Tooltip>
 
