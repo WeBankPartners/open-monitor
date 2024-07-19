@@ -54,7 +54,7 @@
           </FormItem>
           <!--计算方法-->
           <FormItem :label="$t('m_calc_method')" required>
-            <Select filterable v-model="metricConfigData.calcMethod" @on-change="getChartData" :disabled="operator === 'edit' || viewOnly" :transfer="true">
+            <Select  filterable v-model="metricConfigData.calcMethod" @on-change="getChartData" :disabled="operator === 'edit' || viewOnly" :transfer="true">
               <Option v-for="item in calcMethodOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
@@ -79,7 +79,7 @@
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + $t('m_endpoint')">
             <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="getChartData">
-              <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+              <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.name || item.guid }}</Option>
             </Select>
           </FormItem>
           <!--预览区-->
@@ -101,6 +101,10 @@ import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
 export default {
   props: {
+    fromPage: {
+      type: String,
+      default: ''
+    },
     visible: {
       type: Boolean,
       default: false
@@ -132,10 +136,6 @@ export default {
     },
     // 仅查看
     viewOnly: {
-      type: Boolean,
-      default: false
-    },
-    isObject: { // 对象标志
       type: Boolean,
       default: false
     }
@@ -195,7 +195,8 @@ export default {
           label: '3600S',
           value: 3600
         }
-      ]
+      ],
+      previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
     }
   },
   computed: {
@@ -210,14 +211,18 @@ export default {
   },
   async mounted() {
     this.metricConfigData.metricId = this.originalMetricsId || ''
-    await this.getEndpoint()
     await this.getMetricList()
     this.initDrawerHeight()
     if (this.operator === 'edit') {
       this.getConfigData()
     }
+    await this.getEndpoint()
   },
   methods: {
+    setPreviewObject(obj) {
+      this.previewObject = obj
+      // this.getEndpoint()
+    },
     // 获取原始指标列表
     async getMetricList() {
       let params = {
@@ -227,7 +232,7 @@ export default {
         endpointGroup: this.endpointGroup
       }
       // 对象类型查看使用特殊入参
-      if (this.isObject) {
+      if (this.fromPage === 'object') {
         params = {
           guid: this.data.metricId
         }
@@ -249,6 +254,9 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric_comparison/list', params, responseData => {
         if (responseData.length === 1) {
           this.metricConfigData = responseData[0]
+          if (this.fromPage === 'object') {
+            this.metricConfigData.endpoint = this.previewObject.guid
+          }
           this.getMetricType(this.metricConfigData.metricId)
         }
       }, {isNeedloading: true})
@@ -264,34 +272,19 @@ export default {
     },
     // 获取预览对象列表
     getEndpoint() {
-      let params = {
+      // 对象处查看，直接使用父页面中的对象
+      if (this.fromPage === 'object') {
+        this.metricConfigData.endpoint = this.previewObject.guid
+        this.$nextTick(() => {
+          this.$set(this.endpointOptions, 0, this.previewObject)
+          this.getChartData()
+        })
+        return
+      }
+      const params = {
         type: this.monitorType, // 基础类型
         serviceGroup: this.serviceGroup, // 层级对象
         endpointGroup: this.endpointGroup // 组
-      }
-      // 对象预览根据类型传参获取预览对象列表
-      if (this.isObject) {
-        if (this.data.group_type === 'level') {
-          params = {
-            type: 'process',
-            serviceGroup: this.data.service_group,
-            endpointGroup: ''
-          }
-        }
-        else if (this.data.group_type === 'system') {
-          params = {
-            type: this.data.group_name,
-            serviceGroup: '',
-            endpointGroup: ''
-          }
-        }
-        else if (this.data.group_type === 'object') {
-          params = {
-            type: 'process',
-            serviceGroup: '',
-            endpointGroup: this.data.endpoint_group
-          }
-        }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
