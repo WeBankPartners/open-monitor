@@ -1,8 +1,12 @@
 package agent
 
 import (
+	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -34,8 +38,16 @@ type returnData struct {
 
 func RegisterAgentNew(c *gin.Context) {
 	var param m.RegisterParamNew
-	if err := c.ShouldBindJSON(&param); err == nil {
-		validateMessage, _, err := AgentRegister(param)
+	if bindErr := c.ShouldBindJSON(&param); bindErr == nil {
+		if param.Password != "" {
+			decodePassword, decodeErr := DecodeUIPassword(c, param.Password)
+			if decodeErr != nil {
+				mid.ReturnValidateError(c, decodeErr.Error())
+				return
+			}
+			param.Password = decodePassword
+		}
+		validateMessage, _, err := AgentRegister(param, mid.GetOperateUser(c))
 		if validateMessage != "" {
 			mid.ReturnValidateError(c, validateMessage)
 			return
@@ -47,7 +59,7 @@ func RegisterAgentNew(c *gin.Context) {
 		}
 		mid.ReturnSuccess(c)
 	} else {
-		mid.ReturnValidateError(c, err.Error())
+		mid.ReturnValidateError(c, bindErr.Error())
 	}
 }
 
@@ -85,7 +97,7 @@ func startSyncAgentManagerJob(url string) {
 	}
 }
 
-func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err error) {
+func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, guid string, err error) {
 	if AgentManagerServer == "" && param.AgentManager {
 		return validateMessage, guid, fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
@@ -131,7 +143,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 		tmpExtendBytes, _ := json.Marshal(rData.extendParam)
 		extendString = string(tmpExtendBytes)
 	}
-	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString)
+	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString, operator)
 	if err != nil {
 		return validateMessage, guid, err
 	}
@@ -157,7 +169,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 			if tmpErr != nil {
 				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
 			} else {
-				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, operator, true)
 				if tmpErr != nil {
 					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
 				} else {
@@ -848,4 +860,32 @@ func formatExportAddress(input string) string {
 		result = ""
 	}
 	return result
+}
+
+func DecodeUIPassword(ctx context.Context, inputValue string) (output string, err error) {
+	if inputValue == "" {
+		return
+	}
+	seed := m.Config().EncryptSeed
+	if pwdBytes, pwdErr := base64.StdEncoding.DecodeString(inputValue); pwdErr == nil {
+		inputValue = hex.EncodeToString(pwdBytes)
+	} else {
+		err = fmt.Errorf("base64 decode input data fail,%s ", pwdErr.Error())
+		return
+	}
+	output, err = decodeUIAesPassword(seed, inputValue)
+	return
+}
+
+func decodeUIAesPassword(seed, password string) (decodePwd string, err error) {
+	unixTime := time.Now().Unix() / 100
+	decodePwd, err = cipher.AesDePasswordWithIV(seed, password, fmt.Sprintf("%d", unixTime*100000000))
+	if err != nil {
+		unixTime = unixTime - 1
+		decodePwd, err = cipher.AesDePasswordWithIV(seed, password, fmt.Sprintf("%d", unixTime*100000000))
+	}
+	if err != nil {
+		err = fmt.Errorf("aes decode with iv fail,%s ", err.Error())
+	}
+	return
 }

@@ -293,13 +293,13 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 	return result, nil
 }
 
-func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
+func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam, operator string) error {
 	var actions []*Action
 	var endpointString string
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	endpointString = strings.Join(param.Endpoint, "^")
 	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?", Param: []interface{}{endpointString, param.Guid}})
-	actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, param.Endpoint)...)
+	actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, operator, param.Endpoint)...)
 	err := Transaction(actions)
 	if err == nil {
 		var endpointGroup []*m.EndpointGroupTable

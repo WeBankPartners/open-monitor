@@ -11,15 +11,16 @@ type LogKeywordMonitorTable struct {
 }
 
 type LogKeywordConfigTable struct {
-	Guid              string `json:"guid"`
-	LogKeywordMonitor string `json:"log_keyword_monitor"`
-	Keyword           string `json:"keyword"`
-	Regulative        int    `json:"regulative"`
-	NotifyEnable      int    `json:"notify_enable"`
-	Priority          string `json:"priority"`
-	UpdateTime        string `json:"update_time"`
-	Content           string `json:"content"`
-	Name              string `json:"name"`
+	Guid              string     `json:"guid" xorm:"guid"`
+	LogKeywordMonitor string     `json:"log_keyword_monitor" xorm:"log_keyword_monitor"`
+	Keyword           string     `json:"keyword" xorm:"keyword"`
+	Regulative        int        `json:"regulative" xorm:"regulative"`
+	NotifyEnable      int        `json:"notify_enable" xorm:"notify_enable"`
+	Priority          string     `json:"priority" xorm:"priority"`
+	UpdateTime        string     `json:"update_time" xorm:"update_time"`
+	Content           string     `json:"content" xorm:"content"`
+	Name              string     `json:"name" xorm:"name"`
+	Notify            *NotifyObj `json:"notify" xorm:"-"`
 }
 
 type LogKeywordEndpointRelTable struct {
@@ -41,6 +42,7 @@ type LogKeywordMonitorObj struct {
 	MonitorType  string                        `json:"monitor_type"`
 	KeywordList  []*LogKeywordConfigTable      `json:"keyword_list"`
 	EndpointRel  []*LogKeywordEndpointRelTable `json:"endpoint_rel"`
+	Notify       *NotifyObj                    `json:"notify"`
 }
 
 type LogKeywordMonitorCreateObj struct {
