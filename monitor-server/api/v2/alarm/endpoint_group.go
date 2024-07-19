@@ -14,7 +14,10 @@ func ListEndpointGroup(c *gin.Context) {
 	size, _ := strconv.Atoi(c.Query("size"))
 	search := c.Query("search")
 	monitorType := c.Query("monitor_type")
-	param := models.QueryRequestParam{}
+	param := models.QueryRequestParam{Sorting: &models.QueryRequestSorting{
+		Asc:   false,
+		Field: "update_time",
+	}}
 	if size > 0 {
 		param.Paging = true
 		param.Pageable = &models.PageInfo{PageSize: size, StartIndex: page - 1}
