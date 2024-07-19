@@ -3,13 +3,13 @@
     <Title :title="$t('m_title_metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
       <!-- 信息提示去 -->
-      <div class="page-notice" :class="'page-notice-'+noticeConfig.type">
+      <div class="page-notice" :class="'page-notice-' + noticeConfig.type">
         <template v-for="(noticeItem, noticeIndex) in noticeConfig.contents">
           <p :key="noticeIndex">{{$t(noticeItem.tip)}}</p>
-        </template>      
+        </template>
       </div>
       <div style="width:1100px;margin: 0 auto;margin-top:24px">
-         <!-- 条件选择去 -->
+        <!-- 条件选择去 -->
         <div style="display:flex;margin-bottom:24px">
           <div style="margin-right:16px">
             <span style="font-size: 14px;">
@@ -28,15 +28,15 @@
               style="width:300px;"
               v-model="serviceGroup"
               filterable
-              clearable 
+              clearable
               @on-clear="clearServiceGroup"
               @on-change="clearServiceGroup"
               remote
               ref="select"
               :remote-method="getRecursiveList"
-              >
+            >
               <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
-                <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+                <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
                 {{option.display_name}}
               </Option>
             </Select>
@@ -52,32 +52,33 @@
               <div style="min-height:300px">
                 <div style="text-align:right;margin-bottom:16px">
                   <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</button>
-                  <div style="display: inline-block;"> 
-                    <Upload 
-                    :action="uploadUrl" 
-                    :show-upload-list="false"
-                    :max-size="1000"
-                    with-credentials
-                    :headers="{'Authorization': token}"
-                    :on-success="uploadSucess"
-                    :on-error="uploadFailed">
+                  <div style="display: inline-block;">
+                    <Upload
+                      :action="uploadUrl"
+                      :show-upload-list="false"
+                      :max-size="1000"
+                      with-credentials
+                      :headers="{'Authorization': token}"
+                      :on-success="uploadSucess"
+                      :on-error="uploadFailed"
+                    >
                       <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
                     </Upload>
                   </div>
                 </div>
                 <Form :label-width="80">
-                  <FormItem :label="$t('field.metric')">
+                  <FormItem :label="$t('m_field_metric')">
                     <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
                       <Button type="success" style="width:95%;background-color:#19be6b" @click="addMetric" size="small">
                         <Icon type="ios-add" size="24"></Icon>
                       </Button>
                       <Option v-for="metric in metricOptions" :value="metric.guid" :key="metric.guid">{{ metric.metric }}<span style="float:right">
-                          <Button icon="md-trash" type="error" @click="deleteMetric(metric)" size="small"></Button>
-                        </span>
+                        <Button icon="md-trash" type="error" @click="deleteMetric(metric)" size="small"></Button>
+                      </span>
                       </Option>
                     </Select>
                   </FormItem>
-                  <template v-if="metricId!== '' || hideMetricZone">
+                  <template v-if="metricId !== '' || hideMetricZone">
                     <Divider />
                     <FormItem v-if="isAddMetric" :label="$t('m_tableKey_name')">
                       <Input v-model="metricConfigData.metric"></Input>
@@ -103,18 +104,20 @@
                           @on-open-change="getCollectedMetric"
                           @on-change="changeCollectedMetric(param)"
                           :placeholder="param.label"
-                          class="select-dropdown">
-                          <Option 
+                          class="select-dropdown"
+                        >
+                          <Option
                             style="white-space: normal;"
-                            v-for="(item, itemIndex) in collectedMetricOptions" 
-                            :value="item.option_value" 
-                            :key="item.option_value + itemIndex">
+                            v-for="(item, itemIndex) in collectedMetricOptions"
+                            :value="item.option_value"
+                            :key="item.option_value + itemIndex"
+                          >
                             {{ item.option_text }}
                           </Option>
                         </Select>
                       </template>
                     </FormItem>
-                    <FormItem :label="$t('field.metric')">
+                    <FormItem :label="$t('m_field_metric')">
                       <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="6" />
                     </FormItem>
                   </template>
@@ -126,7 +129,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div style="text-align: right;margin-top:24px">
                 <button :disabled="metricConfigData.prom_expr === ''" class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
                 <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('m_button_saveConfig')}}</button>
@@ -143,8 +146,8 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
-                        <Button icon="md-trash" @click="deletePanel(panel)" type="error" size="small"></Button>
-                      </span>
+                      <Button icon="md-trash" @click="deletePanel(panel)" type="error" size="small"></Button>
+                    </span>
                       <span style="float:right">
                         <Button icon="md-create" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
                       </span>
@@ -160,8 +163,8 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
-                        <Button icon="md-trash" type="error" @click="deleteGraph(graph)" size="small"></Button>
-                      </span>
+                      <Button icon="md-trash" type="error" @click="deleteGraph(graph)" size="small"></Button>
+                    </span>
                     </Option>
                   </Select>
                 </div>
@@ -181,7 +184,7 @@
                           <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
                         </Select>
                       </FormItem>
-                      <FormItem :label="$t('field.metric')">
+                      <FormItem :label="$t('m_field_metric')">
                         <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
                           <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
                         </Select>
@@ -206,7 +209,8 @@
             :mask-closable="false"
             @on-ok="checkEndpoint"
             @on-cancel="metricConfigData.endpoint = ''"
-            :title="$t('m_select_endpoint')">
+            :title="$t('m_select_endpoint')"
+          >
             <Form :label-width="80">
               <FormItem :label="$t('m_endpoint')">
                 <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
@@ -221,7 +225,8 @@
             :mask-closable="false"
             @on-ok="saveTitle"
             @on-cancel="titleManagement.title = ''"
-            :title="titleManagement.isAdd ? $t('button.add') : $t('m_button_edit')">
+            :title="titleManagement.isAdd ? $t('m_button_add') : $t('m_button_edit')"
+          >
             <Form :label-width="80">
               <FormItem :label="$t('m_field_title')">
                 <Input v-model="titleManagement.title"/>
@@ -235,7 +240,8 @@
       v-model="isShowWarning"
       :title="$t('m_delConfirm_title')"
       @on-ok="ok"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
@@ -272,8 +278,14 @@ export default {
       recursiveOptions: [],
       workspace: '',
       workspaceOptions: [
-        {label: 'm_all_object', value: 'all_object'}, // 层级对象
-        {label: 'm_any_object', value: 'any_object'}  // 全部对象
+        {
+          label: 'm_all_object',
+          value: 'all_object'
+        }, // 层级对象
+        {
+          label: 'm_any_object',
+          value: 'any_object'
+        } // 全部对象
       ],
       metricId: '',
       metricOptions: [],
@@ -318,9 +330,18 @@ export default {
 
       isAddMetric: false,
       legendOptions: [
-        {label: '指标名称+对象+标签', value: '$custom_all'},
-        {label: '指标名称+标签', value: '$custom_metric'},
-        {label: '指标名称', value: '$metric'}
+        {
+          label: '指标名称+对象+标签',
+          value: '$custom_all'
+        },
+        {
+          label: '指标名称+标签',
+          value: '$custom_metric'
+        },
+        {
+          label: '指标名称',
+          value: '$metric'
+        }
       ],
 
       selectdPanel: '',
@@ -337,7 +358,7 @@ export default {
       showGraphConfig: false, // 指标配置区
 
       titleManagement: {
-        show:false,
+        show: false,
         isAdd: true,
         type: '',
         id: '',
@@ -348,7 +369,7 @@ export default {
     }
   },
   computed: {
-    uploadUrl: function() {
+    uploadUrl() {
       return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
     }
   },
@@ -358,78 +379,80 @@ export default {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
-    exportData () {
+    exportData() {
       const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
       axios({
         method: 'GET',
         url: api,
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         }
-      }).then((response) => {
+      }).then(response => {
         if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          let blob = new Blob([content])
-          if('msSaveOrOpenBlob' in navigator){
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
+          }
+          else {
             if ('download' in document.createElement('a')) { // 非IE下载
-              let elink = document.createElement('a')
+              const elink = document.createElement('a')
               elink.download = fileName
               elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)  
+              elink.href = URL.createObjectURL(blob)
               document.body.appendChild(elink)
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            } else { // IE10+下载
+            }
+            else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
         }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('m_tips_failed'))
-      });
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
-    uploadSucess () {
+    uploadSucess() {
       this.$Message.success(this.$t('m_tips_success'))
       this.getMetricOptions()
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning(file.message)
     },
-    clearMetric () {
+    clearMetric() {
       this.metricConfigData.metric = ''
     },
-    clearServiceGroup () {
+    clearServiceGroup() {
       this.showConfigTab = false
       this.configMetric()
     },
-    getRecursiveList () {
+    getRecursiveList() {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/group'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         this.recursiveOptions = responseData
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     },
-    clearTemplatePl () {
+    clearTemplatePl() {
       this.templatePl = ''
       this.metricTemplateParams = []
     },
-    getMetricTemplate () {
+    getMetricTemplate() {
       this.templatePl = ''
       this.metricTemplateParams = []
       this.metricConfigData.prom_expr = ''
       const params = {
         workspace: this.workspace
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/sys/parameter/metric_template', params, (res) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/sys/parameter/metric_template', params, res => {
         this.metricTemplate = res
       })
     },
-    clearEndpointType () {
+    clearEndpointType() {
       this.showConfigTab = false
       this.metricId = ''
       this.metricConfigData = {
@@ -442,17 +465,20 @@ export default {
       }
       this.isRequestChartData = false
     },
-    handleCreateLegend (val) {
+    handleCreateLegend(val) {
       const exist = this.legendOptions.find(el => el.value === val)
       if (!exist) {
-        this.legendOptions.push({label: val, value: val})
+        this.legendOptions.push({
+          label: val,
+          value: val
+        })
       }
     },
-    changeEndpointType () {
+    changeEndpointType() {
       this.metricId = ''
       this.showConfigTab = false
     },
-    changeMetricOptions (val) {
+    changeMetricOptions(val) {
       this.metricConfigData = {
         guid: null,
         metric: '',
@@ -461,7 +487,9 @@ export default {
         prom_expr: '',
         endpoint: ''
       }
-      if (!val) return
+      if (!val) {
+        return
+      }
       this.isAddMetric = false
       this.hideMetricZone = false
       this.isRequestChartData = false
@@ -474,37 +502,38 @@ export default {
         }
       }
     },
-    ok () {
+    ok() {
       this[this.deleteConfirm.method](this.deleteConfirm.id)
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
-    deleteMetric (metric) {
+    deleteMetric(metric) {
       this.deleteConfirm.id = metric.guid
       this.deleteConfirm.method = 'removeMetric'
       this.isShowWarning = true
     },
-    removeMetric (id) {
+    removeMetric(id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.metricManagement + '?id=' + id, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.metricId = ''
         this.showConfigTab = false
       })
     },
-    changePanel () {
+    changePanel() {
       this.showGraphConfig =false
       this.selectdGraph = ''
       this.changeGraph('')
     },
-    changeGraph (val) {
+    changeGraph(val) {
       if (val) {
         this.editGraph(val)
-      } else {
+      }
+      else {
         this.showGraphConfig = false
       }
     },
-    addMetric () {
+    addMetric() {
       this.hideMetricZone = true
       this.$refs.metricSelect.visible = false
       this.isRequestChartData = false
@@ -518,35 +547,35 @@ export default {
       }
       this.isAddMetric = true
     },
-    addPanel (type) {
+    addPanel(type) {
       this.titleManagement.show = true
       this.titleManagement.isAdd = true
       this.titleManagement.type = type
       this.titleManagement.title = ''
       this.$refs.selectdPanel.visible = false
     },
-    editPanel (type, item) {
+    editPanel(type, item) {
       this.titleManagement.show = true
       this.titleManagement.isAdd = false
       this.titleManagement.type = type
       this.titleManagement.title = item.title
       this.titleManagement.id = item.id
     },
-    deletePanel (item) {
+    deletePanel(item) {
       this.deleteConfirm.id = item.id
       this.deleteConfirm.method = 'removePanel'
       this.isShowWarning = true
     },
-    removePanel (id) {
+    removePanel(id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.selectdPanel = ''
         this.$root.$eventBus.$emit('hideConfirmModal')
       })
     },
-    addGraph () {
+    addGraph() {
       this.selectdGraph = ''
-      this.$nextTick( () => {
+      this.$nextTick(() => {
         this.graphConfig.id = ''
         this.graphConfig.graphName = ''
         this.graphConfig.unit = ''
@@ -556,7 +585,7 @@ export default {
         this.showGraphConfig = true
       })
     },
-    editGraph (id) {
+    editGraph(id) {
       this.showGraphConfig = true
       const graph = this.graphOptions.find(el => el.id === id)
       this.graphConfig.id = id
@@ -566,32 +595,36 @@ export default {
       this.graphConfig.legend = graph.legend
       const exist = this.legendOptions.find(el => el.value === graph.legend)
       if (!exist) {
-        this.legendOptions.push({label: graph.legend, value: graph.legend})
+        this.legendOptions.push({
+          label: graph.legend,
+          value: graph.legend
+        })
       }
     },
-    deleteGraph (item) {
+    deleteGraph(item) {
       this.deleteConfirm.id = item.id
       this.deleteConfirm.method = 'removeGraph'
       this.isShowWarning = true
     },
-    removeGraph (id) {
+    removeGraph(id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.selectMetrc = ''
       })
     },
-    saveTitle () {
+    saveTitle() {
       if (this.titleManagement.type === 'panel') {
         if (this.titleManagement.isAdd) {
-          let params = {
+          const params = {
             title: this.titleManagement.title,
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
             this.$Message.success(this.$t('m_tips_success'))
           })
-        } else {
-          let params = {
+        }
+        else {
+          const params = {
             id: this.titleManagement.id,
             title: this.titleManagement.title,
             service_group: this.serviceGroup
@@ -603,9 +636,9 @@ export default {
         this.selectdPanel = ''
       }
     },
-    savePanel () {
+    savePanel() {
       const findMetricConfig = this.metricOptions.find(m => m.guid === this.metricId)
-      let params = {
+      const params = {
         panel_id: this.chart.group_id,
         chart: this.chart,
         metric: findMetricConfig.metric,
@@ -615,8 +648,8 @@ export default {
         this.$Message.success(this.$t('m_tips_success'))
       })
     },
-    saveGraphMetric () {
-      let params = {
+    saveGraphMetric() {
+      const params = {
         metric: this.graphConfig.metric.join('^'),
         title: this.graphConfig.graphName,
         unit: this.graphConfig.unit,
@@ -628,14 +661,15 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
-      } else {
+      }
+      else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
       }
     },
-    getGraphInfo () {
+    getGraphInfo() {
       const params = {
         groupId: this.selectdPanel
       }
@@ -643,7 +677,7 @@ export default {
         this.graphOptions = responseData
       }, {isNeedloading: false})
     },
-    getPanelinfo () {
+    getPanelinfo() {
       const params = {
         monitorType: this.monitorType,
         serviceGroup: this.serviceGroup
@@ -652,12 +686,12 @@ export default {
         this.panelOptions = responseData
       }, {isNeedloading: false})
     },
-    async getChartData () {
+    async getChartData() {
       this.isRequestChartData = true
-      generateUuid().then((elId)=>{
-        this.acquisitionConfigurationElId =  `id_${elId}`
+      generateUuid().then(elId => {
+        this.acquisitionConfigurationElId = `id_${elId}`
       })
-      let params = {
+      const params = {
         aggregate: 'none',
         time_second: -1800,
         start: 0,
@@ -676,15 +710,19 @@ export default {
       }]
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {
+          eye: false,
+          clear: true,
+          lineBarSwitch: true
+        }
         readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
       }, {isNeedloading: false})
     },
-    async getDispalyChartData () {
-      generateUuid().then((elId)=>{
-        this.displayGroupElId =  `id_${elId}`
+    async getDispalyChartData() {
+      generateUuid().then(elId => {
+        this.displayGroupElId = `id_${elId}`
       })
-      let params = {
+      const params = {
         aggregate: 'none',
         time_second: -1800,
         start: 0,
@@ -698,24 +736,29 @@ export default {
         params.data.push({
           endpoint: find.guid,
           prom_expr: '',
-          metric: metric
+          metric
         })
       })
       this.isRequestChartData = true
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {
+          eye: false,
+          clear: true,
+          lineBarSwitch: true
+        }
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
       }, {isNeedloading: false})
     },
-    checkEndpoint () {
+    checkEndpoint() {
       if (this.previewPosition === 'acquisitionConfiguration') {
         this.getChartData()
-      } else {
+      }
+      else {
         this.getDispalyChartData()
       }
     },
-    getEndpoint () {
+    getEndpoint() {
       this.metricConfigData.endpoint = ''
       const params = {
         type: this.monitorType,
@@ -727,7 +770,7 @@ export default {
         this.showEndpointSelect = true
       })
     },
-    getEndpointForAcquisitionConfiguration () {
+    getEndpointForAcquisitionConfiguration() {
       const params = {
         type: this.monitorType,
         serviceGroup: this.serviceGroup
@@ -736,15 +779,16 @@ export default {
         this.endpointOptions = responseData
       })
     },
-    preview (previewPosition) {
+    preview(previewPosition) {
       if (previewPosition === 'acquisitionConfiguration' && this.workspace === 'all_object') {
         this.getChartData()
-      } else {
+      }
+      else {
         this.previewPosition = previewPosition
         this.getEndpoint()
       }
     },
-    saveMetric () {
+    saveMetric() {
       const type = this.metricConfigData.guid === null ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
       this.metricConfigData.service_group = this.serviceGroup
@@ -762,12 +806,12 @@ export default {
         // })
       })
     },
-    getEndpointType () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', (responseData) => {
+    getEndpointType() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData
       }, {isNeedloading: false})
     },
-    getMetricOptions () {
+    getMetricOptions() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
@@ -777,31 +821,30 @@ export default {
         this.metricOptions = responseData
       }, {isNeedloading: false})
     },
-    changeTemplatePl (val) {
+    changeTemplatePl(val) {
       const find = this.metricTemplate.find(m => m.prom_expr === val)
-      this.metricTemplateParams = find && find.param.split(',').map(p => {
-        return {
-          value: '',
-          label: p
-        }
-      })
+      this.metricTemplateParams = find && find.param.split(',').map(p => ({
+        value: '',
+        label: p
+      }))
       if (find && find.name === 'custom') {
         // this.metricConfigData.prom_expr += val
-      } else {
+      }
+      else {
         this.metricConfigData.prom_expr = val
       }
     },
-    changeCollectedMetric (val) {
+    changeCollectedMetric(val) {
       if (val.value) {
         const find = this.metricTemplate.find(m => m.prom_expr === this.templatePl)
         if (find && find.name === 'custom') {
-          this.metricConfigData.prom_expr += val.value 
+          this.metricConfigData.prom_expr += val.value
         }
         this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll('undefined', '')
         this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll(val.label, val.value)
       }
     },
-    clearData () {
+    clearData() {
       this.endpoint = ''
       this.isRequestChartData = false
       this.selectdPanel = ''
@@ -817,7 +860,7 @@ export default {
       this.metricConfigData.prom_expr = ''
       this.isRequestChartData = false
     },
-    configMetric () {
+    configMetric() {
       this.isAddMetric = false
       this.hideMetricZone = false
       this.clearData()
@@ -827,14 +870,14 @@ export default {
       this.getMetricTemplate()
       this.showConfigTab = true
     },
-    getCollectedMetric () {
+    getCollectedMetric() {
       const params = {
         monitor_type: this.monitorType,
         guid: this.endpoint,
         service_group: this.serviceGroup,
         workspace: this.workspace
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getMetricOptions, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getMetricOptions, params, responseData => {
         this.collectedMetricOptions = responseData
       }, {isNeedloading: false})
     }
