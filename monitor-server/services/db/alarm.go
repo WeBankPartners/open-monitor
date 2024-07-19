@@ -981,6 +981,12 @@ func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	} else if len(param.Metric) > 0 {
 		filterSql, filterParam := createListParams(param.Metric, "")
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
+	} else if len(param.Endpoint) > 0 {
+		filterSql, filterParam := createListParams(param.Endpoint, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and endpoint in ("+filterSql+")", filterParam...).Find(&alarmRows)
+	} else if len(param.AlarmName) > 0 {
+		filterSql, filterParam := createListParams(param.AlarmName, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and alarm_name in ("+filterSql+")", filterParam...).Find(&alarmRows)
 	} else {
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
