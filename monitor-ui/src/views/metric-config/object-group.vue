@@ -481,6 +481,7 @@ export default {
       this.showDrawer = 'comparisonMetrics'
       this.addVisible = true
       this.type = 'add'
+      this.viewOnly = false
       this.originalMetricsId = row.guid
     },
   }
