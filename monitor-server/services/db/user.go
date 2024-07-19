@@ -475,7 +475,7 @@ func UpdateRoleUser(param m.UpdateRoleUserDto) error {
 
 func UpdateGrpRole(param m.RoleGrpDto) error {
 	var roleGrpTable []*m.RelRoleGrpTable
-	err := x.SQL("SELECT role_id FROM rel_role_grp WHERE grp_id=?", param.GrpId).Find(&roleGrpTable)
+	err := x.SQL("SELECT role_id FROM rel_role_grp WHERE grp_id=?", param.GrpIdInt).Find(&roleGrpTable)
 	if err != nil {
 		return err
 	}
@@ -501,9 +501,9 @@ func UpdateGrpRole(param m.RoleGrpDto) error {
 		return nil
 	}
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "DELETE FROM rel_role_grp WHERE grp_id=?", Param: []interface{}{param.GrpId}})
+	actions = append(actions, &Action{Sql: "DELETE FROM rel_role_grp WHERE grp_id=?", Param: []interface{}{param.GrpIdInt}})
 	for _, v := range param.RoleId {
-		actions = append(actions, &Action{Sql: "INSERT INTO rel_role_grp(role_id,grp_id) VALUE (?,?)", Param: []interface{}{v, param.GrpId}})
+		actions = append(actions, &Action{Sql: "INSERT INTO rel_role_grp(role_id,grp_id) VALUE (?,?)", Param: []interface{}{v, param.GrpIdInt}})
 	}
 	err = Transaction(actions)
 	return err
