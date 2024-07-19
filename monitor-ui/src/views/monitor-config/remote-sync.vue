@@ -17,7 +17,7 @@
             <div>{{ card.update_time }}</div>
           </div>
         </div>
-        <div style="height: 100px">
+        <div style="height: 120px">
           <Form ref="formData" :label-width="100">
             <FormItem>
               <span slot="label" style="font-size: 14px;">
@@ -43,8 +43,8 @@
         <div slot="title" class="panal-title">
           <h5 class="ellipsis-text">{{$t('m_button_add')}}</h5>
         </div>
-        <div style="height: 100px;text-align:center;">
-          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer;margin-top:32px" :color="'#2d8cf0'" />
+        <div style="height: 120px;text-align:center;">
+          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer;margin-top:42px" :color="'#2d8cf0'" />
         </div>
       </Card>
     </div>
@@ -167,11 +167,6 @@ export default {
   components: {},
 }
 </script>
-<style lang="less">
-  .ivu-form-item {
-    margin-bottom: 0;
-  }
-</style>
 <style scoped lang="less">
 .w-header {
   display: flex;
