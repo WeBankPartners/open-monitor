@@ -132,7 +132,7 @@ export default {
   },
   data() {
     return {
-      workspace: 'any_object', // 作用域
+      workspace: '', // 作用域
       templatePl: '', // 推荐配置
       metricTemplate: [], // 推荐配置下拉列表
       metricTemplateParams: [],
@@ -300,6 +300,7 @@ export default {
           this.endpointOptions = responseData
           if (this.endpointOptions.length > 0) {
             this.metricConfigData.endpoint = this.endpointOptions[0].guid
+            this.getChartData()
           }
         }
       )
