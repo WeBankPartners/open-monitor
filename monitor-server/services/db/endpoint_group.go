@@ -96,8 +96,13 @@ func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyOb
 }
 
 func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyObj) error {
+	endpointGroupRow, getEndpointGroupErr := GetSimpleEndpointGroup(endpointGroupGuid)
+	if getEndpointGroupErr != nil {
+		return getEndpointGroupErr
+	}
 	for _, v := range param {
 		v.EndpointGroup = endpointGroupGuid
+		v.ServiceGroup = endpointGroupRow.ServiceGroup
 		if v.ProcCallbackKey != "" && v.ProcCallbackName == "" {
 			return fmt.Errorf("procCallbackName can not empty with key:%s ", v.ProcCallbackKey)
 		}
