@@ -232,7 +232,7 @@ export default {
           width: 180,
           render: (h, params) => (
             <div style="display: flex">
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_endpoint')}>
                 <Button size="small" type="info" on-click={() => {
                   this.editEndpoints(params.row)
                 }}>
