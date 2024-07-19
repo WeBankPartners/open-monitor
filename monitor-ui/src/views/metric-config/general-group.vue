@@ -330,6 +330,7 @@ export default {
     },
     handleAdd() {
       this.type = 'add'
+      this.viewOnly = false
       this.showDrawer = this.metricType
       this.addVisible = true
       this.originalMetricsId = ''
