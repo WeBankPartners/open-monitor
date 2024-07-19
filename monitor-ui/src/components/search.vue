@@ -1,65 +1,67 @@
 <template>
   <div class="" style="display:inline-block">
-   <ul class="search-ul">
+    <ul class="search-ul">
       <li class="search-li">
         <Select
           style="width:300px;"
           v-model="endpoint"
           filterable
-          clearable 
+          clearable
           remote
           ref="select"
+          :disabled="endpointExternal"
           :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
           @on-change="updateData"
-          >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
+        >
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
+            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
             {{option.option_text}}
           </Option>
-          <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+          <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
         </Select>
       </li>
       <template v-if="!is_mom_yoy">
         <li class="search-li">
-          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
+          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('m_placeholder_datePicker')" style="width: 320px"></DatePicker>
         </li>
       </template>
       <template v-else>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.datePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_datePicker')" style="width: 250px"></DatePicker>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 250px"></DatePicker>
         </li>
       </template>
       <li class="search-li">
-        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('button.MoM')}}</Checkbox>
+        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
-          @click="getChartsConfig()">
+                @click="getChartsConfig()"
+        >
           <i class="fa fa-search" ></i>
-          {{$t('button.search')}}
+          {{$t('m_button_search')}}
         </button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.endpointManagement')}}</button>
+        <button type="button" v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.historicalAlert')}}</button>
+        <button type="button" v-if="isShow && !endpointExternal" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
       </li>
-   </ul>
+    </ul>
   </div>
 </template>
 
@@ -75,42 +77,42 @@ export default {
       endpointList: [],
       ip: {},
       timeTnterval: -1800,
-      dataPick: dataPick,
+      dataPick,
       dateRange: ['', ''],
       compareFirstDate: ['', ''],
       compareSecondDate: ['', ''],
       autoRefresh: 10,
       disableTime: false,
-      autoRefreshConfig: autoRefreshConfig,
+      autoRefreshConfig,
       is_mom_yoy: false,
-      params: {}
+      params: {},
+      endpointExternal: false
     }
   },
   computed: {
-    isShow: function () {
+    isShow() {
       return !this.$root.$validate.isEmpty_reset(this.endpoint)
     }
   },
   watch: {
-    endpoint: function (val) {
+    endpoint(val) {
       if (val) {
-        this.endpointObject = this.endpointList.find(ep => {
-          return ep.option_value === val
-        })
-      } else {
+        this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
+      }
+      else {
         this.endpointObject = {}
       }
     },
-    isShow: function () {
+    isShow() {
       this.clearEndpoint = []
       this.getEndpointList('.')
-      this.$parent.showCharts = false 
+      this.$parent.showCharts = false
       this.$parent.showRecursive = false
     }
   },
   mounted() {
     this.getEndpointList('.')
-    const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData')) 
+    const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData'))
     localStorage.removeItem('jumpCallData')
     const outerData = jumpCallData || this.$route.params
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
@@ -120,9 +122,9 @@ export default {
       this.endpointList = [{
         active: false,
         id: '',
-        option_text: option_text,
+        option_text,
         option_type_name: outerData.type,
-        option_value: option_value,
+        option_value,
         type: outerData.type
       }]
       this.endpoint = option_value
@@ -138,22 +140,22 @@ export default {
     }
   },
   methods: {
-    getMainConfig () {
+    getMainConfig() {
       if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
         this.endpointObject = this.$root.$store.state.ip
         this.$root.$store.commit('storeip', {})
       }
       const type = this.endpointObject.type
       return new Promise(resolve => {
-        let params = {
-          type: type
+        const params = {
+          type
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, responseData => {
           resolve(responseData)
         })
       })
     },
-    datePick (data) {
+    datePick(data) {
       this.dateRange = data
       this.disableTime = false
       if (this.dateRange[0] && this.dateRange[1]) {
@@ -172,21 +174,28 @@ export default {
       this.compareSecondDate = data
     },
     async getEndpointList(query) {
-      let params = {
+      const params = {
         search: query,
         page: 1,
         size: 1000
       }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
         this.endpointList = responseData
       })
     },
-    updateData () {
+    updateData() {
       this.$nextTick(() => {
         this.getChartsConfig()
       })
     },
-    async getChartsConfig () {
+    disabledEndpoint(val) {
+      this.endpointExternal = val
+    },
+    async getChartsConfig(endpointObj) {
+      if (endpointObj) {
+        this.endpoint = endpointObj.option_value
+        this.endpointObject = endpointObj
+      }
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
@@ -196,12 +205,12 @@ export default {
       }
       if (this.is_mom_yoy) {
         if (this.compareFirstDate[0] === '' || this.compareSecondDate[0] === '') {
-          this.$Message.warning(this.$t('tips.selectDate'))
+          this.$Message.warning(this.$t('m_tips_selectDate'))
           return
         }
       }
       let params = {}
-      if (this.endpointObject.type === 'sys' ) {
+      if (this.endpointObject.type === 'sys') {
         params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
@@ -220,7 +229,7 @@ export default {
       }
       const res = await this.getMainConfig()
       let url = res.panels.url
-      let key = res.search.name
+      const key = res.search.name
       params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
@@ -245,16 +254,20 @@ export default {
         this.disableTime = true
         this.$root.$eventBus.$emit('clearSingleChartInterval')
         this.autoRefresh = 0
-        this.$parent.showCharts = false 
+        this.$parent.showCharts = false
         this.$parent.showRecursive = false
-      } else {
+      }
+      else {
         this.disableTime = false
       }
     },
-    changeRoute () {
-      this.$router.push({name: 'endpointManagement', params: {search: this.endpointObject.option_value}})
+    changeRoute() {
+      this.$router.push({
+        name: 'endpointManagement',
+        params: {search: this.endpointObject.option_value}
+      })
     },
-    historyAlarm () {
+    historyAlarm() {
       this.$parent.historyAlarm(this.endpointObject)
     }
   },

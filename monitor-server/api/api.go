@@ -43,6 +43,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/tags", Method: http.MethodGet, HandlerFunc: dashboard.GetTags},
 		&handlerFuncObj{Url: "/dashboard/search", Method: http.MethodGet, HandlerFunc: dashboard.MainSearch},
 		&handlerFuncObj{Url: "/dashboard/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetChartData},
+		&handlerFuncObj{Url: "/dashboard/comparison_chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetComparisonChartData},
 		&handlerFuncObj{Url: "/dashboard/config/chart/title", Method: http.MethodPost, HandlerFunc: dashboard.UpdateChartsTitle},
 		// 自定义视图
 		&handlerFuncObj{Url: "/dashboard/pie/chart", Method: http.MethodPost, HandlerFunc: dashboard.GetPieChart},
@@ -80,6 +81,8 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.ChartCreate},
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodPut, HandlerFunc: dashboard_new.ChartUpdate},
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodDelete, HandlerFunc: dashboard_new.ChartDelete},
+		&handlerFuncObj{Url: "/dashboard/new/comparison_metric", Method: http.MethodPost, HandlerFunc: monitor.AddOrUpdateComparisonMetric},
+		&handlerFuncObj{Url: "/dashboard/new/comparison_metric/:id", Method: http.MethodDelete, HandlerFunc: monitor.DeleteComparisonMetric},
 	)
 	// Agent 对象管理
 	httpHandlerFuncList = append(httpHandlerFuncList,
@@ -94,7 +97,8 @@ func init() {
 	// Config 配置
 	httpHandlerFuncList = append(httpHandlerFuncList,
 		// 对象配置
-		&handlerFuncObj{Url: "/alarm/endpoint/list", Method: http.MethodGet, HandlerFunc: alarm.ListGrpEndpoint},
+		&handlerFuncObj{Url: "/alarm/endpoint/list", Method: http.MethodPost, HandlerFunc: alarm.ListGrpEndpoint},
+		&handlerFuncObj{Url: "/alarm/endpoint/options", Method: http.MethodGet, HandlerFunc: alarm.ListGrpEndpointOptions},
 		&handlerFuncObj{Url: "/alarm/endpoint/update", Method: http.MethodPost, HandlerFunc: alarm.EditGrpEndpoint},
 		&handlerFuncObj{Url: "/alarm/process/list", Method: http.MethodGet, HandlerFunc: alarm.GetEndpointProcessConfig},
 		&handlerFuncObj{Url: "/alarm/process/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateEndpointProcessConfig},
@@ -127,6 +131,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/action/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateTplAction},
 		// 告警列表
 		&handlerFuncObj{Url: "/alarm/history", Method: http.MethodGet, HandlerFunc: alarm.GetHistoryAlarm},
+		&handlerFuncObj{Url: "/alarm/problem/options", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarmOptions},
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
@@ -233,6 +238,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/plugin/update/path", Method: http.MethodPost, HandlerFunc: service.PluginUpdateServicePath},
 		// alarm
 		&handlerFuncObj{Url: "/alarm/endpoint_group/query", Method: http.MethodGet, HandlerFunc: alarmv2.ListEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/options", Method: http.MethodGet, HandlerFunc: alarmv2.EndpointGroupOptions},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPost, HandlerFunc: alarmv2.CreateEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteEndpointGroup},
@@ -252,6 +258,8 @@ func init() {
 		// monitor
 		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodGet, HandlerFunc: monitor.ListEndpoint},
 		&handlerFuncObj{Url: "/monitor/metric/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetric},
+		&handlerFuncObj{Url: "/monitor/metric/list/count", Method: http.MethodGet, HandlerFunc: monitor.ListMetricCount},
+		&handlerFuncObj{Url: "/monitor/metric_comparison/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetricComparison},
 		&handlerFuncObj{Url: "/sys/parameter/metric_template", Method: http.MethodGet, HandlerFunc: monitor.GetSysMetricTemplate},
 		&handlerFuncObj{Url: "/monitor/endpoint/get/:guid", Method: http.MethodGet, HandlerFunc: monitor.GetEndpoint},
 		&handlerFuncObj{Url: "/monitor/endpoint/update", Method: http.MethodPut, HandlerFunc: monitor.UpdateEndpoint},
@@ -286,6 +294,8 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/export", Method: http.MethodPost, HandlerFunc: monitor.ExportCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/import", Method: http.MethodPost, HandlerFunc: monitor.ImportCustomDashboard},
 		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
@@ -298,7 +308,6 @@ func init() {
 		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartPermission},
 		&handlerFuncObj{Url: "/chart/manage/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomChart},
 		&handlerFuncObj{Url: "/dashboard/data/sync", Method: http.MethodPost, HandlerFunc: monitor.SyncData},
-		&handlerFuncObj{Url: "/dashboard/chart/unbind", Method: http.MethodDelete, HandlerFunc: monitor.UnBindChart},
 		&handlerFuncObj{Url: "/chart/custom/series/config", Method: http.MethodPost, HandlerFunc: monitor.GetChartSeriesColor},
 
 		// 远程读写
@@ -306,6 +315,9 @@ func init() {
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPost, HandlerFunc: config_new.RemoteWriteConfigCreate},
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPut, HandlerFunc: config_new.RemoteWriteConfigUpdate},
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodDelete, HandlerFunc: config_new.RemoteWriteConfigDelete},
+
+		// 获取seed
+		&handlerFuncObj{Url: "/seed", Method: http.MethodGet, HandlerFunc: monitor.GetEncryptSeed},
 	)
 }
 
@@ -440,11 +452,7 @@ func httpLogHandle() gin.HandlerFunc {
 }
 
 func getRemoteIp(c *gin.Context) string {
-	netIp, ok := c.RemoteIP()
-	if ok {
-		return netIp.String()
-	}
-	return c.ClientIP()
+	return c.RemoteIP()
 }
 
 func InitClusterApi() {

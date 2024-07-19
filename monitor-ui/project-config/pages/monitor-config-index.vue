@@ -4,7 +4,7 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList"></BenchMenu>
+      <BenchMenu :menuList="menuList" />
     </div>
   </div>
 </template>
@@ -28,7 +28,7 @@ export default {
                 children: [
                     { title: this.$t('m_endpoint'), path: '/monitorConfigIndex/endpointManagement', name: '1-1' },
                     { title: this.$t('m_object_group'), path: '/monitorConfigIndex/groupManagement', name: '1-2' },
-                    { title: this.$t('field.resourceLevel'), path: '/monitorConfigIndex/resourceLevel', name: '1-3' },
+                    { title: this.$t('m_field_resourceLevel'), path: '/monitorConfigIndex/resourceLevel', name: '1-3' },
                     { title: this.$t('m_group_board'), path: '/monitorConfigIndex/groupBoard', name: '1-4' }
                 ]
             },
@@ -39,16 +39,16 @@ export default {
                 children: [
                     { title: this.$t('m_business_configuration'), path: '/monitorConfigIndex/businessMonitor', name: '2-1' },
                     { title: this.$t('m_business_log_template'), path: '/monitorConfigIndex/logTemplate', name: '2-2' },
-                    { title: this.$t('m_customize_board'), path: '/monitorConfigIndex/metricConfig', name: '2-3' }
+                    { title: this.$t('m_metric_list'), path: '/monitorConfigIndex/metricConfig', name: '2-3' }
                 ]
             },
             {
-                title: this.$t('menu.alert'),
+                title: this.$t('m_menu_alert'),
                 icon: 'md-warning',
                 name: '3',
                 children: [
                     { title: this.$t('m_metric_threshold'), path: '/monitorConfigIndex/thresholdManagement', name: '3-1' },
-                    { title: this.$t('field.log'), path: '/monitorConfigIndex/logManagement', name: '3-2' }
+                    { title: this.$t('m_field_log'), path: '/monitorConfigIndex/logManagement', name: '3-2' }
                 ]
             },
             {

@@ -97,7 +97,7 @@ func GetOrgPanelEndpoint(c *gin.Context) {
 func UpdateOrgPanelEndpoint(c *gin.Context) {
 	var param m.UpdateOrgPanelEndpointParam
 	if err := c.ShouldBindJSON(&param); err == nil {
-		err = db.UpdateOrgEndpoint(param)
+		err = db.UpdateOrgEndpoint(param, mid.GetOperateUser(c))
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 			return

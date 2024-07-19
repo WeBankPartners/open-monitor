@@ -99,12 +99,20 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		return serials
 	}
 	for _, otr := range data.Data.Result {
-		if len(otr.Metric) == 0 {
-			continue
-		}
+		//if len(otr.Metric) == 0 {
+		//	continue
+		//}
 		var serial m.SerialModel
 		serial.Type = "line"
 		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result), query.CustomDashboard)
+		// 同环比 指标
+		if query.ComparisonFlag == "Y" {
+			if otr.Metric["calc_type"] == "diff" {
+				serial.Type = "bar"
+			} else if otr.Metric["calc_type"] == "diff_percent" {
+				serial.YAxisIndex = 1
+			}
+		}
 		var sdata m.DataSort
 		for _, v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
@@ -258,6 +266,12 @@ func appendTagString(name string, metricMap map[string]string, tagList []string)
 	var tmpList m.DefaultSortList
 	if len(tagList) == 0 {
 		for k, v := range metricMap {
+			if k == "exported_instance" || k == "exported_job" {
+				continue
+			}
+			if k == "instance" && v == "127.0.0.1:8181" {
+				continue
+			}
 			tmpList = append(tmpList, &m.DefaultSortObj{Key: k, Value: v})
 		}
 		sort.Sort(tmpList)
@@ -317,9 +331,7 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 			} else {
 				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
 			}
-			if dataLength > 1 {
-				tmpName = appendTagString(tmpName, tagMap, []string{})
-			}
+			tmpName = appendTagString(tmpName, tagMap, []string{})
 		} else if legend == "$custom_metric" {
 			tmpName = metric
 			if dataLength > 1 {
@@ -372,7 +384,7 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 				}
 			}
 			tmpTagList := query.Tags
-			tmpTagList = append(tmpTagList, "t_endpoint", "instance")
+			tmpTagList = append(tmpTagList, "t_endpoint", "instance", "calc_type")
 			tmpName = appendTagString(tmpName, tagMap, tmpTagList)
 		} else {
 			tmpName = metric
