@@ -183,6 +183,7 @@ export default {
       }
       this.metricConfigData.endpoint_type = this.metricConfigData.monitor_type
     }
+    this.getMetricTemplate()
   },
   methods: {
     setPreviewObject(obj) {
