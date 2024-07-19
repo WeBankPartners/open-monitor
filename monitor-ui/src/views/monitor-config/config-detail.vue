@@ -741,7 +741,7 @@ export default {
         },
         {
           title: this.$t('m_tableKey_metricName'),
-          key: 'metric',
+          key: 'metric_name',
 
           minWidth: 300
         },
