@@ -13,7 +13,7 @@
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
-import {readyToDraw} from  '@/assets/config/chart-rely'
+import {readyToDraw} from '@/assets/config/chart-rely'
 // const echarts = require('echarts/lib/echarts');
 
 export default {
@@ -33,20 +33,20 @@ export default {
     params: Object,
     chartIndex: Number
   },
-  created (){
+  created(){
     // 外部触发清除刷新
     this.$root.$eventBus.$on('clearSingleChartInterval', () => {
       clearInterval(this.interval)
     })
-    generateUuid().then((elId)=>{
-      this.elId =  `id_${elId}`; 
+    generateUuid().then(elId => {
+      this.elId = `id_${elId}`
     })
   },
   watch: {
-    params: function () {
+    params() {
       this.getChartData()
       if (this.params.autoRefresh > 0) {
-        this.interval = setInterval(()=>{
+        this.interval = setInterval(() => {
           this.getChartData()
         },this.params.autoRefresh*1000)
       }
@@ -55,7 +55,7 @@ export default {
   mounted() {
     this.getChartData()
     if (this.params.autoRefresh > 0) {
-      this.interval = setInterval(()=>{
+      this.interval = setInterval(() => {
         this.getChartData()
       },this.params.autoRefresh*1000)
     }
@@ -64,8 +64,8 @@ export default {
     clearInterval(this.interval)
   },
   methods: {
-    getChartData (tmp, start, end) {
-      let params = {
+    getChartData(tmp, start, end) {
+      const params = {
         aggregate: 'none',
         time_second: this.params.time,
         start: start ? 0 : this.params.start || 0,
@@ -82,15 +82,16 @@ export default {
         data: []
       }
       if (this.params.sys) {
-        this.chartInfo.endpoint.forEach((ep) => {
-          this.chartInfo.metric.forEach((me) => {
+        this.chartInfo.endpoint.forEach(ep => {
+          this.chartInfo.metric.forEach(me => {
             params.data.push({
               endpoint: ep,
               metric: me
             })
           })
         })
-      } else {
+      }
+      else {
         params.compare = {
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
@@ -108,7 +109,11 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {clear: false,editTitle: false}
+        const chartConfig = {
+          clear: false,
+          editTitle: false,
+          lineBarSwitch: true
+        }
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
       }, { isNeedloading: false })

@@ -4,7 +4,7 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList"></BenchMenu>
+      <BenchMenu :menuList="menuList" />
     </div>
   </div>
 </template>
@@ -39,7 +39,7 @@ export default {
                 children: [
                     { title: this.$t('m_business_configuration'), path: '/monitorConfigIndex/businessMonitor', name: '2-1' },
                     { title: this.$t('m_business_log_template'), path: '/monitorConfigIndex/logTemplate', name: '2-2' },
-                    { title: this.$t('m_customize_board'), path: '/monitorConfigIndex/metricConfig', name: '2-3' }
+                    { title: this.$t('m_metric_list'), path: '/monitorConfigIndex/metricConfig', name: '2-3' }
                 ]
             },
             {

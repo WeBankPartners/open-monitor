@@ -33,7 +33,7 @@ func DeregisterAgent(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err = DeregisterJob(endpointObj)
+	err = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
@@ -41,7 +41,7 @@ func DeregisterAgent(c *gin.Context) {
 	mid.ReturnSuccess(c)
 }
 
-func DeregisterJob(endpointObj m.EndpointTable) error {
+func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 	var err error
 	guid := endpointObj.Guid
 	pingExporterFlag := false
@@ -70,7 +70,7 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 	}
 
 	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
-	err = db.DeleteEndpoint(guid)
+	err = db.DeleteEndpoint(guid, operator)
 	if err != nil {
 		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
@@ -128,7 +128,7 @@ func CustomRegister(c *gin.Context) {
 		endpointObj.Ip = param.HostIp
 		endpointObj.ExportType = "custom"
 		endpointObj.Step = 10
-		_, err := db.UpdateEndpoint(&endpointObj, "")
+		_, err := db.UpdateEndpoint(&endpointObj, "", mid.GetOperateUser(c))
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "endpoint", err)
 		} else {
