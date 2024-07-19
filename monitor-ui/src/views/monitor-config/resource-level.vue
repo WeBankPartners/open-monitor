@@ -1,23 +1,24 @@
 <template>
-  <div class="">
-    <Button type="success" @click="addPanel">{{ $t('resourceLevel.addPanel') }}</Button>
-    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i>
-    <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
-    <span> OR</span>
-    <Select
-      v-model="searchParams.endpoint"
-      class="col-md-2"
-      filterable
-      clearable
-      ref="selectObject"
-      @on-change="clearObject"
-       :placeholder="$t('resourceLevel.level_search_endpoint')"
-      :remote-method="getAllObject"
+  <div>
+    <div class="content-seatch ml-1">
+      <!-- <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i> -->
+      <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('m_resourceLevel_level_search_name')" style="width: 300px;margin-right:8px" />
+      <span> OR</span>
+      <Select
+        v-model="searchParams.endpoint"
+        class="col-md-2"
+        filterable
+        clearable
+        ref="selectObject"
+        @on-change="clearObject"
+        :placeholder="$t('m_resourceLevel_level_search_endpoint')"
+        :remote-method="getAllObject"
       >
-      <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
-    </Select>
-    <!-- <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button> -->
-    
+        <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+      </Select>
+      <Button type="success" class='add-content-item mr-2' @click="addPanel">{{ $t('m_add') }}</Button>
+    </div>
+
     <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
     </template>
@@ -28,7 +29,8 @@
             <i v-if="!inShowLevel(rr.guid)" class="fa fa-angle-double-down" aria-hidden="true"></i>
             <i v-else class="fa fa-angle-double-up" aria-hidden="true"></i>
             {{rr.display_name}}
-            <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}}</Tag>    
+            <TagShow :tagName='rr.type' />
+            <!-- <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}} 22</Tag>     -->
           </div>
           <div v-if="inShowLevel(rr.guid)">
             <recursive :recursiveViewConfig="[rr]"></recursive>
@@ -56,12 +58,33 @@ export default {
       activedLevel: [],
       modelConfig: {
         modalId: 'add_panel_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [
-          {label: 'field.guid', value: 'guid', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'field.displayName', value: 'display_name', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'field.type', value: 'type', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+          {
+            label: 'm_field_guid',
+            value: 'guid',
+            placeholder: 'm_tips_required',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'text'
+          },
+          {
+            label: 'm_field_displayName',
+            value: 'display_name',
+            placeholder: 'm_tips_required',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'text'
+          },
+          {
+            label: 'm_field_type',
+            value: 'type',
+            placeholder: 'm_tips_required',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'text'
+          }
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           guid: null,
@@ -72,66 +95,67 @@ export default {
     }
   },
   computed: {
-    disabledSearchBtn: function() {
+    disabledSearchBtn() {
       return !this.searchParams.name && !this.searchParams.endpoint
     }
   },
-  created () {
+  created() {
     this.$root.$eventBus.$on('updateResource', () => {
       this.getAllResource()
     })
   },
-  mounted () {
+  mounted() {
     this.getAllResource()
     this.getAllObject()
   },
   methods: {
-    clearObject () {
+    clearObject() {
       this.getAllObject()
       this.getAllResource(true)
     },
-    getAllObject (query='.') {
-      let params = {
+    getAllObject(query='.') {
+      const params = {
         search: query
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, responseData => {
         this.allObject = []
-        responseData.forEach((item) => {
-            if (item.id !== -1) {
-              this.allObject.push({
-                ...item,
-                value: item.id
-              })
-            }
-          })
+        responseData.forEach(item => {
+          if (item.id !== -1) {
+            this.allObject.push({
+              ...item,
+              value: item.id
+            })
+          }
+        })
         this.isAssociatedObject = true
       })
     },
-    activeLevel (guid) {
+    activeLevel(guid) {
       if (this.activedLevel.includes(guid)) {
         const index = this.activedLevel.findIndex(item => item === guid)
         this.activedLevel.splice(index, 1)
-      } else {
+      }
+      else {
         this.activedLevel.push(guid)
       }
     },
-    inShowLevel (guid) {
+    inShowLevel(guid) {
       return this.activedLevel.includes(guid) || false
     },
-    getAllResource (extend = false) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, (responseData) => {
+    getAllResource(extend = false) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, responseData => {
         this.resourceRecursive = responseData
         this.extend = extend
       })
     },
-    addPanel () {
+    addPanel() {
       this.modelConfig.isAdd = true
       this.$root.JQ('#add_panel_Modal').modal('show')
     },
-    addPost () {
+    addPost() {
       const params = this.modelConfig.addRow
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/add', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_panel_Modal').modal('hide')
         this.getAllResource()
       })
@@ -144,6 +168,16 @@ export default {
 </script>
 
 <style scoped lang="less">
+.content-seatch {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 15px 0;
+  .add-content-item {
+    margin-left: auto;
+  }
+}
  .fa {
    margin-left: 4px;
    padding: 4px 6px;

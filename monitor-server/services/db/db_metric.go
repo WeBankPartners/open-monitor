@@ -65,8 +65,12 @@ func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 		param.Step = 10
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
+	actions := getCreateDBMetricActions(param, operator, nowTime)
+	return Transaction(actions)
+}
+
+func getCreateDBMetricActions(param *models.DbMetricMonitorObj, operator, nowTime string) (actions []*Action) {
 	param.Guid = guid.CreateGuid()
-	var actions []*Action
 	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time) value (?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime}
 	actions = append(actions, &insertAction)
@@ -80,7 +84,7 @@ func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 		}
 		actions = append(actions, &Action{Sql: "insert into db_metric_endpoint_rel(guid,db_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceEndpoint, v.TargetEndpoint}})
 	}
-	return Transaction(actions)
+	return
 }
 
 func getDbMetricExpr(metric, serviceGroup string) (result string) {

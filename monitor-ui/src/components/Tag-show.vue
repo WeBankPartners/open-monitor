@@ -1,22 +1,22 @@
 <template>
-  <div class="diy-tag" 
-    :style="{color:colorList[getGroupColor(tagName)] + ' !important',
-            borderColor: colorList[getGroupColor(tagName)] + ' !important'}">
+  <div class="diy-tag"
+       :style="{color: getGroupColor(tagName) + ' !important',
+                borderColor: getGroupColor(tagName) + ' !important'}"
+  >
     {{tagName}}
   </div>
 </template>
 <script>
-import {colorList, endpointTag, randomColor} from '@/assets/config/common-config'
+import {endpointTag} from '@/assets/config/common-config'
 export default {
+  name: 'TagShow',
   data() {
     return {
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      colorList: colorList,
+      endpointTag,
       cacheColor: {}
     }
   },
-  props:{
+  props: {
     index: {
       default: 0,
       type: Number
@@ -35,33 +35,37 @@ export default {
     }
   },
   methods: {
-    // choiceColor (type,index) {
-    //   if (endpointTag[type]) {
-    //     return endpointTag[type]
-    //   }
-    //   let color = ''
-    //   if (Object.keys(this.cacheColor).includes(type)) {
-    //     color = this.cacheColor[type]
-    //   } else {
-    //     color = randomColor[index]
-    //     this.cacheColor[type] = randomColor[index]
-    //   }
-    //   return color
-    // },
-    getGroupColor (type) {
-      const colorMap = new Map()
-      let count = 0
-      this.list.forEach(item => {
-        if (!colorMap.has(item[this.name])) {
-          colorMap.set(item[this.name], randomColor[count])
-          if (count < randomColor.length - 1) {
-            count ++
-          } else {
-            count = 0
-          }
-        }
-      })
-      return colorMap.get(type)
+    stringToColor(str) {
+      let hash = 0
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      let color = '#'
+      for (let i = 0; i < 3; i++) {
+        let value = (hash >> (i * 8)) & 0xFF
+        // Add some offset to make the color darker
+        value = Math.min(value + 50, 255)
+        color += ('00' + value.toString(16)).substr(-2)
+      }
+
+      // Convert hex color to RGB
+      const r = parseInt(color.substr(1, 2), 16)
+      const g = parseInt(color.substr(3, 2), 16)
+      const b = parseInt(color.substr(5, 2), 16)
+
+      // Calculate brightness and saturation
+      const y = 0.299 * r + 0.587 * g + 0.114 * b
+      const s = 1 - 3 * Math.min(r, g, b) / (r + g + b)
+
+      // If the brightness is too high or the saturation is too low, generate a new color
+      if (y > 150 || s < 0.2) {
+        return this.stringToColor(str + 'a')
+      }
+
+      return color
+    },
+    getGroupColor(str) {
+      return this.stringToColor(str)
     }
   }
 }

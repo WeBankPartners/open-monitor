@@ -222,21 +222,26 @@ type TableData struct {
 }
 
 type AlarmEndpointQuery struct {
-	Search    string
-	Page      int
-	Size      int
-	Grp       int
-	Result    []*AlarmEndpointObj
-	ResultNum int
+	Search        string
+	Page          int
+	Size          int
+	Grp           int
+	EndpointGroup []string // 对象组
+	BasicType     []string // 基础类型
+	Result        []*AlarmEndpointObj
+	ResultNum     int
 }
 
 type AlarmEndpointObj struct {
-	Id        string      `json:"id"`
-	Guid      string      `json:"guid"`
-	Type      string      `json:"type"`
-	GroupsIds string      `json:"groups_ids"`
-	Tags      string      `json:"tags"`
-	Groups    []*GrpTable `json:"groups"`
+	Id         string      `json:"id"`
+	Guid       string      `json:"guid"`
+	Type       string      `json:"type"`
+	GroupsIds  string      `json:"groups_ids"`
+	Tags       string      `json:"tags"`
+	CreateUser string      `json:"create_user"`
+	UpdateUser string      `json:"update_user"`
+	UpdateTime string      `json:"update_time"`
+	Groups     []*GrpTable `json:"groups"`
 }
 
 type GrpEndpointParam struct {
@@ -473,14 +478,24 @@ type QueryProblemAlarmDto struct {
 	CustomDashboardId int       `json:"custom_dashboard_id"`
 }
 
+type QueryProblemAlarmPageDto struct {
+	Endpoint          []string  `json:"endpoint"`
+	Metric            []string  `json:"metric"`
+	Priority          string    `json:"priority"`
+	Page              *PageInfo `json:"page"`
+	AlarmName         []string  `json:"alarm_name"`
+	CustomDashboardId int       `json:"custom_dashboard_id"`
+}
+
 type QueryHistoryAlarmParam struct {
-	Start    int64     `json:"start" binding:"required"`
-	End      int64     `json:"end" binding:"required"`
-	Filter   string    `json:"filter" binding:"required"`
-	Endpoint string    `json:"endpoint"`
-	Metric   string    `json:"metric"`
-	Priority string    `json:"priority"`
-	Page     *PageInfo `json:"page"`
+	Start     int64     `json:"start" binding:"required"`
+	End       int64     `json:"end" binding:"required"`
+	Filter    string    `json:"filter" binding:"required"`
+	Endpoint  []string  `json:"endpoint"`
+	Metric    []string  `json:"metric"`
+	AlarmName []string  `json:"alarm_name"`
+	Priority  string    `json:"priority"`
+	Page      *PageInfo `json:"page"`
 }
 
 type AlertWindowTable struct {
@@ -565,10 +580,12 @@ type PluginCloseAlarmOutputObj struct {
 }
 
 type AlarmCloseParam struct {
-	Id       int    `json:"id"`
-	Custom   bool   `json:"custom"`
-	Metric   string `json:"metric"`
-	Priority string `json:"priority"`
+	Id        int      `json:"id"`
+	Custom    bool     `json:"custom"`
+	Metric    []string `json:"metric"`
+	Endpoint  []string `json:"endpoint"`
+	AlarmName []string `json:"alarmName"`
+	Priority  string   `json:"priority"`
 }
 
 type AlarmCondition struct {
@@ -618,4 +635,29 @@ type StrategyGroupRow struct {
 	Guid          string `xorm:"guid"`
 	EndpointGroup string `xorm:"endpoint_group"`
 	ServiceGroup  string `xorm:"service_group"`
+}
+
+type EndpointOptions struct {
+	EndpointGroup []string `json:"endpointGroup"` // 对象组
+	BasicType     []string `json:"basicType"`     // 基础类型
+}
+
+type EndpointRow struct {
+	EndpointGroup string `xorm:"endpoint_group"`
+	MonitorType   string `xorm:"monitor_type"`
+}
+
+type EndpointListParam struct {
+	Search        string   `json:"search"`
+	EndpointGroup []string `json:"endpointGroup"` // 对象组
+	BasicType     []string `json:"basicType"`     // 基础类型
+	Page          int      `json:"page"`
+	Size          int      `json:"size"`
+	Grp           int      `json:"grp"`
+}
+
+type ProblemAlarmOptions struct {
+	EndpointList  []string `json:"endpointList"`
+	MetricList    []string `json:"metricList"`
+	AlarmNameList []string `json:"alarmNameList"`
 }
