@@ -173,7 +173,6 @@ export default {
     }
   },
   mounted() {
-    this.getEndpoint()
     this.getEndpointType()
     this.initDrawerHeight()
     if (this.operator === 'edit') {
@@ -183,6 +182,7 @@ export default {
       }
       this.metricConfigData.endpoint_type = this.metricConfigData.monitor_type
     }
+    this.getEndpoint()
   },
   methods: {
     setPreviewObject(obj) {
@@ -292,6 +292,7 @@ export default {
         endpointGroup: this.endpoint_group,
         workspace: this.workspace
       }
+      this.metricConfigData.endpoint = ''
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
         this.$root.apiCenter.getEndpoint,
