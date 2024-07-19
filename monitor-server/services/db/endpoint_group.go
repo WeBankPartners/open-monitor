@@ -152,3 +152,15 @@ func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) 
 	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
 	return actions
 }
+
+func GetSimpleGrp(name string) (result *models.GrpTable, err error) {
+	var grpRows []*models.GrpTable
+	err = x.SQL("select * from grp where name=?", name).Find(&grpRows)
+	if err != nil {
+		return
+	}
+	if len(grpRows) > 0 {
+		result = grpRows[0]
+	}
+	return
+}
