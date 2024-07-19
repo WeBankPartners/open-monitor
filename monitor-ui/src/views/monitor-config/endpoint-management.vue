@@ -590,8 +590,9 @@ export default {
       objectTableColumns: [
         {
           title: this.$t('m_tableKey_endpoint'),
-          width: 280,
-          key: 'guid'
+          width: 250,
+          key: 'guid',
+          tooltip: true
         },
         {
           title: this.$t('m_object_group'),
@@ -639,7 +640,6 @@ export default {
         },
         {
           title: this.$t('m_updatedBy'),
-          width: 130,
           key: 'update_user',
           render: (h, params) => (
             <div>
@@ -651,14 +651,15 @@ export default {
         },
         {
           title: this.$t('m_update_time'),
-          key: 'update_time'
+          key: 'update_time',
+          tooltip: true
         },
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 220,
+          width: 250,
           render: (h, params) => (
-            <div style="display: flex">
+            <div style="display: flex; justify-content: flex-start">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
                 <Button size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
@@ -817,6 +818,7 @@ export default {
       this.request('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
+        this.getTableList()
       })
     },
     maintenanceWindow(rowData) {
@@ -1021,7 +1023,6 @@ export default {
         if (this.endpointRejectModel.addRow.exporter_type) {
           params.type = this.endpointRejectModel.addRow.exporter_type
         }
-        console.error(1.2, params)
         if (Object.keys(params).includes('password') && params.password !== '') {
           const key = CryptoJS.enc.Utf8.parse(this.encryptKey)
           const config = {
@@ -1036,6 +1037,7 @@ export default {
           this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
           this.$root.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('m_tips_success'))
+          this.getTableList()
         })
       })
     },
@@ -1161,6 +1163,7 @@ export default {
       this.request('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#port_Modal').modal('hide')
+        this.getTableList()
       })
     },
     getTableList() {
