@@ -377,7 +377,7 @@ export default {
           render: (h, params) => (
             params.row.name
               ? <Tooltip placement="right" max-width="300" content={params.row.name}>
-                <div class="table-ellipsis" style="width: 130px">{params.row.name}</div>
+                <div class="table-ellipsis" style="width: 130px">{params.row.name + (params.row.metric_prefix_code ? (' [' + params.row.metric_prefix_code + ']') : '') } </div>
               </Tooltip> : <div>-</div>
           )
         },
