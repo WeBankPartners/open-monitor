@@ -1021,7 +1021,6 @@ export default {
         if (this.endpointRejectModel.addRow.exporter_type) {
           params.type = this.endpointRejectModel.addRow.exporter_type
         }
-        console.error(1.2, params)
         if (Object.keys(params).includes('password') && params.password !== '') {
           const key = CryptoJS.enc.Utf8.parse(this.encryptKey)
           const config = {
