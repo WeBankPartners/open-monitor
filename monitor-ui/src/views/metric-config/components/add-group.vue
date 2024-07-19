@@ -31,13 +31,13 @@
           </FormItem>
           <!--对象类型-->
           <FormItem v-if="fromPage === 'level'" :label="$t('m_tableKey_endpoint_type')" required>
-            <Select :disabled="operator === 'edit' || viewOnly" v-model="metricConfigData.endpoint_type" style="width:100%">
+            <Select filterable clearable :disabled="operator === 'edit' || viewOnly" v-model="metricConfigData.endpoint_type" style="width:100%">
               <Option v-for="item in monitorTypeOptions" :value="item" :key="item">{{ item }}</Option>
             </Select>
           </FormItem>
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
-            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business' || viewOnly" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+            <Select  filterable clearable v-model="templatePl" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
               <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
             </Select>
           </FormItem>
@@ -51,6 +51,7 @@
                 @on-change="changeCollectedMetric(param)"
                 :disabled="metricConfigData.metric_type === 'business' || viewOnly"
                 filterable
+                clearable
                 :key="param.label"
                 :placeholder="param.label"
                 class="select-dropdown"
@@ -73,7 +74,7 @@
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + ' ' + $t('m_endpoint')">
             <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
-              <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+              <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.name || item.guid }}</Option>
             </Select>
           </FormItem>
           <!--预览区-->
@@ -127,10 +128,6 @@ export default {
     endpoint_group: { // 组关键参数
       type: String,
       default: ''
-    },
-    isObject: {
-      type: Boolean,
-      default: false
     }
   },
   data() {
@@ -154,7 +151,8 @@ export default {
       endpointOptions: [],
       echartId: '',
       maxHeight: 500,
-      monitorTypeOptions: []
+      monitorTypeOptions: [],
+      previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
     }
   },
   computed: {
@@ -187,6 +185,9 @@ export default {
     }
   },
   methods: {
+    setPreviewObject(obj) {
+      this.previewObject = obj
+    },
     getEndpointType() {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData
@@ -275,38 +276,21 @@ export default {
     },
     // 获取预览对象列表
     getEndpoint() {
-      let params = {
+      // 对象处查看，直接使用父页面中的对象
+      if (this.fromPage === 'object') {
+        this.$nextTick(() => {
+          this.endpointOptions = [this.previewObject]
+          this.metricConfigData.endpoint = this.previewObject.guid
+          this.getChartData()
+          return
+        })
+      }
+      const params = {
         // 在层级对象页面需要使用页面中选择的对象类型
         type: this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType,
         serviceGroup: this.serviceGroup,
         endpointGroup: this.endpoint_group,
         workspace: this.workspace
-      }
-      if (this.isObject) {
-        if (this.data.group_type === 'level') {
-          params = {
-            type: this.metricConfigData.endpoint_type,
-            serviceGroup: this.data.service_group,
-            endpointGroup: '',
-            workspace: this.workspace
-          }
-        }
-        else if (this.data.group_type === 'system') {
-          params = {
-            type: this.data.group_name,
-            serviceGroup: '',
-            endpointGroup: '',
-            workspace: this.workspace
-          }
-        }
-        else if (this.data.group_type === 'object') {
-          params = {
-            type: 'process',
-            serviceGroup: '',
-            endpointGroup: this.data.endpoint_group,
-            workspace: this.workspace
-          }
-        }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
