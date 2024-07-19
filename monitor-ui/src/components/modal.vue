@@ -110,7 +110,7 @@
                     :key="item.value"
                   >{{ item.label }}</option>
                 </select>
-                <select
+                <Select
                   v-if="item.type === 'select' && isHide(item.hide)"
                   :disabled="modelConfig.isAdd ? false : item.disabled"
                   filterable
@@ -118,12 +118,12 @@
                   class="col-md-7 v-selectss"
                   v-model="modelConfig.addRow[item.value]"
                 >
-                  <option
+                  <Option
                     v-for="item in modelConfig.v_select_configs[item.option]"
                     :value="item.value"
                     :key="item.value"
-                  >{{ item.label }}</option>
-                </select>
+                  >{{ item.label }}</Option>
+                </Select>
 
                 <slot v-if="item.type === 'slot' && isHide(item.hide) && !item.ishide" :name="item.name"></slot>
                 <label class="required-tip  isRequired_s" v-if="isRequired_s(item.v_validate) && isHide(item.hide)">*</label>
