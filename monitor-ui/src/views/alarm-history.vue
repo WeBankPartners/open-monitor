@@ -28,19 +28,19 @@
             >
             </DatePicker>
           </li>
-          <li class="filter-li">
-            <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
-              <i class="fa fa-search"></i>
-              {{ $t("m_button_search") }}
-            </button>
-          </li>
-          <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
-          </li>
+
+          <button class="btn btn-sm btn-confirm-f ml-5" @click="getAlarm">
+            <i class="fa fa-search"></i>
+            {{ $t("m_button_search") }}
+          </button>
+          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
         </ul>
-        <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
-          {{ $t("realTimeAlarm") }}
-        </button>
+        <div class='top-right-search'>
+          <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
+          <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
+            {{ $t("realTimeAlarm") }}
+          </button>
+        </div>
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
@@ -49,7 +49,7 @@
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
         <div class="content-stats-container">
-          <div class="left" :class="{ 'cover': total === 0 || noData }">
+          <div class="left" :class="{'cover': total === 0 || noData}">
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
             <template v-if="!noData && !loading && total > 0">
@@ -60,12 +60,12 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" v-if="total > 0 && !noData">
-            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
-              <template v-for="(filterItem, filterIndex) in filtersForShow">
+            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
+            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template>
-              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-            </section>
+              </template> -->
+            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
+            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
@@ -80,28 +80,30 @@
 </template>
 
 <script>
-import TopStats from "@/components/top-stats.vue";
-import MetricsBar from "@/components/metrics-bar.vue";
-import CircleRotate from "@/components/circle-rotate.vue";
-import CircleLabel from "@/components/circle-label.vue";
-import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
-import AlarmCard from "@/components/alarm-card.vue"
+import TopStats from '@/components/top-stats.vue'
+import MetricsBar from '@/components/metrics-bar.vue'
+import CircleRotate from '@/components/circle-rotate.vue'
+import CircleLabel from '@/components/circle-label.vue'
+import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
+import AlarmCard from '@/components/alarm-card.vue'
+import SearchBadge from '../components/search-badge.vue'
 
 export default {
-  name: "",
+  name: '',
   components: {
     TopStats,
     MetricsBar,
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
-    AlarmCard
+    AlarmCard,
+    SearchBadge
   },
   data() {
     return {
       startDate: new Date(new Date().toLocaleDateString()),
       endDate: new Date(),
-      filter: "all",
+      filter: 'all',
       loading: true,
       noData: false,
       showGraph: true,
@@ -112,7 +114,7 @@ export default {
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
-      selectedData: "", // 存放选中数据
+      selectedData: '', // 存放选中数据
 
       low: 0,
       mid: 0,
@@ -126,20 +128,20 @@ export default {
 
       outerMetrics: [],
       outerTotal: 0,
-      
+
       paginationInfo: {
         total: 0,
         startIndex: 1,
         pageSize: 10
       },
-    };
+    }
   },
   computed: {
     total() {
-      return this.low + this.mid + this.high;
+      return this.low + this.mid + this.high
     },
     ttotal() {
-      return this.tlow + this.tmid + this.thigh;
+      return this.tlow + this.tmid + this.thigh
     },
     leftStats() {
       return [
@@ -149,7 +151,7 @@ export default {
           title: this.$t('m_total'),
           total: this.ttotal,
           value: this.ttotal,
-          icon: require("../assets/img/icon_alarm_ttl.png")
+          icon: require('../assets/img/icon_alarm_ttl.png')
         },
         {
           key: 'l_low',
@@ -157,7 +159,7 @@ export default {
           title: this.$t('m_low'),
           total: this.ttotal,
           value: this.tlow,
-          icon: require("../assets/img/icon_alarm_L.png")
+          icon: require('../assets/img/icon_alarm_L.png')
         },
         {
           key: 'l_medium',
@@ -165,7 +167,7 @@ export default {
           title: this.$t('m_medium'),
           total: this.ttotal,
           value: this.tmid,
-          icon: require("../assets/img/icon_alarm_M.png")
+          icon: require('../assets/img/icon_alarm_M.png')
         },
         {
           key: 'l_high',
@@ -173,7 +175,7 @@ export default {
           title: this.$t('m_high'),
           total: this.ttotal,
           value: this.thigh,
-          icon: require("../assets/img/icon_alarm_H.png")
+          icon: require('../assets/img/icon_alarm_H.png')
         }
       ]
     },
@@ -212,53 +214,54 @@ export default {
     circles() {
       return [
         {
-          type: "low",
-          key: "low",
-          label: this.$t("m_low"),
-          icon: require("../assets/img/peichart_L.png"),
+          type: 'low',
+          key: 'low',
+          label: this.$t('m_low'),
+          icon: require('../assets/img/peichart_L.png'),
           value: this.low,
           total: this.total,
-          deg: "-60deg",
+          deg: '-60deg',
           tx: 0,
           ty: -0.5,
         },
         {
-          type: "mid",
-          key: "medium",
-          label: this.$t("m_medium"),
-          icon: require("../assets/img/peichart_M.png"),
+          type: 'mid',
+          key: 'medium',
+          label: this.$t('m_medium'),
+          icon: require('../assets/img/peichart_M.png'),
           value: this.mid,
           total: this.total,
-          deg: "60deg",
+          deg: '60deg',
           tx: 0,
           ty: -0.5,
         },
         {
-          type: "high",
-          key: "high",
-          label: this.$t("m_high"),
-          icon: require("../assets/img/peichart_H.png"),
+          type: 'high',
+          key: 'high',
+          label: this.$t('m_high'),
+          icon: require('../assets/img/peichart_H.png'),
           value: this.high,
           total: this.total,
-          deg: "0",
+          deg: '0',
           tx: 0,
           ty: 0.5,
         },
-      ];
+      ]
     },
   },
   mounted() {
-    this.getAlarm();
-    this.getRealTimeAlarm();
+    this.getAlarm()
+    this.getRealTimeAlarm()
   },
   methods: {
     changeStartDate(data) {
-      this.startDate = data;
+      this.startDate = data
     },
     changeEndDate(data) {
-      if (data && data.indexOf("00:00:00") !== -1) {
-        this.endDate = data.replace("00:00:00", "23:59:59");
-      } else {
+      if (data && data.indexOf('00:00:00') !== -1) {
+        this.endDate = data.replace('00:00:00', '23:59:59')
+      }
+      else {
         this.endDate = data
       }
     },
@@ -270,19 +273,19 @@ export default {
         }
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        "POST",
-        "/monitor/api/v1/alarm/problem/page",
+        'POST',
+        '/monitor/api/v1/alarm/problem/page',
         params,
-        (responseData) => {
-          this.noData = false;
-          this.tlow = responseData.low;
-          this.tmid = responseData.mid;
-          this.thigh = responseData.high;
+        responseData => {
+          this.noData = false
+          this.tlow = responseData.low
+          this.tmid = responseData.mid
+          this.thigh = responseData.high
         },
         () => {
-          this.noData = true;
+          this.noData = true
         }
-      );
+      )
     },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
@@ -295,27 +298,27 @@ export default {
     },
     getAlarm(ifPageKeep) {
       if (
-        !this.startDate ||
-        !this.endDate ||
-        Date.parse(new Date(this.startDate)) >
-          Date.parse(new Date(this.endDate))
+        !this.startDate
+        || !this.endDate
+        || Date.parse(new Date(this.startDate))
+          > Date.parse(new Date(this.endDate))
       ) {
-        this.$Message.error(this.$t("timeIntervalWarn"));
-        return;
+        this.$Message.error(this.$t('timeIntervalWarn'))
+        return
       }
       if (this.startDate === this.endDate) {
-        this.endDate = this.endDate.replace("00:00:00", "23:59:59");
+        this.endDate = this.endDate.replace('00:00:00', '23:59:59')
       }
-      if (ifPageKeep != 'keep') {
+      if (ifPageKeep !== 'keep') {
         this.paginationInfo = {
           total: 0,
           startIndex: 1,
           pageSize: this.paginationInfo.pageSize
         }
       }
-      const start = Date.parse(this.startDate) / 1000;
-      const end = Date.parse(this.endDate) / 1000;
-      let params = {
+      const start = Date.parse(this.startDate) / 1000
+      const end = Date.parse(this.endDate) / 1000
+      const params = {
         start,
         end,
         filter: this.filter,
@@ -323,158 +326,164 @@ export default {
           startIndex: this.paginationInfo.startIndex,
           pageSize: this.paginationInfo.pageSize
         }
-      };
-      let keys = Object.keys(this.filters);
-      this.filtersForShow = [];
+      }
+      const keys = Object.keys(this.filters)
+      this.filtersForShow = []
       for (let i = 0; i < keys.length; i++) {
-        params[keys[i]] = this.filters[keys[i]];
+        params[keys[i]] = this.filters[keys[i]]
         this.filtersForShow.push({
           key: keys[i],
           value: this.filters[keys[i]],
-        });
+        })
       }
       this.loading = true
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        "POST",
-        "/monitor/api/v1/alarm/problem/history",
+        'POST',
+        '/monitor/api/v1/alarm/problem/history',
         params,
-        (responseData) => {
-          this.loading = false;
-          this.noData = false;
-          this.resultData = responseData.data;
-          this.low = responseData.low;
-          this.mid = responseData.mid;
-          this.high = responseData.high;
+        responseData => {
+          this.loading = false
+          this.noData = false
+          this.resultData = responseData.data
+          this.low = responseData.low
+          this.mid = responseData.mid
+          this.high = responseData.high
           this.paginationInfo.total = responseData.page.totalRows
           this.paginationInfo.startIndex = responseData.page.startIndex
           this.paginationInfo.pageSize = responseData.page.pageSize
-          this.alramEmpty = !!this.low || !!this.mid || !!this.high;
-          this.showSunburst(responseData);
+          this.alramEmpty = !!this.low || !!this.mid || !!this.high
+          this.showSunburst(responseData)
         },
         () => {
-          this.loading = false;
-          this.noData = true;
+          this.loading = false
+          this.noData = true
         }
-      );
+      )
     },
     compare(prop) {
       return function (obj1, obj2) {
-        var val1 = obj1[prop];
-        var val2 = obj2[prop];
+        let val1 = obj1[prop]
+        let val2 = obj2[prop]
         if (!isNaN(Number(val1)) && !isNaN(Number(val2))) {
-          val1 = Number(val1);
-          val2 = Number(val2);
+          val1 = Number(val1)
+          val2 = Number(val2)
         }
         if (val1 < val2) {
-          return -1;
-        } else if (val1 > val2) {
-          return 1;
-        } else {
-          return 0;
+          return -1
         }
-      };
+        else if (val1 > val2) {
+          return 1
+        }
+        return 0
+
+      }
     },
     showSunburst(originData) {
-      let legendData = [];
-      let pieInner = [];
+      const legendData = []
+      const pieInner = []
       if (originData.high) {
-        let high = {
-          name: "high",
+        const high = {
+          name: 'high',
           value: originData.high,
-          filterType: "priority",
+          filterType: 'priority',
           itemStyle: {
-            color: "#ed4014",
+            color: '#ed4014',
           },
-        };
-        legendData.push("high");
-        pieInner.push(high);
+        }
+        legendData.push('high')
+        pieInner.push(high)
       }
       if (originData.low) {
-        let low = {
-          name: "low",
+        const low = {
+          name: 'low',
           value: originData.low,
-          filterType: "priority",
+          filterType: 'priority',
           itemStyle: {
-            color: "#19be6b",
+            color: '#19be6b',
           },
-        };
-        legendData.push("low");
-        pieInner.push(low);
+        }
+        legendData.push('low')
+        pieInner.push(low)
       }
       if (originData.mid) {
-        let mid = {
-          name: "medium",
+        const mid = {
+          name: 'medium',
           value: originData.mid,
-          filterType: "priority",
+          filterType: 'priority',
           itemStyle: {
-            color: "#2d8cf0",
+            color: '#2d8cf0',
           },
-        };
-        legendData.push("medium");
-        pieInner.push(mid);
+        }
+        legendData.push('medium')
+        pieInner.push(mid)
       }
 
       const colorX = [
-        "#33CCCC",
-        "#666699",
-        "#66CC66",
-        "#996633",
-        "#9999CC",
-        "#339933",
-        "#339966",
-        "#663333",
-        "#6666CC",
-        "#336699",
-        "#3399CC",
-        "#33CC66",
-        "#CC3333",
-        "#CC6666",
-        "#996699",
-        "#CC9933",
-      ];
-      let index = 0;
-      let pieOuter = [];
-      let itemStyleSet = {};
-      const metricInfo = originData.count;
-      let set = new Set();
-      metricInfo.forEach((item) => {
+        '#33CCCC',
+        '#666699',
+        '#66CC66',
+        '#996633',
+        '#9999CC',
+        '#339933',
+        '#339966',
+        '#663333',
+        '#6666CC',
+        '#336699',
+        '#3399CC',
+        '#33CC66',
+        '#CC3333',
+        '#CC6666',
+        '#996699',
+        '#CC9933',
+      ]
+      let index = 0
+      let pieOuter = []
+      const itemStyleSet = {}
+      const metricInfo = originData.count
+      const set = new Set()
+      metricInfo.forEach(item => {
         if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name];
-        } else {
-          legendData.push(item.name);
-          index++;
+          item.itemStyle = itemStyleSet[item.name]
+        }
+        else {
+          legendData.push(item.name)
+          index++
           const itemStyle = {
             color: colorX[index],
-          };
-          itemStyleSet[item.name] = itemStyle;
-          item.itemStyle = itemStyle;
+          }
+          itemStyleSet[item.name] = itemStyle
+          item.itemStyle = itemStyle
         }
-        set.add(item.name);
-      });
-      pieOuter = metricInfo.sort(this.compare("type"));
-      this.outerMetrics = pieOuter;
-      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0);
+        set.add(item.name)
+      })
+      pieOuter = metricInfo.sort(this.compare('type'))
+      this.outerMetrics = pieOuter
+      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0)
     },
     realTimeAlarm() {
-      this.$router.push("/alarmManagement");
+      this.$router.push('/alarmManagement')
     },
-    addParams ({key, value}) {
+    addParams({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
     clearAll() {
-      this.filters = [];
-      this.getAlarm();
+      this.filters = []
+      this.getAlarm()
     },
     exclude(key) {
-      delete this.filters[key];
-      this.getAlarm();
+      delete this.filters[key]
+      this.getAlarm()
     },
     getPercentage(val, total) {
-      return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2);
+      return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2)
     },
+    onFiltersChange(filters) {
+      this.filters = filters
+      this.getAlarm()
+    }
   },
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -515,6 +524,11 @@ export default {
 
     .btn-confirm-f {
       background: #116ef9;
+    }
+    .top-right-search {
+      display: flex;
+      align-items: center;
+      margin-right: 80px;
     }
   }
 }
