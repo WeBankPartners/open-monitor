@@ -493,6 +493,9 @@ export default {
         if (priority) {
           params.priority = priority.value
         }
+        params.alarm_name = this.filters.alarm_name || []
+        params.endpoint = this.filters.endpoint || []
+        params.metric = this.filters.metric || []
       }
       else {
         params.id = alarmItem.id
