@@ -12,41 +12,41 @@
   </div>
 </template>
 <script>
-  export default {
-    name: 'pagination',
-    data () {
-      return {
+export default {
+  name: 'pagination',
+  data() {
+    return {
+    }
+  },
+  props: ['pagination', 'pageUrl', 'filters'],
+  mounted() {
+  },
+  methods: {
+    pageChange(current) {
+      // 换页时清空已选中数据
+      this.$parent.clearSelectedData()
+      this.pagination.page = current
+      this.requestData()
+    },
+    pageSizeChange(pageSize) {
+      this.$parent.clearSelectedData()
+      if (this.pagination.size === pageSize) {
+        return
       }
+      this.pagination.size = pageSize
+      this.pagination.page = 1
+      this.requestData()
     },
-    props: ['pagination', 'pageUrl', 'filters'],
-    mounted () {
-    },
-    methods: {
-      pageChange (current) {
-        // 换页时清空已选中数据
-        this.$parent.clearSelectedData()
-        this.pagination.page = current
-        this.requestData()
-      },
-      pageSizeChange (pageSize) {
-        this.$parent.clearSelectedData()
-        if (this.pagination.size === pageSize) {
-          return
-        }
-        this.pagination.size = pageSize
-        this.pagination.page = 1
-        this.requestData()
-      },
-      requestData () {
-        let pageConfig = {}
-        pageConfig.researchConfig = {}
-        pageConfig.researchConfig.filters = this.filters
-        pageConfig.pagination = this.pagination
-        this.$parent.initData(this.pageUrl, pageConfig)
-      }
-    },
-    components: {}
-  }
+    requestData() {
+      const pageConfig = {}
+      pageConfig.researchConfig = {}
+      pageConfig.researchConfig.filters = this.filters
+      pageConfig.pagination = this.pagination
+      this.$parent.initData(this.pageUrl, pageConfig)
+    }
+  },
+  components: {}
+}
 </script>
 
 <style lang="less" scoped>

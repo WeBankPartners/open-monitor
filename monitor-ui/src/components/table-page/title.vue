@@ -2,34 +2,36 @@
   <div class="ibox-title">
     <h5>
       <!-- <i class="fa fa-reply-all fa-1x" v-if="titleConfig.backUrl" aria-hidden="true" @click="back"></i> -->
-      <i class="backpage" v-if="titleConfig.backUrl" aria-hidden="true" @click="back"><img :src="backImg" alt="还回"></i>
+      <i class="backpage" v-if="titleConfig.backUrl" aria-hidden="true" @click="back"><img :src="backImg" alt="还回"/></i>
       <i class="fa-sitting" v-else></i>
       <span>{{titleConfig.name}}</span>
     </h5>
   </div>
 </template>
 <script>
-  // import backImg from '../../../../src/assets/back.svg'
-  // import backImg from '../../assets/back.svg'
-  export default {
-    data () {
-      return {backImg:backImg}
-    },
-    props: ['titleConfig'],
-    mounted () {
-    },
-    methods: {
-      back () {
-        this.$router.back(-1)
-        // this.$router.push({
-        //   path: this.titleConfig.backUrl,
-        //   query: {
-        //   }
-        // })
-      }
-    },
-    components: {}
-  }
+// import backImg from '../../../../src/assets/back.svg'
+// import backImg from '../../assets/back.svg'
+export default {
+  data() {
+    return {
+      backImg: ''
+    }
+  },
+  props: ['titleConfig'],
+  mounted() {
+  },
+  methods: {
+    back() {
+      this.$router.back(-1)
+      // this.$router.push({
+      //   path: this.titleConfig.backUrl,
+      //   query: {
+      //   }
+      // })
+    }
+  },
+  components: {}
+}
 </script>
 
 <style lang="less" scoped>

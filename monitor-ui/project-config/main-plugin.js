@@ -13,6 +13,7 @@ import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
+import TagShow from '@/components/Tag-show'
 const eventBus = new Vue()
 
 window.use(vuex)
@@ -65,7 +66,7 @@ const implicitRoute = {
   },
   'monitorConfigIndex/metricConfig': {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
-    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'Customize' }
+    childBreadcrumb: { 'zh-CN': '指标列表', 'en-US': 'Metric List' }
   },
   'monitorConfigIndex/groupBoard': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
@@ -110,9 +111,11 @@ import ModalComponent from '@/components/modal'
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
+window.component('TagShow', TagShow)
 window.use(VeeValidate)
 import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
+
 
 import Dashboard from '@/views/dashboard'
 window.addHomepageComponent && window.addHomepageComponent({

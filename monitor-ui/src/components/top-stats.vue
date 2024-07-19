@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import CircleItem from "../components/circle-item.vue";
+import CircleItem from '../components/circle-item.vue'
 export default {
   components: {
     CircleItem,

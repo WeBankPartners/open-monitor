@@ -104,6 +104,9 @@ func GetChartData(c *gin.Context) {
 		queryList, err = GetChartConfigByCustom(&param)
 	}
 	if err != nil {
+		if strings.Contains(err.Error(), "Param data endpoint") {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotSupportPreview)
+		}
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -177,6 +180,11 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 		}
 		if err != nil {
 			break
+		}
+	}
+	if len(existEndpointMap) > 1 {
+		for _, v := range queryList {
+			v.SameEndpoint = false
 		}
 	}
 	return
@@ -301,6 +309,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			metricLegend = "$custom_with_tag"
 		}
 		serviceTags := []string{}
+		calcServiceGroupAll := false
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
 			serviceGroupTag = fmt.Sprintf("service_group=\"%s\"", dataConfig.AppObject)
@@ -312,7 +321,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			if len(endpointList) == 0 {
 				continue
 			}
-			param.Data[0].Endpoint = endpointList[0].Guid
+			//param.Data[0].Endpoint = endpointList[0].Guid
 			log.Logger.Debug("getChartConfigByCustom", log.String("app", dataConfig.AppObject), log.String("metric", dataConfig.Metric))
 			isServiceMetric, tmpTags, tmpErr := db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject)
 			if tmpErr != nil {
@@ -323,6 +332,17 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				serviceTags = tmpTags
 				log.Logger.Debug("getChartConfigByCustom $app_metric")
 				metricLegend = "$app_metric"
+			}
+			if dataConfig.Endpoint != "" {
+				if dataConfig.Endpoint == dataConfig.AppObject {
+					endpointList = endpointList[:1]
+					calcServiceGroupAll = true
+				} else {
+					endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+					if endpointObj.MonitorType != "" {
+						endpointList = []*models.EndpointNewTable{&endpointObj}
+					}
+				}
 			}
 		} else {
 			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
@@ -358,19 +378,19 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		}
 		//queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
+			log.Logger.Debug("GetChartConfigByCustom use app metric query", log.JsonObj("config", dataConfig))
+			tmpEndpointGuid := endpointList[0].Guid
+			if calcServiceGroupAll {
+				tmpEndpointGuid = dataConfig.AppObject
+			}
 			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{tmpEndpointGuid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
 			continue
-			//log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
-			//if tmpPromQL == dataConfig.PromQl {
-			//	queryAppendFlag = true
-			//	log.Logger.Debug("prom is same")
-			//	queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
-			//}
 		}
+		log.Logger.Debug("GetChartConfigByCustom use endpoint query", log.JsonObj("config", dataConfig))
 		for _, endpoint := range endpointList {
 			tmpPromQL := dataConfig.PromQl
-			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
+			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) && !calcServiceGroupAll {
 				tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
 				if strings.Contains(tmpPromQL, "service_group,") {
 					tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance,")
@@ -380,11 +400,137 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				}
 				log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
 			}
+			tmpEndpointGuid := endpoint.Guid
+			if calcServiceGroupAll {
+				tmpEndpointGuid = dataConfig.AppObject
+			}
 			tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint, dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{tmpEndpointGuid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 		}
 	}
 	return
+}
+
+func GetChartComparisonQueryData(queryList []*models.QueryMonitorData, param models.ComparisonChartQueryParam) (result *models.EChartOption, err error) {
+	var serials []*models.SerialModel
+	var difference int64
+	result = &models.EChartOption{
+		Legend: []string{},
+		Xaxis:  make(map[string]interface{}),
+		Yaxis:  models.YaxisModel{Unit: ""},
+		Series: []*models.SerialModel{},
+	}
+	calcTypeMap := convertArray2Map(param.CalcType)
+	for _, query := range queryList {
+		if query.Cluster != "" && query.Cluster != "default" {
+			query.Cluster = db.GetClusterAddress(query.Cluster)
+		}
+		curResultList := mergePrometheusData(param.CalcPeriod, param.CalcMethod, ds.PrometheusData(query))
+		switch param.ComparisonType {
+		case "day":
+			difference = 86400
+		case "week":
+			difference = 86400 * 7
+		case "month":
+			// 预览数据,一个月当作30d处理
+			difference = 86400 * 30
+		}
+		query.Start = query.Start - difference
+		query.End = query.End - difference
+		historyResultList := mergePrometheusData(param.CalcPeriod, param.CalcMethod, ds.PrometheusData(query))
+		var comparisonSerialList []*models.SerialModel
+		// 计算同环比数据
+		if len(historyResultList) == 0 || len(curResultList) == 0 {
+			return
+		}
+		for _, serialModel := range curResultList {
+			for _, historySerialModel := range historyResultList {
+				if len(serialModel.Data) > 0 && len(historySerialModel.Data) > 0 && serialModel.Name == historySerialModel.Name {
+					newSerialModel := &models.SerialModel{
+						Type: "bar",
+						Name: getNewName(serialModel.Name, "diff"),
+						Data: [][]float64{},
+					}
+					newSerialModel2 := &models.SerialModel{
+						Type:       "line",
+						YAxisIndex: 1,
+						Name:       getNewName(serialModel.Name, "diff_percent"),
+						Data:       [][]float64{},
+					}
+					for i, dataArr := range serialModel.Data {
+						if i < len(historySerialModel.Data) && len(dataArr) == 2 && len(historySerialModel.Data[i]) == 2 {
+							diff := dataArr[1] - historySerialModel.Data[i][1]
+							newSerialModel.Data = append(newSerialModel.Data, []float64{dataArr[0], RoundToOneDecimal(diff)})
+							newSerialModel2.Data = append(newSerialModel2.Data, []float64{dataArr[0], RoundToOneDecimal(diff * 100 / historySerialModel.Data[i][1])})
+						}
+					}
+					if calcTypeMap["diff"] {
+						comparisonSerialList = append(comparisonSerialList, newSerialModel)
+					}
+					if calcTypeMap["diff_percent"] {
+						comparisonSerialList = append(comparisonSerialList, newSerialModel2)
+					}
+					break
+				}
+			}
+		}
+		if len(comparisonSerialList) > 0 {
+			serials = append(serials, comparisonSerialList...)
+		}
+	}
+	processDisplayMap := make(map[string]string)
+	for i, s := range serials {
+		if strings.Contains(s.Name, "$metric") {
+			queryIndex := i
+			if i >= len(queryList) {
+				queryIndex = len(queryList) - 1
+			}
+			s.Name = strings.Replace(s.Name, "$metric", queryList[queryIndex].Metric[0], -1)
+		}
+		if processName, b := processDisplayMap[s.Name]; b {
+			s.Name = processName
+		}
+		result.Legend = append(result.Legend, s.Name)
+		if result.Title == "${auto}" {
+			result.Title = s.Name[:strings.Index(s.Name, "{")]
+		}
+		_, tmpJsonMarshalErr := json.Marshal(s)
+		if tmpJsonMarshalErr == nil {
+			result.Series = append(result.Series, s)
+		}
+	}
+
+	return
+}
+
+func RoundToOneDecimal(value float64) float64 {
+	v := strconv.FormatFloat(value, 'f', 1, 64)
+	floatValue, _ := strconv.ParseFloat(v, 64)
+	return floatValue
+}
+
+func getNewName(name, calcType string) string {
+	var newName string
+	if strings.TrimSpace(name) != "" {
+		start2 := strings.Index(name, "}")
+		if start2 == -1 {
+			newName = name + fmt.Sprintf("{calc_type=%s}", calcType)
+		} else {
+			newName = name[0:start2-1] + fmt.Sprintf(",calc_type=%s}", calcType)
+		}
+	}
+	return newName
+}
+
+func convertArray2Map(arr []string) map[string]bool {
+	hashMap := make(map[string]bool)
+	if len(arr) == 0 {
+		return hashMap
+	}
+	for _, s := range arr {
+		hashMap[s] = true
+	}
+	return hashMap
 }
 
 func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
@@ -394,6 +540,8 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
 		archiveQueryFlag = true
 	}
+	startTimestamp := float64(param.Start * 1000)
+	endTimestamp := float64(param.End * 1000)
 	for _, query := range queryList {
 		log.Logger.Debug("Query param", log.JsonObj("param", query))
 		if query.Cluster != "" && query.Cluster != "default" {
@@ -409,6 +557,9 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 			serials = append(serials, tmpSerials...)
 			param.Step = tmpStep
 			continue
+		}
+		if param.LineType == 2 {
+			query.ComparisonFlag = "Y"
 		}
 		tmpSerials := ds.PrometheusData(query)
 		// 如果归档数据可用，尝试从归档数据中补全数据
@@ -440,6 +591,25 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 				serials = append(serials, tmpSerials...)
 				param.Step = tmpStep
 				continue
+			}
+		}
+		// 如果数据前后不是开始结束时间，补齐前后两个点
+		if param.Compare != nil && param.Compare.CompareSubTime > 0 {
+			// 如果是同环比数据就不补数
+		} else {
+			for _, subSerial := range tmpSerials {
+				if len(subSerial.Data) > 0 {
+					tmpSerialDataStart := subSerial.Data[0][0]
+					tmpSerialDataEnd := subSerial.Data[len(subSerial.Data)-1][0]
+					if tmpSerialDataStart > (startTimestamp + 30000) {
+						subSerial.Data = append([][]float64{{startTimestamp, 0}}, subSerial.Data...)
+					}
+					if tmpSerialDataEnd < (endTimestamp - 30000) {
+						subSerial.Data = append(subSerial.Data, []float64{endTimestamp, 0})
+					}
+				} else {
+					subSerial.Data = [][]float64{{startTimestamp, 0}, {endTimestamp, 0}}
+				}
 			}
 		}
 		serials = append(serials, tmpSerials...)
@@ -496,4 +666,134 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	result.Xaxis = make(map[string]interface{})
 	result.Yaxis = models.YaxisModel{Unit: param.Unit}
 	return err
+}
+
+// GetComparisonChartData 获取同环比预览数据
+func GetComparisonChartData(c *gin.Context) {
+	var param models.ComparisonChartQueryParam
+	var queryParam *models.ChartQueryParam
+	var err error
+	var metric *models.MetricTable
+	var queryList []*models.QueryMonitorData
+	var result = &models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	now := time.Now()
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if strings.TrimSpace(param.MetricId) == "" {
+		middleware.ReturnParamEmptyError(c, "metricId")
+		return
+	}
+	if metric, err = db.GetMetric(param.MetricId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if metric == nil {
+		middleware.ReturnValidateError(c, "metricId is invalid")
+		return
+	}
+	queryParam = &models.ChartQueryParam{
+		Start: now.Unix() + int64(-models.PreviewPointCount*param.CalcPeriod),
+		End:   now.Unix(),
+		Step:  10,
+		Data: []*models.ChartQueryConfigObj{{
+			Endpoint:     param.Endpoint,
+			Metric:       metric.Metric,
+			PromQl:       metric.PromExpr,
+			AppObject:    metric.ServiceGroup,
+			EndpointType: metric.MonitorType,
+			MonitorType:  metric.MonitorType,
+		}},
+	}
+	if queryList, err = GetChartConfigByCustom(queryParam); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	log.Logger.Debug("GetComparisonChartData", log.JsonObj("queryList", queryList))
+	if len(queryList) == 0 {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	if result, err = GetChartComparisonQueryData(queryList, param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
+}
+
+// mergePrometheusData 按 mergeCount整合数据
+func mergePrometheusData(calcPeriod int, calcMethod string, originSerialList []*models.SerialModel) []*models.SerialModel {
+	var targetSerialList []*models.SerialModel
+	mergeCount := calcPeriod / 10
+	if len(originSerialList) > 0 {
+		for _, model := range originSerialList {
+			newModel := &models.SerialModel{
+				Type: model.Type,
+				Name: model.Name,
+				Data: [][]float64{},
+			}
+			if len(model.Data) > 0 {
+				for i, _ := range model.Data {
+					if i > 0 && i%mergeCount == 0 {
+						newDataArr := getCalcValue(calcMethod, model.Data[i-mergeCount:i])
+						newModel.Data = append(newModel.Data, newDataArr...)
+					}
+				}
+				if len(newModel.Data) == 0 {
+					newModel.Data = append(newModel.Data, model.Data[0])
+				}
+			}
+			targetSerialList = append(targetSerialList, newModel)
+		}
+	}
+	return targetSerialList
+}
+
+func getCalcValue(calcMethod string, data [][]float64) [][]float64 {
+	if len(data) == 0 {
+		return [][]float64{}
+	}
+	var dataVal float64
+	var arr [][]float64
+	switch calcMethod {
+	case "avg":
+		var sum1 float64
+		for _, arr := range data {
+			if len(arr) == 2 {
+				sum1 = sum1 + arr[1]
+			}
+		}
+		dataVal = sum1 / float64(len(data))
+	case "sum":
+		for _, arr := range data {
+			if len(arr) == 2 {
+				dataVal = dataVal + arr[1]
+			}
+		}
+	case "max":
+		for i, arr := range data {
+			// 初始化值
+			if i == 0 && len(arr) == 2 {
+				dataVal = arr[1]
+				continue
+			}
+			if len(arr) == 2 && dataVal < arr[1] {
+				dataVal = arr[1]
+			}
+		}
+	case "min":
+		for i, arr := range data {
+			// 初始化值
+			if i == 0 && len(arr) == 2 {
+				dataVal = arr[1]
+				continue
+			}
+			if len(arr) == 2 && dataVal > arr[1] {
+				dataVal = arr[1]
+			}
+		}
+	}
+	arr = append(arr, []float64{data[len(data)-1][0], dataVal})
+	return arr
 }
