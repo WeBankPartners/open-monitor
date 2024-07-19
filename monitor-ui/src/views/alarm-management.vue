@@ -166,12 +166,6 @@ export default {
     }
   },
   computed: {
-    isBatchCloseDisabled() {
-      debugger
-      console.error(this.filters)
-      debugger
-      return isEmpty(this.filters) || (isEmpty(this.filters.alarm_name) && isEmpty(this.filters.metric) && isEmpty(this.filters.endpoint)) || this.resultData.length === 0
-    },
     total() {
       return this.low + this.mid + this.high
     },
@@ -487,7 +481,7 @@ export default {
       const params = {
         id: 0,
         custom: true,
-        metric: '',
+        metric: [],
         priority: ''
       }
       if (this.isBatch) {

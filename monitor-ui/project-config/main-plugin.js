@@ -111,10 +111,10 @@ import ModalComponent from '@/components/modal'
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
+window.component('TagShow', TagShow)
 window.use(VeeValidate)
 import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
-window.use('TagShow', TagShow)
 
 
 import Dashboard from '@/views/dashboard'
