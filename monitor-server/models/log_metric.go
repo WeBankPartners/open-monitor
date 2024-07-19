@@ -45,6 +45,7 @@ type LogMetricConfigTable struct {
 	UpdateUser       string    `json:"update_user" xorm:"update_user"`
 	CreateTime       time.Time `json:"create_time" xorm:"create_time"`
 	UpdateTime       time.Time `json:"update_time" xorm:"update_time"`
+	FullMetric       string    `json:"full_metric" xorm:"-"`
 }
 
 type LogMetricStringMapTable struct {
@@ -68,7 +69,8 @@ type LogMetricEndpointRelTable struct {
 
 type LogMetricQueryObj struct {
 	ServiceGroupTable
-	Config []*LogMetricMonitorObj `json:"config"`
+	Config   []*LogMetricMonitorObj `json:"config"`
+	DBConfig []*DbMetricMonitorObj  `json:"db_config"`
 }
 
 type LogMetricMonitorObj struct {

@@ -397,6 +397,9 @@ func ImportLogMetric(c *gin.Context) {
 			metricGroup.ServiceGroup = serviceGroup
 		}
 	}
+	for _, dbMonitor := range paramObj.DBConfig {
+		dbMonitor.ServiceGroup = serviceGroup
+	}
 	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -740,6 +743,14 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if len(param.MetricList) > 0 {
+		for _, metric := range param.MetricList {
+			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
+				middleware.ReturnValidateError(c, "log_param_name or metric param invalid")
+				return
+			}
+		}
+	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -791,6 +802,14 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		err := fmt.Errorf("guid can not empty")
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
+	}
+	if len(param.MetricList) > 0 {
+		for _, metric := range param.MetricList {
+			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
+				middleware.ReturnValidateError(c, "log_param_name or metric param invalid")
+				return
+			}
+		}
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)

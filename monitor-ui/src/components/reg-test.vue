@@ -19,8 +19,8 @@
         {{apiRes}}
       </FormItem>
       <FormItem style="text-align: right">
-        <Button size="small" @click="cancelReg">{{$t('button.cancel')}}</Button>
-        <Button size="small" @click="saveReg" type="info">{{$t('button.save')}}</Button>
+        <Button size="small" @click="cancelReg">{{$t('m_button_cancel')}}</Button>
+        <Button size="small" @click="saveReg" type="info">{{$t('m_button_save')}}</Button>
       </FormItem>
     </Form>
   </div>
@@ -29,7 +29,7 @@
 <script>
 export default {
   name: '',
-  data () {
+  data() {
     return {
       regx: '',
       textString: '',
@@ -38,37 +38,38 @@ export default {
     }
   },
   computed: {
-    regRes: function () {
+    regRes() {
       try {
         const reg = new RegExp(this.regx, 'g')
-        let execRes = this.textString.match(reg)
+        const execRes = this.textString.match(reg)
         if (execRes && execRes.length > 0) {
-          return this.textString.replace(execRes[0], "<span style='color:red'>" + execRes[0] + '</span>')
+          return this.textString.replace(execRes[0], '<span style=\'color:red\'>' + execRes[0] + '</span>')
         }
         return ''
-      } catch (err) {
+      }
+      catch (err) {
         return ''
       }
     }
   },
   methods: {
-    cancelReg () {
+    cancelReg() {
       this.regx = ''
       this.textString = ''
       this.$emit('cancelReg')
     },
-    saveReg () {
+    saveReg() {
       this.$emit('updateReg', this.regx)
       this.cancelReg()
     },
-    apiTest () {
+    apiTest() {
       const params = {
         reg_string: this.regx,
         test_context: this.textString
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, responseData => {
         this.apiRes = responseData
-      }, {isNeedloading:false})
+      }, {isNeedloading: false})
     }
   },
   components: {}

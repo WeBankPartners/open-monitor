@@ -9,15 +9,20 @@
           style="width:300px;margin-left: 12px;"
           v-model="targetId"
           filterable
-          clearable 
-          remote
+          clearable
           ref="select"
-          :remote-method="getTargrtList"
-          @on-change="search"
-          @on-clear="typeChange"
+          @on-query-change="e => {
+            getTargetOptionsSearch = e;
+            debounceGetTargetOptions()
+          }"
+          @on-change="searchTableDetail"
+        >
+          <Option v-for="(option, index) in targetOptions"
+                  :value="option.option_value"
+                  :label="option.option_text"
+                  :key="index"
           >
-          <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
-            <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+            <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
             {{option.option_text}}
           </Option>
         </Select>
@@ -33,18 +38,19 @@
             {{ $t('m_export') }}
           </Button>
           <div style="display: inline-block;margin-bottom: 3px;">
-            <Upload 
-              :action="uploadUrl" 
+            <Upload
+              :action="uploadUrl"
               :show-upload-list="false"
               :max-size="1000"
               with-credentials
               :headers="{'Authorization': token}"
               :on-success="uploadSucess"
-              :on-error="uploadFailed">
-                <Button type="primary" class="btn-left">
-                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
-                  {{ $t('m_import') }}
-                </Button>
+              :on-error="uploadFailed"
+            >
+              <Button type="primary" class="btn-left">
+                <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                {{ $t('m_import') }}
+              </Button>
             </Upload>
           </div>
         </template>
@@ -54,34 +60,34 @@
       <div v-if="!targetId">
         <Alert type="error">
           <span>{{ $t('m_empty_tip_1') }}</span>
-          <span v-if="type==='service'">{{ $t('field.resourceLevel') }}</span>
-          <span v-if="type==='group'">{{ $t('field.group') }}</span>
-          <span v-if="type==='endpoint'">{{ $t('field.endpoint') }}</span>
+          <span v-if="type === 'service'">{{ $t('m_field_resourceLevel') }}</span>
+          <span v-if="type === 'group'">{{ $t('m_field_group') }}</span>
+          <span v-if="type === 'endpoint'">{{ $t('m_field_endpoint') }}</span>
         </Alert>
       </div>
-      <div v-if="targetId&&dataEmptyTip">
+      <div v-if="targetId && dataEmptyTip">
         <Alert type="error">
-          <span v-if="type==='service'">{{ $t('m_empty_data_recrisive') }}</span>
-          <span v-if="type==='endpoint'">{{ $t('m_empty_data_endpoint') }}</span>
+          <span v-if="type === 'service'">{{ $t('m_empty_data_recrisive') }}</span>
+          <span v-if="type === 'endpoint'">{{ $t('m_empty_data_endpoint') }}</span>
         </Alert>
       </div>
     </div>
     <div v-show="showTargetManagement" class="table-zone">
-      <template v-for="(itemType, index) in thresholdTypes">
-        <thresholdDetail 
-          ref='thresholdDetail'
-          v-if="type === itemType"
-          :key=index
-          :type=type
-          @feedbackInfo="feedbackInfo"
-        >
-        </thresholdDetail>
-      </template>
+      <thresholdDetail
+        ref='thresholdDetail'
+        :type="type"
+        @feedbackInfo="feedbackInfo"
+      >
+      </thresholdDetail>
     </div>
   </div>
 </template>
 
 <script>
+import isEmpty from 'lodash/isEmpty'
+import debounce from 'lodash/debounce'
+import find from 'lodash/find'
+import cloneDeep from 'lodash/cloneDeep'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -94,103 +100,140 @@ export default {
       token: null,
       type: 'service',
       typeList: [
-        {label: 'field.resourceLevel', value: 'service'},
-        {label: 'field.group', value: 'group'},
-        {label: 'field.endpoint', value: 'endpoint'}
+        {
+          label: 'm_field_resourceLevel',
+          value: 'service'
+        },
+        {
+          label: 'm_field_group',
+          value: 'group'
+        },
+        {
+          label: 'm_field_endpoint',
+          value: 'endpoint'
+        }
       ],
       targetId: '',
       targetOptions: [],
       showTargetManagement: false,
       thresholdTypes: ['group', 'endpoint', 'service'],
-      dataEmptyTip: false
+      dataEmptyTip: false,
+      getTargetOptionsSearch: ''
     }
   },
   computed: {
-    uploadUrl: function() {
+    uploadUrl() {
       return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targetId}`
     }
   },
-  async mounted () {
+  async mounted() {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.getTargrtList()
+    this.getTargetOptionsSearch = ''
+    this.initTargetByType()
   },
-  beforeDestroy () {
+  beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    feedbackInfo (val) {
+    feedbackInfo(val) {
       this.dataEmptyTip = val
     },
-    exportThreshold () {
+    async initTargetByType() {
+      await this.getTargetOptions()
+      if (!isEmpty(this.targetOptions)) {
+        this.targetId = this.targetOptions[0].option_value
+        this.searchTableDetail()
+      }
+    },
+    exportThreshold() {
       const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
       axios({
         method: 'GET',
         url: api,
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         }
-      }).then((response) => {
+      }).then(response => {
         if (response.status < 400) {
-          let content = JSON.stringify(response.data)
-        let fileName = `threshold_${new Date().format('yyyyMMddhhmmss')}.json`
-        let blob = new Blob([content])
-        if('msSaveOrOpenBlob' in navigator){
+          const content = JSON.stringify(response.data)
+          const fileName = `threshold_${new Date().format('yyyyMMddhhmmss')}.json`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
           // Microsoft Edge and Microsoft Internet Explorer 10-11
-          window.navigator.msSaveOrOpenBlob(blob, fileName)
-        } else {
-          if ('download' in document.createElement('a')) { // 非IE下载
-            let elink = document.createElement('a')
-            elink.download = fileName
-            elink.style.display = 'none'
-            elink.href = URL.createObjectURL(blob)  
-            document.body.appendChild(elink)
-            elink.click()
-            URL.revokeObjectURL(elink.href) // 释放URL 对象
-            document.body.removeChild(elink)
-          } else { // IE10+下载
-            navigator.msSaveOrOpenBlob(blob, fileName)
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+          else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              const elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            }
+            else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
           }
         }
-        }
       })
-      .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
-      });
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
     },
-    uploadSucess () {
-      this.$Message.success(this.$t('tips.success'))
+    uploadSucess() {
+      this.$Message.success(this.$t('m_tips_success'))
+      this.searchTableDetail()
     },
-    uploadFailed (error, file) {
+    uploadFailed(file) {
       this.$Message.warning({
-          content: file.message,
-          duration: 5
+        content: file.message,
+        duration: 5
       })
     },
-    typeChange () {
+    typeChange() {
       this.clearTargrt()
-      this.getTargrtList()
+      this.initTargetByType()
     },
-    getTargrtList () {
-      this.$refs.select.queryProp = ''
-      const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.targetOptions = responseData
-      }, {isNeedloading:false})
+    getTargetOptions() {
+      return new Promise(resolve => {
+        const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${this.getTargetOptionsSearch}`
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.targetOptions = cloneDeep(responseData)
+          window.targetOptions = this.targetOptions
+          resolve(this.targetOptions)
+        }, {isNeedloading: false})
+      })
     },
-    clearTargrt () {
+    clearTargrt() {
       this.targetOptions = []
       this.targetId = ''
       this.showTargetManagement = false
-      this.$refs.select.query = ''
+      this.getTargetOptionsSearch = ''
     },
-    search () {
+    searchTableDetail() {
       if (this.targetId) {
         this.showTargetManagement = true
         const find = this.targetOptions.find(item => item.option_value === this.targetId)
-        this.$refs.thresholdDetail[0].setMonitorType(find.type);
-        this.$refs.thresholdDetail[0].getDetail(this.targetId);
+        this.$refs.thresholdDetail.setMonitorType(find.type)
+        this.$refs.thresholdDetail.getDetail(this.targetId)
+        setTimeout(async () => {
+          this.getTargetOptionsSearch = ''
+          await this.getTargetOptions()
+        }, 500)
       }
-    }
+    },
+    debounceGetTargetOptions: debounce(async function () {
+      const targetItem = find(this.targetOptions, {
+        option_value: this.targetId
+      })
+      if (targetItem && this.getTargetOptionsSearch !== targetItem.option_text) {
+        return
+      }
+      await this.getTargetOptions()
+    }, 400)
   },
   components: {
     TagShow,
@@ -222,7 +265,7 @@ export default {
 
   .search-input-content {
     display: inline-block;
-    vertical-align: middle; 
+    vertical-align: middle;
   }
   .tag-width {
     cursor: auto;

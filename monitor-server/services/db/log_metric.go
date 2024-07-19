@@ -46,6 +46,10 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 		}
 		result.Config = append(result.Config, &tmpConfig)
 	}
+	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup)
+	if err != nil {
+		err = fmt.Errorf("query db metric config fail,%s ", err.Error())
+	}
 	return
 }
 
@@ -782,6 +786,25 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 			}
 		}
 	}
+	for _, dbConfig := range param.DBConfig {
+		tmpDBMetricGuid := fmt.Sprintf("%s__%s", dbConfig.Metric, dbConfig.ServiceGroup)
+		if tmpMetric, existFlag := serviceGroupMetricMap[tmpDBMetricGuid]; existFlag {
+			err = fmt.Errorf("Metric: %s duplicate ", tmpMetric)
+			return
+		}
+		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getCreateDBMetricMonitorByImport(dbConfig, nowTime, operator)
+		if tmpErr != nil {
+			err = tmpErr
+			return
+		}
+		actions = append(actions, tmpActions...)
+		for _, v := range tmpAffectHosts {
+			affectHostMap[v] = 1
+		}
+		for _, v := range tmpAffectEndpointGroup {
+			affectEndpointGroupMap[v] = 1
+		}
+	}
 	var affectHostList, affectEndpointGroupList []string
 	for k, _ := range affectHostMap {
 		affectHostList = append(affectHostList, k)
@@ -926,6 +949,11 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			actions = append(actions, tmpActions...)
 		}
 	}
+	return
+}
+
+func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTime, operator string) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
+	actions = getCreateDBMetricActions(inputObj, operator, nowTime)
 	return
 }
 
@@ -1329,8 +1357,18 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 
 func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, affectEndpointGroup []string) {
 	alarmMetricGuid := fmt.Sprintf("%s__%s", metric, serviceGroup)
+	tmpActions, tmpEndpointGroups := getMetricComparisonDeleteAction(alarmMetricGuid)
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroups...)
+	tmpActions, tmpEndpointGroups = getDeleteMetricActions(alarmMetricGuid)
+	actions = append(actions, tmpActions...)
+	affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroups...)
+	return
+}
+
+func getDeleteMetricActions(metricGuid string) (actions []*Action, affectEndpointGroup []string) {
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	x.SQL("select t1.guid,t1.endpoint_group,t2.guid as `condition` from alarm_strategy t1 left join alarm_strategy_metric t2 on t1.guid=t2.alarm_strategy where (t1.metric=? or t2.metric=?)", alarmMetricGuid, alarmMetricGuid).Find(&alarmStrategyTable)
+	x.SQL("select t1.guid,t1.endpoint_group,t2.guid as `condition` from alarm_strategy t1 left join alarm_strategy_metric t2 on t1.guid=t2.alarm_strategy where (t1.metric=? or t2.metric=?)", metricGuid, metricGuid).Find(&alarmStrategyTable)
 	for _, v := range alarmStrategyTable {
 		affectEndpointGroup = append(affectEndpointGroup, v.EndpointGroup)
 	}
@@ -1343,11 +1381,11 @@ func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, 
 			actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where guid=?", Param: []interface{}{row.Condition}})
 		}
 	}
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?))", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?)", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where metric=? and service_group=?)", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric=? and service_group=?", Param: []interface{}{metric, serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?))", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?)", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where metric_guid=?)", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric_guid=?", Param: []interface{}{metricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{metricGuid}})
 	return
 }
 
@@ -1376,7 +1414,13 @@ func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGro
 					logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, tmpLogMetricParamObj)
 				}
 				for _, tplMetric := range tmpTemplateObj.MetricList {
-					logMetricGroupData.MetricList = append(logMetricGroupData.MetricList, tplMetric.TransToLogMetric())
+					output := tplMetric.TransToLogMetric()
+					if strings.TrimSpace(v.MetricPrefixCode) == "" {
+						output.FullMetric = output.Metric
+					} else {
+						output.FullMetric = fmt.Sprintf("%s_%s", v.MetricPrefixCode, output.Metric)
+					}
+					logMetricGroupData.MetricList = append(logMetricGroupData.MetricList, output)
 				}
 			}
 		} else {
@@ -1425,6 +1469,11 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) == "" {
+			row.FullMetric = row.Metric
+		} else {
+			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
+		}
 		result.MetricList = append(result.MetricList, row)
 	}
 	return

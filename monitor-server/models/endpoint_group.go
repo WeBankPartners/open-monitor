@@ -3,13 +3,15 @@ package models
 import "time"
 
 type EndpointGroupTable struct {
-	Guid         string    `json:"guid" xorm:"guid"`
-	DisplayName  string    `json:"display_name" xorm:"display_name"`
-	Description  string    `json:"description" xorm:"description"`
-	MonitorType  string    `json:"monitor_type" xorm:"monitor_type"`
-	ServiceGroup string    `json:"service_group" xorm:"service_group"`
-	AlarmWindow  string    `json:"alarm_window" xorm:"alarm_window"`
-	UpdateTime   time.Time `json:"update_time" xorm:"update_time"`
+	Guid         string `json:"guid" xorm:"guid"`
+	DisplayName  string `json:"display_name" xorm:"display_name"`
+	Description  string `json:"description" xorm:"description"`
+	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
+	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	AlarmWindow  string `json:"alarm_window" xorm:"alarm_window"`
+	UpdateTime   string `json:"update_time" xorm:"update_time"`
+	CreateUser   string `json:"create_user" xorm:"create_user"`
+	UpdateUser   string `json:"update_user" xorm:"update_user"`
 }
 
 type EndpointGroupRelTable struct {

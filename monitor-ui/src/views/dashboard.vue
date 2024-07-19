@@ -2,7 +2,7 @@
   <div>
     <section v-if="isPlugin">
       <div style="margin: 100px 0;text-align: center;font-size:14px">
-        {{$t('tips.dashboardEmpty')}}
+        {{$t('m_tips_dashboardEmpty')}}
       </div>
     </section>
     <section v-else>
@@ -11,12 +11,12 @@
           <p slot="title">
             {{dash.name}}
           </p>
-          <view-config 
-            v-if="dash.id" 
-            permissionType='view' 
+          <view-config
+            v-if="dash.id"
+            permissionType='view'
             :boardId="dash.id"
             pageType="dashboard"
-           />
+          />
         </Card>
       </template>
     </section>
@@ -44,7 +44,7 @@ export default {
 
       showAlarm: true, // 显示告警信息
       cutsomViewId: null,
-      
+
       dataHome: []
     }
   },
@@ -52,7 +52,7 @@ export default {
     this.getDashboardData()
   },
   methods: {
-    datePick (data) {
+    datePick(data) {
       this.viewCondition.dateRange = data
       this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
@@ -64,22 +64,23 @@ export default {
       }
       this.initPanals()
     },
-    getDashboardData () {
+    getDashboardData() {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
         this.dataHome = responseData
         if (this.dataHome.length === 0) {
           if (window.request) {
             this.isPlugin = true
-          } else {
+          }
+          else {
             this.$router.push({path: 'portal'})
           }
         }
       })
     },
-    initPanals () {
-      let tmp = []
-      this.viewData.forEach((item) => {
-        let params = {
+    initPanals() {
+      const tmp = []
+      this.viewData.forEach(item => {
+        const params = {
           aggregate: item.aggregate || 'none',
           agg_step: item.agg_step || 60,
           time_second: this.viewCondition.timeTnterval,
@@ -89,17 +90,17 @@ export default {
           unit: '',
           data: []
         }
-        item.query.forEach( _ => {
+        item.query.forEach(_ => {
           params.data.push(_)
         })
-        let height = (item.viewConfig.h) * 30
-        let _activeCharts = []
+        const height = (item.viewConfig.h) * 30
+        const _activeCharts = []
         _activeCharts.push({
           style: `height:${height}px;`,
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          chartType: item.chartType                                                     
+          chartType: item.chartType
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -141,7 +142,7 @@ header {
   i {
     margin: 0 4px;
     cursor: pointer;
-  } 
+  }
 }
 .vue-grid-item {
   border-radius: 4px;

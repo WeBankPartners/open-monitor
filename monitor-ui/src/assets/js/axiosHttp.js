@@ -1,7 +1,7 @@
 import axios from 'axios'
 import {baseURL_config} from './baseURL'
 import { getToken } from '@/assets/js/cookies.ts'
-export default function ajax (options) {
+export default function ajax(options) {
   const ajaxObj = {
     method: options.method,
     baseURL: baseURL_config,
@@ -12,7 +12,7 @@ export default function ajax (options) {
     headers: {
       'Content-type': 'application/json;charset=UTF-8',
       'X-Auth-Token': getToken() || null,
-      'Authorization': 'Bearer ' + localStorage.getItem('monitor-accessToken')
+      Authorization: 'Bearer ' + localStorage.getItem('monitor-accessToken')
     },
     // data: JSON.stringify(options.data || '')
     data: JSON.stringify(options.data)

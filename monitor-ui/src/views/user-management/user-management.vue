@@ -5,25 +5,46 @@
 </template>
 
 <script>
-let tableEle = [
-  {title: 'tableKey.name', value: 'name', display: true},
-  {title: 'tableKey.nickname', value: 'display_name', display: true},
-  {title: 'tableKey.email', value: 'email', display: true},
-  {title: 'tableKey.phone', value: 'phone', display: true}, 
+const tableEle = [
   {
-    title: 'tableKey.role',
+    title: 'm_tableKey_name',
+    value: 'name',
+    display: true
+  },
+  {
+    title: 'm_tableKey_nickname',
+    value: 'display_name',
+    display: true
+  },
+  {
+    title: 'm_tableKey_email',
+    value: 'email',
+    display: true
+  },
+  {
+    title: 'm_tableKey_phone',
+    value: 'phone',
+    display: true
+  },
+  {
+    title: 'm_tableKey_role',
     display: true,
     tags: {style: 'width: 300px;'},
-    'render': (item) => {
+    render: item => {
       if (item.role) {
-        let res = item.role.split(',').map((i) => {
-          return {label: i, value: i}
-        })
+        const res = item.role.split(',').map(i => ({
+          label: i,
+          value: i
+        }))
         return res
       }
     }
   },
-  {title: 'tableKey.activeDate', value: 'created_string', display: true}
+  {
+    title: 'm_tableKey_activeDate',
+    value: 'created_string',
+    display: true
+  }
 ]
 export default {
   name: '',
@@ -33,9 +54,19 @@ export default {
         CRUD: this.$root.apiCenter.setup.userManagement.get,
         researchConfig: {
           input_conditions: [
-            {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
+            {
+              value: 'search',
+              type: 'input',
+              placeholder: 'm_placeholder_input',
+              style: ''
+            }],
           btn_group: [
-            {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
+            {
+              btn_name: 'm_button_search',
+              btn_func: 'search',
+              class: 'btn-confirm-f',
+              btn_icon: 'fa fa-search'
+            }
           ],
           filters: {
             search: ''
@@ -43,12 +74,12 @@ export default {
         },
         table: {
           tableData: [],
-          tableEle: tableEle,
+          tableEle,
           // filterMoreBtn: 'filterMoreBtn',
           // primaryKey: 'guid',
           btn: '',
           pagination: this.pagination,
-          handleFloat:true,
+          handleFloat: true,
         },
         pagination: {
           __orders: '',
@@ -59,11 +90,11 @@ export default {
       }
     }
   },
-  mounted () {
+  mounted() {
     this.initData(this.pageConfig.CRUD, this.pageConfig)
   },
   methods: {
-    initData (url= this.pageConfig.CRUD, params) {
+    initData(url= this.pageConfig.CRUD, params) {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
     },
   },
