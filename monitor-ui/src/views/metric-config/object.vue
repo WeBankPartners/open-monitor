@@ -23,6 +23,7 @@
     </Row>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
     <AddGroupDrawer
+      ref="addGroupRef"
       v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
       :monitorType="monitorType"
@@ -31,7 +32,7 @@
       :data="row"
       operator="edit"
       :viewOnly="viewOnly"
-      :isObject="true"
+      fromPage="object"
     ></AddGroupDrawer>
     <YearOverYear
       ref="yearOverYearRef"
@@ -44,7 +45,7 @@
       operator="edit"
       :endpointGroup="endpoint"
       :viewOnly="viewOnly"
-      :isObject="true"
+      fromPage="object"
     ></YearOverYear>
   </div>
 </template>
@@ -279,11 +280,13 @@ export default {
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
+      previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
     }
   },
   async mounted() {
     await this.getEndpointList()
     this.endpoint = this.endpointOptions[0].guid
+    this.previewObject = this.endpointOptions[0]
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
@@ -294,7 +297,8 @@ export default {
       this.metricType = metricType
       this.getList()
     },
-    changeEndpointGroup() {
+    changeEndpointGroup(val) {
+      this.previewObject = this.endpointOptions.find(item => item.guid === val)
       this.getList()
     },
     getList() {
@@ -345,6 +349,10 @@ export default {
       this.viewOnly = viewOnly
       this.row = row
       this.addVisible = true
+      this.$nextTick(() => {
+        const refsItem = this.metricType === 'originalMetrics' ? 'addGroupRef' : 'yearOverYearRef'
+        this.$refs[refsItem]&&this.$refs[refsItem].setPreviewObject(this.previewObject)
+      })
     },
   }
 }
