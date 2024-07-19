@@ -4,13 +4,14 @@
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
-      :title="$t('closeConfirm.title')"
+      :title="$t('m_closeConfirm_title')"
       :mask-closable="false"
       @on-ok="ok"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -20,22 +21,22 @@
 <script>
 const alarmLevelMap = {
   low: {
-    label: "m_low",
-    buttonType: "green"
+    label: 'm_low',
+    buttonType: 'green'
   },
   medium: {
-    label: "m_medium",
-    buttonType: "gold"
+    label: 'm_medium',
+    buttonType: 'gold'
   },
   high: {
-    label: "m_high",
-    buttonType: "red"
+    label: 'm_high',
+    buttonType: 'red'
   }
 }
-import isEmpty from 'lodash/isEmpty';
+import isEmpty from 'lodash/isEmpty'
 export default {
   name: '',
-  data () {
+  data() {
     return {
       columns: [
         {
@@ -43,16 +44,14 @@ export default {
           key: 'alarm_name'
         },
         {
-          title: this.$t('menu.configuration'),
+          title: this.$t('m_menu_configuration'),
           key: 'strategyGroupsInfo',
-          render: (h, params) => {
-            return (
-              <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
-            )
-          }
+          render: (h, params) => (
+            <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+          )
         },
         {
-          title: this.$t('field.endpoint'),
+          title: this.$t('m_field_endpoint'),
           key: 'endpoint'
         },
         {
@@ -62,36 +61,32 @@ export default {
           tooltip: true
         },
         {
-          title: this.$t('tableKey.s_priority'),
+          title: this.$t('m_tableKey_s_priority'),
           key: 's_priority',
           width: 90,
-          render: (h, params) => {
-            return (
-              <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-            )
-          }
+          render: (h, params) => (
+            <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+          )
         },
         {
-          title: this.$t('field.metric'),
+          title: this.$t('m_field_metric'),
           key: 'alarm_metric_list_join'
         },
         {
-          title: this.$t('field.threshold'),
+          title: this.$t('m_field_threshold'),
           key: 'alarm_detail',
           width: 300,
-          render: (h, params) => {
-            return (
-              <Tooltip transfer={true} placement="bottom-start" max-width="300">
-                <div slot="content">
-                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
-                </div>
+          render: (h, params) => (
+            <Tooltip transfer={true} placement="bottom-start" max-width="300">
+              <div slot="content">
                 <div domPropsInnerHTML={params.row.alarm_detail}></div>
-              </Tooltip>
-            )
-          }
+              </div>
+              <div domPropsInnerHTML={params.row.alarm_detail}></div>
+            </Tooltip>
+          )
         },
         {
-          title: this.$t('tableKey.start'),
+          title: this.$t('m_tableKey_start'),
           key: 'start_string',
           width: 170,
         },
@@ -99,62 +94,58 @@ export default {
           title: this.$t('m_remark'),
           key: 'custom_message',
           width: 120,
-          render: (h, params) => {
-            return(
-              <div>{params.row.custom_message || '-'}</div>
-            )
-          }
+          render: (h, params) => (
+            <div>{params.row.custom_message || '-'}</div>
+          )
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 160,
           align: 'left',
           fixed: 'right',
-          render: (h, params) => {
-            return (
-              <div style="text-align: left; cursor: pointer;display: inline-flex;">
-              <Tooltip content={this.$t('button.view')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={() => this.goToEndpointView(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="ios-stats" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-                <Tooltip content={this.$t('close')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="error"
-                    onClick={() => this.deleteConfirmModal(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-eye-off" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-                <Tooltip content={this.$t('m_remark')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="warning"
-                    onClick={() => this.remarkModal(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-pricetags" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-              </div>
-            )
-          }
+          render: (h, params) => (
+            <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Tooltip content={this.$t('m_button_view')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => this.goToEndpointView(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="ios-stats" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip content={this.$t('close')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="error"
+                  onClick={() => this.deleteConfirmModal(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="md-eye-off" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip content={this.$t('m_remark')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="warning"
+                  onClick={() => this.remarkModal(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="md-pricetags" size="16"></Icon>
+                </Button>
+              </Tooltip>
+            </div>
+          )
         }
       ],
       tableData: [],
       isShowWarning: false,
       selectedData: '',
       strategyNameMaps: {
-        "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        endpointGroup: 'm_base_group',
+        serviceGroup: 'm_field_resourceLevel'
       }
     }
   },
@@ -164,18 +155,16 @@ export default {
     changeResultData(dataList) {
       if (dataList && !isEmpty(dataList)) {
         dataList.forEach(item => {
-          item.strategyGroupsInfo = '-';
-          item.alarm_metric_list_join = '-';
+          item.strategyGroupsInfo = '-'
+          item.alarm_metric_list_join = '-'
           if (!isEmpty(item.strategy_groups)) {
-            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
-              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
-            }, '')
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur) => res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> ', '')
           }
 
           if (!isEmpty(item.alarm_metric_list)) {
             item.alarm_metric_list_join = item.alarm_metric_list.join(',')
           }
-        });
+        })
       }
       return dataList
     },
@@ -185,7 +174,7 @@ export default {
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
       this.tableData = this.changeResultData(resultData)
     },
-    goToEndpointView (alarmItem) {
+    goToEndpointView(alarmItem) {
       const endpointObject = {
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split('_').slice(-1)[0]
@@ -194,21 +183,21 @@ export default {
       const news = this.$router.resolve({name: 'endpointView'})
       window.open(news.href, '_blank')
     },
-    remarkModal (item) {
+    remarkModal(item) {
       this.$parent.remarkModal(item)
     },
-    deleteConfirmModal (rowData) {
+    deleteConfirmModal(rowData) {
       this.selectedData = rowData
       this.isShowWarning = true
     },
-    ok () {
+    ok() {
       this.removeAlarm(this.selectedData)
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
     removeAlarm(alarmItem) {
-      let params = {
+      const params = {
         id: alarmItem.id,
         custom: true
       }
