@@ -41,7 +41,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
-			) t5 ORDER BY t5.guid LIMIT ?,?`
+			) t5 ORDER BY t5.update_time DESC LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
 			SELECT t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
 			SELECT t1.guid,t2.endpoint_group,t1.monitor_type as type,t1.tags FROM endpoint_new t1 
@@ -576,7 +576,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
 	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
-		if query.Endpoint == "" && len(endpointList) == 0 {
+		if query.Endpoint == "" && len(endpointFilterList) == 0 {
 			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
 					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
@@ -974,12 +974,19 @@ func getLastFromExpr(expr string) string {
 	return last
 }
 
-func CloseAlarm(param m.AlarmCloseParam) (err error) {
+func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
 	if param.Priority != "" {
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
-	} else if param.Metric != "" {
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
+	} else if len(param.Metric) > 0 {
+		filterSql, filterParam := createListParams(param.Metric, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
+	} else if len(param.Endpoint) > 0 {
+		filterSql, filterParam := createListParams(param.Endpoint, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and endpoint in ("+filterSql+")", filterParam...).Find(&alarmRows)
+	} else if len(param.AlarmName) > 0 {
+		filterSql, filterParam := createListParams(param.AlarmName, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and alarm_name in ("+filterSql+")", filterParam...).Find(&alarmRows)
 	} else {
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
@@ -987,7 +994,6 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
 		return
 	}
-	var actions []*Action
 	for _, v := range alarmRows {
 		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
 		if v.SMetric == "log_monitor" {
@@ -996,9 +1002,6 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
-	}
-	if len(actions) > 0 {
-		err = Transaction(actions)
 	}
 	return
 }
@@ -1234,9 +1237,16 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	return result
 }
 
-func CloseOpenAlarm(param m.AlarmCloseParam) error {
+func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var query []*m.OpenAlarmObj
-	if strings.ToLower(param.Metric) == "custom" && param.Id == 0 {
+	containsCustomMetric := false
+	for _, v := range param.Metric {
+		if strings.ToLower(v) == "custom" {
+			containsCustomMetric = true
+			break
+		}
+	}
+	if containsCustomMetric && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
 	} else if param.Priority != "" {
 		var levelFilterSql string
@@ -1252,9 +1262,8 @@ func CloseOpenAlarm(param m.AlarmCloseParam) error {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
 	if len(query) == 0 {
-		return nil
+		return
 	}
-	var err error
 	for _, v := range query {
 		subQueryList := []*m.OpenAlarmObj{}
 		err = x.SQL("SELECT id FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=?", v.AlertIp, v.AlertTitle, v.AlertObj).Find(&subQueryList)
@@ -1264,16 +1273,17 @@ func CloseOpenAlarm(param m.AlarmCloseParam) error {
 				tmpIds += fmt.Sprintf("%d,", vv.Id)
 			}
 			tmpIds = tmpIds[:len(tmpIds)-1]
-			_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
-			if err != nil {
-				log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
-			}
+			actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds), Param: []interface{}{}})
+			//_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
+			//if err != nil {
+			//	log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
+			//}
 		}
 		if err != nil {
 			break
 		}
 	}
-	return err
+	return
 }
 
 func UpdateTplAction(tplId int, user, role []int, extraMail, extraPhone []string) error {
