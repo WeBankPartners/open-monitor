@@ -2,25 +2,25 @@
   <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
     <div class="logo" @click="routerChange">
       <img src="../assets/logo.png" />
-      <span>{{$t('menu.systemName')}}</span>
+      <span>{{$t('m_menu_systemName')}}</span>
     </div>
     <Submenu name>
       <template slot="title">
         <i class="fa fa-line-chart" aria-hidden="true"></i>
-        {{$t("menu.view")}}
+        {{$t("m_menu_view")}}
       </template>
-      <MenuItem name="endpointView">{{$t("menu.endpointView")}}</MenuItem>
-      <!-- <MenuItem name="systemMonitoring">{{$t("menu.systemMonitoring")}}</MenuItem> -->
-      <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
-      <MenuItem name="viewConfigIndex">{{$t("menu.screenConfiguration")}}</MenuItem>
+      <MenuItem name="endpointView">{{$t("m_menu_endpointView")}}</MenuItem>
+      <!-- <MenuItem name="systemMonitoring">{{$t("m_menu_systemMonitoring")}}</MenuItem> -->
+      <MenuItem name="metricConfig">{{$t("m_menu_metricConfiguration")}}</MenuItem>
+      <MenuItem name="viewConfigIndex">{{$t("m_menu_screenConfiguration")}}</MenuItem>
     </Submenu>
     <MenuItem name="monitorConfigIndex">
       <i class="fa fa-gears" aria-hidden="true"></i>
-      {{$t("menu.configuration")}}
+      {{$t("m_menu_configuration")}}
     </MenuItem>
     <MenuItem name="alarmManagement">
       <i class="fa fa-bell" aria-hidden="true"></i>
-      {{$t("menu.alert")}}
+      {{$t("m_menu_alert")}}
     </MenuItem>
     <div>
     </div>
@@ -34,13 +34,13 @@
         <DropdownMenu slot="list">
           <DropdownItem style="width:110px">
             <span @click="changeTheme">
-              <a>{{$t('title.theme')}}:</a>
-              <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" ></div>
+              <a>{{$t('m_title_theme')}}:</a>
+              <div class="set-theme" :style="{background: !defaultTheme ? 'white' : 'black'}" ></div>
             </span>
           </DropdownItem>
           <DropdownItem style="width:110px">
             <span @click="setUp">
-              <a>{{$t('title.setUp')}}:</a>
+              <a>{{$t('m_title_setUp')}}:</a>
               <div class="set-theme">
                 <i class="fa fa-cog" aria-hidden="true"></i>
               </div>
@@ -48,14 +48,14 @@
           </DropdownItem>
           <DropdownItem style="width:110px;">
             <span @click="logout">
-              <a>{{$t('button.Logout')}}:</a>
+              <a>{{$t('m_button_Logout')}}:</a>
               <div class="set-theme">
                 <i class="fa fa-sign-out" aria-hidden="true"></i>
               </div>
             </span>
           </DropdownItem>
         </DropdownMenu>
-      </Dropdown> 
+      </Dropdown>
     </div>
     <div class="menu-right">
       <Dropdown @on-click="changeLang">
@@ -66,105 +66,117 @@
         <DropdownMenu slot="list">
           <template v-for="(langItem, langIndex) in lang">
             <DropdownItem
-              :selected="langItem.label===activeLang"
+              :selected="langItem.label === activeLang"
               :name="langItem.label"
               :key="langIndex"
             >{{langItem.label}}</DropdownItem>
           </template>
         </DropdownMenu>
-      </Dropdown> 
+      </Dropdown>
     </div>
   </Menu>
 </template>
 <script>
 import { getToken, removeToken} from '@/assets/js/cookies.ts'
 import axios from 'axios'
-import '@/assets/theme/dark/styls.less';
-import '@/assets/theme/default/styls.less';
+import '@/assets/theme/dark/styls.less'
+import '@/assets/theme/default/styls.less'
 export default {
   data() {
     return {
-      theme1: "dark",
+      theme1: 'dark',
       defaultTheme: false,
-      activeName: "",
-      activeLang: "",
+      activeName: '',
+      activeLang: '',
       langConfig: {
-        "zh-CN": "中文",
-        "en-US": "English"
+        'zh-CN': '中文',
+        'en-US': 'English'
       },
-      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }],
+      lang: [{
+        label: '中文',
+        value: 'zh-CN'
+      }, {
+        label: 'English',
+        value: 'en-US'
+      }],
       username: localStorage.getItem('username')
-    };
+    }
   },
   created(){
     if (localStorage.getItem('theme')) {
       document.body.className = localStorage.getItem('theme')
       this.defaultTheme = false
-    } else {
+    }
+    else {
       document.body.className = ''
       this.defaultTheme = true
     }
     // document.body.className = localStorage.getItem('theme') ? localStorage.getItem('theme'): ''
   },
   mounted() {
-    if (this.langConfig[localStorage.getItem("lang")] === undefined) {
+    if (this.langConfig[localStorage.getItem('lang')] === undefined) {
       this.activeLang = this.langConfig[
         navigator.language || navigator.userLanguage
-      ];
+      ]
       this.setLocale(
-        navigator.language || navigator.userLanguage === "zh-CN"
-          ? "zh-CN"
-          : "en-US"
-      );
-    } else {
-      this.activeLang = this.langConfig[localStorage.getItem("lang")];
+        navigator.language || navigator.userLanguage === 'zh-CN'
+          ? 'zh-CN'
+          : 'en-US'
+      )
+    }
+    else {
+      this.activeLang = this.langConfig[localStorage.getItem('lang')]
     }
   },
   methods: {
     changeLang(name) {
-      this.activeLang = name;
-      let lang = name === "English" ? "en-US" : "zh-CN";
-      this.setLocale(lang);
+      this.activeLang = name
+      const lang = name === 'English' ? 'en-US' : 'zh-CN'
+      this.setLocale(lang)
     },
     setLocale(lang) {
-      localStorage.setItem("lang", lang);
-      this.$i18n.locale = lang;
-      this.$validator.locale = lang;
+      localStorage.setItem('lang', lang)
+      this.$i18n.locale = lang
+      this.$validator.locale = lang
     },
     routerChange() {
-      if (this.$route.name === "dashboard") return;
-      this.$router.push({ name: "dashboard" });
+      if (this.$route.name === 'dashboard') {
+        return
+      }
+      this.$router.push({ name: 'dashboard' })
     },
     menuChange(name) {
-      this.activeName = name;
-      if (this.$route.name === name) return;
-      this.$router.push({ name: name });
+      this.activeName = name
+      if (this.$route.name === name) {
+        return
+      }
+      this.$router.push({ name })
     },
-    changeTheme () {
+    changeTheme() {
       const theme = localStorage.getItem('theme') ? '' : 'dark'
       localStorage.setItem('theme', theme)
       document.body.className = theme
       this.defaultTheme = !this.defaultTheme
     },
-    setUp () {
+    setUp() {
       this.$router.push({path: '/userConfigIndex/userInformationModify'})
     },
-    logout () {
-      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/monitor/logout'
+    logout() {
+      const url = require('../../src/assets/js/baseURL').baseURL_config + '/monitor/logout'
       axios({
         method: 'GET',
-        url: url,
+        url,
         headers: {
           'X-Auth-Token': getToken() || null
         }
       }).then(() => {
-          removeToken()
-          localStorage.removeItem('username')
-          this.$router.push({path: 'login'})
+        removeToken()
+        localStorage.removeItem('username')
+        this.$router.push({path: 'login'})
       })
     }
   }
-};
+}
 </script>
 <style lang="less" scoped>
 .ivu-menu-dark {

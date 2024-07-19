@@ -4,32 +4,32 @@
       <div class="search-container">
         <div>
           <div class="search-zone">
-            <span class="params-title">{{$t('field.relativeTime')}}：</span>
+            <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
             <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
               <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
           <div class="search-zone">
-            <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-            <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="refreshInterval" :placeholder="$t('placeholder.refresh')">
+            <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+            <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="refreshInterval" :placeholder="$t('m_placeholder_refresh')">
               <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
           <div class="search-zone">
-            <span class="params-title">{{$t('field.timeInterval')}}：</span>
-            <DatePicker 
-              type="datetimerange" 
-              :value="viewCondition.dateRange" 
+            <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
+            <DatePicker
+              type="datetimerange"
+              :value="viewCondition.dateRange"
               split-panels
-              format="yyyy-MM-dd HH:mm:ss" 
-              placement="bottom-start" 
-              @on-change="datePick" 
-              :placeholder="$t('placeholder.datePicker')" 
-              style="width: 320px">
-            </DatePicker>
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              @on-change="datePick"
+              :placeholder="$t('m_placeholder_datePicker')"
+              style="width: 320px"
+            />
           </div>
           <div class="search-zone">
-            <span class="params-title">{{$t('field.aggType')}}：</span>
+            <span class="params-title">{{$t('m_field_aggType')}}：</span>
             <RadioGroup v-model="viewCondition.agg" @on-change="initPanal" size="small" type="button">
               <Radio label="min">Min</Radio>
               <Radio label="max">Max</Radio>
@@ -57,13 +57,13 @@
   </div>
 </template>
 <script>
-import Vue from 'vue';
-import cloneDeep from 'lodash/cloneDeep';
-import { generateUuid } from "@/assets/js/utils";
-import { readyToDraw } from "@/assets/config/chart-rely"
+import Vue from 'vue'
+import cloneDeep from 'lodash/cloneDeep'
+import { generateUuid } from '@/assets/js/utils'
+import { readyToDraw } from '@/assets/config/chart-rely'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 export default {
-  name: "",
+  name: '',
   data() {
     return {
       viewCondition: {
@@ -72,8 +72,8 @@ export default {
         autoRefresh: 10,
         agg: 'none'
       },
-      dataPick: dataPick,
-      autoRefreshConfig: autoRefreshConfig,
+      dataPick,
+      autoRefreshConfig,
 
       viewData: null,
       panalData: null,
@@ -84,14 +84,14 @@ export default {
       panalUnit: '',
       interval: null,
       allParams: null
-    };
+    }
   },
   created() {
     generateUuid().then(elId => {
-      this.elId = `id_${elId}`;
-    });
+      this.elId = `id_${elId}`
+    })
   },
-  destroyed () {
+  destroyed() {
     clearInterval(this.interval)
   },
   computed: {
@@ -100,37 +100,36 @@ export default {
     }
   },
   methods: {
-    initChart (params) {
-      this.allParams = params;
-      for(let key in this.viewCondition) {
+    initChart(params) {
+      this.allParams = params
+      for (const key in this.viewCondition) {
         Vue.set(this.viewCondition, key, cloneDeep(params.viewCondition[key]))
       }
       if (params.templateData.cfg) {
-        this.panalDataList = JSON.parse(params.templateData.cfg);
-        const temp = this.panalDataList.filter(item => {
-          return item.viewConfig.id === params.panal.id
-        })
+        this.panalDataList = JSON.parse(params.templateData.cfg)
+        const temp = this.panalDataList.filter(item => item.viewConfig.id === params.panal.id)
         this.panalData = temp[0]
         Vue.set(this.viewCondition, 'agg', this.panalData.aggregate)
-        this.initPanal();
-        this.scheduledRequest();
+        this.initPanal()
+        this.scheduledRequest()
       }
     },
     scheduledRequest() {
       if (this.viewCondition.autoRefresh > 0) {
         clearInterval(this.interval)
-        this.interval = setInterval(()=>{
+        this.interval = setInterval(() => {
           this.initPanal()
         },this.viewCondition.autoRefresh*1000)
-      } else {
+      }
+      else {
         clearInterval(this.interval)
       }
     },
     refreshInterval() {
-      this.initPanal();
-      this.scheduledRequest();
+      this.initPanal()
+      this.scheduledRequest()
     },
-    datePick (data) {
+    datePick(data) {
       this.viewCondition.dateRange = data
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
@@ -142,42 +141,52 @@ export default {
       this.initPanal()
     },
     initPanal() {
-      this.panalTitle = this.panalData.panalTitle;
-      this.panalUnit = this.panalData.panalUnit;
-      this.noDataTip = false;
+      this.panalTitle = this.panalData.panalTitle
+      this.panalUnit = this.panalData.panalUnit
+      this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
-        return;
+        return
       }
-      let params = {
+      const params = {
         aggregate: this.viewCondition.agg,
         agg_step: this.panalData.agg_step,
         time_second: this.viewCondition.timeTnterval,
-        start: this.viewCondition.dateRange[0] ===''? 
-          0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,
-          end: this.viewCondition.dateRange[1] ===''? 
-          0 :Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000,
+        start: this.viewCondition.dateRange[0] ===''
+          ?0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,
+        end: this.viewCondition.dateRange[1] ===''
+          ?0 :Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000,
         title: '',
         unit: '',
         data: [],
-        custom_chart_guid: this.panalData.viewConfig.id
+        custom_chart_guid: this.panalData.viewConfig.id,
+        lineType: this.allParams.panal._activeCharts[0].lineType
       }
       this.panalData.query.forEach(item => {
         params.data.push(item)
       })
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
+          'POST',
+          this.$root.apiCenter.metricConfigView.api,
+          params,
           responseData => {
-            responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {title: false, eye: false, clear: true, lineBarSwitch: true, chartType: this.panalData.chartType, params: params}
+            responseData.yaxis.unit = this.panalUnit
+            const chartConfig = {
+              title: false,
+              eye: false,
+              clear: true,
+              lineBarSwitch: true,
+              chartType: this.panalData.chartType,
+              params
+            }
             readyToDraw(this,responseData, 1, chartConfig)
           }
-        );
+        )
       }
     }
   },
   components: {}
-};
+}
 </script>
 
 <style scoped lang="less">

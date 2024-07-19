@@ -17,20 +17,20 @@
           @on-change="getTemplateList"
         ></Input>
         <span style="margin-top: 8px;margin-left: 24px;">
-          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('button.search') }}</Button>
+          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('m_button_search') }}</Button>
           <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
         </span>
       </div>
       <div>
-        <ExportImport 
-        :isShowExportBtn="true"
-        exportUrl="/monitor/api/v2/service/log_metric/log_monitor_template/export"
-        exportMethod="POST"
-        :exportData="exportData"
-        :validateExportDataEmpty="true"
-        :isShowImportBtn="true"
-        uploadUrl="/monitor/api/v2/service/log_metric/log_monitor_template/import"
-        @successCallBack="getTemplateList"
+        <ExportImport
+          :isShowExportBtn="true"
+          exportUrl="/monitor/api/v2/service/log_metric/log_monitor_template/export"
+          exportMethod="POST"
+          :exportData="exportData"
+          :validateExportDataEmpty="true"
+          :isShowImportBtn="true"
+          uploadUrl="/monitor/api/v2/service/log_metric/log_monitor_template/import"
+          @successCallBack="getTemplateList"
         ></ExportImport>
       </div>
     </div>
@@ -62,7 +62,7 @@
                   style="cursor: pointer"
                 />
               </div>
-              <Button slot="extra" type="success" @click.prevent="addTemplate(item.log_type)">{{ $t('button.add') }}</Button>
+              <Button slot="extra" type="success" @click.prevent="addTemplate(item.log_type)">{{ $t('m_button_add') }}</Button>
               <div v-show="!hideRegex.includes(itemIndex)">
                 <Table
                   size="small"
@@ -90,9 +90,10 @@
     <!-- 删除组 -->
     <Modal
       v-model="isShowDeleteWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="confirmDeleteTemplate"
-      @on-cancel="isShowDeleteWarning = false">
+      @on-cancel="isShowDeleteWarning = false"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">{{$t('m_delete_tip')}}: {{ toBeDeleted }}</p>
@@ -104,16 +105,17 @@
       v-model="showServiceGroup"
       :fullscreen="isfullscreen"
       footer-hide
-      :title="$t('field.resourceLevel')">
+      :title="$t('m_field_resourceLevel')"
+    >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('field.resourceLevel')}}
+          {{$t('m_field_resourceLevel')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Input v-model="filterServiceGroup" :placeholder="$t('field.resourceLevel') + $t('tableKey.name')" style="margin-bottom: 12px;"></Input>
-      <div  :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
+      <Input v-model="filterServiceGroup" :placeholder="$t('m_field_resourceLevel') + $t('m_tableKey_name')" style="margin-bottom: 12px;"></Input>
+      <div  :class="isfullscreen ? 'modal-container-fullscreen' : 'modal-container-normal'">
         <template v-if="serviceGroup.length > 0">
           <Tag size="large" v-for="(item, index) in serviceGroup.filter(data => data.display_name.includes(filterServiceGroup))" :key="index">{{ item.display_name }}</Tag>
         </template>
@@ -131,7 +133,7 @@ import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
 
 export default {
-  name: "log-template",
+  name: 'log-template',
   data() {
     return {
       spinShow: false,
@@ -168,51 +170,49 @@ export default {
           key: 'update_user',
         },
         {
-          title: this.$t('title.updateTime'),
+          title: this.$t('m_title_updateTime'),
           key: 'update_time',
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 200,
           align: 'left',
           fixed: 'right',
-          render: (h, params) => {
-            return (
-              <div style="text-align: left; cursor: pointer;display: inline-flex;">
-              <Tooltip content={this.$t('button.edit')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={() => this.editAction(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-create" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-                <Tooltip content={this.$t('m_view_associated')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="warning"
-                    onClick={() => this.viewAction(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-cube" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-                <Tooltip content={this.$t('button.remove')} placement="top" transfer={true}>
-                  <Button
-                    size="small"
-                    type="error"
-                    onClick={() => this.removeAction(params.row)}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
-                </Tooltip>
-              </div>
-            )
-          }
+          render: (h, params) => (
+            <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Tooltip content={this.$t('m_button_edit')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => this.editAction(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip content={this.$t('m_view_associated')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="warning"
+                  onClick={() => this.viewAction(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="md-cube" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip content={this.$t('m_button_remove')} placement="top" transfer={true}>
+                <Button
+                  size="small"
+                  type="error"
+                  onClick={() => this.removeAction(params.row)}
+                  style="margin-right:5px;"
+                >
+                  <Icon type="md-trash" size="16"></Icon>
+                </Button>
+              </Tooltip>
+            </div>
+          )
         }
       ],
       isShowDeleteWarning: false,
@@ -225,78 +225,81 @@ export default {
     }
   },
   computed: {
-    exportData () {
+    exportData() {
       return this.selectedParams.map(p => p.guid)
     }
   },
-  mounted () {
+  mounted() {
     this.getTemplateList()
   },
   methods: {
-    getTemplateList () {
+    getTemplateList() {
       this.spinShow = true
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, (resp) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, resp => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
       })
       this.spinShow = false
     },
-    handleReset () {
+    handleReset() {
       this.searchParams = {
         name: '',
         update_user: ''
       }
       this.getTemplateList()
     },
-    changeRegexTableStatus (index, type) {
+    changeRegexTableStatus(index, type) {
       if (type === 'in') {
         this.hideRegex.push(index)
-      } else if (type === 'out') {
+      }
+      else if (type === 'out') {
         const findIndex = this.hideRegex.findIndex(rIndex => rIndex === index)
         this.hideRegex.splice(findIndex, 1)
       }
     },
     // 添加模版
-    addTemplate (log_type) {
+    addTemplate(log_type) {
       if (log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage()
-      } else {
+      }
+      else {
         this.$refs.standardRegexRef.loadPage()
       }
     },
     // 编辑模版
-    editAction (row) {
+    editAction(row) {
       if (row.log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage(row.guid)
-      } else {
+      }
+      else {
         this.$refs.standardRegexRef.loadPage(row.guid)
       }
     },
     // 查看关联层级对象
-    viewAction (row) {
+    viewAction(row) {
       this.filterServiceGroup = ''
       const api = this.$root.apiCenter.getAffectServiceGroupByGuid + row.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.serviceGroup = resp || []
         this.showServiceGroup = true
       })
     },
     // 删除模版
-    removeAction (row) {
+    removeAction(row) {
       this.toBeDeleted = row.name
       this.toBeDeletedGuid = row.guid
       this.isShowDeleteWarning = true
     },
-    confirmDeleteTemplate () {
-      let api = this.$root.apiCenter.deleteLogTemplate + this.toBeDeletedGuid
+    confirmDeleteTemplate() {
+      const api = this.$root.apiCenter.deleteLogTemplate + this.toBeDeletedGuid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, {}, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getTemplateList()
       })
     },
 
-    //#region 导入导出
-    onSelectAll (selection, tableIndex) {
+    // #region 导入导出
+    onSelectAll(selection, tableIndex) {
       selection.forEach(se => {
         const findIndex = this.selectedParams.findIndex(
           param => param.guid === se.guid && param.tableIndex === tableIndex
@@ -304,27 +307,27 @@ export default {
         if (findIndex === -1) {
           this.selectedParams.push({
             guid: se.guid,
-            tableIndex: tableIndex
+            tableIndex
           })
         }
       })
     },
-    onSelectAllCancel (selection, tableIndex) {
+    onSelectAllCancel(selection, tableIndex) {
       this.selectedParams = this.selectedParams.filter(param => param.tableIndex !== tableIndex)
     },
-    onSelect (selection, row, tableIndex) {
+    onSelect(selection, row, tableIndex) {
       this.selectedParams.push({
         guid: row.guid,
         tableIndex
       })
     },
-    cancelSelect (selection, row, tableIndex) {
+    cancelSelect(selection, row, tableIndex) {
       const findIndex = this.selectedParams.findIndex(
         param => param.guid === row.guid && param.tableIndex === tableIndex
       )
       this.selectedParams.splice(findIndex, 1)
     },
-    //#endregion
+    // #endregion
   },
   components: {
     JsonRegex,

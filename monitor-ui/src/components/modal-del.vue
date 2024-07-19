@@ -23,7 +23,7 @@ export default {
   },
   props: ['ModelDelConfig'],
   methods: {
-    deleteConfirm () {
+    deleteConfirm() {
       this.ModelDelConfig.callback()
       this.ModelDelConfig.deleteWarning = false
     }

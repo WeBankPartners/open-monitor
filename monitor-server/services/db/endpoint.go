@@ -22,13 +22,35 @@ func GetEndpointTypeList() (result []string, err error) {
 	return
 }
 
-func GetEndpointByType(endpointType, serviceGroup string) (result []*models.EndpointNewTable, err error) {
+func GetEndpointByType(endpointType, serviceGroup, endpointGroup, workspace string) (result []*models.EndpointNewTable, err error) {
 	result = []*models.EndpointNewTable{}
 	if serviceGroup != "" {
+		serviceGroupObj, getSGErr := getSimpleServiceGroup(serviceGroup)
+		if getSGErr != nil {
+			err = getSGErr
+			return
+		}
 		serviceGroupList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", endpointType).Find(&result)
+		if err == nil {
+			if workspace == "all_object" {
+				result = append([]*models.EndpointNewTable{{Guid: serviceGroup, Name: serviceGroupObj.DisplayName}}, result...)
+			}
+		}
+	} else if endpointGroup != "" {
+		err = x.SQL("select guid from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&result)
+		if err == nil {
+			if workspace == "all_object" {
+				result = append([]*models.EndpointNewTable{{Guid: endpointGroup, Name: endpointGroup}}, result...)
+			}
+		}
 	} else {
 		err = x.SQL("select guid from endpoint_new where monitor_type=?", endpointType).Find(&result)
+	}
+	for _, v := range result {
+		if v.Name == "" {
+			v.Name = v.Guid
+		}
 	}
 	return
 }
@@ -145,6 +167,10 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	return
 }
 
+func GetAllEndpointIdList() (list []string, err error) {
+	err = x.SQL("select  guid from endpoint_new").Find(&list)
+	return
+}
 func CheckEndpointInAgentManager(guid string) bool {
 	queryRows, _ := x.QueryString("select endpoint_guid from agent_manager where endpoint_guid=?", guid)
 	if len(queryRows) > 0 {
@@ -165,13 +191,13 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 	return err
 }
 
-func UpdateEndpointData(endpoint *models.EndpointNewTable) (err error) {
+func UpdateEndpointData(endpoint *models.EndpointNewTable, operator string) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
 	if endpoint.Ip != "" {
-		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
 		x.Exec("update endpoint set ip=? where guid=?", endpoint.Ip, endpoint.Guid)
 	} else {
-		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
 	}
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
