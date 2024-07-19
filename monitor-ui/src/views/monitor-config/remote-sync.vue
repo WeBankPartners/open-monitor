@@ -17,32 +17,34 @@
             <div>{{ card.update_time }}</div>
           </div>
         </div>
-        <Form ref="formData" :label-width="100">
-          <FormItem>
-            <span slot="label" style="font-size: 14px;">
-              {{ $t('m_http_server') }}：
-            </span>
-            <Tooltip :content="card.address" transfer max-width="300" style="width: 100%;">
-              <div class="text-truncate-">{{ card.address }}</div>
-            </Tooltip>
-          </FormItem>
-        </Form>
-        <div class="card-divider"></div>
-        <div class="card-content-footer">
-          <Button size="small" type="primary" @click.stop="editCard(card)">
-            <Icon type="md-create" />
-          </Button>
-          <Button size="small" type="error" @click.stop="deleteConfirmModal(card)">
-            <Icon type="md-trash" />
-          </Button>
+        <div style="height: 100px">
+          <Form ref="formData" :label-width="100">
+            <FormItem>
+              <span slot="label" style="font-size: 14px;">
+                {{ $t('m_http_server') }}：
+              </span>
+              <Tooltip :content="card.address" transfer max-width="300" style="width: 100%;">
+                <div class="text-truncate-">{{ card.address }}</div>
+              </Tooltip>
+            </FormItem>
+          </Form>
+          <div class="card-divider"></div>
+          <div class="card-content-footer">
+            <Button size="small" type="primary" @click.stop="editCard(card)">
+              <Icon type="md-create" />
+            </Button>
+            <Button size="small" type="error" @click.stop="deleteConfirmModal(card)">
+              <Icon type="md-trash" />
+            </Button>
+          </div>
         </div>
       </Card>
-      <Card style="margin: 8px;width: 390px;display: inline-block;vertical-align: top;height: 190px;">
-        <p slot="title">
-          {{$t('m_button_add')}}
-        </p>
-        <div style="margin:32px;text-align:center">
-          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer" :color="'#2d8cf0'" />
+      <Card style="margin: 8px;width: 390px;display: inline-block;vertical-align: top;">
+        <div slot="title" class="panal-title">
+          <h5 class="ellipsis-text">{{$t('m_button_add')}}</h5>
+        </div>
+        <div style="height: 100px;text-align:center;">
+          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer;margin-top:32px" :color="'#2d8cf0'" />
         </div>
       </Card>
     </div>
