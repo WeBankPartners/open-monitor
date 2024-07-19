@@ -3,9 +3,9 @@
     <div style="margin-right:16px;display:inline-block;">
       <Form :label-width="100" inline>
         <div>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('m_field_type')">
             <Select filterable v-model="monitorType" @on-clear="clearEndpointType" @on-change="changeEndpointType" style="width:300px">
-              <Option v-for="type in monitorTypeOptions" :value="type" :key="type">{{ type }}</Option>
+              <Option v-for="type in monitorTypeOptions" :value="type" :label="type" :key="type">{{ type }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -16,8 +16,8 @@
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
               <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
-                  <Button icon="md-trash" @click="deletePanel(panel)" type="error" size="small"></Button>
-                </span>
+                <Button icon="md-trash" @click="deletePanel(panel)" type="error" size="small"></Button>
+              </span>
                 <span style="float:right">
                   <Button icon="md-create" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
                 </span>
@@ -30,8 +30,8 @@
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
               <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
-                  <Button icon="md-trash" type="error" @click="deleteGraph(graph)" size="small"></Button>
-                </span>
+                <Button icon="md-trash" type="error" @click="deleteGraph(graph)" size="small"></Button>
+              </span>
               </Option>
             </Select>
           </FormItem>
@@ -44,19 +44,19 @@
           <FormItem :label="$t('m_graph_name')">
             <Input v-model="graphConfig.graphName" style="width: 300px"></Input>
           </FormItem>
-          <FormItem :label="$t('field.unit')">
+          <FormItem :label="$t('m_field_unit')">
             <Input v-model="graphConfig.unit"  style="width: 300px" />
           </FormItem>
         </div>
         <div>
-          <FormItem :label="$t('field.legend')">
+          <FormItem :label="$t('m_field_legend')">
             <Select filterable clearable allow-create v-model="graphConfig.legend" @on-create="handleCreateLegend" :placeholder="$t('m_legend_tips')" style="width: 300px">
-              <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              <Option v-for="item in legendOptions" :value="item.value" :label="item.label" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
-          <FormItem :label="$t('field.metric')">
+          <FormItem :label="$t('m_field_metric')">
             <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
-              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
+              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :label="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -68,7 +68,7 @@
       </div>
       <div style="width:900px;text-align:center;margin-top:24px">
         <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveConfig')}}</button>
+        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</button>
       </div>
     </div>
     <Modal
@@ -76,11 +76,12 @@
       :mask-closable="false"
       @on-ok="checkEndpoint"
       @on-cancel="metricConfigData.endpoint = ''"
-      :title="$t('m_select_endpoint')">
+      :title="$t('m_select_endpoint')"
+    >
       <Form :label-width="80">
         <FormItem :label="$t('m_endpoint')">
           <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
-            <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+            <Option v-for="item in endpointOptions" :value="item.guid" :label="item.guid" :key="item.guid">{{ item.guid }}</Option>
           </Select>
         </FormItem>
       </Form>
@@ -90,21 +91,23 @@
       :mask-closable="false"
       @on-ok="saveTitle"
       @on-cancel="titleManagement.title = ''"
-      :title="titleManagement.isAdd ? $t('button.add') : $t('button.edit')">
+      :title="titleManagement.isAdd ? $t('m_button_add') : $t('m_button_edit')"
+    >
       <Form :label-width="80">
-        <FormItem :label="$t('field.title')">
+        <FormItem :label="$t('m_field_title')">
           <Input v-model="titleManagement.title"/>
         </FormItem>
       </Form>
     </Modal>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
-      @on-cancel="cancel">
+      @on-cancel="cancel"
+    >
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -140,9 +143,18 @@ export default {
       showEndpointSelect: false,
       endpointOptions: [],
       legendOptions: [
-        {label: '指标名称+对象+标签', value: '$custom_all'},
-        {label: '指标名称+标签', value: '$custom_metric'},
-        {label: '指标名称', value: '$metric'}
+        {
+          label: '指标名称+对象+标签',
+          value: '$custom_all'
+        },
+        {
+          label: '指标名称+标签',
+          value: '$custom_metric'
+        },
+        {
+          label: '指标名称',
+          value: '$metric'
+        }
       ],
       selectdPanel: '',
       panelOptions: [],
@@ -158,12 +170,13 @@ export default {
       showGraphConfig: false, // 指标配置区
 
       titleManagement: {
-        show:false,
+        show: false,
         isAdd: true,
         type: '',
         id: '',
         title: '',
-      }
+      },
+      originalMetricsId: ''
     }
   },
   mounted() {
@@ -171,15 +184,15 @@ export default {
     this.getEndpointType()
   },
   methods: {
-    configMetric () {
+    configMetric() {
       this.clearData()
       this.changeGraph('')
       this.getMetricOptions()
     },
-    changeEndpointType () {
+    changeEndpointType() {
       this.configMetric()
     },
-     getMetricOptions () {
+    getMetricOptions() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
@@ -189,7 +202,7 @@ export default {
         this.metricOptions = responseData
       }, {isNeedloading: false})
     },
-    clearEndpointType () {
+    clearEndpointType() {
       this.metricConfigData = {
         guid: null,
         metric: '',
@@ -200,59 +213,63 @@ export default {
       }
       this.isRequestChartData = false
     },
-    handleCreateLegend (val) {
+    handleCreateLegend(val) {
       const exist = this.legendOptions.find(el => el.value === val)
       if (!exist) {
-        this.legendOptions.push({label: val, value: val})
+        this.legendOptions.push({
+          label: val,
+          value: val
+        })
       }
     },
-    ok () {
+    ok() {
       this[this.deleteConfirm.method](this.deleteConfirm.id)
     },
-    cancel () {
+    cancel() {
       this.isShowWarning = false
     },
-    changePanel () {
+    changePanel() {
       this.showGraphConfig =false
       this.selectdGraph = ''
       this.changeGraph('')
     },
-    changeGraph (val) {
+    changeGraph(val) {
       if (val) {
         this.editGraph(val)
-      } else {
+      }
+      else {
         this.showGraphConfig = false
       }
     },
-    addPanel (type) {
+    addPanel(type) {
       this.titleManagement.show = true
       this.titleManagement.isAdd = true
       this.titleManagement.type = type
       this.titleManagement.title = ''
       this.$refs.selectdPanel.visible = false
     },
-    editPanel (type, item) {
+    editPanel(type, item) {
       this.titleManagement.show = true
       this.titleManagement.isAdd = false
       this.titleManagement.type = type
       this.titleManagement.title = item.title
       this.titleManagement.id = item.id
     },
-    deletePanel (item) {
+    deletePanel(item) {
       this.deleteConfirm.id = item.id
       this.deleteConfirm.method = 'removePanel'
       this.isShowWarning = true
     },
-    removePanel (id) {
+    removePanel(id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectdPanel = ''
         this.$root.$eventBus.$emit('hideConfirmModal')
       })
     },
-    addGraph () {
+    addGraph() {
       this.selectdGraph = ''
-      this.$nextTick( () => {
+      this.$nextTick(() => {
         this.graphConfig.id = ''
         this.graphConfig.graphName = ''
         this.graphConfig.unit = ''
@@ -262,7 +279,7 @@ export default {
         this.showGraphConfig = true
       })
     },
-    editGraph (id) {
+    editGraph(id) {
       this.showGraphConfig = true
       const graph = this.graphOptions.find(el => el.id === id)
       this.graphConfig.id = id
@@ -272,45 +289,49 @@ export default {
       this.graphConfig.legend = graph.legend
       const exist = this.legendOptions.find(el => el.value === graph.legend)
       if (!exist) {
-        this.legendOptions.push({label: graph.legend, value: graph.legend})
+        this.legendOptions.push({
+          label: graph.legend,
+          value: graph.legend
+        })
       }
     },
-    deleteGraph (item) {
+    deleteGraph(item) {
       this.deleteConfirm.id = item.id
       this.deleteConfirm.method = 'removeGraph'
       this.isShowWarning = true
     },
-    removeGraph (id) {
+    removeGraph(id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectMetrc = ''
       })
     },
-    saveTitle () {
+    saveTitle() {
       if (this.titleManagement.type === 'panel') {
         if (this.titleManagement.isAdd) {
-          let params = {
+          const params = {
             title: this.titleManagement.title,
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
-        } else {
-          let params = {
+        }
+        else {
+          const params = {
             id: this.titleManagement.id,
             title: this.titleManagement.title,
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.addPanel, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
         }
         this.selectdPanel = ''
       }
     },
-    saveGraphMetric () {
-      let params = {
+    saveGraphMetric() {
+      const params = {
         metric: this.graphConfig.metric.join('^'),
         title: this.graphConfig.graphName,
         unit: this.graphConfig.unit,
@@ -320,16 +341,17 @@ export default {
       }
       if (this.selectdGraph) {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
-      } else {
+      }
+      else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
       }
     },
-    getGraphInfo () {
+    getGraphInfo() {
       const params = {
         groupId: this.selectdPanel
       }
@@ -337,7 +359,7 @@ export default {
         this.graphOptions = responseData
       }, {isNeedloading: false})
     },
-    getPanelinfo () {
+    getPanelinfo() {
       const params = {
         monitorType: this.monitorType,
         serviceGroup: this.serviceGroup
@@ -346,11 +368,11 @@ export default {
         this.panelOptions = responseData
       }, {isNeedloading: false})
     },
-    async getDispalyChartData () {
-      generateUuid().then((elId)=>{
-        this.displayGroupElId =  `id_${elId}`
+    async getDispalyChartData() {
+      generateUuid().then(elId => {
+        this.displayGroupElId = `id_${elId}`
       })
-      let params = {
+      const params = {
         aggregate: 'none',
         time_second: -1800,
         start: 0,
@@ -364,20 +386,24 @@ export default {
         params.data.push({
           endpoint: find.guid,
           prom_expr: '',
-          metric: metric
+          metric
         })
       })
       this.isRequestChartData = true
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {
+          eye: false,
+          clear: true,
+          lineBarSwitch: true
+        }
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
       }, {isNeedloading: false})
     },
-    checkEndpoint () {
+    checkEndpoint() {
       this.getDispalyChartData()
     },
-    getEndpoint () {
+    getEndpoint() {
       this.metricConfigData.endpoint = ''
       const params = {
         type: this.monitorType,
@@ -389,15 +415,15 @@ export default {
         this.showEndpointSelect = true
       })
     },
-    preview () {
+    preview() {
       this.getEndpoint()
     },
-    getEndpointType () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', (responseData) => {
+    getEndpointType() {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData
       }, {isNeedloading: false})
     },
-    clearData () {
+    clearData() {
       this.endpoint = ''
       this.isRequestChartData = false
       this.selectdPanel = ''

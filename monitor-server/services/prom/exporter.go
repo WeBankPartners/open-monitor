@@ -12,12 +12,13 @@ import (
 
 func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) {
 	var strList []string
-	resp, err := http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
+	httpClient := http.Client{Timeout: 3 * time.Second}
+	resp, err := httpClient.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 	if err != nil {
 		var tmpErr error
-		for i := 0; i < 3; i++ {
-			time.Sleep(10 * time.Second)
-			resp, tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
+		for i := 0; i < 2; i++ {
+			time.Sleep(1 * time.Second)
+			resp, tmpErr = httpClient.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 			if tmpErr == nil {
 				break
 			}

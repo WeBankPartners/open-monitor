@@ -123,7 +123,7 @@ func ExportAgentNew(c *gin.Context) {
 		}
 		if action == "register" {
 			param.Tags = v.Tags
-			validateMessage, endpointGuid, inputErr = AgentRegister(param)
+			validateMessage, endpointGuid, inputErr = AgentRegister(param, mid.GetOperateUser(c))
 			if validateMessage != "" {
 				validateMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, validateMessage)
 			}
@@ -142,7 +142,7 @@ func ExportAgentNew(c *gin.Context) {
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
 				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
-				inputErr = DeregisterJob(endpointObj)
+				inputErr = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 				endpointGuid = endpointObj.Guid
 			}
 		}
@@ -347,7 +347,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 			return
 		}
 		for _, input := range param.Inputs {
-			subResult, subError := updateProcessNew(input, operation)
+			subResult, subError := updateProcessNew(input, operation, mid.GetOperateUser(c))
 			results = append(results, subResult)
 			if subError != nil {
 				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
@@ -359,7 +359,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 	}
 }
 
-func updateProcessNew(input processRequestObj, operation string) (result processResultOutputObj, err error) {
+func updateProcessNew(input processRequestObj, operation, operator string) (result processResultOutputObj, err error) {
 	result.Guid = input.Guid
 	result.CallbackParameter = input.CallbackParameter
 	defer func() {
@@ -385,7 +385,7 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 	}
 	if operation == "add" {
 		registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
-		validateMessage, guid, tmpErr := AgentRegister(registerParam)
+		validateMessage, guid, tmpErr := AgentRegister(registerParam, operator)
 		if validateMessage != "" {
 			return result, fmt.Errorf("Param validate error,%s ", validateMessage)
 		}
@@ -394,13 +394,13 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 		}
 		result.Guid = input.Guid
 		result.MonitorKey = guid
-	}else if operation == "delete" {
+	} else if operation == "delete" {
 		tmpEndpointObj := m.EndpointTable{Ip: input.HostIp, Name: input.DisplayName, ExportType: "process"}
 		db.GetEndpoint(&tmpEndpointObj)
 		if tmpEndpointObj.Guid == "" {
 			return
 		}
-		err = DeregisterJob(tmpEndpointObj)
+		err = DeregisterJob(tmpEndpointObj, operator)
 		return
 	}
 	return

@@ -200,8 +200,14 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		result.Guid = param.Labels["guid"]
 	} else if param.Labels["e_guid"] != "" {
 		result.Guid = param.Labels["e_guid"]
-	} else if param.Labels["instance"] != "" {
+	} else if param.Labels["instance"] != "" && param.Labels["instance"] != "127.0.0.1:8181" {
 		result.AgentAddress = param.Labels["instance"]
+		//if result.AgentAddress == "127.0.0.1:8181" {
+		//	if param.Labels["service_group"] != "" {
+		//		result = m.EndpointNewTable{Guid: "sg__" + param.Labels["service_group"]}
+		//		return
+		//	}
+		//}
 		if strings.Contains(result.AgentAddress, "9100") {
 			result.MonitorType = "host"
 		}
@@ -342,14 +348,28 @@ func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj, param *m.AMRespAlert) (exist
 }
 
 func GetHistoryAlarm(c *gin.Context) {
-	endpointId, err := strconv.Atoi(c.Query("id"))
-	if err != nil {
-		mid.ReturnParamTypeError(c, "id", "int")
-		return
-	}
+	idParam := c.Query("id")
+	var err error
 	var ids []string
 	var startTime, endTime time.Time
-	if endpointId < 0 {
+	endpointId, _ := strconv.Atoi(idParam)
+	if endpointId > 0 {
+		endpointObj := m.EndpointTable{Id: endpointId}
+		err = db.GetEndpoint(&endpointObj)
+		if err != nil || endpointObj.Guid == "" {
+			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint id:%d fetch data fail", endpointId))
+			return
+		}
+		ids = append(ids, endpointObj.Guid)
+	} else if idParam != "" {
+		endpointObj := m.EndpointTable{Guid: idParam}
+		err = db.GetEndpoint(&endpointObj)
+		if err != nil || endpointObj.Guid == "" {
+			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint guid:%d fetch data fail", idParam))
+			return
+		}
+		ids = append(ids, endpointObj.Guid)
+	} else {
 		guid := c.Query("guid")
 		if guid == "" {
 			mid.ReturnValidateError(c, "Param guid can not empty when id<0 ")
@@ -361,14 +381,6 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 		ids = recursiveHistoryEndpoint(&recursiveObj)
-	} else {
-		endpointObj := m.EndpointTable{Id: endpointId}
-		err = db.GetEndpoint(&endpointObj)
-		if err != nil || endpointObj.Guid == "" {
-			mid.ReturnValidateError(c, fmt.Sprintf("Endpoint id:%d fetch data fail", endpointId))
-			return
-		}
-		ids = append(ids, endpointObj.Guid)
 	}
 	start := c.Query("start")
 	end := c.Query("end")
@@ -413,7 +425,7 @@ func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) 
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, true, false, []string{})
+	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{})
 	return err, data
 }
 
@@ -452,6 +464,28 @@ func recursiveHistoryEndpoint(input *m.RecursivePanelObj) []string {
 	return endpoints
 }
 
+func GetProblemAlarmOptions(c *gin.Context) {
+	var err error
+	var data = &m.ProblemAlarmOptions{
+		EndpointList:  []string{},
+		MetricList:    []string{},
+		AlarmNameList: []string{},
+	}
+	if data.AlarmNameList, err = db.GetAlarmStrategyNameList(); err != nil {
+		mid.ReturnServerHandleError(c, err)
+		return
+	}
+	if data.EndpointList, err = db.GetAllEndpointIdList(); err != nil {
+		mid.ReturnServerHandleError(c, err)
+		return
+	}
+	if data.MetricList, err = db.GetAllMetricNameList(); err != nil {
+		mid.ReturnServerHandleError(c, err)
+		return
+	}
+	mid.ReturnSuccessData(c, data)
+}
+
 func GetProblemAlarm(c *gin.Context) {
 	filters := c.QueryArray("filter[]")
 	query := m.AlarmTable{Status: "firing"}
@@ -469,7 +503,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, true, []string{})
+	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -481,7 +515,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, true, []string{})
+		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -522,7 +556,7 @@ func QueryProblemAlarm(c *gin.Context) {
 }
 
 func QueryProblemAlarmByPage(c *gin.Context) {
-	var param m.QueryProblemAlarmDto
+	var param m.QueryProblemAlarmPageDto
 	if err := c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
@@ -530,7 +564,11 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if param.Page == nil {
 		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
 	}
-	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority, AlarmName: param.AlarmName}
+	if len(param.Endpoint) > 3 || len(param.AlarmName) > 3 || len(param.Metric) > 3 {
+		mid.ReturnValidateError(c, "query data too large")
+		return
+	}
+	query := m.AlarmTable{Status: "firing", Endpoint: "", SMetric: "", SPriority: param.Priority, AlarmName: ""}
 	var endpointList []string
 	var err error
 	if param.CustomDashboardId > 0 {
@@ -540,7 +578,10 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 			return
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, true, endpointList)
+	if len(param.Endpoint) > 0 {
+		endpointList = append(endpointList, param.Endpoint...)
+	}
+	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -589,7 +630,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if param.Page.PageSize > 0 {
 		si := (param.Page.StartIndex - 1) * param.Page.PageSize
 		ei := param.Page.StartIndex*param.Page.PageSize - 1
-		pageResult := []*m.AlarmProblemQuery{}
+		var pageResult []*m.AlarmProblemQuery
 		for i, v := range data {
 			if i >= si && i <= ei {
 				pageResult = append(pageResult, v)
@@ -613,20 +654,24 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.Metric == "" && param.Id == 0 && param.Priority == "" {
+	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
-	if strings.ToLower(param.Metric) == "custom" {
-		param.Custom = true
+	var actions []*db.Action
+	actions, err = db.CloseAlarm(param)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
 	}
-	if param.Custom {
-		err = db.CloseOpenAlarm(param)
-	} else {
-		err = db.CloseAlarm(param)
-		if err == nil && param.Priority != "" {
-			err = db.CloseOpenAlarm(param)
-		}
+	customActions, getCustomErr := db.CloseOpenAlarm(param)
+	if getCustomErr != nil {
+		mid.ReturnHandleError(c, getCustomErr.Error(), getCustomErr)
+		return
+	}
+	actions = append(actions, customActions...)
+	if len(actions) > 0 {
+		err = db.Transaction(actions)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
@@ -792,10 +837,6 @@ func QueryHistoryAlarm(c *gin.Context) {
 	var param m.QueryHistoryAlarmParam
 	if err := c.ShouldBindJSON(&param); err == nil {
 		param.Filter = "start"
-		//if param.Filter != "all" && param.Filter != "start" && param.Filter != "end" {
-		//	mid.ReturnValidateError(c, "filter must in [all,start,end]")
-		//	return
-		//}
 		err, result := db.QueryHistoryAlarm(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
@@ -851,8 +892,11 @@ func NotifyAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
-	if strings.ToLower(param.Metric) == "custom" {
+	for _, v := range param.Metric {
+		if strings.ToLower(v) == "custom" {
+		}
 		param.Custom = true
+		break
 	}
 	err = db.ManualNotifyAlarm(param.Id, mid.GetOperateUser(c))
 	if err != nil {
