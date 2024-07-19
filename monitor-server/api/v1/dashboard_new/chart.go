@@ -182,6 +182,11 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 			break
 		}
 	}
+	if len(existEndpointMap) > 1 {
+		for _, v := range queryList {
+			v.SameEndpoint = false
+		}
+	}
 	return
 }
 
