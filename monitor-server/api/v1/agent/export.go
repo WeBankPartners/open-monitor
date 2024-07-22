@@ -102,7 +102,7 @@ func ExportAgentNew(c *gin.Context) {
 				v.Password = tmpPassword
 			}
 		}
-		var param m.RegisterParamNew
+		var registerParam m.RegisterParamNew
 		var validateMessage, endpointGuid string
 		var inputErr error
 		tmpStep := 10
@@ -113,22 +113,22 @@ func ExportAgentNew(c *gin.Context) {
 			}
 		}
 		if tmpAgentType == "host" {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Cluster: v.Cluster, Port: "9100", AddDefaultGroup: true, AgentManager: false, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
+			registerParam = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Cluster: v.Cluster, Port: v.Port, AddDefaultGroup: true, AgentManager: false, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
 		} else if tmpAgentType == "snmp" {
-			param = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
+			registerParam = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
-			param.Url = v.Url
-			param.Method = v.Method
+			registerParam = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
+			registerParam.Url = v.Url
+			registerParam.Method = v.Method
 		}
 		if action == "register" {
-			param.Tags = v.Tags
-			validateMessage, endpointGuid, inputErr = AgentRegister(param, mid.GetOperateUser(c))
+			registerParam.Tags = v.Tags
+			validateMessage, endpointGuid, inputErr = AgentRegister(registerParam, mid.GetOperateUser(c))
 			if validateMessage != "" {
 				validateMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, validateMessage)
 			}
 			if validateMessage == "" && inputErr == nil && v.AppLogPaths != "" {
-				inputErr = autoAddAppPathConfig(param, v.AppLogPaths)
+				inputErr = autoAddAppPathConfig(registerParam, v.AppLogPaths)
 			}
 		} else {
 			var endpointObj m.EndpointTable
