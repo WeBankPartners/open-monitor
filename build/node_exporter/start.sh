@@ -4,30 +4,39 @@ tmppath=$0
 exporter_type='host'
 bin_name='node_exporter_new'
 package_path=${tmppath/\/start\.sh/}
+deploy_path=$1
+if [ -z $deploy_path ];then
+  deploy_path='/usr/local/monitor'
+fi
+exporter_port=$2
+if [ -z $exporter_port ];then
+  exporter_port='9100'
+fi
+sed -i "s~{{exporter_port}}~$exporter_port~g" $package_path/control
 chmod +x $package_path/$bin_name $package_path/control
-mkdir -p /usr/local/monitor/$exporter_type
-mkdir -p /usr/local/monitor/$exporter_type/data
+mkdir -p $deploy_path/$exporter_type
+mkdir -p $deploy_path/$exporter_type/data
 cleanprocess='yes'
-if [ -f /usr/local/monitor/host/VERSION ]
+if [ -f $deploy_path/host/VERSION ]
 then
-  if [ "`cat /usr/local/monitor/host/VERSION | grep v1.11.3.5`" == "v1.11.3.5" ]
+  if [ "`cat $deploy_path/host/VERSION | grep v1.11.3.5`" == "v1.11.3.5" ]
   then
     cleanprocess='no'
   fi
 fi
-rm -f /usr/local/monitor/host/VERSION
-/bin/cp -f $package_path/* /usr/local/monitor/$exporter_type/
-cd /usr/local/monitor/$exporter_type/
+rm -f $deploy_path/host/VERSION
+/bin/cp -f $package_path/* $deploy_path/$exporter_type/
+cd $deploy_path/$exporter_type/
 rm -f start.sh
 ./control stop
 if [ "$cleanprocess" == "yes" ]
 then
-  rm -f /usr/local/monitor/host/data/process_cache.data
+  rm -f $deploy_path/host/data/process_cache.data
 fi
 ./control start
 for i in `seq 1 60`
 do
-  if [ "`netstat -lntp|grep ':9100'|wc -l`" = "1" ]
+  if [ "`netstat -lntp|grep \":${exporter_port}\"|wc -l`" = "1" ]
   then
     break
   else
@@ -46,5 +55,5 @@ fi
 if [[ $result -eq 0 ]];
 then
     echo "#Ansible: monitor-agent-host
-* * * * * cd /usr/local/monitor/$exporter_type;./control start > /dev/null 2>&1" >> /var/spool/cron/root;
+* * * * * cd $deploy_path/$exporter_type;./control start > /dev/null 2>&1" >> /var/spool/cron/root;
 fi
