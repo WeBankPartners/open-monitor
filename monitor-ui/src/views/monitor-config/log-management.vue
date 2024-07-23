@@ -1,11 +1,18 @@
 <template>
-  <div class=" ">
+  <div class="log-management">
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-          </Select>
+          <RadioGroup
+            v-model="type"
+            type="button"
+            button-style="solid"
+            @on-change="typeChange"
+            style="margin-right: 5px"
+          >
+            <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
+            <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
+          </RadioGroup>
         </li>
         <li class="search-li">
           <Select
@@ -56,16 +63,6 @@ export default {
   data() {
     return {
       type: 'group',
-      typeList: [
-        {
-          label: this.$t('m_field_resourceLevel'),
-          value: 'group'
-        },
-        {
-          label: this.$t('m_tableKey_endpoint'),
-          value: 'endpoint'
-        }
-      ],
       targetId: '',
       targetOptions: [],
       showTargetManagement: false
@@ -123,13 +120,19 @@ export default {
 }
 </script>
 
-<style scoped lang="less">
-.search-li {
+<style lang="less">
+.log-management {
+  .ivu-radio-group-button .ivu-radio-wrapper-checked {
+    background: #2d8cf0;
+    color: #fff;
+  }
+  .search-li {
     display: inline-block;
   }
   .search-ul>li:not(:first-child) {
     padding-left: 12px;
   }
+}
 </style>
 <style scoped lang="less">
   .is-danger {
