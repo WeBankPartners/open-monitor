@@ -696,5 +696,6 @@
   "m_enter_name_tips": "Please Enter Object Name",
   "m_creator": "Creator",
   "m_permissions": "Permissions",
-  "m_filter": "Filter"
+  "m_filter": "Filter",
+  "m_confirm_close_alarm": "Confirm close alarm"
 }
