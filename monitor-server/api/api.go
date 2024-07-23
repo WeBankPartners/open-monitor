@@ -223,7 +223,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPut, HandlerFunc: service.UpdateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteDbMetricMonitor},
 		&handlerFuncObj{Url: "/regexp/test/match", Method: http.MethodPost, HandlerFunc: service.CheckRegExpMatch},
-
+		// 关键字告警配置
 		&handlerFuncObj{Url: "/service/log_keyword/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeywordMonitor},
@@ -234,6 +234,11 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config/:logKeywordGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeyword},
+		// 数据库关键字配置
+		&handlerFuncObj{Url: "/service/db_keyword/list", Method: http.MethodGet, HandlerFunc: service.ListDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodDelete, HandlerFunc: service.DeleteDBKeywordConfig},
 		// service plugin
 		&handlerFuncObj{Url: "/service/plugin/update/path", Method: http.MethodPost, HandlerFunc: service.PluginUpdateServicePath},
 		// alarm
