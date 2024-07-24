@@ -28,8 +28,13 @@ func GetLogKeywordByServiceGroup(serviceGroupGuid string) (result []*models.LogK
 	configList := []*models.LogKeywordMonitorObj{}
 	for _, v := range logKeywordTable {
 		configObj := models.LogKeywordMonitorObj{Guid: v.Guid, ServiceGroup: serviceGroupGuid, LogPath: v.LogPath, MonitorType: v.MonitorType}
-		configObj.KeywordList = ListLogKeyword(v.Guid)
+		if configObj.KeywordList, err = ListLogKeyword(v.Guid); err != nil {
+			return
+		}
 		configObj.EndpointRel = ListLogKeywordEndpointRel(v.Guid)
+		if configObj.Notify, err = GetLogKeywordNotify(v.Guid); err != nil {
+			return
+		}
 		configList = append(configList, &configObj)
 	}
 	result = append(result, &models.LogKeywordServiceGroupObj{ServiceGroupTable: serviceGroupObj, Config: configList})
@@ -130,24 +135,92 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	return actions
 }
 
-func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable) {
+func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable, err error) {
 	result = []*models.LogKeywordConfigTable{}
-	x.SQL("select * from log_keyword_config where log_keyword_monitor=?", logKeywordMonitor).Find(&result)
+	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=?", logKeywordMonitor).Find(&result)
+	if err != nil {
+		return
+	}
+	var logKeywordNotifyRelRows []*models.LogKeywordNotifyRel
+	err = x.SQL("select * from log_keyword_notify_rel where log_keyword_config in (select guid from log_keyword_config where log_keyword_monitor=?)", logKeywordMonitor).Find(&logKeywordNotifyRelRows)
+	if err != nil {
+		return
+	}
+	if len(logKeywordNotifyRelRows) == 0 {
+		return
+	}
+	var notifyGuidList []string
+	notifyMap := make(map[string]*models.NotifyTable)
+	for _, row := range logKeywordNotifyRelRows {
+		notifyGuidList = append(notifyGuidList, row.Notify)
+		notifyMap[row.LogKeywordConfig] = &models.NotifyTable{Guid: row.Notify}
+	}
+	filterSql, filterParam := createListParams(notifyGuidList, "")
+	var notifyRows []*models.NotifyTable
+	err = x.SQL("select * from notify where guid in ("+filterSql+")", filterParam...).Find(&notifyRows)
+	if err != nil {
+		return
+	}
+	for _, v := range notifyMap {
+		for _, row := range notifyRows {
+			if v.Guid == row.Guid {
+				v.NotifyNum = row.NotifyNum
+				v.Description = row.Description
+				v.ProcCallbackKey = row.ProcCallbackKey
+				v.ProcCallbackName = row.ProcCallbackName
+				v.ProcCallbackMode = row.ProcCallbackMode
+				v.AlarmAction = row.AlarmAction
+				v.AlarmPriority = row.AlarmPriority
+				v.CallbackUrl = row.CallbackUrl
+				v.CallbackParam = row.CallbackParam
+				break
+			}
+		}
+	}
+	for _, row := range result {
+		if v, ok := notifyMap[row.Guid]; ok {
+			row.Notify = buildNotifyObj(v)
+		}
+	}
 	return
 }
 
 func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
-	_, err = x.Exec("insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name) value (?,?,?,?,?,?,?,?,?)", guid.CreateGuid(), param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name)
+	var actions []*Action
+	param.Guid = "lk_config_" + guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name}})
+	if param.Notify != nil {
+		actions = append(actions, getNotifyListInsertAction([]*models.NotifyObj{param.Notify})...)
+		actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_config,notify) values (?,?,?)", Param: []interface{}{
+			guid.CreateGuid(), param.Guid, param.Notify.Guid,
+		}})
+	}
+	err = Transaction(actions)
 	return
 }
 
 func UpdateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
-	_, err = x.Exec("update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=? where guid=?", param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.Guid)
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=? where guid=?", Param: []interface{}{
+		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.Guid}})
+	if param.Notify != nil {
+		actions = append(actions, getNotifyListUpdateAction([]*models.NotifyObj{param.Notify})...)
+		actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{param.Guid}})
+		actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_config,notify) values (?,?,?)", Param: []interface{}{
+			guid.CreateGuid(), param.Guid, param.Notify.Guid,
+		}})
+	}
+	err = Transaction(actions)
 	return
 }
 
 func DeleteLogKeyword(logKeywordConfigGuid string) (err error) {
-	_, err = x.Exec("delete from log_keyword_config where guid=?", logKeywordConfigGuid)
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_config where guid=?", Param: []interface{}{logKeywordConfigGuid}})
+	err = Transaction(actions)
 	return
 }
 
@@ -387,6 +460,32 @@ func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
 		session.Exec("delete from log_keyword_alarm where tags=?", alarmObj.Tags)
 		_, err = session.Exec("insert into log_keyword_alarm(alarm_id,endpoint,status,content,tags,start_value,updated_time) values (?,?,?,?,?,?,?)",
 			lastInsertId, alarmObj.Endpoint, alarmObj.Status, alarmObj.Content, alarmObj.Tags, alarmObj.StartValue, alarmObj.Start.Format(models.DatetimeFormat))
+	}
+	return
+}
+
+func UpdateLogKeywordNotify(param *models.LogKeywordNotifyParam) (err error) {
+	if param.Notify == nil {
+		return
+	}
+	var actions []*Action
+	actions = getNotifyListUpdateAction([]*models.NotifyObj{param.Notify})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{param.LogKeywordMonitor}})
+	actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_monitor,notify) values (?,?,?)", Param: []interface{}{
+		"lk_notify_" + guid.CreateGuid(), param.LogKeywordMonitor, param.Notify.Guid,
+	}})
+	err = Transaction(actions)
+	return
+}
+
+func GetLogKeywordNotify(logKeywordMonitorGuid string) (result *models.NotifyObj, err error) {
+	var notifyRows []*models.NotifyTable
+	err = x.SQL("select * from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", logKeywordMonitorGuid).Find(&notifyRows)
+	if err != nil {
+		return
+	}
+	if len(notifyRows) > 0 {
+		result = buildNotifyObj(notifyRows[0])
 	}
 	return
 }
