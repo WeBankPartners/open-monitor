@@ -7,8 +7,34 @@ import (
 	"time"
 )
 
-func ListDBKeywordConfig(listType, listGuid string) (result *models.ListDbKeywordData, err error) {
+func ListDBKeywordConfig(listType, listGuid string) (result []*models.ListDbKeywordData, err error) {
+	if listType == "endpoint" {
+		result, err = GetDbKeywordByEndpoint(listGuid, false)
+	} else {
+		result, err = GetDbKeywordByServiceGroup(listGuid)
+	}
+	return
+}
 
+func GetDbKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*models.ListDbKeywordData, err error) {
+	result = []*models.ListDbKeywordData{}
+	var logKeywordMonitorTable []*models.LogKeywordMonitorTable
+	if onlySource {
+		err = x.SQL("select distinct t2.service_group from db_keyword_endpoint_rel t1 left join db_keyword_monitor t2 on t1.db_keyword_monitor=t2.guid where t1.source_endpoint=?", endpointGuid).Find(&logKeywordMonitorTable)
+	} else {
+		err = x.SQL("select distinct t2.service_group from db_keyword_endpoint_rel t1 left join db_keyword_monitor t2 on t1.db_keyword_monitor=t2.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpointGuid, endpointGuid).Find(&logKeywordMonitorTable)
+	}
+	if err != nil {
+		return result, fmt.Errorf("Query table fail,%s ", err.Error())
+	}
+	for _, v := range logKeywordMonitorTable {
+		tmpResult, tmpErr := GetDbKeywordByServiceGroup(v.ServiceGroup)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		result = append(result, tmpResult[0])
+	}
 	return
 }
 
@@ -26,8 +52,12 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 	configList := []*models.DbKeywordConfigObj{}
 	for _, v := range dbKeywordTable {
 		configObj := models.DbKeywordConfigObj{DbKeywordMonitor: *v}
-		//configObj.KeywordList = ListLogKeyword(v.Guid)
-		//configObj.EndpointRel = ListLogKeywordEndpointRel(v.Guid)
+		if configObj.EndpointRel, err = ListDbKeywordEndpointRel(v.Guid); err != nil {
+			return
+		}
+		if configObj.Notify, err = GetDbKeywordNotify(v.Guid); err != nil {
+			return
+		}
 		configList = append(configList, &configObj)
 	}
 	result = append(result, &models.ListDbKeywordData{
@@ -38,6 +68,43 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 		UpdateTime:  serviceGroupObj.UpdateTime,
 		Config:      configList,
 	})
+	return
+}
+
+func ListDbKeywordEndpointRel(dbKeywordMonitorGuid string) (result []*models.DbKeywordEndpointRel, err error) {
+	err = x.SQL("select * from db_keyword_endpoint_rel where db_keyword_monitor=?", dbKeywordMonitorGuid).Find(&result)
+	return
+}
+
+func GetDbKeywordNotify(dbKeywordMonitorGuid string) (result *models.NotifyObj, err error) {
+	var notifyRows []*models.NotifyTable
+	err = x.SQL("select * from notify where guid in (select notify from db_keyword_notify_rel where db_keyword_monitor=?)", dbKeywordMonitorGuid).Find(&notifyRows)
+	if err != nil {
+		return
+	}
+	if len(notifyRows) > 0 {
+		result = buildNotifyObj(notifyRows[0])
+	}
+	return
+}
+
+func buildNotifyObj(notifyRow *models.NotifyTable) (notifyObj *models.NotifyObj) {
+	notifyObj = &models.NotifyObj{
+		Guid:             notifyRow.Guid,
+		NotifyRoles:      getNotifyRoles(notifyRow.Guid),
+		EndpointGroup:    notifyRow.EndpointGroup,
+		ServiceGroup:     notifyRow.ServiceGroup,
+		AlarmStrategy:    notifyRow.AlarmStrategy,
+		AlarmAction:      notifyRow.AlarmAction,
+		AlarmPriority:    notifyRow.AlarmPriority,
+		NotifyNum:        notifyRow.NotifyNum,
+		ProcCallbackName: notifyRow.ProcCallbackName,
+		ProcCallbackKey:  notifyRow.ProcCallbackKey,
+		CallbackUrl:      notifyRow.CallbackUrl,
+		CallbackParam:    notifyRow.CallbackParam,
+		ProcCallbackMode: notifyRow.ProcCallbackMode,
+		Description:      notifyRow.Description,
+	}
 	return
 }
 
