@@ -284,7 +284,8 @@ export default {
       const params = {
         type: this.monitorType, // 基础类型
         serviceGroup: this.serviceGroup, // 层级对象
-        endpointGroup: this.endpointGroup // 组
+        endpointGroup: this.endpointGroup, // 组
+        workspace: 'all_object'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
