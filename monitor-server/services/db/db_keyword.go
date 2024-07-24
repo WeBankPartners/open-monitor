@@ -12,25 +12,32 @@ func ListDBKeywordConfig(listType, listGuid string) (result *models.ListDbKeywor
 	return
 }
 
-func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.LogKeywordServiceGroupObj, err error) {
+func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListDbKeywordData, err error) {
 	serviceGroupObj, getErr := getSimpleServiceGroup(serviceGroupGuid)
 	if getErr != nil {
 		return result, getErr
 	}
-	result = []*models.LogKeywordServiceGroupObj{}
-	var logKeywordTable []*models.LogKeywordMonitorTable
-	err = x.SQL("select * from log_keyword_monitor where service_group=?", serviceGroupGuid).Find(&logKeywordTable)
+	result = []*models.ListDbKeywordData{}
+	var dbKeywordTable []*models.DbKeywordMonitor
+	err = x.SQL("select * from db_keyword_monitor where service_group=?", serviceGroupGuid).Find(&dbKeywordTable)
 	if err != nil {
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
-	configList := []*models.LogKeywordMonitorObj{}
-	for _, v := range logKeywordTable {
-		configObj := models.LogKeywordMonitorObj{Guid: v.Guid, ServiceGroup: serviceGroupGuid, LogPath: v.LogPath, MonitorType: v.MonitorType}
-		configObj.KeywordList = ListLogKeyword(v.Guid)
-		configObj.EndpointRel = ListLogKeywordEndpointRel(v.Guid)
+	configList := []*models.DbKeywordConfigObj{}
+	for _, v := range dbKeywordTable {
+		configObj := models.DbKeywordConfigObj{DbKeywordMonitor: *v}
+		//configObj.KeywordList = ListLogKeyword(v.Guid)
+		//configObj.EndpointRel = ListLogKeywordEndpointRel(v.Guid)
 		configList = append(configList, &configObj)
 	}
-	result = append(result, &models.LogKeywordServiceGroupObj{ServiceGroupTable: serviceGroupObj, Config: configList})
+	result = append(result, &models.ListDbKeywordData{
+		Guid:        serviceGroupObj.Guid,
+		DisplayName: serviceGroupObj.DisplayName,
+		Description: serviceGroupObj.Description,
+		ServiceType: serviceGroupObj.ServiceType,
+		UpdateTime:  serviceGroupObj.UpdateTime,
+		Config:      configList,
+	})
 	return
 }
 
