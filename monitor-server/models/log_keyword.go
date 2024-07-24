@@ -114,3 +114,8 @@ type LogKeywordAlarmTable struct {
 	EndValue    float64   `json:"endValue" xorm:"end_value"`
 	UpdatedTime time.Time `json:"updatedTime" xorm:"updated_time"`
 }
+
+type LogKeywordNotifyParam struct {
+	LogKeywordMonitor string     `json:"log_keyword_monitor"`
+	Notify            *NotifyObj `json:"notify"`
+}
