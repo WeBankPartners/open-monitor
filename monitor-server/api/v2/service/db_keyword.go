@@ -28,7 +28,9 @@ func CreateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		respData := make(map[string]string)
+		respData["guid"] = param.Guid
+		middleware.ReturnSuccessData(c, respData)
 	}
 }
 
@@ -42,7 +44,9 @@ func UpdateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		respData := make(map[string]string)
+		respData["guid"] = param.Guid
+		middleware.ReturnSuccessData(c, respData)
 	}
 }
 
