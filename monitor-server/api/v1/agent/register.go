@@ -42,10 +42,10 @@ func RegisterAgentNew(c *gin.Context) {
 		if param.Password != "" {
 			decodePassword, decodeErr := DecodeUIPassword(c, param.Password)
 			if decodeErr != nil {
-				mid.ReturnValidateError(c, decodeErr.Error())
-				return
+				log.Logger.Info("try to decode ui password fail", log.Error(decodeErr))
+			} else {
+				param.Password = decodePassword
 			}
-			param.Password = decodePassword
 		}
 		validateMessage, _, err := AgentRegister(param, mid.GetOperateUser(c))
 		if validateMessage != "" {
