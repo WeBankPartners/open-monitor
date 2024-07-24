@@ -234,6 +234,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config/:logKeywordGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeyword},
+
+		&handlerFuncObj{Url: "/service/log_keyword/notify", Method: http.MethodPost, HandlerFunc: service.UpdateLogKeywordNotify},
 		// 数据库关键字配置
 		&handlerFuncObj{Url: "/service/db_keyword/list", Method: http.MethodGet, HandlerFunc: service.ListDBKeywordConfig},
 		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateDBKeywordConfig},
