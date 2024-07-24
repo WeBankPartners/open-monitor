@@ -210,3 +210,21 @@ func ImportLogKeyword(c *gin.Context) {
 		middleware.ReturnSuccess(c)
 	}
 }
+
+func UpdateLogKeywordNotify(c *gin.Context) {
+	var param models.LogKeywordNotifyParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogKeywordMonitor == "" {
+		middleware.ReturnValidateError(c, "param log_keyword_monitor illegal")
+		return
+	}
+	err := db.UpdateLogKeywordNotify(&param)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
