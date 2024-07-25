@@ -102,6 +102,7 @@
         <systemParameter name="MONITOR_AGENT_MANAGER_REMOTE_MODE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_NOTIFY_TREEVENT_ENABLE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue=""/>
+        <systemParameter name="MONITOR_HOST_PORT" scopeType="global" defaultValue="9100"/>
     </systemParameters>
 
 
@@ -130,6 +131,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_PORT">port</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP">group</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
