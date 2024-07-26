@@ -75,7 +75,7 @@
                 <Button type="success" size="small">
                   <Icon type="ios-link" size="16" />
                 </Button>
-                <template #list>
+                <template slot='list'>
                   <DropdownMenu>
                     <DropdownItem v-for="(option, key) in allTemplateList"
                                   :name="option.guid"
@@ -105,7 +105,7 @@
               </Poptip>
             </div>
           </div>
-          <template #content>
+          <template slot='content'>
             <Table
               class="log-file-table"
               size="small"
