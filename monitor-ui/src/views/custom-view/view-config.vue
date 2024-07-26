@@ -117,7 +117,7 @@
               {{$t(item.name)}}
               <Icon type="ios-arrow-down"></Icon>
             </Button>
-            <template #list>
+            <template slot='list'>
               <DropdownMenu v-if="item.options.length > 0">
                 <DropdownItem v-for="(option, key) in item.options"
                               :name="JSON.stringify(option)"
@@ -265,7 +265,7 @@
           </FormItem>
         </Form>
       </div>
-      <template #footer>
+      <template slot='footer'>
         <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
       </template>

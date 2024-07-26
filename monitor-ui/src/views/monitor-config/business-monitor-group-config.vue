@@ -170,7 +170,7 @@
           ></JsonRegexDisplay>
         </div>
       </div>
-      <template #footer>
+      <template slot='footer'>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
