@@ -83,7 +83,7 @@
           <Button type="primary">
             {{$t('m_import')}}
           </Button>
-          <template #list>
+          <template  slot='list'>
             <DropdownMenu>
               <DropdownItem v-for="(item, index) in importTypeOptions"
                             :name="item.value"
@@ -164,7 +164,7 @@
         show-total
       />
       <ModalComponent :modelConfig="authorizationModel">
-        <template #authorization>
+        <template slot='authorization'>
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in authorizationModel.result">
               <p :key="index" style="margin:6px 0">
@@ -195,7 +195,7 @@
         </template>
       </ModalComponent>
       <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveTemplate">
-        <template #content-top>
+        <template slot='content-top'>
           <div v-if="isAuthModalNameShow" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
             <Input style="width:calc(100% - 60px);" :maxlength="30" show-word-limit v-model.trim="addViewName"></Input>

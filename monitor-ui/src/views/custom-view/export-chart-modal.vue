@@ -4,7 +4,7 @@
     :title="$t('m_select_export_chart')"
     @on-visible-change="onVisibleChange"
   >
-    <template #footer>
+    <template slot='footer'>
       <div>
         <Button
           type="default"
