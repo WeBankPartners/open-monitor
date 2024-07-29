@@ -28,9 +28,14 @@ func CreateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		respData := make(map[string]string)
-		respData["guid"] = param.Guid
-		middleware.ReturnSuccessData(c, respData)
+		err = db.SyncDbMetric()
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			respData := make(map[string]string)
+			respData["guid"] = param.Guid
+			middleware.ReturnSuccessData(c, respData)
+		}
 	}
 }
 
@@ -44,9 +49,14 @@ func UpdateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		respData := make(map[string]string)
-		respData["guid"] = param.Guid
-		middleware.ReturnSuccessData(c, respData)
+		err = db.SyncDbMetric()
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			respData := make(map[string]string)
+			respData["guid"] = param.Guid
+			middleware.ReturnSuccessData(c, respData)
+		}
 	}
 }
 
@@ -56,6 +66,11 @@ func DeleteDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		err = db.SyncDbMetric()
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }

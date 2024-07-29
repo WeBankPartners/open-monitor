@@ -24,6 +24,7 @@ type DbMonitorTaskObj struct {
 	LastTime     int64        `json:"last_time"`
 	ServiceGroup string       `json:"service_group"`
 	Session      *xorm.Engine `json:"session"`
+	KeywordFlag  bool         `json:"keyword_flag"`
 }
 
 type DbMonitorResultObj struct {
@@ -33,18 +34,20 @@ type DbMonitorResultObj struct {
 	Port         string  `json:"port"`
 	Value        float64 `json:"value"`
 	ServiceGroup string  `json:"service_group"`
+	KeywordFlag  bool    `json:"keyword_flag"`
 }
 
 var (
-	taskList     []*DbMonitorTaskObj
-	taskLock     = new(sync.RWMutex)
-	resultList   []*DbMonitorResultObj
-	resultLock   = new(sync.RWMutex)
-	taskInterval = 10
-	maxIdle      = 2
-	maxOpen      = 5
-	timeOut      = 10
-	metricString = "db_monitor_value"
+	taskList        []*DbMonitorTaskObj
+	taskLock        = new(sync.RWMutex)
+	resultList      []*DbMonitorResultObj
+	resultLock      = new(sync.RWMutex)
+	taskInterval    = 10
+	maxIdle         = 2
+	maxOpen         = 5
+	timeOut         = 10
+	metricString    = "db_monitor_value"
+	dbKeywordMetric = "db_keyword_value"
 )
 
 func StartCronTask() {
@@ -72,7 +75,7 @@ func doTask() {
 		if taskObj.DbType == "mysql" {
 			resultValue = mysqlTask(taskObj)
 		}
-		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup})
+		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup, KeywordFlag: taskObj.KeywordFlag})
 		taskObj.LastTime = nowTime
 	}
 	taskLock.RUnlock()
