@@ -236,7 +236,7 @@ func StartDbKeywordMonitorCronJob() {
 
 func doDbKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
-	dataMap, err := datasource.QueryLogKeywordData()
+	dataMap, err := datasource.QueryLogKeywordData("db")
 	if err != nil {
 		log.Logger.Error("Check log keyword break with get prometheus data", log.Error(err))
 		return
