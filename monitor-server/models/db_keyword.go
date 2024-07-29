@@ -35,21 +35,21 @@ type DbKeywordConfigObj struct {
 }
 
 type LogKeywordNotifyRel struct {
-	Guid              string `json:"guid" xorm:"guid"`                             // 唯一标识
-	LogKeywordMonitor string `json:"logKeywordMonitor" xorm:"log_keyword_monitor"` // 业务关键字监控
-	LogKeywordConfig  string `json:"logKeywordConfig" xorm:"log_keyword_config"`   // 业务关键字配置
-	Notify            string `json:"notify" xorm:"notify"`                         // 通知表
+	Guid              string `json:"guid" xorm:"guid"`                               // 唯一标识
+	LogKeywordMonitor string `json:"log_keyword_monitor" xorm:"log_keyword_monitor"` // 业务关键字监控
+	LogKeywordConfig  string `json:"log_keyword_config" xorm:"log_keyword_config"`   // 业务关键字配置
+	Notify            string `json:"notify" xorm:"notify"`                           // 通知表
 }
 
 type DbKeywordEndpointRel struct {
-	Guid             string `json:"guid" xorm:"guid"`                           // 唯一标识
-	DbKeywordMonitor string `json:"dbKeywordMonitor" xorm:"db_keyword_monitor"` // 数据库关键字监控
-	SourceEndpoint   string `json:"sourceEndpoint" xorm:"source_endpoint"`      // 源对象
-	TargetEndpoint   string `json:"targetEndpoint" xorm:"target_endpoint"`      // 目标对象
+	Guid             string `json:"guid" xorm:"guid"`                             // 唯一标识
+	DbKeywordMonitor string `json:"db_keyword_monitor" xorm:"db_keyword_monitor"` // 数据库关键字监控
+	SourceEndpoint   string `json:"source_endpoint" xorm:"source_endpoint"`       // 源对象
+	TargetEndpoint   string `json:"target_endpoint" xorm:"target_endpoint"`       // 目标对象
 }
 
 type DbKeywordNotifyRel struct {
-	Guid             string `json:"guid" xorm:"guid"`                           // 唯一标识
-	DbKeywordMonitor string `json:"dbKeywordMonitor" xorm:"db_keyword_monitor"` // 数据库关键字监控
-	Notify           string `json:"notify" xorm:"notify"`                       // 通知表
+	Guid             string `json:"guid" xorm:"guid"`                             // 唯一标识
+	DbKeywordMonitor string `json:"db_keyword_monitor" xorm:"db_keyword_monitor"` // 数据库关键字监控
+	Notify           string `json:"notify" xorm:"notify"`                         // 通知表
 }

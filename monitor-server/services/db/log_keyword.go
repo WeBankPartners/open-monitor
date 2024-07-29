@@ -188,8 +188,8 @@ func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfig
 func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 	var actions []*Action
 	param.Guid = "lk_config_" + guid.CreateGuid()
-	actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name}})
+	actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name,active_window) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow}})
 	if param.Notify != nil {
 		actions = append(actions, getNotifyListInsertAction([]*models.NotifyObj{param.Notify})...)
 		actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_config,notify) values (?,?,?)", Param: []interface{}{
@@ -202,8 +202,8 @@ func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 
 func UpdateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=? where guid=?", Param: []interface{}{
-		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.Guid}})
+	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=?,active_window=? where guid=?", Param: []interface{}{
+		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow, param.Guid}})
 	if param.Notify != nil {
 		actions = append(actions, getNotifyListUpdateAction([]*models.NotifyObj{param.Notify})...)
 		actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{param.Guid}})
@@ -240,7 +240,7 @@ func StartLogKeywordMonitorCronJob() {
 
 func doLogKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
-	dataMap, err := datasource.QueryLogKeywordData()
+	dataMap, err := datasource.QueryLogKeywordData("log")
 	if err != nil {
 		log.Logger.Error("Check log keyword break with get prometheus data", log.Error(err))
 		return
@@ -486,6 +486,8 @@ func GetLogKeywordNotify(logKeywordMonitorGuid string) (result *models.NotifyObj
 	}
 	if len(notifyRows) > 0 {
 		result = buildNotifyObj(notifyRows[0])
+	} else {
+		result = &models.NotifyObj{}
 	}
 	return
 }
