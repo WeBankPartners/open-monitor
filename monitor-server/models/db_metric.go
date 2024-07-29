@@ -42,6 +42,16 @@ type DbMetricMonitorQueryObj struct {
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
 }
 
+type DbKeywordMonitorQueryObj struct {
+	Guid           string `json:"guid" xorm:"guid"`
+	ServiceGroup   string `json:"service_group" xorm:"service_group"`
+	QuerySql       string `json:"query_sql" xorm:"query_sql"`
+	Step           int64  `json:"step" xorm:"step"`
+	MonitorType    string `json:"monitor_type" xorm:"monitor_type"`
+	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
+	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
+}
+
 type MetricComparison struct {
 	Guid           string `json:"guid" xorm:"guid"`
 	ComparisonType string `json:"comparisonType" xorm:"comparison_type"`
