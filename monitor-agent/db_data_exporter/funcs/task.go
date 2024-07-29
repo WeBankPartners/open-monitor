@@ -25,6 +25,7 @@ type DbMonitorTaskObj struct {
 	ServiceGroup string       `json:"service_group"`
 	Session      *xorm.Engine `json:"session"`
 	KeywordFlag  bool         `json:"keyword_flag"`
+	KeywordCount int64        `json:"keyword_count"`
 }
 
 type DbMonitorResultObj struct {
@@ -35,6 +36,7 @@ type DbMonitorResultObj struct {
 	Value        float64 `json:"value"`
 	ServiceGroup string  `json:"service_group"`
 	KeywordFlag  bool    `json:"keyword_flag"`
+	KeywordCount int64   `json:"keyword_count"`
 }
 
 var (
@@ -75,7 +77,7 @@ func doTask() {
 		if taskObj.DbType == "mysql" {
 			resultValue = mysqlTask(taskObj)
 		}
-		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup, KeywordFlag: taskObj.KeywordFlag})
+		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup, KeywordFlag: taskObj.KeywordFlag, KeywordCount: taskObj.KeywordCount})
 		taskObj.LastTime = nowTime
 	}
 	taskLock.RUnlock()
@@ -118,6 +120,11 @@ func mysqlTask(config *DbMonitorTaskObj) float64 {
 		return -2
 	}
 	var resultValue float64
+	if config.KeywordFlag {
+		if len(queryStringMap) > 0 {
+			config.KeywordCount = config.KeywordCount + 1
+		}
+	}
 	if len(queryStringMap) > 0 {
 		for _, v := range queryStringMap[0] {
 			resultValue, _ = strconv.ParseFloat(v, 64)
