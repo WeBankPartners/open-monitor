@@ -20,6 +20,7 @@ type LogKeywordConfigTable struct {
 	UpdateTime        string     `json:"update_time" xorm:"update_time"`
 	Content           string     `json:"content" xorm:"content"`
 	Name              string     `json:"name" xorm:"name"`
+	ActiveWindow      string     `json:"active_window" xorm:"active_window"`
 	Notify            *NotifyObj `json:"notify" xorm:"-"`
 }
 
