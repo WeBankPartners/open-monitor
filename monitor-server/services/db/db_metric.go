@@ -186,11 +186,20 @@ func SyncDbMetric() error {
 	if err != nil {
 		return fmt.Errorf("Query db_metric_monitor fail,%s ", err.Error())
 	}
+	var dbKeywordQuery []*models.DbKeywordMonitorQueryObj
+	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor").Find(&dbKeywordQuery)
+	if err != nil {
+		return fmt.Errorf("Query db_keyword_monitor fail,%s ", err.Error())
+	}
 	endpointGuidList := []string{}
 	endpointExtMap := make(map[string]*models.EndpointExtendParamObj)
 	for _, v := range dbMonitorQuery {
 		endpointGuidList = append(endpointGuidList, v.SourceEndpoint)
 		endpointExtMap[v.SourceEndpoint] = &models.EndpointExtendParamObj{}
+	}
+	for _, row := range dbKeywordQuery {
+		endpointGuidList = append(endpointGuidList, row.SourceEndpoint)
+		endpointExtMap[row.SourceEndpoint] = &models.EndpointExtendParamObj{}
 	}
 	var endpointTable []*models.EndpointNewTable
 	x.SQL("select guid,endpoint_address,extend_param from endpoint_new where monitor_type='mysql' and guid in ('" + strings.Join(endpointGuidList, "','") + "')").Find(&endpointTable)
@@ -209,6 +218,15 @@ func SyncDbMetric() error {
 	for _, v := range dbMonitorQuery {
 		if extConfig, b := endpointExtMap[v.SourceEndpoint]; b {
 			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: v.Metric, Step: v.Step, Sql: v.MetricSql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup}
+			if v.TargetEndpoint != "" {
+				taskObj.Endpoint = v.TargetEndpoint
+			}
+			postData = append(postData, &taskObj)
+		}
+	}
+	for _, v := range dbKeywordQuery {
+		if extConfig, b := endpointExtMap[v.SourceEndpoint]; b {
+			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: "db_keyword_value", Step: v.Step, Sql: v.QuerySql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup, KeywordFlag: true}
 			if v.TargetEndpoint != "" {
 				taskObj.Endpoint = v.TargetEndpoint
 			}
