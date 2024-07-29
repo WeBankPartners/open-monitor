@@ -11,10 +11,12 @@ func GetExportMetric() []byte {
 	resultLock.RLock()
 	for _, v := range resultList {
 		tmpMetricDisplay := metricString
+		valueString := transFloatValueToString(v.Value)
 		if v.KeywordFlag {
 			tmpMetricDisplay = dbKeywordMetric
+			valueString = fmt.Sprintf("%d", v.KeywordCount)
 		}
-		buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", tmpMetricDisplay, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, transFloatValueToString(v.Value)))
+		buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", tmpMetricDisplay, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, valueString))
 	}
 	resultLock.RUnlock()
 	return buff.Bytes()
