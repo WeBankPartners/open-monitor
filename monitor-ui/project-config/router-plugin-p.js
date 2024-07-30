@@ -51,14 +51,6 @@ const routerP = [
     name: "/monitorConfigIndex/resourceLevel"
   },
   {
-    path: "/monitorConfigIndex/exporter",
-    name: "/monitorConfigIndex/exporter"
-  },
-  {
-    path: "/monitorConfigIndex/remoteSync",
-    name: "/monitorConfigIndex/remoteSync"
-  },
-  {
     path: "/monitorConfigIndex/businessMonitor",
     name: "/monitorConfigIndex/businessMonitor"
   },
@@ -71,16 +63,32 @@ const routerP = [
     name: "/monitorConfigIndex/metricConfig"
   },
   {
-    path: "/monitorConfigIndex/groupBoard",
-    name: "/monitorConfigIndex/groupBoard"
-  },
-  {
     path: "/viewConfigIndex/allChartList",
     name: "/viewConfigIndex/allChartList"
   },
   {
     path: "/viewConfigIndex/boardList",
     name: "/viewConfigIndex/boardList"
+  },
+  {
+    path: "/adminConfig/typeConfig",
+    name: "/adminConfig/typeConfig"
+  },
+  {
+    path: "/adminConfig/groupBoard",
+    name: "/adminConfig/groupBoard"
+  },
+  {
+    path: "/adminConfig/adminMetric",
+    name: "/adminConfig/adminMetric"
+  },
+  {
+    path: "/adminConfig/exporter",
+    name: "/adminConfig/exporter"
+  },
+  {
+    path: "/adminConfig/remoteSync",
+    name: "/adminConfig/remoteSync"
   },
 ];
 
