@@ -1,3 +1,4 @@
+<!--看板配置-->
 <template>
   <div class="monitor-group-board">
     <div style="margin-right:16px;display:inline-block;">
