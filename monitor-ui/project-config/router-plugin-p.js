@@ -11,14 +11,6 @@ const routerP = [
     name: "viewConfig"
   },
   {
-    path: "/editPieView",
-    name: "editPieView"
-  },
-  {
-    path: "/editLineView",
-    name: "editLineView"
-  },
-  {
     path: "/viewChart",
     name: "viewChart"
   },
