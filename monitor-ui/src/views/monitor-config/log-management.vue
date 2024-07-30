@@ -32,13 +32,7 @@
           </Select>
         </li>
         <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-                  :disabled="targetId === ''"
-                  @click="search"
-          >
-            <i class="fa fa-search" ></i>
-            {{$t('m_button_search')}}
-          </button>
+          <Button type="primary" :disabled="targetId === ''" @click="search">{{$t('m_button_search')}}</Button>
         </li>
       </ul>
     </section>

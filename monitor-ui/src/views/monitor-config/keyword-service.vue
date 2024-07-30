@@ -6,8 +6,7 @@
         <i class="fa fa-plus"></i>
         {{$t('m_button_add')}}
       </button>
-
-      <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
+      <Button style="margin-left:16px" @click="exportData">{{$t("m_export")}}</Button>
       <div style="display: inline-block;margin-bottom: 3px;">
         <Upload
           :action="uploadUrl"
