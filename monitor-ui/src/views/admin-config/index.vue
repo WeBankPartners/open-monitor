@@ -53,8 +53,16 @@ export default {
           icon: 'ios-more',
           name: '2',
           children: [
-            { title: this.$t('m_field_exporter'), path: '/adminConfig/exporter', name: '2-1' },
-            { title: this.$t('m_remote_sync'), path: '/adminConfig/remoteSync', name: '2-2' }
+            {
+              title: this.$t('m_field_exporter'),
+              path: '/adminConfig/exporter',
+              name: '2-1'
+            },
+            {
+              title: this.$t('m_remote_sync'),
+              path: '/adminConfig/remoteSync',
+              name: '2-2'
+            }
           ]
         }
       ]
