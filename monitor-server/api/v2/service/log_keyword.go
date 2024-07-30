@@ -13,8 +13,8 @@ import (
 )
 
 func ListLogKeywordMonitor(c *gin.Context) {
-	queryType := c.Param("queryType")
-	guid := c.Param("guid")
+	queryType := c.Query("type")
+	guid := c.Query("guid")
 	if queryType == "endpoint" {
 		result, err := db.GetLogKeywordByEndpoint(guid, false)
 		if err != nil {
@@ -121,7 +121,7 @@ func UpdateLogKeyword(c *gin.Context) {
 }
 
 func DeleteLogKeyword(c *gin.Context) {
-	logKeywordGuid := c.Param("logKeywordGuid")
+	logKeywordGuid := c.Query("guid")
 	err := db.DeleteLogKeyword(logKeywordGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
