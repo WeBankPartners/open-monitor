@@ -21,12 +21,7 @@
         </Select>
       </li>
       <li class="search-li">
-        <button type="button" class="btn btn-sm btn-confirm-f"
-                @click="routerChange"
-        >
-          <i class="fa fa-search" ></i>
-          {{$t('m_button_search')}}
-        </button>
+        <Button type="primary" @click="routerChange">{{$t('m_button_search')}}</Button>
       </li>
     </ul>
   </div>
