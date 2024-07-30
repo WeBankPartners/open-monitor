@@ -64,14 +64,6 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }
   },
-  'editLineView': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
-  },
-  'editPieView': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
-  },
   'viewChart': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '视图', 'en-US': 'View' }
@@ -88,7 +80,7 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '图表库', 'en-US': 'Chart Library'},
     childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
   },
-  'adminConfig/adminMetric': {
+  'adminConfig/typeConfig': {
     parentBreadcrumb: {'zh-CN': '基础类型', 'en-US': 'Basic Type'},
     childBreadcrumb: { 'zh-CN': '类型配置', 'en-US': 'Type Config' }
   },
