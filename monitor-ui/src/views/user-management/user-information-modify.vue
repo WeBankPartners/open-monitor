@@ -10,15 +10,6 @@
         <input v-if="activeKey === info.key" @blur="saveInfo(info.key)" v-model="userInfo[info.key]" type="text" class="form-control model-input"/>
         <span v-else>{{userInfo[info.key]}} <i @click="activeKey = info.key" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
       </li>
-      <!-- <li>
-        <label for="">{{$t('tableKey.password')}}：</label>
-        <template v-if="activeKey === 'new_password'">
-          <input v-model="userInfo.new_password" type="text" class="form-control model-input">
-          <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
-          <button type="button" class="btn-confirm-f">{{$t('m_button_confirm')}}</button>
-        </template>
-        <span v-else>{{userInfo.new_password}} <i @click="activeKey = 'new_password'" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
-      </li> -->
       <template v-if="activeKey === 'new_password'">
         <li>
           <label for="">{{$t('m_button_password')}}：</label>
@@ -27,8 +18,8 @@
         <li>
           <label for="">{{$t('m_button_rePassword')}}：</label>
           <input v-model="userInfo.re_new_password" type="text" class="form-control model-input"/>
-          <button type="button" class="btn-confirm-f" @click="confirmPassword">{{$t('m_button_rePassword')}}</button>
-          <button type="button" class="btn-cancel-f" @click="abandonModify">{{$t('m_button_cancel')}}</button>
+          <Button type="primary" @click="confirmPassword">{{$t('m_button_rePassword')}}</Button>
+          <Button @click="abandonModify">{{$t('m_button_cancel')}}</Button>
         </li>
       </template>
       <li v-else>
