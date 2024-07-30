@@ -14,7 +14,6 @@ import remoteSync from "@/views/monitor-config/remote-sync";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config/index";
-import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import chartList from "@/views/custom-view/chart-list";
 import boardIndex from "@/views/custom-view/index";
@@ -23,6 +22,9 @@ import editLineView from "@/views/custom-view/edit-line-view";
 import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
+import typeConfig from "@/views/admin-config/basic/type-config";
+import groupBoard from "@/views/admin-config/basic/board-config";
+import adminMetric from '@/views/metric-config/general-group';
 import index from "@/views/index";
 
 const router = [
@@ -99,20 +101,6 @@ const router = [
         component: resourceLevel
       },
       {
-        path: "exporter",
-        name: "exporter",
-        title: "exporter",
-        meta: {},
-        component: exporter
-      },
-      {
-        path: "remoteSync",
-        name: "remoteSync",
-        title: "remoteSync",
-        meta: {},
-        component: remoteSync
-      },
-      {
         path: "businessMonitor",
         name: "businessMonitor",
         title: "businessMonitor",
@@ -132,13 +120,6 @@ const router = [
         title: "metricConfig",
         meta: {},
         component: metricConfig
-      },
-      {
-        path: "groupBoard",
-        name: "groupBoard",
-        title: "对象看板",
-        meta: {},
-        component: groupBoard
       }
     ]
   },
@@ -207,6 +188,51 @@ const router = [
     title: "搜索主页",
     meta: {},
     component: portal
+  },
+  {
+    path: "/adminConfig",
+    name: "adminConfig",
+    title: "管理员配置",
+    meta: {},
+    redirect: '/adminConfig/groupBoard',
+    component: () => import("@/views/admin-config/index"),
+    children: [
+      {
+        path: "typeConfig",
+        name: "typeConfig",
+        title: "类型配置",
+        meta: {},
+        component: typeConfig
+      },
+      {
+        path: "groupBoard",
+        name: "groupBoard",
+        title: "看板配置",
+        meta: {},
+        component: groupBoard
+      },
+      {
+        path: "adminMetric",
+        name: "adminMetric",
+        title: "指标配置",
+        meta: {},
+        component: adminMetric
+      },
+      {
+        path: "exporter",
+        name: "exporter",
+        title: "exporter",
+        meta: {},
+        component: exporter
+      },
+      {
+        path: "remoteSync",
+        name: "remoteSync",
+        title: "remoteSync",
+        meta: {},
+        component: remoteSync
+      }
+    ]
   }
 ];
 
