@@ -49,12 +49,12 @@
           </div>
 
           <div class="header-tools">
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
+            <Button v-if="!showAlarm" @click="openAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
+            </Button>
+            <Button v-else @click="closeAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -133,8 +133,8 @@
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
     <Drawer :title="$t('m_placeholder_chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
-      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
+      <!-- <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
+      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView> -->
     </Drawer>
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
@@ -218,8 +218,6 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
-import editLineView from '@/views/custom-view/edit-line-view'
-import editPieView from '@/views/custom-view/edit-pie-view'
 export default {
   name: '',
   data() {
@@ -655,8 +653,8 @@ export default {
     CustomPieChart,
     ViewConfigAlarm,
     ViewChart,
-    editPieView,
-    editLineView
+    // editPieView,
+    // editLineView
   },
 }
 </script>
