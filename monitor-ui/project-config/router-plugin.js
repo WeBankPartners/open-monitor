@@ -16,8 +16,6 @@ import viewConfigIndex from "@/views/custom-view/view-config-index";
 import chartList from "@/views/custom-view/chart-list";
 import boardIndex from "@/views/custom-view/index";
 import viewConfig from "@/views/custom-view/view-config";
-import editLineView from "@/views/custom-view/edit-line-view";
-import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
 import typeConfig from "@/views/admin-config/basic/type-config";
@@ -160,20 +158,6 @@ const router = [
         component: viewConfig
       }
     ]
-  },
-  {
-    path: "/editLineView",
-    name: "editLineView",
-    title: "自定义视图编辑",
-    meta: {},
-    component: editLineView
-  },
-  {
-    path: "/editPieView",
-    name: "editPieView",
-    title: "自定义视图编辑",
-    meta: {},
-    component: editPieView
   },
   {
     path: "/viewChart",
