@@ -48,18 +48,13 @@
         <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
       </li>
       <li class="search-li">
-        <button type="button" class="btn btn-sm btn-confirm-f"
-                @click="getChartsConfig()"
-        >
-          <i class="fa fa-search" ></i>
-          {{$t('m_button_search')}}
-        </button>
+        <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
+        <Button v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow && !endpointExternal" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
+        <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
       </li>
     </ul>
   </div>

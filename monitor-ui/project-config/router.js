@@ -167,13 +167,6 @@ const router = new Router({
           ]
         },
         {
-          path: "metricConfig",
-          name: "metricConfig",
-          title: "视图配置",
-          meta: {},
-          component: () => import("@/views/metric-config")
-        },
-        {
           path: "viewConfigIndex",
           name: "viewConfigIndex",
           title: "自定义视图主页",
@@ -205,20 +198,6 @@ const router = new Router({
               component: () => import("@/views/custom-view/view-config")
             }
           ]
-        },
-        {
-          path: "editLineView",
-          name: "editLineView",
-          title: "自定义视图编辑",
-          meta: {},
-          component: () => import("@/views/custom-view/edit-line-view")
-        },
-        {
-          path: "editPieView",
-          name: "editPieView",
-          title: "自定义视图编辑",
-          meta: {},
-          component: () => import("@/views/custom-view/edit-pie-view")
         },
         {
           path: "viewChart",
