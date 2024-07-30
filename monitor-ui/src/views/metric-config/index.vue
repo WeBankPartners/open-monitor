@@ -2,8 +2,8 @@
   <div class="monitor-metric-config">
     <Tabs v-model="activeName">
       <!--通用对象-->
-      <TabPane :label="$t('m_basic_type')" name="1">
-      </TabPane>
+      <!-- <TabPane :label="$t('m_basic_type')" name="1">
+      </TabPane> -->
       <!--层级对象-->
       <TabPane :label="$t('m_field_resourceLevel')" name="2">
       </TabPane>
@@ -38,7 +38,7 @@ export default {
   },
   data() {
     return {
-      activeName: '1'
+      activeName: '2'
     }
   },
   methods: {
