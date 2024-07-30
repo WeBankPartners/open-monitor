@@ -1,3 +1,4 @@
+<!--采集器-->
 <template>
   <div class=" ">
     <!-- <Divider plain orientation="left">K8s Com</Divider> -->
