@@ -28,18 +28,20 @@
             >
             </DatePicker>
           </li>
-
-          <button class="btn btn-sm btn-confirm-f ml-5" @click="getAlarm">
-            <i class="fa fa-search"></i>
-            {{ $t("m_button_search") }}
-          </button>
-          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          <li class="filter-li">
+            <Select v-model="filter" style="width: 220px">
+              <Option value="all">{{ $t('all') }}</Option>
+              <Option value="low">{{ $t('low') }}</Option>
+              <Option value="medium">{{ $t('medium') }}</Option>
+              <Option value="high">{{ $t('high')}}</Option>
+            </Select>
+          </li>
+          <Button type="primary" @click="getAlarm" style="margin-left: 24px;">{{ $t("m_button_search") }}</Button>
+          <Button v-if="filtersForShow.length" @click="clearAll">{{$t('m_reset_condition')}}</Button>
         </ul>
         <div class='top-right-search'>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
-          <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
-            {{ $t("realTimeAlarm") }}
-          </button>
+          <Button type="primary" @click="realTimeAlarm">{{ $t("realTimeAlarm") }}</Button>
         </div>
       </div>
     </div>
@@ -60,12 +62,6 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" v-if="total > 0 && !noData">
-            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
-            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template> -->
-            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
-            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
@@ -522,9 +518,6 @@ export default {
       border: 1px solid #f2f3f7;
     }
 
-    .btn-confirm-f {
-      background: #116ef9;
-    }
     .top-right-search {
       display: flex;
       align-items: center;

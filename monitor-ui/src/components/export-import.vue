@@ -9,8 +9,6 @@
       <img src="../assets/img/export.png" class="btn-img" alt="" />
       {{ $t('m_export') }}
     </Button>
-
-    <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
     <div style="display: inline-block;margin-bottom: 3px;" v-if="isShowImportBtn">
       <Upload
         :action="uploadUrl"
