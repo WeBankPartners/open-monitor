@@ -23,8 +23,8 @@ import portal from "@/views/portal";
 import typeConfig from "@/views/admin-config/basic/type-config";
 import groupBoard from "@/views/admin-config/basic/board-config";
 import adminMetric from '@/views/metric-config/general-group';
-import exporter from "@/views/admin-config/exporter";
-import remoteSync from "@/views/admin-config/remote-sync";
+import exporter from "@/views/admin-config/other/exporter";
+import remoteSync from "@/views/admin-config/other/remote-sync";
 import index from "@/views/index";
 
 const router = [
