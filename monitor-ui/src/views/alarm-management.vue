@@ -21,7 +21,7 @@
             </i-switch>
           </li>
           <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+            <Button @click="clearAll">{{$t('m_reset_condition')}}</Button>
           </li>
         </ul>
         <div class="top-right-search">
@@ -34,12 +34,11 @@
           >
             <Button
               :disabled="isEmpty(filters) || (isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
-              class="btn btn-sm btn-cancel-f"
             >
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+          <Button type="primary" @click="alarmHistory">{{$t('alarmHistory')}}</Button>
         </div>
       </div>
     </div>
@@ -60,12 +59,6 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
-            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
-            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template> -->
-            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
-            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
@@ -585,10 +578,6 @@ export default {
         font-size: 12px;
         margin-right: 28px;
       }
-    }
-
-    .btn-confirm-f {
-      background: #116EF9;
     }
   }
 }
