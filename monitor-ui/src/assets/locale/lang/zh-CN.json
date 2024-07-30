@@ -701,6 +701,8 @@
   "m_confirm_close_alarm": "确认关闭告警?",
   "m_monitor_config": "监控配置",
   "m_admin_config": "管理员配置",
-  "m_type_config": "类型配置"
+  "m_type_config": "类型配置",
+  "m_keyword_edit": "关键字编辑",
+  "m_alarm_configuration_save": "告警配置保存"
 }
 
