@@ -88,7 +88,7 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '图表库', 'en-US': 'Chart Library'},
     childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
   },
-  'adminConfig/adminMetric': {
+  'adminConfig/typeConfig': {
     parentBreadcrumb: {'zh-CN': '基础类型', 'en-US': 'Basic Type'},
     childBreadcrumb: { 'zh-CN': '类型配置', 'en-US': 'Type Config' }
   },
