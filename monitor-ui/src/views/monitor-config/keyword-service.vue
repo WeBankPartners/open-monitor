@@ -648,8 +648,10 @@ export default {
     },
     getDetail(targrtId) {
       this.targrtId = targrtId
-      const api = `/monitor/api/v2/service/log_keyword/list/service/${targrtId}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/service/db_keyword/list', {
+        type: 'service',
+        guid: this.targrtId
+      }, responseData => {
         this.showManagement = true
         this.targetDetail = responseData[0]
         this.pageConfig.table.tableData = responseData[0].config
