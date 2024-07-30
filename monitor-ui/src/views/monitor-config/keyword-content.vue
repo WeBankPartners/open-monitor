@@ -467,7 +467,6 @@ import hasIn from 'lodash/hasIn'
 import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
-import {notifyData} from './mockData'
 import {priorityList} from '@/assets/config/common-config.js'
 
 const alarmLevelMap = {
@@ -778,7 +777,6 @@ export default {
           value: 'auto'
         }
       ],
-      notifyData,
       dataBaseTableData: [],
       isTableChangeFormShow: false,
       isAddState: true,
