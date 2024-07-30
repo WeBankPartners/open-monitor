@@ -698,6 +698,9 @@
   "m_creator": "创建人",
   "m_permissions": "权限",
   "m_filter": "筛选",
-  "m_confirm_close_alarm": "确认关闭告警?"
+  "m_confirm_close_alarm": "确认关闭告警?",
+  "m_monitor_config": "监控配置",
+  "m_admin_config": "管理员配置",
+  "m_type_config": "类型配置"
 }
 
