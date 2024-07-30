@@ -6,8 +6,7 @@
         <i class="fa fa-plus"></i>
         {{$t('m_button_add')}}
       </button>
-
-      <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
+      <Button style="margin-left:16px" @click="exportData">{{$t("m_export")}}</Button>
       <div style="display: inline-block;margin-bottom: 3px;">
         <Upload
           :action="uploadUrl"
@@ -649,8 +648,10 @@ export default {
     },
     getDetail(targrtId) {
       this.targrtId = targrtId
-      const api = `/monitor/api/v2/service/log_keyword/list/service/${targrtId}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/service/db_keyword/list', {
+        type: 'service',
+        guid: this.targrtId
+      }, responseData => {
         this.showManagement = true
         this.targetDetail = responseData[0]
         this.pageConfig.table.tableData = responseData[0].config

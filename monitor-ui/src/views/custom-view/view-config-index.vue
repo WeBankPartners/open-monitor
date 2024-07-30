@@ -94,9 +94,7 @@
             </DropdownMenu>
           </template>
         </Dropdown>
-        <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
-          {{$t('m_button_setDashboard')}}
-        </button>
+        <Button @click="setDashboard">{{$t('m_button_setDashboard')}}</Button>
       </div>
     </div>
     <div class="mt-3">
