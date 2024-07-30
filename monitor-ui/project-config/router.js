@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
-// import { getToken } from '@/assets/js/cookies.ts'
+import { getToken } from '@/assets/js/cookies.ts'
 
 Vue.use(Router);
 
@@ -318,16 +318,20 @@ const router = new Router({
   ]
 });
 
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location) {
+ return originalPush.call(this, location).catch(err => err)
+}
+
 router.beforeEach((to, from, next) => {
+  if (['login', 'callCustomViewExternal'].includes(to.name)) {
   next()
-  // if (['login', 'callCustomViewExternal'].includes(to.name)) {
-  // next()
-  //   return
-  // }
-  // if (!getToken()&& !['login', 'register', 'endpointViewExternalCall', 'callCustomViewExternal'].includes(to.name)) {
-  //   next({name:'login'})
-  // } else {
-  //   next()
-  // }
+    return
+  }
+  if (!getToken()&& !['login', 'register', 'endpointViewExternalCall', 'callCustomViewExternal'].includes(to.name)) {
+    next({name:'login'})
+  } else {
+    next()
+  }
 })
 export default router;
