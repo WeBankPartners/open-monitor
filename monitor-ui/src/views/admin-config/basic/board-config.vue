@@ -68,8 +68,8 @@
         </div>
       </div>
       <div style="width:900px;text-align:center;margin-top:24px">
-        <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</button>
+        <Button :disabled="graphConfig.metric.length === 0" @click="preview('displayGroup')">{{$t('m_preview')}}</Button>
+        <Button type="primary" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</Button>
       </div>
     </div>
     <Modal
