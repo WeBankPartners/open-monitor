@@ -9,8 +9,6 @@ import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
-import exporter from "@/views/monitor-config/exporter";
-import remoteSync from "@/views/monitor-config/remote-sync";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config/index";
@@ -25,6 +23,8 @@ import portal from "@/views/portal";
 import typeConfig from "@/views/admin-config/basic/type-config";
 import groupBoard from "@/views/admin-config/basic/board-config";
 import adminMetric from '@/views/metric-config/general-group';
+import exporter from "@/views/metric-config/exporter";
+import remoteSync from "@/views/metric-config/remote-sync";
 import index from "@/views/index";
 
 const router = [
