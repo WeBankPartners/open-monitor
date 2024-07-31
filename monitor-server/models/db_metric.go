@@ -48,6 +48,9 @@ type DbKeywordMonitorQueryObj struct {
 	QuerySql       string `json:"query_sql" xorm:"query_sql"`
 	Step           int64  `json:"step" xorm:"step"`
 	MonitorType    string `json:"monitor_type" xorm:"monitor_type"`
+	Content        string `json:"content" xorm:"content"`
+	Priority       string `json:"priority" xorm:"priority"`
+	Name           string `json:"name" xorm:"name"`
 	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
 }
