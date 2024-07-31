@@ -79,18 +79,19 @@ type LogKeywordHttpResult struct {
 }
 
 type LogKeywordCronJobQuery struct {
-	Guid           string `xorm:"guid"`
-	ServiceGroup   string `xorm:"service_group"`
-	LogPath        string `xorm:"log_path"`
-	MonitorType    string `xorm:"monitor_type"`
-	Keyword        string `xorm:"keyword"`
-	NotifyEnable   int    `xorm:"notify_enable"`
-	Priority       string `xorm:"priority"`
-	SourceEndpoint string `xorm:"source_endpoint"`
-	TargetEndpoint string `xorm:"target_endpoint"`
-	AgentAddress   string `xorm:"agent_address"`
-	Content        string `xorm:"content"`
-	Name           string `xorm:"name"`
+	Guid                 string `xorm:"guid"`
+	ServiceGroup         string `xorm:"service_group"`
+	LogPath              string `xorm:"log_path"`
+	MonitorType          string `xorm:"monitor_type"`
+	Keyword              string `xorm:"keyword"`
+	NotifyEnable         int    `xorm:"notify_enable"`
+	Priority             string `xorm:"priority"`
+	SourceEndpoint       string `xorm:"source_endpoint"`
+	TargetEndpoint       string `xorm:"target_endpoint"`
+	AgentAddress         string `xorm:"agent_address"`
+	Content              string `xorm:"content"`
+	Name                 string `xorm:"name"`
+	LogKeywordConfigGuid string `xorm:"log_keyword_config_guid"`
 }
 
 type LogKeywordRowsHttpDto struct {
