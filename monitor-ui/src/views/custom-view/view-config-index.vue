@@ -321,7 +321,7 @@ export default {
       ],
       pagination: {
         totalRows: 100,
-        currentPage: 2,
+        currentPage: 1,
         pageSize: 18
       },
       mgmtRoles: [],
@@ -507,6 +507,7 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.currentPage = 1
       this.getViewList()
     }, 300),
     saveTemplate(mgmtRoles, useRoles) {

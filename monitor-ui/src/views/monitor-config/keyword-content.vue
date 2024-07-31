@@ -241,7 +241,7 @@
                   v-model="item.source_endpoint"
                   :disabled="!isEditState"
                   style="width: 310px"
-                  :placeholder="$t('m_log_server') + '333'"
+                  :placeholder="$t('m_log_server')"
                 >
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
@@ -370,19 +370,19 @@
                   {{ item.label }}</Option>
               </Select>
             </FormItem>
-            <FormItem v-if="!isLogFile" :label="$t('delay')" prop="notify_delay_second">
+            <FormItem v-if="!isLogFile" :label="$t('m_collection_interval')" prop="step">
               <Select
                 filterable
                 :disabled="!isEditState"
-                v-model="formData.notify_delay_second"
+                v-model="formData.step"
               >
                 <Option
-                  v-for="item in notifyDelayOption"
-                  :value="item.value"
-                  :key="item.value"
-                  :label="item.label"
+                  v-for="item in stepOptions"
+                  :value="item"
+                  :key="item"
+                  :label="item + 's'"
                 >
-                  {{ item.label }}
+                  {{ item + 's' }}
                 </Option>
               </Select>
             </FormItem>
@@ -517,7 +517,7 @@ const initFormData = {
   endpoint_rel: [],
   priority: 'low',
   notify_enable: 1, // 通知,默认启用
-  notify_delay_second: 0,
+  step: 10,
   active_window: ['00:00','23:59'], // 告警时间段
   content: '', // 通知内容
   notify: {
@@ -638,11 +638,13 @@ export default {
         {
           title: this.$t('m_field_log'), // 更新人
           key: 'keyword',
+          minWidth: 150,
           render: (h, params) => <span>{params.row.keyword || '-'}</span>
         },
         {
           title: this.$t('m_regular'), // 更新人
           key: 'regulative',
+          width: 150,
           render: (h, params) => {
             const regulative_enable = params.row.regulative === 0
             return (
@@ -793,40 +795,7 @@ export default {
           value: 0
         }
       ],
-      notifyDelayOption: [
-        {
-          label: '0s',
-          value: 0
-        },
-        {
-          label: '30s',
-          value: 30
-        },
-        {
-          label: '60s',
-          value: 60
-        },
-        {
-          label: '90s',
-          value: 90
-        },
-        {
-          label: '120s',
-          value: 120
-        },
-        {
-          label: '180s',
-          value: 180
-        },
-        {
-          label: '300s',
-          value: 300
-        },
-        {
-          label: '600s',
-          value: 600
-        }
-      ],
+      stepOptions: [10, 30, 60, 300, 600],
       ruleValidate: {
         name: [
           {
