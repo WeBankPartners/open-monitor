@@ -74,6 +74,7 @@
 import debounce from 'lodash/debounce'
 import isEmpty from 'lodash/isEmpty'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import {showPoptipOnTable} from '@/assets/js/utils.js'
 
 export default {
   name: '',
@@ -210,6 +211,7 @@ export default {
         {
           title: this.$t('m_creator'),
           key: 'create_user',
+          width: 150,
           render: (h, params) => (
             <span>{params.row.create_user ? params.row.create_user : '-'}</span>
           )
@@ -217,18 +219,20 @@ export default {
         {
           title: this.$t('m_updatedBy'),
           key: 'update_user',
+          width: 150,
           render: (h, params) => (
             <span>{params.row.update_user ? params.row.update_user : '-'}</span>
           )
         },
         {
           title: this.$t('m_update_time'),
-          width: 200,
+          minWidth: 150,
           key: 'update_time'
         },
         {
           title: this.$t('m_table_action'),
           key: 'action',
+          fixed: 'right',
           width: 180,
           render: (h, params) => (
             <div style="display: flex">
@@ -261,7 +265,9 @@ export default {
                 on-on-ok={() => {
                   this.deleteTableItem(params.row)
                 }}>
-                <Button size="small" type="error">
+                <Button size="small" type="error" on-click={() => {
+                  showPoptipOnTable()
+                }}>
                   <Icon type="md-trash" />
                 </Button>
               </Poptip>
@@ -422,6 +428,8 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.page = 1
+      this.pagination.size = 10
       this.getTableList()
     }, 300),
     getTableList() {
@@ -456,6 +464,7 @@ export default {
   position: fixed;
   right: 20px;
   bottom: 20px;
+  z-index: 10000
 }
 
 </style>
