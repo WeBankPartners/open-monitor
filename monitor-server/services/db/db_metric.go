@@ -226,7 +226,7 @@ func SyncDbMetric() error {
 	}
 	for _, v := range dbKeywordQuery {
 		if extConfig, b := endpointExtMap[v.SourceEndpoint]; b {
-			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: "db_keyword_value", Step: v.Step, Sql: v.QuerySql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup, KeywordFlag: true}
+			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: "db_keyword_value", Step: v.Step, Sql: v.QuerySql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup, KeywordGuid: v.Guid}
 			if v.TargetEndpoint != "" {
 				taskObj.Endpoint = v.TargetEndpoint
 			}
