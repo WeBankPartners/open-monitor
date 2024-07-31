@@ -27,7 +27,7 @@ type DbMonitorTaskObj struct {
 	Sql          string `json:"sql"`
 	Step         int64  `json:"step"`
 	ServiceGroup string `json:"service_group"`
-	KeywordFlag  bool   `json:"keyword_flag"`
+	KeywordGuid  string `json:"keyword_guid"`
 }
 
 type DbMonitorConfigQuery struct {
