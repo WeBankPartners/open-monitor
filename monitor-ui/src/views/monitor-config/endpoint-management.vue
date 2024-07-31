@@ -60,7 +60,6 @@
     <!-- <PageTable :pageConfig="pageConfig"></PageTable> -->
 
     <ModalComponent :modelConfig="modelConfig">
-      <div>555</div>
       <div slot="advancedConfig" class="extentClass">
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
@@ -325,7 +324,7 @@ import isEmpty from 'lodash/isEmpty'
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import { cycleOption, collectionInterval } from '@/assets/config/common-config'
 import {
-  interceptParams
+  interceptParams, showPoptipOnTable
 } from '@/assets/js/utils'
 
 const alarmLevelMap = {
@@ -617,7 +616,7 @@ export default {
         },
         {
           title: this.$t('m_basic_type'),
-          width: 150,
+          width: 110,
           key: 'type',
           render: (h, params) => (
             <div>
@@ -630,6 +629,7 @@ export default {
         {
           title: this.$t('m_creator'),
           key: 'create_user',
+          width: 120,
           render: (h, params) => (
             <div>
               {
@@ -641,6 +641,7 @@ export default {
         {
           title: this.$t('m_updatedBy'),
           key: 'update_user',
+          width: 120,
           render: (h, params) => (
             <div>
               {
@@ -652,12 +653,13 @@ export default {
         {
           title: this.$t('m_update_time'),
           key: 'update_time',
-          tooltip: true
+          minWidth: 150,
         },
         {
           title: this.$t('m_table_action'),
           key: 'action',
           width: 250,
+          fixed: 'right',
           render: (h, params) => (
             <div style="display: flex; justify-content: flex-start">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
@@ -693,7 +695,9 @@ export default {
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => this.deleteConfirmModal(params.row)}>
-                <Button size="small" type="error">
+                <Button size="small" type="error" on-click={() => {
+                  showPoptipOnTable()
+                }}>
                   <Icon type="md-trash" />
                 </Button>
               </Poptip>
@@ -1167,6 +1171,8 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.page = 1
+      this.pagination.size = 10
       this.getTableList()
     }, 300),
     onAddButtonClick() {
@@ -1288,6 +1294,7 @@ export default {
   position: fixed;
   right: 20px;
   bottom: 20px;
+  z-index: 10000
 }
 </style>
 
