@@ -39,6 +39,7 @@ func main() {
 	go db.StartCronJob()
 	go db.StartCheckCron()
 	go db.StartLogKeywordMonitorCronJob()
+	go db.StartDbKeywordMonitorCronJob()
 	go db.SendConfigToDbManager()
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
