@@ -306,7 +306,6 @@ export default {
   },
   methods: {
     getAllOptions() {
-      console.error(11, this.request)
       const params = {
         page: 1,
         size: 1000
