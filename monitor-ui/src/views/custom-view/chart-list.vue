@@ -332,6 +332,8 @@ export default {
       return resArr
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.currentPage = 1
+      this.pagination.pageSize = 10
       this.getChartList()
     }, 300),
     getChartList() {
