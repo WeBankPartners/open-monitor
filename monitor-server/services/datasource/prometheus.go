@@ -490,7 +490,14 @@ func QueryLogKeywordData(keywordMode string) (result map[string]float64, err err
 		return result, fmt.Errorf("Query prometheus data fail,status:%s ", data.Status)
 	}
 	if keywordMode == "db" {
-
+		for _, otr := range data.Data.Result {
+			key := fmt.Sprintf("service_group:%s^db_keyword_guid:%s^t_endpoint:%s", otr.Metric["service_group"], otr.Metric["db_keyword_guid"], otr.Metric["t_endpoint"])
+			tmpValue := float64(0)
+			if len(otr.Values) > 0 {
+				tmpValue, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+			}
+			result[key] = tmpValue
+		}
 		return
 	}
 	for _, otr := range data.Data.Result {
