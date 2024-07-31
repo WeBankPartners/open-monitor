@@ -353,6 +353,8 @@ export default {
     }
   },
   mounted(){
+    this.request = this.$root.$httpRequestEntrance.httpRequestEntrance,
+    console.error(22, this.request)
     this.pathMap = this.$root.apiCenter.template
     this.pagination.pageSize = 18
     this.pagination.currentPage = 1
