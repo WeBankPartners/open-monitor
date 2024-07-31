@@ -53,3 +53,16 @@ type DbKeywordNotifyRel struct {
 	DbKeywordMonitor string `json:"db_keyword_monitor" xorm:"db_keyword_monitor"` // 数据库关键字监控
 	Notify           string `json:"notify" xorm:"notify"`                         // 通知表
 }
+
+type DbKeywordAlarm struct {
+	Id               int       `json:"id" xorm:"id"`
+	AlarmId          int       `json:"alarm_id" xorm:"alarm_id"`
+	Endpoint         string    `json:"endpoint" xorm:"endpoint"`
+	Status           string    `json:"status" xorm:"status"`
+	DbKeywordMonitor string    `json:"db_keyword_monitor" xorm:"db_keyword_monitor"`
+	Content          string    `json:"content" xorm:"content"`
+	Tags             string    `json:"tags" xorm:"tags"`
+	StartValue       float64   `json:"start_value" xorm:"start_value"`
+	EndValue         float64   `json:"end_value" xorm:"end_value"`
+	UpdatedTime      time.Time `json:"updated_time" xorm:"updated_time"`
+}
