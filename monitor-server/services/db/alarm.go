@@ -999,6 +999,9 @@ func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
 		}
+		if v.SMetric == "db_keyword_monitor" {
+			actions = append(actions, &Action{Sql: "update db_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
@@ -1364,7 +1367,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		for _, v := range alarmQuery {
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
-			if v.SMetric == "log_monitor" {
+			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
 				v.IsLogMonitor = true
 				if v.EndValue > 0 {
 					v.Start, v.End = v.End, v.Start
