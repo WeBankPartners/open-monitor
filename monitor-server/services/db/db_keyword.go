@@ -294,6 +294,7 @@ func doDbKeywordMonitorJob() {
 			} else {
 				oldValue = existAlarm.StartValue
 			}
+			log.Logger.Debug("doDbKeywordMonitorJob match exist alarm", log.String("key", key), log.Float64("newValue", newValue), log.Float64("oldValue", oldValue), log.String("status", existAlarm.Status))
 			if newValue == oldValue {
 				continue
 			}
@@ -304,7 +305,7 @@ func doDbKeywordMonitorJob() {
 				} else {
 					existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLastRowObj.KeywordContent
 				}
-				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, SMetric: "db_keyword_monitor", Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
 				addFlag = true
 			}
