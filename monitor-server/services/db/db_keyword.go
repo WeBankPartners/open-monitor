@@ -1,12 +1,15 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -295,7 +298,12 @@ func doDbKeywordMonitorJob() {
 				continue
 			}
 			if existAlarm.Status == "firing" {
-				//existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
+				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
+				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
+					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
+				} else {
+					existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLastRowObj.KeywordContent
+				}
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
 				addFlag = true
@@ -310,6 +318,12 @@ func doDbKeywordMonitorJob() {
 			alarmContent := config.Content
 			if alarmContent != "" {
 				alarmContent = alarmContent + "<br/>"
+			}
+			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
+			if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
+				log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
+			} else {
+				alarmContent += getLastRowObj.KeywordContent
 			}
 			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "db_keyword_monitor", SExpr: "db_keyword_value", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent, Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.Guid})
 		}
@@ -336,8 +350,49 @@ func doDbKeywordMonitorJob() {
 					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
 					continue
 				}
+				if tmpNotifyRow.ProcCallbackMode == models.AlarmNotifyManualMode && tmpNotifyRow.ProcCallbackKey != "" {
+					if _, execErr := x.Exec("update alarm set notify_id=? where id=?", tmpNotifyRow.Guid, tmpAlarmObj.Id); execErr != nil {
+						log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", tmpAlarmObj.Id), log.Error(execErr))
+					}
+				}
 				notifyAction(tmpNotifyRow, &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 			}
 		}
 	}
+}
+
+func getDbKeywordLastRow(param *models.DbLastKeywordDto) (err error) {
+	var dbExportAddress string
+	for _, v := range models.Config().Dependence {
+		if v.Name == "db_data_exporter" {
+			dbExportAddress = v.Server
+			break
+		}
+	}
+	if dbExportAddress == "" {
+		return fmt.Errorf("Can not find db_data_exporter address ")
+	}
+	postDataByte, _ := json.Marshal([]*models.DbLastKeywordDto{param})
+	log.Logger.Info("getDbKeywordLastRow", log.String("postData", string(postDataByte)))
+	resp, err := http.Post(fmt.Sprintf("%s/db/lastkeyword", dbExportAddress), "application/json", strings.NewReader(string(postDataByte)))
+	if err != nil {
+		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
+	}
+	bodyByte, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode > 300 {
+		return fmt.Errorf("%s", string(bodyByte))
+	}
+	var responseData []*models.DbLastKeywordDto
+	if err = json.Unmarshal(bodyByte, &responseData); err != nil {
+		err = fmt.Errorf("json unmarshal repsonse data fail,body:%s,err:%s ", string(bodyByte), err.Error())
+		return
+	}
+	for _, respRow := range responseData {
+		if respRow.KeywordGuid == param.KeywordGuid {
+			param.KeywordContent = respRow.KeywordContent
+			break
+		}
+	}
+	return
 }
