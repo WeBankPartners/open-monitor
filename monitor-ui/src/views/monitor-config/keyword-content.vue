@@ -1159,6 +1159,7 @@ export default {
       this.resetDrawerForm()
       this.formData.service_group = this.targetId
       this.formData.monitor_type = 'process'
+      this.formData.name = this.$t('m_alert') + new Date().getTime()
       this.getSqlSourceOptions(this.formData.monitor_type)
       this.isTableChangeFormShow = true
     },
