@@ -189,51 +189,51 @@ const router = [
     meta: {},
     component: portal
   },
-  {
-    path: "/adminConfig",
-    name: "adminConfig",
-    title: "管理员配置",
-    meta: {},
-    redirect: '/adminConfig/groupBoard',
-    component: () => import("@/views/admin-config/index"),
-    children: [
-      {
-        path: "typeConfig",
-        name: "typeConfig",
-        title: "类型配置",
-        meta: {},
-        component: typeConfig
-      },
-      {
-        path: "groupBoard",
-        name: "groupBoard",
-        title: "看板配置",
-        meta: {},
-        component: groupBoard
-      },
-      {
-        path: "adminMetric",
-        name: "adminMetric",
-        title: "指标配置",
-        meta: {},
-        component: adminMetric
-      },
-      {
-        path: "exporter",
-        name: "exporter",
-        title: "exporter",
-        meta: {},
-        component: exporter
-      },
-      {
-        path: "remoteSync",
-        name: "remoteSync",
-        title: "remoteSync",
-        meta: {},
-        component: remoteSync
-      }
-    ]
-  }
+  // {
+  //   path: "/adminConfig",
+  //   name: "adminConfig",
+  //   title: "管理员配置",
+  //   meta: {},
+  //   redirect: '/adminConfig/groupBoard',
+  //   component: () => import("@/views/admin-config/index"),
+  //   children: [
+  //     {
+  //       path: "typeConfig",
+  //       name: "typeConfig",
+  //       title: "类型配置",
+  //       meta: {},
+  //       component: typeConfig
+  //     },
+  //     {
+  //       path: "groupBoard",
+  //       name: "groupBoard",
+  //       title: "看板配置",
+  //       meta: {},
+  //       component: groupBoard
+  //     },
+  //     {
+  //       path: "adminMetric",
+  //       name: "adminMetric",
+  //       title: "指标配置",
+  //       meta: {},
+  //       component: adminMetric
+  //     },
+  //     {
+  //       path: "exporter",
+  //       name: "exporter",
+  //       title: "exporter",
+  //       meta: {},
+  //       component: exporter
+  //     },
+  //     {
+  //       path: "remoteSync",
+  //       name: "remoteSync",
+  //       title: "remoteSync",
+  //       meta: {},
+  //       component: remoteSync
+  //     }
+  //   ]
+  // }
 ];
 
 export default router;
