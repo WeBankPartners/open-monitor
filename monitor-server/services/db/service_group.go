@@ -626,7 +626,7 @@ func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map
 	if err != nil {
 		return err
 	}
-	err = SyncDbMetric()
+	err = SyncDbMetric(false)
 	if err != nil {
 		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.String("serviceGroup", serviceGroup))
 	}
@@ -679,7 +679,7 @@ func DeleteServiceConfig(serviceGroup string) {
 		}
 	}
 	if len(dbMetricTable) > 0 {
-		err := SyncDbMetric()
+		err := SyncDbMetric(false)
 		if err != nil {
 			log.Logger.Error("Try to SyncDbMetric fail", log.Error(err))
 		}
