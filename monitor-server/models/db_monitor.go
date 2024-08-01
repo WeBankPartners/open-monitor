@@ -28,6 +28,7 @@ type DbMonitorTaskObj struct {
 	Step         int64  `json:"step"`
 	ServiceGroup string `json:"service_group"`
 	KeywordGuid  string `json:"keyword_guid"`
+	KeywordCount int64  `json:"keyword_count"`
 }
 
 type DbMonitorConfigQuery struct {
