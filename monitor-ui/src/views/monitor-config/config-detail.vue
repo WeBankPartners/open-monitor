@@ -885,7 +885,7 @@ export default {
       }
       return {
         symbol: str.match(/[<>=smh]+/g)[0],
-        value: str.match(/[\d.]+/)[0]
+        value: str.match(/[-+]?[\d.]+/)[0]
       }
     },
     getInitialTags() {
