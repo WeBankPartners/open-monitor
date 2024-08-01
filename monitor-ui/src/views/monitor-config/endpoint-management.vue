@@ -663,7 +663,7 @@ export default {
           render: (h, params) => (
             <div style="display: flex; justify-content: flex-start">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
-                <Button size="small" type="info" on-click={() => {
+                <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
                   this.isReviewMode = true
                   this.editF(params.row)
@@ -672,7 +672,7 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
-                <Button size="small" type="primary" on-click={() => {
+                <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.endpointRejectModel.modalFooter = null
                   this.isReviewMode = false
                   this.editF(params.row)
@@ -681,12 +681,12 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_maintenanceWindow')}>
-                <Button size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
+                <Button class="mr-1" size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
                   <Icon type="ios-build" />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_historicalAlert')}>
-                <Button size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
+                <Button class="mr-1" size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
                   <Icon type="md-warning" />
                 </Button>
               </Tooltip>
