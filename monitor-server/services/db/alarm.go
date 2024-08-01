@@ -512,7 +512,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
-		if v.SMetric == "log_monitor" {
+		if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
 			v.IsLogMonitor = true
 			if v.EndValue > 0 {
 				v.Start, v.End = v.End, v.Start
