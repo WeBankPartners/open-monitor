@@ -38,7 +38,7 @@
         </Button>
       </div>
 
-      <Collapse v-model="keywordCollapseValue">
+      <Collapse v-model="keywordCollapseValue" v-if="keywordCollapseData.length !== 0">
         <Panel v-for="(item, index) in keywordCollapseData"
                :key="index"
                :name="index + ''"
@@ -67,8 +67,8 @@
                 </Button>
               </Tooltip>
               <Tooltip :content="$t('m_alarm_configuration_save')" placement="bottom" transfer>
-                <Button size="small" class="mr-1"  type="success" @click.stop="saveFileDetail(item)">
-                  <Icon type="ios-folder-open" size="16" />
+                <Button size="small" class="mr-1"  type="info" @click.stop="saveFileDetail(item)">
+                  <Icon type="ios-cloud-done" size="16" />
                 </Button>
               </Tooltip>
               <Poptip
@@ -148,6 +148,7 @@
           </template>
         </Panel>
       </Collapse>
+      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     </section>
 
     <section style="margin-top: 16px; padding-bottom: 30px">
@@ -423,7 +424,7 @@
         <div class="arrange-item">
           <span class="mr-1 mt-1" style="font-size: 12px">{{$t('firing')}}</span>
           <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
-            <Select v-model="formData.notify.notify_roles" :disabled="!isEditState" clearable :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('m_field_role')">
+            <Select v-model="formData.notify.notify_roles" :disabled="!isEditState" clearable :max-tag-count="2" style="width: 300px" multiple filterable :placeholder="$t('m_field_role')">
               <Option v-for="item in allRoles" :value="item.name" :key="item.value">{{ item.name }}</Option>
             </Select>
           </Tooltip>
@@ -511,7 +512,7 @@ const initFormData = {
   service_group: '',
   name: '',
   keyword: '',
-  regulative: '',
+  regulative: 1,
   query_sql: '',
   monitor_type: '',
   endpoint_rel: [],
@@ -988,6 +989,7 @@ export default {
     addCustomMetric(item) {
       this.currentEditType = 'logFile'
       this.resetDrawerForm()
+      this.formData.name = this.$t('m_alert') + new Date().getTime()
       this.formData.log_keyword_monitor = item.guid
       this.isAddState = true
       this.isTableChangeFormShow = true
@@ -1153,17 +1155,19 @@ export default {
     },
     addDataBase() {
       this.currentEditType = 'database'
+      this.isAddState = true
       this.resetDrawerForm()
       this.formData.service_group = this.targetId
-      this.isAddState = true
+      this.formData.monitor_type = 'process'
+      this.getSqlSourceOptions(this.formData.monitor_type)
       this.isTableChangeFormShow = true
     },
     editDataBaseItem(rowData) {
-      this.getSqlSourceOptions(rowData.monitor_type)
+      this.isAddState = false
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.isAddState = false
+      this.getSqlSourceOptions(rowData.monitor_type)
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
@@ -1180,6 +1184,7 @@ export default {
       this.resetDrawerForm()
     },
     addMetricConfig() {
+      this.formData.endpoint_rel = this.formData.endpoint_rel || []
       this.formData.endpoint_rel.push({
         target_endpoint: '',
         source_endpoint: ''
@@ -1196,6 +1201,20 @@ export default {
         this.request('GET', targetApi, '', responseData => {
           this.sqlTargetEndpoints = responseData
         })
+        if (this.isAddState) {
+          this.formData.endpoint_rel = this.formData.endpoint_rel || []
+          const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=mysql&targetType=${monitorType}`
+          this.request('GET', api, '', responseData => {
+            if (!isEmpty(responseData)) {
+              responseData.forEach(item => {
+                this.formData.endpoint_rel.push({
+                  target_endpoint: item.target_endpoint,
+                  source_endpoint: item.source_endpoint
+                })
+              })
+            }
+          })
+        }
       }
     },
     deleteDatabaseMapItem(index) {
@@ -1332,6 +1351,12 @@ export default {
       font-size: 14px;
     }
   }
+
+  .no-data-class {
+    display: flex;
+    justify-content: center;
+  }
+
 }
 
 .content-title {
@@ -1359,9 +1384,10 @@ export default {
     }
   }
   .arrange-item {
-    width: 80%;
+    width: 90%;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    margin-left: 66px;
     margin-top: 20px;
     margin-bottom: 100px;
 

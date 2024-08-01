@@ -237,14 +237,14 @@ export default {
           render: (h, params) => (
             <div style="display: flex">
               <Tooltip placement="top" max-width="400" content={this.$t('m_endpoint')}>
-                <Button size="small" type="info" on-click={() => {
+                <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.editEndpoints(params.row)
                 }}>
                   <Icon type="ios-cube" />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
-                <Button size="small" type="primary" on-click={() => {
+                <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.editF(params.row)
                 }}>
                   <Icon type="md-create" />
@@ -252,7 +252,7 @@ export default {
               </Tooltip>
 
               <Tooltip placement="top" max-width="400" content={this.$t('m_permissions')}>
-                <Button size="small" on-click={() => {
+                <Button class="mr-1" size="small" on-click={() => {
                   this.authorizeF(params.row)
                 }} type="warning">
                   <Icon type="md-person" />
@@ -265,7 +265,7 @@ export default {
                 on-on-ok={() => {
                   this.deleteTableItem(params.row)
                 }}>
-                <Button size="small" type="error" on-click={() => {
+                <Button class="mr-1" size="small" type="error" on-click={() => {
                   showPoptipOnTable()
                 }}>
                   <Icon type="md-trash" />
