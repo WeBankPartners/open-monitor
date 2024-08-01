@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -12,20 +13,21 @@ import (
 )
 
 type DbMonitorTaskObj struct {
-	DbType       string       `json:"db_type"`
-	Endpoint     string       `json:"endpoint"`
-	Name         string       `json:"name"`
-	Server       string       `json:"server"`
-	Port         string       `json:"port"`
-	User         string       `json:"user"`
-	Password     string       `json:"password"`
-	Sql          string       `json:"sql"`
-	Step         int64        `json:"step"`
-	LastTime     int64        `json:"last_time"`
-	ServiceGroup string       `json:"service_group"`
-	Session      *xorm.Engine `json:"session"`
-	KeywordGuid  string       `json:"keyword_guid"`
-	KeywordCount int64        `json:"keyword_count"`
+	DbType         string       `json:"db_type"`
+	Endpoint       string       `json:"endpoint"`
+	Name           string       `json:"name"`
+	Server         string       `json:"server"`
+	Port           string       `json:"port"`
+	User           string       `json:"user"`
+	Password       string       `json:"password"`
+	Sql            string       `json:"sql"`
+	Step           int64        `json:"step"`
+	LastTime       int64        `json:"last_time"`
+	ServiceGroup   string       `json:"service_group"`
+	Session        *xorm.Engine `json:"session"`
+	KeywordGuid    string       `json:"keyword_guid"`
+	KeywordCount   int64        `json:"keyword_count"`
+	KeywordContent string       `json:"keyword_content"`
 }
 
 type DbMonitorResultObj struct {
@@ -37,6 +39,11 @@ type DbMonitorResultObj struct {
 	ServiceGroup string  `json:"service_group"`
 	KeywordGuid  string  `json:"keyword_guid"`
 	KeywordCount int64   `json:"keyword_count"`
+}
+
+type DbLastKeywordDto struct {
+	KeywordGuid    string `json:"keyword_guid"`
+	KeywordContent string `json:"keyword_content"`
 }
 
 var (
@@ -123,6 +130,8 @@ func mysqlTask(config *DbMonitorTaskObj) float64 {
 	if config.KeywordGuid != "" {
 		if len(queryStringMap) > 0 {
 			config.KeywordCount = config.KeywordCount + 1
+			rowOneBytes, _ := json.Marshal(queryStringMap[0])
+			config.KeywordContent = string(rowOneBytes)
 		}
 	}
 	if len(queryStringMap) > 0 {
