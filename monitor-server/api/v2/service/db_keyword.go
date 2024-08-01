@@ -28,7 +28,7 @@ func CreateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -49,7 +49,7 @@ func UpdateDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -66,7 +66,7 @@ func DeleteDBKeywordConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
