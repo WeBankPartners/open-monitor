@@ -54,7 +54,7 @@ func CreateDbMetricMonitor(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -75,7 +75,7 @@ func UpdateDbMetricMonitor(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -90,7 +90,7 @@ func DeleteDbMetricMonitor(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = db.SyncDbMetric()
+		err = db.SyncDbMetric(false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
