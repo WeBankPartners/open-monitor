@@ -57,7 +57,8 @@ module.exports = {
 	// },
 	configureWebpack: config => {
     if (process.env.PLUGIN === "plugin") {	
-      config.optimization.splitChunks = {}
+      // config.optimization.splitChunks = {}
+			config.optimization.minimize = false
 		}
 		
   },
