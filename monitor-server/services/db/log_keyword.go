@@ -334,7 +334,17 @@ func doLogKeywordMonitorJob() {
 					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
 					continue
 				}
-				//NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
+				tmpNotifyRow, getNotifyErr := getLogKeywordAlarmNotify(v.AlarmStrategy)
+				if getNotifyErr != nil {
+					log.Logger.Error("doLogKeywordMonitorJob get alarm notify fail", log.String("logKeywordConfigGuid", v.AlarmStrategy), log.Int("alarmId", tmpAlarmObj.Id), log.Error(getNotifyErr))
+					continue
+				}
+				if tmpNotifyRow.ProcCallbackMode == models.AlarmNotifyManualMode && tmpNotifyRow.ProcCallbackKey != "" {
+					if _, execErr := x.Exec("update alarm set notify_id=? where id=?", tmpNotifyRow.Guid, tmpAlarmObj.Id); execErr != nil {
+						log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", tmpAlarmObj.Id), log.Error(execErr))
+					}
+				}
+				notifyAction(tmpNotifyRow, &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 			}
 		}
 	}
@@ -520,6 +530,42 @@ func getLogKeywordAlarmNotify(logKeywordConfigGuid string) (notifyRow *models.No
 	if len(logKeywordNotifyRelRows) == 0 {
 		return
 	}
-
+	notifyGuidList := []string{}
+	for _, row := range logKeywordNotifyRelRows {
+		notifyGuidList = append(notifyGuidList, row.Notify)
+	}
+	if len(notifyGuidList) == 0 {
+		return
+	}
+	filterSql, filterParam := createListParams(notifyGuidList, "")
+	var notifyRows []*models.NotifyTable
+	err = x.SQL("select * from notify where guid in ("+filterSql+")", filterParam...).Find(&notifyRows)
+	if err != nil {
+		err = fmt.Errorf("query notify row fail,%s ", err.Error())
+		return
+	}
+	for _, relRow := range logKeywordNotifyRelRows {
+		matchNotify := &models.NotifyTable{}
+		for _, row := range notifyRows {
+			if relRow.Notify == row.Guid {
+				matchNotify = row
+				break
+			}
+		}
+		if matchNotify.Guid != "" {
+			tmpNotifyObj := buildNotifyObj(matchNotify)
+			if len(tmpNotifyObj.NotifyRoles) == 0 && matchNotify.ProcCallbackKey == "" {
+				continue
+			}
+		} else {
+			continue
+		}
+		if relRow.LogKeywordConfig != "" {
+			notifyRow = matchNotify
+			break
+		} else {
+			notifyRow = matchNotify
+		}
+	}
 	return
 }
