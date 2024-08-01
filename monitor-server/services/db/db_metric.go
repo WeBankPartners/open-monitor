@@ -170,7 +170,7 @@ func getDbMetricEndpointRel(dbMetricMonitorGuid string) (result []*models.DbMetr
 	return result
 }
 
-func SyncDbMetric() error {
+func SyncDbMetric(initFlag bool) error {
 	var dbExportAddress string
 	for _, v := range models.Config().Dependence {
 		if v.Name == "db_data_exporter" {
@@ -231,6 +231,29 @@ func SyncDbMetric() error {
 				taskObj.Endpoint = v.TargetEndpoint
 			}
 			postData = append(postData, &taskObj)
+		}
+	}
+	if initFlag {
+		var alarmTable []*models.DbKeywordAlarm
+		err = x.SQL("select * from db_keyword_alarm").Find(&alarmTable)
+		if err != nil {
+			log.Logger.Error("init db keyword warning with query exist alarm fail", log.Error(err))
+		} else {
+			keywordCountMap := make(map[string]float64)
+			for _, row := range alarmTable {
+				if existCount, ok := keywordCountMap[row.DbKeywordMonitor]; ok {
+					if existCount < row.EndValue {
+						keywordCountMap[row.DbKeywordMonitor] = row.EndValue
+					}
+				} else {
+					keywordCountMap[row.DbKeywordMonitor] = row.EndValue
+				}
+			}
+			for _, v := range postData {
+				if findCount, ok := keywordCountMap[v.KeywordGuid]; ok {
+					v.KeywordCount = int64(findCount)
+				}
+			}
 		}
 	}
 	postDataByte, _ := json.Marshal(postData)
