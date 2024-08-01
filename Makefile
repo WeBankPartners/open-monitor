@@ -13,8 +13,8 @@ clean:
 	rm -rf monitor-agent/ping_exporter/ping_exporter
 	rm -rf monitor-agent/db_data_exporter/db_data_exporter
 	rm -rf monitor-agent/transgateway/transgateway
-	rm -rf monitor-ui/dist
-	rm -rf monitor-ui/plugin
+	# rm -rf monitor-ui/dist
+	# rm -rf monitor-ui/plugin
 
 build: clean build_monitor_server
 	chmod +x ./build/*.sh
