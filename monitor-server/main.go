@@ -40,7 +40,7 @@ func main() {
 	go db.StartCheckCron()
 	go db.StartLogKeywordMonitorCronJob()
 	go db.StartDbKeywordMonitorCronJob()
-	go db.SendConfigToDbManager()
+	go db.SyncDbMetric(true)
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
 	go api.InitDependenceParam()
