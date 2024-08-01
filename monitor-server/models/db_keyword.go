@@ -66,3 +66,8 @@ type DbKeywordAlarm struct {
 	EndValue         float64   `json:"end_value" xorm:"end_value"`
 	UpdatedTime      time.Time `json:"updated_time" xorm:"updated_time"`
 }
+
+type DbLastKeywordDto struct {
+	KeywordGuid    string `json:"keyword_guid"`
+	KeywordContent string `json:"keyword_content"`
+}
