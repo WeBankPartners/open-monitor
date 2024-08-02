@@ -62,26 +62,26 @@ const routerP = [
     path: "/viewConfigIndex/boardList",
     name: "/viewConfigIndex/boardList"
   },
-  {
-    path: "/adminConfig/typeConfig",
-    name: "/adminConfig/typeConfig"
-  },
-  {
-    path: "/adminConfig/groupBoard",
-    name: "/adminConfig/groupBoard"
-  },
-  {
-    path: "/adminConfig/adminMetric",
-    name: "/adminConfig/adminMetric"
-  },
-  {
-    path: "/adminConfig/exporter",
-    name: "/adminConfig/exporter"
-  },
-  {
-    path: "/adminConfig/remoteSync",
-    name: "/adminConfig/remoteSync"
-  },
+  // {
+  //   path: "/adminConfig/typeConfig",
+  //   name: "/adminConfig/typeConfig"
+  // },
+  // {
+  //   path: "/adminConfig/groupBoard",
+  //   name: "/adminConfig/groupBoard"
+  // },
+  // {
+  //   path: "/adminConfig/adminMetric",
+  //   name: "/adminConfig/adminMetric"
+  // },
+  // {
+  //   path: "/adminConfig/exporter",
+  //   name: "/adminConfig/exporter"
+  // },
+  // {
+  //   path: "/adminConfig/remoteSync",
+  //   name: "/adminConfig/remoteSync"
+  // },
 ];
 
 export default routerP;
