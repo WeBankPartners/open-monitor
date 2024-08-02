@@ -20,11 +20,11 @@ import editLineView from "@/views/custom-view/edit-line-view";
 import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
-// import typeConfig from "@/views/admin-config/basic/type-config";
-// import groupBoard from "@/views/admin-config/basic/board-config";
+import typeConfig from "@/views/admin-config/basic/type-config";
+import groupBoard from "@/views/admin-config/basic/board-config";
 // import adminMetric from '@/views/metric-config/general-group';
-// import exporter from "@/views/admin-config/other/exporter";
-// import remoteSync from "@/views/admin-config/other/remote-sync";
+import exporter from "@/views/admin-config/other/exporter";
+import remoteSync from "@/views/admin-config/other/remote-sync";
 import index from "@/views/index";
 
 const router = [
@@ -189,51 +189,51 @@ const router = [
     meta: {},
     component: portal
   },
-  // {
-  //   path: "/adminConfig",
-  //   name: "adminConfig",
-  //   title: "管理员配置",
-  //   meta: {},
-  //   redirect: '/adminConfig/groupBoard',
-  //   component: () => import("@/views/admin-config/index"),
-  //   children: [
-  //     {
-  //       path: "typeConfig",
-  //       name: "typeConfig",
-  //       title: "类型配置",
-  //       meta: {},
-  //       component: typeConfig
-  //     },
-  //     {
-  //       path: "groupBoard",
-  //       name: "groupBoard",
-  //       title: "看板配置",
-  //       meta: {},
-  //       component: groupBoard
-  //     },
-  //     {
-  //       path: "adminMetric",
-  //       name: "adminMetric",
-  //       title: "指标配置",
-  //       meta: {},
-  //       component: adminMetric
-  //     },
-  //     {
-  //       path: "exporter",
-  //       name: "exporter",
-  //       title: "exporter",
-  //       meta: {},
-  //       component: exporter
-  //     },
-  //     {
-  //       path: "remoteSync",
-  //       name: "remoteSync",
-  //       title: "remoteSync",
-  //       meta: {},
-  //       component: remoteSync
-  //     }
-  //   ]
-  // }
+  {
+    path: "/adminConfig",
+    name: "adminConfig",
+    title: "管理员配置",
+    meta: {},
+    redirect: '/adminConfig/groupBoard',
+    component: () => import("@/views/admin-config/index"),
+    children: [
+      {
+        path: "typeConfig",
+        name: "typeConfig",
+        title: "类型配置",
+        meta: {},
+        component: typeConfig
+      },
+      {
+        path: "groupBoard",
+        name: "groupBoard",
+        title: "看板配置",
+        meta: {},
+        component: groupBoard
+      },
+      // {
+      //   path: "adminMetric",
+      //   name: "adminMetric",
+      //   title: "指标配置",
+      //   meta: {},
+      //   component: adminMetric
+      // },
+      {
+        path: "exporter",
+        name: "exporter",
+        title: "exporter",
+        meta: {},
+        component: exporter
+      },
+      {
+        path: "remoteSync",
+        name: "remoteSync",
+        title: "remoteSync",
+        meta: {},
+        component: remoteSync
+      }
+    ]
+  }
 ];
 
 export default router;
