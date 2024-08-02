@@ -62,6 +62,7 @@ const routerP = [
     path: "/viewConfigIndex/boardList",
     name: "/viewConfigIndex/boardList"
   },
+<<<<<<< HEAD
   // {
   //   path: "/adminConfig/typeConfig",
   //   name: "/adminConfig/typeConfig"
@@ -70,10 +71,21 @@ const routerP = [
   //   path: "/adminConfig/groupBoard",
   //   name: "/adminConfig/groupBoard"
   // },
+=======
+  {
+    path: "/adminConfig/typeConfig",
+    name: "/adminConfig/typeConfig"
+  },
+  {
+    path: "/adminConfig/groupBoard",
+    name: "/adminConfig/groupBoard"
+  },
+>>>>>>> dev_v3.2.0_wang
   // {
   //   path: "/adminConfig/adminMetric",
   //   name: "/adminConfig/adminMetric"
   // },
+<<<<<<< HEAD
   // {
   //   path: "/adminConfig/exporter",
   //   name: "/adminConfig/exporter"
@@ -82,6 +94,16 @@ const routerP = [
   //   path: "/adminConfig/remoteSync",
   //   name: "/adminConfig/remoteSync"
   // },
+=======
+  {
+    path: "/adminConfig/exporter",
+    name: "/adminConfig/exporter"
+  },
+  {
+    path: "/adminConfig/remoteSync",
+    name: "/adminConfig/remoteSync"
+  }
+>>>>>>> dev_v3.2.0_wang
 ];
 
 export default routerP;
