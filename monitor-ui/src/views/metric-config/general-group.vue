@@ -1,7 +1,6 @@
 <template>
   <div ref="maxheight" class="monitor-general-group">
-    <Row>
-      <Col :span="8">
+    <div style="display:flex;align-items:center;">
       <!--对象类型-->
       <span style="font-size: 14px;">
         {{$t('m_basic_type')}}：
@@ -9,14 +8,11 @@
       <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
         <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
       </Select>
-      </Col>
-      <Col :span="16">
       <div class="btn-group">
         <!--新增-->
         <Button type="success" @click="handleAdd">{{ $t('m_button_add') }}</Button>
       </div>
-      </Col>
-    </Row>
+    </div>
     <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="general-table"/>
     <Modal
       v-model="deleteVisible"
@@ -386,7 +382,8 @@ export default {
   padding-bottom: 20px;
   .btn-group {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    margin-left: 10px;
   }
   .general-table {
     margin-top: 12px;
