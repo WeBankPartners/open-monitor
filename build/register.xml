@@ -14,11 +14,7 @@
         <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard" localDisplayName="对象看板">/endpointView</menu>
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm List" localDisplayName="告警列表">/alarmManagement</menu>
         <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex</menu>
-<<<<<<< HEAD
-        <!-- <menu code='MONITOR_ADMINISTRATOR_CONFIG' cat='MONITORING' displayName="Administrator Config" localDisplayName="管理员配置">/adminConfig</menu> -->
-=======
         <menu code='MONITOR_ADMINISTRATOR_CONFIG' cat='MONITORING' displayName="Administrator Config" localDisplayName="管理员配置">/adminConfig</menu>
->>>>>>> dev_v3.2.0_wang
     </menus>
 
     <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
@@ -119,7 +115,7 @@
             <menu code="MONITOR_CUSTOM_DASHBOARD" />
             <menu code="MONITOR_ALARM_CONFIG" />
             <menu code="MONITOR_ALARM_MANAGEMENT" />
-            <!-- <menu code="MONITOR_ADMINISTRATOR_CONFIG" /> -->
+            <menu code="MONITOR_ADMINISTRATOR_CONFIG" />
         </authority >
     </authorities>
 

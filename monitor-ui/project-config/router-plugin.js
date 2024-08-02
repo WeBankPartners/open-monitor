@@ -18,20 +18,12 @@ import boardIndex from "@/views/custom-view/index";
 import viewConfig from "@/views/custom-view/view-config";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
-<<<<<<< HEAD
-// import typeConfig from "@/views/admin-config/basic/type-config";
-// import groupBoard from "@/views/admin-config/basic/board-config";
-// import adminMetric from '@/views/metric-config/general-group';
-// import exporter from "@/views/admin-config/other/exporter";
-// import remoteSync from "@/views/admin-config/other/remote-sync";
-=======
 import adminConfigIndex from '@/views/admin-config/index';
 import typeConfig from "@/views/admin-config/basic/type-config";
 import groupBoard from "@/views/admin-config/basic/board-config";
 import adminMetric from '@/views/admin-config/basic/metric-config';
 import exporter from "@/views/admin-config/other/exporter";
 import remoteSync from "@/views/admin-config/other/remote-sync";
->>>>>>> dev_v3.2.0_wang
 import index from "@/views/index";
 
 const router = [
@@ -182,53 +174,6 @@ const router = [
     meta: {},
     component: portal
   },
-<<<<<<< HEAD
-  // {
-  //   path: "/adminConfig",
-  //   name: "adminConfig",
-  //   title: "管理员配置",
-  //   meta: {},
-  //   redirect: '/adminConfig/groupBoard',
-  //   component: () => import("@/views/admin-config/index"),
-  //   children: [
-  //     {
-  //       path: "typeConfig",
-  //       name: "typeConfig",
-  //       title: "类型配置",
-  //       meta: {},
-  //       component: typeConfig
-  //     },
-  //     {
-  //       path: "groupBoard",
-  //       name: "groupBoard",
-  //       title: "看板配置",
-  //       meta: {},
-  //       component: groupBoard
-  //     },
-  //     {
-  //       path: "adminMetric",
-  //       name: "adminMetric",
-  //       title: "指标配置",
-  //       meta: {},
-  //       component: adminMetric
-  //     },
-  //     {
-  //       path: "exporter",
-  //       name: "exporter",
-  //       title: "exporter",
-  //       meta: {},
-  //       component: exporter
-  //     },
-  //     {
-  //       path: "remoteSync",
-  //       name: "remoteSync",
-  //       title: "remoteSync",
-  //       meta: {},
-  //       component: remoteSync
-  //     }
-  //   ]
-  // }
-=======
   {
     path: "/adminConfig",
     name: "adminConfig",
@@ -274,7 +219,6 @@ const router = [
       }
     ]
   }
->>>>>>> dev_v3.2.0_wang
 ];
 
 export default router;
