@@ -20,9 +20,10 @@ import editLineView from "@/views/custom-view/edit-line-view";
 import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
+import adminConfigIndex from '@/views/admin-config/index';
 import typeConfig from "@/views/admin-config/basic/type-config";
 import groupBoard from "@/views/admin-config/basic/board-config";
-// import adminMetric from '@/views/metric-config/general-group';
+import adminMetric from '@/views/admin-config/basic/metric-config';
 import exporter from "@/views/admin-config/other/exporter";
 import remoteSync from "@/views/admin-config/other/remote-sync";
 import index from "@/views/index";
@@ -195,7 +196,7 @@ const router = [
     title: "管理员配置",
     meta: {},
     redirect: '/adminConfig/groupBoard',
-    component: () => import("@/views/admin-config/index"),
+    component: adminConfigIndex,
     children: [
       {
         path: "typeConfig",
@@ -211,13 +212,13 @@ const router = [
         meta: {},
         component: groupBoard
       },
-      // {
-      //   path: "adminMetric",
-      //   name: "adminMetric",
-      //   title: "指标配置",
-      //   meta: {},
-      //   component: adminMetric
-      // },
+      {
+        path: "adminMetric",
+        name: "adminMetric",
+        title: "指标配置",
+        meta: {},
+        component: adminMetric
+      },
       {
         path: "exporter",
         name: "exporter",
