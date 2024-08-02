@@ -36,20 +36,12 @@
       </ul>
     </section>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
-      <keywordContent v-if="!isUseOldComponent" ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
-      <template v-if="isUseOldComponent && type === 'group'">
-        <groupManagement ref="group"></groupManagement>
-      </template>
-      <template v-if="isUseOldComponent && type === 'endpoint'">
-        <endpointManagement ref="endpoint"></endpointManagement>
-      </template>
+      <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
     </section>
   </div>
 </template>
 
 <script>
-import endpointManagement from './keyword-endpoint.vue'
-import groupManagement from './keyword-service.vue'
 import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
 export default {
@@ -64,11 +56,6 @@ export default {
         group: 'service',
         endpoint: 'endpoint'
       }
-    }
-  },
-  computed: {
-    isUseOldComponent() {
-      return false
     }
   },
   async mounted() {
@@ -99,19 +86,11 @@ export default {
     search() {
       if (this.targetId) {
         this.showTargetManagement = true
-        if (this.isUseOldComponent) {
-          this.$refs[this.type].getDetail(this.targetId)
-        }
-        else {
-          this.$refs.keywordContent.getDetail(this.targetId)
-        }
-
+        this.$refs.keywordContent.getDetail(this.targetId)
       }
     }
   },
   components: {
-    endpointManagement,
-    groupManagement,
     TagShow,
     keywordContent
   },
