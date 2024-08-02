@@ -1,9 +1,9 @@
 <template>
   <div class="monitor-metric-config">
-    <Tabs v-model="activeName">
+    <Tabs v-if="from !== 'admin'" v-model="activeName">
       <!--通用对象-->
-      <!-- <TabPane :label="$t('m_basic_type')" name="1">
-      </TabPane> -->
+      <TabPane :label="$t('m_basic_type')" name="1">
+      </TabPane>
       <!--层级对象-->
       <TabPane :label="$t('m_field_resourceLevel')" name="2">
       </TabPane>
@@ -13,8 +13,8 @@
       <!--对象-->
       <TabPane :label="$t('m_object_design') + '(' + $t('m_ready_only') + ')'" name="4">
       </TabPane>
-      <MetricChange slot="extra" ref="metricChangeRef" @reloadData="reloadData"></MetricChange>
     </Tabs>
+    <MetricChange ref="metricChangeRef" @reloadData="reloadData" :style="{right: '0'}"></MetricChange>
     <GeneralGroup v-if="activeName === '1'" ref="metricList" @totalCount="setTotalCount"></GeneralGroup>
     <LevelGroup v-if="activeName === '2'" ref="metricList" @totalCount="setTotalCount"></LevelGroup>
     <ObjectGroup v-if="activeName === '3'" ref="metricList" @totalCount="setTotalCount"></ObjectGroup>
@@ -36,9 +36,15 @@ export default {
     Object,
     MetricChange
   },
+  props: {
+    from: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
-      activeName: '2'
+      activeName: '1'
     }
   },
   methods: {
@@ -56,6 +62,7 @@ export default {
 
 <style lang="less" scoped>
 .monitor-metric-config {
+  position: relative;
   width: 100%;
 }
 </style>
