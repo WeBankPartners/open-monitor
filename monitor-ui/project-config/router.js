@@ -261,7 +261,7 @@ const router = new Router({
               name: "adminMetric",
               title: "指标配置",
               meta: {},
-              component: () => import("@/views/metric-config/general-group")
+              component: () => import("@/views/admin-config/basic/metric-config")
             },
             {
               path: "exporter",
