@@ -41,11 +41,17 @@ func AddTypeConfig(param models.TypeConfig) (err error) {
 }
 
 func DeleteTypeConfig(id string) (err error) {
-	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint in (select guid from endpoint_new where monitor_type=?)", Param: []interface{}{id}})
-	actions = append(actions, &Action{Sql: "delete from endpoint_new where monitor_type=?", Param: []interface{}{id}})
-	actions = append(actions, &Action{Sql: "delete from monitor_type where guid=?", Param: []interface{}{id}})
-	return Transaction(actions)
+	_, err = x.Exec("delete from monitor_type where guid=?", id)
+	return
+}
+
+func GetEndpointByMonitorType(id string) (list []*models.EndpointNewTable, err error) {
+	err = x.SQL("select * from endpoint_new where monitor_type=?", id).Find(&list)
+	return
+}
+func GetEndpointGroupByMonitorType(id string) (list []*models.EndpointGroupTable, err error) {
+	err = x.SQL("select * from endpoint_group where monitor_type=?", id).Find(&list)
+	return
 }
 
 func QueryTypeConfigByName(name string) (typeConfigList []*models.TypeConfig, err error) {
