@@ -990,12 +990,12 @@ export default {
           label: item,
           value: item
         }))
-        this.endpointRejectModel.endpointType.push(
-          {
-            label: 'other',
-            value: 'other'
-          }
-        )
+        // this.endpointRejectModel.endpointType.push(
+        //   {
+        //     label: 'other',
+        //     value: 'other'
+        //   }
+        // )
       })
       this.endpointRejectModel.isAdd = true
       this.endpointRejectModel.addRow.type = 'host'
