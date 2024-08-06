@@ -11,8 +11,7 @@ func GetTypeConfigList(name string) (list []*models.TypeConfig, err error) {
 	if name == "" {
 		err = x.SQL("select * from monitor_type").Find(&list)
 	} else {
-		sql := fmt.Sprintf("select * from monitor_type where display_name like '%%s%s'", name)
-		err = x.SQL(sql).Find(&list)
+		err = x.SQL("select * from monitor_type where display_name like ?", fmt.Sprintf("%%%s%%", name)).Find(&list)
 	}
 	if err != nil {
 		return
