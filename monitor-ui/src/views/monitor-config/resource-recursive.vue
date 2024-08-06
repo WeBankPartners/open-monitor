@@ -619,6 +619,7 @@ export default {
             })
           }
         })
+        this.addObject = []
         this.isAssociatedObject = true
       })
     },
