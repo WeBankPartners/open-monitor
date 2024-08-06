@@ -316,6 +316,11 @@ func init() {
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPut, HandlerFunc: config_new.RemoteWriteConfigUpdate},
 		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodDelete, HandlerFunc: config_new.RemoteWriteConfigDelete},
 
+		// 类型配置
+		&handlerFuncObj{Url: "/config/type/query", Method: http.MethodGet, HandlerFunc: monitor.QueryTypeConfigList},
+		&handlerFuncObj{Url: "/config/type", Method: http.MethodPost, HandlerFunc: monitor.AddTypeConfig},
+		&handlerFuncObj{Url: "/config/type", Method: http.MethodDelete, HandlerFunc: monitor.DeleteTypeConfig},
+
 		// 获取seed
 		&handlerFuncObj{Url: "/seed", Method: http.MethodGet, HandlerFunc: monitor.GetEncryptSeed},
 	)
