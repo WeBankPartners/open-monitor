@@ -47,6 +47,8 @@ func AddTypeConfig(c *gin.Context) {
 
 func DeleteTypeConfig(c *gin.Context) {
 	var typeConfig *models.TypeConfig
+	var endpointList []*models.EndpointNewTable
+	var endpointGroupList []*models.EndpointGroupTable
 	var err error
 	id := c.Query("id")
 	if strings.TrimSpace(id) == "" {
@@ -63,6 +65,22 @@ func DeleteTypeConfig(c *gin.Context) {
 	}
 	if typeConfig.SystemType == 1 {
 		middleware.ReturnValidateError(c, "system config not allow delete")
+		return
+	}
+	if endpointList, err = db.GetEndpointByMonitorType(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(endpointList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameAssociationObjectError))
+		return
+	}
+	if endpointGroupList, err = db.GetEndpointGroupByMonitorType(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(endpointGroupList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameAssociationObjectGroupError))
 		return
 	}
 	if err = db.DeleteTypeConfig(id); err != nil {
