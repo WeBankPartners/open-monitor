@@ -33,4 +33,5 @@ type ErrorMessageObj struct {
 	DashboardIdExistError            string `json:"dashboard_id_exist_error"`
 	ImportDashboardNameExistError    string `json:"import_dashboard_name_exist_error"`
 	MetricNotSupportPreview          string `json:"metric_not_support_preview"`
+	TypeConfigNameRepeatError        string `json:"type_config_name_repeat_error"`
 }
