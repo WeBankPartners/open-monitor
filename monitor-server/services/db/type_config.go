@@ -49,7 +49,7 @@ func DeleteTypeConfig(id string) (err error) {
 }
 
 func QueryTypeConfigByName(name string) (typeConfigList []*models.TypeConfig, err error) {
-	err = x.SQL("select * from monitor_type where name=?", name).Find(&typeConfigList)
+	err = x.SQL("select * from monitor_type where display_name=?", name).Find(&typeConfigList)
 	return
 }
 
