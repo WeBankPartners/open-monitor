@@ -215,3 +215,9 @@ type LogMetricParamNeObj struct {
 	Regular   string                     `json:"regular"`
 	StringMap []*LogMetricStringMapNeObj `json:"string_map"`
 }
+
+type LogMetricDataMapMatchDto struct {
+	Content string `json:"content"`
+	Regexp  string `json:"regexp"`
+	Match   bool   `json:"match"`
+}
