@@ -440,7 +440,7 @@ export default {
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
-          this.initPanals()
+          this.initPanals('init')
           this.cutsomViewId = this.pannelId
         }
       })
@@ -536,7 +536,7 @@ export default {
       timestamp = timestamp / 1000
       return timestamp
     },
-    initPanals() {
+    initPanals(type) {
       const tmpArr = []
       this.viewData.forEach(item => {
         const parsedDisplayConfig = JSON.parse(item.displayConfig)
@@ -591,7 +591,14 @@ export default {
           sourceDashboard: item.sourceDashboard
         })
       })
-      this.layoutData = tmpArr
+      if (isEmpty(this.layoutData) || type === 'init') {
+        this.layoutData = tmpArr
+      }
+      else {
+        tmpArr.forEach((tmpItem, index) => {
+          this.layoutData[index]._activeCharts = tmpItem._activeCharts
+        })
+      }
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
       }, 100)
@@ -834,6 +841,29 @@ export default {
       }
       return '10000'
     },
+    processSingleItem(allItem, singleItem) {
+      const target = {
+        x: 0,
+        y: 0
+      }
+      allItem.forEach(item => {
+        if (item.y > target.y) {
+          target.y = item.y
+          target.x = item.x
+        }
+        else if (item.y === target.y) {
+          if (item.x >= target.x) {
+            target.x = item.x
+          }
+        }
+      })
+
+      singleItem.x = target.x >= 6 ? 0 : 6
+      singleItem.y = singleItem.x === 0 ? target.y + target.h : target.y
+      singleItem.w = 6
+      singleItem.h = 7
+      return singleItem
+    },
     async onAddChart(copyInfo, type) {
       if (type === 'add') {
         const name = this.processInitialChartName()
@@ -865,14 +895,9 @@ export default {
           id: `${this.setChartConfigId}`
         }
         if (this.layoutData.length) {
-          const lastItem = this.layoutData[this.layoutData.length - 1]
-          if (lastItem.x <= 6 && lastItem.w <= 6) {
-            const popItem = this.layoutData.pop()
-            popItem.x = 6
-            this.layoutData.push(popItem)
-          }
+          this.processSingleItem(this.layoutData, item)
         }
-        this.layoutData.push(item)
+        this.layoutData.unshift(item)
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
             this.getPannelList()
@@ -904,7 +929,11 @@ export default {
           id: `${chartId}`,
           group
         }
-        this.layoutData.push(item)
+
+        if (this.layoutData.length) {
+          this.processSingleItem(this.layoutData, item)
+        }
+        this.layoutData.unshift(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
           this.getPannelList()
@@ -915,6 +944,12 @@ export default {
           this.getAllChartOptionList()
         }, 0)
       }
+      setTimeout(() => {
+        document.querySelector('.grid-style').scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
+        })
+      }, 500)
     },
     processPannelParams() {
       const charts = []
