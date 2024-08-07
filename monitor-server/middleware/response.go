@@ -105,7 +105,7 @@ func ReturnHandleError(c *gin.Context, msg string, err error) {
 }
 
 func ReturnServerHandleError(c *gin.Context, err error) {
-	ReturnError(c, 500, fmt.Sprintf(GetMessageMap(c).HandleError, err.Error()), err)
+	ReturnError(c, 200, fmt.Sprintf(GetMessageMap(c).HandleError, err.Error()), err)
 }
 
 func ReturnPasswordError(c *gin.Context) {
