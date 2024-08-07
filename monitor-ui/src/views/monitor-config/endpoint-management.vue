@@ -189,7 +189,7 @@
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -717,7 +717,6 @@ export default {
         this.showGroupMsg = true
       }
     }
-    this.getIpList()
     this.getTableList()
     this.getAllOptions()
   },
