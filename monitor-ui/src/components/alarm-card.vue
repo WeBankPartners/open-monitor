@@ -268,8 +268,11 @@ export default {
     },
     addParams(key, value) {
       this.$parent.filters[key] = this.$parent.filters[key] || []
-      if (!this.$parent.filters[key].includes(value)) {
-        this.$parent.filters[key].push(value)
+      const singleArr = this.$parent.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      } else {
+        singleArr.push(value)
       }
       this.$parent.getAlarm()
     },
