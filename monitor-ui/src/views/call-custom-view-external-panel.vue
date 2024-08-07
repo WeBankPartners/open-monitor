@@ -129,7 +129,7 @@
         </div>
       </div>
     </div>
-    <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
+    <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
     <Drawer :title="$t('m_placeholder_chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
