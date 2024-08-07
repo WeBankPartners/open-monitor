@@ -432,7 +432,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList []string) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -477,8 +477,12 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		params = append(params, query.SLast)
 	}
 	if query.SPriority != "" {
-		whereSql += " and s_priority=? "
-		params = append(params, query.SPriority)
+		priorityList = append(priorityList, query.SPriority)
+	}
+	if len(priorityList) > 0 {
+		priorityFilterSql, priorityFilterParam := createListParams(priorityList, "")
+		whereSql += " and s_priority in (" + priorityFilterSql + ") "
+		params = append(params, priorityFilterParam...)
 	}
 	if query.Tags != "" {
 		whereSql += " and tags=? "
@@ -579,7 +583,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		if query.Endpoint == "" && len(endpointFilterList) == 0 {
 			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
 				if extOpenAlarm {
-					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
+					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: []string{query.SPriority}}) {
 						result = append(result, v)
 					}
 				}
@@ -1187,15 +1191,8 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
 		}
 	}
-	if param.Level != "" {
-		levelFilterSql := ""
-		if param.Level == "high" {
-			levelFilterSql = " AND alert_level in (1,2) "
-		} else if param.Level == "medium" {
-			levelFilterSql = " AND alert_level in (3,4) "
-		} else {
-			levelFilterSql = " AND alert_level>=5 "
-		}
+	levelFilterSql := getLevelSQL(convertString2Map(param.Level))
+	if len(levelFilterSql) > 0 {
 		sql += levelFilterSql
 	}
 	sql += " ORDER BY id DESC"
@@ -1491,8 +1488,8 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if len(param.Endpoint) > 0 {
 		whereSql += fmt.Sprintf(" AND endpoint in ('" + strings.Join(param.Endpoint, "','") + "') ")
 	}
-	if param.Priority != "" {
-		whereSql += fmt.Sprintf(" AND s_priority='%s' ", param.Priority)
+	if len(param.Priority) > 0 {
+		whereSql += fmt.Sprintf(" AND s_priority in ('" + strings.Join(param.Priority, "','") + "') ")
 	}
 	if len(param.Metric) > 0 {
 		whereSql += fmt.Sprintf(" AND s_metric in ('" + strings.Join(param.Metric, "','") + "') ")
@@ -1883,4 +1880,39 @@ func convertMap2string(hashMap map[string]bool) []string {
 		arr = append(arr, key)
 	}
 	return arr
+}
+
+func convertString2Map(list []string) map[string]bool {
+	var hashMap = make(map[string]bool)
+	if len(list) == 0 {
+		return hashMap
+	}
+	for _, s := range list {
+		hashMap[s] = true
+	}
+	return hashMap
+}
+
+func getLevelSQL(levelMap map[string]bool) string {
+	var levelFilterSql string
+	switch len(levelMap) {
+	case 1:
+		if levelMap["high"] {
+			levelFilterSql = " AND alert_level in (1,2) "
+		} else if levelMap["medium"] {
+			levelFilterSql = " AND alert_level in (3,4) "
+		} else {
+			levelFilterSql = " AND alert_level>=5 "
+		}
+	case 2:
+		if levelMap["high"] && levelMap["medium"] {
+			levelFilterSql = " AND alert_level<5 "
+		} else if levelMap["high"] && levelMap["low"] {
+			levelFilterSql = " ( AND alert_level in (1,2) or alert_level>=5) "
+		} else {
+			levelFilterSql = " AND alert_level>=3 "
+		}
+	default:
+	}
+	return levelFilterSql
 }
