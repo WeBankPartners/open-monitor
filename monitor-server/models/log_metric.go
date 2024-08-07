@@ -217,7 +217,8 @@ type LogMetricParamNeObj struct {
 }
 
 type LogMetricDataMapMatchDto struct {
-	Content string `json:"content"`
-	Regexp  string `json:"regexp"`
-	Match   bool   `json:"match"`
+	IsRegexp bool   `json:"is_regexp"`
+	Content  string `json:"content"`
+	Regexp   string `json:"regexp"`
+	Match    bool   `json:"match"`
 }
