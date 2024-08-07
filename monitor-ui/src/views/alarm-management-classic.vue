@@ -55,7 +55,7 @@ export default {
           key: 'endpoint'
         },
         {
-          title: this.$t('alarmContent'),
+          title: this.$t('m_alarmContent'),
           key: 'content',
           ellipsis: true,
           tooltip: true
@@ -116,7 +116,7 @@ export default {
                   <Icon type="ios-stats" size="16"></Icon>
                 </Button>
               </Tooltip>
-              <Tooltip content={this.$t('close')} placement="top" transfer={true}>
+              <Tooltip content={this.$t('m_close')} placement="top" transfer={true}>
                 <Button
                   size="small"
                   type="error"
