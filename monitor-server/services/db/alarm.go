@@ -99,12 +99,12 @@ func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
 	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
 	if len(monitorTypeList) > 0 {
 		for _, monitorType := range monitorTypeList {
-			options.EndpointGroup = append(options.EndpointGroup, monitorType.DisplayName)
+			options.BasicType = append(options.BasicType, monitorType.DisplayName)
 		}
 	}
 	if len(endpointGroupList) > 0 {
 		for _, endpointGroup := range endpointGroupList {
-			options.BasicType = append(options.BasicType, endpointGroup.Guid)
+			options.EndpointGroup = append(options.EndpointGroup, endpointGroup.Guid)
 		}
 	}
 	return
