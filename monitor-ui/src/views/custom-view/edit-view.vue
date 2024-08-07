@@ -586,7 +586,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
+          label: `${this.$t('m_volume')}: sum-60s-${this.$t('m_bar_chart')}`,
           key: 'two',
           value: {
             aggregate: 'sum',
@@ -596,7 +596,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'three',
           value: {
             aggregate: 'avg',
@@ -606,7 +606,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'four',
           value: {
             aggregate: 'max',
