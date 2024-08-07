@@ -93,7 +93,7 @@ func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
 	if err = x.SQL("select display_name from monitor_type order by create_time desc").Find(&monitorTypeList); err != nil {
 		return
 	}
-	if err = x.SQL("select guid from endpoint_group order by create_time desc").Find(&endpointGroupList); err != nil {
+	if err = x.SQL("select guid from endpoint_group order by update_time desc").Find(&endpointGroupList); err != nil {
 		return
 	}
 	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
