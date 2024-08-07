@@ -7,6 +7,21 @@
       </div>
       <template slot="list">
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
+
+          <FormItem :label="$t('m_alarm_level')">
+            <Select
+              v-model="filters.priority"
+              multiple
+              filterable
+              :placeholder="$t('m_please_select') + $t('m_alarm_level')"
+              @on-change="onFilterConditionChange"
+            >
+              <Option v-for="item in filtersPriorityOptions" :value="item.value" :key="item.value">
+                {{item.name}}
+              </Option>
+            </Select>
+          </FormItem>
+
           <FormItem :label="$t('m_alarmName')">
             <Select
               v-model="filters.alarm_name"
@@ -83,7 +98,21 @@ export default ({
       filtersEndpointOptions: [],
       filtersMetricOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      filters: cloneDeep(initFilters)
+      filters: cloneDeep(initFilters),
+      filtersPriorityOptions: [
+        {
+          name: this.$t('m_low'),
+          value: 'low'
+        },
+        {
+          name: this.$t('m_medium'),
+          value: 'medium'
+        },
+        {
+          name: this.$t('m_high'),
+          value: 'high'
+        }
+      ]
     }
   },
   computed: {

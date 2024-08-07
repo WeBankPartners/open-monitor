@@ -228,7 +228,7 @@
         {{ $t('m_noData') }}
       </div>
     </div>
-    <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
+    <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
 
