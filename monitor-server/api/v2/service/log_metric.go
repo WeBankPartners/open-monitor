@@ -942,6 +942,11 @@ func LogMonitorDataMapRegMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if !param.IsRegexp {
+		param.Match = true
+		middleware.ReturnSuccessData(c, param)
+		return
+	}
 	ce, err := pcre.Compile(param.Regexp, 0)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Message, fmt.Errorf(err.Message))
