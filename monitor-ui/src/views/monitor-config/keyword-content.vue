@@ -279,7 +279,7 @@
               <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20"></Input>
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_field_log')" prop="keyword">
-              <Input v-model="formData.keyword" :disabled="!isEditState" :maxlength="10"></Input>
+              <Input v-model="formData.keyword" :disabled="!isEditState"></Input>
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_regular')" prop="regulative">
               <Select
