@@ -82,7 +82,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('alarmHistory')}}
+          {{$t('m_alarmHistory')}}
         </span>
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
@@ -159,25 +159,25 @@
           <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="(['ping','http','telnet'].includes(endpointRejectModel.addRow.type))">
-          <label class="col-md-2 label-name">{{$t('exporter')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_exporter')}}:</label>
           <Checkbox v-model="endpointRejectModel.addRow.exporter" :disabled="isReviewMode" />
         </div>
         <div v-if="endpointRejectModel.addRow.exporter">
-          <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="col-md-2 label-name">{{$t('m_exporter_address')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('m_exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
         </div>
         <template v-if="endpointRejectModel.addRow.type === 'process'">
           <div>
-            <label class="col-md-2 label-name">{{$t('processName')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="col-md-2 label-name">{{$t('m_processName')}}:</label>
+            <input v-validate="'required'" :placeholder="$t('m_processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
           </div>
           <div>
-            <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
-            <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="col-md-2 label-name">{{$t('m_processTags')}}:</label>
+            <input :placeholder="$t('m_processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
           </div>
         </template>
         <template>
@@ -209,13 +209,13 @@
         <section>
           <div style="display: flex;">
             <div class="port-title">
-              <span>{{$t('processName')}}:</span>
+              <span>{{$t('m_processName')}}:</span>
             </div>
             <div class="port-title">
-              <span>{{$t('processTags')}}:</span>
+              <span>{{$t('m_processTags')}}:</span>
             </div>
             <div class="port-title">
-              <span>{{$t('displayName')}}:</span>
+              <span>{{$t('m_displayName')}}:</span>
             </div>
             <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
           </div>
@@ -377,7 +377,7 @@ export default {
               key: 'endpoint'
             },
             {
-              title: this.$t('alarmContent'),
+              title: this.$t('m_alarmContent'),
               key: 'content'
             },
             {
@@ -757,7 +757,7 @@ export default {
           value: item
         }))
         this.endpointRejectModel.endpointType.push({
-          label: 'other',
+          label: 'm_other',
           value: 'other'
         })
       })
