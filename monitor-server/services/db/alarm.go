@@ -88,27 +88,25 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 }
 
 func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
-	var list []*m.EndpointRow
-	var endpointGroupMap = make(map[string]bool)
-	var basicTypeMap = make(map[string]bool)
-	if err = x.SQL("select t2.endpoint_group,t1.monitor_type from endpoint_new t1 LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint").Find(&list); err != nil {
+	var monitorTypeList []*m.MonitorTypeTable
+	var endpointGroupList []*m.EndpointGroupTable
+	if err = x.SQL("select display_name from monitor_type order by create_time desc").Find(&monitorTypeList); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from endpoint_group order by create_time desc").Find(&endpointGroupList); err != nil {
 		return
 	}
 	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
-	if len(list) > 0 {
-		for _, endpoint := range list {
-			if strings.TrimSpace(endpoint.EndpointGroup) != "" {
-				endpointGroupMap[endpoint.EndpointGroup] = true
-			}
-			if strings.TrimSpace(endpoint.MonitorType) != "" {
-				basicTypeMap[endpoint.MonitorType] = true
-			}
+	if len(monitorTypeList) > 0 {
+		for _, monitorType := range monitorTypeList {
+			options.EndpointGroup = append(options.EndpointGroup, monitorType.DisplayName)
 		}
 	}
-	options.EndpointGroup = convertMap2string(endpointGroupMap)
-	options.BasicType = convertMap2string(basicTypeMap)
-	sort.Strings(options.EndpointGroup)
-	sort.Strings(options.BasicType)
+	if len(endpointGroupList) > 0 {
+		for _, endpointGroup := range endpointGroupList {
+			options.BasicType = append(options.BasicType, endpointGroup.Guid)
+		}
+	}
 	return
 }
 
