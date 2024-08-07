@@ -481,7 +481,7 @@ type QueryProblemAlarmDto struct {
 type QueryProblemAlarmPageDto struct {
 	Endpoint          []string  `json:"endpoint"`
 	Metric            []string  `json:"metric"`
-	Priority          string    `json:"priority"`
+	Priority          []string  `json:"priority"`
 	Page              *PageInfo `json:"page"`
 	AlarmName         []string  `json:"alarm_name"`
 	CustomDashboardId int       `json:"custom_dashboard_id"`
@@ -494,7 +494,7 @@ type QueryHistoryAlarmParam struct {
 	Endpoint  []string  `json:"endpoint"`
 	Metric    []string  `json:"metric"`
 	AlarmName []string  `json:"alarm_name"`
-	Priority  string    `json:"priority"`
+	Priority  []string  `json:"priority"`
 	Page      *PageInfo `json:"page"`
 }
 
@@ -521,7 +521,7 @@ type AlertWindowParam struct {
 
 type CustomAlarmQueryParam struct {
 	Enable bool
-	Level  string
+	Level  []string
 	Start  string
 	End    string
 	Status string
