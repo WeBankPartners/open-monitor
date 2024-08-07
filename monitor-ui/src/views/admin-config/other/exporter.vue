@@ -103,7 +103,7 @@ export default {
         isAdd: true,
         config: [
           {
-            label: 'clusterName',
+            label: 'm_clusterName',
             value: 'cluster_name',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
@@ -127,7 +127,7 @@ export default {
             type: 'text'
           },
           {
-            label: 'token',
+            label: 'm_token',
             value: 'token',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
@@ -160,7 +160,7 @@ export default {
           {
             label: 'm_field_address',
             value: 'address',
-            placeholder: 'exporter_address_placeholder',
+            placeholder: 'm_exporter_address_placeholder',
             v_validate: 'required:true',
             disabled: false,
             type: 'text'
