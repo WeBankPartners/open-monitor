@@ -494,5 +494,11 @@
   "m_monitor_config": "Monitor Config",
   "m_admin_config": "Administrator Config",
   "m_type_config": "Type Config",
-  "m_view_details": "View Details"
+  "m_keyword_edit": "Keyword edit",
+  "m_alarm_configuration_save": "Alarm configuration save",
+  "m_view_details": "View Details",
+  "m_matching_source_value": "Matching source value",
+  "m_matching_result_test": "Matching result",
+  "m_matching_failed": "Matching failed",
+  "m_alarm_level": "Alarm level"
 }
