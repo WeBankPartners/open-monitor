@@ -30,7 +30,7 @@
             <i v-else class="fa fa-angle-double-up" aria-hidden="true"></i>
             {{rr.display_name}}
             <TagShow :tagName='rr.type' />
-            <!-- <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}} 22</Tag>     -->
+            <!-- <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}}</Tag>     -->
           </div>
           <div v-if="inShowLevel(rr.guid)">
             <recursive :recursiveViewConfig="[rr]"></recursive>
