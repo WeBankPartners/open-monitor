@@ -2,7 +2,7 @@
 <template>
   <div class="admin-type-config">
     <div class="search">
-      <Input placeholder="类型名" style="width:250px;" v-model="searchParams.displayName" clearable @on-change="handleQuery" />
+      <Input :placeholder="$t('m_type_name')" style="width:320px;" v-model="searchParams.displayName" clearable @on-change="handleQuery" />
       <Button type="success" @click="handleAdd">{{ $t('m_button_add') }}</Button>
     </div>
     <Table
@@ -14,7 +14,7 @@
     ></Table>
     <Modal v-model="addVisible" :title="$t('m_button_add')">
       <Form ref="form" :model="form" :rules="ruleForm" label-position="left" :label-width="80">
-        <FormItem label="类型名" prop="displayName">
+        <FormItem :label="$t('m_type_name')" prop="displayName">
           <Input v-model.trim="form.displayName" :maxlength="20" show-word-limit />
         </FormItem>
       </Form>
@@ -26,13 +26,13 @@
     <Modal
       class="delete-confirm-modal"
       v-model="deleteVisible"
-      title="提示"
+      :title="$t('delConfirm.title')"
       @on-ok="handleDelete"
       @on-cancel="deleteVisible = false"
     >
       <div class="confirm-body">
         <Icon type="md-alert" color="#ff9900" size="28" />
-        {{ $t('m_delConfirm_title') }}
+        {{ $t('delConfirm.tip') }}
       </div>
     </Modal>
   </div>
@@ -60,10 +60,10 @@ export default {
           {
             validator: (rule, value, callback) => {
               if (value === '') {
-                callback(new Error('请输入类型名'))
+                callback(new Error(this.$t('placeholder.input') + this.$t('m_type_name')))
               }
               else if (!/^[^\u4e00-\u9fa5]*$/.test(value)) {
-                callback(new Error('不能输入中文字符'))
+                callback(new Error(this.$t('m_chinese_valid')))
               }
               else {
                 callback()
@@ -75,7 +75,7 @@ export default {
       },
       tableColumns: [
         {
-          title: '类型名',
+          title: this.$t('m_type_name'),
           minWidth: 200,
           render: (h, params) => (
             <div>
@@ -86,18 +86,18 @@ export default {
           )
         },
         {
-          title: '对象数',
+          title: this.$t('m_object_count'),
           key: 'objectCount',
           minWidth: 100
         },
         {
-          title: '创建人',
+          title: this.$t('m_creator'),
           key: 'createUser',
           minWidth: 120,
           render: (h, params) => <span>{params.row.createUser || '-'}</span>
         },
         {
-          title: '创建时间',
+          title: this.$t('m_create_time'),
           key: 'createTime',
           minWidth: 160,
           render: (h, params) => <span>{params.row.createTime || '-'}</span>
@@ -132,7 +132,7 @@ export default {
   },
   mounted() {
     this.getList()
-    this.maxHeight = document.body.clientHeight - 140
+    this.maxHeight = document.body.clientHeight - 150
   },
   methods: {
     handleQuery: debounce(function () {
@@ -188,6 +188,8 @@ export default {
   .confirm-body {
     display: flex;
     align-items: center;
+    padding-left: 20px;
+    font-size: 14px;
   }
 }
 </style>

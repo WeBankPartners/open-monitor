@@ -56,9 +56,9 @@ export default {
       for (const j of i.children) {
         if (j.path === this.$route.fullPath) {
           this.activeName = j.name
-          this.openNames = [i.name]
         }
       }
+      this.openNames.push(i.name)
     })
   },
   mounted() {
