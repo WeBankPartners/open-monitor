@@ -90,10 +90,10 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
 	var monitorTypeList []*m.MonitorTypeTable
 	var endpointGroupList []*m.EndpointGroupTable
-	if err = x.SQL("select display_name from monitor_type order by create_time desc").Find(&monitorTypeList); err != nil {
+	if err = x.SQL("select display_name from monitor_type where display_name in (select monitor_type from endpoint_new) order by create_time desc ").Find(&monitorTypeList); err != nil {
 		return
 	}
-	if err = x.SQL("select guid from endpoint_group order by update_time desc").Find(&endpointGroupList); err != nil {
+	if err = x.SQL("select guid from endpoint_group where guid in (select endpoint_group from endpoint_group_rel) order by update_time desc").Find(&endpointGroupList); err != nil {
 		return
 	}
 	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
