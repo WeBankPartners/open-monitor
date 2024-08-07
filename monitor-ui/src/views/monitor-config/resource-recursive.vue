@@ -120,7 +120,7 @@
             clearable
             multiple
             style="width:300px"
-            :placeholder="$t('requestMoreData')"
+            :placeholder="$t('m_requestMoreData')"
             :remote-method="getAllObject"
           >
             <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
@@ -241,7 +241,7 @@
       </div>
       <div slot="footer">
         <span style="color:#ed4014;float: left;text-align:left">
-          <Checkbox v-model="confirmModal.check">{{ $t('dangerous_confirm_tip') }}</Checkbox>
+          <Checkbox v-model="confirmModal.check">{{ $t('m_dangerous_confirm_tip') }}</Checkbox>
         </span>
         <Button @click="cancelConfirmModal">{{$t('m_button_cancel')}}</Button>
         <Button
@@ -258,7 +258,7 @@
       @on-cancel="cancel"
     >
       <div class="modal-body" style="padding:10px">
-        <div style="color:#ed4014">{{$t('delete_follow')}}:</div>
+        <div style="color:#ed4014">{{$t('m_delete_follow')}}:</div>
         <p v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</p>
       </div>
     </Modal>
@@ -306,7 +306,7 @@ export default {
       confirmModal: {
         isShowConfirmModal: false,
         check: false,
-        message: 'resource_delete_tip',
+        message: 'm_resource_delete_tip',
       },
       doubleConfirm: {
         isShow: false,
