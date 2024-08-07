@@ -49,7 +49,7 @@ export default {
         },
         {
           // 其它
-          title: this.$t('other'),
+          title: this.$t('m_other'),
           icon: 'ios-more',
           name: '2',
           children: [
