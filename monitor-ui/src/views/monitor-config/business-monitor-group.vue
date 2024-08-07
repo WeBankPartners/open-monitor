@@ -183,7 +183,7 @@
             size="small"
             style="width:650px"
             long
-          >{{$t('addStringMap')}}</Button>
+          >{{$t('m_addStringMap')}}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -262,7 +262,7 @@
                 @click="addEmptyItem('string_map', index)"
                 type="success"
                 size="small"
-              >{{ $t('addStringMap') }}</Button>
+              >{{ $t('m_addStringMap') }}</Button>
             </div>
             <Divider :key="index + 'Q'" />
           </template>
@@ -271,7 +271,7 @@
             type="success"
             size="small"
             long
-          >{{ $t('addMetricConfig') }}</Button>
+          >{{ $t('m_addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -325,7 +325,7 @@
               type="success"
               size="small"
               long
-            >{{ $t('addStringMap') }}</Button>
+            >{{ $t('m_addStringMap') }}</Button>
           </div>
         </div>
         <!-- 新增标签 -->
@@ -433,7 +433,7 @@
             size="small"
             long
             style="width:610px"
-          >{{ $t('addMetricConfig') }}</Button>
+          >{{ $t('m_addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
