@@ -10,8 +10,7 @@ import (
 
 func GetEndpointTypeList() (result []string, err error) {
 	result = []string{}
-	//queryRows, queryErr := x.QueryString("select distinct t1.export_type from (select export_type from endpoint union select dashboard_type as export_type from dashboard) t1 order by t1.export_type")
-	queryRows, queryErr := x.QueryString("select guid from monitor_type")
+	queryRows, queryErr := x.QueryString("select guid from monitor_type order by create_time desc")
 	if queryErr != nil {
 		err = queryErr
 		return
