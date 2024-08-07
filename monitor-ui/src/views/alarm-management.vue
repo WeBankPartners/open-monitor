@@ -50,12 +50,10 @@
         <div class="content-stats-container">
           <div class="left" :class="{'cover': total === 0 || noData}" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
-
             <template v-if="!noData">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
-
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
@@ -463,7 +461,14 @@ export default {
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
     addParams({key, value}) {
-      this.filters[key] = value
+      this.filters[key] = this.filters[key] || []
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      }
+      else {
+        singleArr.push(value)
+      }
       this.getAlarm()
     },
     deleteConfirmModal() {
