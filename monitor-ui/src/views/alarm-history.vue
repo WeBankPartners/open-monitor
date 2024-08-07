@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="title-wrapper">
-      <Title :title="$t('alarmHistory')"> </Title>
+      <Title :title="$t('m_alarmHistory')"> </Title>
       <div class="title-form">
         <ul>
           <li class="filter-li">
@@ -11,7 +11,7 @@
               @on-change="changeStartDate"
               format="yyyy-MM-dd HH:mm:ss"
               placement="bottom-start"
-              :placeholder="$t('startDatePlaceholder')"
+              :placeholder="$t('m_startDatePlaceholder')"
               style="width: 220px"
             >
             </DatePicker>
@@ -23,7 +23,7 @@
               @on-change="changeEndDate"
               format="yyyy-MM-dd HH:mm:ss"
               placement="bottom-start"
-              :placeholder="$t('endDatePlaceholder')"
+              :placeholder="$t('m_endDatePlaceholder')"
               style="width: 220px"
             >
             </DatePicker>
@@ -41,12 +41,12 @@
         </ul>
         <div class='top-right-search'>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
-          <Button type="primary" @click="realTimeAlarm">{{ $t("realTimeAlarm") }}</Button>
+          <Button type="primary" @click="realTimeAlarm">{{ $t("m_realTimeAlarm") }}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('alarmHistory')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_alarmHistory')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
@@ -299,7 +299,7 @@ export default {
         || Date.parse(new Date(this.startDate))
           > Date.parse(new Date(this.endDate))
       ) {
-        this.$Message.error(this.$t('timeIntervalWarn'))
+        this.$Message.error(this.$t('m_timeIntervalWarn'))
         return
       }
       if (this.startDate === this.endDate) {
