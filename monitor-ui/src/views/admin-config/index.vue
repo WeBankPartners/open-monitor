@@ -35,7 +35,7 @@ export default {
             },
             // 看板配置
             {
-              title: this.$t('menu.screenConfiguration'),
+              title: this.$t('m_menu_screenConfiguration'),
               path: '/adminConfig/groupBoard',
               name: '1-2'
             },
