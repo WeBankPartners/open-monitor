@@ -45,30 +45,61 @@
                 <Col span="3" style="margin-top: 30px">
                 <span style="color:#5cadff">{{ $t('m_service_code') }}</span>
                 </Col>
-                <Col span="20">
+                <Col span="21">
                 <Row>
-                  <Col span="4">{{ $t('m_match_type') }}</Col>
-                  <Col span="6">
+                  <Col span="3">{{ $t('m_match_type') }}</Col>
+                  <Col span="3">
                   <span style="color:red">*</span>
                   {{ $t('m_source_value') }}</Col>
-                  <Col span="6">
+                  <Col span="4">
+                  {{ $t('m_matching_source_value') }}
+                  </Col>
+                  <Col span="4">
+                  {{ $t('m_matching_result_test') }}
+                  </Col>
+                  <Col span="4">
                   <span style="color:red">*</span>
-                  {{ $t('m_match_value') }}</Col>
+                  {{ $t('m_match_value') }}
+                  </Col>
                   <Col span="2">
                   {{ $t('m_field_type') }}</Col>
-                  <Col span="2"></Col>
+                  <Col span="1"></Col>
                 </Row>
-                <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
-                  <Col span="4">
+                <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" class='action-row'>
+                  <Col span="3">
                   <Select v-model="item.regulative" :disabled="view" style="width:90%">
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
-                  <Col span="6">
+                  <Col span="3">
                   <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
                   </Col>
-                  <Col span="6">
+
+                  <Col span="4">
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view"
+                         type='textarea'
+                         :rows='2'
+                         style="width:90%"
+                  >
+                  </Input>
+                  </Col>
+
+                  <Col span="4">
+                  <span>{{item.matchingResult ? item.source_value : $t('m_matching_failed')}}</span>
+                  <Button
+                    type="info"
+                    ghost
+                    size="small"
+                    :disabled="view"
+                    @click="onMatchButtonClick(item)"
+                  >
+                    {{$t('m_match')}}
+                  </Button>
+                  </Col>
+
+                  <Col span="4">
                   <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
                   </Col>
                   <Col span="2" offset="2">
@@ -86,9 +117,9 @@
                 </Col>
               </Row>
               <Row>
-                <Col span="20" offset="3">
+                <Col span="21" offset="3">
                 <Row>
-                  <Col span="2" offset="18">
+                  <Col span="2" offset="20">
                   <div style="cursor: pointer">
                     <Button type="success" :disabled="view" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
                   </div>
@@ -102,18 +133,41 @@
                 <Col span="3" style="margin-top: 12px">
                 <span style="color:#5cadff">{{ $t('m_return_code') }}</span>
                 </Col>
-                <Col span="20">
-                <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
-                  <Col span="4">
+                <Col span="21">
+                <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
+                  <Col span="3">
                   <Select v-model="item.regulative" :disabled="view" style="width:90%">
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
-                  <Col span="6">
+                  <Col span="3">
                   <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
                   </Col>
-                  <Col span="6">
+
+                  <Col span="4">
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view"
+                         type='textarea'
+                         :rows='2'
+                         style="width:90%"
+                  >
+                  </Input>
+                  </Col>
+                  <Col span="4">
+                  <span>{{item.matchingResult ? item.source_value : $t('m_matching_failed')}}</span>
+                  <Button
+                    type="info"
+                    ghost
+                    size="small"
+                    :disabled="view"
+                    @click="onMatchButtonClick(item)"
+                  >
+                    {{$t('m_match')}}
+                  </Button>
+                  </Col>
+
+                  <Col span="4">
                   <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
@@ -135,9 +189,9 @@
                 </Col>
               </Row>
               <Row>
-                <Col span="20" offset="3">
+                <Col span="21" offset="3">
                 <Row>
-                  <Col span="2" offset="18">
+                  <Col span="2" offset="20">
                   <div style="cursor: pointer">
                     <Button type="success" :disabled="view" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
                   </div>
@@ -179,6 +233,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
 import JsonRegexDisplay from '@/views/monitor-config/log-template-config/json-regex-display.vue'
 export default {
@@ -265,6 +320,14 @@ export default {
       const api = this.$root.apiCenter.getLogMetricConfig + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.businessConfig = resp
+        Array.isArray(this.businessConfig.code_string_map) && this.businessConfig.code_string_map.forEach((item, index) => {
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingSourceValue', '')
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingResult', false)
+        })
+        Array.isArray(this.businessConfig.retcode_string_map) && this.businessConfig.retcode_string_map.forEach((item, index) => {
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingSourceValue', '')
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingResult', false)
+        })
       })
     },
     paramsValidate(tmpData) {
@@ -304,10 +367,6 @@ export default {
       if (this.paramsValidate(tmpData)) {
         return
       }
-      // delete tmpData.create_user
-      // delete tmpData.create_time
-      // delete tmpData.update_user
-      // delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, () => {
         this.$Message.success(this.$t('m_tips_success'))
@@ -319,17 +378,32 @@ export default {
       const params = key === 'code_string_map' ? {
         regulative: 0,
         source_value: '',
-        target_value: ''
+        target_value: '',
+        matchingSourceValue: '',
+        matchingResult: false
       } : {
         regulative: 0,
         source_value: '',
         target_value: '',
-        value_type: 'fail'
+        value_type: 'fail',
+        matchingSourceValue: '',
+        matchingResult: false
       }
       this.businessConfig[key].push(params)
     },
     deleteItem(key, itemIndex) {
       this.businessConfig[key].splice(itemIndex, 1)
+    },
+    onMatchButtonClick(item) {
+      const api = '/monitor/api/v2/service/log_metric/data_map/regexp/match'
+      const params = {
+        content: item.matchingSourceValue,
+        regexp: item.source_value,
+        is_regexp: item.regulative === 1 ? true : false
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
+        item.matchingResult = res.match
+      })
     }
   },
   components: {
@@ -381,4 +455,11 @@ export default {
     }
   }
 }
+
+.action-row {
+  margin:6px 0;
+  display: flex;
+  align-items: center;
+}
+
 </style>
