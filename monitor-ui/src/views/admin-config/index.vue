@@ -35,7 +35,7 @@ export default {
             },
             // 看板配置
             {
-              title: this.$t('menu.screenConfiguration'),
+              title: this.$t('m_menu_screenConfiguration'),
               path: '/adminConfig/groupBoard',
               name: '1-2'
             },
@@ -49,7 +49,7 @@ export default {
         },
         {
           // 其它
-          title: this.$t('other'),
+          title: this.$t('m_other'),
           icon: 'ios-more',
           name: '2',
           children: [
