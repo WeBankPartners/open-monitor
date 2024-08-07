@@ -700,5 +700,8 @@
   "m_confirm_close_alarm": "Confirm close alarm",
   "m_monitor_config": "Monitor Config",
   "m_admin_config": "Administrator Config",
-  "m_type_config": "Type Config"
+  "m_type_config": "Type Config",
+  "m_type_name": "Type Name",
+  "m_chinese_valid": "Cannot enter Chinese characters",
+  "m_object_count": "Object Count"
 }
