@@ -7,14 +7,14 @@
             <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('alarmStatistics')}}：</span>
+            <span class="label">{{$t('m_alarmStatistics')}}：</span>
             <i-switch size="large" v-model="showGraph">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
             </i-switch>
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('classic_mode')}}：</span>
+            <span class="label">{{$t('m_classic_mode')}}：</span>
             <i-switch size="large" v-model="isClassicModel">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
@@ -38,12 +38,12 @@
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <Button type="primary" @click="alarmHistory">{{$t('alarmHistory')}}</Button>
+          <Button type="primary" @click="alarmHistory">{{$t('m_alarmHistory')}}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_todayAlarm')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
