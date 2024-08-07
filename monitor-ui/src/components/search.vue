@@ -10,7 +10,7 @@
           remote
           ref="select"
           :disabled="endpointExternal"
-          :placeholder="$t('requestMoreData')"
+          :placeholder="$t('m_requestMoreData')"
           :remote-method="getEndpointList"
           @on-change="updateData"
         >

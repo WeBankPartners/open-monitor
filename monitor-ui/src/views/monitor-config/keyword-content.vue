@@ -107,7 +107,7 @@
                 <div style="margin: 4px 0">
                   <Row v-if="item.notify">
                     <Col span="2">
-                    <span style="margin-right: 8px;line-height: 32px;">{{$t('firing')}}</span>
+                    <span style="margin-right: 8px;line-height: 32px;">{{$t('m_firing')}}</span>
                     </Col>
                     <Col span="6" style="">
                     <Select v-model="item.notify.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
@@ -120,7 +120,7 @@
                             :disabled="!isEditState"
                             @on-change="procCallbackKeyChangeForm(item.notify.proc_callback_key, item.notify)"
                             style="width:99%;"
-                            :placeholder="$t('proc_callback_key')"
+                            :placeholder="$t('m_proc_callback_key')"
                     >
                       <Option v-for="(flow, flowIndex) in allFlows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                     </Select>
@@ -256,7 +256,7 @@
             size="small"
             style="width:650px"
             long
-          >{{$t('addStringMap')}}</Button>
+          >{{$t('m_addStringMap')}}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -341,7 +341,7 @@
                   type="success"
                   size="small"
                   long
-                >{{ $t('addMetricConfig') }}</Button>
+                >{{ $t('m_addMetricConfig') }}</Button>
               </div>
             </FormItem>
             <FormItem :label="$t('m_tableKey_s_priority')" prop="priority">
@@ -422,14 +422,14 @@
           </Tooltip>
         </div>
         <div class="arrange-item">
-          <span class="mr-1 mt-1" style="font-size: 12px">{{$t('firing')}}</span>
+          <span class="mr-1 mt-1" style="font-size: 12px">{{$t('m_firing')}}</span>
           <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
             <Select v-model="formData.notify.notify_roles" :disabled="!isEditState" clearable :max-tag-count="2" style="width: 300px" multiple filterable :placeholder="$t('m_field_role')">
               <Option v-for="item in allRoles" :value="item.name" :key="item.value">{{ item.name }}</Option>
             </Select>
           </Tooltip>
-          <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-            <Select v-model="formData.notify.proc_callback_key" :disabled="!isEditState" clearable @on-change="procCallbackKeyChangeForm(formData.notify.proc_callback_key, formData.notify)" style="width: 160px" :placeholder="$t('proc_callback_key')">
+          <Tooltip :content="$t('m_proc_callback_key')" :delay="1000">
+            <Select v-model="formData.notify.proc_callback_key" :disabled="!isEditState" clearable @on-change="procCallbackKeyChangeForm(formData.notify.proc_callback_key, formData.notify)" style="width: 160px" :placeholder="$t('m_proc_callback_key')">
               <Option v-for="(flow, flowIndex) in allFlows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
             </Select>
           </Tooltip>
