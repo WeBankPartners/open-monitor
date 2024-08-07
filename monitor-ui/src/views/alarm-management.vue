@@ -7,14 +7,14 @@
             <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('alarmStatistics')}}：</span>
+            <span class="label">{{$t('m_alarmStatistics')}}：</span>
             <i-switch size="large" v-model="showGraph">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
             </i-switch>
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('classic_mode')}}：</span>
+            <span class="label">{{$t('m_classic_mode')}}：</span>
             <i-switch size="large" v-model="isClassicModel">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
@@ -38,24 +38,22 @@
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <Button type="primary" @click="alarmHistory">{{$t('alarmHistory')}}</Button>
+          <Button type="primary" @click="alarmHistory">{{$t('m_alarmHistory')}}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_todayAlarm')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{'cover': total === 0 || noData}" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
-
             <template v-if="!noData">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
-
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
@@ -463,7 +461,14 @@ export default {
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
     addParams({key, value}) {
-      this.filters[key] = value
+      this.filters[key] = this.filters[key] || []
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      }
+      else {
+        singleArr.push(value)
+      }
       this.getAlarm()
     },
     deleteConfirmModal() {

@@ -19,8 +19,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <Button @click="addVisible = false">{{ $t('button.cancel') }}</Button>
-        <Button type="primary" @click="saveAdd">{{ $t('button.save') }}</Button>
+        <Button @click="addVisible = false">{{ $t('m_button_cancel') }}</Button>
+        <Button type="primary" @click="saveAdd">{{ $t('m_save') }}</Button>
       </div>
     </Modal>
     <Modal
@@ -110,7 +110,7 @@ export default {
           fixed: 'right',
           render: (h, params) => (
             <div style="display:flex;justify-content:center;">
-              <Tooltip content={this.$t('button.remove')} placement="top">
+              <Tooltip content={this.$t('m_button_remove')} placement="top">
                 <Button
                   size="small"
                   type="error"
