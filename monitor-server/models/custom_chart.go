@@ -19,40 +19,42 @@ type CustomChart struct {
 }
 
 type CustomChartExtend struct {
-	Guid            string `json:"id" xorm:"'guid' pk"`
-	SourceDashboard int    `json:"sourceDashboard" xorm:"source_dashboard"` // 源看板
-	Public          int    `json:"public" xorm:"public"`                    // 是否公共
-	Name            string `json:"name" xorm:"name"`                        // 图表名称
-	ChartTemplate   string `json:"chartTemplate" xorm:"chart_template"`     // 图表模板
-	ChartType       string `json:"chartType" xorm:"chart_type"`             // 曲线图/饼图,line/pie
-	LineType        string `json:"lineType" xorm:"line_type"`               // 折线/柱状/面积,line/bar/area
-	PieType         string `json:"pieType" xorm:"pie_type"`                 // 饼图类型
-	Aggregate       string `json:"aggregate" xorm:"aggregate"`              // 聚合类型
-	AggStep         int    `json:"aggStep" xorm:"agg_step"`                 // 聚合间隔
-	Unit            string `json:"unit" xorm:"unit"`                        // 单位
-	CreateUser      string `json:"createUser" xorm:"create_user"`           // 创建人
-	UpdateUser      string `json:"updateUser" xorm:"update_user"`           // 更新人
-	CreateTime      string `json:"createTime" xorm:"create_time"`           // 创建时间
-	UpdateTime      string `json:"updateTime" xorm:"update_time"`           // 更新时间
-	Group           string `json:"group" xorm:"group"`                      // 所属分组
-	DisplayConfig   string `json:"displayConfig" xorm:"display_config"`     // 视图位置与长宽
+	Guid               string `json:"id" xorm:"'guid' pk"`
+	SourceDashboard    int    `json:"sourceDashboard" xorm:"source_dashboard"`        // 源看板
+	Public             int    `json:"public" xorm:"public"`                           // 是否公共
+	Name               string `json:"name" xorm:"name"`                               // 图表名称
+	ChartTemplate      string `json:"chartTemplate" xorm:"chart_template"`            // 图表模板
+	ChartType          string `json:"chartType" xorm:"chart_type"`                    // 曲线图/饼图,line/pie
+	LineType           string `json:"lineType" xorm:"line_type"`                      // 折线/柱状/面积,line/bar/area
+	PieType            string `json:"pieType" xorm:"pie_type"`                        // 饼图类型
+	Aggregate          string `json:"aggregate" xorm:"aggregate"`                     // 聚合类型
+	AggStep            int    `json:"aggStep" xorm:"agg_step"`                        // 聚合间隔
+	Unit               string `json:"unit" xorm:"unit"`                               // 单位
+	CreateUser         string `json:"createUser" xorm:"create_user"`                  // 创建人
+	UpdateUser         string `json:"updateUser" xorm:"update_user"`                  // 更新人
+	CreateTime         string `json:"createTime" xorm:"create_time"`                  // 创建时间
+	UpdateTime         string `json:"updateTime" xorm:"update_time"`                  // 更新时间
+	Group              string `json:"group" xorm:"group"`                             // 所属分组
+	DisplayConfig      string `json:"displayConfig" xorm:"display_config"`            // 视图位置与长宽
+	GroupDisplayConfig string `json:"groupDisplayConfig" xorm:"group_display_config"` // 视图位置与长宽
 }
 
 type CustomChartDto struct {
-	Id              string                  `json:"id"`
-	Public          bool                    `json:"public"`
-	SourceDashboard int                     `json:"sourceDashboard"`         // 源看板
-	Name            string                  `json:"name"`                    // 图表名称
-	ChartTemplate   string                  `json:"chartTemplate"`           // 图表模板
-	Unit            string                  `json:"unit"`                    // 单位
-	ChartType       string                  `json:"chartType"`               // 曲线图/饼图,line/pie
-	LineType        string                  `json:"lineType"`                // 折线/柱状/面积,line/bar/area
-	PieType         string                  `json:"pieType" xorm:"pie_type"` // 饼图类型
-	Aggregate       string                  `json:"aggregate"`               // 聚合类型
-	AggStep         int                     `json:"aggStep"`                 // 聚合间隔
-	ChartSeries     []*CustomChartSeriesDto `json:"chartSeries"`
-	DisplayConfig   interface{}             `json:"displayConfig"`
-	Group           string                  `json:"group"` // 所属分组
+	Id                 string                  `json:"id"`
+	Public             bool                    `json:"public"`
+	SourceDashboard    int                     `json:"sourceDashboard"`         // 源看板
+	Name               string                  `json:"name"`                    // 图表名称
+	ChartTemplate      string                  `json:"chartTemplate"`           // 图表模板
+	Unit               string                  `json:"unit"`                    // 单位
+	ChartType          string                  `json:"chartType"`               // 曲线图/饼图,line/pie
+	LineType           string                  `json:"lineType"`                // 折线/柱状/面积,line/bar/area
+	PieType            string                  `json:"pieType" xorm:"pie_type"` // 饼图类型
+	Aggregate          string                  `json:"aggregate"`               // 聚合类型
+	AggStep            int                     `json:"aggStep"`                 // 聚合间隔
+	ChartSeries        []*CustomChartSeriesDto `json:"chartSeries"`
+	DisplayConfig      interface{}             `json:"displayConfig"`      // 默认所有下面图表位置
+	GroupDisplayConfig interface{}             `json:"groupDisplayConfig"` // 组下面的图表位置
+	Group              string                  `json:"group"`              // 所属分组
 }
 
 type ChartSharedDto struct {
