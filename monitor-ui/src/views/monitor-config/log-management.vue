@@ -30,9 +30,6 @@
             </Option>
           </Select>
         </li>
-        <li class="search-li">
-          <Button type="primary" :disabled="targetId === ''" @click="search">{{$t('m_button_search')}}</Button>
-        </li>
       </ul>
     </section>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
