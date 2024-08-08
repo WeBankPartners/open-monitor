@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="custom-view-index">
     <div>
       <Row>
         <Tabs v-model="searchMap.permission" @on-click="onFilterConditionChange()">
@@ -352,19 +352,37 @@ export default {
       panalName: ''
     }
   },
-  mounted(){
-    this.pathMap = this.$root.apiCenter.template
-    this.pagination.pageSize = 18
-    this.pagination.currentPage = 1
-    this.getViewList()
-    this.getAllRoles()
-    if (this.$route.query.isCreate) {
-      setTimeout(() => {
-        this.addBoardItem()
-      }, 500)
+  mounted() {
+    if (this.$route.query.needCache === 'yes') {
+      // 读取列表搜索参数
+      const storage = window.sessionStorage.getItem('search_custom_view') || ''
+      if (storage) {
+        const { searchParams } = JSON.parse(storage)
+        this.searchMap = searchParams
+      }
     }
+    this.initData()
+  },
+  beforeDestroy() {
+    // 缓存列表搜索条件
+    const storage = {
+      searchParams: this.searchMap
+    }
+    window.sessionStorage.setItem('search_custom_view', JSON.stringify(storage))
   },
   methods: {
+    initData() {
+      this.pathMap = this.$root.apiCenter.template
+      this.pagination.pageSize = 18
+      this.pagination.currentPage = 1
+      this.getViewList()
+      this.getAllRoles()
+      if (this.$route.query.isCreate) {
+        setTimeout(() => {
+          this.addBoardItem()
+        }, 500)
+      }
+    },
     handleReset() {
       const resetObj = {
         name: '',
