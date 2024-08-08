@@ -422,7 +422,7 @@
           </Tooltip>
         </div>
         <div class="arrange-item">
-          <span class="mr-1 mt-1" style="font-size: 12px">{{$t('m_firing')}}</span>
+          <span class="mr-1 mt-1" style="font-size: 12px; min-width: 60px">{{$t('m_firing')}}</span>
           <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
             <Select v-model="formData.notify.notify_roles" :disabled="!isEditState" clearable :max-tag-count="2" style="width: 300px" multiple filterable :placeholder="$t('m_field_role')">
               <Option v-for="item in allRoles" :value="item.name" :key="item.value">{{ item.name }}</Option>
