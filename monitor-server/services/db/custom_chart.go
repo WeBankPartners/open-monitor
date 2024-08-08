@@ -653,29 +653,39 @@ func getChartSeriesTagValues(chartSeriesTagValueList []*models.CustomChartSeries
 }
 
 func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []string) (ids []string, err error) {
-	var sql = "select dashboard_chart from custom_chart_permission "
+	var sql = "select dashboard_chart from custom_chart_permission where 1=1 "
 	var params []interface{}
 	if len(roles) == 0 {
 		return
 	}
 	ids = []string{}
-	roleFilterSql, roleFilterParam := createListParams(roles, "")
-	sql = sql + " where role_id  in (" + roleFilterSql + ")"
-	params = append(params, roleFilterParam...)
-
-	if len(condition.UseRoles) > 0 {
-		useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
-		sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
-		params = append(append(params, useRoleFilterParam...), models.PermissionUse)
-	}
-	if len(condition.MgmtRoles) > 0 {
-		mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
-		sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
-		params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
-	}
-	if condition.Permission == string(models.PermissionMgmt) {
-		sql = sql + " and permission = ? "
-		params = append(params, models.PermissionMgmt)
+	if len(condition.UseRoles) == 0 && len(condition.MgmtRoles) == 0 {
+		roleFilterSql, roleFilterParam := createListParams(roles, "")
+		sql = sql + " and role_id  in (" + roleFilterSql + ")"
+		params = append(params, roleFilterParam...)
+		if condition.Permission == string(models.PermissionMgmt) {
+			sql = sql + " and permission = ? "
+			params = append(params, models.PermissionMgmt)
+		}
+	} else {
+		if len(condition.UseRoles) > 0 {
+			useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
+			sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
+			params = append(append(params, useRoleFilterParam...), models.PermissionUse)
+		}
+		if len(condition.MgmtRoles) > 0 {
+			mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
+			sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
+			params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
+		}
+		roleFilterSql, roleFilterParam := createListParams(roles, "")
+		if condition.Permission == string(models.PermissionMgmt) {
+			sql = sql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + ") and  and permission = ?)"
+			params = append(append(params, roleFilterParam...), models.PermissionMgmt)
+		} else {
+			sql = sql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + "))"
+			params = append(params, roleFilterParam...)
+		}
 	}
 	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
