@@ -3,4 +3,6 @@ alter table monitor_type add column create_user varchar(64) default null COMMENT
 alter table monitor_type add column create_time varchar(32) default null COMMENT '创建时间';
 alter table custom_dashboard_chart_rel add column group_display_config text default null COMMENT '组里视图位置长与宽';
 
+alter table alarm add index alarm_name (alarm_name);
+
 update monitor_type set system_type = 1;
