@@ -26,13 +26,13 @@
     <Modal
       class="delete-confirm-modal"
       v-model="deleteVisible"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="handleDelete"
       @on-cancel="deleteVisible = false"
     >
       <div class="confirm-body">
         <Icon type="md-alert" color="#ff9900" size="28" />
-        {{ $t('delConfirm.tip') }}
+        {{ $t('m_delConfirm_tip') }}
       </div>
     </Modal>
   </div>
@@ -60,7 +60,7 @@ export default {
           {
             validator: (rule, value, callback) => {
               if (value === '') {
-                callback(new Error(this.$t('placeholder.input') + this.$t('m_type_name')))
+                callback(new Error(this.$t('m_placeholder_input') + this.$t('m_type_name')))
               }
               else if (!/^[^\u4e00-\u9fa5]*$/.test(value)) {
                 callback(new Error(this.$t('m_chinese_valid')))
