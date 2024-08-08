@@ -1864,8 +1864,21 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 	return
 }
 
-func GetAlarmStrategyNameList() (list []string, err error) {
-	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
+func GetAlarmNameList(status string) (list []string, err error) {
+	var newList []string
+	if status == "" {
+		err = x.SQL("select distinct alarm_name from alarm").Find(&list)
+	} else {
+		err = x.SQL("select distinct alarm_name from alarm where status=?", status).Find(&list)
+	}
+	if len(list) > 0 {
+		for _, s := range list {
+			if strings.TrimSpace(s) == "" {
+				continue
+			}
+			newList = append(newList, s)
+		}
+	}
 	return
 }
 
