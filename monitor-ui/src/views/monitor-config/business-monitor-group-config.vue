@@ -402,7 +402,7 @@ export default {
         is_regexp: item.regulative === 1 ? true : false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
-        item.matchingResult = res.match
+        Vue.set(item, 'matchingResult', res.match)
       })
     }
   },
