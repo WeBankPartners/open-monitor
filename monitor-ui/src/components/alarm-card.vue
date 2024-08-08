@@ -271,7 +271,8 @@ export default {
       const singleArr = this.$parent.filters[key]
       if (singleArr.includes(value)) {
         singleArr.splice(singleArr.indexOf(value), 1)
-      } else {
+      }
+      else {
         singleArr.push(value)
       }
       this.$parent.getAlarm()
