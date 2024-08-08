@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <Collapse v-model="logFileCollapseValue">
+      <Collapse v-model="logFileCollapseValue" v-if='logFileCollapseData.length'>
         <Panel v-for="(item, index) in logFileCollapseData"
                :key="index"
                :name="index + ''"
@@ -115,6 +115,7 @@
           </template>
         </Panel>
       </Collapse>
+      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
@@ -1349,5 +1350,10 @@ export default {
   ::-webkit-scrollbar {
     display: none;
   }
+}
+
+.no-data-class {
+  display: flex;
+  justify-content: center;
 }
 </style>
