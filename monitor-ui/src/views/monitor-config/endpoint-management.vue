@@ -29,7 +29,7 @@
         filterable
         clearable
         style="width: 25%"
-        :placeholder="$t('m_please_select') + $t('m_endpoint_type')"
+        :placeholder="$t('m_please_select') + $t('m_basic_type')"
         @on-change="onFilterConditionChange"
       >
         <Option v-for="name in objectTypeList" :value="name" :key="name">
@@ -189,7 +189,7 @@
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -602,13 +602,7 @@ export default {
               {
                 params.row.groups && params.row.groups.length
                   ? params.row.groups.map(item => (
-                    <Button
-                      type="info"
-                      size="small"
-                      ghost
-                    >
-                      {item.name}
-                    </Button>
+                    <Tag>{item.name}</Tag>
                   )) : <div>-</div>
               }
             </div>
@@ -616,7 +610,7 @@ export default {
         },
         {
           title: this.$t('m_basic_type'),
-          width: 110,
+          minWidth: 200,
           key: 'type',
           render: (h, params) => (
             <div>
@@ -629,7 +623,7 @@ export default {
         {
           title: this.$t('m_creator'),
           key: 'create_user',
-          width: 120,
+          minWidth: 150,
           render: (h, params) => (
             <div>
               {
@@ -641,7 +635,7 @@ export default {
         {
           title: this.$t('m_updatedBy'),
           key: 'update_user',
-          width: 120,
+          minWidth: 150,
           render: (h, params) => (
             <div>
               {
@@ -658,10 +652,11 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 250,
+          width: 210,
+          align: 'center',
           fixed: 'right',
           render: (h, params) => (
-            <div style="display: flex; justify-content: flex-start">
+            <div style="display: flex; justify-content: center;">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
                 <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
@@ -722,7 +717,6 @@ export default {
         this.showGroupMsg = true
       }
     }
-    this.getIpList()
     this.getTableList()
     this.getAllOptions()
   },
