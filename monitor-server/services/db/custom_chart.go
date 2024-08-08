@@ -558,19 +558,20 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 	var chartSeriesTagList []*models.CustomChartSeriesTag
 	var chartSeriesTagValueList []*models.CustomChartSeriesTagValue
 	chart = &models.CustomChartDto{
-		Id:              chartExtend.Guid,
-		Public:          intToBool(chartExtend.Public),
-		SourceDashboard: chartExtend.SourceDashboard,
-		Name:            chartExtend.Name,
-		ChartTemplate:   chartExtend.ChartTemplate,
-		Unit:            chartExtend.Unit,
-		ChartType:       chartExtend.ChartType,
-		LineType:        chartExtend.LineType,
-		PieType:         chartExtend.PieType,
-		Aggregate:       chartExtend.Aggregate,
-		AggStep:         chartExtend.AggStep,
-		DisplayConfig:   chartExtend.DisplayConfig,
-		Group:           chartExtend.Group,
+		Id:                 chartExtend.Guid,
+		Public:             intToBool(chartExtend.Public),
+		SourceDashboard:    chartExtend.SourceDashboard,
+		Name:               chartExtend.Name,
+		ChartTemplate:      chartExtend.ChartTemplate,
+		Unit:               chartExtend.Unit,
+		ChartType:          chartExtend.ChartType,
+		LineType:           chartExtend.LineType,
+		PieType:            chartExtend.PieType,
+		Aggregate:          chartExtend.Aggregate,
+		AggStep:            chartExtend.AggStep,
+		DisplayConfig:      chartExtend.DisplayConfig,
+		GroupDisplayConfig: chartExtend.GroupDisplayConfig,
+		Group:              chartExtend.Group,
 	}
 	chart.ChartSeries = []*models.CustomChartSeriesDto{}
 	if list, err = QueryCustomChartSeriesByChart(chartExtend.Guid); err != nil {
