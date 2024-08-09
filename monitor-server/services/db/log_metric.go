@@ -1532,6 +1532,30 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	return
 }
 
+func CopyLogMetricCustomGroup(guid string) (logMetricMonitor string, err error) {
+	return
+}
+
+func GetLogMetricGroupObj(logMetricGroupId string) (logMetricGroupObj models.LogMetricGroupObj, err error) {
+	var logMetricGroup models.LogMetricGroup
+	var serviceGroup, monitorType string
+	if _, err = x.SQL("select * from log_metric_group where guid= ?", logMetricGroupId).Get(&logMetricGroup); err != nil {
+		return
+	}
+	logMetricGroup.Name = logMetricGroup.Name + "1"
+	serviceGroup, monitorType = GetLogMetricServiceGroup(logMetricGroup.LogMetricMonitor)
+	logMetricGroupObj = models.LogMetricGroupObj{
+		LogMetricGroup:         logMetricGroup,
+		LogMonitorTemplateName: logMetricGroup.LogMonitorTemplate,
+		ServiceGroup:           serviceGroup,
+		MonitorType:            monitorType,
+		JsonRegular:            "",
+		ParamList:              nil,
+		MetricList:             nil,
+	}
+	return
+}
+
 func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
 	param.LogType = "custom"
 	if param.Guid == "" {
