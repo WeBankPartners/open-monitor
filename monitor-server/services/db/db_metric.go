@@ -20,7 +20,10 @@ func GetDbMetricByServiceGroup(serviceGroup string) (result []*models.DbMetricMo
 		return result, fmt.Errorf("Query db_metric_monitor table fail,%s ", err.Error())
 	}
 	for _, v := range dbMetricTable {
-		result = append(result, &models.DbMetricMonitorObj{Guid: v.Guid, ServiceGroup: v.ServiceGroup, MetricSql: v.MetricSql, Metric: v.Metric, DisplayName: v.DisplayName, Step: v.Step, MonitorType: v.MonitorType, EndpointRel: getDbMetricEndpointRel(v.Guid)})
+		result = append(result, &models.DbMetricMonitorObj{Guid: v.Guid, ServiceGroup: v.ServiceGroup, MetricSql: v.MetricSql,
+			Metric: v.Metric, DisplayName: v.DisplayName, Step: v.Step, MonitorType: v.MonitorType,
+			EndpointRel: getDbMetricEndpointRel(v.Guid), UpdateUser: v.UpdateUser, UpdateTime: v.UpdateTime,
+		})
 	}
 	return
 }
