@@ -45,6 +45,7 @@ func main() {
 	go db.StartNotifyPingExport()
 	go api.InitDependenceParam()
 	go db.StartInitAlarmUniqueTags()
+	go db.SyncMetricComparison()
 	middleware.InitErrorMessageList()
 	api.InitHttpServer()
 }
