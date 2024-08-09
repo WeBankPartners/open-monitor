@@ -237,5 +237,6 @@
     "remoteWrite": "/monitor/api/v2/config/remote/write",
     "getEncryptKey": "/monitor/api/v2/seed",
     "getTypeConfigList": "/monitor/api/v2/config/type/query",
-    "createTypeConfig": "/monitor/api/v2/config/type"
+    "createTypeConfig": "/monitor/api/v2/config/type",
+    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new"
 }
