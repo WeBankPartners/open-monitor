@@ -9,6 +9,7 @@ type DbMetricMonitorTable struct {
 	Step         int64  `json:"step" xorm:"step"`
 	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
 	UpdateTime   string `json:"update_time" xorm:"update_time"`
+	UpdateUser   string `json:"update_user" xorm:"update_user"`
 }
 
 type DbMetricEndpointRelTable struct {
@@ -27,6 +28,8 @@ type DbMetricMonitorObj struct {
 	DisplayName      string                      `json:"display_name"`
 	Step             int64                       `json:"step"`
 	MonitorType      string                      `json:"monitor_type"`
+	UpdateTime       string                      `json:"update_time"`
+	UpdateUser       string                      `json:"update_user"`
 	EndpointRel      []*DbMetricEndpointRelTable `json:"endpoint_rel"`
 }
 
