@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GetEndpointTypeList() (result []string, err error) {
+func GetSimpleEndpointTypeList() (result []string, err error) {
 	result = []string{}
 	queryRows, queryErr := x.QueryString("select guid from monitor_type order by create_time desc")
 	if queryErr != nil {
@@ -18,6 +18,12 @@ func GetEndpointTypeList() (result []string, err error) {
 	for _, row := range queryRows {
 		result = append(result, row["guid"])
 	}
+	return
+}
+
+func GetEndpointTypeList() (result []*models.MonitorTypeTable, err error) {
+	result = []*models.MonitorTypeTable{}
+	err = x.SQL("select guid,system_type from monitor_type order by create_time desc").Find(&result)
 	return
 }
 
