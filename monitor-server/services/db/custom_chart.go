@@ -125,7 +125,7 @@ func GetAddCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChar
 	var actions []*Action
 	if len(chartRelList) > 0 {
 		for _, rel := range chartRelList {
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
 				rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime, rel.GroupDisplayConfig}})
 		}
 	}
