@@ -503,5 +503,10 @@
   "m_matching_source_value": "Matching source value",
   "m_matching_result_test": "Matching result",
   "m_matching_failed": "Matching failed",
-  "m_alarm_level": "Alarm level"
+  "m_alarm_level": "Alarm level",
+  "m_automatic_layout": "Automatic layout",
+  "m_two_columns": "Two columns",
+  "m_three_columns": "Three columns",
+  "m_layout_change_tips": "Switching the layout will automatically reset the layout, and the previous layout will be overwritten. Do you confirm the operation?",
+  "m_is_requesting": "Is requesting"
 }
