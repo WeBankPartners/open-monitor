@@ -15,7 +15,7 @@ import (
 func GetDbMetricByServiceGroup(serviceGroup string) (result []*models.DbMetricMonitorObj, err error) {
 	result = []*models.DbMetricMonitorObj{}
 	var dbMetricTable []*models.DbMetricMonitorTable
-	err = x.SQL("select * from db_metric_monitor where service_group=?", serviceGroup).Find(&dbMetricTable)
+	err = x.SQL("select * from db_metric_monitor where service_group=? order by update_time desc", serviceGroup).Find(&dbMetricTable)
 	if err != nil {
 		return result, fmt.Errorf("Query db_metric_monitor table fail,%s ", err.Error())
 	}
@@ -71,8 +71,8 @@ func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 
 func getCreateDBMetricActions(param *models.DbMetricMonitorObj, operator, nowTime string) (actions []*Action) {
 	param.Guid = guid.CreateGuid()
-	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time) value (?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime}
+	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time,update_user) value (?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime, operator}
 	actions = append(actions, &insertAction)
 	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getDbMetricExpr(param.Metric, param.ServiceGroup), param.ServiceGroup,
@@ -103,8 +103,8 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 	}
 	var affectEndpointGroup []string
 	var actions []*Action
-	updateAction := Action{Sql: "update db_metric_monitor set metric_sql=?,metric=?,display_name=?,step=?,monitor_type=?,update_time=? where guid=?"}
-	updateAction.Param = []interface{}{param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, time.Now().Format(models.DatetimeFormat), param.Guid}
+	updateAction := Action{Sql: "update db_metric_monitor set metric_sql=?,metric=?,display_name=?,step=?,monitor_type=?,update_time=?,update_user=? where guid=?"}
+	updateAction.Param = []interface{}{param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, time.Now().Format(models.DatetimeFormat), operator, param.Guid}
 	actions = append(actions, &updateAction)
 	if dbMetricTable[0].Metric != param.Metric {
 		oldMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
