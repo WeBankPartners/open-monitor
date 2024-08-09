@@ -2,6 +2,7 @@ alter table monitor_type add column system_type tinyint(1) default 0 COMMENT '�
 alter table monitor_type add column create_user varchar(64) default null COMMENT '创建人';
 alter table monitor_type add column create_time varchar(32) default null COMMENT '创建时间';
 alter table custom_dashboard_chart_rel add column group_display_config text default null COMMENT '组里视图位置长与宽';
+alter table log_metric_string_map modify column target_value varchar(128) default null COMMENT '目标值';
 
 alter table alarm add index alarm_name (alarm_name);
 
