@@ -7,6 +7,15 @@ import (
 )
 
 func GetEndpointTypeList(c *gin.Context) {
+	result, err := db.GetSimpleEndpointTypeList()
+	if err != nil {
+		middleware.ReturnQueryTableError(c, "endpoint", err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func GetEndpointTypeNewList(c *gin.Context) {
 	result, err := db.GetEndpointTypeList()
 	if err != nil {
 		middleware.ReturnQueryTableError(c, "endpoint", err)
