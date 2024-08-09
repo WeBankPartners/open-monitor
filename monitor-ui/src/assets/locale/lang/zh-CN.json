@@ -496,7 +496,7 @@
   "m_admin_config": "管理员配置",
   "m_type_config": "类型配置",
   "m_type_name": "类型名",
-  "m_chinese_valid": "不能输入中文字符",
+  "m_chinese_underline_valid": "不能输入中文字符和下划线",
   "m_object_count": "对象数",
   "m_keyword_edit": "关键字编辑",
   "m_alarm_configuration_save": "告警配置保存",

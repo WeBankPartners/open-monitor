@@ -495,7 +495,7 @@
   "m_admin_config": "Administrator Config",
   "m_type_config": "Type Config",
   "m_type_name": "Type Name",
-  "m_chinese_valid": "Cannot enter Chinese characters",
+  "m_chinese_underline_valid": "Cannot enter Chinese characters and underscores",
   "m_object_count": "Object Count",
   "m_keyword_edit": "Keyword edit",
   "m_alarm_configuration_save": "Alarm configuration save",
