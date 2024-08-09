@@ -38,7 +38,7 @@ func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, 
 }
 
 func QueryCustomChartListByDashboard(customDashboard int) (list []*models.CustomChartExtend, err error) {
-	err = x.SQL("select c.*,r.`group`,r.display_config from custom_dashboard_chart_rel  r join custom_chart  c "+
+	err = x.SQL("select c.*,r.`group`,r.display_config,r.group_display_config from custom_dashboard_chart_rel  r join custom_chart  c "+
 		"on r.dashboard_chart = c.guid where r.custom_dashboard = ?", customDashboard).Find(&list)
 	return
 }
