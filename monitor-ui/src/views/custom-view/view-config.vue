@@ -726,7 +726,12 @@ export default {
       this.$Message.success(this.$t('m_tips_success'))
     },
     returnPreviousPage() {
-      this.$router.push({name: 'viewConfigIndex'})
+      this.$router.push({
+        name: 'viewConfigIndex',
+        query: {
+          needCache: 'yes'
+        }
+      })
     },
     async savePanalEdit() {
       if (!this.panalName) {
