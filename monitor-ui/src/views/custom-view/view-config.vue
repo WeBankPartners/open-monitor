@@ -20,9 +20,6 @@
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
-              <!-- <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
-                <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select> -->
               <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
                 <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
               </RadioGroup>
@@ -37,10 +34,10 @@
                 split-panels
                 @on-change="datePick"
                 :placeholder="$t('m_placeholder_datePicker')"
-                style="width: 320px"
+                style="width: 250px"
               ></DatePicker>
             </div>
-            <div class="search-zone ml-2">
+            <div class="search-zone">
               <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
               <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -101,6 +98,21 @@
               icon="md-add"
             ></Button>
           </span>
+
+          <div class="ml-4">
+            <span class="params-title">{{$t('m_automatic_layout')}}：</span>
+            <Poptip
+              class='chart-layout-poptip'
+              confirm
+              :title="$t('m_layout_change_tips')"
+              @on-ok="onLayoutPopTipConfirm"
+            >
+              <Button id='chartLayoutPopTipButton' style="display: none"></Button>
+            </Poptip>
+            <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
+              <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
+            </RadioGroup>
+          </div>
         </div>
 
         <!-- 图表新增 -->
@@ -166,9 +178,11 @@
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
-                    <span @click="onChartBodyClick(item)" v-if="editChartId !== item.id">{{item.i}}</span>
+                    <Tooltip v-if="editChartId !== item.id" :content="item.i" :max-width='250' placement="top">
+                      <span class='header-grid-name-text'>{{item.i}}</span>
+                    </Tooltip>
                     <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
                     <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
@@ -285,8 +299,10 @@ import isEmpty from 'lodash/isEmpty'
 import remove from 'lodash/remove'
 import cloneDeep from 'lodash/cloneDeep'
 import debounce from 'lodash/debounce'
+import find from 'lodash/find'
+import orderBy from 'lodash/orderBy'
 import {generateUuid} from '@/assets/js/utils'
-import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
+import {dataPick, autoRefreshConfig, layoutOptions} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
@@ -335,6 +351,7 @@ export default {
       disableTime: false,
       dataPick,
       autoRefreshConfig,
+      layoutOptions,
       viewData: [],
       activeGroup: 'ALL',
       showGroupMgmt: false,
@@ -398,16 +415,17 @@ export default {
       boardMgmtRoles: [],
       boardUseRoles: [],
       initTitle: '',
-      isModalShow: false
+      isModalShow: false,
+      chartLayoutType: 'customize',
+      previousChartLayoutType: 'customize', // 用于记录radio点击前的type
+      tempChartLayoutType: '', // 用于记录点击后的type,
+      allPageLayoutData: []
     }
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
-      if (this.activeGroup === 'ALL') {
-        return this.layoutData
-      }
-      return this.layoutData.filter(d => d.group === this.activeGroup)
-
+      return this.layoutData
+      // return this.filterLayoutData()
     },
     isEditStatus() {
       return this.permission === 'edit'
@@ -424,7 +442,7 @@ export default {
     this.getAllRolesOptions()
   },
   methods: {
-    getPannelList(activeGroup='ALL') {
+    getPannelList(activeGroup=this.activeGroup) {
       this.request('GET', '/monitor/api/v2/dashboard/custom', {
         id: this.pannelId
       }, res => {
@@ -491,19 +509,6 @@ export default {
       }
       return options
     },
-    onChartBodyClick(item) {
-      if (this.isEditStatus && !this.noAllowChartChange(item)) {
-        this.setChartType(item)
-      }
-      else {
-        if (!this.isEditStatus) {
-          this.gridPlus(item)
-        }
-        else {
-          this.$Message.warning('暂无编辑权限！')
-        }
-      }
-    },
     openAlarmDisplay() {
       this.showAlarm = !this.showAlarm
       setTimeout(() => {
@@ -539,7 +544,25 @@ export default {
     initPanals(type) {
       const tmpArr = []
       this.viewData.forEach(item => {
-        const parsedDisplayConfig = JSON.parse(item.displayConfig)
+        // 先对groupDisplayConfig进行初始化，防止异常值
+        if (!this.isValidJson(item.groupDisplayConfig) || isEmpty(JSON.parse(item.groupDisplayConfig))) {
+          item.groupDisplayConfig = ''
+        }
+
+        let parsedDisplayConfig = {}
+        if (this.activeGroup === 'ALL') {
+          parsedDisplayConfig = JSON.parse(item.displayConfig)
+        }
+        else {
+          // 在各个分组中的情况
+          if (this.isValidJson(item.groupDisplayConfig) && !isEmpty(JSON.parse(item.groupDisplayConfig))) {
+            parsedDisplayConfig = JSON.parse(item.groupDisplayConfig)
+          }
+          else {
+            item.groupDisplayConfig = ''
+            parsedDisplayConfig = JSON.parse(item.displayConfig)
+          }
+        }
         const params = {
           aggregate: item.aggregate,
           agg_step: item.aggStep,
@@ -565,7 +588,6 @@ export default {
           }
           params.data.push(item)
         })
-
         const height = (parsedDisplayConfig.h + 1) * 30-8
         const _activeCharts = []
         _activeCharts.push({
@@ -588,7 +610,9 @@ export default {
           id: item.id,
           group: item.group,
           public: item.public,
-          sourceDashboard: item.sourceDashboard
+          sourceDashboard: item.sourceDashboard,
+          allGroupDisplayConfig: JSON.parse(item.displayConfig),
+          partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
         })
       })
       if (isEmpty(this.layoutData) || type === 'init') {
@@ -599,9 +623,37 @@ export default {
           this.layoutData[index]._activeCharts = tmpItem._activeCharts
         })
       }
+      this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+      this.allPageLayoutData = cloneDeep(this.layoutData)
+      this.filterLayoutData()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
       }, 100)
+    },
+    sortLayoutData(data) {
+      const sortedArr = orderBy(data, ['y', 'x'], ['asc', 'asc'])
+      return sortedArr
+    },
+    confirmLayoutType(data) {
+      if (isEmpty(data)) {
+        return
+      }
+      for (let i=0; i<data.length; i++) {
+        const single = data[i]
+        if ((single.x === (i % 2) * 6) && single.y === Math.floor(i / 2) * 7 && single.h === 7 && single.w === 6) {
+          this.chartLayoutType = 'two'
+          continue
+        }
+        else if ((single.x === (i % 3) * 4) && single.y === Math.floor(i / 3) * 7 && single.h === 7 && single.w === 4) {
+          this.chartLayoutType = 'three'
+          continue
+        }
+        else {
+          this.chartLayoutType = 'customize'
+          break
+        }
+      }
+      this.previousChartLayoutType = this.chartLayoutType
     },
     isShowGridPlus(item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
@@ -715,6 +767,7 @@ export default {
         }
         else {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+            this.refreshPannelNow()
             resolve()
           })
         }
@@ -741,14 +794,18 @@ export default {
       await this.submitPanelInfo()
       this.$Message.success(this.$t('m_tips_success'))
       this.isEditPanal = false
+      this.getPannelList(this.activeGroup)
     },
     canclePanalEdit() {
       this.isEditPanal = false
       this.panalName = this.editData.name
     },
     // #region 组管理
-    selectGroup(item) {
+    async selectGroup(item) {
+      await this.submitPanelInfo() // 保存完毕后切换
+      this.$Message.success(this.$t('m_tips_success'))
       this.activeGroup = item
+      this.chartLayoutType = 'customize'
       this.getPannelList(this.activeGroup)
     },
     addGroupItem() {
@@ -828,46 +885,39 @@ export default {
         })
       }
       this.showGroupMgmt = false
-      this.savePanalEdit()
       this.activeGroup = this.groupName
+      this.savePanalEdit()
     },
 
     processInitialChartName() {
       let allName = []
-      if (!isEmpty(this.layoutData)) {
-        allName = this.layoutData.map(item => {
+      if (!isEmpty(this.allPageLayoutData)) {
+        allName = this.allPageLayoutData.map(item => {
           if (!isNaN(Number(item.i))) {
             return Number(item.i)
           }
           return 10000
-
         })
         return Math.max(...allName) + 1 + ''
       }
       return '10000'
     },
-    processSingleItem(allItem, singleItem) {
-      const target = {
-        x: 0,
-        y: 0
+    processSingleItem(lastItem, needSetItem) {
+      if (lastItem.x + lastItem.w > 6) {
+        needSetItem.x = 0
+        needSetItem.y = lastItem.y + 7
       }
-      allItem.forEach(item => {
-        if (item.y > target.y) {
-          target.y = item.y
-          target.x = item.x
-        }
-        else if (item.y === target.y) {
-          if (item.x >= target.x) {
-            target.x = item.x
-          }
-        }
-      })
+      else {
+        needSetItem.x = lastItem.x + lastItem.w
+        needSetItem.y = lastItem.y
+      }
 
-      singleItem.x = target.x >= 6 ? 0 : 6
-      singleItem.y = singleItem.x === 0 ? target.y + target.h : target.y
-      singleItem.w = 6
-      singleItem.h = 7
-      return singleItem
+      needSetItem.allGroupDisplayConfig = {
+        x: needSetItem.x,
+        y: needSetItem.y,
+        h: needSetItem.h,
+        w: needSetItem.w
+      }
     },
     async onAddChart(copyInfo, type) {
       if (type === 'add') {
@@ -883,6 +933,7 @@ export default {
           aggStep: 60,
           unit: '',
           group: this.activeGroup === 'ALL' ? '' : this.activeGroup,
+          groupDisplayConfig: '',
           displayConfig: {
             x: 0,
             y: 0,
@@ -897,15 +948,21 @@ export default {
           w: 6,
           h: 7,
           i: `${name}`,
-          id: `${this.setChartConfigId}`
+          moved: false,
+          id: `${this.setChartConfigId}`,
+          group: this.activeGroup === 'ALL' ? '' : this.activeGroup,
+          partGroupDisplayConfig: '',
+          allGroupDisplayConfig: {},
+          sourceDashboard: this.pannelId
         }
         if (this.layoutData.length) {
-          this.processSingleItem(this.layoutData, item)
+          const lastOne = this.layoutData[this.layoutData.length - 1]
+          this.processSingleItem(lastOne, item)
         }
-        this.layoutData.unshift(item)
+        this.layoutData.push(item)
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
-            this.getPannelList()
+            this.getPannelList(this.activeGroup)
             this.showChartConfig = true
           })
         }, 0)
@@ -917,6 +974,7 @@ export default {
           ref: type === 'copy' ? false : true,
           originChartId: copyInfo.id,
           group,
+          groupDisplayConfig: '',
           displayConfig: {
             x: 0,
             y: 0,
@@ -932,16 +990,19 @@ export default {
           h: 7,
           i: '',
           id: `${chartId}`,
-          group
+          group,
+          partGroupDisplayConfig: '',
+          allGroupDisplayConfig: {},
+          sourceDashboard: this.pannelId
         }
-
         if (this.layoutData.length) {
-          this.processSingleItem(this.layoutData, item)
+          const lastOne = this.layoutData[this.layoutData.length - 1]
+          this.processSingleItem(lastOne, item)
         }
-        this.layoutData.unshift(item)
+        this.layoutData.push(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
-          this.getPannelList()
+          this.getPannelList(this.activeGroup)
           this.setChartConfigId = chartId
           if (type === 'copy') {
             this.showChartConfig = true
@@ -957,13 +1018,19 @@ export default {
       }, 500)
     },
     processPannelParams() {
-      const charts = []
+      const finalCharts = []
       this.layoutData.forEach(item => {
-        charts.push({
+        finalCharts.push({
           id: item.id,
           group: item.group,
           name: item.i,
-          displayConfig: {
+          displayConfig: this.activeGroup === 'ALL' ? {
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h
+          } : item.allGroupDisplayConfig,
+          groupDisplayConfig: this.activeGroup === 'ALL' ? item.partGroupDisplayConfig : {
             x: item.x,
             y: item.y,
             w: item.w,
@@ -971,10 +1038,27 @@ export default {
           }
         })
       })
+
+      if (this.layoutData.length !== this.allPageLayoutData.length) {
+        this.allPageLayoutData.forEach(item => {
+          const single = find(this.layoutData, {id: item.id})
+          if (isEmpty(single)) {
+            finalCharts.push(
+              {
+                id: item.id,
+                group: item.group,
+                name: item.i,
+                displayConfig: item.allGroupDisplayConfig,
+                groupDisplayConfig: item.partGroupDisplayConfig
+              }
+            )
+          }
+        })
+      }
       return {
         id: this.pannelId,
         name: this.panalName,
-        charts,
+        charts: finalCharts,
         panelGroups: this.panel_group_list,
         timeRange: this.viewCondition.timeTnterval,
         refreshWeek: this.viewCondition.autoRefresh
@@ -1100,12 +1184,13 @@ export default {
         this.getPannelList()
       })
     },
-    onSingleChartGroupChange() {
-      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
-        this.$Message.success(this.$t('m_success'))
-        this.getPannelList(this.activeGroup)
-        // this.activeGroup = 'ALL';
-      })
+    onSingleChartGroupChange(e) {
+      if (e) {
+        this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+          this.$Message.success(this.$t('m_success'))
+          this.getPannelList(this.activeGroup)
+        })
+      }
     },
     closeChartInfoDrawer() {
       this.getPannelList()
@@ -1115,6 +1200,87 @@ export default {
     },
     exportPanel() {
       this.isModalShow = true
+    },
+    onLayoutRadioChange(type) {
+      document.querySelector('#chartLayoutPopTipButton').click()
+      this.tempChartLayoutType = type
+      this.$nextTick(() => {
+        this.chartLayoutType = this.previousChartLayoutType
+      })
+    },
+
+    onLayoutPopTipConfirm() {
+      this.setChartLayoutType(this.tempChartLayoutType)
+    },
+    calculateLayout(data, type='customize') {
+      if (isEmpty(data)) {
+        return data
+      }
+      if (type === 'two') {
+        data.forEach((item, index) => {
+          item.h = 7
+          item.w = 6
+          item.x = (index % 2) * 6
+          item.y = Math.floor(index / 2) * 7
+        })
+      }
+      else if (type === 'three') {
+        data.forEach((item, index) => {
+          item.h = 7
+          item.w = 4
+          item.x = (index % 3) * 4
+          item.y = Math.floor(index / 3) * 7
+        })
+      }
+      return data
+    },
+    setChartLayoutType(val = 'customize') {
+      this.chartLayoutType = val
+      this.previousChartLayoutType = val
+      if (isEmpty(this.layoutData) || val === 'customize') {
+        return
+      }
+      this.filterLayoutData()
+    },
+    filterLayoutData() {
+      if (this.activeGroup === 'ALL') {
+        this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
+      }
+      else {
+        this.layoutData = this.layoutData.filter(d => d.group === this.activeGroup)
+        if (isEmpty(this.layoutData)) {
+          return []
+        }
+        const layoutNeedReset = this.layoutData.some(item => item.partGroupDisplayConfig === '')
+        // 假如其中有partGroupDisplayConfig为空，基于两列进行打平，假如没有为空，则基于partGroupDisplayConfig排列
+        if (layoutNeedReset || this.chartLayoutType === 'two' || this.chartLayoutType === 'three') {
+          this.sortLayoutData(this.layoutData)
+          this.calculateLayout(this.layoutData, this.chartLayoutType)
+        }
+        else {
+          this.layoutData.forEach(item => {
+            Object.assign(item, item.partGroupDisplayConfig)
+          })
+          this.sortLayoutData(this.layoutData)
+        }
+      }
+      this.confirmLayoutType(this.layoutData)
+      this.refreshPannelNow()
+      return this.layoutData
+    },
+    refreshPannelNow() {
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow
+      }, 100)
+    },
+    isValidJson(str) {
+      try {
+        JSON.parse(str)
+        return true
+      }
+      catch (e) {
+        return false
+      }
     }
   },
   components: {
@@ -1132,6 +1298,15 @@ export default {
 </script>
 
 <style lang="less">
+.chart-layout-poptip {
+  .ivu-poptip-popper {
+    top: 10px !important;
+    left: 565px !important
+  }
+  .ivu-poptip-confirm .ivu-poptip-popper {
+    max-width: 330px;
+  }
+}
 .ivu-poptip-popper {
   color: #515a6e
 }
@@ -1162,7 +1337,7 @@ export default {
 
 .grid-content {
   display: flex;
-  padding: 0 32px;
+  padding: 0 5px;
   font-size: 16px;
 }
 
@@ -1240,6 +1415,8 @@ export default {
 }
 
 .radio-group {
+  display: flex;
+  align-items: center;
   font-size: 14px;
   margin-bottom: 15px;
 }
@@ -1321,5 +1498,13 @@ export default {
   ::-webkit-scrollbar {
     display: none;
   }
+}
+
+.header-grid-name-text {
+  display: inline-block;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
