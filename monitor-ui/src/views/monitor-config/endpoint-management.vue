@@ -100,7 +100,7 @@
             </Option>
           </Select>
         </div>
-        <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
+        <div v-if="endpointRejectModel.supportStep && systemType === '1'" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
           <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode">
             <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
@@ -108,7 +108,7 @@
             </Option>
           </Select>
         </div>
-        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
+        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type)) && systemType === '1'">
           <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
           <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -701,7 +701,8 @@ export default {
         }
       ],
       isReviewMode: false,
-      encryptKey: '' // 加密key
+      encryptKey: '', // 加密key
+      systemType: '' // 0 自定义 1 系统
     }
   },
   mounted() {
@@ -750,21 +751,24 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
-          label: item,
-          value: item
+          label: item.guid,
+          value: item.guid,
+          systemType: item.system_type // 0 自定义 1 系统
         }))
-        this.endpointRejectModel.endpointType.push({
-          label: 'm_other',
-          value: 'other'
-        })
+        // this.endpointRejectModel.endpointType.push({
+        //   label: 'm_other',
+        //   value: 'other'
+        // })
       })
       this.modelTip.value = rowData.guid
       this.endpointRejectModel.isAdd = false
       const api = `/monitor/api/v2/monitor/endpoint/get/${rowData.guid}`
       this.request('GET', api, '', res => {
         this.endpointRejectModel.addRow = res
+        const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
+        this.systemType = obj.systemType
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -848,6 +852,8 @@ export default {
 
     },
     typeChange(type) {
+      const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
+      this.systemType = obj.systemType
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
         name: '',
         type,
@@ -979,10 +985,11 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
-          label: item,
-          value: item
+          label: item.guid,
+          value: item.guid,
+          systemType: item.system_type // 0 自定义 1 系统
         }))
         // this.endpointRejectModel.endpointType.push(
         //   {
@@ -992,7 +999,9 @@ export default {
         // )
       })
       this.endpointRejectModel.isAdd = true
+      this.isReviewMode = false
       this.endpointRejectModel.addRow.type = 'host'
+      this.systemType = '1'
       this.endpointRejectModel.addRow.step = 10
       this.endpointRejectModel.addRow.port = 9100
       this.$root.JQ('#endpoint_reject_model').modal('show')
