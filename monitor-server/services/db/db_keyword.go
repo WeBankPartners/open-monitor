@@ -51,11 +51,11 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 	}
 	result = []*models.ListDbKeywordData{}
 	var dbKeywordTable []*models.DbKeywordMonitor
-	err = x.SQL("select * from db_keyword_monitor where service_group=?", serviceGroupGuid).Find(&dbKeywordTable)
+	err = x.SQL("select * from db_keyword_monitor where service_group=? order by  update_time desc", serviceGroupGuid).Find(&dbKeywordTable)
 	if err != nil {
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
-	configList := []*models.DbKeywordConfigObj{}
+	var configList []*models.DbKeywordConfigObj
 	for _, v := range dbKeywordTable {
 		configObj := models.DbKeywordConfigObj{DbKeywordMonitor: *v}
 		if configObj.EndpointRel, err = ListDbKeywordEndpointRel(v.Guid); err != nil {
