@@ -49,6 +49,7 @@ func GetLogMetricMonitor(c *gin.Context) {
 
 func CreateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorCreateDto
+	var list []*models.LogMetricMonitorTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -67,6 +68,15 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	// 校验路径是否重复
+	if list, err = db.GetLogMetricMonitorByCond(param.LogPath, "", param.MetricType, param.MonitorType); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnValidateError(c, fmt.Errorf("path:%s Already exists", list[0].LogPath).Error())
+		return
+	}
 	err = db.CreateLogMetricMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -77,6 +87,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 
 func UpdateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorObj
+	var list []*models.LogMetricMonitorTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -92,6 +103,15 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 	}
 	for _, v := range param.EndpointRel {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	}
+	// 校验路径是否重复
+	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.MetricType, param.MonitorType); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnValidateError(c, fmt.Errorf("path:%s Already exists", list[0].LogPath).Error())
+		return
 	}
 	err = db.UpdateLogMetricMonitor(&param)
 	if err != nil {
