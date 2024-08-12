@@ -1,5 +1,6 @@
 <template>
   <div class="all-content">
+    <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
@@ -19,9 +20,6 @@
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
             </i-switch>
-          </li>
-          <li class="filter-li" v-if="filtersForShow.length">
-            <Button @click="clearAll">{{$t('m_reset_condition')}}</Button>
           </li>
         </ul>
         <div class="top-right-search">
@@ -100,6 +98,7 @@ import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
 import AlarmCard from '@/components/alarm-card.vue'
 import SearchBadge from '../components/search-badge.vue'
+import GlobalLoading from '../components/globalLoading.vue'
 
 export default {
   name: '',
@@ -111,7 +110,8 @@ export default {
     AlarmAssetsBasic,
     ClassicAlarm,
     AlarmCard,
-    SearchBadge
+    SearchBadge,
+    GlobalLoading
   },
   data() {
     return {
@@ -153,7 +153,8 @@ export default {
       },
       isBatch: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      isEmpty
+      isEmpty,
+      isSpinShow: false
     }
   },
   computed: {
@@ -353,6 +354,9 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
+      if (this.isSpinShow === false) {
+        this.isSpinShow = false
+      }
       this.request(
         'POST',
         '/monitor/api/v1/alarm/problem/page',
@@ -369,6 +373,9 @@ export default {
           this.alramEmpty = !!this.low || !!this.mid ||!!this.high
           this.showSunburst(responseData)
           this.$refs.classicAlarm.getAlarm(this.resultData)
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         },
         {isNeedloading: false},
         () => {

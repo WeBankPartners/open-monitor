@@ -252,7 +252,7 @@ func doDbKeywordMonitorJob() {
 		return
 	}
 	var dbKeywordConfigs []*models.DbKeywordMonitorQueryObj
-	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
+	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
 	if err != nil {
 		log.Logger.Error("DoDbKeywordMonitorJob, query db_keyword_monitor fail", log.Error(err))
 		return
@@ -299,7 +299,7 @@ func doDbKeywordMonitorJob() {
 			if newValue == oldValue {
 				continue
 			}
-			if existAlarm.Status == "firing" {
+			if existAlarm.Status == "firing" || !inActiveWindow(config.ActiveWindow) {
 				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
 				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
@@ -311,7 +311,9 @@ func doDbKeywordMonitorJob() {
 				addFlag = true
 			}
 		} else {
-			addFlag = true
+			if inActiveWindow(config.ActiveWindow) {
+				addFlag = true
+			}
 		}
 		if addFlag {
 			//if config.NotifyEnable > 0 {
@@ -397,4 +399,52 @@ func getDbKeywordLastRow(param *models.DbLastKeywordDto) (err error) {
 		}
 	}
 	return
+}
+
+func checkDBKeywordMonitorName(serviceGroup, inputName, dbKeywordMonitorGuid string) (err error) {
+	var dbKeywordMonitorRows []*models.DbKeywordMonitor
+	err = x.SQL("select guid,name from db_keyword_monitor where service_group=?", serviceGroup).Find(&dbKeywordMonitorRows)
+	if err != nil {
+		err = fmt.Errorf("query db keyword monitor fail,%s ", err.Error())
+		return
+	}
+	for _, row := range dbKeywordMonitorRows {
+		if inputName == row.Name && dbKeywordMonitorGuid != row.Guid {
+			err = fmt.Errorf("Name:%s Already exists ", inputName)
+			break
+		}
+	}
+	return
+}
+
+func inActiveWindow(activeWindow string) bool {
+	windowList := strings.Split(activeWindow, "-")
+	if len(windowList) != 2 {
+		log.Logger.Error("active window illegal")
+		return true
+	}
+	start := windowList[0]
+	end := windowList[1]
+	if strings.Count(start, ":") == 1 {
+		start = start + ":00"
+	}
+	if strings.Count(end, ":") == 1 {
+		end = end + ":59"
+	}
+	dayPrefix := time.Now().Format("2006-01-02")
+	startTime, startErr := time.ParseInLocation("2006-01-02 15:04:05", dayPrefix+" "+start, time.Local)
+	endTime, endErr := time.ParseInLocation("2006-01-02 15:04:05", dayPrefix+" "+end, time.Local)
+	if startErr != nil {
+		fmt.Printf("start time:%s  parse err:%s \n", start, startErr.Error())
+		return true
+	}
+	if endErr != nil {
+		fmt.Printf("end time:%s parse err:%s \n", end, endErr.Error())
+		return true
+	}
+	nowTime := time.Now().Unix()
+	if nowTime >= startTime.Unix() && nowTime <= endTime.Unix() {
+		return true
+	}
+	return false
 }

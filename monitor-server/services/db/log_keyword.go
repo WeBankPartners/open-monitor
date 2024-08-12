@@ -65,11 +65,27 @@ func GetLogKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*mo
 }
 
 func CreateLogKeywordMonitor(param *models.LogKeywordMonitorCreateObj) (err error) {
+	var existLogKeywordMonitorRows []*models.LogKeywordMonitorTable
+	err = x.SQL("select log_path from log_keyword_monitor where service_group=?", param.ServiceGroup).Find(&existLogKeywordMonitorRows)
+	if err != nil {
+		err = fmt.Errorf("query log keyword monitor fail,%s ", err.Error())
+		return
+	}
+	existLogPathMap := make(map[string]int)
+	for _, row := range existLogKeywordMonitorRows {
+		existLogPathMap[row.LogPath] = 1
+	}
 	param.Guid = guid.CreateGuid()
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	logKeywordGuidList := guid.CreateGuidList(len(param.LogPath))
 	for i, path := range param.LogPath {
+		if _, existFlag := existLogPathMap[path]; existFlag {
+			err = fmt.Errorf("Path:%s Already exists ", path)
+			return
+		} else {
+			existLogPathMap[path] = 1
+		}
 		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{logKeywordGuidList[i], param.ServiceGroup, path, param.MonitorType, nowTime}})
 		endpointRelActions, tmpErr := getLogKeywordEndpointRelCreateAction(param.EndpointRel, logKeywordGuidList[i])
 		if tmpErr != nil {
@@ -97,6 +113,18 @@ func getLogKeywordEndpointRelCreateAction(param []*models.LogKeywordEndpointRelT
 }
 
 func UpdateLogKeywordMonitor(param *models.LogKeywordMonitorObj) (err error) {
+	var existLogKeywordMonitorRows []*models.LogKeywordMonitorTable
+	err = x.SQL("select guid,log_path from log_keyword_monitor where service_group=?", param.ServiceGroup).Find(&existLogKeywordMonitorRows)
+	if err != nil {
+		err = fmt.Errorf("query log keyword monitor fail,%s ", err.Error())
+		return
+	}
+	for _, row := range existLogKeywordMonitorRows {
+		if row.LogPath == param.LogPath && param.Guid != row.Guid {
+			err = fmt.Errorf("Path:%s Already exists ", param.LogPath)
+			return
+		}
+	}
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "update log_keyword_monitor set log_path=?,monitor_type=?,update_time=? where guid=?", Param: []interface{}{param.LogPath, param.MonitorType, nowTime, param.Guid}})
