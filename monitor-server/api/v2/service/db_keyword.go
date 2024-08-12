@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -20,11 +21,21 @@ func ListDBKeywordConfig(c *gin.Context) {
 
 func CreateDBKeywordConfig(c *gin.Context) {
 	var param models.DbKeywordConfigObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var list []*models.DbKeywordMonitor
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateDBKeywordConfig(&param, middleware.GetOperateUser(c))
+	if list, err = db.GetDbKeywordMonitorByName("", param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	err = db.CreateDBKeywordConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -41,11 +52,21 @@ func CreateDBKeywordConfig(c *gin.Context) {
 
 func UpdateDBKeywordConfig(c *gin.Context) {
 	var param models.DbKeywordConfigObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var list []*models.DbKeywordMonitor
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateDBKeywordConfig(&param, middleware.GetOperateUser(c))
+	if list, err = db.GetDbKeywordMonitorByName(param.Guid, param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	err = db.UpdateDBKeywordConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
