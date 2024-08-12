@@ -280,6 +280,7 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 	endpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
 	jsonConfigList := ListLogMetricJson(logMetricMonitorGuid)
 	metricConfigList := ListLogMetricConfig("", logMetricMonitorGuid)
+	logMetricGroupList := ListLogMetricGroups(logMetricMonitorGuid)
 	for _, v := range endpointRel {
 		affectHost = append(affectHost, v.SourceEndpoint)
 	}
@@ -296,6 +297,16 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 		deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, logMetricMonitorGuid)
 		actions = append(actions, deleteActions...)
 		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
+	for _, v := range logMetricGroupList {
+		deleteActions, tmpEndpointGroup, _, tmpErr := getDeleteLogMetricGroupActions(v.Guid)
+		if tmpErr != nil {
+			log.Logger.Error("try to get delete logMetricGroupAction fail", log.String("logMetricGroupGuid", v.Guid), log.Error(tmpErr))
+			continue
+		} else {
+			actions = append(actions, deleteActions...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+		}
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
 	return
