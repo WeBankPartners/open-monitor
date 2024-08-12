@@ -51,6 +51,7 @@ type DbKeywordMonitorQueryObj struct {
 	Content        string `json:"content" xorm:"content"`
 	Priority       string `json:"priority" xorm:"priority"`
 	Name           string `json:"name" xorm:"name"`
+	ActiveWindow   string `json:"active_window" xorm:"active_window"`
 	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
 }
