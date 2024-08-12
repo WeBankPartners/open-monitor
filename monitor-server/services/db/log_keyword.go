@@ -186,6 +186,16 @@ func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfig
 	return
 }
 
+func GetLogKeywordByName(guid, name string) (list []*models.LogKeywordConfigTable, err error) {
+	list = []*models.LogKeywordConfigTable{}
+	if guid == "" {
+		err = x.SQL("select * from log_keyword_config where name = ?", name).Find(&list)
+	} else {
+		err = x.SQL("select * from log_keyword_config where name = ? and guid <> ?", name, guid).Find(&list)
+	}
+	return
+}
+
 func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 	var actions []*Action
 	param.Guid = "lk_config_" + guid.CreateGuid()

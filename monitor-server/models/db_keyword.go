@@ -25,6 +25,7 @@ type ListDbKeywordData struct {
 	Description string                `json:"description"`
 	ServiceType string                `json:"service_type"`
 	UpdateTime  string                `json:"update_time"`
+	UpdateUser  string                `json:"update_user"`
 	Config      []*DbKeywordConfigObj `json:"config"`
 }
 
