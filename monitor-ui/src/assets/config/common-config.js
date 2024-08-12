@@ -21,6 +21,21 @@ export const dataPick = [
   }
 ]
 
+export const layoutOptions = [
+  {
+    value: 'customize',
+    label: 'm_customize'
+  },
+  {
+    value: 'two',
+    label: 'm_two_columns'
+  },
+  {
+    value: 'three',
+    label: 'm_three_columns'
+  }
+]
+
 export const autoRefreshConfig = [
   {
     value: -1,
