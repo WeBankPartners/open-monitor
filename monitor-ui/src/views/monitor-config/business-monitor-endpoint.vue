@@ -35,7 +35,7 @@
               </div>
 
             </div>
-            <template #content>
+            <template slot='content'>
               <Table
                 class="log-file-table"
                 size="small"
