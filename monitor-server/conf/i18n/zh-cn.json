@@ -22,5 +22,8 @@
   "dashboard_name_repeat_error": "保存失败:同名看板已存在",
   "dashboard_id_exist_error": "导入失败:看板ID已存在",
   "import_dashboard_name_exist_error": "导入失败,看板名称: %s 已存在",
-  "metric_not_support_preview": "对象组暂不支持当前类型,请切换单个对象预览"
+  "metric_not_support_preview": "对象组暂不支持当前类型,请切换单个对象预览",
+  "type_config_name_repeat_error": "保存失败:同名类型配置已存在",
+  "type_config_association_obj_error": "删除失败:类型配置有关联对象不允许删除",
+  "type_config_association_obj_group_error": "删除失败:类型配置有关联对象组不允许删除"
 }
