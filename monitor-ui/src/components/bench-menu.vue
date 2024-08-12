@@ -16,7 +16,7 @@
         style="width:140px;height:100%;"
       >
         <Submenu v-for="(i, index) in menuList" :key="index" :name="i.name">
-          <template #title>
+          <template slot='title'>
             <div class="menu-item">
               <img v-if="i.img" :src="i.img" />
               <Icon v-if="i.icon" :type="i.icon" :size="22" style="margin-right:10px;" color="#fff" />

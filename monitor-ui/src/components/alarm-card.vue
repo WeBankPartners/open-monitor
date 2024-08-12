@@ -1,6 +1,6 @@
 <template>
   <Card style="margin-bottom: 8px;" class="xxx">
-    <template #title>
+    <template slot='title'>
       <div
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
