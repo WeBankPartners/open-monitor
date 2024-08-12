@@ -172,7 +172,7 @@
           </Col>
         </Row>
       </div>
-      <template #footer>
+      <template slot='footer'>
         <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('m_button_save') }}</Button>
       </template>

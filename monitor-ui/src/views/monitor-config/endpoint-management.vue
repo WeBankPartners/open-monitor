@@ -273,7 +273,7 @@
     </Modal>
 
     <ModalComponent :modelConfig="maintenanceWindowModel">
-      <template #maintenanceWindow>
+      <template slot='maintenanceWindow'>
         <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in maintenanceWindowModel.result">
             <p :key="index" style="margin:6px 0">

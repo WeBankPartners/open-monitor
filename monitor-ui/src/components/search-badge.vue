@@ -5,7 +5,7 @@
         <Icon type="md-search" class="search-icon mr-1" />
         {{$t('m_filter')}}
       </div>
-      <template #list>
+      <template slot='list'>
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
           <FormItem :label="$t('m_alarmName')">
             <Select
