@@ -60,7 +60,6 @@
     <!-- <PageTable :pageConfig="pageConfig"></PageTable> -->
 
     <ModalComponent :modelConfig="modelConfig">
-      <div>555</div>
       <div slot="advancedConfig" class="extentClass">
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
@@ -1167,6 +1166,8 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.page = 1
+      this.pagination.size = 10
       this.getTableList()
     }, 300),
     onAddButtonClick() {
