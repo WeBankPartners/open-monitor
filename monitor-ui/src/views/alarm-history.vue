@@ -28,14 +28,14 @@
             >
             </DatePicker>
           </li>
-          <li class="filter-li">
+          <!-- <li class="filter-li">
             <Select v-model="filter" style="width: 220px">
               <Option value="all">{{ $t('all') }}</Option>
               <Option value="low">{{ $t('low') }}</Option>
               <Option value="medium">{{ $t('medium') }}</Option>
               <Option value="high">{{ $t('high')}}</Option>
             </Select>
-          </li>
+          </li> -->
           <Button type="primary" @click="getAlarm" style="margin-left: 24px;">{{ $t("m_button_search") }}</Button>
           <Button v-if="filtersForShow.length" @click="clearAll">{{$t('m_reset_condition')}}</Button>
         </ul>
@@ -55,7 +55,7 @@
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
             <template v-if="!noData && !loading && total > 0">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
 
@@ -111,20 +111,15 @@ export default {
       actveAlarmIndex: null,
       resultData: [],
       selectedData: '', // 存放选中数据
-
       low: 0,
       mid: 0,
       high: 0,
-
       tlow: 0,
       tmid: 0,
       thigh: 0,
-
       full_len: 280,
-
       outerMetrics: [],
       outerTotal: 0,
-
       paginationInfo: {
         total: 0,
         startIndex: 1,
@@ -460,7 +455,14 @@ export default {
       this.$router.push('/alarmManagement')
     },
     addParams({key, value}) {
-      this.filters[key] = value
+      this.filters[key] = this.filters[key] || []
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      }
+      else {
+        singleArr.push(value)
+      }
       this.getAlarm()
     },
     clearAll() {

@@ -38,7 +38,7 @@ func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, 
 }
 
 func QueryCustomChartListByDashboard(customDashboard int) (list []*models.CustomChartExtend, err error) {
-	err = x.SQL("select c.*,r.`group`,r.display_config from custom_dashboard_chart_rel  r join custom_chart  c "+
+	err = x.SQL("select c.*,r.`group`,r.display_config,r.group_display_config from custom_dashboard_chart_rel  r join custom_chart  c "+
 		"on r.dashboard_chart = c.guid where r.custom_dashboard = ?", customDashboard).Find(&list)
 	return
 }
@@ -125,8 +125,8 @@ func GetAddCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChar
 	var actions []*Action
 	if len(chartRelList) > 0 {
 		for _, rel := range chartRelList {
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
-				rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
+				rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime, rel.GroupDisplayConfig}})
 		}
 	}
 	return actions
@@ -159,8 +159,8 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 	var actions []*Action
 	if len(chartRelList) > 0 {
 		for _, rel := range chartRelList {
-			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set `group` = ?,display_config = ?,updated_user = ?," +
-				"update_time = ? where guid =?", Param: []interface{}{rel.Group, rel.DisplayConfig, rel.UpdateUser, rel.UpdateTime, rel.Guid}})
+			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set `group` = ?,display_config = ?,group_display_config = ?,updated_user = ?," +
+				"update_time = ? where guid =?", Param: []interface{}{rel.Group, rel.DisplayConfig, rel.GroupDisplayConfig, rel.UpdateUser, rel.UpdateTime, rel.Guid}})
 		}
 	}
 	return actions
