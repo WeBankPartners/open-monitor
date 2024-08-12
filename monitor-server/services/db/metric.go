@@ -692,6 +692,12 @@ func convertMetric2ComparisonParam(comparison *models.MetricComparisonExtend) mo
 	}
 }
 
+// SyncMetricComparison  服务启动休眠1min向exporter同步同环比数据(数据兜底用)
+func SyncMetricComparison() {
+	time.Sleep(1 * time.Minute)
+	SyncMetricComparisonData()
+}
+
 // SyncMetricComparisonData 同步同环比指标数据
 func SyncMetricComparisonData() (err error) {
 	var list []*models.MetricComparisonDto
