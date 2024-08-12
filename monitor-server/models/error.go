@@ -23,14 +23,17 @@ type ErrorMessageObj struct {
 	TokenError          string `json:"token_error"`
 	TokenAuthorityError string `json:"token_authority_error"`
 
-	SaveDoneButSyncFail              string `json:"save_done_but_sync_fail"`
-	MetricDuplicateError             string `json:"metric_duplicate_error"`
-	MetricNotFound                   string `json:"metric_not_found"`
-	StrategyNameImportDuplicateError string `json:"strategy_name_import_duplicate_error"`
-	LogGroupNameDuplicateError       string `json:"log_group_name_duplicate_error"`
-	LogGroupNameIllegalError         string `json:"log_group_name_illegal_error"`
-	DashboardNameRepeatError         string `json:"dashboard_name_repeat_error"`
-	DashboardIdExistError            string `json:"dashboard_id_exist_error"`
-	ImportDashboardNameExistError    string `json:"import_dashboard_name_exist_error"`
-	MetricNotSupportPreview          string `json:"metric_not_support_preview"`
+	SaveDoneButSyncFail                       string `json:"save_done_but_sync_fail"`
+	MetricDuplicateError                      string `json:"metric_duplicate_error"`
+	MetricNotFound                            string `json:"metric_not_found"`
+	StrategyNameImportDuplicateError          string `json:"strategy_name_import_duplicate_error"`
+	LogGroupNameDuplicateError                string `json:"log_group_name_duplicate_error"`
+	LogGroupNameIllegalError                  string `json:"log_group_name_illegal_error"`
+	DashboardNameRepeatError                  string `json:"dashboard_name_repeat_error"`
+	DashboardIdExistError                     string `json:"dashboard_id_exist_error"`
+	ImportDashboardNameExistError             string `json:"import_dashboard_name_exist_error"`
+	MetricNotSupportPreview                   string `json:"metric_not_support_preview"`
+	TypeConfigNameRepeatError                 string `json:"type_config_name_repeat_error"`
+	TypeConfigNameAssociationObjectError      string `json:"type_config_association_obj_error"`
+	TypeConfigNameAssociationObjectGroupError string `json:"type_config_association_obj_group_error"`
 }
