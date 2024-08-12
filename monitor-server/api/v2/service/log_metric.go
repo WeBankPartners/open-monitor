@@ -813,6 +813,25 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 	}
 }
 
+func CopyLogMetricCustomGroup(c *gin.Context) {
+	var err error
+	var logMetricMonitor string
+	guid := c.Query("guid")
+	if guid == "" {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("guid can not empty"))
+		return
+	}
+	if logMetricMonitor, err = db.CopyLogMetricCustomGroup(guid); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if err = syncLogMetricMonitorConfig(logMetricMonitor); err != nil {
+		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
 func UpdateLogMetricCustomGroup(c *gin.Context) {
 	var param models.LogMetricGroupObj
 	if err := c.ShouldBindJSON(&param); err != nil {
