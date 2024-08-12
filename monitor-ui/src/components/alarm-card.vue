@@ -203,6 +203,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import EndpointViewComponent from '@/components/endpoint-view-component'
 export default {
   props: {
@@ -267,7 +268,7 @@ export default {
       // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
-      this.$parent.filters[key] = this.$parent.filters[key] || []
+      Vue.set(this.$parent.filters, key, this.$parent.filters[key] || [])
       const singleArr = this.$parent.filters[key]
       if (singleArr.includes(value)) {
         singleArr.splice(singleArr.indexOf(value), 1)
@@ -275,7 +276,6 @@ export default {
       else {
         singleArr.push(value)
       }
-      this.$parent.getAlarm()
     },
     copyEndpoint(data) {
       const inputElement = document.createElement('input')
