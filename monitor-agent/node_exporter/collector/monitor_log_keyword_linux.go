@@ -83,15 +83,16 @@ type logKeywordObj struct {
 }
 
 type logKeywordCollector struct {
-	Path              string
-	Rule              []*logKeywordObj
-	TailSession       *tail.Tail
-	Lock              *sync.RWMutex
-	DataChan          chan string
-	ReOpenHandlerChan chan int      `json:"-"`
-	TailTimeLock      *sync.RWMutex `json:"-"`
-	TailLastUnixTime  int64         `json:"-"`
-	DestroyChan       chan int      `json:"-"`
+	Path               string
+	Rule               []*logKeywordObj
+	TailSession        *tail.Tail
+	Lock               *sync.RWMutex
+	DataChan           chan string
+	ReOpenHandlerChan  chan int      `json:"-"`
+	TailTimeLock       *sync.RWMutex `json:"-"`
+	TailLastUnixTime   int64         `json:"-"`
+	DestroyChan        chan int      `json:"-"`
+	TailDataCancelChan chan int      `json:"-"`
 }
 
 func (c *logKeywordCollector) update(rule []*logKeywordObj) {
@@ -111,7 +112,13 @@ func (c *logKeywordCollector) update(rule []*logKeywordObj) {
 
 func (c *logKeywordCollector) startHandleTailData() {
 	for {
-		lineText := <-c.DataChan
+		var lineText string
+		select {
+		case lineText = <-c.DataChan:
+		case <-c.TailDataCancelChan:
+			return
+		}
+		//lineText := <-c.DataChan
 		c.Lock.Lock()
 		for _, v := range c.Rule {
 			if v.RegExp != nil {
@@ -139,6 +146,7 @@ func (c *logKeywordCollector) init() {
 	c.ReOpenHandlerChan = make(chan int, 1)
 	c.TailLastUnixTime = 0
 	c.DestroyChan = make(chan int, 1)
+	c.TailDataCancelChan = make(chan int, 1)
 	go c.start()
 }
 
@@ -178,6 +186,7 @@ func (c *logKeywordCollector) start() {
 	}
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
+	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_keyword -> startLogMetricMonitorNeObj__end", c.Path)
 	if destroyFlag {
 		return
@@ -209,6 +218,7 @@ func (c *logKeywordCollector) startFileHandlerCheck() {
 			if fileLastTime-tailLastTime > 60 {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				break
 			} else {
 				//level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
