@@ -214,12 +214,12 @@ func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfig
 	return
 }
 
-func GetLogKeywordByName(guid, name string) (list []*models.LogKeywordConfigTable, err error) {
-	list = []*models.LogKeywordConfigTable{}
+func GetDbKeywordMonitorByName(guid, name string) (list []*models.DbKeywordMonitor, err error) {
+	list = []*models.DbKeywordMonitor{}
 	if guid == "" {
-		err = x.SQL("select * from log_keyword_config where name = ?", name).Find(&list)
+		err = x.SQL("select * from db_keyword_monitor where name = ?", name).Find(&list)
 	} else {
-		err = x.SQL("select * from log_keyword_config where name = ? and guid <> ?", name, guid).Find(&list)
+		err = x.SQL("select * from db_keyword_monitor where name = ? and guid <> ?", name, guid).Find(&list)
 	}
 	return
 }
