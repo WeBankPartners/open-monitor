@@ -19,7 +19,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam, operator string) (st
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	var actions []*Action
 	if host.Id == 0 {
-		existMonitorTypeList, _ := GetEndpointTypeList()
+		existMonitorTypeList, _ := GetSimpleEndpointTypeList()
 		addMonitorTypeFlag := true
 		for _, v := range existMonitorTypeList {
 			if endpoint.ExportType == v {

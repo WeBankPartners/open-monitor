@@ -27,7 +27,7 @@
             <FormItem :label="$t('m_metric_code') ">
               <Input
                 v-model.trim="businessConfig.metric_prefix_code"
-                maxlength="6"
+                maxlength="10"
                 :disabled="!isAdd || view"
                 show-word-limit
                 :placeholder="$t('m_metric_code_placeholder')"
@@ -341,7 +341,7 @@ export default {
       }
       // eslint-disable-next-line no-useless-escape
       // const regex = /^[a-zA-Z0-9_\-]{1,6}$/;
-      const regex = /^[A-Za-z][A-Za-z0-9]{0,5}$/
+      const regex = /^[A-Za-z][A-Za-z0-9]{0,9}$/
 
       if (!regex.test(tmpData.metric_prefix_code)) {
         this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_metric_prefix_code_validate')}`)
