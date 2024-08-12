@@ -72,6 +72,7 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 		Description: serviceGroupObj.Description,
 		ServiceType: serviceGroupObj.ServiceType,
 		UpdateTime:  serviceGroupObj.UpdateTime,
+		UpdateUser:  serviceGroupObj.UpdateUser,
 		Config:      configList,
 	})
 	return
