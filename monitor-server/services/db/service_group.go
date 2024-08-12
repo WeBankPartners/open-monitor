@@ -160,11 +160,11 @@ func CreateServiceGroup(param *models.ServiceGroupTable) {
 
 }
 
-func getCreateServiceGroupAction(param *models.ServiceGroupTable) (actions []*Action) {
+func getCreateServiceGroupAction(param *models.ServiceGroupTable, operator string) (actions []*Action) {
 	if param.Parent == "" {
-		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime}})
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime, operator}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime}})
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time,update_user) value (?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime, operator}})
 	}
 	return actions
 }
@@ -183,7 +183,7 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime, operator string, 
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
 		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, operator, endpoint)...)
-		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v}})
+		actions = append(actions, &Action{Sql: "update service_group set update_time=?,update_user=? where guid=?", Param: []interface{}{nowTime, operator, v}})
 	}
 	return actions
 }

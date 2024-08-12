@@ -84,11 +84,21 @@ func DeleteLogKeywordMonitor(c *gin.Context) {
 
 func CreateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var list []*models.LogKeywordConfigTable
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogKeyword(&param)
+	if list, err = db.GetLogKeywordByName("", param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	err = db.CreateLogKeyword(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -103,20 +113,29 @@ func CreateLogKeyword(c *gin.Context) {
 
 func UpdateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var list []*models.LogKeywordConfigTable
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateLogKeyword(&param)
+	if list, err = db.GetLogKeywordByName(param.Guid, param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if err = db.UpdateLogKeyword(&param); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
