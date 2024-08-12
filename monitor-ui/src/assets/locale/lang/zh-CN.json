@@ -496,7 +496,7 @@
   "m_admin_config": "管理员配置",
   "m_type_config": "类型配置",
   "m_type_name": "类型名",
-  "m_chinese_valid": "不能输入中文字符",
+  "m_chinese_underline_valid": "不能输入中文字符和下划线",
   "m_object_count": "对象数",
   "m_keyword_edit": "关键字编辑",
   "m_alarm_configuration_save": "告警配置保存",
@@ -504,6 +504,11 @@
   "m_matching_source_value": "匹配源值(仅测试)",
   "m_matching_result_test": "匹配结果(仅测试)",
   "m_matching_failed": "匹配失败",
-  "m_alarm_level": "告警等级"
+  "m_alarm_level": "告警等级",
+  "m_automatic_layout": "自动布局",
+  "m_two_columns": "两列",
+  "m_three_columns": "三列",
+  "m_layout_change_tips": "切换布局将自动重新设置布局，之前保存的布局、尺寸设置会被覆盖，确认操作吗？",
+  "m_is_requesting": "请求中"
 }
 
