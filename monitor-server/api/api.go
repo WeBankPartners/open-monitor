@@ -67,6 +67,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/recursive/endpoint_type/list", Method: http.MethodGet, HandlerFunc: agent.GetPanelRecursiveEndpointType},
 		// 指标配置
 		&handlerFuncObj{Url: "/dashboard/endpoint/type", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointTypeList},
+		&handlerFuncObj{Url: "/dashboard/endpoint/type_new", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointTypeNewList},
 		&handlerFuncObj{Url: "/dashboard/endpoint", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointList},
 		&handlerFuncObj{Url: "/dashboard/endpoint/metric/list", Method: http.MethodPost, HandlerFunc: dashboard.GetEndpointMetric},
 		&handlerFuncObj{Url: "/dashboard/new/metric", Method: http.MethodGet, HandlerFunc: dashboard_new.MetricList},
@@ -290,6 +291,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricCustomGroup},
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricCustomGroup},
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group/copy", Method: http.MethodGet, HandlerFunc: service.CopyLogMetricCustomGroup},
 		&handlerFuncObj{Url: "/service/log_metric/data_map/regexp/match", Method: http.MethodPost, HandlerFunc: service.LogMonitorDataMapRegMatch},
 		// 标签
 		&handlerFuncObj{Url: "/metric/tag/value-list", Method: http.MethodPost, HandlerFunc: monitor.QueryMetricTagValue},
