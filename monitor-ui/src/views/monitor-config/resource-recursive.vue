@@ -5,7 +5,7 @@
         <div @click="hide(itemIndex)" class="tree-title" :style="[addTag(item.fetch_search), stylePadding]">
           <div style="display:flex;justify-content: space-between;">
             <div>
-              <span class="title-style">{{item.display_name}}33</span>
+              <span class="title-style">{{item.display_name}}</span>
               <TagShow :tagName='item.type' />
               <!-- <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag> -->
             </div>
