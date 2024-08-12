@@ -5,6 +5,8 @@ alter table custom_dashboard_chart_rel add column group_display_config text defa
 alter table log_metric_string_map modify column target_value varchar(128) default null COMMENT '目标值';
 alter table db_metric_monitor add column update_user varchar(64) default null COMMENT '更新人';
 
+alter table service_group add column update_user varchar(64) default null COMMENT '更新人';
+
 alter table alarm add index alarm_name (alarm_name);
 
 update monitor_type set system_type = 1;
