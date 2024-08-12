@@ -84,18 +84,9 @@ func DeleteLogKeywordMonitor(c *gin.Context) {
 
 func CreateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	var list []*models.LogKeywordConfigTable
 	var err error
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
-		return
-	}
-	if list, err = db.GetLogKeywordByName("", param.Name); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
-	}
-	if len(list) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
 		return
 	}
 	err = db.CreateLogKeyword(&param)
@@ -113,18 +104,9 @@ func CreateLogKeyword(c *gin.Context) {
 
 func UpdateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	var list []*models.LogKeywordConfigTable
 	var err error
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
-		return
-	}
-	if list, err = db.GetLogKeywordByName(param.Guid, param.Name); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
-	}
-	if len(list) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
 		return
 	}
 	if err = db.UpdateLogKeyword(&param); err != nil {
