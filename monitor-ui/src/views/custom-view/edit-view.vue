@@ -343,9 +343,11 @@ export default {
             <div class="indicator_color_system">
               {params.row.metricType ? <Tag class="indicator_system_tag" type="border" color={this.metricTypeMap[params.row.metricType].color}>{this.metricTypeMap[params.row.metricType].label}</Tag> : <span/>}
               <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
-              <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
-                this.tableData[params.index].colorGroup = e
-              }} />
+              <ColorPicker value={params.row.colorGroup}
+                on-on-open-change={
+                  isShow => this.changeColorGroup(isShow, this.tableData[params.index], 'colorGroup')
+                }
+              />
             </div>
           )
         },
@@ -397,9 +399,11 @@ export default {
                   <div class="generate-lines">
                     {item.new ? <Tag class="new-line-tag" color="error">{this.$t('m_new')}</Tag> : <span/>}
                     <div class="series-name mr-2">{item.seriesName}</div>
-                    <ColorPicker v-model={item.color} on-on-change={e => {
-                      this.tableData[params.index].series[selectIndex].color = e
-                    }} />
+                    <ColorPicker v-model={item.color}
+                      on-on-open-change={
+                        isShow => this.changeColorGroup(isShow, this.tableData[params.index].series[selectIndex], 'color')
+                      }
+                    />
                   </div>
                 ))) : '-' }
             </div>
@@ -1301,6 +1305,36 @@ export default {
         item.color = item.color || this.getRandomColor()
         return item
       })
+    },
+    changeColorGroup(isShow = true, data, key) {
+      if (isShow) {
+        this.$nextTick(() => {
+          const confirmButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-primary')
+          const resetButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-default')
+          if (isEmpty(confirmButtonList)) {
+            return
+          }
+          confirmButtonList[0].addEventListener('click', () => {
+            const inputList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-input')
+            if (isEmpty(inputList)) {
+              return
+            }
+            const color = inputList[0].value
+            data[key] = color
+            if (key === 'colorGroup') {
+              Array.isArray(data.series) && data.series.forEach((line, index) => {
+                line.color = generateAdjacentColors(color, 1, 35 * (index - 0.3))[0]
+              })
+            }
+          })
+          if (isEmpty(resetButtonList)) {
+            return
+          }
+          resetButtonList[0].addEventListener('click', () => {
+            data[key] = ''
+          })
+        })
+      }
     }
   },
   components: {
