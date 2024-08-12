@@ -1,5 +1,6 @@
 <template>
   <div>
+    <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
       <Title :title="$t('m_alarmHistory')"> </Title>
       <div class="title-form">
@@ -76,6 +77,8 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import isEmpty from 'lodash/isEmpty'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -83,6 +86,7 @@ import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import AlarmCard from '@/components/alarm-card.vue'
 import SearchBadge from '../components/search-badge.vue'
+import GlobalLoading from '../components/globalLoading.vue'
 
 export default {
   name: '',
@@ -93,7 +97,8 @@ export default {
     CircleLabel,
     AlarmAssetsBasic,
     AlarmCard,
-    SearchBadge
+    SearchBadge,
+    GlobalLoading
   },
   data() {
     return {
@@ -125,6 +130,7 @@ export default {
         startIndex: 1,
         pageSize: 10
       },
+      isSpinShow: false
     }
   },
   computed: {
@@ -327,7 +333,9 @@ export default {
           value: this.filters[keys[i]],
         })
       }
-      this.loading = true
+      if (this.isSpinShow === false) {
+        this.isSpinShow = true
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
         '/monitor/api/v1/alarm/problem/history',
@@ -344,8 +352,14 @@ export default {
           this.paginationInfo.pageSize = responseData.page.pageSize
           this.alramEmpty = !!this.low || !!this.mid || !!this.high
           this.showSunburst(responseData)
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         },
         () => {
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
           this.loading = false
           this.noData = true
         }
@@ -430,32 +444,34 @@ export default {
       let index = 0
       let pieOuter = []
       const itemStyleSet = {}
-      const metricInfo = originData.count
-      const set = new Set()
-      metricInfo.forEach(item => {
-        if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
-        }
-        else {
-          legendData.push(item.name)
-          index++
-          const itemStyle = {
-            color: colorX[index],
+      if (!isEmpty(originData.count)) {
+        const metricInfo = originData.count
+        const set = new Set()
+        metricInfo.forEach(item => {
+          if (set.has(item.name)) {
+            item.itemStyle = itemStyleSet[item.name]
           }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
-        }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0)
+          else {
+            legendData.push(item.name)
+            index++
+            const itemStyle = {
+              color: colorX[index],
+            }
+            itemStyleSet[item.name] = itemStyle
+            item.itemStyle = itemStyle
+          }
+          set.add(item.name)
+        })
+        pieOuter = metricInfo.sort(this.compare('type'))
+        this.outerMetrics = pieOuter
+        this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0)
+      }
     },
     realTimeAlarm() {
       this.$router.push('/alarmManagement')
     },
     addParams({key, value}) {
-      this.filters[key] = this.filters[key] || []
+      Vue.set(this.filters, key, this.filters[key] || [])
       const singleArr = this.filters[key]
       if (singleArr.includes(value)) {
         singleArr.splice(singleArr.indexOf(value), 1)
@@ -463,10 +479,9 @@ export default {
       else {
         singleArr.push(value)
       }
-      this.getAlarm()
     },
     clearAll() {
-      this.filters = []
+      this.filters = {}
       this.getAlarm()
     },
     exclude(key) {
