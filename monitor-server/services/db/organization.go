@@ -132,7 +132,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		}
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
-		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime})...)
+		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime}, operation)...)
 		err = Transaction(actions)
 		if err == nil {
 			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent, DisplayName: param.DisplayName})
@@ -146,7 +146,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			return fmt.Errorf("guid: %s can not find any record", param.Guid)
 		}
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_user=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, operation, param.Guid}})
 		err = Transaction(actions)
 		if err == nil {
 			m.GlobalSGDisplayNameMap[param.Guid] = param.DisplayName

@@ -1,4 +1,6 @@
+import isEmpty from 'lodash/isEmpty'
 import {validate} from './validate'
+
 const colorSet = ['#487e89', '#395b79', '#153863', '#153250']
 // const colorSet = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
 export function generateUuid() {
@@ -81,4 +83,21 @@ export const deepClone = obj => {
     }
   }
   return objClone
+}
+
+export const showPoptipOnTable = (className='.ivu-poptip-popper') => {
+  setTimeout(() => {
+    const elements = document.querySelectorAll(className)
+    const visibleElements = Array.prototype.filter.call(elements, function (element) {
+      return window.getComputedStyle(element).display === 'block'
+    })
+    if (isEmpty(visibleElements)) {
+      return
+    }
+    const resElement = visibleElements[0]
+    const rect = resElement.getBoundingClientRect()
+    resElement.style.position = 'fixed'
+    resElement.style.top = rect.top + 'px'
+    resElement.style.left = rect.left + 'px'
+  }, 0)
 }

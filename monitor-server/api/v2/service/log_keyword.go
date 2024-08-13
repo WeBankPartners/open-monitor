@@ -13,8 +13,8 @@ import (
 )
 
 func ListLogKeywordMonitor(c *gin.Context) {
-	queryType := c.Param("queryType")
-	guid := c.Param("guid")
+	queryType := c.Query("type")
+	guid := c.Query("guid")
 	if queryType == "endpoint" {
 		result, err := db.GetLogKeywordByEndpoint(guid, false)
 		if err != nil {
@@ -84,11 +84,12 @@ func DeleteLogKeywordMonitor(c *gin.Context) {
 
 func CreateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogKeyword(&param)
+	err = db.CreateLogKeyword(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -103,25 +104,25 @@ func CreateLogKeyword(c *gin.Context) {
 
 func UpdateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateLogKeyword(&param)
+	if err = db.UpdateLogKeyword(&param); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
 func DeleteLogKeyword(c *gin.Context) {
-	logKeywordGuid := c.Param("logKeywordGuid")
+	logKeywordGuid := c.Query("guid")
 	err := db.DeleteLogKeyword(logKeywordGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -206,6 +207,24 @@ func ImportLogKeyword(c *gin.Context) {
 	}
 	if err = db.ImportLogKeyword(&paramObj); err != nil {
 		middleware.ReturnHandleError(c, "import log keyword fail", err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func UpdateLogKeywordNotify(c *gin.Context) {
+	var param models.LogKeywordNotifyParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogKeywordMonitor == "" {
+		middleware.ReturnValidateError(c, "param log_keyword_monitor illegal")
+		return
+	}
+	err := db.UpdateLogKeywordNotify(&param)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}
