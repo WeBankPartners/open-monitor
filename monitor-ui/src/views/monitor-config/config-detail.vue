@@ -19,7 +19,6 @@
           size="small"
           :columns="alarmItemTableColumns"
           :data="tableItem.tableData"
-          :span-method="(e) => handleMergeSpan(e, tableIndex)"
         />
         <div class="alarm-tips" style="margin-top:16px">
           <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
@@ -348,6 +347,7 @@ export default {
     return {
       targetId: '', // 层级对象选中的
       totalPageConfig: [],
+      originTotalPageConfig: [], // 保存原始数据
       selectedTableData: null,
       modelConfig: {
         modalId: 'add_edit_Modal',
@@ -806,6 +806,14 @@ export default {
     }
   },
   methods: {
+    // 根据告警名称模糊搜索
+    filterData(alarmName) {
+      this.totalPageConfig = cloneDeep(this.originTotalPageConfig)
+      this.totalPageConfig = this.totalPageConfig.map(item => {
+        item.tableData = item.tableData.filter(row => row.name.toLowerCase().indexOf(alarmName.toLowerCase()) > -1)
+        return item
+      })
+    },
     mgmtConfigDetail(val) {
       const res = {
         showBtn: true,
@@ -1096,6 +1104,7 @@ export default {
             notify: item.notify,
             mergeSpanMap: this.mergeSpanMap
           })
+          this.originTotalPageConfig = cloneDeep(this.totalPageConfig)
         })
       }, {isNeedloading: true})
       this.getAllRole()
@@ -1115,19 +1124,19 @@ export default {
     cancelModal() {
       this.closeAddEditModal()
     },
-    handleMergeSpan({ row, rowIndex, columnIndex }, index) {
-      if ([6,7,8,11].includes(columnIndex)) {
-        return
-      }
-      const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
-      const spanMap = mergeSpanMap[row.guid]
-      if (rowIndex === spanMap.startRowIndex) {
-        return [spanMap.colSpan,1]
-      }
-      if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
-        return [0,0]
-      }
-    },
+    // handleMergeSpan({ row, rowIndex, columnIndex }, index) {
+    //   if ([6,7,8,11].includes(columnIndex)) {
+    //     return
+    //   }
+    //   const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
+    //   const spanMap = mergeSpanMap[row.guid]
+    //   if (rowIndex === spanMap.startRowIndex) {
+    //     return [spanMap.colSpan,1]
+    //   }
+    //   if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
+    //     return [0,0]
+    //   }
+    // },
     findTagsByMetric(metricId) {
       const api = '/monitor/api/v2/metric/tag/value-list'
       const params = {
