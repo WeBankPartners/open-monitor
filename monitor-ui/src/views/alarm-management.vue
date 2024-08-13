@@ -89,6 +89,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import isEmpty from 'lodash/isEmpty'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
@@ -355,7 +356,7 @@ export default {
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
       if (this.isSpinShow === false) {
-        this.isSpinShow = false
+        this.isSpinShow = true
       }
       this.request(
         'POST',
@@ -372,14 +373,17 @@ export default {
           this.high = responseData.high
           this.alramEmpty = !!this.low || !!this.mid ||!!this.high
           this.showSunburst(responseData)
-          this.$refs.classicAlarm.getAlarm(this.resultData)
           if (this.isSpinShow) {
             this.isSpinShow = false
           }
+          this.$refs.classicAlarm.getAlarm(this.resultData)
         },
         {isNeedloading: false},
         () => {
           this.noData = true
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         }
       )
     },
@@ -445,30 +449,32 @@ export default {
       let index = 0
       let pieOuter = []
       const itemStyleSet = {}
-      const metricInfo = originData.count
-      const set = new Set()
-      metricInfo.forEach(item => {
-        if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
-        }
-        else {
-          legendData.push(item.name)
-          index++
-          const itemStyle = {
-            color: colorX[index]
+      if (!isEmpty(originData.count)) {
+        const metricInfo = originData.count
+        const set = new Set()
+        metricInfo.forEach(item => {
+          if (set.has(item.name)) {
+            item.itemStyle = itemStyleSet[item.name]
           }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
-        }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
+          else {
+            legendData.push(item.name)
+            index++
+            const itemStyle = {
+              color: colorX[index]
+            }
+            itemStyleSet[item.name] = itemStyle
+            item.itemStyle = itemStyle
+          }
+          set.add(item.name)
+        })
+        pieOuter = metricInfo.sort(this.compare('type'))
 
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+        this.outerMetrics = pieOuter
+        this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+      }
     },
     addParams({key, value}) {
-      this.filters[key] = this.filters[key] || []
+      Vue.set(this.filters, key, this.filters[key] || [])
       const singleArr = this.filters[key]
       if (singleArr.includes(value)) {
         singleArr.splice(singleArr.indexOf(value), 1)
@@ -476,7 +482,6 @@ export default {
       else {
         singleArr.push(value)
       }
-      this.getAlarm()
     },
     deleteConfirmModal() {
       this.isBatch = true
