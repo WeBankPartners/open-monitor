@@ -136,6 +136,7 @@ type AlarmProblemQuery struct {
 	AlarmDetail        string                `json:"alarm_detail"`
 	AlarmMetricList    []string              `json:"alarm_metric_list"`
 	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
+	Log                string                `json:"log"`
 }
 
 type UpdateAlarmCustomMessageDto struct {

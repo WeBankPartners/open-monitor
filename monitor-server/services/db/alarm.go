@@ -546,6 +546,11 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		if strings.Contains(v.Content, "\n") {
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+				index := strings.Index(v.Content, "<br/>")
+				v.Log = v.Content[:index]
+				v.Content = v.Content[index+5:]
+			}
 		}
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
