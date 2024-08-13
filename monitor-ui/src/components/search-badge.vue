@@ -7,6 +7,21 @@
       </div>
       <template slot='list'>
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
+
+          <FormItem :label="$t('m_alarm_level')">
+            <Select
+              v-model="filters.priority"
+              multiple
+              filterable
+              :placeholder="$t('m_please_select') + $t('m_alarm_level')"
+              @on-change="onFilterConditionChange"
+            >
+              <Option v-for="item in filtersPriorityOptions" :value="item.value" :key="item.value">
+                {{item.name}}
+              </Option>
+            </Select>
+          </FormItem>
+
           <FormItem :label="$t('m_alarmName')">
             <Select
               v-model="filters.alarm_name"
@@ -61,7 +76,8 @@ import cloneDeep from 'lodash/cloneDeep'
 const initFilters = {
   alarm_name: [],
   metric: [],
-  endpoint: []
+  endpoint: [],
+  priority: []
 }
 
 export default ({
@@ -71,8 +87,9 @@ export default ({
   watch: {
     tempFilters: {
       handler(newVal) {
-        if (newVal) {
+        if (newVal && newVal !== JSON.stringify(this.filters)) {
           this.filters = JSON.parse(newVal)
+          this.onFilterConditionChange()
         }
       }
     }
@@ -83,7 +100,21 @@ export default ({
       filtersEndpointOptions: [],
       filtersMetricOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      filters: cloneDeep(initFilters)
+      filters: cloneDeep(initFilters),
+      filtersPriorityOptions: [
+        {
+          name: this.$t('m_low'),
+          value: 'low'
+        },
+        {
+          name: this.$t('m_medium'),
+          value: 'medium'
+        },
+        {
+          name: this.$t('m_high'),
+          value: 'high'
+        }
+      ]
     }
   },
   computed: {
@@ -103,7 +134,8 @@ export default ({
   },
   methods: {
     getFilterAllOptions() {
-      const api = '/monitor/api/v1/alarm/problem/options'
+      const query = this.$route.path === '/alarmManagement' ? '?status=firing' : ''
+      const api = '/monitor/api/v1/alarm/problem/options' + query
       this.request('GET', api, {}, res => {
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
@@ -115,7 +147,6 @@ export default ({
     }, 300),
     onResetButtonClick() {
       this.filters = cloneDeep(initFilters)
-      this.onFilterConditionChange()
     }
   }
 

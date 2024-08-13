@@ -14,6 +14,7 @@
         <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard" localDisplayName="对象看板">/endpointView</menu>
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm List" localDisplayName="告警列表">/alarmManagement</menu>
         <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex</menu>
+        <menu code='MONITOR_ADMINISTRATOR_CONFIG' cat='MONITORING' displayName="Administrator Config" localDisplayName="管理员配置">/adminConfig</menu>
     </menus>
 
     <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
@@ -102,6 +103,7 @@
         <systemParameter name="MONITOR_AGENT_MANAGER_REMOTE_MODE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_NOTIFY_TREEVENT_ENABLE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue=""/>
+        <systemParameter name="MONITOR_HOST_PORT" scopeType="global" defaultValue="9100"/>
     </systemParameters>
 
 
@@ -113,6 +115,7 @@
             <menu code="MONITOR_CUSTOM_DASHBOARD" />
             <menu code="MONITOR_ALARM_CONFIG" />
             <menu code="MONITOR_ALARM_MANAGEMENT" />
+            <menu code="MONITOR_ADMINISTRATOR_CONFIG" />
         </authority >
     </authorities>
 
@@ -130,6 +133,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_PORT">port</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP">group</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>

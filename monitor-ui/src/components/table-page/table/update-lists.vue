@@ -41,8 +41,8 @@
               </form>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">取消</button>
-              <button type="button" @click="changeTableTr" class="btn-confirm-f">保存</button>
+              <Button data-dismiss="modal">{{ $t('m_button_cancel') }}</Button>
+              <Button type="primary" @click="changeTableTr">{{ $t('m_save') }}</Button>
             </div>
           </div>
         </div>

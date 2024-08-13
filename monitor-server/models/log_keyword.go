@@ -20,6 +20,7 @@ type LogKeywordConfigTable struct {
 	UpdateTime        string     `json:"update_time" xorm:"update_time"`
 	Content           string     `json:"content" xorm:"content"`
 	Name              string     `json:"name" xorm:"name"`
+	ActiveWindow      string     `json:"active_window" xorm:"active_window"`
 	Notify            *NotifyObj `json:"notify" xorm:"-"`
 }
 
@@ -78,18 +79,19 @@ type LogKeywordHttpResult struct {
 }
 
 type LogKeywordCronJobQuery struct {
-	Guid           string `xorm:"guid"`
-	ServiceGroup   string `xorm:"service_group"`
-	LogPath        string `xorm:"log_path"`
-	MonitorType    string `xorm:"monitor_type"`
-	Keyword        string `xorm:"keyword"`
-	NotifyEnable   int    `xorm:"notify_enable"`
-	Priority       string `xorm:"priority"`
-	SourceEndpoint string `xorm:"source_endpoint"`
-	TargetEndpoint string `xorm:"target_endpoint"`
-	AgentAddress   string `xorm:"agent_address"`
-	Content        string `xorm:"content"`
-	Name           string `xorm:"name"`
+	Guid                 string `xorm:"guid"`
+	ServiceGroup         string `xorm:"service_group"`
+	LogPath              string `xorm:"log_path"`
+	MonitorType          string `xorm:"monitor_type"`
+	Keyword              string `xorm:"keyword"`
+	NotifyEnable         int    `xorm:"notify_enable"`
+	Priority             string `xorm:"priority"`
+	SourceEndpoint       string `xorm:"source_endpoint"`
+	TargetEndpoint       string `xorm:"target_endpoint"`
+	AgentAddress         string `xorm:"agent_address"`
+	Content              string `xorm:"content"`
+	Name                 string `xorm:"name"`
+	LogKeywordConfigGuid string `xorm:"log_keyword_config_guid"`
 }
 
 type LogKeywordRowsHttpDto struct {
@@ -113,4 +115,9 @@ type LogKeywordAlarmTable struct {
 	StartValue  float64   `json:"startValue" xorm:"start_value"`
 	EndValue    float64   `json:"endValue" xorm:"end_value"`
 	UpdatedTime time.Time `json:"updatedTime" xorm:"updated_time"`
+}
+
+type LogKeywordNotifyParam struct {
+	LogKeywordMonitor string     `json:"log_keyword_monitor"`
+	Notify            *NotifyObj `json:"notify"`
 }

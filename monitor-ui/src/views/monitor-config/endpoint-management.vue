@@ -29,7 +29,7 @@
         filterable
         clearable
         style="width: 25%"
-        :placeholder="$t('m_please_select') + $t('m_endpoint_type')"
+        :placeholder="$t('m_please_select') + $t('m_basic_type')"
         @on-change="onFilterConditionChange"
       >
         <Option v-for="name in objectTypeList" :value="name" :key="name">
@@ -82,7 +82,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('alarmHistory')}}
+          {{$t('m_alarmHistory')}}
         </span>
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
@@ -100,7 +100,7 @@
             </Option>
           </Select>
         </div>
-        <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
+        <div v-if="endpointRejectModel.supportStep && systemType === '1'" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
           <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode">
             <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
@@ -108,7 +108,7 @@
             </Option>
           </Select>
         </div>
-        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
+        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type)) && systemType === '1'">
           <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
           <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -159,25 +159,25 @@
           <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="(['ping','http','telnet'].includes(endpointRejectModel.addRow.type))">
-          <label class="col-md-2 label-name">{{$t('exporter')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_exporter')}}:</label>
           <Checkbox v-model="endpointRejectModel.addRow.exporter" :disabled="isReviewMode" />
         </div>
         <div v-if="endpointRejectModel.addRow.exporter">
-          <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="col-md-2 label-name">{{$t('m_exporter_address')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('m_exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
         </div>
         <template v-if="endpointRejectModel.addRow.type === 'process'">
           <div>
-            <label class="col-md-2 label-name">{{$t('processName')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="col-md-2 label-name">{{$t('m_processName')}}:</label>
+            <input v-validate="'required'" :placeholder="$t('m_processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
           </div>
           <div>
-            <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
-            <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
+            <label class="col-md-2 label-name">{{$t('m_processTags')}}:</label>
+            <input :placeholder="$t('m_processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
           </div>
         </template>
         <template>
@@ -189,7 +189,7 @@
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -209,13 +209,13 @@
         <section>
           <div style="display: flex;">
             <div class="port-title">
-              <span>{{$t('processName')}}:</span>
+              <span>{{$t('m_processName')}}:</span>
             </div>
             <div class="port-title">
-              <span>{{$t('processTags')}}:</span>
+              <span>{{$t('m_processTags')}}:</span>
             </div>
             <div class="port-title">
-              <span>{{$t('displayName')}}:</span>
+              <span>{{$t('m_displayName')}}:</span>
             </div>
             <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
           </div>
@@ -324,7 +324,7 @@ import isEmpty from 'lodash/isEmpty'
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import { cycleOption, collectionInterval } from '@/assets/config/common-config'
 import {
-  interceptParams
+  interceptParams, showPoptipOnTable
 } from '@/assets/js/utils'
 
 const alarmLevelMap = {
@@ -377,7 +377,7 @@ export default {
               key: 'endpoint'
             },
             {
-              title: this.$t('alarmContent'),
+              title: this.$t('m_alarmContent'),
               key: 'content'
             },
             {
@@ -602,13 +602,7 @@ export default {
               {
                 params.row.groups && params.row.groups.length
                   ? params.row.groups.map(item => (
-                    <Button
-                      type="info"
-                      size="small"
-                      ghost
-                    >
-                      {item.name}
-                    </Button>
+                    <Tag>{item.name}</Tag>
                   )) : <div>-</div>
               }
             </div>
@@ -616,7 +610,7 @@ export default {
         },
         {
           title: this.$t('m_basic_type'),
-          width: 150,
+          minWidth: 200,
           key: 'type',
           render: (h, params) => (
             <div>
@@ -629,6 +623,7 @@ export default {
         {
           title: this.$t('m_creator'),
           key: 'create_user',
+          minWidth: 150,
           render: (h, params) => (
             <div>
               {
@@ -640,6 +635,7 @@ export default {
         {
           title: this.$t('m_updatedBy'),
           key: 'update_user',
+          minWidth: 150,
           render: (h, params) => (
             <div>
               {
@@ -651,16 +647,18 @@ export default {
         {
           title: this.$t('m_update_time'),
           key: 'update_time',
-          tooltip: true
+          minWidth: 150,
         },
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 250,
+          width: 210,
+          align: 'center',
+          fixed: 'right',
           render: (h, params) => (
-            <div style="display: flex; justify-content: flex-start">
+            <div style="display: flex; justify-content: center;">
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
-                <Button size="small" type="info" on-click={() => {
+                <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
                   this.isReviewMode = true
                   this.editF(params.row)
@@ -669,7 +667,7 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
-                <Button size="small" type="primary" on-click={() => {
+                <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.endpointRejectModel.modalFooter = null
                   this.isReviewMode = false
                   this.editF(params.row)
@@ -678,12 +676,12 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_maintenanceWindow')}>
-                <Button size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
+                <Button class="mr-1" size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
                   <Icon type="ios-build" />
                 </Button>
               </Tooltip>
               <Tooltip placement="top" max-width="400" content={this.$t('m_button_historicalAlert')}>
-                <Button size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
+                <Button class="mr-1" size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
                   <Icon type="md-warning" />
                 </Button>
               </Tooltip>
@@ -692,7 +690,9 @@ export default {
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => this.deleteConfirmModal(params.row)}>
-                <Button size="small" type="error">
+                <Button size="small" type="error" on-click={() => {
+                  showPoptipOnTable()
+                }}>
                   <Icon type="md-trash" />
                 </Button>
               </Poptip>
@@ -701,7 +701,8 @@ export default {
         }
       ],
       isReviewMode: false,
-      encryptKey: '' // 加密key
+      encryptKey: '', // 加密key
+      systemType: '' // 0 自定义 1 系统
     }
   },
   mounted() {
@@ -717,7 +718,6 @@ export default {
         this.showGroupMsg = true
       }
     }
-    this.getIpList()
     this.getTableList()
     this.getAllOptions()
   },
@@ -751,21 +751,24 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
-          label: item,
-          value: item
+          label: item.guid,
+          value: item.guid,
+          systemType: item.system_type // 0 自定义 1 系统
         }))
-        this.endpointRejectModel.endpointType.push({
-          label: 'other',
-          value: 'other'
-        })
+        // this.endpointRejectModel.endpointType.push({
+        //   label: 'm_other',
+        //   value: 'other'
+        // })
       })
       this.modelTip.value = rowData.guid
       this.endpointRejectModel.isAdd = false
       const api = `/monitor/api/v2/monitor/endpoint/get/${rowData.guid}`
       this.request('GET', api, '', res => {
         this.endpointRejectModel.addRow = res
+        const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
+        this.systemType = obj.systemType
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -849,6 +852,8 @@ export default {
 
     },
     typeChange(type) {
+      const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
+      this.systemType = obj.systemType
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
         name: '',
         type,
@@ -980,20 +985,23 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
-          label: item,
-          value: item
+          label: item.guid,
+          value: item.guid,
+          systemType: item.system_type // 0 自定义 1 系统
         }))
-        this.endpointRejectModel.endpointType.push(
-          {
-            label: 'other',
-            value: 'other'
-          }
-        )
+        // this.endpointRejectModel.endpointType.push(
+        //   {
+        //     label: 'other',
+        //     value: 'other'
+        //   }
+        // )
       })
       this.endpointRejectModel.isAdd = true
+      this.isReviewMode = false
       this.endpointRejectModel.addRow.type = 'host'
+      this.systemType = '1'
       this.endpointRejectModel.addRow.step = 10
       this.endpointRejectModel.addRow.port = 9100
       this.$root.JQ('#endpoint_reject_model').modal('show')
@@ -1289,6 +1297,7 @@ export default {
   position: fixed;
   right: 20px;
   bottom: 20px;
+  z-index: 10000
 }
 </style>
 

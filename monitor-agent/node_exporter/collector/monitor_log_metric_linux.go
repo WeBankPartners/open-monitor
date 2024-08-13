@@ -79,19 +79,20 @@ type logMetricNodeExporterResponse struct {
 }
 
 type logMetricMonitorNeObj struct {
-	TailSession       *tail.Tail             `json:"-"`
-	Lock              *sync.RWMutex          `json:"-"`
-	Path              string                 `json:"path"`
-	TargetEndpoint    string                 `json:"target_endpoint"`
-	ServiceGroup      string                 `json:"service_group"`
-	JsonConfig        []*logMetricJsonNeObj  `json:"config"`
-	MetricConfig      []*logMetricNeObj      `json:"custom"`
-	MetricGroupConfig []*logMetricGroupNeObj `json:"metric_group_config"`
-	DataChan          chan string            `json:"-"`
-	ReOpenHandlerChan chan int               `json:"-"`
-	TailTimeLock      *sync.RWMutex          `json:"-"`
-	TailLastUnixTime  int64                  `json:"-"`
-	DestroyChan       chan int               `json:"-"`
+	TailSession        *tail.Tail             `json:"-"`
+	Lock               *sync.RWMutex          `json:"-"`
+	Path               string                 `json:"path"`
+	TargetEndpoint     string                 `json:"target_endpoint"`
+	ServiceGroup       string                 `json:"service_group"`
+	JsonConfig         []*logMetricJsonNeObj  `json:"config"`
+	MetricConfig       []*logMetricNeObj      `json:"custom"`
+	MetricGroupConfig  []*logMetricGroupNeObj `json:"metric_group_config"`
+	DataChan           chan string            `json:"-"`
+	ReOpenHandlerChan  chan int               `json:"-"`
+	TailTimeLock       *sync.RWMutex          `json:"-"`
+	TailLastUnixTime   int64                  `json:"-"`
+	DestroyChan        chan int               `json:"-"`
+	TailDataCancelChan chan int               `json:"-"`
 }
 
 type logMetricGroupNeObj struct {
@@ -179,7 +180,13 @@ type logMetricValueObj struct {
 
 func (c *logMetricMonitorNeObj) startHandleTailData() {
 	for {
-		lineText := <-c.DataChan
+		var lineText string
+		select {
+		case lineText = <-c.DataChan:
+		case <-c.TailDataCancelChan:
+			return
+		}
+		//lineText := <-c.DataChan
 		//level.Info(monitorLogger).Log("log_metric_get_new_line ->", lineText)
 		//lineText = strings.ReplaceAll(lineText, "\\t", "    ")
 		c.Lock.RLock()
@@ -340,6 +347,7 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
+	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
 	if destroyFlag {
 		return
@@ -365,6 +373,7 @@ func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
 			if fileLastTime-tailLastTime > 60 {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				break
 			} else {
 				//level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
@@ -382,6 +391,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.TailTimeLock = new(sync.RWMutex)
 	c.ReOpenHandlerChan = make(chan int, 1)
 	c.DestroyChan = make(chan int, 1)
+	c.TailDataCancelChan = make(chan int, 1)
 	var err error
 	for _, jsonObj := range input.JsonConfig {
 		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
