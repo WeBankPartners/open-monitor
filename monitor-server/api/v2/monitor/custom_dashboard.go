@@ -337,12 +337,14 @@ func UpdateCustomDashboard(c *gin.Context) {
 		for _, chartRel := range hasChartRelList {
 			if *chartRel.DashboardChart == chart.Id {
 				displayConfig, _ := json.Marshal(chart.DisplayConfig)
+				groupDisplayConfig, _ := json.Marshal(chart.GroupDisplayConfig)
 				updateChartRelList = append(updateChartRelList, &models.CustomDashboardChartRel{
-					Guid:          chartRel.Guid,
-					Group:         chart.Group,
-					DisplayConfig: string(displayConfig),
-					UpdateUser:    user,
-					UpdateTime:    now,
+					Guid:               chartRel.Guid,
+					Group:              chart.Group,
+					DisplayConfig:      string(displayConfig),
+					GroupDisplayConfig: string(groupDisplayConfig),
+					UpdateUser:         user,
+					UpdateTime:         now,
 				})
 				insert = false
 				break
@@ -350,16 +352,18 @@ func UpdateCustomDashboard(c *gin.Context) {
 		}
 		if insert {
 			displayConfig, _ := json.Marshal(chart.DisplayConfig)
+			groupDisplayConfig, _ := json.Marshal(chart.GroupDisplayConfig)
 			insertChartRelList = append(insertChartRelList, &models.CustomDashboardChartRel{
-				Guid:            guid.CreateGuid(),
-				CustomDashboard: &param.Id,
-				DashboardChart:  &chart.Id,
-				Group:           chart.Group,
-				DisplayConfig:   string(displayConfig),
-				CreateUser:      user,
-				UpdateUser:      user,
-				CreateTime:      now,
-				UpdateTime:      now,
+				Guid:               guid.CreateGuid(),
+				CustomDashboard:    &param.Id,
+				DashboardChart:     &chart.Id,
+				Group:              chart.Group,
+				DisplayConfig:      string(displayConfig),
+				GroupDisplayConfig: string(groupDisplayConfig),
+				CreateUser:         user,
+				UpdateUser:         user,
+				CreateTime:         now,
+				UpdateTime:         now,
 			})
 		}
 	}

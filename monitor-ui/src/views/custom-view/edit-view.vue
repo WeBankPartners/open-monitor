@@ -400,7 +400,7 @@ export default {
                   <div class="generate-lines">
                     {item.new ? <Tag class="new-line-tag" color="error">{this.$t('m_new')}</Tag> : <span/>}
                     <div class="series-name mr-2">{item.seriesName}</div>
-                    <ColorPicker value={item.color}
+                    <ColorPicker v-model={item.color}
                       on-on-open-change={
                         isShow => this.changeColorGroup(isShow, this.tableData[params.index].series[selectIndex], 'color')
                       }
@@ -587,7 +587,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
+          label: `${this.$t('m_volume')}: sum-60s-${this.$t('m_bar_chart')}`,
           key: 'two',
           value: {
             aggregate: 'sum',
@@ -597,7 +597,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'three',
           value: {
             aggregate: 'avg',
@@ -607,7 +607,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'four',
           value: {
             aggregate: 'max',
@@ -757,7 +757,6 @@ export default {
           this.chartConfigForm.chartTemplate = 'one'
         }
         this.tableData = cloneDeep(res.chartSeries)
-
         if (res.chartType === 'pie' && isEmpty(this.tableData)) {
           this.tableData = cloneDeep(initTableData)
         }
