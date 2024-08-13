@@ -1957,7 +1957,7 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
 		}
 		jsonParam, _ := json.Marshal(param)
-		if resByteArr, err = HttpPost(m.CoreUrl, jsonParam); err != nil {
+		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", jsonParam); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
