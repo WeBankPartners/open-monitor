@@ -635,7 +635,6 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
 				if alarmNotify, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
 					v.NotifyStatus = "started"
-					log.Logger.Info("http post1", log.String("coreUrl", m.CoreUrl), log.String("coreToken", m.GetCoreToken()))
 					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles)) {
 						v.NotifyPermission = "yes"
 					}
@@ -1968,10 +1967,7 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			param.ProcDefName = name
 		}
 		jsonParam, _ := json.Marshal(param)
-		log.Logger.Info("http post", log.String("coreUrl", m.CoreUrl), log.String("coreToken", m.GetCoreToken()))
-		m.CoreUrl = "http://106.52.160.142:18080"
-		token := "***REMOVED***"
-		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", token, jsonParam); err != nil {
+		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", m.GetCoreToken(), jsonParam); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
