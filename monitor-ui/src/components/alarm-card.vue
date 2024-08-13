@@ -110,11 +110,26 @@
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
-              <Tooltip :content="data.content" :max-width="300">
+              <Tooltip :content="data.content" :max-width="300" placement="bottom-start">
                 <div slot="content">
                   <div v-html="data.content || '-'"></div>
                 </div>
                 <div v-html="data.content || '-'" class="ellipsis-text" style="width: 450px;"></div>
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li>
+        <label class="card-label" v-html="$t('m_log')"></label>
+        <div class="card-content">
+          <div style="display:flex;align-items:center;width:100%;">
+            <div class="ellipsis">
+              <Tooltip :content="data.log" :max-width="300" placement="bottom-start">
+                <div slot="content">
+                  <div v-html="data.log || '-'"></div>
+                </div>
+                <div v-html="data.log || '-'" class="ellipsis-text" style="width: 450px;"></div>
               </Tooltip>
             </div>
           </div>
