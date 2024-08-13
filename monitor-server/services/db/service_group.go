@@ -740,7 +740,7 @@ func CheckMetricIsServiceMetric(metric, serviceGroup string) (ok bool, tags []st
 		return
 	}
 	if len(metricRows) > 0 {
-		tags, err = GetMetricTags(metricRows[0])
+		tags, _, err = GetMetricTags(metricRows[0])
 		if err != nil {
 			return
 		}
