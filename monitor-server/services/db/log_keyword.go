@@ -343,9 +343,13 @@ func doLogKeywordMonitorJob() {
 	var newValue, oldValue float64
 	//notifyMap := make(map[string]string)
 	nowTime := time.Now()
+	notifyConfigMap := make(map[string]int)
 	for _, config := range logKeywordConfigs {
 		if config.LogKeywordConfigGuid == "" {
 			continue
+		}
+		if config.NotifyEnable > 0 {
+			notifyConfigMap[config.Guid] = 1
 		}
 		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", config.SourceEndpoint, config.TargetEndpoint, config.LogPath, config.Keyword)
 		newValue, oldValue = 0, 0
@@ -395,10 +399,10 @@ func doLogKeywordMonitorJob() {
 			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
-				//if _, b := notifyMap[v.Tags]; !b {
-				//	log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("tags", v.Tags))
-				//	continue
-				//}
+				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
+					log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("logKeywordConfig", v.AlarmStrategy))
+					continue
+				}
 				tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
 				if tmpAlarmObj.Id <= 0 {
 					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
