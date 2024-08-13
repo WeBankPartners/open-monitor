@@ -250,18 +250,23 @@ func CreateLogKeyword(param *models.LogKeywordConfigTable, operator string) (err
 	return
 }
 
-func UpdateLogKeyword(param *models.LogKeywordConfigTable, operator string) (err error) {
-	var actions []*Action
+func GetSimpleLogKeywordConfig(logKeywordConfigGuid string) (result *models.LogKeywordConfigTable, err error) {
 	var logKeywordConfigRows []*models.LogKeywordConfigTable
-	err = x.SQL("select * from log_keyword_config where guid=?", param.Guid).Find(&logKeywordConfigRows)
+	err = x.SQL("select * from log_keyword_config where guid=?", logKeywordConfigGuid).Find(&logKeywordConfigRows)
 	if err != nil {
 		err = fmt.Errorf("query log keyword config table fail,%s ", err.Error())
 		return
 	}
 	if len(logKeywordConfigRows) == 0 {
-		err = fmt.Errorf("can not find log keyword config with guid:%s ", param.Guid)
+		err = fmt.Errorf("can not find log keyword config with guid:%s ", logKeywordConfigGuid)
 		return
 	}
+	result = logKeywordConfigRows[0]
+	return
+}
+
+func UpdateLogKeyword(param, existData *models.LogKeywordConfigTable, operator string) (err error) {
+	var actions []*Action
 	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=?,active_window=?,update_user=? where guid=?", Param: []interface{}{
 		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow, operator, param.Guid}})
 	if param.Notify != nil {
@@ -271,7 +276,7 @@ func UpdateLogKeyword(param *models.LogKeywordConfigTable, operator string) (err
 			guid.CreateGuid(), param.Guid, param.Notify.Guid,
 		}})
 	}
-	if logKeywordConfigRows[0].Name != param.Name || logKeywordConfigRows[0].Keyword != param.Keyword || logKeywordConfigRows[0].Priority != param.Priority {
+	if existData.Name != param.Name || existData.Keyword != param.Keyword || existData.Priority != param.Priority {
 		// 关键信息改了，把已有告警关闭
 		var logKeywordAlarmRows []*models.LogKeywordAlarmTable
 		err = x.SQL("select id,alarm_id from log_keyword_alarm where log_keyword_config=? and status='firing'", param.Guid).Find(&logKeywordAlarmRows)
