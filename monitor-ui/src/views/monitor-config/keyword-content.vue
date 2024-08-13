@@ -1307,8 +1307,8 @@ export default {
           if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
             return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, (data, message, res) => {
-            if (res.status === 'OK') {
+          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, data => {
+            if (!isEmpty(data)) {
               this.$Message.success(this.$t('m_tips_success'))
               this.isTableChangeFormShow = false
               this.getDataBaseDetail()
