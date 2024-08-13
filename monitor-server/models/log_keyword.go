@@ -21,6 +21,7 @@ type LogKeywordConfigTable struct {
 	Content           string     `json:"content" xorm:"content"`
 	Name              string     `json:"name" xorm:"name"`
 	ActiveWindow      string     `json:"active_window" xorm:"active_window"`
+	ActiveWindowList  []string   `json:"active_window_list" xorm:"-"`
 	Notify            *NotifyObj `json:"notify" xorm:"-"`
 }
 
@@ -106,15 +107,16 @@ type LogKeywordRowsHttpResult struct {
 }
 
 type LogKeywordAlarmTable struct {
-	Id          int       `json:"id" xorm:"id"`
-	AlarmId     int       `json:"alarmId" xorm:"alarm_id"`
-	Endpoint    string    `json:"endpoint" xorm:"endpoint"`
-	Status      string    `json:"status" xorm:"status"`
-	Content     string    `json:"content" xorm:"content"`
-	Tags        string    `json:"tags" xorm:"tags"`
-	StartValue  float64   `json:"startValue" xorm:"start_value"`
-	EndValue    float64   `json:"endValue" xorm:"end_value"`
-	UpdatedTime time.Time `json:"updatedTime" xorm:"updated_time"`
+	Id               int       `json:"id" xorm:"id"`
+	AlarmId          int       `json:"alarmId" xorm:"alarm_id"`
+	Endpoint         string    `json:"endpoint" xorm:"endpoint"`
+	Status           string    `json:"status" xorm:"status"`
+	Content          string    `json:"content" xorm:"content"`
+	Tags             string    `json:"tags" xorm:"tags"`
+	StartValue       float64   `json:"startValue" xorm:"start_value"`
+	EndValue         float64   `json:"endValue" xorm:"end_value"`
+	UpdatedTime      time.Time `json:"updatedTime" xorm:"updated_time"`
+	LogKeywordConfig string    `json:"logKeywordConfig" xorm:"log_keyword_config"`
 }
 
 type LogKeywordNotifyParam struct {
