@@ -86,12 +86,12 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
     if (window.request) {
       // return callback(response.data)
       if (response.status === 'OK' && callback !== undefined) {
-        return callback(response.data,response.message)
+        return callback(response.data,response.message, response.data)
       }
     }
     else {
       if (response.status < 400 && callback !== undefined) {
-        return callback(response.data.data,response.data.message)
+        return callback(response.data.data,response.data.message, response.data)
       }
     }
   })
