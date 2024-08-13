@@ -748,7 +748,18 @@ export default {
         },
         {
           title: this.$t('m_field_type'),
-          key: 'monitor_type'
+          key: 'monitor_type',
+          minWidth: 100,
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          width: 100,
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
         },
         {
           title: this.$t('m_table_action'),
