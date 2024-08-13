@@ -1171,6 +1171,17 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			}
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
+			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {
+				log.Logger.Error("Build custom alarm mail fail", log.Int("Id", customAlarmId), log.Error(buildMailAlarmErr))
+			} else {
+				if mailSender, getMailSenderErr := GetMailSender(); getMailSenderErr != nil {
+					log.Logger.Error("Try to send custom alarm mail fail", log.Error(getMailSenderErr))
+				} else {
+					if sendErr := mailSender.Send(mailAlarmObj.Subject, mailAlarmObj.Content, strings.Split(mailAlarmObj.ToMail, ",")); sendErr != nil {
+						log.Logger.Error("Try to send custom alarm mail fail", log.Error(sendErr))
+					}
+				}
+			}
 			sendMailErr := NotifyCoreEvent("", 0, 0, customAlarmId)
 			if sendMailErr != nil {
 				log.Logger.Error("Send custom alarm mail event fail", log.Error(sendMailErr))
