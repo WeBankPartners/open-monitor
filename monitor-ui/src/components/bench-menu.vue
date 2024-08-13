@@ -39,9 +39,7 @@
 <script>
 export default {
   props: {
-    menuList: Array,
-    // openNames: Array,
-    // defaultMenu: String
+    menuList: Array
   },
   data() {
     return {
