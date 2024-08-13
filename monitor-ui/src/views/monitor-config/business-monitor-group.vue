@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <Collapse v-model="logFileCollapseValue">
+      <Collapse v-model="logFileCollapseValue" v-if='logFileCollapseData.length'>
         <Panel v-for="(item, index) in logFileCollapseData"
                :key="index"
                :name="index + ''"
@@ -115,6 +115,7 @@
           </template>
         </Panel>
       </Collapse>
+      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
@@ -183,7 +184,7 @@
             size="small"
             style="width:650px"
             long
-          >{{$t('addStringMap')}}</Button>
+          >{{$t('m_addStringMap')}}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -262,7 +263,7 @@
                 @click="addEmptyItem('string_map', index)"
                 type="success"
                 size="small"
-              >{{ $t('addStringMap') }}</Button>
+              >{{ $t('m_addStringMap') }}</Button>
             </div>
             <Divider :key="index + 'Q'" />
           </template>
@@ -271,7 +272,7 @@
             type="success"
             size="small"
             long
-          >{{ $t('addMetricConfig') }}</Button>
+          >{{ $t('m_addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -325,7 +326,7 @@
               type="success"
               size="small"
               long
-            >{{ $t('addStringMap') }}</Button>
+            >{{ $t('m_addStringMap') }}</Button>
           </div>
         </div>
         <!-- 新增标签 -->
@@ -433,7 +434,7 @@
             size="small"
             long
             style="width:610px"
-          >{{ $t('addMetricConfig') }}</Button>
+          >{{ $t('m_addMetricConfig') }}</Button>
         </div>
       </div>
       <div slot="footer">
@@ -481,6 +482,7 @@ import RegTest from '@/components/reg-test'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 import axios from 'axios'
+import {showPoptipOnTable} from '@/assets/js/utils.js'
 
 export default {
   name: '',
@@ -695,7 +697,8 @@ export default {
         },
         {
           title: this.$t('m_updatedBy'),
-          key: 'update_user'
+          key: 'update_user',
+          width: 100,
         },
         {
           title: this.$t('m_title_updateTime'),
@@ -706,6 +709,7 @@ export default {
           title: this.$t('m_table_action'),
           width: 150,
           key: 'index',
+          fixed: 'right',
           render: (h, params) => (
             <div>
               <Button size="small" class="mr-1" type="primary" on-click={() => {
@@ -720,7 +724,9 @@ export default {
                 on-on-ok={() => {
                   this.currentLogFileIndex = params.row.logFileIndex; this.deleteType = 'rules'; this.okDelRow(params.row)
                 }}>
-                <Button size="small" type="error" class="mr-2">
+                <Button size="small" type="error" class="mr-2" on-click={() => {
+                  showPoptipOnTable()
+                }}>
                   <Icon type="md-trash" size="16" />
                 </Button>
               </Poptip>
@@ -1344,5 +1350,10 @@ export default {
   ::-webkit-scrollbar {
     display: none;
   }
+}
+
+.no-data-class {
+  display: flex;
+  justify-content: center;
 }
 </style>

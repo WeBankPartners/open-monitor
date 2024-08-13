@@ -35,7 +35,7 @@
             <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
               <Row>
                 <Col span="2">
-                <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                <span style="margin-right: 8px;line-height: 32px;">{{$t('m_' + item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
@@ -43,7 +43,7 @@
                 </Select>
                 </Col>
                 <Col span="5">
-                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('m_proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
                 </Col>
@@ -136,7 +136,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('delay') }}
+                {{ $t('m_delay') }}
               </span>
               <Select
                 filterable
@@ -203,7 +203,7 @@
                 </Select>
                 </Col>
                 <Col span="5">
-                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width:97%;" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width:97%;" :placeholder="$t('m_proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
                 </Col>
@@ -292,14 +292,14 @@ const initFormData = {
   content: '', // 通知内容
   notify: [
     {
-      alarm_action: 'firing',
+      alarm_action: 'm_firing',
       proc_callback_key: '',
       notify_roles: [],
       proc_callback_mode: '',
       description: ''
     },
     {
-      alarm_action: 'ok',
+      alarm_action: 'm_ok',
       proc_callback_key: '',
       notify_roles: [],
       proc_callback_mode: '',
@@ -696,7 +696,7 @@ export default {
           key: 'active_window'
         },
         {
-          title: this.$t('firing'),
+          title: this.$t('m_firing'),
           key: 'firing',
           width: 150,
           align: 'left',
@@ -718,7 +718,7 @@ export default {
           }
         },
         {
-          title: this.$t('ok'),
+          title: this.$t('m_ok'),
           key: 'ok',
           width: 150,
           align: 'left',
@@ -885,7 +885,7 @@ export default {
       }
       return {
         symbol: str.match(/[<>=smh]+/g)[0],
-        value: str.match(/[\d.]+/)[0]
+        value: str.match(/[-+]?[\d.]+/)[0]
       }
     },
     getInitialTags() {

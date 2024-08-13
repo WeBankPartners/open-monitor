@@ -1,6 +1,6 @@
 <template>
   <Card style="margin-bottom: 8px;" class="xxx">
-    <template slot='title'>
+    <template slot="title">
       <div
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
@@ -203,6 +203,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import EndpointViewComponent from '@/components/endpoint-view-component'
 export default {
   props: {
@@ -267,11 +268,14 @@ export default {
       // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
-      this.$parent.filters[key] = this.$parent.filters[key] || []
-      if (!this.$parent.filters[key].includes(value)) {
-        this.$parent.filters[key].push(value)
+      Vue.set(this.$parent.filters, key, this.$parent.filters[key] || [])
+      const singleArr = this.$parent.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
       }
-      this.$parent.getAlarm()
+      else {
+        singleArr.push(value)
+      }
     },
     copyEndpoint(data) {
       const inputElement = document.createElement('input')
