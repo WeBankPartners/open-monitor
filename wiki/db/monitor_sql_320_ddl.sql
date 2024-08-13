@@ -12,3 +12,5 @@ CREATE TABLE `db_keyword_alarm` (
     PRIMARY KEY (`id`),
     KEY `idx_log_keyword_alarm_id` (`alarm_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
