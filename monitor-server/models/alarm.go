@@ -130,6 +130,7 @@ type AlarmProblemQuery struct {
 	NotifyMessage      string                `json:"notify_message"`
 	NotifyCallbackName string                `json:"notify_callback_name"`
 	NotifyStatus       string                `json:"notify_status"`
+	NotifyPermission   string                `json:"notify_permission"` // yes表示有权限
 	AlarmObjName       string                `json:"alarm_obj_name"`
 	AlarmName          string                `json:"alarm_name"`
 	AlarmDetail        string                `json:"alarm_detail"`
@@ -660,4 +661,44 @@ type ProblemAlarmOptions struct {
 	EndpointList  []string `json:"endpointList"`
 	MetricList    []string `json:"metricList"`
 	AlarmNameList []string `json:"alarmNameList"`
+}
+
+type QueryProcessDefinitionParam struct {
+	ProcDefName string `json:"procDefName"` // 编排名称
+}
+
+type QueryProcessDefinitionResponse struct {
+	Code    int                `json:"code"`
+	Status  string             `json:"status"`
+	Message string             `json:"message"`
+	Data    []*ProcDefQueryDto `json:"data"`
+}
+
+type ProcDefQueryDto struct {
+	ManageRole        string        `json:"manageRole"`        //管理角色
+	ManageRoleDisplay string        `json:"manageRoleDisplay"` //管理角色-显示名
+	ProcDefList       []*ProcDefDto `json:"dataList"`          // 编排列表
+}
+
+type ProcDefDto struct {
+	Id               string   `json:"id"`               // 唯一标识
+	Key              string   `json:"key"`              // 编排key
+	Name             string   `json:"name"`             // 编排名称
+	Version          string   `json:"version"`          // 版本
+	RootEntity       string   `json:"rootEntity"`       // 根节点
+	Status           string   `json:"status"`           // 状态
+	Tags             string   `json:"tags"`             // 标签
+	AuthPlugins      []string `json:"authPlugins"`      // 授权插件
+	Scene            string   `json:"scene"`            // 使用场景
+	ConflictCheck    bool     `json:"conflictCheck"`    // 冲突检测
+	CreatedBy        string   `json:"createdBy"`        // 创建人
+	CreatedTime      string   `json:"createdTime"`      // 创建时间
+	UpdatedBy        string   `json:"updatedBy"`        // 更新人
+	UpdatedTime      string   `json:"updatedTime"`      // 更新时间
+	EnableCreated    bool     `json:"enableCreated"`    // 能否创建新版本
+	EnableModifyName bool     `json:"enableModifyName"` // 能否修改名称
+	UseRoles         []string `json:"userRoles"`        // 使用角色
+	UseRolesDisplay  []string `json:"userRolesDisplay"` // 使用角色-显示名
+	MgmtRoles        []string `json:"mgmtRoles"`        // 管理角色
+	MgmtRolesDisplay []string `json:"mgmtRolesDisplay"` // 管理角色-显示名
 }
