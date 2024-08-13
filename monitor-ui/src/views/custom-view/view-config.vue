@@ -959,7 +959,7 @@ export default {
           const lastOne = this.layoutData[this.layoutData.length - 1]
           this.processSingleItem(lastOne, item)
         }
-        this.layoutData.push(item)
+        this.layoutData.unshift(item)
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
             this.getPannelList(this.activeGroup)
@@ -999,7 +999,10 @@ export default {
           const lastOne = this.layoutData[this.layoutData.length - 1]
           this.processSingleItem(lastOne, item)
         }
-        this.layoutData.push(item)
+        if (this.layoutData.length) {
+          this.processSingleItem(this.layoutData, item)
+        }
+        this.layoutData.unshift(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
           this.getPannelList(this.activeGroup)
