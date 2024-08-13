@@ -714,7 +714,7 @@ func SyncMetricComparisonData() (err error) {
 	}
 	if len(list) > 0 {
 		param, _ := json.Marshal(list)
-		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", param); err != nil {
+		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", "", param); err != nil {
 			return
 		}
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
@@ -728,13 +728,16 @@ func SyncMetricComparisonData() (err error) {
 }
 
 // HttpPost Post请求
-func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
+func HttpPost(url, token string, postBytes []byte) (byteArr []byte, err error) {
 	req, reqErr := http.NewRequest(http.MethodPost, url, bytes.NewReader(postBytes))
 	if reqErr != nil {
 		err = fmt.Errorf("new http reqeust fail,%s ", reqErr.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", token)
+	}
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
 		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
