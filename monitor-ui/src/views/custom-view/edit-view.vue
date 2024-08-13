@@ -1,5 +1,6 @@
 <template>
   <div class="all-page">
+    <ColorPicker v-model='test' style="display: none" />
     <div class="content">
       <div class="chart-config_view">
         <div class="chart-view">
@@ -695,7 +696,8 @@ export default {
       chartAddTagOptions: {},
       chartAddTags: [],
       getEndpointSearch: '',
-      selectedEndpointOptionItem: {}
+      selectedEndpointOptionItem: {},
+      test: ''
     }
   },
   computed: {
@@ -1305,7 +1307,6 @@ export default {
         return item
       })
     },
-
     changeColorGroup(isShow = true, data, key) {
       if (isShow) {
         this.$nextTick(() => {
