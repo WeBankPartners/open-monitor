@@ -15,6 +15,7 @@ type ServiceGroupTable struct {
 	Parent      string `json:"parent" xorm:"parent"`
 	ServiceType string `json:"service_type" xorm:"service_type"`
 	UpdateTime  string `json:"update_time" xorm:"update_time"`
+	UpdateUser  string `json:"update_user" xorm:"update_user"`
 }
 
 type EndpointServiceRelTable struct {

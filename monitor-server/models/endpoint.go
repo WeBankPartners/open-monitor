@@ -13,6 +13,7 @@ type MonitorTypeTable struct {
 	Guid        string `json:"guid" xorm:"guid" binding:"required"`
 	DisplayName string `json:"display_name" xorm:"display_name"`
 	Description string `json:"description" xorm:"description"`
+	SystemType  string `json:"system_type" xorm:"system_type"`
 }
 
 type EndpointNewTable struct {

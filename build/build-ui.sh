@@ -5,6 +5,7 @@ if [ $? -eq 0 ]
 then
     cd $1/monitor-ui
     npm install --registry https://registry.npmmirror.com --unsafe-perm --force
+    # npm install
     npm run build
     npm run plugin
 else
