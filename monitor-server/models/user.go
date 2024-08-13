@@ -57,6 +57,7 @@ type RoleTable struct {
 	Created       time.Time `json:"created"`
 	MainDashboard int       `json:"main_dashboard"`
 	Disable       int       `json:"disable"`
+	OwnerUser     string    `json:"owner_user"`
 }
 
 type RoleQuery struct {

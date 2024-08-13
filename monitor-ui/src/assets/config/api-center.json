@@ -235,5 +235,8 @@
     "customLogMetricConfig": "/monitor/api/v2/service/log_metric/custom/log_metric_group",
     "getAffectServiceGroupByGuid": "/monitor/api/v2/service/log_metric/affect_service_group/",
     "remoteWrite": "/monitor/api/v2/config/remote/write",
-    "getEncryptKey": "/monitor/api/v2/seed"
+    "getEncryptKey": "/monitor/api/v2/seed",
+    "getTypeConfigList": "/monitor/api/v2/config/type/query",
+    "createTypeConfig": "/monitor/api/v2/config/type",
+    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new"
 }

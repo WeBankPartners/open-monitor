@@ -10,7 +10,6 @@
               <!-- <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag> -->
             </div>
             <div>
-              <!-- <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('m_button_receiversConfiguration')}}</button> -->
               <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedObject')">
                 <Button size="small" type="primary" @click="associatedObject(item)">
                   <Icon type="ios-cube" />
@@ -44,12 +43,6 @@
                   <Icon type="md-trash" />
                 </Button>
               </Tooltip>
-              <!-- <button class="btn-cancel-f btn-small" @click="associatedRole(item)">{{$t('m_resourceLevel_addAssociatedRole') + '77'}}</button> -->
-              <!-- <button class="btn-cancel-f btn-small" @click="associatedObject(item)">{{$t('m_resourceLevel_addAssociatedObject')}}</button> -->
-              <!-- <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('m_resourceLevel_alarmCallback')}}</button> -->
-              <!-- <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i> -->
-              <!-- <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i> -->
-              <!-- <i class="fa fa-trash-o" style="color:red" @click="deleteConfirmModal(item)" aria-hidden="true"></i> -->
             </div>
           </div>
         </div>
@@ -87,8 +80,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isEditPanal = false">{{$t('m_button_cancel')}}</button>
-        <button class="btn-confirm-f" @click="savePanal">{{$t('m_button_save')}}</button>
+        <Button @click="isEditPanal = false">{{$t('m_button_cancel')}}</Button>
+        <Button @click="savePanal">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
     <!-- 关联角色 -->
@@ -106,8 +99,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAssociatedRole = false">{{$t('m_button_cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAssociatedRole">{{$t('m_button_save')}}</button>
+        <Button @click="isAssociatedRole = false">{{$t('m_button_cancel')}}</Button>
+        <Button type="primary" @click="saveAssociatedRole">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
 
@@ -127,7 +120,7 @@
             clearable
             multiple
             style="width:300px"
-            :placeholder="$t('requestMoreData')"
+            :placeholder="$t('m_requestMoreData')"
             :remote-method="getAllObject"
           >
             <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
@@ -157,8 +150,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAssociatedObject = false">{{$t('m_button_cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAssociatedObject">{{$t('m_button_save')}}</button>
+        <Button @click="isAssociatedObject = false">{{$t('m_button_cancel')}}</Button>
+        <Button type="primary" @click="saveAssociatedObject">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
     <!-- 告警回调 -->
@@ -181,8 +174,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAlarmCallback = false">{{$t('m_button_cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('m_button_save')}}</button>
+        <Button @click="isAlarmCallback = false">{{$t('m_button_cancel')}}</Button>
+        <Button type="primary" @click="saveAlarmCallback">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
     <!-- 告警接收人 -->
@@ -198,7 +191,7 @@
           <Option v-for="item in roleList" :value="item.id" :key="item.id">
             {{item.display_name}}</Option>
         </Select>
-        <button class="btn-cancel-f" @click="addSelectReceivers">{{$t('m_button_add')}}</button>
+        <Button @click="addSelectReceivers">{{$t('m_button_add')}}</Button>
       </div>
       <div style="margin: 8px 0">
         <label style="width:110px">{{$t('m_button_receiversInput')}}:</label>
@@ -208,11 +201,11 @@
           :placeholder="$t('m_button_receiversInputTip')"
           class="form-control search-input c-dark"
         />
-        <button class="btn-cancel-f" @click="addInputReceivers">{{$t('m_button_add')}}</button>
+        <Button @click="addInputReceivers">{{$t('m_button_add')}}</Button>
       </div>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAlarmReceivers = false">{{$t('m_button_cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAlarmReceivers">{{$t('m_button_save')}}</button>
+        <Button @click="isAlarmReceivers = false">{{$t('m_button_cancel')}}</Button>
+        <Button type="primary" @click="saveAlarmReceivers">{{$t('m_button_save')}}</Button>
       </div>
       <template>
         <Tag
@@ -248,7 +241,7 @@
       </div>
       <div slot="footer">
         <span style="color:#ed4014;float: left;text-align:left">
-          <Checkbox v-model="confirmModal.check">{{ $t('dangerous_confirm_tip') }}</Checkbox>
+          <Checkbox v-model="confirmModal.check">{{ $t('m_dangerous_confirm_tip') }}</Checkbox>
         </span>
         <Button @click="cancelConfirmModal">{{$t('m_button_cancel')}}</Button>
         <Button
@@ -265,7 +258,7 @@
       @on-cancel="cancel"
     >
       <div class="modal-body" style="padding:10px">
-        <div style="color:#ed4014">{{$t('delete_follow')}}:</div>
+        <div style="color:#ed4014">{{$t('m_delete_follow')}}:</div>
         <p v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</p>
       </div>
     </Modal>
@@ -313,7 +306,7 @@ export default {
       confirmModal: {
         isShowConfirmModal: false,
         check: false,
-        message: 'resource_delete_tip',
+        message: 'm_resource_delete_tip',
       },
       doubleConfirm: {
         isShow: false,
@@ -626,6 +619,7 @@ export default {
             })
           }
         })
+        this.addObject = []
         this.isAssociatedObject = true
       })
     },

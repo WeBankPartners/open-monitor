@@ -19,7 +19,7 @@ module.exports = {
   },
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
-	productionSourceMap: process.env.PLUGIN !== 'plugin',
+	productionSourceMap: process.env.PLUGIN === 'plugin',
 	chainWebpack: config => {
 		config.when(process.env.PLUGIN === "plugin", config => {
       config
@@ -58,6 +58,7 @@ module.exports = {
 	configureWebpack: config => {
     if (process.env.PLUGIN === "plugin") {	
       config.optimization.splitChunks = {}
+			// config.optimization.minimize = false
 		}
 		
   },

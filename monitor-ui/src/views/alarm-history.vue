@@ -1,7 +1,8 @@
 <template>
   <div>
+    <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
-      <Title :title="$t('alarmHistory')"> </Title>
+      <Title :title="$t('m_alarmHistory')"> </Title>
       <div class="title-form">
         <ul>
           <li class="filter-li">
@@ -11,7 +12,7 @@
               @on-change="changeStartDate"
               format="yyyy-MM-dd HH:mm:ss"
               placement="bottom-start"
-              :placeholder="$t('startDatePlaceholder')"
+              :placeholder="$t('m_startDatePlaceholder')"
               style="width: 220px"
             >
             </DatePicker>
@@ -23,28 +24,30 @@
               @on-change="changeEndDate"
               format="yyyy-MM-dd HH:mm:ss"
               placement="bottom-start"
-              :placeholder="$t('endDatePlaceholder')"
+              :placeholder="$t('m_endDatePlaceholder')"
               style="width: 220px"
             >
             </DatePicker>
           </li>
-
-          <button class="btn btn-sm btn-confirm-f ml-5" @click="getAlarm">
-            <i class="fa fa-search"></i>
-            {{ $t("m_button_search") }}
-          </button>
-          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          <!-- <li class="filter-li">
+            <Select v-model="filter" style="width: 220px">
+              <Option value="all">{{ $t('all') }}</Option>
+              <Option value="low">{{ $t('low') }}</Option>
+              <Option value="medium">{{ $t('medium') }}</Option>
+              <Option value="high">{{ $t('high')}}</Option>
+            </Select>
+          </li> -->
+          <Button type="primary" @click="getAlarm" style="margin-left: 24px;">{{ $t("m_button_search") }}</Button>
+          <Button v-if="filtersForShow.length" @click="clearAll">{{$t('m_reset_condition')}}</Button>
         </ul>
         <div class='top-right-search'>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
-          <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
-            {{ $t("realTimeAlarm") }}
-          </button>
+          <Button type="primary" @click="realTimeAlarm">{{ $t("m_realTimeAlarm") }}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('alarmHistory')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_alarmHistory')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
@@ -53,19 +56,13 @@
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
             <template v-if="!noData && !loading && total > 0">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
 
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" v-if="total > 0 && !noData">
-            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
-            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template> -->
-            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
-            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
@@ -80,6 +77,8 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import isEmpty from 'lodash/isEmpty'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -87,6 +86,7 @@ import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import AlarmCard from '@/components/alarm-card.vue'
 import SearchBadge from '../components/search-badge.vue'
+import GlobalLoading from '../components/globalLoading.vue'
 
 export default {
   name: '',
@@ -97,7 +97,8 @@ export default {
     CircleLabel,
     AlarmAssetsBasic,
     AlarmCard,
-    SearchBadge
+    SearchBadge,
+    GlobalLoading
   },
   data() {
     return {
@@ -115,25 +116,21 @@ export default {
       actveAlarmIndex: null,
       resultData: [],
       selectedData: '', // 存放选中数据
-
       low: 0,
       mid: 0,
       high: 0,
-
       tlow: 0,
       tmid: 0,
       thigh: 0,
-
       full_len: 280,
-
       outerMetrics: [],
       outerTotal: 0,
-
       paginationInfo: {
         total: 0,
         startIndex: 1,
         pageSize: 10
       },
+      isSpinShow: false
     }
   },
   computed: {
@@ -303,7 +300,7 @@ export default {
         || Date.parse(new Date(this.startDate))
           > Date.parse(new Date(this.endDate))
       ) {
-        this.$Message.error(this.$t('timeIntervalWarn'))
+        this.$Message.error(this.$t('m_timeIntervalWarn'))
         return
       }
       if (this.startDate === this.endDate) {
@@ -336,7 +333,9 @@ export default {
           value: this.filters[keys[i]],
         })
       }
-      this.loading = true
+      if (this.isSpinShow === false) {
+        this.isSpinShow = true
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
         '/monitor/api/v1/alarm/problem/history',
@@ -353,8 +352,14 @@ export default {
           this.paginationInfo.pageSize = responseData.page.pageSize
           this.alramEmpty = !!this.low || !!this.mid || !!this.high
           this.showSunburst(responseData)
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         },
         () => {
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
           this.loading = false
           this.noData = true
         }
@@ -439,36 +444,44 @@ export default {
       let index = 0
       let pieOuter = []
       const itemStyleSet = {}
-      const metricInfo = originData.count
-      const set = new Set()
-      metricInfo.forEach(item => {
-        if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
-        }
-        else {
-          legendData.push(item.name)
-          index++
-          const itemStyle = {
-            color: colorX[index],
+      if (!isEmpty(originData.count)) {
+        const metricInfo = originData.count
+        const set = new Set()
+        metricInfo.forEach(item => {
+          if (set.has(item.name)) {
+            item.itemStyle = itemStyleSet[item.name]
           }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
-        }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0)
+          else {
+            legendData.push(item.name)
+            index++
+            const itemStyle = {
+              color: colorX[index],
+            }
+            itemStyleSet[item.name] = itemStyle
+            item.itemStyle = itemStyle
+          }
+          set.add(item.name)
+        })
+        pieOuter = metricInfo.sort(this.compare('type'))
+        this.outerMetrics = pieOuter
+        this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0)
+      }
     },
     realTimeAlarm() {
       this.$router.push('/alarmManagement')
     },
     addParams({key, value}) {
-      this.filters[key] = value
-      this.getAlarm()
+      Vue.set(this.filters, key, this.filters[key] || [])
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      }
+      else {
+        singleArr.push(value)
+      }
     },
     clearAll() {
-      this.filters = []
+      this.filters = {}
       this.getAlarm()
     },
     exclude(key) {
@@ -522,9 +535,6 @@ export default {
       border: 1px solid #f2f3f7;
     }
 
-    .btn-confirm-f {
-      background: #116ef9;
-    }
     .top-right-search {
       display: flex;
       align-items: center;

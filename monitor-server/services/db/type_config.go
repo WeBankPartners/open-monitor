@@ -9,10 +9,9 @@ import (
 func GetTypeConfigList(name string) (list []*models.TypeConfig, err error) {
 	var endpointList []*models.EndpointNewTable
 	if name == "" {
-		err = x.SQL("select * from monitor_type").Find(&list)
+		err = x.SQL("select * from monitor_type order by create_time desc").Find(&list)
 	} else {
-		sql := fmt.Sprintf("select * from monitor_type where display_name like '%%s%s'", name)
-		err = x.SQL(sql).Find(&list)
+		err = x.SQL("select * from monitor_type where display_name like ? order by create_time desc", fmt.Sprintf("%%%s%%", name)).Find(&list)
 	}
 	if err != nil {
 		return
