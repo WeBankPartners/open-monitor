@@ -1946,7 +1946,7 @@ func getLevelSQL(levelMap map[string]bool) string {
 func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool) (result bool) {
 	var name = alarmNotify.ProcDefName
 	var version string
-	var param = m.QueryProcessDefinitionParam{ProcDefName: name}
+	var param = m.QueryProcessDefinitionParam{}
 	var resByteArr []byte
 	var response m.QueryProcessDefinitionResponse
 	var err error
@@ -1955,9 +1955,10 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 		if index != -1 {
 			name = alarmNotify.ProcDefName[:index]
 			version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
+			param.ProcDefName = name
 		}
 		jsonParam, _ := json.Marshal(param)
-		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", jsonParam); err != nil {
+		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", m.GetCoreToken(), jsonParam); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
