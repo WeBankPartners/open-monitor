@@ -489,7 +489,7 @@ func GetOriginMetricByComparisonId(metricId string) (metricRow *models.MetricTab
 	return
 }
 
-func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
+func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue map[string][]string, err error) {
 	if metricRow == nil {
 		return
 	}
