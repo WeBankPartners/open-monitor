@@ -2,7 +2,7 @@
   <div>
     <Drawer
       v-model="drawerVisible"
-      width="820"
+      width="60%"
       :mask-closable="false"
       :lock-scroll="true"
       @on-close="handleCancel"
@@ -204,9 +204,9 @@ export default {
     },
     // 选择作用域
     changeWorkspace() {
-      this.templatePl = ''
-      this.metricTemplateParams = []
-      this.metricConfigData.prom_expr = ''
+      // this.templatePl = ''
+      // this.metricTemplateParams = []
+      // this.metricConfigData.prom_expr = ''
       this.getEndpoint()
     },
     // 选择推荐配置
