@@ -35,3 +35,6 @@ Fix tail handler recover
 
 v2.0.7.50
 Fix cpu high with remove log metric path && log metric calc
+
+v3.1.0
+Update control shell to support custom exporter port
