@@ -279,7 +279,7 @@ func doDbKeywordMonitorJob() {
 		return
 	}
 	var dbKeywordConfigs []*models.DbKeywordMonitorQueryObj
-	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
+	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t1.notify_enable,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
 	if err != nil {
 		log.Logger.Error("DoDbKeywordMonitorJob, query db_keyword_monitor fail", log.Error(err))
 		return
@@ -304,9 +304,13 @@ func doDbKeywordMonitorJob() {
 	var addAlarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	nowTime := time.Now()
+	notifyConfigMap := make(map[string]int)
 	for _, config := range dbKeywordConfigs {
 		key := fmt.Sprintf("service_group:%s^db_keyword_guid:%s^t_endpoint:%s", config.ServiceGroup, config.Guid, config.TargetEndpoint)
 		newValue, oldValue = 0, 0
+		if config.NotifyEnable > 0 {
+			notifyConfigMap[config.Guid] = 1
+		}
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
@@ -367,6 +371,10 @@ func doDbKeywordMonitorJob() {
 			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
+				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
+					log.Logger.Warn("doDbKeywordMonitorJob ignore notify with config", log.String("dbKeywordMonitor", v.AlarmStrategy))
+					continue
+				}
 				_, tmpNotifyRow, getNotifyErr := GetDbKeywordNotify(v.AlarmStrategy)
 				if getNotifyErr != nil {
 					log.Logger.Error("doDbKeywordMonitorJob get notify data fail", log.String("dbKeywordMonitor", v.AlarmStrategy), log.Error(getNotifyErr))
