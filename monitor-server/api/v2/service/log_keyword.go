@@ -125,6 +125,12 @@ func UpdateLogKeyword(c *gin.Context) {
 	if len(param.ActiveWindowList) > 0 {
 		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(param.Guid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	param.LogKeywordMonitor = logKeywordConfig.LogKeywordMonitor
 	var list []*models.LogKeywordConfigTable
 	if list, err = db.GetLogKeywordConfigByName(param.Guid, param.Name, param.LogKeywordMonitor); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -134,7 +140,7 @@ func UpdateLogKeyword(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
 		return
 	}
-	if err = db.UpdateLogKeyword(&param, middleware.GetOperateUser(c)); err != nil {
+	if err = db.UpdateLogKeyword(&param, logKeywordConfig, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -147,12 +153,17 @@ func UpdateLogKeyword(c *gin.Context) {
 }
 
 func DeleteLogKeyword(c *gin.Context) {
-	logKeywordGuid := c.Query("guid")
-	err := db.DeleteLogKeyword(logKeywordGuid)
+	logKeywordConfigGuid := c.Query("guid")
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(logKeywordConfigGuid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	err := db.DeleteLogKeyword(logKeywordConfigGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(logKeywordGuid)
+		err = syncLogKeywordMonitorConfig(logKeywordConfig.LogKeywordMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
