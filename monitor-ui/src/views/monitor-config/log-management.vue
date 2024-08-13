@@ -22,7 +22,6 @@
             clearable
             remote
             ref="select"
-            :remote-method="getRemoteMethod"
             @on-change="search"
           >
             <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
@@ -31,32 +30,16 @@
             </Option>
           </Select>
         </li>
-        <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-                  :disabled="targetId === ''"
-                  @click="search"
-          >
-            <i class="fa fa-search" ></i>
-            {{$t('m_button_search')}}
-          </button>
-        </li>
       </ul>
     </section>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
-      <template v-if="type === 'group'">
-        <groupManagement ref="group"></groupManagement>
-      </template>
-      <template v-if="type === 'endpoint'">
-        <endpointManagement ref="endpoint"></endpointManagement>
-      </template>
+      <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
     </section>
   </div>
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
-import endpointManagement from './keyword-endpoint.vue'
-import groupManagement from './keyword-service.vue'
+import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
@@ -65,36 +48,31 @@ export default {
       type: 'group',
       targetId: '',
       targetOptions: [],
-      showTargetManagement: false
+      showTargetManagement: false,
+      typeMap: {
+        group: 'service',
+        endpoint: 'endpoint'
+      }
     }
   },
-
   async mounted() {
-    this.initTargetByType()
+    this.getTargrtList()
   },
   beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    async initTargetByType() {
-      await this.getTargrtList()
-      if (!isEmpty(this.targetOptions)) {
-        this.targetId = this.targetOptions[0].guid
-        this.search()
-      }
-    },
-    async typeChange() {
+    typeChange() {
       this.clearTargrt()
-      this.initTargetByType()
+      this.getTargrtList()
     },
     getTargrtList() {
-      return new Promise(resolve => {
-        const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-          this.targetOptions = responseData
-          resolve(responseData)
-        }, {isNeedloading: false})
-      })
+      const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.targetOptions = responseData
+        this.targetId = this.targetOptions[0].guid
+        this.search()
+      }, {isNeedloading: false})
     },
     clearTargrt() {
       this.targetOptions = []
@@ -105,17 +83,13 @@ export default {
     search() {
       if (this.targetId) {
         this.showTargetManagement = true
-        this.$refs[this.type].getDetail(this.targetId)
+        this.$refs.keywordContent.getDetail(this.targetId)
       }
-    },
-    async getRemoteMethod() {
-      await this.getTargrtList()
     }
   },
   components: {
-    endpointManagement,
-    groupManagement,
-    TagShow
+    TagShow,
+    keywordContent
   },
 }
 </script>

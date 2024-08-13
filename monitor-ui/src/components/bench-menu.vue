@@ -16,7 +16,7 @@
         style="width:140px;height:100%;"
       >
         <Submenu v-for="(i, index) in menuList" :key="index" :name="i.name">
-          <template slot='title'>
+          <template slot="title">
             <div class="menu-item">
               <img v-if="i.img" :src="i.img" />
               <Icon v-if="i.icon" :type="i.icon" :size="22" style="margin-right:10px;" color="#fff" />
@@ -56,9 +56,9 @@ export default {
       for (const j of i.children) {
         if (j.path === this.$route.fullPath) {
           this.activeName = j.name
-          this.openNames = [i.name]
         }
       }
+      this.openNames.push(i.name)
     })
   },
   mounted() {

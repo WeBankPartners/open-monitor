@@ -1,5 +1,6 @@
 <template>
   <div class="all-content">
+    <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
@@ -7,21 +8,18 @@
             <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('alarmStatistics')}}：</span>
+            <span class="label">{{$t('m_alarmStatistics')}}：</span>
             <i-switch size="large" v-model="showGraph">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
             </i-switch>
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('classic_mode')}}：</span>
+            <span class="label">{{$t('m_classic_mode')}}：</span>
             <i-switch size="large" v-model="isClassicModel">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
             </i-switch>
-          </li>
-          <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
           </li>
         </ul>
         <div class="top-right-search">
@@ -34,38 +32,29 @@
           >
             <Button
               :disabled="isEmpty(filters) || (isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
-              class="btn btn-sm btn-cancel-f"
             >
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+          <Button type="primary" @click="alarmHistory">{{$t('m_alarmHistory')}}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_todayAlarm')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{'cover': total === 0 || noData}" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
-
             <template v-if="!noData">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
-
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
-            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
-            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template> -->
-            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
-            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
@@ -100,6 +89,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import isEmpty from 'lodash/isEmpty'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
@@ -109,6 +99,7 @@ import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
 import AlarmCard from '@/components/alarm-card.vue'
 import SearchBadge from '../components/search-badge.vue'
+import GlobalLoading from '../components/globalLoading.vue'
 
 export default {
   name: '',
@@ -120,7 +111,8 @@ export default {
     AlarmAssetsBasic,
     ClassicAlarm,
     AlarmCard,
-    SearchBadge
+    SearchBadge,
+    GlobalLoading
   },
   data() {
     return {
@@ -162,7 +154,8 @@ export default {
       },
       isBatch: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      isEmpty
+      isEmpty,
+      isSpinShow: false
     }
   },
   computed: {
@@ -362,6 +355,9 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
+      if (this.isSpinShow === false) {
+        this.isSpinShow = true
+      }
       this.request(
         'POST',
         '/monitor/api/v1/alarm/problem/page',
@@ -377,11 +373,17 @@ export default {
           this.high = responseData.high
           this.alramEmpty = !!this.low || !!this.mid ||!!this.high
           this.showSunburst(responseData)
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
           this.$refs.classicAlarm.getAlarm(this.resultData)
         },
         {isNeedloading: false},
         () => {
           this.noData = true
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         }
       )
     },
@@ -447,31 +449,39 @@ export default {
       let index = 0
       let pieOuter = []
       const itemStyleSet = {}
-      const metricInfo = originData.count
-      const set = new Set()
-      metricInfo.forEach(item => {
-        if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
-        }
-        else {
-          legendData.push(item.name)
-          index++
-          const itemStyle = {
-            color: colorX[index]
+      if (!isEmpty(originData.count)) {
+        const metricInfo = originData.count
+        const set = new Set()
+        metricInfo.forEach(item => {
+          if (set.has(item.name)) {
+            item.itemStyle = itemStyleSet[item.name]
           }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
-        }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
+          else {
+            legendData.push(item.name)
+            index++
+            const itemStyle = {
+              color: colorX[index]
+            }
+            itemStyleSet[item.name] = itemStyle
+            item.itemStyle = itemStyle
+          }
+          set.add(item.name)
+        })
+        pieOuter = metricInfo.sort(this.compare('type'))
 
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+        this.outerMetrics = pieOuter
+        this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+      }
     },
     addParams({key, value}) {
-      this.filters[key] = value
-      this.getAlarm()
+      Vue.set(this.filters, key, this.filters[key] || [])
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      }
+      else {
+        singleArr.push(value)
+      }
     },
     deleteConfirmModal() {
       this.isBatch = true
@@ -585,10 +595,6 @@ export default {
         font-size: 12px;
         margin-right: 28px;
       }
-    }
-
-    .btn-confirm-f {
-      background: #116EF9;
     }
   }
 }

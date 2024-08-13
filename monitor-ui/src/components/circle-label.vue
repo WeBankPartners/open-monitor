@@ -1,5 +1,5 @@
 <template>
-  <div class="cir" :class="{[$attrs.data.type]: true}" :style="cirStyle">
+  <div class="cir" :class="{[$attrs.data.type]: true}" :style="cirStyle" @click="onCircleTextClick">
     <div class="text" :style="textStyle">
       <div class="title">{{ $attrs.data.label }}</div>
       <div class="value">{{ percentage }}%</div>
@@ -44,6 +44,16 @@ export default {
       const { value, total } = this.$attrs.data
       return Math.max(this.L * ((parseInt(value, 10) / parseInt(total, 10)) || 0), 30)
     },
+  },
+  methods: {
+    onCircleTextClick() {
+      if (this.$attrs.data.key) {
+        this.$emit('onFilter', {
+          key: 'priority',
+          value: this.$attrs.data.key
+        })
+      }
+    }
   }
 }
 </script>
@@ -56,7 +66,7 @@ export default {
   background: #FFFFFF;
   border-radius: 50%;
   z-index: 101;
-
+  cursor: pointer;
   .text {
     .title {
       font-size: 16px;
