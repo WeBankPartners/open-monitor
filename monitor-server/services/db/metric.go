@@ -562,7 +562,13 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	return
 }
 func GetAllMetricNameList() (list []string, err error) {
+	var hashMap = make(map[string]bool)
 	err = x.SQL("select distinct metric from metric ").Find(&list)
+	hashMap = convertString2Map(list)
+	// 添加写死的关键字指标
+	hashMap["log_monitor"] = true
+	hashMap["db_keyword_monitor"] = true
+	list = convertMap2string(hashMap)
 	return
 }
 
