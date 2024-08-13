@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -89,6 +90,9 @@ func CreateLogKeyword(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
+	}
 	err = db.CreateLogKeyword(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -108,6 +112,9 @@ func UpdateLogKeyword(c *gin.Context) {
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
+	}
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
 	if err = db.UpdateLogKeyword(&param); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
