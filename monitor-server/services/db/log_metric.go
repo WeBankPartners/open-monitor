@@ -179,6 +179,22 @@ func ListLogMetricStringMap(logMetricConfig string) (result []*models.LogMetricS
 	return result
 }
 
+func GetLogMetricMonitorByCond(logPath []string, guid, metricType, monitorType string) (list []*models.LogMetricMonitorTable, err error) {
+	list = []*models.LogMetricMonitorTable{}
+	for _, path := range logPath {
+		var subList []*models.LogMetricMonitorTable
+		if guid == "" {
+			err = x.SQL("select * from log_metric_monitor where log_path=? and metric_type=? and monitor_type=?", path, metricType, monitorType).Find(&subList)
+		} else {
+			err = x.SQL("select * from log_metric_monitor where log_path=? and metric_type=? and monitor_type=? and guid <>?", path, metricType, monitorType, guid).Find(&subList)
+		}
+		if len(subList) > 0 {
+			list = append(list, subList...)
+		}
+	}
+	return
+}
+
 func CreateLogMetricMonitor(param *models.LogMetricMonitorCreateDto) error {
 	if len(param.LogPath) == 0 {
 		return nil
@@ -264,6 +280,7 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 	endpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
 	jsonConfigList := ListLogMetricJson(logMetricMonitorGuid)
 	metricConfigList := ListLogMetricConfig("", logMetricMonitorGuid)
+	logMetricGroupList := ListLogMetricGroups(logMetricMonitorGuid)
 	for _, v := range endpointRel {
 		affectHost = append(affectHost, v.SourceEndpoint)
 	}
@@ -280,6 +297,16 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 		deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, logMetricMonitorGuid)
 		actions = append(actions, deleteActions...)
 		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
+	for _, v := range logMetricGroupList {
+		deleteActions, tmpEndpointGroup, _, tmpErr := getDeleteLogMetricGroupActions(v.Guid)
+		if tmpErr != nil {
+			log.Logger.Error("try to get delete logMetricGroupAction fail", log.String("logMetricGroupGuid", v.Guid), log.Error(tmpErr))
+			continue
+		} else {
+			actions = append(actions, deleteActions...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+		}
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
 	return
@@ -1513,6 +1540,30 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 		return
 	}
 	err = Transaction(actions)
+	return
+}
+
+func CopyLogMetricCustomGroup(guid string) (logMetricMonitor string, err error) {
+	return
+}
+
+func GetLogMetricGroupObj(logMetricGroupId string) (logMetricGroupObj models.LogMetricGroupObj, err error) {
+	var logMetricGroup models.LogMetricGroup
+	var serviceGroup, monitorType string
+	if _, err = x.SQL("select * from log_metric_group where guid= ?", logMetricGroupId).Get(&logMetricGroup); err != nil {
+		return
+	}
+	logMetricGroup.Name = logMetricGroup.Name + "1"
+	serviceGroup, monitorType = GetLogMetricServiceGroup(logMetricGroup.LogMetricMonitor)
+	logMetricGroupObj = models.LogMetricGroupObj{
+		LogMetricGroup:         logMetricGroup,
+		LogMonitorTemplateName: logMetricGroup.LogMonitorTemplate,
+		ServiceGroup:           serviceGroup,
+		MonitorType:            monitorType,
+		JsonRegular:            "",
+		ParamList:              nil,
+		MetricList:             nil,
+	}
 	return
 }
 

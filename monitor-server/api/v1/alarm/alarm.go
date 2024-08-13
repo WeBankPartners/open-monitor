@@ -208,9 +208,9 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		//		return
 		//	}
 		//}
-		if strings.Contains(result.AgentAddress, "9100") {
-			result.MonitorType = "host"
-		}
+		//if strings.Contains(result.AgentAddress, "9100") {
+		//	result.MonitorType = "host"
+		//}
 	} else if param.Labels["strategy_guid"] != "" {
 		endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
 		if tmpErr != nil {
@@ -425,7 +425,7 @@ func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) 
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{})
+	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{}, []string{})
 	return err, data
 }
 
@@ -466,12 +466,13 @@ func recursiveHistoryEndpoint(input *m.RecursivePanelObj) []string {
 
 func GetProblemAlarmOptions(c *gin.Context) {
 	var err error
+	status := c.Query("status")
 	var data = &m.ProblemAlarmOptions{
 		EndpointList:  []string{},
 		MetricList:    []string{},
 		AlarmNameList: []string{},
 	}
-	if data.AlarmNameList, err = db.GetAlarmStrategyNameList(); err != nil {
+	if data.AlarmNameList, err = db.GetAlarmNameList(status); err != nil {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
@@ -503,7 +504,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
+	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -515,7 +516,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
+		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{})
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -568,7 +569,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		mid.ReturnValidateError(c, "query data too large")
 		return
 	}
-	query := m.AlarmTable{Status: "firing", Endpoint: "", SMetric: "", SPriority: param.Priority, AlarmName: ""}
+	query := m.AlarmTable{Status: "firing", Endpoint: "", SMetric: "", SPriority: "", AlarmName: ""}
 	var endpointList []string
 	var err error
 	if param.CustomDashboardId > 0 {
@@ -581,7 +582,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if len(param.Endpoint) > 0 {
 		endpointList = append(endpointList, param.Endpoint...)
 	}
-	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName)
+	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName, param.Priority)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return

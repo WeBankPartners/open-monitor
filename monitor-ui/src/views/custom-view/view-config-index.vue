@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="custom-view-index">
     <div>
       <Row>
         <Tabs v-model="searchMap.permission" @on-click="onFilterConditionChange()">
@@ -83,7 +83,7 @@
           <Button type="primary">
             {{$t('m_import')}}
           </Button>
-          <template slot='list'>
+          <template  slot='list'>
             <DropdownMenu>
               <DropdownItem v-for="(item, index) in importTypeOptions"
                             :name="item.value"
@@ -94,9 +94,7 @@
             </DropdownMenu>
           </template>
         </Dropdown>
-        <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
-          {{$t('m_button_setDashboard')}}
-        </button>
+        <Button @click="setDashboard">{{$t('m_button_setDashboard')}}</Button>
       </div>
     </div>
     <div class="mt-3">
@@ -323,7 +321,7 @@ export default {
       ],
       pagination: {
         totalRows: 100,
-        currentPage: 2,
+        currentPage: 1,
         pageSize: 18
       },
       mgmtRoles: [],
@@ -354,19 +352,37 @@ export default {
       panalName: ''
     }
   },
-  mounted(){
-    this.pathMap = this.$root.apiCenter.template
-    this.pagination.pageSize = 18
-    this.pagination.currentPage = 1
-    this.getViewList()
-    this.getAllRoles()
-    if (this.$route.query.isCreate) {
-      setTimeout(() => {
-        this.addBoardItem()
-      }, 500)
+  mounted() {
+    if (this.$route.query.needCache === 'yes') {
+      // 读取列表搜索参数
+      const storage = window.sessionStorage.getItem('search_custom_view') || ''
+      if (storage) {
+        const { searchParams } = JSON.parse(storage)
+        this.searchMap = searchParams
+      }
     }
+    this.initData()
+  },
+  beforeDestroy() {
+    // 缓存列表搜索条件
+    const storage = {
+      searchParams: this.searchMap
+    }
+    window.sessionStorage.setItem('search_custom_view', JSON.stringify(storage))
   },
   methods: {
+    initData() {
+      this.pathMap = this.$root.apiCenter.template
+      this.pagination.pageSize = 18
+      this.pagination.currentPage = 1
+      this.getViewList()
+      this.getAllRoles()
+      if (this.$route.query.isCreate) {
+        setTimeout(() => {
+          this.addBoardItem()
+        }, 500)
+      }
+    },
     handleReset() {
       const resetObj = {
         name: '',
@@ -509,6 +525,7 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.currentPage = 1
       this.getViewList()
     }, 300),
     saveTemplate(mgmtRoles, useRoles) {

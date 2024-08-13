@@ -2,16 +2,16 @@
   <div class="monitor-metric-config">
     <Tabs v-model="activeName">
       <!--通用对象-->
-      <TabPane :label="$t('m_basic_type')" name="1">
+      <TabPane v-if="from === 'admin'" :label="$t('m_basic_type')" name="1">
       </TabPane>
       <!--层级对象-->
-      <TabPane :label="$t('m_field_resourceLevel')" name="2">
+      <TabPane v-if="from !== 'admin'" :label="$t('m_field_resourceLevel')" name="2">
       </TabPane>
       <!--对象组-->
-      <TabPane :label="$t('m_object_group')" name="3">
+      <TabPane v-if="from !== 'admin'" :label="$t('m_object_group')" name="3">
       </TabPane>
       <!--对象-->
-      <TabPane :label="$t('m_object_design') + '(' + $t('m_ready_only') + ')'" name="4">
+      <TabPane v-if="from !== 'admin'" :label="$t('m_object_design') + '(' + $t('m_ready_only') + ')'" name="4">
       </TabPane>
       <MetricChange slot="extra" ref="metricChangeRef" @reloadData="reloadData"></MetricChange>
     </Tabs>
@@ -36,9 +36,15 @@ export default {
     Object,
     MetricChange
   },
+  props: {
+    from: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
-      activeName: '1'
+      activeName: this.from === 'admin' ? '1' : '2'
     }
   },
   methods: {
