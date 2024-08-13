@@ -6,6 +6,7 @@ alter table log_metric_string_map modify column target_value varchar(128) defaul
 alter table db_metric_monitor add column update_user varchar(64) default null COMMENT '更新人';
 
 alter table service_group add column update_user varchar(64) default null COMMENT '更新人';
+alter table log_keyword_config add column update_user varchar(64) default null COMMENT '更新人';
 
 alter table alarm add index alarm_name (alarm_name);
 

@@ -93,7 +93,7 @@ func CreateLogKeyword(c *gin.Context) {
 	if len(param.ActiveWindowList) > 0 {
 		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
-	err = db.CreateLogKeyword(&param)
+	err = db.CreateLogKeyword(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -116,7 +116,7 @@ func UpdateLogKeyword(c *gin.Context) {
 	if len(param.ActiveWindowList) > 0 {
 		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
-	if err = db.UpdateLogKeyword(&param); err != nil {
+	if err = db.UpdateLogKeyword(&param, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -212,7 +212,7 @@ func ImportLogKeyword(c *gin.Context) {
 	for _, logKeyword := range paramObj.Config {
 		logKeyword.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogKeyword(&paramObj); err != nil {
+	if err = db.ImportLogKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, "import log keyword fail", err)
 	} else {
 		middleware.ReturnSuccess(c)
