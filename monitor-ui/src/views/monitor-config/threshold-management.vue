@@ -12,7 +12,7 @@
           <Radio v-for="item in typeList" :label="item.value" :key="item.value">{{ $t(item.label) }}</Radio>
         </RadioGroup>
         <Select
-          style="width:300px;margin-left: 12px;"
+          style="width:300px;margin-left:12px;"
           v-model="targetId"
           filterable
           clearable
@@ -32,6 +32,14 @@
             {{option.option_text}}
           </Option>
         </Select>
+        <!--告警名称-->
+        <Input
+          v-model="alarmName"
+          @on-change="filterDataByAlarmName"
+          style="width:300px;margin-left:12px;"
+          clearable
+          :placeholder="$t('m_alarmName')"
+        />
       </div>
       <div>
         <template v-if="type !== 'endpoint' && targetId">
@@ -124,7 +132,8 @@ export default {
       showTargetManagement: false,
       thresholdTypes: ['group', 'endpoint', 'service'],
       dataEmptyTip: false,
-      getTargetOptionsSearch: ''
+      getTargetOptionsSearch: '',
+      alarmName: ''
     }
   },
   computed: {
@@ -200,6 +209,7 @@ export default {
       })
     },
     typeChange() {
+      this.alarmName = ''
       this.clearTargrt()
       this.initTargetByType()
     },
@@ -221,6 +231,7 @@ export default {
     },
     searchTableDetail() {
       if (this.targetId) {
+        this.alarmName = ''
         this.showTargetManagement = true
         const find = this.targetOptions.find(item => item.option_value === this.targetId)
         this.$refs.thresholdDetail.setMonitorType(find.type)
@@ -239,7 +250,10 @@ export default {
         return
       }
       await this.getTargetOptions()
-    }, 400)
+    }, 400),
+    filterDataByAlarmName() {
+      this.$refs.thresholdDetail.filterData(this.alarmName)
+    }
   },
   components: {
     TagShow,
