@@ -15,7 +15,7 @@
             <span class="underline"></span>
           </div>
         </div>
-        <Row>
+        <Row :key='rowKey'>
           <Col span="8">
           <Form :label-width="120">
             <FormItem :label="$t('m_tableKey_name')">
@@ -73,9 +73,8 @@
                   </Select>
                   </Col>
                   <Col span="3">
-                  <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                  <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
-
                   <Col span="4">
                   <Input v-model.trim="item.matchingSourceValue"
                          :disabled="view"
@@ -87,7 +86,7 @@
                   </Col>
 
                   <Col span="4">
-                  <span>{{item.matchingResult ? item.source_value : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? item.matchingResultText : $t('m_matching_failed')}}</span>
                   <Button
                     type="info"
                     ghost
@@ -142,7 +141,7 @@
                   </Select>
                   </Col>
                   <Col span="3">
-                  <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                  <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
 
                   <Col span="4">
@@ -155,7 +154,7 @@
                   </Input>
                   </Col>
                   <Col span="4">
-                  <span>{{item.matchingResult ? item.source_value : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? item.matchingResultText : $t('m_matching_failed')}}</span>
                   <Button
                     type="info"
                     ghost
@@ -249,7 +248,8 @@ export default {
         log_type: ''
       },
       businessConfig: {},
-      templeteStatus: false
+      templeteStatus: false,
+      rowKey: ''
     }
   },
   methods: {
@@ -323,10 +323,12 @@ export default {
         Array.isArray(this.businessConfig.code_string_map) && this.businessConfig.code_string_map.forEach((item, index) => {
           Vue.set(this.businessConfig.code_string_map[index], 'matchingSourceValue', '')
           Vue.set(this.businessConfig.code_string_map[index], 'matchingResult', false)
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingResultText', this.businessConfig.code_string_map[index].source_value)
         })
         Array.isArray(this.businessConfig.retcode_string_map) && this.businessConfig.retcode_string_map.forEach((item, index) => {
           Vue.set(this.businessConfig.retcode_string_map[index], 'matchingSourceValue', '')
           Vue.set(this.businessConfig.retcode_string_map[index], 'matchingResult', false)
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingResultText', this.businessConfig.retcode_string_map[index].source_value)
         })
       })
     },
@@ -380,6 +382,7 @@ export default {
         source_value: '',
         target_value: '',
         matchingSourceValue: '',
+        matchingResultText: '',
         matchingResult: false
       } : {
         regulative: 0,
@@ -387,6 +390,7 @@ export default {
         target_value: '',
         value_type: 'fail',
         matchingSourceValue: '',
+        matchingResultText: '',
         matchingResult: false
       }
       this.businessConfig[key].push(params)
@@ -403,7 +407,12 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
         Vue.set(item, 'matchingResult', res.match)
+        this.rowKey = +new Date() + ''
       })
+    },
+    onSourceValueChange(event, item) {
+      item.matchingResultText = event.target.value
+      item.matchingResult = false
     }
   },
   components: {
