@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div>
     <section class="section-content">
       <div class="upload-content">
         <Button
@@ -28,146 +28,159 @@
           </Button>
         </Upload>
       </div>
-      <div class="content-title">
-        <div class="use-underline-title">
-          {{$t('m_log_file')}}
-          <span class="underline" ></span>
-        </div>
-        <Button v-if="isEditState" type="success" class="mr-4" @click="addLogFileConfig">
-          {{ $t('m_button_add') }}
-        </Button>
-      </div>
 
-      <Collapse v-model="keywordCollapseValue" v-if="keywordCollapseData.length !== 0">
-        <Panel v-for="(item, index) in keywordCollapseData"
-               :key="index"
-               :name="index + ''"
-        >
-          <div class="keyword-collapse-content">
-            <div>
-              <div class="use-underline-title mr-4">
-                {{item.log_path}}
-                <span class="underline"></span>
-              </div>
-              <Tag color="blue">{{ item.monitor_type }}</Tag>
-            </div>
-            <div v-if="isEditState" class="key-word-collapse-button" @click="(e) => {e.stopPropagation()}">
-              <Tooltip :content="$t('m_title_logAdd')" placement="bottom" transfer>
-                <Button
-                  size="small"
-                  type="success"
-                  @click.stop="addCustomMetric(item)"
-                >
-                  <Icon type="ios-add-circle" size="16" />
-                </Button>
-              </Tooltip>
-              <Tooltip :content="$t('m_keyword_edit')" placement="bottom" transfer>
-                <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
-                  <Icon type="md-create" size="16" />
-                </Button>
-              </Tooltip>
-              <Tooltip :content="$t('m_alarm_configuration_save')" placement="bottom" transfer>
-                <Button size="small" class="mr-1"  type="info" @click.stop="saveFileDetail(item)">
-                  <Icon type="ios-cloud-done" size="16" />
-                </Button>
-              </Tooltip>
-              <Poptip
-                confirm
-                :title="$t('m_delConfirm_tip')"
-                placement="left-end"
-                @on-ok="deleteLogFileItem(item)"
-              >
-                <Button size="small" type="error" class="mr-2">
-                  <Icon type="md-trash" size="16" />
-                </Button>
-              </Poptip>
-            </div>
-            <Button v-else style="margin-right: 124px" size="small" type="info" @click.stop="editF(item)">
-              <Icon type="md-eye" size="16" />
-            </Button>
+      <div v-for="(singleData, i) in allLogFileData" :key="i">
+
+        <div v-if="!isEditState" class="content-header mb-2 mt-3">
+          <div class="use-underline-title header-title mr-4">
+            {{singleData.guid}}
+            <span class="underline"></span>
           </div>
-          <template slot='content'>
-            <Table
-              class="keyword-table"
-              size="small"
-              :columns="keywordTableColumns"
-              :data="item.keyword_list"
-            />
-            <div class="alarm-tips" style="margin-top:16px">
-              <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
-              <Tooltip :max-width="400" placement="right">
-                <p slot=content>
-                  {{ $t('m_alarm_tips') }}
-                </p>
-                <Icon type="ios-help-circle-outline" style="margin-left:4px" />
-              </Tooltip>
-            </div>
-            <div>
-              <template>
-                <div style="margin: 4px 0">
-                  <Row v-if="item.notify">
-                    <Col span="2">
-                    <span style="margin-right: 8px;line-height: 32px;">{{$t('m_firing')}}</span>
-                    </Col>
-                    <Col span="6" style="">
-                    <Select v-model="item.notify.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
-                      <Option v-for="role in allRoles" :value="role.name" :key="role.value">{{ role.name }}</Option>
-                    </Select>
-                    </Col>
-                    <Col span="5">
-                    <Select v-model="item.notify.proc_callback_key"
-                            clearable
-                            :disabled="!isEditState"
-                            @on-change="procCallbackKeyChangeForm(item.notify.proc_callback_key, item.notify)"
-                            style="width:99%;"
-                            :placeholder="$t('m_proc_callback_key')"
-                    >
-                      <Option v-for="(flow, flowIndex) in allFlows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                    </Select>
-                    </Col>
-                    <Col span="5">
-                    <Select v-model="item.notify.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
-                      <Option v-for="mode in callbackMode" :value="mode.value" :key="mode.value">{{ $t(mode.label) }}</Option>
-                    </Select>
-                    </Col>
-                    <Col span="5">
-                    <Input
-                      v-model="item.notify.description"
-                      clearable
-                      :disabled="!isEditState"
-                      style="width:99%"
-                      type="text"
-                      maxlength="50"
-                      :placeholder="$t('m_tableKey_description')"
-                    />
-                    </Col>
-                  </Row>
-                </div>
-              </template>
-            </div>
-          </template>
-        </Panel>
-      </Collapse>
-      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
-    </section>
-
-    <section style="margin-top: 16px; padding-bottom: 30px">
-      <div class="content-title">
-        <div class="use-underline-title">
-          {{$t('m_db')}}
-          <span class="underline"></span>
+          <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
         </div>
-        <Button v-if="isEditState" type="success" class="mr-4" @click="addDataBase" style="margin: 8px 0">
-          {{ $t('m_button_add') }}
-        </Button>
-      </div>
 
-      <Table
-        size="small"
-        :columns="dataBaseTableColumns"
-        :data="dataBaseTableData"
-      />
+        <div class="content-title mb-3">
+          <div class="use-underline-title">
+            {{$t('m_log_file')}}
+            <span class="underline" ></span>
+          </div>
+          <Button v-if="isEditState" type="success" class="mr-4" @click="addLogFileConfig">
+            {{ $t('m_button_add') }}
+          </Button>
+        </div>
+
+        <Collapse v-model="keywordCollapseValue" v-if="!isEmpty(singleData.config)">
+          <Panel v-for="(item, index) in singleData.config"
+                 :key="index"
+                 :name="index + ''"
+          >
+            <div class="keyword-collapse-content">
+              <div>
+                <div class="use-underline-title mr-4">
+                  {{item.log_path}}
+                  <span class="underline"></span>
+                </div>
+                <Tag color="blue">{{ item.monitor_type }}</Tag>
+              </div>
+              <div v-if="isEditState" class="key-word-collapse-button" @click="(e) => {e.stopPropagation()}">
+                <Tooltip :content="$t('m_title_logAdd')" placement="bottom" transfer>
+                  <Button
+                    size="small"
+                    type="success"
+                    @click.stop="addCustomMetric(item)"
+                  >
+                    <Icon type="ios-add-circle" size="16" />
+                  </Button>
+                </Tooltip>
+                <Tooltip :content="$t('m_keyword_edit')" placement="bottom" transfer>
+                  <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
+                    <Icon type="md-create" size="16" />
+                  </Button>
+                </Tooltip>
+                <Tooltip :content="$t('m_alarm_configuration_save')" placement="bottom" transfer>
+                  <Button size="small" class="mr-1"  type="info" @click.stop="saveFileDetail(item)">
+                    <Icon type="ios-cloud-done" size="16" />
+                  </Button>
+                </Tooltip>
+                <Poptip
+                  confirm
+                  :title="$t('m_delConfirm_tip')"
+                  placement="left-end"
+                  @on-ok="deleteLogFileItem(item)"
+                >
+                  <Button size="small" type="error" class="mr-2">
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
+              </div>
+              <Button v-else style="margin-right: 124px" size="small" type="info" @click.stop="editF(item)">
+                <Icon type="md-eye" size="16" />
+              </Button>
+            </div>
+            <template slot='content'>
+              <Table
+                class="keyword-table"
+                size="small"
+                :columns="keywordTableColumns"
+                :data="item.keyword_list"
+              />
+              <div class="alarm-tips" style="margin-top:16px">
+                <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
+                <Tooltip :max-width="400" placement="right">
+                  <p slot=content>
+                    {{ $t('m_alarm_tips') }}
+                  </p>
+                  <Icon type="ios-help-circle-outline" style="margin-left:4px" />
+                </Tooltip>
+              </div>
+              <div>
+                <template>
+                  <div style="margin: 4px 0">
+                    <Row v-if="item.notify">
+                      <Col span="2">
+                      <span style="margin-right: 8px;line-height: 32px;">{{$t('m_firing')}}</span>
+                      </Col>
+                      <Col span="6" style="">
+                      <Select v-model="item.notify.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
+                        <Option v-for="role in allRoles" :value="role.name" :key="role.value">{{ role.name }}</Option>
+                      </Select>
+                      </Col>
+                      <Col span="5">
+                      <Select v-model="item.notify.proc_callback_key"
+                              clearable
+                              :disabled="!isEditState"
+                              @on-change="procCallbackKeyChangeForm(item.notify.proc_callback_key, item.notify)"
+                              style="width:99%;"
+                              :placeholder="$t('m_proc_callback_key')"
+                      >
+                        <Option v-for="(flow, flowIndex) in allFlows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                      </Select>
+                      </Col>
+                      <Col span="5">
+                      <Select v-model="item.notify.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                        <Option v-for="mode in callbackMode" :value="mode.value" :key="mode.value">{{ $t(mode.label) }}</Option>
+                      </Select>
+                      </Col>
+                      <Col span="5">
+                      <Input
+                        v-model="item.notify.description"
+                        clearable
+                        :disabled="!isEditState"
+                        style="width:99%"
+                        type="text"
+                        maxlength="50"
+                        :placeholder="$t('m_tableKey_description')"
+                      />
+                      </Col>
+                    </Row>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </Panel>
+        </Collapse>
+        <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
+      </div>
     </section>
+    <div class="mt-3">
+      <div v-for="(singleDatabase, index) in allDataBaseDataInfo" :key="index + 's'">
+        <div class="content-title mb-2">
+          <div class="use-underline-title">
+            {{$t('m_db')}}
+            <span class="underline"></span>
+          </div>
+          <Button v-if="isEditState" type="success" class="mr-4" @click="addDataBase" style="margin: 8px 0">
+            {{ $t('m_button_add') }}
+          </Button>
+        </div>
+
+        <Table
+          size="small"
+          :columns="dataBaseTableColumns"
+          :data="singleDatabase.config"
+        />
+      </div>
+    </div>
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('')"
@@ -276,7 +289,7 @@
         <div class="file-log-form">
           <Form ref="formData" :model="formData" :rules="ruleValidate" :label-width="130">
             <FormItem :label="$t('m_alarmName')" prop="name">
-              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20"></Input>
+              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20" show-word-limit />
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_field_log')" prop="keyword">
               <Input v-model="formData.keyword" :disabled="!isEditState"></Input>
@@ -578,9 +591,9 @@ export default {
           value: 'mysql'
         }
       ],
-
+      allLogFileData: [],
+      allDataBaseDataInfo: [],
       keywordCollapseValue: ['0'],
-      keywordCollapseData: [],
       keywordTableColumns: [ // 日志文件table
         {
           title: this.$t('m_alarmName'),
@@ -637,7 +650,7 @@ export default {
           }
         },
         {
-          title: this.$t('m_field_log'), // 更新人
+          title: this.$t('m_field_log'),
           key: 'keyword',
           minWidth: 150,
           render: (h, params) => <span>{params.row.keyword || '-'}</span>
@@ -654,9 +667,21 @@ export default {
           }
         },
         {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          minWidth: 100,
+          render: (h, params) => <span>{params.row.update_user || '-'}</span>
+        },
+        {
+          title: this.$t('m_update_time'),
+          key: 'update_time',
+          width: 150,
+          render: (h, params) => <span>{params.row.update_time || '-'}</span>
+        },
+        {
           title: this.$t('m_table_action'),
           key: 'index',
-          width: 160,
+          width: 120,
           render: (h, params) => this.isEditState ? (
             <div>
               <Button size="small" class="mr-1" type='primary' on-click={() => this.editCustomMetricItem(params.row)}>
@@ -739,12 +764,25 @@ export default {
         {
           title: this.$t('m_sql_script'), // 更新人
           key: 'query_sql',
+          minWidth: 250,
           render: (h, params) => <span>{params.row.query_sql || '-'}</span>
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          minWidth: 100,
+          render: (h, params) => <span>{params.row.update_user || '-'}</span>
+        },
+        {
+          title: this.$t('m_update_time'),
+          key: 'update_time',
+          width: 150,
+          render: (h, params) => <span>{params.row.update_time || '-'}</span>
         },
         {
           title: this.$t('m_table_action'),
           key: 'index',
-          width: 173,
+          width: 120,
           render: (h, params) => this.isEditState ? (
             <div>
               <Button size="small" class="mr-1" type="primary" on-click={() => this.editDataBaseItem(params.row)}>
@@ -780,7 +818,6 @@ export default {
           value: 'auto'
         }
       ],
-      dataBaseTableData: [],
       isTableChangeFormShow: false,
       isAddState: true,
       formData: cloneDeep(initFormData),
@@ -853,12 +890,21 @@ export default {
             message: '请输入',
             trigger: 'blur'
           }
+        ],
+        endpoint_rel: [
+          {
+            type: 'array',
+            required: true,
+            message: '请输入',
+            trigger: 'blur'
+          }
         ]
       },
       sqlSourceEndpoints: [],
       sqlTargetEndpoints: [],
       currentEditType: 'logFile', // 为枚举值，logFile(日志文件新增和编辑)和database（数据库新增和编辑）
-      service_group: ''
+      service_group: '',
+      isEmpty
     }
   },
   computed: {
@@ -875,16 +921,13 @@ export default {
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.getWorkFlows()
-    this.getAllRoles()
+    this.getFlowsAndRolesOptions()
   },
   methods: {
-    getWorkFlows() {
+    getFlowsAndRolesOptions() {
       this.request('GET', '/monitor/api/v2/alarm/event/callback/list', '', responseData => {
         this.allFlows = responseData
       })
-    },
-    getAllRoles() {
       this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1000', '', responseData => {
         this.allRoles = responseData.data.map(_ => ({
           ..._,
@@ -987,6 +1030,7 @@ export default {
       })
     },
     addCustomMetric(item) {
+      this.getFlowsAndRolesOptions()
       this.currentEditType = 'logFile'
       this.resetDrawerForm()
       this.formData.name = this.$t('m_alert') + new Date().getTime()
@@ -995,6 +1039,7 @@ export default {
       this.isTableChangeFormShow = true
     },
     editCustomMetricItem(rowData) {
+      this.getFlowsAndRolesOptions()
       this.currentEditType = 'logFile'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
@@ -1137,11 +1182,13 @@ export default {
         type: this.keywordType,
         guid: this.targetId
       }, res => {
-        this.keywordCollapseData = isEmpty(res) ? [] : res[0].config
-        !isEmpty(this.keywordCollapseData) && this.keywordCollapseData.forEach(item => {
-          if (isEmpty(item.notify)) {
-            item.notify = cloneDeep(initNotify)
-          }
+        this.allLogFileData = isEmpty(res) ? [] : res
+        this.allLogFileData.forEach(logFile => {
+          isEmpty(logFile.config) && logFile.config.forEach(item => {
+            if (isEmpty(item.notify)) {
+              item.notify = cloneDeep(initNotify)
+            }
+          })
         })
       })
     },
@@ -1150,10 +1197,17 @@ export default {
         type: this.keywordType,
         guid: this.targetId
       }, res => {
-        this.dataBaseTableData = isEmpty(res) ? [] : res[0].config
+        const detail = isEmpty(res) ? [] : res
+        detail.forEach(item => {
+          !isEmpty(item.config) && item.config.forEach(one => {
+            one.dataBaseGuid = item.guid
+          })
+        })
+        Vue.set(this, 'allDataBaseDataInfo', detail)
       })
     },
     addDataBase() {
+      this.getFlowsAndRolesOptions()
       this.currentEditType = 'database'
       this.isAddState = true
       this.resetDrawerForm()
@@ -1164,11 +1218,12 @@ export default {
       this.isTableChangeFormShow = true
     },
     editDataBaseItem(rowData) {
+      this.getFlowsAndRolesOptions()
       this.isAddState = false
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.getSqlSourceOptions(rowData.monitor_type)
+      this.getSqlSourceOptions(rowData.dataBaseGuid)
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
@@ -1249,10 +1304,18 @@ export default {
           if (!this.isAddState) { // 数据库编辑
             method = 'PUT'
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, () => {
-            this.$Message.success(this.$t('m_tips_success'))
-            this.isTableChangeFormShow = false
-            this.getDataBaseDetail()
+          if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
+            return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
+          }
+          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, (data, message, res) => {
+            if (res.status === 'OK') {
+              this.$Message.success(this.$t('m_tips_success'))
+              this.isTableChangeFormShow = false
+              this.getDataBaseDetail()
+            }
+            else {
+              this.isTableChangeFormShow = true
+            }
           })
         }
       }
@@ -1266,10 +1329,7 @@ export default {
         item.proc_callback_name = ''
       }
     }
-  },
-  components: {
-    // extendTable
-  },
+  }
 }
 </script>
 
@@ -1284,7 +1344,7 @@ export default {
 
 .file-log-form {
   .ivu-form-item {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
   }
 }
 .success-btn {
@@ -1327,7 +1387,13 @@ export default {
       -webkit-box-sizing: content-box;
       box-sizing: content-box;
     }
+}
+
+.use-underline-title.header-title {
+  .underline {
+    margin-top: -14px;
   }
+}
 
 .section-content {
   position: relative;
@@ -1368,6 +1434,11 @@ export default {
   margin-bottom: 10px;
 }
 
+.content-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .config-drawer {
   position: relative;
   .file-log-form {
@@ -1402,6 +1473,11 @@ export default {
     background-color: #fff;
     opacity: 1;
   }
+}
+
+.database-item {
+  margin-top: 16px;
+  padding-bottom: 30px
 }
 
 </style>
