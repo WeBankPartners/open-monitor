@@ -23,6 +23,7 @@ type LogKeywordConfigTable struct {
 	ActiveWindow      string     `json:"active_window" xorm:"active_window"`
 	ActiveWindowList  []string   `json:"active_window_list" xorm:"-"`
 	Notify            *NotifyObj `json:"notify" xorm:"-"`
+	UpdateUser        string     `json:"update_user" xorm:"update_user"`
 }
 
 type LogKeywordEndpointRelTable struct {
