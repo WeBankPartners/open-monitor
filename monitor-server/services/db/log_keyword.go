@@ -215,12 +215,22 @@ func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfig
 	return
 }
 
-func GetDbKeywordMonitorByName(guid, name string) (list []*models.DbKeywordMonitor, err error) {
+func GetDbKeywordMonitorByName(guid, name, serviceGroup string) (list []*models.DbKeywordMonitor, err error) {
 	list = []*models.DbKeywordMonitor{}
 	if guid == "" {
-		err = x.SQL("select * from db_keyword_monitor where name = ?", name).Find(&list)
+		err = x.SQL("select * from db_keyword_monitor where name = ? and service_group=?", name, serviceGroup).Find(&list)
 	} else {
-		err = x.SQL("select * from db_keyword_monitor where name = ? and guid <> ?", name, guid).Find(&list)
+		err = x.SQL("select * from db_keyword_monitor where name = ? and service_group=? and guid <> ?", name, serviceGroup, guid).Find(&list)
+	}
+	return
+}
+
+func GetLogKeywordConfigByName(guid, name, logKeywordMonitorGuid string) (list []*models.LogKeywordConfigTable, err error) {
+	list = []*models.LogKeywordConfigTable{}
+	if guid == "" {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=?", logKeywordMonitorGuid, name).Find(&list)
+	} else {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=? and guid<>?", logKeywordMonitorGuid, name, guid).Find(&list)
 	}
 	return
 }
