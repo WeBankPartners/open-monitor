@@ -284,21 +284,25 @@ func getNotifyListInsertAction(notifyList []*models.NotifyObj) (actions []*Actio
 		refColumn, refValue = "endpoint_group", notifyList[0].EndpointGroup
 	} else if notifyList[0].ServiceGroup != "" {
 		refColumn, refValue = "service_group", notifyList[0].ServiceGroup
-	} else {
-		return actions
 	}
 	notifyGuidList := guid.CreateGuidList(len(notifyList))
 	for i, v := range notifyList {
 		if v.NotifyNum == 0 {
 			v.NotifyNum = 1
 		}
-		tmpAction := Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
-		tmpAction.Param = []interface{}{"notify_" + notifyGuidList[i], v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description}
+		v.Guid = "notify_" + notifyGuidList[i]
+		tmpAction := Action{}
+		if refColumn != "" {
+			tmpAction = Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
+		} else {
+			tmpAction = Action{Sql: "insert into notify(guid,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,?,?,?,?,?,?,?,?,?)"}
+		}
+		tmpAction.Param = []interface{}{v.Guid, v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description}
 		actions = append(actions, &tmpAction)
 		if len(v.NotifyRoles) > 0 {
 			tmpNotifyRoleGuidList := guid.CreateGuidList(len(v.NotifyRoles))
 			for ii, vv := range v.NotifyRoles {
-				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], "notify_" + notifyGuidList[i], vv}})
+				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], v.Guid, vv}})
 			}
 		}
 	}
@@ -317,8 +321,6 @@ func getNotifyListUpdateAction(notifyList []*models.NotifyObj) (actions []*Actio
 		refColumn, refValue = "endpoint_group", notifyList[0].EndpointGroup
 	} else if notifyList[0].ServiceGroup != "" {
 		refColumn, refValue = "service_group", notifyList[0].ServiceGroup
-	} else {
-		return actions
 	}
 	notifyGuidList := guid.CreateGuidList(len(notifyList))
 	for i, v := range notifyList {
@@ -332,7 +334,12 @@ func getNotifyListUpdateAction(notifyList []*models.NotifyObj) (actions []*Actio
 			actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify=?", Param: []interface{}{v.Guid}})
 		} else {
 			v.Guid = "notify_" + notifyGuidList[i]
-			tmpAction := Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
+			tmpAction := Action{}
+			if refColumn != "" {
+				tmpAction = Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
+			} else {
+				tmpAction = Action{Sql: "insert into notify(guid,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,?,?,?,?,?,?,?,?,?)"}
+			}
 			tmpAction.Param = []interface{}{v.Guid, v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description}
 			actions = append(actions, &tmpAction)
 		}
@@ -362,6 +369,12 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 	}
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify_role_rel where notify in (select guid from notify where %s=?)", refColumn), Param: actionParam})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify where %s=?", refColumn), Param: actionParam})
+	return actions
+}
+
+func getNotifyDeleteAction(notifyGuid string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify=?", Param: []interface{}{notifyGuid}})
+	actions = append(actions, &Action{Sql: "delete from notify where guid=?", Param: []interface{}{notifyGuid}})
 	return actions
 }
 
