@@ -509,6 +509,7 @@
   "m_two_columns": "两列",
   "m_three_columns": "三列",
   "m_layout_change_tips": "切换布局将自动重新设置布局，之前保存的布局、尺寸设置会被覆盖，确认操作吗？",
-  "m_is_requesting": "请求中"
+  "m_is_requesting": "请求中",
+  "m_log": "日志"
 }
 
