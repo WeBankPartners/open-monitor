@@ -64,6 +64,7 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 		if configObj.Notify, _, err = GetDbKeywordNotify(v.Guid); err != nil {
 			return
 		}
+		configObj.ActiveWindowList = strings.Split(configObj.ActiveWindow, ",")
 		configList = append(configList, &configObj)
 	}
 	result = append(result, &models.ListDbKeywordData{
@@ -150,7 +151,33 @@ func getCreateDbKeywordConfigActions(input *models.DbKeywordConfigObj, operator 
 }
 
 func UpdateDBKeywordConfig(param *models.DbKeywordConfigObj, operator string) (err error) {
+	dbKeywordObj, getObjErr := getSimpleDbKeywordConfig(param.Guid, true)
+	if getObjErr != nil {
+		err = getObjErr
+		return
+	}
 	actions := getUpdateDbKeywordConfigActions(param, operator, time.Now())
+	if dbKeywordObj.Name != param.Name || dbKeywordObj.QuerySql != param.QuerySql || dbKeywordObj.Priority != param.Priority {
+		// 关键信息改变把原告警关闭
+		var dbKeywordAlarmRows []*models.DbKeywordAlarm
+		err = x.SQL("select id,alarm_id from db_keyword_alarm where db_keyword_monitor=? and status='firing'", param.Guid).Find(&dbKeywordAlarmRows)
+		if err != nil {
+			err = fmt.Errorf("query db keyword alarm table fail,%s ", err.Error())
+			return
+		}
+		for _, row := range dbKeywordAlarmRows {
+			if row.AlarmId > 0 {
+				closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
+				if tmpErr != nil {
+					err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
+					return
+				}
+				if len(closeAlarmActions) > 0 {
+					actions = append(actions, closeAlarmActions...)
+				}
+			}
+		}
+	}
 	err = Transaction(actions)
 	return
 }
@@ -299,7 +326,7 @@ func doDbKeywordMonitorJob() {
 			if newValue == oldValue {
 				continue
 			}
-			if existAlarm.Status == "firing" || !inActiveWindow(config.ActiveWindow) {
+			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
 				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
@@ -311,7 +338,7 @@ func doDbKeywordMonitorJob() {
 				addFlag = true
 			}
 		} else {
-			if inActiveWindow(config.ActiveWindow) {
+			if InActiveWindowList(config.ActiveWindow) {
 				addFlag = true
 			}
 		}
@@ -415,6 +442,15 @@ func checkDBKeywordMonitorName(serviceGroup, inputName, dbKeywordMonitorGuid str
 		}
 	}
 	return
+}
+
+func InActiveWindowList(activeWindowList string) bool {
+	for _, v := range strings.Split(activeWindowList, ",") {
+		if inActiveWindow(v) {
+			return true
+		}
+	}
+	return false
 }
 
 func inActiveWindow(activeWindow string) bool {
