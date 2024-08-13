@@ -1406,3 +1406,23 @@ func getStrategyNotifyImportActions(endpointGroup string, notifyList []*models.N
 	actions = append(actions, getNotifyListInsertAction(notifyList)...)
 	return
 }
+
+func GetMailSender() (mailSender *smtp.MailSender, err error) {
+	mailConfig, getConfigErr := GetSysAlertMailConfig()
+	if getConfigErr != nil {
+		return
+	}
+	mailSender = &smtp.MailSender{SenderName: mailConfig.SenderName, SenderMail: mailConfig.SenderMail, AuthServer: mailConfig.AuthServer, AuthPassword: mailConfig.AuthPassword}
+	mailConfig.SSL = strings.ToLower(mailConfig.SSL)
+	if mailConfig.SSL == "y" {
+		mailSender.SSL = true
+	} else if mailConfig.SSL == "starttls" {
+		mailSender.SSL = true
+		mailSender.ByStartTLS = true
+	}
+	err = mailSender.Init()
+	if err != nil {
+		err = fmt.Errorf("mail init fail,%s ", err.Error())
+	}
+	return
+}
