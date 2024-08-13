@@ -430,7 +430,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList, userRoles []string) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList, userRoles []string, token string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -635,7 +635,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
 				if alarmNotify, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
 					v.NotifyStatus = "started"
-					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles)) {
+					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles), token) {
 						v.NotifyPermission = "yes"
 					}
 				}
@@ -1952,7 +1952,7 @@ func getLevelSQL(levelMap map[string]bool) string {
 }
 
 // 校验是否有编排使用权限
-func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool) (result bool) {
+func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool, token string) (result bool) {
 	var name = alarmNotify.ProcDefName
 	var version string
 	var param = m.QueryProcessDefinitionParam{}
@@ -1967,7 +1967,7 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			param.ProcDefName = name
 		}
 		jsonParam, _ := json.Marshal(param)
-		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", m.GetCoreToken(), jsonParam); err != nil {
+		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", token, jsonParam); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
