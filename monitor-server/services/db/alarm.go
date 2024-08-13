@@ -430,7 +430,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList []string) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList, userRoles []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -611,7 +611,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		alarmNotifyMap := make(map[int]*m.AlarmNotifyTable)
 		if len(alarmIdList) > 0 {
 			var alarmNotifyRows []*m.AlarmNotifyTable
-			err = x.SQL("select id,alarm_id,status from alarm_notify where alarm_id in (" + strings.Join(alarmIdList, ",") + ")").Find(&alarmNotifyRows)
+			err = x.SQL("select id,alarm_id,status,proc_def_name from alarm_notify where alarm_id in (" + strings.Join(alarmIdList, ",") + ")").Find(&alarmNotifyRows)
 			if err != nil {
 				err = fmt.Errorf("query alarm_notify table fail,%s ", err.Error())
 				return err, result
@@ -624,11 +624,14 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 			if notifyRowObj, ok := notifyMsgMap[v.NotifyId]; ok {
 				v.NotifyMessage = notifyRowObj.Description
 				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
-				if _, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
+				if alarmNotify, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
 					v.NotifyStatus = "started"
-				} else {
-					v.NotifyStatus = "notStart"
+					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles)) {
+						v.NotifyPermission = "yes"
+					}
 				}
+			} else {
+				v.NotifyStatus = "notStart"
 			}
 			v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 		}
@@ -639,7 +642,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
 		} else {
 			for _, v := range sortResult {
-				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
+				var tmpStrategyGroups []*m.AlarmStrategyGroup
 				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
 					if strategyRow.ServiceGroup == "" {
 						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
@@ -660,7 +663,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 }
 
 func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
-	successAlarms := []*m.AlarmHandleObj{}
+	var successAlarms []*m.AlarmHandleObj
 	if len(alarms) == 0 {
 		return alarms
 	}
@@ -1926,4 +1929,52 @@ func getLevelSQL(levelMap map[string]bool) string {
 	default:
 	}
 	return levelFilterSql
+}
+
+// 校验是否有编排使用权限
+func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool) (result bool) {
+	var name = alarmNotify.ProcDefName
+	var version string
+	var param = m.QueryProcessDefinitionParam{ProcDefName: name}
+	var resByteArr []byte
+	var response m.QueryProcessDefinitionResponse
+	var err error
+	if strings.TrimSpace(alarmNotify.ProcDefName) != "" {
+		index := strings.Index(alarmNotify.ProcDefName, "[")
+		if index != -1 {
+			name = alarmNotify.ProcDefName[:index]
+			version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
+		}
+		jsonParam, _ := json.Marshal(param)
+		if resByteArr, err = HttpPost(m.CoreUrl, jsonParam); err != nil {
+			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
+			return
+		}
+		if err = json.Unmarshal(resByteArr, &response); err != nil {
+			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
+			return
+		}
+		if response.Status != "OK" {
+			err = fmt.Errorf(response.Message)
+			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
+			return
+		}
+		if len(response.Data) > 0 {
+			for _, procDefDto := range response.Data {
+				if len(procDefDto.ProcDefList) > 0 {
+					for _, procDef := range procDefDto.ProcDefList {
+						if procDef.Version == version {
+							for _, role := range procDef.UseRoles {
+								if hasRoleMap[role] {
+									result = true
+									return
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return
 }
