@@ -225,7 +225,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
-			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) and service_group is null and endpoint_group  is null "
 			baseSql = baseSql + ") m join metric_comparison mc on mc.metric_id = m.guid"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
@@ -307,7 +307,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
-			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) and service_group is null and endpoint_group  is null "
 			baseSql = baseSql + ") m where 1=1"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
@@ -489,7 +489,7 @@ func GetOriginMetricByComparisonId(metricId string) (metricRow *models.MetricTab
 	return
 }
 
-func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue map[string][]string, err error) {
+func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 	if metricRow == nil {
 		return
 	}
@@ -512,7 +512,6 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 				}
 			}
 		}
-		tagConfigValue, err = getMetricConfigTagValueMap(metricRow, tags)
 		return
 	}
 	if metricRow.LogMetricTemplate != "" {
@@ -530,35 +529,12 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 				}
 			}
 		}
-		tagConfigValue, err = getMetricConfigTagValueMap(metricRow, tags)
 		return
 	}
 	tagParamList := getPromTagParamList(metricRow.PromExpr)
 	for _, v := range tagParamList {
 		if strings.HasPrefix(v, "$t_") {
 			tags = append(tags, v[3:])
-		}
-	}
-	tagConfigValue, err = getMetricConfigTagValueMap(metricRow, tags)
-	return
-}
-
-func getMetricConfigTagValueMap(metricRow *models.MetricTable, tagList []string) (tagConfigValue map[string][]string, err error) {
-	tagConfigValue = make(map[string][]string)
-	if len(tagList) == 0 || metricRow.LogMetricGroup == "" {
-		return
-	}
-	var stringMapRows []*models.LogMetricStringMapTable
-	err = x.SQL("select log_param_name,target_value from log_metric_string_map where log_metric_group=?", metricRow.LogMetricGroup).Find(&stringMapRows)
-	if err != nil {
-		err = fmt.Errorf("query log metric string map table fail,%s ", err.Error())
-		return
-	}
-	for _, row := range stringMapRows {
-		if v, ok := tagConfigValue[row.LogParamName]; ok {
-			tagConfigValue[row.LogParamName] = append(v, row.TargetValue)
-		} else {
-			tagConfigValue[row.LogParamName] = []string{row.TargetValue}
 		}
 	}
 	return
