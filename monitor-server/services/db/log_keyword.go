@@ -225,11 +225,11 @@ func GetDbKeywordMonitorByName(guid, name string) (list []*models.DbKeywordMonit
 	return
 }
 
-func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
+func CreateLogKeyword(param *models.LogKeywordConfigTable, operator string) (err error) {
 	var actions []*Action
 	param.Guid = "lk_config_" + guid.CreateGuid()
-	actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name,active_window) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow}})
+	actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content,name,active_window,update_user) value (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow, operator}})
 	if param.Notify != nil {
 		actions = append(actions, getNotifyListInsertAction([]*models.NotifyObj{param.Notify})...)
 		actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_config,notify) values (?,?,?)", Param: []interface{}{
@@ -240,7 +240,7 @@ func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 	return
 }
 
-func UpdateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
+func UpdateLogKeyword(param *models.LogKeywordConfigTable, operator string) (err error) {
 	var actions []*Action
 	var logKeywordConfigRows []*models.LogKeywordConfigTable
 	err = x.SQL("select * from log_keyword_config where guid=?", param.Guid).Find(&logKeywordConfigRows)
@@ -252,8 +252,8 @@ func UpdateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
 		err = fmt.Errorf("can not find log keyword config with guid:%s ", param.Guid)
 		return
 	}
-	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=?,active_window=? where guid=?", Param: []interface{}{
-		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow, param.Guid}})
+	actions = append(actions, &Action{Sql: "update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=?,name=?,active_window=?,update_user=? where guid=?", Param: []interface{}{
+		param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Name, param.ActiveWindow, operator, param.Guid}})
 	if param.Notify != nil {
 		actions = append(actions, getNotifyListUpdateAction([]*models.NotifyObj{param.Notify})...)
 		actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{param.Guid}})
@@ -469,7 +469,7 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	return result
 }
 
-func ImportLogKeyword(param *models.LogKeywordServiceGroupObj) (err error) {
+func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) (err error) {
 	existSGs, getExistDataErr := GetLogKeywordByServiceGroup(param.Guid)
 	if getExistDataErr != nil {
 		return fmt.Errorf("get exist log keyword data fail,%s ", getExistDataErr.Error())
@@ -488,7 +488,7 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj) (err error) {
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, inputKeywordConfig := range param.Config {
-		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime, operator}})
 		for _, keywordObj := range inputKeywordConfig.KeywordList {
 			actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{keywordObj.Guid, keywordObj.LogKeywordMonitor, keywordObj.Keyword, keywordObj.Regulative, keywordObj.NotifyEnable, keywordObj.Priority, nowTime}})
 		}
