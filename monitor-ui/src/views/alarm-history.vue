@@ -66,7 +66,7 @@
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
-            <div style="margin: 4px 0; text-align:right">
+            <div class='card-pagination'>
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
@@ -546,9 +546,9 @@ export default {
 .data-stats-container {
 
   .content-stats-container {
+    height: ~"calc(100vh - 250px)";
     width: 100%;
     display: flex;
-    // margin: 12px 0;
 
     .left {
       position: relative;
@@ -571,6 +571,15 @@ export default {
     .right {
       flex-basis: 40%;
       overflow-x: auto;
+
+      .card-pagination {
+        position: fixed;
+        bottom: 0px;
+        right: 0px;
+        opacity: 1;
+        margin-bottom: 20px;
+        background: #fff;
+      }
 
       .alarm-card-container {
         height: 740px;
