@@ -117,7 +117,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('m_tableKey_status') }}
+                {{ $t('m_notification') }}
               </span>
               <Select
                 :disabled="!isEditState"
