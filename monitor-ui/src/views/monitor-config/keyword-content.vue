@@ -370,7 +370,7 @@
                   {{ $t(item.label) }}</Option>
               </Select>
             </FormItem>
-            <FormItem :label="$t('m_tableKey_status')" prop="notify_enable">
+            <FormItem :label="$t('m_notification')" prop="notify_enable">
               <Select
                 :disabled="!isEditState"
                 v-model="formData.notify_enable"
@@ -392,11 +392,11 @@
               >
                 <Option
                   v-for="item in stepOptions"
-                  :value="item"
-                  :key="item"
-                  :label="item + 's'"
+                  :value="item.value"
+                  :key="item.value"
+                  :label="item.name"
                 >
-                  {{ item + 's' }}
+                  {{ item.name }}
                 </Option>
               </Select>
             </FormItem>
@@ -833,7 +833,44 @@ export default {
           value: 0
         }
       ],
-      stepOptions: [10, 30, 60, 300, 600],
+      stepOptions: [
+        {
+          name: '10s',
+          value: 10
+        },
+        {
+          name: '30s',
+          value: 30
+        },
+        {
+          name: '1min',
+          value: 60
+        },
+        {
+          name: '5min',
+          value: 300
+        },
+        {
+          name: '10min',
+          value: 600
+        },
+        {
+          name: '1h',
+          value: 3600
+        },
+        {
+          name: '2h',
+          value: 7200
+        },
+        {
+          name: '12h',
+          value: 43200
+        },
+        {
+          name: '24h',
+          value: 86400
+        }
+      ],
       ruleValidate: {
         name: [
           {
@@ -1307,15 +1344,10 @@ export default {
           if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
             return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, data => {
-            if (!isEmpty(data)) {
-              this.$Message.success(this.$t('m_tips_success'))
-              this.isTableChangeFormShow = false
-              this.getDataBaseDetail()
-            }
-            else {
-              this.isTableChangeFormShow = true
-            }
+          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, () => {
+            this.$Message.success(this.$t('m_tips_success'))
+            this.isTableChangeFormShow = false
+            this.getDataBaseDetail()
           })
         }
       }

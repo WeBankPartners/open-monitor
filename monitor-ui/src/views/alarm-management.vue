@@ -58,7 +58,7 @@
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
-            <div style="margin: 4px 0; text-align:right">
+            <div class="card-pagination">
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
@@ -275,7 +275,7 @@ export default {
     this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(() => {
-      this.getAlarm('keep')
+      this.getAlarm('keep', false)
     }, 10000)
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
@@ -328,7 +328,7 @@ export default {
       this.paginationInfo.pageSize = pageSize
       this.getAlarm('keep')
     },
-    getAlarm(ifPageKeep) {
+    getAlarm(ifPageKeep, isLoadingShow = true) {
       if (ifPageKeep !== 'keep') {
         this.paginationInfo = {
           total: 0,
@@ -355,7 +355,7 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      if (this.isSpinShow === false) {
+      if (this.isSpinShow === false && isLoadingShow) {
         this.isSpinShow = true
       }
       this.request(
@@ -656,12 +656,18 @@ export default {
       align-items: center;
     }
   }
+  .card-pagination {
+    position: fixed;
+    bottom: 20px;
+    right: 0px;
+  }
 
   .content-stats-container {
+    // height: ~"calc(100vh - 180px)";
+    height: ~"calc(100vh - 250px)";
     width: 100%;
     display: flex;
     // margin: 12px 0;
-
     .left {
       position: relative;
       flex-basis: 60%;
