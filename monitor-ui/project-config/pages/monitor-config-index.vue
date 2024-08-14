@@ -4,19 +4,15 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList" />
+      <BaseMenu :menuList="menuList" />
     </div>
   </div>
 </template>
 
 <script>
-import BenchMenu from '@/components/bench-menu'
 import Vue from 'vue'
 Vue.prototype.$bus = new Vue()
 export default {
-  components: {
-    BenchMenu
-  },
   data () {
     return {
       expand: true,
