@@ -252,6 +252,9 @@ export default {
       this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
     },
     goToNotify(item) {
+      if (item.notify_permission === 'no') {
+        return this.$Message.error(this.$t('m_noProcessPermission'))
+      }
       if (item.notify_status === 'notStart') {
         this.startFlowTip = `${this.$t('m_button_confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
       }
