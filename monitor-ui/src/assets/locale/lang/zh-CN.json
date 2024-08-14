@@ -177,7 +177,7 @@
   "m_success": "成功",
   "m_fail": "失败",
   "m_metric_code": "指标编码",
-  "m_metric_prefix_code_validate": "请输入1到6个字符的字母(开头)、数字",
+  "m_metric_prefix_code_validate": "请输入1到15个字符的字母(开头)、数字",
   "m_metric_group": "指标组",
   "m_metric_config_type": "指标配置类型",
   "m_add_one_tip": "请至少添加一条",
@@ -510,6 +510,7 @@
   "m_three_columns": "三列",
   "m_layout_change_tips": "切换布局将自动重新设置布局，之前保存的布局、尺寸设置会被覆盖，确认操作吗？",
   "m_is_requesting": "请求中",
-  "m_log": "日志"
+  "m_log": "日志",
+  "m_noProcessPermission": "没有编排执行权限"
 }
 
