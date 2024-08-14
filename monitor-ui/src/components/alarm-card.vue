@@ -253,7 +253,7 @@ export default {
     },
     goToNotify(item) {
       if (item.notify_permission === 'no') {
-        return this.$Message.error('没有编排执行权限')
+        return this.$Message.error(this.$t('m_noProcessPermission'))
       }
       if (item.notify_status === 'notStart') {
         this.startFlowTip = `${this.$t('m_button_confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
