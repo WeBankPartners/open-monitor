@@ -600,8 +600,8 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 	for _, v := range sortResult {
 		if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
 			if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-				v.Log = v.Content[:brIndex]
-				v.Content = v.Content[brIndex+5:]
+				v.Content = v.Content[:brIndex]
+				v.Log = v.Content[brIndex+5:]
 			}
 		}
 	}
@@ -1889,10 +1889,14 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 
 func GetAlarmNameList(status string) (list []string, err error) {
 	var newList []string
+	var closed = 1
+	if status == "firing" {
+		closed = 0
+	}
 	if status == "" {
-		err = x.SQL("select distinct alarm_name from alarm").Find(&list)
+		err = x.SQL("select distinct alarm_name from alarm union select distinct alert_title from alarm_custom").Find(&list)
 	} else {
-		err = x.SQL("select distinct alarm_name from alarm where status=?", status).Find(&list)
+		err = x.SQL("select distinct alarm_name from alarm where status=? union select distinct alert_title from alarm_custom where closed=?", status, closed).Find(&list)
 	}
 	if len(list) > 0 {
 		for _, s := range list {
