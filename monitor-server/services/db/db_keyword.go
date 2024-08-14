@@ -351,16 +351,14 @@ func doDbKeywordMonitorJob() {
 			//	notifyMap[key] = config.ServiceGroup
 			//}
 			alarmContent := config.Content
-			if alarmContent != "" {
-				alarmContent = alarmContent + "<br/>"
-			}
+			alarmContent = alarmContent + "<br/>"
 			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
 			if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 				log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
 			} else {
 				alarmContent += getLastRowObj.KeywordContent
 			}
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "db_keyword_monitor", SExpr: "db_keyword_value", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent, Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.Guid})
+			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "db_keyword_monitor", SExpr: "db_keyword_value", SCond: ">0", SLast: fmt.Sprintf("%ds", config.Step), SPriority: config.Priority, Content: alarmContent, Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.Guid})
 		}
 	}
 	if len(addAlarmRows) == 0 {
