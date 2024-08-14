@@ -177,7 +177,7 @@
   "m_success": "Success",
   "m_fail": "Fail",
   "m_metric_code": "Metric Code",
-  "m_metric_prefix_code_validate": "Please enter 1 to 6 letters (beginning) or numbers",
+  "m_metric_prefix_code_validate": "Please enter 1 to 15 letters (beginning) or numbers",
   "m_metric_group": "Metric Group",
   "m_metric_config_type": "Metric Config Type",
   "m_add_one_tip": "Please Add At Least One",
@@ -509,5 +509,6 @@
   "m_three_columns": "Three columns",
   "m_layout_change_tips": "Switching the layout will automatically reset the layout, and the previous layout will be overwritten. Do you confirm the operation?",
   "m_is_requesting": "Is requesting",
-  "m_log": "log"
+  "m_log": "log",
+  "m_noProcessPermission": "Operation Failed: No permission to use the current process"
 }
