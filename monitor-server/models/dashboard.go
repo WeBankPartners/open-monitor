@@ -238,19 +238,20 @@ type PieChartConfigObj struct {
 }
 
 type ChartQueryParam struct {
-	ChartId         int                     `json:"chart_id"`
-	Title           string                  `json:"title"`
-	Unit            string                  `json:"unit"`
-	Start           int64                   `json:"start"`
-	End             int64                   `json:"end"`
-	TimeSecond      int64                   `json:"time_second"`
-	Aggregate       string                  `json:"aggregate"`
-	AggStep         int64                   `json:"agg_step"`
-	Step            int                     `json:"step"`
-	Data            []*ChartQueryConfigObj  `json:"data"`
-	Compare         *ChartQueryCompareParam `json:"compare"`
-	CustomChartGuid string                  `json:"custom_chart_guid"`
-	LineType        int                     `json:"lineType"` // lineType=2 表示同环比数据
+	ChartId                int                     `json:"chart_id"`
+	Title                  string                  `json:"title"`
+	Unit                   string                  `json:"unit"`
+	Start                  int64                   `json:"start"`
+	End                    int64                   `json:"end"`
+	TimeSecond             int64                   `json:"time_second"`
+	Aggregate              string                  `json:"aggregate"`
+	AggStep                int64                   `json:"agg_step"`
+	Step                   int                     `json:"step"`
+	Data                   []*ChartQueryConfigObj  `json:"data"`
+	Compare                *ChartQueryCompareParam `json:"compare"`
+	CustomChartGuid        string                  `json:"custom_chart_guid"`
+	LineType               int                     `json:"lineType"` // lineType=2 表示同环比数据
+	CalcServiceGroupEnable bool                    `json:"calc_service_group_enable"`
 }
 
 type ChartQueryConfigObj struct {
