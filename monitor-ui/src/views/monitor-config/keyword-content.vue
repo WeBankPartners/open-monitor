@@ -33,7 +33,7 @@
 
         <div v-if="!isEditState" class="content-header mb-2 mt-3">
           <div class="use-underline-title header-title mr-4">
-            {{singleData.guid}}
+            {{singleData.display_name}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
@@ -374,7 +374,7 @@
                   {{ $t(item.label) }}</Option>
               </Select>
             </FormItem>
-            <FormItem :label="$t('m_tableKey_status')" prop="notify_enable">
+            <FormItem :label="$t('m_notification')" prop="notify_enable">
               <Select
                 :disabled="!isEditState"
                 v-model="formData.notify_enable"
@@ -396,11 +396,11 @@
               >
                 <Option
                   v-for="item in stepOptions"
-                  :value="item"
-                  :key="item"
-                  :label="item + 's'"
+                  :value="item.value"
+                  :key="item.value"
+                  :label="item.name"
                 >
-                  {{ item + 's' }}
+                  {{ item.name }}
                 </Option>
               </Select>
             </FormItem>
@@ -837,7 +837,44 @@ export default {
           value: 0
         }
       ],
-      stepOptions: [10, 30, 60, 300, 600],
+      stepOptions: [
+        {
+          name: '10s',
+          value: 10
+        },
+        {
+          name: '30s',
+          value: 30
+        },
+        {
+          name: '1min',
+          value: 60
+        },
+        {
+          name: '5min',
+          value: 300
+        },
+        {
+          name: '10min',
+          value: 600
+        },
+        {
+          name: '1h',
+          value: 3600
+        },
+        {
+          name: '2h',
+          value: 7200
+        },
+        {
+          name: '12h',
+          value: 43200
+        },
+        {
+          name: '24h',
+          value: 86400
+        }
+      ],
       ruleValidate: {
         name: [
           {
@@ -908,7 +945,8 @@ export default {
       sqlTargetEndpoints: [],
       currentEditType: 'logFile', // 为枚举值，logFile(日志文件新增和编辑)和database（数据库新增和编辑）
       service_group: '',
-      isEmpty
+      isEmpty,
+      dataBaseGuid: ''
     }
   },
   computed: {
@@ -1225,6 +1263,7 @@ export default {
       this.formData.service_group = this.targetId
       this.formData.monitor_type = 'process'
       this.formData.name = this.$t('m_alert') + new Date().getTime()
+      this.dataBaseGuid = 'process'
       this.getSqlSourceOptions(this.formData.monitor_type)
       this.isTableChangeFormShow = true
     },
@@ -1234,7 +1273,8 @@ export default {
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.getSqlSourceOptions(rowData.dataBaseGuid)
+      this.dataBaseGuid = rowData.dataBaseGuid
+      this.getSqlSourceOptions(rowData.monitor_type)
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
@@ -1260,11 +1300,11 @@ export default {
     getSqlSourceOptions(monitorType) {
       if (monitorType) {
         const publicPath = '/monitor/api/v2/service/service_group/'
-        const sourceApi = publicPath + this.targetId + '/endpoint/mysql'
+        const sourceApi = publicPath + (this.keywordType === 'service' ? this.targetId : this.dataBaseGuid) + '/endpoint/mysql'
         this.request('GET', sourceApi, '', responseData => {
           this.sqlSourceEndpoints = responseData
         })
-        const targetApi = publicPath + this.targetId + '/endpoint/' + monitorType
+        const targetApi = publicPath + (this.keywordType === 'service' ? this.targetId : this.dataBaseGuid) + '/endpoint/' + monitorType
         this.request('GET', targetApi, '', responseData => {
           this.sqlTargetEndpoints = responseData
         })
@@ -1318,15 +1358,10 @@ export default {
           if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
             return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, data => {
-            if (!isEmpty(data)) {
-              this.$Message.success(this.$t('m_tips_success'))
-              this.isTableChangeFormShow = false
-              this.getDataBaseDetail()
-            }
-            else {
-              this.isTableChangeFormShow = true
-            }
+          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, () => {
+            this.$Message.success(this.$t('m_tips_success'))
+            this.isTableChangeFormShow = false
+            this.getDataBaseDetail()
           })
         }
       }

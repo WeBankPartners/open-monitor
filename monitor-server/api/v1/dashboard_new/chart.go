@@ -296,6 +296,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 }
 
 func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
+	log.Logger.Debug("GetChartConfigByCustom param --> ", log.JsonObj("param", param))
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
@@ -334,13 +335,15 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				metricLegend = "$app_metric"
 			}
 			if dataConfig.Endpoint != "" {
-				if dataConfig.Endpoint == dataConfig.AppObject {
-					endpointList = endpointList[:1]
-					calcServiceGroupAll = true
-				} else {
-					endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
-					if endpointObj.MonitorType != "" {
-						endpointList = []*models.EndpointNewTable{&endpointObj}
+				if param.CalcServiceGroupEnable {
+					if dataConfig.Endpoint == dataConfig.AppObject {
+						endpointList = endpointList[:1]
+						calcServiceGroupAll = true
+					} else {
+						endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+						if endpointObj.MonitorType != "" {
+							endpointList = []*models.EndpointNewTable{&endpointObj}
+						}
 					}
 				}
 			}

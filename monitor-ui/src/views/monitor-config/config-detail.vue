@@ -117,7 +117,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('m_tableKey_status') }}
+                {{ $t('m_notification') }}
               </span>
               <Select
                 :disabled="!isEditState"
@@ -591,7 +591,6 @@ export default {
             <Input
               value={params.row.thresholdValue}
               disabled={!this.isEditState}
-              maxlength="10"
               on-on-change={v => {
 
                 this.formData.conditions[params.index].thresholdValue = v.target.value
@@ -609,7 +608,6 @@ export default {
             <Input
               value={params.row.lastValue}
               disabled={!this.isEditState}
-              maxlength="10"
               on-on-change={v => {
                 this.formData.conditions[params.index].lastValue = v.target.value
               }}
