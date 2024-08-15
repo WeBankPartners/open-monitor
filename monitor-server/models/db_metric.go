@@ -57,6 +57,7 @@ type DbKeywordMonitorQueryObj struct {
 	ActiveWindow   string `json:"active_window" xorm:"active_window"`
 	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
+	NotifyEnable   int8   `json:"notify_enable" xorm:"notify_enable"` // 是否通知
 }
 
 type MetricComparison struct {

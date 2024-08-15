@@ -64,6 +64,7 @@ func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListD
 		if configObj.Notify, _, err = GetDbKeywordNotify(v.Guid); err != nil {
 			return
 		}
+		configObj.ActiveWindowList = strings.Split(configObj.ActiveWindow, ",")
 		configList = append(configList, &configObj)
 	}
 	result = append(result, &models.ListDbKeywordData{
@@ -150,7 +151,33 @@ func getCreateDbKeywordConfigActions(input *models.DbKeywordConfigObj, operator 
 }
 
 func UpdateDBKeywordConfig(param *models.DbKeywordConfigObj, operator string) (err error) {
+	dbKeywordObj, getObjErr := getSimpleDbKeywordConfig(param.Guid, true)
+	if getObjErr != nil {
+		err = getObjErr
+		return
+	}
 	actions := getUpdateDbKeywordConfigActions(param, operator, time.Now())
+	if dbKeywordObj.Name != param.Name || dbKeywordObj.QuerySql != param.QuerySql || dbKeywordObj.Priority != param.Priority {
+		// 关键信息改变把原告警关闭
+		var dbKeywordAlarmRows []*models.DbKeywordAlarm
+		err = x.SQL("select id,alarm_id from db_keyword_alarm where db_keyword_monitor=? and status='firing'", param.Guid).Find(&dbKeywordAlarmRows)
+		if err != nil {
+			err = fmt.Errorf("query db keyword alarm table fail,%s ", err.Error())
+			return
+		}
+		for _, row := range dbKeywordAlarmRows {
+			if row.AlarmId > 0 {
+				closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
+				if tmpErr != nil {
+					err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
+					return
+				}
+				if len(closeAlarmActions) > 0 {
+					actions = append(actions, closeAlarmActions...)
+				}
+			}
+		}
+	}
 	err = Transaction(actions)
 	return
 }
@@ -252,7 +279,7 @@ func doDbKeywordMonitorJob() {
 		return
 	}
 	var dbKeywordConfigs []*models.DbKeywordMonitorQueryObj
-	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
+	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t1.notify_enable,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
 	if err != nil {
 		log.Logger.Error("DoDbKeywordMonitorJob, query db_keyword_monitor fail", log.Error(err))
 		return
@@ -277,9 +304,13 @@ func doDbKeywordMonitorJob() {
 	var addAlarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	nowTime := time.Now()
+	notifyConfigMap := make(map[string]int)
 	for _, config := range dbKeywordConfigs {
 		key := fmt.Sprintf("service_group:%s^db_keyword_guid:%s^t_endpoint:%s", config.ServiceGroup, config.Guid, config.TargetEndpoint)
 		newValue, oldValue = 0, 0
+		if config.NotifyEnable > 0 {
+			notifyConfigMap[config.Guid] = 1
+		}
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
@@ -299,7 +330,7 @@ func doDbKeywordMonitorJob() {
 			if newValue == oldValue {
 				continue
 			}
-			if existAlarm.Status == "firing" || !inActiveWindow(config.ActiveWindow) {
+			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
 				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
@@ -311,7 +342,7 @@ func doDbKeywordMonitorJob() {
 				addFlag = true
 			}
 		} else {
-			if inActiveWindow(config.ActiveWindow) {
+			if InActiveWindowList(config.ActiveWindow) {
 				addFlag = true
 			}
 		}
@@ -329,7 +360,7 @@ func doDbKeywordMonitorJob() {
 			} else {
 				alarmContent += getLastRowObj.KeywordContent
 			}
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "db_keyword_monitor", SExpr: "db_keyword_value", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent, Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.Guid})
+			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "db_keyword_monitor", SExpr: "db_keyword_value", SCond: ">0", SLast: fmt.Sprintf("%ds", config.Step), SPriority: config.Priority, Content: alarmContent, Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.Guid})
 		}
 	}
 	if len(addAlarmRows) == 0 {
@@ -340,6 +371,10 @@ func doDbKeywordMonitorJob() {
 			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
+				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
+					log.Logger.Warn("doDbKeywordMonitorJob ignore notify with config", log.String("dbKeywordMonitor", v.AlarmStrategy))
+					continue
+				}
 				_, tmpNotifyRow, getNotifyErr := GetDbKeywordNotify(v.AlarmStrategy)
 				if getNotifyErr != nil {
 					log.Logger.Error("doDbKeywordMonitorJob get notify data fail", log.String("dbKeywordMonitor", v.AlarmStrategy), log.Error(getNotifyErr))
@@ -415,6 +450,15 @@ func checkDBKeywordMonitorName(serviceGroup, inputName, dbKeywordMonitorGuid str
 		}
 	}
 	return
+}
+
+func InActiveWindowList(activeWindowList string) bool {
+	for _, v := range strings.Split(activeWindowList, ",") {
+		if inActiveWindow(v) {
+			return true
+		}
+	}
+	return false
 }
 
 func inActiveWindow(activeWindow string) bool {
