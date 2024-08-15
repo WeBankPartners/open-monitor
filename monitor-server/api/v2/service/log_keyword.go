@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -89,7 +90,19 @@ func CreateLogKeyword(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.CreateLogKeyword(&param)
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
+	}
+	var list []*models.LogKeywordConfigTable
+	if list, err = db.GetLogKeywordConfigByName(param.Guid, param.Name, param.LogKeywordMonitor); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	err = db.CreateLogKeyword(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -109,7 +122,25 @@ func UpdateLogKeyword(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if err = db.UpdateLogKeyword(&param); err != nil {
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
+	}
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(param.Guid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	param.LogKeywordMonitor = logKeywordConfig.LogKeywordMonitor
+	var list []*models.LogKeywordConfigTable
+	if list, err = db.GetLogKeywordConfigByName(param.Guid, param.Name, param.LogKeywordMonitor); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if err = db.UpdateLogKeyword(&param, logKeywordConfig, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -122,12 +153,17 @@ func UpdateLogKeyword(c *gin.Context) {
 }
 
 func DeleteLogKeyword(c *gin.Context) {
-	logKeywordGuid := c.Query("guid")
-	err := db.DeleteLogKeyword(logKeywordGuid)
+	logKeywordConfigGuid := c.Query("guid")
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(logKeywordConfigGuid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	err := db.DeleteLogKeyword(logKeywordConfigGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(logKeywordGuid)
+		err = syncLogKeywordMonitorConfig(logKeywordConfig.LogKeywordMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -205,7 +241,7 @@ func ImportLogKeyword(c *gin.Context) {
 	for _, logKeyword := range paramObj.Config {
 		logKeyword.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogKeyword(&paramObj); err != nil {
+	if err = db.ImportLogKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, "import log keyword fail", err)
 	} else {
 		middleware.ReturnSuccess(c)
