@@ -533,6 +533,8 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 					if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
 						v.Content = v.Log[:brIndex+5]
 						v.Log = v.Log[brIndex+5:]
+					} else {
+						v.Content = ""
 					}
 					v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
 				}
@@ -542,6 +544,8 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 				if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
 					v.Content = v.Log[:brIndex+5]
 					v.Log = v.Log[brIndex+5:]
+				} else {
+					v.Content = ""
 				}
 				if strings.HasSuffix(v.Log, "^^") {
 					v.Log = v.StartString + ": " + v.Log[:len(v.Log)-2]
