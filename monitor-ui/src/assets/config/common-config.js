@@ -56,6 +56,33 @@ export const layoutOptions = [
   }
 ]
 
+export const layoutColumns = {
+  customize: {
+    w: 6
+  },
+  two: {
+    w: 6
+  },
+  three: {
+    w: 4
+  },
+  four: {
+    w: 3
+  },
+  five: {
+    w: 2.4
+  },
+  six: {
+    w: 2
+  },
+  seven: {
+    w: 1.7
+  },
+  eight: {
+    w: 1.5
+  }
+}
+
 export const autoRefreshConfig = [
   {
     value: -1,

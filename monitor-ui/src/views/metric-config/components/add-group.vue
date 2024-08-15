@@ -328,6 +328,7 @@ export default {
         this.echartId = `id_${elId}`
       })
       const params = {
+        calc_service_group_enable: true,
         aggregate: 'none',
         time_second: -1800,
         start: 0,
