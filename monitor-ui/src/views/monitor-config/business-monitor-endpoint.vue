@@ -1,6 +1,6 @@
 <template>
   <div class=" ">
-    <section v-if="showManagement" style="margin-top: 16px;">
+    <section v-if="showManagement && !(isEmpty(allPageContentData) && isEmpty(dataBaseTableData))" style="margin-top: 16px;">
       <div v-for="item in allPageContentData" :key="item.guid">
         <div class="content-header">
           <div class="use-underline-title mr-4">
@@ -59,6 +59,7 @@
         :data="dataBaseTableData"
       />
     </section>
+    <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
@@ -233,7 +234,7 @@
 </template>
 
 <script>
-import map from 'lodash/map'
+import {map, isEmpty} from 'lodash'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 export default {
@@ -483,7 +484,8 @@ export default {
           )
         }
       ],
-      dataBaseTableData: []
+      dataBaseTableData: [],
+      isEmpty
     }
   },
   methods: {
@@ -578,7 +580,6 @@ export default {
       this.getDbDetail(targrtId)
       const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-
         this.allPageContentData = responseData.map((res, index) => {
           if (index === 0) {
             res.logFileCollapseValue = ['0']
@@ -653,5 +654,13 @@ export default {
   .underline {
     margin-top: -10px
   }
+}
+
+.no-data-class {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 80px;
+  font-size: 16px;
 }
 </style>
