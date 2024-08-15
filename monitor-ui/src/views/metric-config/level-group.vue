@@ -1,51 +1,58 @@
 <template>
-  <div ref="maxheight" class="monitor-level-group">
+  <div class="monitor-level-group">
     <Row>
       <Col :span="8">
-      <!--层级对象-->
-      <span style="font-size: 14px;">
-        {{$t('m_field_resourceLevel')}}:
-      </span>
-      <Select
-        style="width:300px;"
-        v-model="serviceGroup"
-        filterable
-        @on-change="changeServiceGroup"
-      >
-        <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.display_name" :key="index">
-          <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
-          {{option.display_name}}
-        </Option>
-      </Select>
+        <!--层级对象-->
+        <span style="font-size: 14px;">
+          {{$t('m_field_resourceLevel')}}:
+        </span>
+        <Select
+          style="width:300px;"
+          v-model="serviceGroup"
+          filterable
+          @on-change="changeServiceGroup"
+        >
+          <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.display_name" :key="index">
+            <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
+            {{option.display_name}}
+          </Option>
+        </Select>
       </Col>
       <Col :span="16">
-      <div class="btn-group">
-        <Button
-          type="info"
-          @click.stop="exportData"
-        >
-          <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-          {{ $t("m_export") }}
-        </Button>
-        <Upload
-          :action="uploadUrl"
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed"
-        >
-          <Button type="primary">
-            <img src="@/assets/img/import.png" alt="" style="width:16px;" />
-            {{ $t('m_import') }}
+        <div class="btn-group">
+          <Button
+            type="info"
+            @click.stop="exportData"
+          >
+            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+            {{ $t("m_export") }}
           </Button>
-        </Upload>
-        <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
-      </div>
+          <Upload
+            :action="uploadUrl"
+            :show-upload-list="false"
+            :max-size="1000"
+            with-credentials
+            :headers="{'Authorization': token}"
+            :on-success="uploadSucess"
+            :on-error="uploadFailed"
+          >
+            <Button type="primary">
+              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+              {{ $t('m_import') }}
+            </Button>
+          </Upload>
+          <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
+        </div>
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="level-table"
+    />
     <Modal
       v-model="deleteVisible"
       :title="$t('m_delConfirm_title')"
@@ -337,8 +344,7 @@ export default {
     this.serviceGroup = this.recursiveOptions[0].guid
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
   },
   methods: {
     reloadData(metricType) {

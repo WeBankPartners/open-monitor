@@ -735,6 +735,7 @@ li {
 
 .card-content {
   display: flex;
+  align-items: center;
 }
 
 .auth-dialog-content {
