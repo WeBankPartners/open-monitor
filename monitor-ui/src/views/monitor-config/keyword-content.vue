@@ -33,7 +33,7 @@
 
         <div v-if="!isEditState" class="content-header mb-2 mt-3">
           <div class="use-underline-title header-title mr-4">
-            {{singleData.guid}}
+            {{singleData.display_name}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
@@ -941,7 +941,8 @@ export default {
       sqlTargetEndpoints: [],
       currentEditType: 'logFile', // 为枚举值，logFile(日志文件新增和编辑)和database（数据库新增和编辑）
       service_group: '',
-      isEmpty
+      isEmpty,
+      dataBaseGuid: ''
     }
   },
   computed: {
@@ -1251,6 +1252,7 @@ export default {
       this.formData.service_group = this.targetId
       this.formData.monitor_type = 'process'
       this.formData.name = this.$t('m_alert') + new Date().getTime()
+      this.dataBaseGuid = 'process'
       this.getSqlSourceOptions(this.formData.monitor_type)
       this.isTableChangeFormShow = true
     },
@@ -1260,7 +1262,8 @@ export default {
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.getSqlSourceOptions(rowData.dataBaseGuid)
+      this.dataBaseGuid = rowData.dataBaseGuid
+      this.getSqlSourceOptions(rowData.monitor_type)
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
@@ -1286,11 +1289,11 @@ export default {
     getSqlSourceOptions(monitorType) {
       if (monitorType) {
         const publicPath = '/monitor/api/v2/service/service_group/'
-        const sourceApi = publicPath + this.targetId + '/endpoint/mysql'
+        const sourceApi = publicPath + (this.keywordType === 'service' ? this.targetId : this.dataBaseGuid) + '/endpoint/mysql'
         this.request('GET', sourceApi, '', responseData => {
           this.sqlSourceEndpoints = responseData
         })
-        const targetApi = publicPath + this.targetId + '/endpoint/' + monitorType
+        const targetApi = publicPath + (this.keywordType === 'service' ? this.targetId : this.dataBaseGuid) + '/endpoint/' + monitorType
         this.request('GET', targetApi, '', responseData => {
           this.sqlTargetEndpoints = responseData
         })
