@@ -166,7 +166,7 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 
 func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable, err error) {
 	result = []*models.LogKeywordConfigTable{}
-	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=?", logKeywordMonitor).Find(&result)
+	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? order by update_time desc", logKeywordMonitor).Find(&result)
 	if err != nil {
 		return
 	}
@@ -555,7 +555,7 @@ func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
 	} else {
 		calcAlarmUniqueFlag(alarmObj)
 		execResult, execErr := session.Exec("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy,endpoint_tags,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-			alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.SExpr, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, alarmObj.StartValue, alarmObj.Start.Format(models.DatetimeFormat), alarmObj.Tags, "log_keyword_strategy", alarmObj.EndpointTags, alarmObj.AlarmName)
+			alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.SExpr, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, alarmObj.StartValue, alarmObj.Start.Format(models.DatetimeFormat), alarmObj.Tags, alarmObj.AlarmStrategy, alarmObj.EndpointTags, alarmObj.AlarmName)
 		if execErr != nil {
 			err = execErr
 			return
