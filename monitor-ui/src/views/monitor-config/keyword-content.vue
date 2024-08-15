@@ -181,19 +181,21 @@
         />
       </div>
     </div>
+    <!--新增/编辑日志文件-->
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('')"
+      :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
       :mask-closable="false"
       :width="730"
     >
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <div>
           <span>{{$t('m_field_type')}}:</span>
-          <Select v-model="addAndEditModal.dataConfig.monitor_type"
-                  :disabled="!isEditState"
-                  @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')"
-                  style="width: 640px"
+          <Select
+            v-model="addAndEditModal.dataConfig.monitor_type"
+            :disabled="!isEditState"
+            @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')"
+            style="width: 640px"
           >
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
@@ -201,6 +203,14 @@
         <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
+              <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
+                <Input
+                  v-model.trim="item.path"
+                  :disabled="!isEditState"
+                  style="width: 620px"
+                  :placeholder="$t('m_tableKey_logPath')"
+                />
+              </Tooltip>
               <Button
                 v-if="addAndEditModal.isAdd"
                 :disabled="!isEditState"
@@ -209,13 +219,6 @@
                 type="error"
                 icon="md-trash"
               ></Button>
-              <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
-                <Input v-model="item.path"
-                       :disabled="!isEditState"
-                       style="width: 620px"
-                       :placeholder="$t('m_tableKey_logPath')"
-                />
-              </Tooltip>
             </p>
           </template>
           <Button
@@ -229,18 +232,11 @@
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input :disabled="!isEditState" style="width: 640px" v-model="addAndEditModal.dataConfig.log_path" />
+          <Input :disabled="!isEditState" style="width: 640px" v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
-              <Button
-                :disabled="!isEditState"
-                @click="deleteItem('relate', index)"
-                size="small"
-                type="error"
-                icon="md-trash"
-              ></Button>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
                 <Select v-model="item.target_endpoint"
                         :disabled="!isEditState"
@@ -260,6 +256,13 @@
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
+              <Button
+                :disabled="!isEditState"
+                @click="deleteItem('relate', index)"
+                size="small"
+                type="error"
+                icon="md-trash"
+              ></Button>
             </p>
           </template>
           <Button
@@ -277,22 +280,22 @@
         <Button @click="okAddAndEdit" :disabled="!isEditState" type="primary">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
-
-    <Drawer :title="isAddState ? $t('m_add') : $t('m_button_edit')"
-            v-model="isTableChangeFormShow"
-            :width="70"
-            @on-close="onTableChangeFormClose"
-            :mask-closable="false"
-            class="config-drawer"
+    <BaseDrawer
+      :title="isAddState ? $t('m_add') : $t('m_button_edit')"
+      :visible.sync="isTableChangeFormShow"
+      :realWidth="1000"
+      :scrollable="true"
+      :mask-closable="false"
+      class="config-drawer"
     >
-      <div>
+      <template slot="content">
         <div class="file-log-form">
           <Form ref="formData" :model="formData" :rules="ruleValidate" :label-width="130">
             <FormItem :label="$t('m_alarmName')" prop="name">
-              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20" show-word-limit />
+              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit />
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_field_log')" prop="keyword">
-              <Input v-model="formData.keyword" :disabled="!isEditState"></Input>
+              <Input v-model.trim="formData.keyword" :disabled="!isEditState"></Input>
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_regular')" prop="regulative">
               <Select
@@ -312,15 +315,16 @@
               <Input
                 type="textarea"
                 :disabled="!isEditState"
-                v-model="formData.query_sql"
+                v-model.trim="formData.query_sql"
                 :maxlength="200"
               >
               </Input>
             </FormItem>
             <FormItem v-if="!isLogFile" :label="$t('m_type')" prop="monitor_type">
-              <Select v-model="formData.monitor_type"
-                      :disabled="!isEditState"
-                      @on-change="getSqlSourceOptions"
+              <Select
+                v-model="formData.monitor_type"
+                :disabled="!isEditState"
+                @on-change="getSqlSourceOptions"
               >
                 <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
               </Select>
@@ -416,7 +420,7 @@
               <Input
                 type="textarea"
                 :disabled="!isEditState"
-                v-model="formData.content"
+                v-model.trim="formData.content"
                 :maxlength="200"
               >
               </Input>
@@ -453,7 +457,7 @@
           </Tooltip>
           <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
             <Input
-              v-model="formData.notify.description"
+              v-model.trim="formData.notify.description"
               :disabled="!isEditState"
               style="width: 150px"
               type="text"
@@ -464,12 +468,12 @@
             />
           </Tooltip>
         </div>
-        <div class="form-footer" v-if="isTableChangeFormShow && isEditState">
-          <Button @click="onDrawerClose" :disabled="!isEditState" class="mr-4">{{$t('m_button_cancel')}}</Button>
-          <Button @click="onFormSave" :disabled="!isEditState" type="primary">{{$t('m_button_save')}}</Button>
-        </div>
-      </div>
-    </Drawer>
+      </template>
+      <template slot="footer">
+        <Button @click="onDrawerClose" :disabled="!isEditState">{{$t('m_button_cancel')}}</Button>
+        <Button @click="onFormSave" :disabled="!isEditState" type="primary">{{$t('m_button_save')}}</Button>
+      </template>
+    </BaseDrawer>
   </div>
 </template>
 
@@ -562,7 +566,7 @@ export default {
         dataConfig: {
           service_group: '',
           log_path: '',
-          monitor_type: '',
+          monitor_type: 'process',
           endpoint_rel: []
         },
         pathOptions: [],
@@ -628,7 +632,7 @@ export default {
           render: (h, params) => <div>{params.row.active_window ? params.row.active_window : '-' }</div>
         },
         {
-          title: this.$t('firing'),
+          title: this.$t('m_firing'),
           key: 'firing',
           width: 150,
           align: 'left',
@@ -740,7 +744,7 @@ export default {
           render: (h, params) => <div>{params.row.active_window ? params.row.active_window : '-' }</div>
         },
         {
-          title: this.$t('firing'),
+          title: this.$t('m_firing'),
           key: 'firing',
           width: 150,
           align: 'left',
@@ -1072,6 +1076,24 @@ export default {
       })
     },
     okAddAndEdit() {
+      if (!this.addAndEditModal.dataConfig.monitor_type) {
+        return this.$Message.error('类型不能为空')
+      }
+      if (this.addAndEditModal.isAdd) {
+        const pathFlag = this.addAndEditModal.pathOptions.every(item => item.path !== '')
+        if (!pathFlag) {
+          return this.$Message.error('日志路径不能为空')
+        }
+      }
+      else {
+        if (!this.addAndEditModal.dataConfig.log_path) {
+          return this.$Message.error('日志路径不能为空')
+        }
+      }
+      const endpointRelFlag = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
+      if (!endpointRelFlag) {
+        return this.$Message.error('映射不能为空')
+      }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
       const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
       params.service_group = this.targetId
@@ -1090,7 +1112,7 @@ export default {
       this.addAndEditModal.dataConfig = {
         service_group: '',
         log_path: [],
-        monitor_type: '',
+        monitor_type: 'process',
         endpoint_rel: []
       }
     },
@@ -1110,30 +1132,18 @@ export default {
     addEmptyItem(type) {
       switch (type) {
         case 'path': {
-          const hasEmpty = this.addAndEditModal.pathOptions.every(item => item.path !== '')
-          if (hasEmpty) {
-            this.addAndEditModal.pathOptions.push(
-              {path: ''}
-            )
-          }
-          else {
-            this.$Message.warning('Path Can Not Empty')
-          }
+          this.addAndEditModal.pathOptions.push(
+            {path: ''}
+          )
           break
         }
         case 'relate': {
-          const hasEmpty = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
-          if (hasEmpty) {
-            this.addAndEditModal.dataConfig.endpoint_rel.push(
-              {
-                source_endpoint: '',
-                target_endpoint: ''
-              }
-            )
-          }
-          else {
-            this.$Message.warning('Can Not Empty')
-          }
+          this.addAndEditModal.dataConfig.endpoint_rel.push(
+            {
+              source_endpoint: '',
+              target_endpoint: ''
+            }
+          )
           break
         }
       }
@@ -1152,6 +1162,7 @@ export default {
     },
     async addLogFileConfig() {
       this.cancelAddAndEdit()
+      this.getEndpoint(this.addAndEditModal.dataConfig.monitor_type, 'host')
       this.addAndEditModal.isAdd = true
       this.addAndEditModal.isShow = true
     },
