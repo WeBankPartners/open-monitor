@@ -404,7 +404,7 @@ func GetHistoryAlarm(c *gin.Context) {
 	}
 	returnData := []*m.AlarmHistoryReturnData{}
 	for _, endpointGuid := range ids {
-		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime)
+		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime, mid.GetOperateUserRoles(c))
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -418,14 +418,14 @@ func GetHistoryAlarm(c *gin.Context) {
 	mid.ReturnSuccessData(c, returnData)
 }
 
-func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) (err error, data m.AlarmProblemList) {
+func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time, useRoles []string) (err error, data m.AlarmProblemList) {
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	err = db.GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{}, []string{})
+	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{}, []string{}, useRoles, "")
 	return err, data
 }
 
@@ -484,6 +484,7 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
+
 	mid.ReturnSuccessData(c, data)
 }
 
@@ -504,7 +505,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{})
+	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{}, mid.GetOperateUserRoles(c), "")
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -516,7 +517,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{})
+		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{}, []string{}, mid.GetOperateUserRoles(c), "")
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -582,7 +583,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if len(param.Endpoint) > 0 {
 		endpointList = append(endpointList, param.Endpoint...)
 	}
-	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName, param.Priority)
+	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName, param.Priority, mid.GetOperateUserRoles(c), c.GetHeader("Authorization"))
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return

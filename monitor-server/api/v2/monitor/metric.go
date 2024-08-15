@@ -212,12 +212,13 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	tagConfigValueMap := make(map[string][]string)
 	if orginMetricRow != nil {
 		// 同环比指标 默认新增 calc_type标签
-		tagList, err = db.GetMetricTags(orginMetricRow)
+		tagList, tagConfigValueMap, err = db.GetMetricTags(orginMetricRow)
 		tagList = append(tagList, "calc_type")
 	} else {
-		tagList, err = db.GetMetricTags(metricRow)
+		tagList, tagConfigValueMap, err = db.GetMetricTags(metricRow)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -266,6 +267,14 @@ func QueryMetricTagValue(c *gin.Context) {
 				if _, existFlag := tmpValueDistinctMap[tmpTagValue]; !existFlag {
 					tmpValueList = append(tmpValueList, tmpTagValue)
 					tmpValueDistinctMap[tmpTagValue] = 1
+				}
+			}
+		}
+		if configValueList, ok := tagConfigValueMap[v]; ok {
+			for _, configValue := range configValueList {
+				if _, existFlag := tmpValueDistinctMap[configValue]; !existFlag {
+					tmpValueList = append(tmpValueList, configValue)
+					tmpValueDistinctMap[configValue] = 1
 				}
 			}
 		}

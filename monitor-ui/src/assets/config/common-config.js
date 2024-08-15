@@ -33,6 +33,26 @@ export const layoutOptions = [
   {
     value: 'three',
     label: 'm_three_columns'
+  },
+  {
+    value: 'four',
+    label: 'm_four_columns'
+  },
+  {
+    value: 'five',
+    label: 'm_five_columns'
+  },
+  {
+    value: 'six',
+    label: 'm_six_columns'
+  },
+  {
+    value: 'seven',
+    label: 'm_seven_columns'
+  },
+  {
+    value: 'eight',
+    label: 'm_eight_columns'
   }
 ]
 

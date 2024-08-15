@@ -117,7 +117,7 @@
               </div>
               <div v-if="keyItem.type === 'array'">
                 <div v-if="item[keyItem.key].length" class="card-content-array">
-                  <ScrollTag :list="item[keyItem.key]"></ScrollTag>
+                  <BaseScrollTag :list="item[keyItem.key]"></BaseScrollTag>
                 </div>
                 <div v-else>-</div>
               </div>
@@ -242,7 +242,6 @@ import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
-import ScrollTag from '@/components/scroll-tag.vue'
 import ExportChartModal from './export-chart-modal.vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 export default {
@@ -609,7 +608,6 @@ export default {
   },
   components: {
     AuthDialog,
-    ScrollTag,
     ExportChartModal
   }
 }
