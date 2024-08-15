@@ -21,7 +21,7 @@ var (
 	regName             = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
 	regMetric           = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	regDisplayName      = regexp.MustCompile(`.*`)
-	regMetricPrefixCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9]{0,5}$`)
+	regMetricPrefixCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9]{0,15}$`)
 	regLogParamName     = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$`)
 	roleEndpointMap     []map[string]int
 	roleEndpointLock    sync.RWMutex

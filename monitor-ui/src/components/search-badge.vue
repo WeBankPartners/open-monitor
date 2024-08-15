@@ -5,7 +5,7 @@
         <Icon type="md-search" class="search-icon mr-1" />
         {{$t('m_filter')}}
       </div>
-      <template slot="list">
+      <template slot='list'>
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
 
           <FormItem :label="$t('m_alarm_level')">
@@ -129,8 +129,10 @@ export default ({
     }
   },
   mounted(){
-    this.getFilterAllOptions()
     document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
+    document.querySelector('.badge-content').addEventListener('click', () => {
+      this.getFilterAllOptions()
+    })
   },
   methods: {
     getFilterAllOptions() {
