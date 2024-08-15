@@ -637,6 +637,7 @@ func GetChartSeriesColor(c *gin.Context) {
 			}
 		}
 	}
+	log.Logger.Debug("GetChartSeriesColor config", log.JsonObj("querySeriesConfigList", querySeriesConfigList))
 	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
 	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -645,6 +646,7 @@ func GetChartSeriesColor(c *gin.Context) {
 	for _, v := range querySeriesResult.Legend {
 		result = append(result, &models.ColorConfigDto{SeriesName: v, New: true})
 	}
+	log.Logger.Debug("GetChartSeriesColor result", log.JsonObj("result", result))
 	existSeriesMap := make(map[string]string)
 	// 查已保存的series颜色配置
 	if param.ChartSeriesGuid != "" {

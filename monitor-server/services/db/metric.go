@@ -225,7 +225,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
-			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) and service_group is null and endpoint_group  is null "
 			baseSql = baseSql + ") m join metric_comparison mc on mc.metric_id = m.guid"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
@@ -307,7 +307,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 			baseSql = baseSql + " union "
 			baseSql = baseSql + " select * from metric where endpoint_group in (select endpoint_group from endpoint_group_rel where endpoint=?) "
 			baseSql = baseSql + " union "
-			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) "
+			baseSql = baseSql + " select * from metric where monitor_type in (select monitor_type from endpoint_new where guid=?) and service_group is null and endpoint_group  is null "
 			baseSql = baseSql + ") m where 1=1"
 			params = []interface{}{endpoint, endpoint, endpoint}
 		} else {
@@ -489,7 +489,7 @@ func GetOriginMetricByComparisonId(metricId string) (metricRow *models.MetricTab
 	return
 }
 
-func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
+func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue map[string][]string, err error) {
 	if metricRow == nil {
 		return
 	}
@@ -562,7 +562,13 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	return
 }
 func GetAllMetricNameList() (list []string, err error) {
+	var hashMap = make(map[string]bool)
 	err = x.SQL("select distinct metric from metric ").Find(&list)
+	hashMap = convertString2Map(list)
+	// 添加写死的关键字指标
+	hashMap["log_monitor"] = true
+	hashMap["db_keyword_monitor"] = true
+	list = convertMap2string(hashMap)
 	return
 }
 
@@ -708,7 +714,7 @@ func SyncMetricComparisonData() (err error) {
 	}
 	if len(list) > 0 {
 		param, _ := json.Marshal(list)
-		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", param); err != nil {
+		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", "", param); err != nil {
 			return
 		}
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
@@ -722,13 +728,16 @@ func SyncMetricComparisonData() (err error) {
 }
 
 // HttpPost Post请求
-func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
+func HttpPost(url, token string, postBytes []byte) (byteArr []byte, err error) {
 	req, reqErr := http.NewRequest(http.MethodPost, url, bytes.NewReader(postBytes))
 	if reqErr != nil {
 		err = fmt.Errorf("new http reqeust fail,%s ", reqErr.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", token)
+	}
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
 		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())

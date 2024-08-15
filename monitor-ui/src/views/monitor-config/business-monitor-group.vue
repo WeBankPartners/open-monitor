@@ -403,7 +403,14 @@
           </FormItem>
           <FormItem :label="$t('m_collection_interval')">
             <Select v-model="dbModelConfig.addRow.step" style="width: 520px" transfer>
-              <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
+              <Option
+                v-for="item in stepOptions"
+                :key="item.value"
+                :value="item.value"
+                :label="item.name"
+              >
+                {{item.name}}
+              </Option>
             </Select>
           </FormItem>
         </Form>
@@ -630,7 +637,44 @@ export default {
           value: 'mysql'
         }
       ],
-      stepOptions: [10, 30, 60, 300, 600],
+      stepOptions: [
+        {
+          name: '10s',
+          value: 10
+        },
+        {
+          name: '30s',
+          value: 30
+        },
+        {
+          name: '1min',
+          value: 60
+        },
+        {
+          name: '5min',
+          value: 300
+        },
+        {
+          name: '10min',
+          value: 600
+        },
+        {
+          name: '1h',
+          value: 3600
+        },
+        {
+          name: '2h',
+          value: 7200
+        },
+        {
+          name: '12h',
+          value: 43200
+        },
+        {
+          name: '24h',
+          value: 86400
+        }
+      ],
       isShowGroupMetricUpload: false,
       groupMetricId: '',
       typeToName: { // 模版枚举
@@ -748,7 +792,18 @@ export default {
         },
         {
           title: this.$t('m_field_type'),
-          key: 'monitor_type'
+          key: 'monitor_type',
+          minWidth: 100,
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          width: 100,
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
         },
         {
           title: this.$t('m_table_action'),
