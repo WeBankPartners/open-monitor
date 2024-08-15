@@ -393,6 +393,7 @@
                 filterable
                 :disabled="!isEditState"
                 v-model="formData.step"
+                transfer
               >
                 <Option
                   v-for="item in stepOptions"
@@ -441,17 +442,17 @@
         <div class="arrange-item">
           <span class="mr-1 mt-1" style="font-size: 12px; min-width: 60px">{{$t('m_firing')}}</span>
           <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
-            <Select v-model="formData.notify.notify_roles" :disabled="!isEditState" clearable :max-tag-count="2" style="width: 300px" multiple filterable :placeholder="$t('m_field_role')">
+            <Select v-model="formData.notify.notify_roles" transfer :disabled="!isEditState" clearable :max-tag-count="2" style="width: 300px" multiple filterable :placeholder="$t('m_field_role')">
               <Option v-for="item in allRoles" :value="item.name" :key="item.value">{{ item.name }}</Option>
             </Select>
           </Tooltip>
           <Tooltip :content="$t('m_proc_callback_key')" :delay="1000">
-            <Select v-model="formData.notify.proc_callback_key" :disabled="!isEditState" clearable @on-change="procCallbackKeyChangeForm(formData.notify.proc_callback_key, formData.notify)" style="width: 160px" :placeholder="$t('m_proc_callback_key')">
+            <Select v-model="formData.notify.proc_callback_key" transfer :disabled="!isEditState" clearable @on-change="procCallbackKeyChangeForm(formData.notify.proc_callback_key, formData.notify)" style="width: 160px" :placeholder="$t('m_proc_callback_key')">
               <Option v-for="(flow, flowIndex) in allFlows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
             </Select>
           </Tooltip>
           <Tooltip :content="$t('m_callback_mode')" :delay="1000">
-            <Select v-model="formData.notify.proc_callback_mode" :disabled="!isEditState" clearable style="width: 180px" :placeholder="$t('m_callback_mode')">
+            <Select v-model="formData.notify.proc_callback_mode" transfer :disabled="!isEditState" clearable style="width: 180px" :placeholder="$t('m_callback_mode')">
               <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
             </Select>
           </Tooltip>
