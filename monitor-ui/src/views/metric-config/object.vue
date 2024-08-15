@@ -1,5 +1,5 @@
 <template>
-  <div ref="maxheight" class="monitor-level-group">
+  <div class="monitor-level-group">
     <Row>
       <Col :span="8">
       <!--对象-->
@@ -21,7 +21,14 @@
       <Col :span="16">
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="level-table"
+    />
     <AddGroupDrawer
       ref="addGroupRef"
       v-if="addVisible && showDrawer === 'originalMetrics'"
@@ -289,8 +296,7 @@ export default {
     this.previewObject = this.endpointOptions[0]
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
   },
   methods: {
     reloadData(metricType) {
