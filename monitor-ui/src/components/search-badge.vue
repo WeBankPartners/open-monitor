@@ -129,8 +129,10 @@ export default ({
     }
   },
   mounted(){
-    this.getFilterAllOptions()
     document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
+    document.querySelector('.badge-content').addEventListener('click', () => {
+      this.getFilterAllOptions()
+    })
   },
   methods: {
     getFilterAllOptions() {
