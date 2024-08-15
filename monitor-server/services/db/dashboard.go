@@ -544,10 +544,18 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 }
 
 func GetServiceGroupPromMetric(serviceGroup, workspace, monitorType string) (err error, result []*m.OptionModel) {
+	fetchServiceGroupList, fetchErr := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	if fetchErr != nil {
+		err = fetchErr
+		return
+	}
 	result = []*m.OptionModel{}
 	var metricList []string
 	nowTime := time.Now().Unix()
 	queryPromQl := fmt.Sprintf("{service_group=\"%s\"}", serviceGroup)
+	if len(fetchServiceGroupList) > 0 {
+		queryPromQl = fmt.Sprintf("{service_group=~\"%s\"}", strings.Join(fetchServiceGroupList, "|"))
+	}
 	metricList, err = datasource.QueryPromQLMetric(queryPromQl, GetClusterAddress(""), nowTime-120, nowTime)
 	if err != nil {
 		return

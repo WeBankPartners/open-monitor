@@ -505,7 +505,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		log.Logger.Error("Get alarms fail", log.Error(err))
 		return err, result
 	}
-	var notifyIdList, alarmIdList, alarmStrategyList, endpointList []string
+	var notifyIdList, alarmIdList, alarmStrategyList, endpointList, logKeywordConfigList, dbKeywordMonitorList []string
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
@@ -515,7 +515,13 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
 		if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+			if v.SMetric == "log_monitor" {
+				logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
+			} else {
+				dbKeywordMonitorList = append(dbKeywordMonitorList, v.AlarmStrategy)
+			}
 			v.IsLogMonitor = true
+			v.Log = v.Content
 			if v.EndValue > 0 {
 				v.Start, v.End = v.End, v.Start
 				if v.EndValue < v.StartValue {
@@ -523,29 +529,29 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 				} else {
 					v.StartValue = v.EndValue - v.StartValue + 1
 				}
-				if strings.Contains(v.Content, "^^") {
-					if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-						v.StartString = v.Content[:brIndex+5] + v.StartString
-						v.Content = v.Content[brIndex+5:]
+				if strings.Contains(v.Log, "^^") {
+					if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+						v.Content = v.Log[:brIndex+5]
+						v.Log = v.Log[brIndex+5:]
 					}
-					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+					v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
 				}
 				v.StartString = v.EndString
 			} else {
 				v.StartValue = 1
-				if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-					v.StartString = v.Content[:brIndex+5] + v.StartString
-					v.Content = v.Content[brIndex+5:]
+				if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+					v.Content = v.Log[:brIndex+5]
+					v.Log = v.Log[brIndex+5:]
 				}
-				if strings.HasSuffix(v.Content, "^^") {
-					v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+				if strings.HasSuffix(v.Log, "^^") {
+					v.Log = v.StartString + ": " + v.Log[:len(v.Log)-2]
 				} else {
-					v.Content = v.StartString + ": " + v.Content
+					v.Log = v.StartString + ": " + v.Log
 				}
 			}
 		}
-		if strings.Contains(v.Content, "\n") {
-			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		if strings.Contains(v.Log, "\n") {
+			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 		}
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
@@ -597,14 +603,14 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		sortResult = []*m.AlarmProblemQuery{}
 	}
 
-	for _, v := range sortResult {
-		if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
-			if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-				v.Content = v.Content[:brIndex]
-				v.Log = v.Content[brIndex+5:]
-			}
-		}
-	}
+	//for _, v := range sortResult {
+	//	if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+	//		if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
+	//			v.Content = v.Content[:brIndex]
+	//			v.Log = v.Content[brIndex+5:]
+	//		}
+	//	}
+	//}
 	if len(notifyIdList) > 0 {
 		var notifyRows []*m.NotifyTable
 		filterSql, filterParams := createListParams(notifyIdList, "")
@@ -645,23 +651,37 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 			v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 		}
 	}
-	if len(alarmStrategyList) > 0 {
+	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
+		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
+		if matchKeywordStrategyErr != nil {
+			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
 			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
 		} else {
 			for _, v := range sortResult {
 				var tmpStrategyGroups []*m.AlarmStrategyGroup
-				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
-					if strategyRow.ServiceGroup == "" {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
-						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
-							for _, endpointServiceRelRow := range endpointServiceList {
-								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+				if v.SMetric == "log_monitor" {
+					if serviceGroup, ok := logKeywordConfigMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else if v.SMetric == "db_keyword_monitor" {
+					if serviceGroup, ok := dbKeywordMonitorMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else {
+					if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+						if strategyRow.ServiceGroup == "" {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+							if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+								for _, endpointServiceRelRow := range endpointServiceList {
+									tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+								}
 							}
+						} else {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 						}
-					} else {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 					}
 				}
 				v.StrategyGroups = tmpStrategyGroups
@@ -1853,6 +1873,8 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 }
 
 func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMap map[string]*m.StrategyGroupRow, endpointServiceMap map[string][]*m.EndpointServiceRelTable, err error) {
+	strategyGroupMap = make(map[string]*m.StrategyGroupRow)
+	endpointServiceMap = make(map[string][]*m.EndpointServiceRelTable)
 	if len(alarmStrategyList) == 0 {
 		return
 	}
@@ -1872,8 +1894,6 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 			return
 		}
 	}
-	strategyGroupMap = make(map[string]*m.StrategyGroupRow)
-	endpointServiceMap = make(map[string][]*m.EndpointServiceRelTable)
 	for _, row := range strategyGroupRows {
 		strategyGroupMap[row.Guid] = row
 	}
@@ -1999,6 +2019,32 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 					}
 				}
 			}
+		}
+	}
+	return
+}
+
+func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []string) (logKeywordConfigMap, dbKeywordMonitorMap map[string]string, err error) {
+	logKeywordConfigMap = make(map[string]string)
+	dbKeywordMonitorMap = make(map[string]string)
+	if len(logKeywordConfigList) > 0 {
+		var logKeywordRows []*m.DbKeywordMonitor
+		err = x.SQL("select t1.guid,t2.service_group from log_keyword_config t1 left join log_keyword_monitor t2 on t1.log_keyword_monitor=t2.guid where t1.guid in ('" + strings.Join(logKeywordConfigList, "','") + "')").Find(&logKeywordRows)
+		if err != nil {
+			return
+		}
+		for _, row := range logKeywordRows {
+			logKeywordConfigMap[row.Guid] = row.ServiceGroup
+		}
+	}
+	if len(dbKeywordMonitorList) > 0 {
+		var dbKeywordRows []*m.DbKeywordMonitor
+		err = x.SQL("select guid,service_group from db_keyword_monitor where guid in ('" + strings.Join(dbKeywordMonitorList, "','") + "')").Find(&dbKeywordRows)
+		if err != nil {
+			return
+		}
+		for _, row := range dbKeywordRows {
+			dbKeywordMonitorMap[row.Guid] = row.ServiceGroup
 		}
 	}
 	return
