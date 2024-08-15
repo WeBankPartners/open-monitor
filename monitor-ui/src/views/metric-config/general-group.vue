@@ -1,19 +1,50 @@
 <template>
-  <div ref="maxheight" class="monitor-general-group">
-    <div style="display:flex;align-items:center;">
-      <!--对象类型-->
-      <span style="font-size: 14px;">
-        {{$t('m_basic_type')}}：
-      </span>
-      <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
-        <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
-      </Select>
-      <div class="btn-group">
-        <!--新增-->
-        <Button type="success" @click="handleAdd">{{ $t('m_button_add') }}</Button>
-      </div>
-    </div>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="general-table"/>
+  <div class="monitor-general-group">
+    <Row>
+      <Col :span="8">
+        <!--对象类型-->
+        <span style="font-size: 14px;">
+          {{$t('m_basic_type')}}：
+        </span>
+        <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
+          <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
+        </Select>
+      </Col>
+      <Col :span="16">
+        <div class="btn-group">
+          <Button
+            type="info"
+            @click.stop="exportData"
+          >
+            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+            {{ $t("m_export") }}
+          </Button>
+          <Upload
+            :action="uploadUrl"
+            :show-upload-list="false"
+            :max-size="1000"
+            with-credentials
+            :headers="{'Authorization': token}"
+            :on-success="uploadSucess"
+            :on-error="uploadFailed"
+          >
+            <Button type="primary">
+              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+              {{ $t('m_import') }}
+            </Button>
+          </Upload>
+          <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
+        </div>
+      </Col>
+    </Row>
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="general-table"
+    />
     <Modal
       v-model="deleteVisible"
       :title="$t('m_delConfirm_title')"
@@ -50,6 +81,9 @@
 </template>
 
 <script>
+import axios from 'axios'
+import {baseURL_config} from '@/assets/js/baseURL'
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import AddGroupDrawer from './components/add-group.vue'
 import YearOverYear from './components/year-over-year.vue'
 export default {
@@ -279,12 +313,18 @@ export default {
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
+      token: null
+    }
+  },
+  computed: {
+    uploadUrl() {
+      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
     }
   },
   mounted() {
     this.getMonitorType()
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 60
   },
   methods: {
     reloadData(metricType) {
@@ -362,6 +402,66 @@ export default {
       this.viewOnly = false
       this.originalMetricsId = row.guid
     },
+    exportData() {
+      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
+      axios({
+        method: 'GET',
+        url: api,
+        headers: {
+          Authorization: this.token
+        }
+      }).then(response => {
+        if (response.status < 400) {
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+          else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              const elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            }
+            else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
+          }
+        }
+      })
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
+    },
+    uploadSucess(val) {
+      if (val.status === 'OK') {
+        if (val.data) {
+          if (Array.isArray(val.data.fail_list) && val.data.fail_list.length > 0) {
+            this.$Notice.error({
+              duration: 0,
+              render: () => <div>
+                {this.$t('m_metric_export_errorTips')}
+                <span style="color:red;"> {val.data.fail_list.join('、')}</span>
+              </div>
+            })
+          }
+          else {
+            this.$Message.success(this.$t('m_tips_success'))
+          }
+        }
+        this.getList()
+      }
+    },
+    uploadFailed(file) {
+      this.$Message.warning(file.message)
+    }
   }
 }
 </script>
@@ -382,8 +482,7 @@ export default {
   padding-bottom: 20px;
   .btn-group {
     display: flex;
-    justify-content: flex-start;
-    margin-left: 10px;
+    justify-content: flex-end;
   }
   .general-table {
     margin-top: 12px;
