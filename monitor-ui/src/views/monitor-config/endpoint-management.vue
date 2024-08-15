@@ -720,6 +720,7 @@ export default {
     }
     this.getTableList()
     this.getAllOptions()
+    this.getIpList()
   },
   filters: {
     interceptParams(val) {

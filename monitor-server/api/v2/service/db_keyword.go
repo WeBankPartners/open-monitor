@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func ListDBKeywordConfig(c *gin.Context) {
@@ -27,13 +28,16 @@ func CreateDBKeywordConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if list, err = db.GetDbKeywordMonitorByName("", param.Name); err != nil {
+	if list, err = db.GetDbKeywordMonitorByName("", param.Name, param.ServiceGroup); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(list) > 0 {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
 		return
+	}
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
 	err = db.CreateDBKeywordConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
@@ -58,13 +62,16 @@ func UpdateDBKeywordConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if list, err = db.GetDbKeywordMonitorByName(param.Guid, param.Name); err != nil {
+	if list, err = db.GetDbKeywordMonitorByName(param.Guid, param.Name, param.ServiceGroup); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(list) > 0 {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
 		return
+	}
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
 	err = db.UpdateDBKeywordConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
