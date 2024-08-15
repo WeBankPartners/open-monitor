@@ -164,7 +164,7 @@
             :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
-                       style="cursor: auto; overflow: scroll"
+                       style="cursor: auto; overflow-y: hidden; overflow-x: scroll"
                        class="c-dark"
                        :x="item.x"
                        :y="item.y"
@@ -178,7 +178,7 @@
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
-                    <Tooltip v-if="editChartId !== item.id" :content="item.i" :max-width='250' placement="top">
+                    <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="top">
                       <span class='header-grid-name-text'>{{item.i}}</span>
                     </Tooltip>
                     <span  v-else @click.stop="">
@@ -200,7 +200,8 @@
                               clearable
                               filterable
                               :placeholder="$t('m_group_name')"
-                              @on-change="onSingleChartGroupChange"
+                              @on-change="(e) => onSingleChartGroupChange(e, index)"
+                              @on-clear="onSingleChartGroupClear"
                       >
                         <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                       </Select>
@@ -295,14 +296,13 @@
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
-import remove from 'lodash/remove'
-import cloneDeep from 'lodash/cloneDeep'
-import debounce from 'lodash/debounce'
-import find from 'lodash/find'
-import orderBy from 'lodash/orderBy'
+import {
+  isEmpty, remove, cloneDeep, debounce, find, orderBy, maxBy, filter
+} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
-import {dataPick, autoRefreshConfig, layoutOptions} from '@/assets/config/common-config'
+import {
+  dataPick, autoRefreshConfig, layoutOptions, layoutColumns
+} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
@@ -514,7 +514,7 @@ export default {
       setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
         this.refreshNow = !this.refreshNow
-      }, 0)
+      }, 300)
     },
     closeAlarmDisplay() {
       this.showAlarm = !this.showAlarm
@@ -628,7 +628,7 @@ export default {
       this.filterLayoutData()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
-      }, 100)
+      }, 300)
     },
     isShowGridPlus(item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
@@ -777,8 +777,10 @@ export default {
     },
     // #region 组管理
     async selectGroup(item) {
-      await this.submitPanelInfo() // 保存完毕后切换
-      this.$Message.success(this.$t('m_tips_success'))
+      if (this.isEditStatus) {
+        await this.submitPanelInfo() // 保存完毕后切换
+        this.$Message.success(this.$t('m_tips_success'))
+      }
       this.activeGroup = item
       this.chartLayoutType = 'customize'
       this.getPannelList(this.activeGroup)
@@ -878,20 +880,13 @@ export default {
       return '10000'
     },
     processSingleItem(lastItem, needSetItem) {
-      if (lastItem.x + lastItem.w > 6) {
+      if (lastItem.x + lastItem.w + needSetItem.w > 12) {
         needSetItem.x = 0
         needSetItem.y = lastItem.y + 7
       }
       else {
         needSetItem.x = lastItem.x + lastItem.w
         needSetItem.y = lastItem.y
-      }
-
-      needSetItem.allGroupDisplayConfig = {
-        x: needSetItem.x,
-        y: needSetItem.y,
-        h: needSetItem.h,
-        w: needSetItem.w
       }
     },
     async onAddChart(copyInfo, type) {
@@ -920,14 +915,14 @@ export default {
         const item = {
           x: 0,
           y: 0,
-          w: 6,
+          w: layoutColumns[this.chartLayoutType].w,
           h: 7,
           i: `${name}`,
           moved: false,
           id: `${this.setChartConfigId}`,
           group: this.activeGroup === 'ALL' ? '' : this.activeGroup,
           partGroupDisplayConfig: '',
-          allGroupDisplayConfig: {},
+          allGroupDisplayConfig: this.calculateDisplayConfig(),
           sourceDashboard: this.pannelId
         }
         if (this.layoutData.length) {
@@ -961,21 +956,18 @@ export default {
         const item = {
           x: 0,
           y: 0,
-          w: 6,
+          w: layoutColumns[this.chartLayoutType].w,
           h: 7,
           i: '',
           id: `${chartId}`,
           group,
           partGroupDisplayConfig: '',
-          allGroupDisplayConfig: {},
+          allGroupDisplayConfig: this.calculateDisplayConfig(),
           sourceDashboard: this.pannelId
         }
         if (this.layoutData.length) {
           const lastOne = this.layoutData[this.layoutData.length - 1]
           this.processSingleItem(lastOne, item)
-        }
-        if (this.layoutData.length) {
-          this.processSingleItem(this.layoutData, item)
         }
         this.layoutData.unshift(item)
         setTimeout(async () => {
@@ -1162,13 +1154,62 @@ export default {
         this.getPannelList()
       })
     },
-    onSingleChartGroupChange(e) {
-      if (e) {
-        this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
-          this.$Message.success(this.$t('m_success'))
-          this.getPannelList(this.activeGroup)
-        })
+    onSingleChartGroupClear() {
+      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+        this.$Message.success(this.$t('m_success'))
+        this.getPannelList(this.activeGroup)
+      })
+    },
+    onSingleChartGroupChange(group, index) {
+      if (isEmpty(group)) {
+        return
       }
+      if (group !== 'ALL') {
+        // 切换分组时，默认填充到最后一个，并保证w=6, h=7
+        const layoutDataByGroup = this.layoutData.filter((d, m) => m !== index && d.group === group)
+        const layoutByGroupNeedReset = layoutDataByGroup.some((item, i) => i !== index && item.partGroupDisplayConfig === '')
+        this.layoutData[index].partGroupDisplayConfig = this.layoutData[index].partGroupDisplayConfig || {}
+        const needChangeItem = this.layoutData[index].partGroupDisplayConfig
+        if (isEmpty(layoutDataByGroup) || layoutByGroupNeedReset) {
+          needChangeItem.w = 6
+          needChangeItem.h = 7
+          needChangeItem.x = 0
+          needChangeItem.y = 0
+        }
+        else {
+          // 先筛选出最下面的元素，再给这个元素填充
+          const maxY = maxBy(layoutDataByGroup, item => item.partGroupDisplayConfig.y).partGroupDisplayConfig.y
+          const sameMaxYData = filter(layoutDataByGroup, item => item.partGroupDisplayConfig.y === maxY)
+          const maxX = maxBy(sameMaxYData, item => item.partGroupDisplayConfig.x).partGroupDisplayConfig.x
+          const lastOneArr = filter(sameMaxYData, item => item.partGroupDisplayConfig.x === maxX)
+          // 用于获取更改目标组的排列
+          const isStandardArrangement = layoutDataByGroup.every((item, i) => i !== index && item.partGroupDisplayConfig.w === lastOneArr[0].partGroupDisplayConfig.w && item.partGroupDisplayConfig.h === lastOneArr[0].partGroupDisplayConfig.h)
+          if (isStandardArrangement) {
+            needChangeItem.w = lastOneArr[0].partGroupDisplayConfig.w
+            needChangeItem.h = lastOneArr[0].partGroupDisplayConfig.h
+          }
+          else {
+            needChangeItem.w = 6
+            needChangeItem.h = 7
+          }
+
+          if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
+            const lastOne = lastOneArr[0].partGroupDisplayConfig
+            if (lastOne.x + lastOne.w + needChangeItem.w > 12) {
+              needChangeItem.y = lastOne.y + 7
+              needChangeItem.x = 0
+            }
+            else {
+              needChangeItem.y = lastOne.y
+              needChangeItem.x = lastOne.x + lastOne.w
+            }
+          }
+        }
+      }
+      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+        this.$Message.success(this.$t('m_success'))
+        this.getPannelList(this.activeGroup)
+      })
     },
     closeChartInfoDrawer() {
       this.getPannelList()
@@ -1191,7 +1232,7 @@ export default {
       this.setChartLayoutType(this.tempChartLayoutType)
     },
     calculateLayout(data, type='customize') {
-      if (isEmpty(data)) {
+      if (isEmpty(data) || type==='customize') {
         return data
       }
       data.forEach((item, index) => {
@@ -1251,7 +1292,6 @@ export default {
         if (isEmpty(this.layoutData)) {
           return []
         }
-
         const layoutNeedReset = this.layoutData.some(item => item.partGroupDisplayConfig === '')
         // 假如其中有partGroupDisplayConfig为空，基于两列进行打平，假如没有为空，则基于partGroupDisplayConfig排列
         this.initLayoutTypeByWidth(this.layoutData)
@@ -1266,14 +1306,15 @@ export default {
           this.sortLayoutData(this.layoutData)
         }
       }
-      this.confirmLayoutType(this.layoutData)
+      this.chartLayoutType = this.confirmLayoutType(this.layoutData)
+      this.previousChartLayoutType = this.chartLayoutType
       this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
-      }, 100)
+      }, 300)
     },
     isValidJson(str) {
       try {
@@ -1293,12 +1334,12 @@ export default {
         return
       }
       const isTwo = data.every(item => item.h === 7 && item.w === 6)
-      const isThree = data.every(item => item.h = 7 && item.w === 4)
-      const isFour = data.every(item => item.h = 7 && item.w === 3)
-      const isFive = data.every(item => item.h = 7 && item.w === 2.4)
-      const isSix = data.every(item => item.h = 7 && item.w === 2)
-      const isSeven = data.every(item => item.h = 7 && item.w === 1.7)
-      const isEight = data.every(item => item.h = 7 && item.w === 1.5)
+      const isThree = data.every(item => item.h === 7 && item.w === 4)
+      const isFour = data.every(item => item.h === 7 && item.w === 3)
+      const isFive = data.every(item => item.h === 7 && item.w === 2.4)
+      const isSix = data.every(item => item.h === 7 && item.w === 2)
+      const isSeven = data.every(item => item.h === 7 && item.w === 1.7)
+      const isEight = data.every(item => item.h === 7 && item.w === 1.5)
 
       isTwo ? this.chartLayoutType = 'two'
         : isThree ? this.chartLayoutType = 'three'
@@ -1312,42 +1353,59 @@ export default {
       if (isEmpty(data)) {
         return
       }
-      for (let i=0; i<data.length; i++) {
-        const single = data[i]
-        if ((single.x === (i % 2) * 6) && single.y === Math.floor(i / 2) * 7 && single.h === 7 && single.w === 6) {
-          this.chartLayoutType = 'two'
-          continue
-        }
-        else if ((single.x === (i % 3) * 4) && single.y === Math.floor(i / 3) * 7 && single.h === 7 && single.w === 4) {
-          this.chartLayoutType = 'three'
-          continue
-        }
-        else if ((single.x === (i % 4) * 3) && single.y === Math.floor(i / 4) * 7 && single.h === 7 && single.w === 3) {
-          this.chartLayoutType = 'four'
-          continue
-        }
-        else if ((single.x === (i % 5) * 2.4) && single.y === Math.floor(i / 5) * 7 && single.h === 7 && single.w === 2.4) {
-          this.chartLayoutType = 'five'
-          continue
-        }
-        else if ((single.x === (i % 6) * 2) && single.y === Math.floor(i / 6) * 7 && single.h === 7 && single.w === 2) {
-          this.chartLayoutType = 'six'
-          continue
-        }
-        else if ((single.x === (i % 7) * 1.7) && single.y === Math.floor(i / 7) * 7 && single.h === 7 && single.w === 1.7) {
-          this.chartLayoutType = 'seven'
-          continue
-        }
-        else if ((single.x === (i % 8) * 1.5) && single.y === Math.floor(i / 8) * 7 && single.h === 7 && single.w === 1.5) {
-          this.chartLayoutType = 'eight'
-          continue
+      let res = ''
+      const isTwo = data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6)
+      const isThree = data.every((item, i) => (item.x === (i % 3) * 4) && item.y === Math.floor(i / 3) * 7 && item.h === 7 && item.w === 4)
+      const isFour = data.every((item, i) => (item.x === (i % 4) * 3) && item.y === Math.floor(i / 4) * 7 && item.h === 7 && item.w === 3)
+      const isFive = data.every((item, i) => (item.x === (i % 5) * 2.4) && item.y === Math.floor(i / 5) * 7 && item.h === 7 && item.w === 2.4)
+      const isSix = data.every((item, i) => (item.x === (i % 6) * 2) && item.y === Math.floor(i / 6) * 7 && item.h === 7 && item.w === 2)
+      const isSeven = data.every((item, i) => (item.x === (i % 7) * 1.7) && item.y === Math.floor(i / 7) * 7 && item.h === 7 && item.w === 1.7)
+      const isEight = data.every((item, i) => (item.x === (i % 8) * 1.5) && item.y === Math.floor(i / 8) * 7 && item.h === 7 && item.w === 1.5)
+
+      isTwo ? res = 'two'
+        : isThree ? res = 'three'
+          : isFour ? res = 'four'
+            : isFive ? res = 'five'
+              : isSix ? res = 'six'
+                : isSeven ? res = 'seven'
+                  : isEight ? res = 'eight' : res = 'customize'
+      return res
+    },
+    // 在新增时计算DisplayConfig的值
+    calculateDisplayConfig() {
+      const finalItem = {}
+      // 先筛选出最下面的元素，再给这个元素填充
+      const maxY = maxBy(this.allPageLayoutData, item => item.allGroupDisplayConfig.y).allGroupDisplayConfig.y
+      const sameMaxYData = filter(this.allPageLayoutData, item => item.allGroupDisplayConfig.y === maxY)
+      const maxX = maxBy(sameMaxYData, item => item.allGroupDisplayConfig.x).allGroupDisplayConfig.x
+      const lastOneArr = filter(sameMaxYData, item => item.allGroupDisplayConfig.x === maxX)
+      // 用于获取更改目标组的排列
+      const isStandardArrangement = this.allPageLayoutData.every(item => item.allGroupDisplayConfig.w === lastOneArr[0].allGroupDisplayConfig.w && item.allGroupDisplayConfig.h === lastOneArr[0].allGroupDisplayConfig.h)
+      if (isStandardArrangement) {
+        finalItem.w = lastOneArr[0].allGroupDisplayConfig.w
+        finalItem.h = lastOneArr[0].allGroupDisplayConfig.h
+      }
+      else {
+        finalItem.w = 6
+        finalItem.h = 7
+      }
+
+      if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
+        const lastOne = lastOneArr[0].allGroupDisplayConfig
+        if (lastOne.x + lastOne.w + finalItem.w > 12) {
+          finalItem.y = lastOne.y + 7
+          finalItem.x = 0
         }
         else {
-          this.chartLayoutType = 'customize'
-          break
+          finalItem.y = lastOne.y
+          finalItem.x = lastOne.x + lastOne.w
         }
       }
-      this.previousChartLayoutType = this.chartLayoutType
+      else {
+        finalItem.x = 0
+        finalItem.y = 0
+      }
+      return finalItem
     }
   },
   components: {
@@ -1419,6 +1477,14 @@ export default {
   .ivu-btn-info {
     background-color: #aa8aea;
     border-color: #aa8aea;
+  }
+}
+
+.header-grid-name {
+  .ivu-tooltip-rel {
+    display: flex;
+    align-items: center;
+    height: 30px;
   }
 }
 </style>
@@ -1569,7 +1635,7 @@ export default {
 
 .header-grid-name-text {
   display: inline-block;
-  max-width: 100px;
+  max-width: 150px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
