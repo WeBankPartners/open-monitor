@@ -134,7 +134,7 @@
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
               <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 620px" :placeholder="$t('m_tableKey_logPath')" />
+                <Input v-model.trim="item.path" style="width: 620px" :placeholder="$t('m_tableKey_logPath')" />
               </Tooltip>
               <Button
                 v-if="addAndEditModal.isAdd"
@@ -155,7 +155,7 @@
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input style="width: 640px" v-model="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 640px" v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
@@ -376,73 +376,73 @@
         :data="dataBaseTableData"
       />
     </section>
-    <Modal
-      v-model="dbModelConfig.isShow"
+
+    <!--数据库-->
+    <BaseDrawer
       :title="$t('m_db')"
-      width="700"
-      :mask-closable="false"
+      :visible.sync="dbModelConfig.isShow"
+      :realWidth="1000"
+      :scrollable="true"
     >
-      <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
-        <Form :label-width="100">
-          <FormItem :label="$t('m_field_displayName')">
-            <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
-          </FormItem>
-          <FormItem :label="$t('m_metric_key')">
-            <Input v-model="dbModelConfig.addRow.metric"
-                   :placeholder="$t('m_metric_key_placeholder_second')"
-                   style="width:520px"
-            />
-          </FormItem>
-          <FormItem label="SQL">
-            <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
-          </FormItem>
-          <FormItem :label="$t('m_field_type')" style="margin-top: 12px;">
-            <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
-              <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
-            </Select>
-          </FormItem>
-          <FormItem :label="$t('m_collection_interval')">
-            <Select v-model="dbModelConfig.addRow.step" style="width: 520px" transfer>
-              <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
-            </Select>
-          </FormItem>
-        </Form>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: center;">
-          <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
-            <p :key="index + 'S'">
-              <Tooltip :content="$t('m_db')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_target_value')">
-                  <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('m_source_value')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_source_value')">
-                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
-              </Tooltip>
-              <Button
-                @click="deleteItem('endpoint_rel', index)"
-                size="small"
-                type="error"
-                icon="md-trash"
-              ></Button>
-            </p>
-          </template>
-          <Button
-            @click="addEmptyItem('endpoint_rel')"
-            type="success"
-            size="small"
-            long
-            style="width:610px"
-          >{{ $t('m_addMetricConfig') }}</Button>
+      <template slot-scope="{maxHeight}" slot="content">
+        <div :style="{'max-height': maxHeight + 'px', overflow: 'auto'}">
+          <Form :label-width="100">
+            <!-- <FormItem :label="$t('m_field_displayName')" required>
+              <Input v-model.trim="dbModelConfig.addRow.display_name" />
+            </FormItem> -->
+            <FormItem :label="$t('m_metric_key')" required>
+              <Input v-model.trim="dbModelConfig.addRow.metric" :placeholder="$t('m_metric_key_placeholder_second')" />
+            </FormItem>
+            <FormItem :label="$t('m_sql_script')" required>
+              <Input v-model.trim="dbModelConfig.addRow.metric_sql" type="textarea" />
+            </FormItem>
+            <FormItem :label="$t('m_field_type')" style="margin-top: 12px;" required>
+              <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" transfer>
+                <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
+              </Select>
+            </FormItem>
+            <FormItem :label="$t('m_collection_interval')" required>
+              <Select v-model="dbModelConfig.addRow.step" transfer>
+                <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
+              </Select>
+            </FormItem>
+          </Form>
+          <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: center;">
+            <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
+              <p :key="index + 'S'">
+                <Tooltip :content="$t('m_db')" :delay="1000">
+                  <Select v-model="item.target_endpoint" :placeholder="$t('m_target_value')" style="width:420px;">
+                    <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+                  </Select>
+                </Tooltip>
+                <Tooltip :content="$t('m_source_value')" :delay="1000">
+                  <Select v-model="item.source_endpoint" :placeholder="$t('m_source_value')" style="width:420px;">
+                    <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+                  </Select>
+                </Tooltip>
+                <Button
+                  @click="deleteItem('endpoint_rel', index)"
+                  size="small"
+                  type="error"
+                  icon="md-trash"
+                ></Button>
+              </p>
+            </template>
+            <Button
+              @click="addEmptyItem('endpoint_rel')"
+              type="success"
+              size="small"
+              long
+              style="width:800px"
+            >{{ $t('m_addMetricConfig') }}</Button>
+          </div>
         </div>
-      </div>
-      <div slot="footer">
+      </template>
+      <template slot="footer">
         <Button @click="cancelDb">{{$t('m_button_cancel')}}</Button>
         <Button @click="saveDb" type="primary">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
-
+      </template>
+    </BaseDrawer>
     <Modal
       v-model="isShowGroupMetricUpload"
       :title="$t('m_import')"
@@ -505,7 +505,7 @@ export default {
         dataConfig: {
           service_group: '',
           log_path: '',
-          monitor_type: '',
+          monitor_type: 'process',
           endpoint_rel: []
         },
         pathOptions: [],
@@ -603,7 +603,7 @@ export default {
           metric_sql: '',
           metric: '',
           display_name: '',
-          monitor_type: '',
+          monitor_type: 'process',
           step: 10,
           endpoint_rel: []
         }
@@ -707,7 +707,7 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 150,
+          width: 120,
           key: 'index',
           fixed: 'right',
           render: (h, params) => (
@@ -736,11 +736,11 @@ export default {
       ],
       currentLogFileIndex: 0,
       dataBaseTableColumns: [
-        {
-          title: this.$t('m_metric_name'),
-          width: 250,
-          key: 'display_name'
-        },
+        // {
+        //   title: this.$t('m_metric_name'),
+        //   width: 250,
+        //   key: 'display_name'
+        // },
         {
           title: this.$t('m_metric_key'),
           width: 350,
@@ -763,7 +763,7 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 250,
+          width: 120,
           key: 'index',
           render: (h, params) => (
             <div>
@@ -881,12 +881,34 @@ export default {
       this.dbModelConfig.isShow = true
     },
     addDb() {
+      this.dbModelConfig.addRow = {
+        service_group: '',
+        metric_sql: '',
+        metric: '',
+        display_name: '',
+        monitor_type: 'process',
+        step: 10,
+        endpoint_rel: []
+      }
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
     saveDb() {
+      // if (!this.dbModelConfig.addRow.display_name) {
+      //   return this.$Message.error('显示名不能为空')
+      // }
       if (!(/^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/.test(this.dbModelConfig.addRow.metric))) {
         return this.$Message.error(this.$t('m_metric_key') + ':' + this.$t('m_regularization_check_failed_tips'))
+      }
+      if (!this.dbModelConfig.addRow.metric_sql) {
+        return this.$Message.error('SQL不能为空')
+      }
+      if (!this.dbModelConfig.addRow.monitor_type) {
+        return this.$Message.error('类型不能为空')
+      }
+      const endpointRelFlag = this.dbModelConfig.addRow.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
+      if (!endpointRelFlag) {
+        return this.$Message.error('指标配置不能为空')
       }
       this.dbModelConfig.addRow.service_group = this.targrtId
       const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
@@ -1062,6 +1084,24 @@ export default {
       })
     },
     okAddAndEdit() {
+      if (!this.addAndEditModal.dataConfig.monitor_type) {
+        return this.$Message.error('类型不能为空')
+      }
+      if (this.addAndEditModal.isAdd) {
+        const pathFlag = this.addAndEditModal.pathOptions.every(item => item.path !== '')
+        if (!pathFlag) {
+          return this.$Message.error('日志路径不能为空')
+        }
+      }
+      else {
+        if (!this.addAndEditModal.dataConfig.log_path) {
+          return this.$Message.error('日志路径不能为空')
+        }
+      }
+      const endpointRelFlag = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
+      if (!endpointRelFlag) {
+        return this.$Message.error('映射不能为空')
+      }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
       const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
       params.service_group = this.targrtId
@@ -1080,7 +1120,7 @@ export default {
       this.addAndEditModal.dataConfig = {
         service_group: '',
         log_path: [],
-        monitor_type: '',
+        monitor_type: 'process',
         endpoint_rel: []
       }
     },
@@ -1101,30 +1141,18 @@ export default {
     addEmptyItem(type, index) {
       switch (type) {
         case 'path': {
-          const hasEmpty = this.addAndEditModal.pathOptions.every(item => item.path !== '')
-          if (hasEmpty) {
-            this.addAndEditModal.pathOptions.push(
-              {path: ''}
-            )
-          }
-          else {
-            this.$Message.warning('Path Can Not Empty')
-          }
+          this.addAndEditModal.pathOptions.push(
+            {path: ''}
+          )
           break
         }
         case 'relate': {
-          const hasEmpty = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
-          if (hasEmpty) {
-            this.addAndEditModal.dataConfig.endpoint_rel.push(
-              {
-                source_endpoint: '',
-                target_endpoint: ''
-              }
-            )
-          }
-          else {
-            this.$Message.warning('Can Not Empty')
-          }
+          this.addAndEditModal.dataConfig.endpoint_rel.push(
+            {
+              source_endpoint: '',
+              target_endpoint: ''
+            }
+          )
           break
         }
         case 'metric_list': {
@@ -1190,6 +1218,7 @@ export default {
     },
     async add() {
       this.cancelAddAndEdit()
+      this.getEndpoint(this.addAndEditModal.dataConfig.monitor_type, 'host')
       this.addAndEditModal.isAdd = true
       this.addAndEditModal.isShow = true
     },
