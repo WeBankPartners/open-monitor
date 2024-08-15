@@ -351,7 +351,9 @@ func doDbKeywordMonitorJob() {
 			//	notifyMap[key] = config.ServiceGroup
 			//}
 			alarmContent := config.Content
-			alarmContent = alarmContent + "<br/>"
+			if alarmContent != "" {
+				alarmContent = alarmContent + "<br/>"
+			}
 			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
 			if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 				log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
