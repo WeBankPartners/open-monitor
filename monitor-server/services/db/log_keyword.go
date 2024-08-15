@@ -166,7 +166,7 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 
 func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable, err error) {
 	result = []*models.LogKeywordConfigTable{}
-	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=?", logKeywordMonitor).Find(&result)
+	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? order by update_time desc", logKeywordMonitor).Find(&result)
 	if err != nil {
 		return
 	}

@@ -174,6 +174,11 @@ func DeleteEndpoint(guid, operator string) error {
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from db_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?))", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?)", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?)", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where endpoint=?", Param: []interface{}{guid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
