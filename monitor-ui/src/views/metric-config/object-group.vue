@@ -1,5 +1,5 @@
 <template>
-  <div ref="maxheight" class="monitor-level-group">
+  <div class="monitor-level-group">
     <Row>
       <Col :span="8">
       <!--对象组-->
@@ -45,7 +45,14 @@
       </div>
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="level-table"
+    />
     <Modal
       v-model="deleteVisible"
       :title="$t('m_delConfirm_title')"
@@ -334,8 +341,7 @@ export default {
     this.monitorType = this.objectGroupOptions[0].monitor_type
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
   },
   methods: {
     reloadData(metricType) {
