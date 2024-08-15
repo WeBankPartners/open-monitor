@@ -164,7 +164,7 @@
             :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
-                       style="cursor: auto;"
+                       style="cursor: auto; overflow: scroll"
                        class="c-dark"
                        :x="item.x"
                        :y="item.y"
@@ -630,31 +630,6 @@ export default {
         this.refreshNow = !this.refreshNow
       }, 100)
     },
-    sortLayoutData(data) {
-      const sortedArr = orderBy(data, ['y', 'x'], ['asc', 'asc'])
-      return sortedArr
-    },
-    confirmLayoutType(data) {
-      if (isEmpty(data)) {
-        return
-      }
-      for (let i=0; i<data.length; i++) {
-        const single = data[i]
-        if ((single.x === (i % 2) * 6) && single.y === Math.floor(i / 2) * 7 && single.h === 7 && single.w === 6) {
-          this.chartLayoutType = 'two'
-          continue
-        }
-        else if ((single.x === (i % 3) * 4) && single.y === Math.floor(i / 3) * 7 && single.h === 7 && single.w === 4) {
-          this.chartLayoutType = 'three'
-          continue
-        }
-        else {
-          this.chartLayoutType = 'customize'
-          break
-        }
-      }
-      this.previousChartLayoutType = this.chartLayoutType
-    },
     isShowGridPlus(item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
         return false
@@ -959,7 +934,7 @@ export default {
           const lastOne = this.layoutData[this.layoutData.length - 1]
           this.processSingleItem(lastOne, item)
         }
-        this.layoutData.push(item)
+        this.layoutData.unshift(item)
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
             this.getPannelList(this.activeGroup)
@@ -999,7 +974,10 @@ export default {
           const lastOne = this.layoutData[this.layoutData.length - 1]
           this.processSingleItem(lastOne, item)
         }
-        this.layoutData.push(item)
+        if (this.layoutData.length) {
+          this.processSingleItem(this.layoutData, item)
+        }
+        this.layoutData.unshift(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
           this.getPannelList(this.activeGroup)
@@ -1216,22 +1194,44 @@ export default {
       if (isEmpty(data)) {
         return data
       }
-      if (type === 'two') {
-        data.forEach((item, index) => {
-          item.h = 7
+      data.forEach((item, index) => {
+        item.h = 7
+        if (type === 'two') {
           item.w = 6
           item.x = (index % 2) * 6
           item.y = Math.floor(index / 2) * 7
-        })
-      }
-      else if (type === 'three') {
-        data.forEach((item, index) => {
-          item.h = 7
+        }
+        else if (type === 'three') {
           item.w = 4
           item.x = (index % 3) * 4
           item.y = Math.floor(index / 3) * 7
-        })
-      }
+        }
+        else if (type === 'four') {
+          item.w = 3
+          item.x = (index % 4) * 3
+          item.y = Math.floor(index / 4) * 7
+        }
+        else if (type === 'five') {
+          item.w = 2.4
+          item.x = (index % 5) * 2.4
+          item.y = Math.floor(index / 5) * 7
+        }
+        else if (type === 'six') {
+          item.w = 2
+          item.x = (index % 6) * 2
+          item.y = Math.floor(index / 6) * 7
+        }
+        else if (type === 'seven') {
+          item.w = 1.7
+          item.x = (index % 7) * 1.7
+          item.y = Math.floor(index / 7) * 7
+        }
+        else if (type === 'eight') {
+          item.w = 1.5
+          item.x = (index % 8) * 1.5
+          item.y = Math.floor(index / 8) * 7
+        }
+      })
       return data
     },
     setChartLayoutType(val = 'customize') {
@@ -1251,9 +1251,11 @@ export default {
         if (isEmpty(this.layoutData)) {
           return []
         }
+
         const layoutNeedReset = this.layoutData.some(item => item.partGroupDisplayConfig === '')
         // 假如其中有partGroupDisplayConfig为空，基于两列进行打平，假如没有为空，则基于partGroupDisplayConfig排列
-        if (layoutNeedReset || this.chartLayoutType === 'two' || this.chartLayoutType === 'three') {
+        this.initLayoutTypeByWidth(this.layoutData)
+        if (layoutNeedReset || ['two', 'three', 'four', 'five', 'six', 'seven', 'eight'].includes(this.chartLayoutType)) {
           this.sortLayoutData(this.layoutData)
           this.calculateLayout(this.layoutData, this.chartLayoutType)
         }
@@ -1281,6 +1283,71 @@ export default {
       catch (e) {
         return false
       }
+    },
+    sortLayoutData(data) {
+      const sortedArr = orderBy(data, ['y', 'x'], ['asc', 'asc'])
+      return sortedArr
+    },
+    initLayoutTypeByWidth(data) {
+      if (isEmpty(data) || this.chartLayoutType !== 'customize') {
+        return
+      }
+      const isTwo = data.every(item => item.h === 7 && item.w === 6)
+      const isThree = data.every(item => item.h = 7 && item.w === 4)
+      const isFour = data.every(item => item.h = 7 && item.w === 3)
+      const isFive = data.every(item => item.h = 7 && item.w === 2.4)
+      const isSix = data.every(item => item.h = 7 && item.w === 2)
+      const isSeven = data.every(item => item.h = 7 && item.w === 1.7)
+      const isEight = data.every(item => item.h = 7 && item.w === 1.5)
+
+      isTwo ? this.chartLayoutType = 'two'
+        : isThree ? this.chartLayoutType = 'three'
+          : isFour ? this.chartLayoutType = 'four'
+            : isFive ? this.chartLayoutType = 'five'
+              : isSix ? this.chartLayoutType = 'six'
+                : isSeven ? this.chartLayoutType = 'seven'
+                  : isEight ? this.chartLayoutType = 'eight' : 'customize'
+    },
+    confirmLayoutType(data) {
+      if (isEmpty(data)) {
+        return
+      }
+      for (let i=0; i<data.length; i++) {
+        const single = data[i]
+        if ((single.x === (i % 2) * 6) && single.y === Math.floor(i / 2) * 7 && single.h === 7 && single.w === 6) {
+          this.chartLayoutType = 'two'
+          continue
+        }
+        else if ((single.x === (i % 3) * 4) && single.y === Math.floor(i / 3) * 7 && single.h === 7 && single.w === 4) {
+          this.chartLayoutType = 'three'
+          continue
+        }
+        else if ((single.x === (i % 4) * 3) && single.y === Math.floor(i / 4) * 7 && single.h === 7 && single.w === 3) {
+          this.chartLayoutType = 'four'
+          continue
+        }
+        else if ((single.x === (i % 5) * 2.4) && single.y === Math.floor(i / 5) * 7 && single.h === 7 && single.w === 2.4) {
+          this.chartLayoutType = 'five'
+          continue
+        }
+        else if ((single.x === (i % 6) * 2) && single.y === Math.floor(i / 6) * 7 && single.h === 7 && single.w === 2) {
+          this.chartLayoutType = 'six'
+          continue
+        }
+        else if ((single.x === (i % 7) * 1.7) && single.y === Math.floor(i / 7) * 7 && single.h === 7 && single.w === 1.7) {
+          this.chartLayoutType = 'seven'
+          continue
+        }
+        else if ((single.x === (i % 8) * 1.5) && single.y === Math.floor(i / 8) * 7 && single.h === 7 && single.w === 1.5) {
+          this.chartLayoutType = 'eight'
+          continue
+        }
+        else {
+          this.chartLayoutType = 'customize'
+          break
+        }
+      }
+      this.previousChartLayoutType = this.chartLayoutType
     }
   },
   components: {
