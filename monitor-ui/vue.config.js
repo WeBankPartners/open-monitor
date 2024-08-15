@@ -1,6 +1,6 @@
 const path = require('path')
 const vueConfig = require('./project-config/project-config.json')
-const baseUrl = ''
+const baseUrl = 'http://106.52.160.142:18080/'
 module.exports = {
   devServer: {
     // hot: true,
