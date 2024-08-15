@@ -2,39 +2,39 @@
   <div class="monitor-general-group">
     <Row>
       <Col :span="8">
-        <!--对象类型-->
-        <span style="font-size: 14px;">
-          {{$t('m_basic_type')}}：
-        </span>
-        <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
-          <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
-        </Select>
+      <!--对象类型-->
+      <span style="font-size: 14px;">
+        {{$t('m_basic_type')}}：
+      </span>
+      <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
+        <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
+      </Select>
       </Col>
       <Col :span="16">
-        <div class="btn-group">
-          <Button
-            type="info"
-            @click.stop="exportData"
-          >
-            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-            {{ $t("m_export") }}
+      <div class="btn-group">
+        <Button
+          type="info"
+          @click.stop="exportData"
+        >
+          <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+          {{ $t("m_export") }}
+        </Button>
+        <Upload
+          :action="uploadUrl"
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed"
+        >
+          <Button type="primary">
+            <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+            {{ $t('m_import') }}
           </Button>
-          <Upload
-            :action="uploadUrl"
-            :show-upload-list="false"
-            :max-size="1000"
-            with-credentials
-            :headers="{'Authorization': token}"
-            :on-success="uploadSucess"
-            :on-error="uploadFailed"
-          >
-            <Button type="primary">
-              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
-              {{ $t('m_import') }}
-            </Button>
-          </Upload>
-          <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
-        </div>
+        </Upload>
+        <Button type="success" @click="handleAdd">{{$t('m_button_add')}}</Button>
+      </div>
       </Col>
     </Row>
     <Table
