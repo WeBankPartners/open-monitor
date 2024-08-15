@@ -657,9 +657,13 @@ export default {
     }
   }
   .card-pagination {
+    width: 40%;
     position: fixed;
-    bottom: 20px;
+    bottom: 0px;
     right: 0px;
+    opacity: 1;
+    padding-bottom:20px;
+    background: #fff;
   }
 
   .content-stats-container {
@@ -688,6 +692,7 @@ export default {
       .alarm-card-container {
         // height: 740px;
         height: ~"calc(100vh - 310px)";
+        padding-bottom: 20px;
         overflow-y: auto;
 
         &::-webkit-scrollbar {
