@@ -19,6 +19,11 @@ type DbMetricEndpointRelTable struct {
 	TargetEndpoint  string `json:"target_endpoint" xorm:"target_endpoint"`
 }
 
+type DbMetricQueryObj struct {
+	ServiceGroupTable
+	Config []*DbMetricMonitorObj `json:"config"`
+}
+
 type DbMetricMonitorObj struct {
 	Guid             string                      `json:"guid"`
 	ServiceGroup     string                      `json:"service_group"`
