@@ -493,6 +493,22 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 	if metricRow == nil {
 		return
 	}
+	tagConfigValue = make(map[string][]string)
+	if metricRow.LogMetricGroup != "" {
+		var stringMapRows []*models.LogMetricStringMapTable
+		err = x.SQL("select target_value,log_param_name from log_metric_string_map where log_metric_group=?", metricRow.LogMetricGroup).Find(&stringMapRows)
+		if err != nil {
+			err = fmt.Errorf("query log metric string map table fail,%s ", err.Error())
+			return
+		}
+		for _, row := range stringMapRows {
+			if v, ok := tagConfigValue[row.LogParamName]; ok {
+				tagConfigValue[row.LogParamName] = append(v, row.TargetValue)
+			} else {
+				tagConfigValue[row.LogParamName] = []string{row.TargetValue}
+			}
+		}
+	}
 	if metricRow.LogMetricConfig != "" {
 		var logMetricConfigRows []*models.LogMetricConfigTable
 		err = x.SQL("select metric,tag_config from log_metric_config where guid=?", metricRow.LogMetricConfig).Find(&logMetricConfigRows)
