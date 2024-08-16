@@ -38,7 +38,6 @@
             </Select>
           </li> -->
           <Button type="primary" @click="getAlarm" style="margin-left: 24px;">{{ $t("m_button_search") }}</Button>
-          <Button v-if="filtersForShow.length" @click="clearAll">{{$t('m_reset_condition')}}</Button>
         </ul>
         <div class='top-right-search'>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
