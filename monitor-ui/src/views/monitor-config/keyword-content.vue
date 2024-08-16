@@ -29,11 +29,10 @@
         </Upload>
       </div>
 
-      <div v-for="(singleData, i) in allLogFileData" :key="i">
-
+      <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div v-if="!isEditState" class="content-header mb-2 mt-3">
           <div class="use-underline-title header-title mr-4">
-            {{singleData.display_name}}
+            {{ !isEmpty(single.logFile) ? single.logFile.display_name : (!isEmpty(single.database) ? single.database.display_name : '')}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
@@ -42,15 +41,15 @@
         <div class="content-title mb-3">
           <div class="use-underline-title">
             {{$t('m_log_file')}}
-            <span class="underline" ></span>
+            <span class="underline" style="margin-top: -10px"></span>
           </div>
           <Button v-if="isEditState" type="success" class="mr-4" @click="addLogFileConfig">
             {{ $t('m_button_add') }}
           </Button>
         </div>
 
-        <Collapse v-model="keywordCollapseValue" v-if="!isEmpty(singleData.config)">
-          <Panel v-for="(item, index) in singleData.config"
+        <Collapse v-model="keywordCollapseValue" v-if="!isEmpty(single.logFile) && !isEmpty(single.logFile.config)">
+          <Panel v-for="(item, index) in single.logFile.config"
                  :key="index"
                  :name="index + ''"
           >
@@ -160,28 +159,31 @@
           </Panel>
         </Collapse>
         <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
-      </div>
-    </section>
-    <div class="mt-3">
-      <div v-for="(singleDatabase, index) in allDataBaseDataInfo" :key="index + 's'">
-        <div class="content-title mb-2">
-          <div class="use-underline-title">
-            {{$t('m_db')}}
-            <span class="underline"></span>
+
+        <div class="mt-2 pb-5">
+          <div>
+            <div class="content-title mb-2 ">
+              <div class="use-underline-title">
+                {{$t('m_db')}}
+                <span class="underline" style="margin-top: -10px"></span>
+              </div>
+              <Button v-if="isEditState" type="success" class="mr-4" @click="addDataBase" style="margin: 8px 0">
+                {{ $t('m_button_add') }}
+              </Button>
+            </div>
+
+            <Table
+              v-if='!isEmpty(single.database)'
+              size="small"
+              :columns="dataBaseTableColumns"
+              :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+            />
+            <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
           </div>
-          <Button v-if="isEditState" type="success" class="mr-4" @click="addDataBase" style="margin: 8px 0">
-            {{ $t('m_button_add') }}
-          </Button>
         </div>
 
-        <Table
-          size="small"
-          :columns="dataBaseTableColumns"
-          :data="singleDatabase.config"
-        />
       </div>
-    </div>
-    <!--新增/编辑日志文件-->
+    </section>
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
@@ -480,9 +482,9 @@
 
 <script>
 import axios from 'axios'
-import cloneDeep from 'lodash/cloneDeep'
-import isEmpty from 'lodash/isEmpty'
-import hasIn from 'lodash/hasIn'
+import {
+  cloneDeep, isEmpty, hasIn, map, uniq, find, filter
+} from 'lodash'
 import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
@@ -947,7 +949,8 @@ export default {
       currentEditType: 'logFile', // 为枚举值，logFile(日志文件新增和编辑)和database（数据库新增和编辑）
       service_group: '',
       isEmpty,
-      dataBaseGuid: ''
+      dataBaseGuid: '',
+      logAndDataBaseAllDetail: []
     }
   },
   computed: {
@@ -1222,38 +1225,58 @@ export default {
         }
       })
     },
-    getDetail(targetId) {
+    async getDetail(targetId) {
       this.targetId = targetId
-      this.getLogKeyWordDetail()
-      this.getDataBaseDetail()
+      await this.getLogKeyWordDetail()
+      await this.getDataBaseDetail()
+      this.processAllInfo()
+    },
+    processAllInfo() {
+      this.logAndDataBaseAllDetail = []
+      const allDetail = [...cloneDeep(this.allLogFileData), ...cloneDeep(this.allDataBaseDataInfo)]
+      const allGuid = uniq(map(allDetail, 'guid')) || []
+
+      allGuid.forEach(guid => {
+        const tempInfo = {
+          logFile: filter(this.allLogFileData, item => item.guid === guid)[0],
+          database: filter(this.allDataBaseDataInfo, item => item.guid === guid)[0]
+        }
+        this.logAndDataBaseAllDetail.push(tempInfo)
+      })
     },
     getLogKeyWordDetail() {
-      this.request('GET', '/monitor/api/v2/service/log_keyword/list', {
-        type: this.keywordType,
-        guid: this.targetId
-      }, res => {
-        this.allLogFileData = isEmpty(res) ? [] : res
-        this.allLogFileData.forEach(logFile => {
-          isEmpty(logFile.config) && logFile.config.forEach(item => {
-            if (isEmpty(item.notify)) {
-              item.notify = cloneDeep(initNotify)
-            }
+      return new Promise(resolve => {
+        this.request('GET', '/monitor/api/v2/service/log_keyword/list', {
+          type: this.keywordType,
+          guid: this.targetId
+        }, res => {
+          this.allLogFileData = isEmpty(res) ? [] : res
+          this.allLogFileData.forEach(logFile => {
+            isEmpty(logFile.config) && logFile.config.forEach(item => {
+              if (isEmpty(item.notify)) {
+                item.notify = cloneDeep(initNotify)
+              }
+            })
           })
+          resolve(this.allLogFileData)
         })
       })
     },
     getDataBaseDetail() {
-      this.request('GET', '/monitor/api/v2/service/db_keyword/list', {
-        type: this.keywordType,
-        guid: this.targetId
-      }, res => {
-        const detail = isEmpty(res) ? [] : res
-        detail.forEach(item => {
-          !isEmpty(item.config) && item.config.forEach(one => {
-            one.dataBaseGuid = item.guid
+      return new Promise(resolve => {
+        this.request('GET', '/monitor/api/v2/service/db_keyword/list', {
+          type: this.keywordType,
+          guid: this.targetId
+        }, res => {
+          const detail = isEmpty(res) ? [] : res
+          detail.forEach(item => {
+            !isEmpty(item.config) && item.config.forEach(one => {
+              one.dataBaseGuid = item.guid
+            })
           })
+          Vue.set(this, 'allDataBaseDataInfo', detail)
+          resolve(this.allDataBaseDataInfo)
         })
-        Vue.set(this, 'allDataBaseDataInfo', detail)
       })
     },
     addDataBase() {
@@ -1346,10 +1369,10 @@ export default {
           if (!this.isAddState) { // 日志编辑
             method = 'PUT'
           }
-          this.request(method, '/monitor/api/v2/service/log_keyword/log_keyword_config', params, () => {
+          this.request(method, '/monitor/api/v2/service/log_keyword/log_keyword_config', params, async () => {
             this.$Message.success(this.$t('m_tips_success'))
             this.isTableChangeFormShow = false
-            this.getLogKeyWordDetail()
+            this.getDetail(this.targetId)
           })
         }
         else {
@@ -1359,10 +1382,10 @@ export default {
           if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
             return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, () => {
+          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, async () => {
             this.$Message.success(this.$t('m_tips_success'))
             this.isTableChangeFormShow = false
-            this.getDataBaseDetail()
+            this.getDetail(this.targetId)
           })
         }
       }
