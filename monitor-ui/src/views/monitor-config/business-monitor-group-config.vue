@@ -76,17 +76,15 @@
                   <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
                   <Col span="4">
-                  <Input v-model.trim="item.matchingSourceValue"
+                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
                          :disabled="view"
-                         type='textarea'
-                         :rows='2'
                          style="width:90%"
                   >
                   </Input>
                   </Col>
 
                   <Col span="4">
-                  <span>{{item.matchingResult ? item.matchingResultText : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
                     type="info"
                     ghost
@@ -145,16 +143,14 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.matchingSourceValue"
+                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
                          :disabled="view"
-                         type='textarea'
-                         :rows='2'
                          style="width:90%"
                   >
                   </Input>
                   </Col>
                   <Col span="4">
-                  <span>{{item.matchingResult ? item.matchingResultText : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
                     type="info"
                     ghost
