@@ -39,7 +39,23 @@ func CreateLogKeywordMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogKeywordMonitor(&param)
+	var err error
+	if len(param.LogPath) == 0 {
+		err = fmt.Errorf("Param log_path is empty ")
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	for _, v := range param.LogPath {
+		if !strings.HasPrefix(v, "/") {
+			err = fmt.Errorf("Path:%s illegal ", v)
+			break
+		}
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.CreateLogKeywordMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -51,6 +67,10 @@ func UpdateLogKeywordMonitor(c *gin.Context) {
 	var param models.LogKeywordMonitorObj
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if !strings.HasPrefix(param.LogPath, "/") {
+		middleware.ReturnValidateError(c, fmt.Sprintf("Path:%s illegal ", param.LogPath))
 		return
 	}
 	var endpointList []string
