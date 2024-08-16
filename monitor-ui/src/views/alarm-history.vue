@@ -573,18 +573,19 @@ export default {
       overflow-x: auto;
 
       .card-pagination {
+        width: 40%;
         position: fixed;
         bottom: 0px;
         right: 0px;
         opacity: 1;
-        margin-bottom: 20px;
         background: #fff;
+        padding-bottom: 20px;
       }
 
       .alarm-card-container {
         height: 740px;
         overflow-y: auto;
-
+        padding-bottom: 40px;
         &::-webkit-scrollbar {
           width: 6px;
           height: 6px;
