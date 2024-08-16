@@ -14,3 +14,4 @@ CREATE TABLE `db_keyword_alarm` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
+alter table custom_chart_series_config modify column series_name varchar(512) default null;
