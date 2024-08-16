@@ -523,7 +523,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 			v.IsLogMonitor = true
 			v.Log = v.Content
 			if v.EndValue > 0 {
-				v.Start, v.End = v.End, v.Start
+				//v.Start, v.End = v.End, v.Start
 				if v.EndValue < v.StartValue {
 					v.StartValue = v.EndValue
 				} else {
