@@ -19,7 +19,7 @@ func ListDbMetricMonitor(c *gin.Context) {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.GetDbMetricByServiceGroup(guid)
+		result, err := db.QueryDbMetricWithServiceGroup(guid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
