@@ -6,7 +6,7 @@
         <FormItem :label="$t('m_template_name')">
           <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
             <Input
-              v-model="configInfo.name"
+              v-model.trim="configInfo.name"
               maxlength="30"
               show-word-limit
               style="width: 96%"
@@ -28,7 +28,7 @@
         </template>
         <FormItem  v-if="showTemplate === true" :label="$t('m_json_regular')" style="margin-bottom: 12px;">
           <Input
-            v-model="configInfo.json_regular"
+            v-model.trim="configInfo.json_regular"
             maxlength="200"
             show-word-limit
             type="textarea"

@@ -94,7 +94,7 @@
                 <span style="color:red">*</span>
                 {{ $t('m_alarmName') }}
               </span>
-              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit></Input>
+              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit></Input>
             </FormItem>
             <FormItem>
               <span slot="label">
@@ -171,7 +171,7 @@
               <Input
                 type="textarea"
                 :disabled="!isEditState"
-                v-model="formData.content"
+                v-model.trim="formData.content"
                 :maxlength="200"
               >
               </Input>
@@ -213,7 +213,7 @@
                 </Col>
                 <Col span="5">
                 <Input
-                  v-model="item.description"
+                  v-model.trim="item.description"
                   clearable
                   :disabled="!isEditState"
                   style="width:97%"
