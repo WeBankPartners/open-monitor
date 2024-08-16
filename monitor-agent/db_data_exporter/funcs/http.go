@@ -117,7 +117,7 @@ func handleGetLastKeyword(w http.ResponseWriter, r *http.Request) {
 	taskLock.RLock()
 	for _, input := range param {
 		for _, v := range taskList {
-			if v.KeywordGuid == input.KeywordGuid {
+			if v.KeywordGuid == input.KeywordGuid && v.Endpoint == input.Endpoint {
 				input.KeywordContent = v.KeywordContent
 				break
 			}
