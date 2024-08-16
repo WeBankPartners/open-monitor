@@ -1351,7 +1351,7 @@ export default {
     },
     confirmLayoutType(data) {
       if (isEmpty(data)) {
-        return
+        return 'customize'
       }
       let res = ''
       const isTwo = data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6)
@@ -1373,37 +1373,47 @@ export default {
     },
     // 在新增时计算DisplayConfig的值
     calculateDisplayConfig() {
-      const finalItem = {}
-      // 先筛选出最下面的元素，再给这个元素填充
-      const maxY = maxBy(this.allPageLayoutData, item => item.allGroupDisplayConfig.y).allGroupDisplayConfig.y
-      const sameMaxYData = filter(this.allPageLayoutData, item => item.allGroupDisplayConfig.y === maxY)
-      const maxX = maxBy(sameMaxYData, item => item.allGroupDisplayConfig.x).allGroupDisplayConfig.x
-      const lastOneArr = filter(sameMaxYData, item => item.allGroupDisplayConfig.x === maxX)
-      // 用于获取更改目标组的排列
-      const isStandardArrangement = this.allPageLayoutData.every(item => item.allGroupDisplayConfig.w === lastOneArr[0].allGroupDisplayConfig.w && item.allGroupDisplayConfig.h === lastOneArr[0].allGroupDisplayConfig.h)
-      if (isStandardArrangement) {
-        finalItem.w = lastOneArr[0].allGroupDisplayConfig.w
-        finalItem.h = lastOneArr[0].allGroupDisplayConfig.h
-      }
-      else {
-        finalItem.w = 6
-        finalItem.h = 7
-      }
-
-      if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
-        const lastOne = lastOneArr[0].allGroupDisplayConfig
-        if (lastOne.x + lastOne.w + finalItem.w > 12) {
-          finalItem.y = lastOne.y + 7
-          finalItem.x = 0
+      let finalItem = {}
+      if (!isEmpty(this.allPageLayoutData)) {
+        // 先筛选出最下面的元素，再给这个元素填充
+        const maxY = maxBy(this.allPageLayoutData, item => item.allGroupDisplayConfig.y).allGroupDisplayConfig.y
+        const sameMaxYData = filter(this.allPageLayoutData, item => item.allGroupDisplayConfig.y === maxY)
+        const maxX = maxBy(sameMaxYData, item => item.allGroupDisplayConfig.x).allGroupDisplayConfig.x
+        const lastOneArr = filter(sameMaxYData, item => item.allGroupDisplayConfig.x === maxX)
+        // 用于获取更改目标组的排列
+        const isStandardArrangement = this.allPageLayoutData.every(item => item.allGroupDisplayConfig.w === lastOneArr[0].allGroupDisplayConfig.w && item.allGroupDisplayConfig.h === lastOneArr[0].allGroupDisplayConfig.h)
+        if (isStandardArrangement) {
+          finalItem.w = lastOneArr[0].allGroupDisplayConfig.w
+          finalItem.h = lastOneArr[0].allGroupDisplayConfig.h
         }
         else {
-          finalItem.y = lastOne.y
-          finalItem.x = lastOne.x + lastOne.w
+          finalItem.w = 6
+          finalItem.h = 7
+        }
+
+        if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
+          const lastOne = lastOneArr[0].allGroupDisplayConfig
+          if (lastOne.x + lastOne.w + finalItem.w > 12) {
+            finalItem.y = lastOne.y + 7
+            finalItem.x = 0
+          }
+          else {
+            finalItem.y = lastOne.y
+            finalItem.x = lastOne.x + lastOne.w
+          }
+        }
+        else {
+          finalItem.x = 0
+          finalItem.y = 0
         }
       }
       else {
-        finalItem.x = 0
-        finalItem.y = 0
+        finalItem = {
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 7
+        }
       }
       return finalItem
     }
