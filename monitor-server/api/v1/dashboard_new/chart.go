@@ -215,6 +215,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 	queryList = []*models.QueryMonitorData{}
 	legend := "$custom"
 	for _, dataConfig := range chartSeries {
+		legend = "$custom"
 		log.Logger.Debug("chart series display config", log.JsonObj("dataConfig", dataConfig))
 		tmpPromQl := ""
 		tmpPromQl, err = db.GetPromQLByMetric(dataConfig.Metric, dataConfig.MonitorType, dataConfig.ServiceGroup)
