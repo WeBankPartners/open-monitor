@@ -178,13 +178,13 @@
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
-                    <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="top">
+                    <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <span class='header-grid-name-text'>{{item.i}}</span>
                     </Tooltip>
                     <span  v-else @click.stop="">
                       <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
-                    <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="top">
+                    <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" ></Icon>
                       <Icon v-if="editChartId === item.id" size="20" type="md-close" @click.stop="cancelEditTitle(item)" ></Icon>
@@ -258,7 +258,7 @@
     </Drawer>
 
     <!-- 分组新增 -->
-    <Modal v-model="showGroupMgmt" :title="$t('m_edit_screen_group')" :mask-closable="false">
+    <Modal v-model="showGroupMgmt" :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')" :mask-closable="false">
       <div>
         <Form :label-width="90">
           <FormItem :label="$t('m_group_chart_name')">
@@ -752,6 +752,8 @@ export default {
     async savePanelInfo() {
       await this.submitPanelInfo()
       this.$Message.success(this.$t('m_tips_success'))
+      this.chartLayoutType = 'customize'
+      this.getPannelList(this.activeGroup)
     },
     returnPreviousPage() {
       this.$router.push({
@@ -800,7 +802,7 @@ export default {
     },
     getPanelGroupInfo(groupName) {
       this.panelGroupInfo = []
-      this.layoutData.forEach((d, dIndex) => {
+      this.allPageLayoutData.forEach((d, dIndex) => {
         const group = {
           index: dIndex,
           label: d.i,
@@ -1221,11 +1223,16 @@ export default {
       this.isModalShow = true
     },
     onLayoutRadioChange(type) {
-      document.querySelector('#chartLayoutPopTipButton').click()
-      this.tempChartLayoutType = type
-      this.$nextTick(() => {
-        this.chartLayoutType = this.previousChartLayoutType
-      })
+      if (this.isEditStatus) {
+        document.querySelector('#chartLayoutPopTipButton').click()
+        this.tempChartLayoutType = type
+        this.$nextTick(() => {
+          this.chartLayoutType = this.previousChartLayoutType
+        })
+      }
+      else {
+        this.setChartLayoutType(type)
+      }
     },
 
     onLayoutPopTipConfirm() {
