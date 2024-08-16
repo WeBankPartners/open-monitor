@@ -3,14 +3,14 @@
     <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
       <div>
         <Input
-          v-model="searchParams.name"
+          v-model.trim="searchParams.name"
           :placeholder="$t('m_template_name')"
           class="search-item"
           clearable
           @on-change="getTemplateList"
         ></Input>
         <Input
-          v-model="searchParams.update_user"
+          v-model.trim="searchParams.update_user"
           :placeholder="$t('m_updatedBy')"
           class="search-item"
           clearable

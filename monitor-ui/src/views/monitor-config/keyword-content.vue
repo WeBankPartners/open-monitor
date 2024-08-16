@@ -143,7 +143,7 @@
                       </Col>
                       <Col span="5">
                       <Input
-                        v-model="item.notify.description"
+                        v-model.trim="item.notify.description"
                         clearable
                         :disabled="!isEditState"
                         style="width:99%"
@@ -1120,7 +1120,7 @@ export default {
       }
       if (this.addAndEditModal.isAdd) {
         const pathFlag = this.addAndEditModal.pathOptions.every(item => item.path !== '')
-        if (!pathFlag) {
+        if (!pathFlag || this.addAndEditModal.pathOptions.length === 0) {
           return this.$Message.error('日志路径不能为空')
         }
       }
@@ -1130,7 +1130,7 @@ export default {
         }
       }
       const endpointRelFlag = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
-      if (!endpointRelFlag) {
+      if (!endpointRelFlag || this.addAndEditModal.dataConfig.endpoint_rel.length === 0) {
         return this.$Message.error('映射不能为空')
       }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))

@@ -20,7 +20,7 @@
             <FormItem :label="$t('m_template_name')">
               <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
                 <Input
-                  v-model="configInfo.name"
+                  v-model.trim="configInfo.name"
                   maxlength="30"
                   show-word-limit
                   style="width: 96%"
@@ -42,7 +42,7 @@
                   <div v-html="regRes" style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
                 </div>
                 <Input
-                  v-model="configInfo.json_regular"
+                  v-model.trim="configInfo.json_regular"
                   type="textarea"
                   style="width: 96%"
                 />
@@ -51,7 +51,7 @@
             </FormItem>
             <FormItem :label="$t('m_log_example')">
               <Input
-                v-model="configInfo.demo_log"
+                v-model.trim="configInfo.demo_log"
                 type="textarea"
                 :rows="12"
                 style="width: 96%"
@@ -66,7 +66,7 @@
             <FormItem :label="$t('m_matching_result')">
               <Input
                 disabled
-                v-model="configInfo.calc_result.match_text"
+                v-model.trim="configInfo.calc_result.match_text"
                 type="textarea"
                 :rows="12"
                 style="width: 96%"
