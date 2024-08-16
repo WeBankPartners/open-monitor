@@ -31,7 +31,7 @@ func GetDbMetricByServiceGroup(serviceGroup string) (result []*models.DbMetricMo
 func GetDbMetricByEndpoint(endpointGuid string) (result []*models.DbMetricMonitorObj, err error) {
 	result = []*models.DbMetricMonitorObj{}
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select distinct t3.* from db_metric_endpoint_rel t1 left join db_metric_monitor t2 on t1.db_metric_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.source_endpoint=?", endpointGuid).Find(&serviceGroupTable)
+	err = x.SQL("select distinct t3.* from db_metric_endpoint_rel t1 left join db_metric_monitor t2 on t1.db_metric_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpointGuid, endpointGuid).Find(&serviceGroupTable)
 	if err != nil {
 		return result, fmt.Errorf("Query database fail,%s ", err.Error())
 	}

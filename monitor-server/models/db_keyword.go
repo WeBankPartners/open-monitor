@@ -72,4 +72,5 @@ type DbKeywordAlarm struct {
 type DbLastKeywordDto struct {
 	KeywordGuid    string `json:"keyword_guid"`
 	KeywordContent string `json:"keyword_content"`
+	Endpoint       string `json:"endpoint"`
 }
