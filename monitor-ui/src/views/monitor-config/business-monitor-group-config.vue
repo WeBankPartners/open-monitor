@@ -84,8 +84,9 @@
                   </Col>
 
                   <Col span="4">
-                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
+                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
@@ -150,8 +151,9 @@
                   </Input>
                   </Col>
                   <Col span="4">
-                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
+                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
