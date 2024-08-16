@@ -331,7 +331,7 @@ func doDbKeywordMonitorJob() {
 				continue
 			}
 			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
-				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
+				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid, Endpoint: config.TargetEndpoint}
 				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
 				} else {
@@ -354,7 +354,7 @@ func doDbKeywordMonitorJob() {
 			if alarmContent != "" {
 				alarmContent = alarmContent + "<br/>"
 			}
-			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid}
+			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid, Endpoint: config.TargetEndpoint}
 			if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
 				log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
 			} else {
