@@ -5,7 +5,7 @@
       <FormItem :label="$t('m_template_name')">
         <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
           <Input
-            v-model="configInfo.name"
+            v-model.trim="configInfo.name"
             maxlength="30"
             show-word-limit
             style="width: 96%"
@@ -27,7 +27,7 @@
       </template>
       <FormItem :label="$t('m_log_example')" v-if="showTemplate === true">
         <Input
-          v-model="configInfo.demo_log"
+          v-model.trim="configInfo.demo_log"
           type="textarea"
           :rows="11"
           style="width: 96%"

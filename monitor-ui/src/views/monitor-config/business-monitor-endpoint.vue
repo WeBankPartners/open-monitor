@@ -68,20 +68,20 @@
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_tableKey_regular')">
-            <Input disabled v-model="ruleModelConfig.addRow.json_regular" style="width:100%"/>
+            <Input disabled v-model.trim="ruleModelConfig.addRow.json_regular" style="width:100%"/>
           </FormItem>
           <FormItem :label="$t('m_tableKey_tags')">
-            <Input disabled v-model="ruleModelConfig.addRow.tags" style="width:100%" />
+            <Input disabled v-model.trim="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
         </Form>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_key')" :delay="1000">
-                <Input disabled v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+                <Input disabled v-model.trim="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_metric')" :delay="1000">
-                <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
+                <Input disabled v-model.trim="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select disabled v-model="item.agg_type" filterable clearable style="width:190px">
@@ -91,7 +91,7 @@
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
-                <Input disabled v-model="item.display_name" style="width: 160px" :placeholder="$t('m_tableKey_description')" />
+                <Input disabled v-model.trim="item.display_name" style="width: 160px" :placeholder="$t('m_tableKey_description')" />
               </Tooltip>
             </p>
             <div v-if="item.string_map.length > 0" :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
@@ -105,10 +105,10 @@
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('m_business_object')" :delay="1000">
-                    <Input disabled v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
+                    <Input disabled v-model.trim="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
                   </Tooltip>
                   <Tooltip :content="$t('m_log_server')" :delay="1000">
-                    <Input disabled v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
+                    <Input disabled v-model.trim="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
                   </Tooltip>
                 </p>
               </template>
@@ -143,10 +143,10 @@
                   </Select>
                 </Tooltip>
                 <Tooltip :content="$t('m_business_object')" :delay="1000">
-                  <Input disabled v-model="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
+                  <Input disabled v-model.trim="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
                 </Tooltip>
                 <Tooltip :content="$t('m_log_server')" :delay="1000">
-                  <Input disabled v-model="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
+                  <Input disabled v-model.trim="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
                 </Tooltip>
               </p>
             </template>
@@ -165,16 +165,16 @@
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_field_displayName')">
-            <Input disabled v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
+            <Input disabled v-model.trim="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
           <FormItem :label="$t('m_field_metric')">
-            <Input disabled v-model="dbModelConfig.addRow.metric" style="width:520px" />
+            <Input disabled v-model.trim="dbModelConfig.addRow.metric" style="width:520px" />
           </FormItem>
           <FormItem label="SQL">
             <Input disabled v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
           <FormItem :label="$t('m_field_type')">
-            <Select disabled v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
+            <Select disabled v-model.trim="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
             </Select>
           </FormItem>
@@ -183,10 +183,10 @@
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_db')" :delay="1000">
-                <Input disabled v-model="item.target_endpoint" style="width:290px" />
+                <Input disabled v-model.trim="item.target_endpoint" style="width:290px" />
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:290px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:290px" />
               </Tooltip>
             </p>
           </template>
@@ -208,16 +208,16 @@
         </div>
         <div style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 640px" disabled v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align:center">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:315px" />
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:315px" />
               </Tooltip>
             </p>
           </template>
