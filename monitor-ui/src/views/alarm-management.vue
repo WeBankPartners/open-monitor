@@ -85,6 +85,8 @@
         <Button @click="cancelRemark">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
+    <!-- 新告警声音提示 -->
+    <AlertSoundTrigger :timeInterval="10" ></AlertSoundTrigger>
   </div>
 </template>
 
@@ -98,6 +100,7 @@ import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
 import AlarmCard from '@/components/alarm-card.vue'
+import AlertSoundTrigger from '@/components/alert-sound-trigger.vue'
 import SearchBadge from '../components/search-badge.vue'
 import GlobalLoading from '../components/globalLoading.vue'
 
@@ -112,7 +115,8 @@ export default {
     ClassicAlarm,
     AlarmCard,
     SearchBadge,
-    GlobalLoading
+    GlobalLoading,
+    AlertSoundTrigger
   },
   data() {
     return {
