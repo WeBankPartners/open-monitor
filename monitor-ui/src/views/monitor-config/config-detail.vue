@@ -194,7 +194,7 @@
             >
               <Row>
                 <Col span="3">
-                <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                <span style="margin-right: 8px;line-height: 32px;">{{$t('m_' + item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('m_field_role')">
@@ -291,14 +291,14 @@ const initFormData = {
   content: '', // 通知内容
   notify: [
     {
-      alarm_action: 'm_firing',
+      alarm_action: 'firing',
       proc_callback_key: '',
       notify_roles: [],
       proc_callback_mode: '',
       description: ''
     },
     {
-      alarm_action: 'm_ok',
+      alarm_action: 'ok',
       proc_callback_key: '',
       notify_roles: [],
       proc_callback_mode: '',
