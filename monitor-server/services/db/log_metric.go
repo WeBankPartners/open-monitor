@@ -179,14 +179,14 @@ func ListLogMetricStringMap(logMetricConfig string) (result []*models.LogMetricS
 	return result
 }
 
-func GetLogMetricMonitorByCond(logPath []string, guid, metricType, monitorType string) (list []*models.LogMetricMonitorTable, err error) {
+func GetLogMetricMonitorByCond(logPath []string, guid, serviceGroup string) (list []*models.LogMetricMonitorTable, err error) {
 	list = []*models.LogMetricMonitorTable{}
 	for _, path := range logPath {
 		var subList []*models.LogMetricMonitorTable
 		if guid == "" {
-			err = x.SQL("select * from log_metric_monitor where log_path=? and metric_type=? and monitor_type=?", path, metricType, monitorType).Find(&subList)
+			err = x.SQL("select * from log_metric_monitor where log_path=? and service_group=?", path, serviceGroup).Find(&subList)
 		} else {
-			err = x.SQL("select * from log_metric_monitor where log_path=? and metric_type=? and monitor_type=? and guid <>?", path, metricType, monitorType, guid).Find(&subList)
+			err = x.SQL("select * from log_metric_monitor where log_path=? and service_group=? and guid <>?", path, serviceGroup, guid).Find(&subList)
 		}
 		if len(subList) > 0 {
 			list = append(list, subList...)
