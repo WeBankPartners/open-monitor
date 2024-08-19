@@ -517,5 +517,6 @@
   "m_layout_change_tips": "Switching the layout will automatically reset the layout, and the previous layout will be overwritten. Do you confirm the operation?",
   "m_is_requesting": "Is requesting",
   "m_log": "log",
-  "m_noProcessPermission": "Operation Failed: No permission to use the current process"
+  "m_noProcessPermission": "Operation Failed: No permission to use the current process",
+  "m_new_alert": "New Alert"
 }
