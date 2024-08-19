@@ -225,12 +225,21 @@ func GetDbKeywordMonitorByName(guid, name, serviceGroup string) (list []*models.
 	return
 }
 
-func GetLogKeywordConfigByName(guid, name, logKeywordMonitorGuid string) (list []*models.LogKeywordConfigTable, err error) {
-	list = []*models.LogKeywordConfigTable{}
+func GetLogKeywordConfigUniqueData(guid, name, keyword, logKeywordMonitorGuid string) (sameNameList, sameKeywordList []*models.LogKeywordConfigTable, err error) {
+	sameNameList = []*models.LogKeywordConfigTable{}
 	if guid == "" {
-		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=?", logKeywordMonitorGuid, name).Find(&list)
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=?", logKeywordMonitorGuid, name).Find(&sameNameList)
 	} else {
-		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=? and guid<>?", logKeywordMonitorGuid, name, guid).Find(&list)
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name=? and guid<>?", logKeywordMonitorGuid, name, guid).Find(&sameNameList)
+	}
+	if err != nil {
+		return
+	}
+	sameKeywordList = []*models.LogKeywordConfigTable{}
+	if keyword == "" {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and keyword=?", logKeywordMonitorGuid, keyword).Find(&sameKeywordList)
+	} else {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and keyword=? and guid<>?", logKeywordMonitorGuid, keyword, guid).Find(&sameKeywordList)
 	}
 	return
 }
