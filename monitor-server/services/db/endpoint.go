@@ -196,22 +196,41 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 	return err
 }
 
-func UpdateEndpointData(endpoint *models.EndpointNewTable, operator string) (err error) {
+func UpdateEndpointData(oldEndpoint, endpoint *models.EndpointNewTable, operator string) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
+	var actions []*Action
 	if endpoint.Ip != "" {
-		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
-		x.Exec("update endpoint set ip=? where guid=?", endpoint.Ip, endpoint.Guid)
+		actions = append(actions, &Action{Sql: "update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", Param: []interface{}{
+			endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid,
+		}})
+		actions = append(actions, &Action{Sql: "update endpoint set ip=? where guid=?", Param: []interface{}{endpoint.Ip, endpoint.Guid}})
+		//_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
+		//x.Exec("update endpoint set ip=? where guid=?", endpoint.Ip, endpoint.Guid)
 	} else {
-		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
+		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", Param: []interface{}{endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid}})
+		//_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=?,update_user=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, operator, endpoint.Guid)
 	}
+	if endpoint.AgentAddress != endpoint.EndpointAddress {
+		actions = append(actions, &Action{Sql: "update endpoint set address_agent=?,address=?,step=? where guid=?", Param: []interface{}{endpoint.AgentAddress, endpoint.EndpointAddress, endpoint.Step, endpoint.Guid}})
+	} else {
+		actions = append(actions, &Action{Sql: "update endpoint set address=?,step=? where guid=?", Param: []interface{}{endpoint.EndpointAddress, endpoint.Step, endpoint.Guid}})
+	}
+	if oldEndpoint.MonitorType == "host" && (oldEndpoint.AgentAddress != endpoint.AgentAddress) {
+		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=? where agent_address=?", Param: []interface{}{endpoint.AgentAddress, oldEndpoint.AgentAddress}})
+		actions = append(actions, &Action{Sql: "update endpoint set address=? where address=?", Param: []interface{}{endpoint.AgentAddress, oldEndpoint.AgentAddress}})
+	}
+	err = Transaction(actions)
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
-	} else {
-		if endpoint.AgentAddress != endpoint.EndpointAddress {
-			x.Exec("update endpoint set address_agent=?,address=?,step=? where guid=?", endpoint.AgentAddress, endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
-		} else {
-			x.Exec("update endpoint set address=?,step=? where guid=?", endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
-		}
 	}
+	//if err != nil {
+	//	err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
+	//} else {
+	//	if endpoint.AgentAddress != endpoint.EndpointAddress {
+	//		x.Exec("update endpoint set address_agent=?,address=?,step=? where guid=?", endpoint.AgentAddress, endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
+	//	} else {
+	//		x.Exec("update endpoint set address=?,step=? where guid=?", endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
+	//	}
+	//}
 	return
 }
