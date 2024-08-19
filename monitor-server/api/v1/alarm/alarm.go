@@ -579,6 +579,10 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
+		if len(endpointList) == 0 {
+			mid.ReturnSuccessData(c, m.AlarmProblemQueryResult{Data: []*m.AlarmProblemQuery{}, Count: []*m.AlarmProblemCountObj{}, Page: &m.PageInfo{}})
+			return
+		}
 	}
 	if len(param.Endpoint) > 0 {
 		endpointList = append(endpointList, param.Endpoint...)
