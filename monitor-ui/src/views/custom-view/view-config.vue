@@ -268,7 +268,7 @@
             <Row v-if="panelGroupInfo.length > 0">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
               <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">
-                <Tooltip :content="panel.label">
+                <Tooltip :content="panel.label" transfer :max-width='200'>
                   <div class="ellipsis-text">{{ panel.label }}</div>
                 </Tooltip>
               </Checkbox>
@@ -841,13 +841,13 @@ export default {
         this.panel_group_list.push(this.groupName)
         this.panelGroupInfo.forEach(p => {
           if (p.setGroup) {
-            this.layoutData[p.index].group = this.groupName
+            this.allPageLayoutData[p.index].group = this.groupName
           }
         })
       }
       else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
-        this.layoutData.forEach(d => {
+        this.allPageLayoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
             d.group = this.groupName
           }
@@ -855,10 +855,10 @@ export default {
         this.panelGroupInfo.forEach(p => {
           if (p.hasGroup === false) {
             if (p.setGroup && p.group === '') {
-              this.layoutData[p.index].group = this.groupName
+              this.allPageLayoutData[p.index].group = this.groupName
             }
             else if (!p.setGroup) {
-              this.layoutData[p.index].group = ''
+              this.allPageLayoutData[p.index].group = ''
             }
           }
         })
@@ -1063,6 +1063,7 @@ export default {
         name: item.i
       })
       this.editChartId = null
+      this.getPannelList(this.activeGroup)
       this.$Message.success(this.$t('m_tips_success'))
     },
     chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {

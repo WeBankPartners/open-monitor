@@ -111,9 +111,9 @@ export default {
     localStorage.removeItem('jumpCallData')
     const outerData = jumpCallData || this.$route.params
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
-      const option_value = outerData.option_value
-      const option_value_split = option_value.split('_')
-      const option_text = option_value_split.slice(0, option_value_split.length - 1).join('_')
+      const option_value = outerData.option_value || ''
+      const option_value_split = option_value ? option_value.split('_') : ''
+      const option_text = option_value_split ? option_value_split.slice(0, option_value_split.length - 1).join('_') : ''
       this.endpointList = [{
         active: false,
         id: '',
@@ -122,11 +122,11 @@ export default {
         option_value,
         type: outerData.type
       }]
-      this.endpoint = option_value
+      this.endpoint = option_value || ''
       this.endpointObject = outerData
     }
     if (this.$root.$validate.isEmpty_reset(outerData) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
-      this.endpoint = this.$route.query.endpoint
+      this.endpoint = this.$route.query.endpoint || ''
       this.$root.$store.commit('storeip', {
         id: '',
         option_value: this.$route.query.endpoint,
