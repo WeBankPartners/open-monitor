@@ -248,19 +248,27 @@ export default {
           fixed: 'right',
           render: (h, params) => (params.row.permission === 'mgmt'
             ? (<div style="display:flex;justify-content: center;">
-              <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
-                <Icon type="md-create" size="16"></Icon>
-              </Button>
-              <Button class="ml-2 mr-2" size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
-                <Icon type="md-person" size="16"></Icon>
-              </Button>
-              <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
-                <Icon type="md-trash" size="16"></Icon>
-              </Button>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_permissions')}>
+                <Button class="ml-2 mr-2" size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
+                  <Icon type="md-person" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_remove')}>
+                <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
+                  <Icon type="md-trash" size="16"></Icon>
+                </Button>
+              </Tooltip>
             </div>) : (<div style="display:flex;justify-content: center;">
-              <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
-                <Icon type="md-eye" size="16"></Icon>
-              </Button>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_view')}>
+                <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
+                  <Icon type="md-eye" size="16"></Icon>
+                </Button>
+              </Tooltip>
             </div>)
           )
         }
