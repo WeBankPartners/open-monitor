@@ -538,7 +538,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 					}
 					v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
 				}
-				v.StartString = v.EndString
+				//v.StartString = v.EndString
 			} else {
 				v.StartValue = 1
 				if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
@@ -1403,6 +1403,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
 	var alarmQuery []*m.AlarmProblemQuery
+	var logKeywordConfigList, dbKeywordMonitorList []string
 	err = x.SQL(sql, params...).Find(&alarmQuery)
 	if len(alarmQuery) > 0 {
 		//var logMonitorStrategyIds []string
@@ -1410,24 +1411,67 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
 			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+				if v.SMetric == "log_monitor" {
+					logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
+				} else {
+					dbKeywordMonitorList = append(dbKeywordMonitorList, v.AlarmStrategy)
+				}
 				v.IsLogMonitor = true
+				v.Log = v.Content
 				if v.EndValue > 0 {
-					v.Start, v.End = v.End, v.Start
-					v.StartValue = v.EndValue - v.StartValue + 1
-					if strings.Contains(v.Content, "^^") {
-						v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+					//v.Start, v.End = v.End, v.Start
+					if v.EndValue < v.StartValue {
+						v.StartValue = v.EndValue
+					} else {
+						v.StartValue = v.EndValue - v.StartValue + 1
 					}
-					v.StartString = v.EndString
+					if strings.Contains(v.Log, "^^") {
+						if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+							v.Content = v.Log[:brIndex+5]
+							v.Log = v.Log[brIndex+5:]
+						} else {
+							v.Content = ""
+						}
+						v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
+					}
+					//v.StartString = v.EndString
 				} else {
 					v.StartValue = 1
-					if strings.HasSuffix(v.Content, "^^") {
-						v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+					if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+						v.Content = v.Log[:brIndex+5]
+						v.Log = v.Log[brIndex+5:]
+					} else {
+						v.Content = ""
+					}
+					if strings.HasSuffix(v.Log, "^^") {
+						v.Log = v.StartString + ": " + v.Log[:len(v.Log)-2]
+					} else {
+						v.Log = v.StartString + ": " + v.Log
 					}
 				}
 			}
-			if strings.Contains(v.Content, "\n") {
-				v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			if strings.Contains(v.Log, "\n") {
+				v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 			}
+			//if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+			//	v.IsLogMonitor = true
+			//	if v.EndValue > 0 {
+			//		v.Start, v.End = v.End, v.Start
+			//		v.StartValue = v.EndValue - v.StartValue + 1
+			//		if strings.Contains(v.Content, "^^") {
+			//			v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+			//		}
+			//		v.StartString = v.EndString
+			//	} else {
+			//		v.StartValue = 1
+			//		if strings.HasSuffix(v.Content, "^^") {
+			//			v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+			//		}
+			//	}
+			//}
+			//if strings.Contains(v.Content, "\n") {
+			//	v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			//}
 		}
 	}
 	if customQueryParam.Enable {
@@ -1496,29 +1540,66 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if len(alarmStrategyList) > 0 {
+	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
+		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
+		if matchKeywordStrategyErr != nil {
+			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
 			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
 		} else {
 			for _, v := range result.Data {
-				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
-				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
-					if strategyRow.ServiceGroup == "" {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
-						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
-							for _, endpointServiceRelRow := range endpointServiceList {
-								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+				var tmpStrategyGroups []*m.AlarmStrategyGroup
+				if v.SMetric == "log_monitor" {
+					if serviceGroup, ok := logKeywordConfigMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else if v.SMetric == "db_keyword_monitor" {
+					if serviceGroup, ok := dbKeywordMonitorMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else {
+					if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+						if strategyRow.ServiceGroup == "" {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+							if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+								for _, endpointServiceRelRow := range endpointServiceList {
+									tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+								}
 							}
+						} else {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 						}
-					} else {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 					}
 				}
 				v.StrategyGroups = tmpStrategyGroups
 			}
 		}
 	}
+	//if len(alarmStrategyList) > 0 {
+	//	strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
+	//	if matchErr != nil {
+	//		log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
+	//	} else {
+	//		for _, v := range result.Data {
+	//			tmpStrategyGroups := []*m.AlarmStrategyGroup{}
+	//			if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+	//				if strategyRow.ServiceGroup == "" {
+	//					tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+	//					if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+	//						for _, endpointServiceRelRow := range endpointServiceList {
+	//							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+	//						}
+	//					}
+	//				} else {
+	//					tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
+	//				}
+	//			}
+	//			v.StrategyGroups = tmpStrategyGroups
+	//		}
+	//	}
+	//}
 	return err, result
 }
 
