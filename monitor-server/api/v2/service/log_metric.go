@@ -69,7 +69,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		return
 	}
 	// 校验路径是否重复
-	if list, err = db.GetLogMetricMonitorByCond(param.LogPath, "", param.MetricType, param.MonitorType); err != nil {
+	if list, err = db.GetLogMetricMonitorByCond(param.LogPath, "", param.ServiceGroup); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -105,7 +105,7 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
 	}
 	// 校验路径是否重复
-	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.MetricType, param.MonitorType); err != nil {
+	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.ServiceGroup); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
