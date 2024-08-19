@@ -27,5 +27,6 @@
   "type_config_association_obj_error": "删除失败:类型配置有关联对象不允许删除",
   "type_config_association_obj_group_error": "删除失败:类型配置有关联对象组不允许删除",
   "alert_name_repeat_error": "保存失败:同名告警名称已存在",
-  "alert_keyword_repeat_error": "保存失败:同名告警关键字已存在"
+  "alert_keyword_repeat_error": "保存失败:同名告警关键字已存在",
+  "endpoint_host_delete_error": "删除失败:主机对象有关联的进程对象"
 }
