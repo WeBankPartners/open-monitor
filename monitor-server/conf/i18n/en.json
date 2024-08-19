@@ -26,5 +26,6 @@
   "type_config_name_repeat_error": "Save failed: The same type configuration already exists",
   "type_config_association_obj_error": "Delete failed: An associated object cannot be deleted",
   "type_config_association_obj_group_error": "Delete failed: The type configuration cannot be deleted if an associated object group exists",
-  "alert_name_repeat_error": "Save failed: The alarm with the same name already exists"
+  "alert_name_repeat_error": "Save failed: The alarm with the same name already exists",
+  "alert_keyword_repeat_error": "Save failed: The alarm with the same keyword already exists"
 }

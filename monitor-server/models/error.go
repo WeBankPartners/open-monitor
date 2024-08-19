@@ -37,4 +37,5 @@ type ErrorMessageObj struct {
 	TypeConfigNameAssociationObjectError      string `json:"type_config_association_obj_error"`
 	TypeConfigNameAssociationObjectGroupError string `json:"type_config_association_obj_group_error"`
 	AlertNameRepeatError                      string `json:"alert_name_repeat_error"`
+	AlertKeywordRepeatError                   string `json:"alert_keyword_repeat_error"`
 }
