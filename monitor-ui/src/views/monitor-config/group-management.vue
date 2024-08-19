@@ -236,14 +236,14 @@ export default {
           width: 180,
           render: (h, params) => (
             <div style="display: flex">
-              <Tooltip placement="top" max-width="400" content={this.$t('m_endpoint')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_endpoint')}>
                 <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.editEndpoints(params.row)
                 }}>
                   <Icon type="ios-cube" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_edit')}>
                 <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.editF(params.row)
                 }}>
@@ -251,7 +251,7 @@ export default {
                 </Button>
               </Tooltip>
 
-              <Tooltip placement="top" max-width="400" content={this.$t('m_permissions')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_permissions')}>
                 <Button class="mr-1" size="small" on-click={() => {
                   this.authorizeF(params.row)
                 }} type="warning">
@@ -260,6 +260,7 @@ export default {
               </Tooltip>
               <Poptip
                 confirm
+                transfer
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => {
