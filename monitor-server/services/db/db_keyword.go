@@ -412,7 +412,7 @@ func getDbKeywordLastRow(param *models.DbLastKeywordDto) (err error) {
 		return fmt.Errorf("Can not find db_data_exporter address ")
 	}
 	postDataByte, _ := json.Marshal([]*models.DbLastKeywordDto{param})
-	log.Logger.Info("getDbKeywordLastRow", log.String("postData", string(postDataByte)))
+	//log.Logger.Debug("getDbKeywordLastRow", log.String("postData", string(postDataByte)))
 	resp, err := http.Post(fmt.Sprintf("%s/db/lastkeyword", dbExportAddress), "application/json", strings.NewReader(string(postDataByte)))
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
