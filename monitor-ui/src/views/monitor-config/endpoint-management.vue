@@ -183,13 +183,13 @@
         <template>
           <div v-if="endpointRejectModel.addRow.type !== 'process'">
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode || disabledIp" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode || disabledIp" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -703,6 +703,15 @@ export default {
       isReviewMode: false,
       encryptKey: '', // 加密key
       systemType: '' // 0 自定义 1 系统
+    }
+  },
+  computed: {
+    disabledIp() {
+      if(['process', 'host'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
+        return true
+      } else {
+        return false
+      }
     }
   },
   mounted() {
