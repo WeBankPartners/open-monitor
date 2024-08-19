@@ -113,10 +113,11 @@ export default {
       this.cacheParams.id = id
       this.cacheParams.viewCondition = viewCondition
       this.getAlarmdata(id)
-      this.interval = setInterval(() => {
-        this.getAlarmdata(id)
-      }, (viewCondition.autoRefresh || 10) * 1000)
-
+      if (viewCondition.autoRefresh && viewCondition.autoRefresh > 0) {
+        this.interval = setInterval(() => {
+          this.getAlarmdata(id)
+        }, (viewCondition.autoRefresh || 10) * 1000)
+      }
     },
     getAlarmdata(id) {
       const params = {
