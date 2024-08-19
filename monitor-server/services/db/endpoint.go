@@ -234,3 +234,12 @@ func UpdateEndpointData(oldEndpoint, endpoint *models.EndpointNewTable, operator
 	//}
 	return
 }
+
+func GetProcessByHostEndpoint(hostIp string) (processEndpoints []*models.EndpointNewTable, err error) {
+	processEndpoints = []*models.EndpointNewTable{}
+	err = x.SQL("select * from endpoint_new where monitor_type='process' and ip=?", hostIp).Find(&processEndpoints)
+	if err != nil {
+		err = fmt.Errorf("query endpoint with process ip fail,%s ", err.Error())
+	}
+	return
+}
