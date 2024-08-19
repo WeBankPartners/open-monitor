@@ -252,7 +252,7 @@ export default {
       this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
     },
     goToNotify(item) {
-      if (item.notify_permission === 'no') {
+      if (item.notify_permission === 'no' || !item.notify_permission) {
         return this.$Message.error(this.$t('m_noProcessPermission'))
       }
       else if (item.notify_status === 'notStart') {
