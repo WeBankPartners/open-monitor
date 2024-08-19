@@ -44,11 +44,11 @@ func GetEndpointByType(endpointType, serviceGroup, endpointGroup, workspace stri
 		}
 	} else if endpointGroup != "" {
 		err = x.SQL("select guid from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&result)
-		if err == nil {
-			if workspace == "all_object" {
-				result = append([]*models.EndpointNewTable{{Guid: endpointGroup, Name: endpointGroup}}, result...)
-			}
-		}
+		//if err == nil {
+		//	if workspace == "all_object" {
+		//		result = append([]*models.EndpointNewTable{{Guid: endpointGroup, Name: endpointGroup}}, result...)
+		//	}
+		//}
 	} else {
 		err = x.SQL("select guid from endpoint_new where monitor_type=?", endpointType).Find(&result)
 	}
