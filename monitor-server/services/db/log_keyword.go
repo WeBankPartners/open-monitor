@@ -342,6 +342,7 @@ func doLogKeywordMonitorJob() {
 		return
 	}
 	if len(dataMap) == 0 {
+		log.Logger.Debug("doLogKeywordMonitorJob break with dataMap empty")
 		return
 	}
 	var logKeywordConfigs []*models.LogKeywordCronJobQuery
@@ -380,9 +381,11 @@ func doLogKeywordMonitorJob() {
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
+			log.Logger.Debug("doLogKeywordMonitorJob ignore lgoKeywordConfig", log.String("key", key))
 			continue
 		}
 		if newValue == 0 {
+			log.Logger.Debug("doLogKeywordMonitorJob ignore lgoKeywordConfig with empty value", log.String("key", key))
 			continue
 		}
 		addFlag := false
@@ -413,6 +416,7 @@ func doLogKeywordMonitorJob() {
 			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
 		}
 	}
+	log.Logger.Debug("doLogKeywordMonitorJob add or modify rows", log.JsonObj("addAlarmRows", addAlarmRows))
 	if len(addAlarmRows) == 0 {
 		return
 	}
@@ -556,7 +560,11 @@ func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
 		if execErr != nil {
 			err = execErr
 		} else {
-			if affectRowNum, _ := execResult.RowsAffected(); affectRowNum <= 0 {
+			affectRowNum, affectRowErr := execResult.RowsAffected()
+			if affectRowErr != nil {
+				err = fmt.Errorf("update log keyword alarm table tail,get affect row result error:%s ", affectRowErr.Error())
+				return
+			} else if affectRowNum <= 0 {
 				err = fmt.Errorf("update log keyword alarm table fail,affect row 0 with alarm_id=%d ", alarmObj.Id)
 			}
 		}
