@@ -360,7 +360,7 @@
     </ModalComponent>
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px; padding-bottom: 30px">
-      <div class="w-header" slot="title" style="display: flex;justify-content: space-between;">
+      <div class="w-header" style="display: flex;justify-content: space-between;">
         <div class="title">
           {{$t('m_db')}}
           <span class="underline"></span>
@@ -370,11 +370,13 @@
         </Button>
       </div>
       <Table
+        v-if="dataBaseTableData.length"
         class="log-file-table"
         size="small"
         :columns="dataBaseTableColumns"
         :data="dataBaseTableData"
       />
+      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     </section>
 
     <!--数据库-->
