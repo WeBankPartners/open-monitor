@@ -113,13 +113,18 @@ func CreateLogKeyword(c *gin.Context) {
 	if len(param.ActiveWindowList) > 0 {
 		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
-	var list []*models.LogKeywordConfigTable
-	if list, err = db.GetLogKeywordConfigByName(param.Guid, param.Name, param.LogKeywordMonitor); err != nil {
+	var sameNameList, sameKeywordList []*models.LogKeywordConfigTable
+	sameNameList, sameKeywordList, err = db.GetLogKeywordConfigUniqueData(param.Guid, param.Name, param.Keyword, param.LogKeywordMonitor)
+	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(list) > 0 {
+	if len(sameNameList) > 0 {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if len(sameKeywordList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
 		return
 	}
 	err = db.CreateLogKeyword(&param, middleware.GetOperateUser(c))
@@ -151,13 +156,18 @@ func UpdateLogKeyword(c *gin.Context) {
 		return
 	}
 	param.LogKeywordMonitor = logKeywordConfig.LogKeywordMonitor
-	var list []*models.LogKeywordConfigTable
-	if list, err = db.GetLogKeywordConfigByName(param.Guid, param.Name, param.LogKeywordMonitor); err != nil {
+	var sameNameList, sameKeywordList []*models.LogKeywordConfigTable
+	sameNameList, sameKeywordList, err = db.GetLogKeywordConfigUniqueData(param.Guid, param.Name, param.Keyword, param.LogKeywordMonitor)
+	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(list) > 0 {
+	if len(sameNameList) > 0 {
 		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if len(sameKeywordList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
 		return
 	}
 	if err = db.UpdateLogKeyword(&param, logKeywordConfig, middleware.GetOperateUser(c)); err != nil {
