@@ -8,7 +8,7 @@
             v-model="type"
             type="button"
             button-style="solid"
-            @on-change="typeChange"
+            @on-change="typeChange(true)"
             style="margin-right: 5px"
           >
             <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
@@ -24,7 +24,7 @@
             remote
             ref="select"
             @on-change="search"
-            @on-clear="typeChange"
+            @on-clear="typeChange(false)"
           >
             <Option v-for="(option, index) in targetOptions"
                     :value="option.guid"
@@ -82,15 +82,17 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    typeChange() {
+    typeChange(needDefaultTarget) {
       this.clearTargrt()
-      this.getTargrtList()
+      this.getTargrtList(needDefaultTarget)
     },
-    getTargrtList() {
+    getTargrtList(needDefaultTarget = true) {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.targetOptions = responseData
-        this.targrtId = this.targetOptions[0].guid
+        this.targetOptions = responseData || []
+        if (this.targetOptions.length > 0 && needDefaultTarget) {
+          this.targrtId = this.targetOptions[0].guid
+        }
         this.search()
       }, {isNeedloading: false})
     },
