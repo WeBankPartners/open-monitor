@@ -23,7 +23,7 @@ func ListDbMetricMonitor(c *gin.Context) {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
-			middleware.ReturnSuccessData(c, result)
+			middleware.ReturnSuccessData(c, []*models.DbMetricQueryObj{result})
 		}
 	}
 }
