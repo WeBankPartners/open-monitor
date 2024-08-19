@@ -183,13 +183,13 @@
         <template>
           <div v-if="endpointRejectModel.addRow.type !== 'process'">
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="(!endpointRejectModel.isAdd && ['process', 'host'].includes(endpointRejectModel.addRow.type)) || isReviewMode" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="(!endpointRejectModel.isAdd && ['process', 'host'].includes(endpointRejectModel.addRow.type)) || isReviewMode" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -656,8 +656,8 @@ export default {
           align: 'center',
           fixed: 'right',
           render: (h, params) => (
-            <div style="display: flex; justify-content: center;">
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_view')}>
+            <div style="display: flex;">
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_view')}>
                 <Button class="mr-1" size="small" type="info" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
                   this.isReviewMode = true
@@ -666,7 +666,7 @@ export default {
                   <Icon type="md-eye" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_edit')}>
                 <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.endpointRejectModel.modalFooter = null
                   this.isReviewMode = false
@@ -675,18 +675,19 @@ export default {
                   <Icon type="md-create" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_maintenanceWindow')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_maintenanceWindow')}>
                 <Button class="mr-1" size="small" on-click={() => this.maintenanceWindow(params.row)} type="primary">
                   <Icon type="ios-build" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_historicalAlert')}>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_historicalAlert')}>
                 <Button class="mr-1" size="small" type="warning" on-click={() => this.historyAlarm(params.row)}>
                   <Icon type="md-warning" />
                 </Button>
               </Tooltip>
               <Poptip
                 confirm
+                transfer
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => this.deleteConfirmModal(params.row)}>
