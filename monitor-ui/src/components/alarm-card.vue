@@ -1,5 +1,5 @@
 <template>
-  <Card style="margin-bottom: 8px;" class="xxx">
+  <Card style="margin-bottom: 8px;">
     <template slot="title">
       <div
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
