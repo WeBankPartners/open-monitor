@@ -373,7 +373,7 @@ func doLogKeywordMonitorJob() {
 			continue
 		}
 		if config.NotifyEnable > 0 {
-			notifyConfigMap[config.Guid] = 1
+			notifyConfigMap[config.LogKeywordConfigGuid] = 1
 		}
 		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", config.SourceEndpoint, config.TargetEndpoint, config.LogPath, config.Keyword)
 		newValue, oldValue = 0, 0
