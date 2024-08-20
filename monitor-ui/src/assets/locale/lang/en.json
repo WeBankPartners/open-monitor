@@ -518,5 +518,6 @@
   "m_is_requesting": "Is requesting",
   "m_log": "log",
   "m_noProcessPermission": "Operation Failed: No permission to use the current process",
-  "m_new_alert": "New Alert"
+  "m_new_alert": "New Alert",
+  "m_audio_prompt": "Audio Prompt"
 }

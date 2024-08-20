@@ -519,6 +519,7 @@
   "m_is_requesting": "请求中",
   "m_log": "日志",
   "m_noProcessPermission": "没有编排执行权限",
-  "m_new_alert": "新增告警"
+  "m_new_alert": "新增告警",
+  "m_audio_prompt": "音频提示"
 }
 
