@@ -464,7 +464,7 @@ func InActiveWindowList(activeWindowList string) bool {
 func inActiveWindow(activeWindow string) bool {
 	windowList := strings.Split(activeWindow, "-")
 	if len(windowList) != 2 {
-		log.Logger.Error("active window illegal")
+		log.Logger.Debug("active window illegal", log.String("activeWindow", activeWindow))
 		return true
 	}
 	start := windowList[0]
