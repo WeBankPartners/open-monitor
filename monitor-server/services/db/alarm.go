@@ -2087,7 +2087,6 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
-		log.Logger.Debug("http procDef", log.String("name", name), log.String("version", version), log.String("response", string(resByteArr)))
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
 			return
@@ -2103,7 +2102,6 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 					return true
 				}
 			}
-			return true
 		}
 	}
 	return
