@@ -829,6 +829,11 @@ export default {
           d.group = ''
         }
       })
+      this.allPageLayoutData.forEach(d => {
+        if (d.group === group) {
+          d.group = ''
+        }
+      })
       this.savePanalEdit()
       this.activeGroup = 'ALL'
     },
@@ -1011,22 +1016,27 @@ export default {
         })
       })
 
-      if (this.layoutData.length !== this.allPageLayoutData.length) {
-        this.allPageLayoutData.forEach(item => {
-          const single = find(this.layoutData, {id: item.id})
-          if (isEmpty(single)) {
-            finalCharts.push(
-              {
-                id: item.id,
-                group: item.group,
-                name: item.i,
-                displayConfig: item.allGroupDisplayConfig,
-                groupDisplayConfig: item.partGroupDisplayConfig
-              }
-            )
+      this.allPageLayoutData.forEach(item => {
+        const single = find(this.layoutData, {id: item.id})
+        if (isEmpty(single)) {
+          finalCharts.push(
+            {
+              id: item.id,
+              group: item.group,
+              name: item.i,
+              displayConfig: item.allGroupDisplayConfig,
+              groupDisplayConfig: item.partGroupDisplayConfig
+            }
+          )
+        }
+        else {
+          // 解决分组修改后保存失效问题
+          const singleChart = find(finalCharts, {id: item.id})
+          if (!isEmpty(singleChart)) {
+            singleChart.group = item.group
           }
-        })
-      }
+        }
+      })
       return {
         id: this.pannelId,
         name: this.panalName,
