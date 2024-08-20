@@ -9,6 +9,16 @@
       <Button type="success" @click="addParams('low')" size="small"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Button>
       <Button type="warning" @click="addParams('medium')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
       <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
+      <div style="float: right;">
+        <span style="font-size: 14px;vertical-align: bottom;">{{$t('m_audio_prompt')}}：</span>
+        <i-switch size="large" @on-change="alertSoundChange">
+          <span slot="true">ON</span>
+          <span slot="false">OFF</span>
+        </i-switch>
+        <!-- 新告警声音提示 -->
+        {{ autoRefresh }}
+        <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="autoRefresh" ></AlertSoundTrigger>
+      </div>
     </div>
     <div class="alarm-list">
       <section class="alarm-card-container">
@@ -48,10 +58,12 @@
 
 <script>
 import AlarmCard from '@/components/alarm-card.vue'
+import AlertSoundTrigger from '@/components/alert-sound-trigger.vue'
 export default {
   name: '',
   components: {
-    AlarmCard
+    AlarmCard,
+    AlertSoundTrigger
   },
   data() {
     return {
@@ -81,7 +93,8 @@ export default {
         total: 0,
         startIndex: 1,
         pageSize: 10
-      }
+      },
+      autoRefresh: 0 // 保存刷新频率供告警列表使用
     }
   },
   mounted() {
@@ -92,6 +105,9 @@ export default {
     window.removeEventListener('visibilitychange', this.isTabActive, true)
   },
   methods: {
+    alertSoundChange(val) {
+      this.$refs.alertSoundTriggerRef.changeAudioPlay(val)
+    },
     isTabActive() {
       if (document.hidden) {
         this.clearAlarmInterval()
@@ -106,6 +122,7 @@ export default {
       clearInterval(this.interval)
     },
     getAlarm(id, viewCondition, permission) {
+      this.autoRefresh = viewCondition.autoRefresh
       if (!String(id).length) {
         return
       }
