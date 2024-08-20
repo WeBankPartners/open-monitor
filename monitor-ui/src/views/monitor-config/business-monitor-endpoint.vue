@@ -9,6 +9,12 @@
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
         </div>
+        <div class="content-header">
+          <div class="use-underline-title mr-4">
+            {{$t('m_log_file')}}
+            <span class="underline"></span>
+          </div>
+        </div>
         <Collapse v-model="single.logFile.logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
           <Panel v-for="(item, index) in single.logFile.config"
                  :key="index"
