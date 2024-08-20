@@ -1,6 +1,8 @@
 <template>
   <div>
-    <audio id="alarmAudioPlay" src="../assets/alarm-audio/level1.mp3"></audio>
+    <!-- {{ alertSoundTriggerOpen }} -->
+    <!-- <button @click="changeAudioPlay">Start Audio</button> -->
+    <audio id="alarmAudioPlay" src="../assets/alarm-audio/level1.mp3" loop></audio>
   </div>
 </template>
 
@@ -9,6 +11,7 @@ import dayjs from 'dayjs'
 export default {
   data() {
     return {
+      alertSoundTriggerOpen: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       latestAlert: {}
     }
@@ -22,11 +25,12 @@ export default {
     // 查询频率，默认10s，在自定义看板中以具体刷新频率为准
     timeInterval: {
       type: Number,
-      default: 5
+      default: 10
     }
   },
   mounted(){
     this.getAlarm()
+    this.audio = document.getElementById('alarmAudioPlay')
     this.interval = setInterval(() => {
       this.getAlarm()
     }, this.timeInterval * 1000)
@@ -35,7 +39,22 @@ export default {
     })
   },
   methods: {
+    changeAudioPlay(trigger) {
+      this.alertSoundTriggerOpen = trigger
+      this.latestAlert = {}
+      if (this.alertSoundTriggerOpen) {
+        this.audio.volume = 0
+        if (this.audio) {
+          console.error('开启')
+          this.audio.pause()
+        }
+      }
+    },
     getAlarm() {
+      if (!this.alertSoundTriggerOpen) {
+        return
+      }
+      this.audio&&this.audio.pause()
       const now = dayjs().format('YYYY-MM-DD HH:mm:ss')
       const params = {
         page: {
@@ -49,20 +68,32 @@ export default {
         '/monitor/api/v1/alarm/problem/page',
         params,
         responseData => {
-          if (responseData.data.length > 0) {
-            if (this.latestAlert.id === responseData.data[0].id) {
+          const alertData = responseData.data || []
+          if (alertData.length > 0) {
+            if (this.latestAlert.id === alertData[0].id) {
               console.error('重复了')
               return
             }
-            this.latestAlert = responseData.data[0]
-            console.error(now, this.latestAlert.start_string)
-            // 计算两个时间之间的总间隔
-            const diff = dayjs(now).diff(dayjs(this.latestAlert.start_string))
-            // if (diff/1000 > this.timeInterval) {
-            if (diff/1000 > 100000) {
-              console.error('时间超期了')
+            if (!this.priority.includes(alertData[0].s_priority)) {
+              console.error('不在范围内')
               return
             }
+
+            const latestAlert = alertData[0]
+            if (this.latestAlert) {
+              // 计算两个时间之间的总间隔
+              const diff = dayjs(now).diff(dayjs(latestAlert.start_string))
+
+              if (diff/1000 > this.timeInterval) {
+                console.error('时间超期了')
+                this.audio.pause()
+                return
+              }
+            }
+            if (this.latestAlert.id !== alertData[0].id) {
+              this.latestAlert = alertData[0]
+            }
+
             const priority = this.latestAlert.s_priority
             let iconSrc = ''
             if (priority === 'high') {
@@ -109,6 +140,8 @@ export default {
                 </div>
               )
             })
+            this.audio.play()
+            this.audio.volume = 1
           }
         },
         {isNeedloading: false},
