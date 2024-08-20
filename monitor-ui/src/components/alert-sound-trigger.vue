@@ -29,11 +29,6 @@ export default {
     }
   },
   mounted(){
-    this.getAlarm()
-    this.audio = document.getElementById('alarmAudioPlay')
-    this.interval = setInterval(() => {
-      this.getAlarm()
-    }, this.timeInterval * 1000)
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
     })
@@ -43,11 +38,20 @@ export default {
       this.alertSoundTriggerOpen = trigger
       this.latestAlert = {}
       if (this.alertSoundTriggerOpen) {
+        this.getAlarm()
+        this.audio = document.getElementById('alarmAudioPlay')
+        this.interval = setInterval(() => {
+          this.getAlarm()
+        }, this.timeInterval * 1000)
         this.audio.volume = 0
         if (this.audio) {
           console.error('开启')
           this.audio.pause()
         }
+      }
+      else {
+        this.audio.pause()
+        clearInterval(this.interval)
       }
     },
     getAlarm() {
