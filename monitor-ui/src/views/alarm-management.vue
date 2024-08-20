@@ -40,7 +40,7 @@
             @on-ok="deleteConfirmModal()"
           >
             <Button
-              :disabled="isEmpty(filters) || (isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
+              :disabled="isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
             >
               {{$t('m_batch_close')}}
             </Button>
