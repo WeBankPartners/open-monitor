@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -648,6 +649,11 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles), token) {
 						v.NotifyPermission = "yes"
 					}
+				} else {
+					if notifyRowObj.ProcCallbackName != "" && checkHasProcDefUsePermission(&m.AlarmNotifyTable{ProcDefName: notifyRowObj.ProcCallbackName}, convertString2Map(userRoles), token) {
+						v.NotifyPermission = "yes"
+					}
+					v.NotifyStatus = "notStart"
 				}
 			} else {
 				v.NotifyStatus = "notStart"
@@ -1014,8 +1020,9 @@ func getLastFromExpr(expr string) string {
 
 func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
-	if param.Priority != "" {
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+	if len(param.Priority) > 0 {
+		filterSql, filterParam := createListParams(param.Priority, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority in ("+filterSql+")", filterParam...).Find(&alarmRows)
 	} else if len(param.Metric) > 0 {
 		filterSql, filterParam := createListParams(param.Metric, "")
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
@@ -1291,18 +1298,20 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			break
 		}
 	}
+	priorityMap := make(map[string][]string)
+	priorityMap["high"] = []string{"1", "2"}
+	priorityMap["medium"] = []string{"3", "4"}
+	priorityMap["low"] = []string{"5"}
 	if containsCustomMetric && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
-	} else if param.Priority != "" {
-		var levelFilterSql string
-		if param.Priority == "high" {
-			levelFilterSql = " AND alert_level in (1,2) "
-		} else if param.Priority == "medium" {
-			levelFilterSql = " AND alert_level in (3,4) "
-		} else {
-			levelFilterSql = " AND alert_level>=5 "
+	} else if len(param.Priority) > 0 {
+		levelList := []string{}
+		for _, v := range param.Priority {
+			if levelValue, ok := priorityMap[v]; ok {
+				levelList = append(levelList, levelValue...)
+			}
 		}
-		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 " + levelFilterSql).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 AND alert_level in (" + strings.Join(levelList, ",") + ")").Find(&query)
 	} else {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
@@ -2064,22 +2073,21 @@ func getLevelSQL(levelMap map[string]bool) string {
 func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool, token string) (result bool) {
 	var name = alarmNotify.ProcDefName
 	var version string
-	var param = m.QueryProcessDefinitionParam{}
 	var resByteArr []byte
-	var response m.QueryProcessDefinitionResponse
+	var response m.QueryProcessDefinitionPublicResponse
 	var err error
 	if strings.TrimSpace(alarmNotify.ProcDefName) != "" {
-		index := strings.Index(alarmNotify.ProcDefName, "[")
-		if index != -1 {
-			name = alarmNotify.ProcDefName[:index]
-			version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
-			param.ProcDefName = name
+		index := strings.LastIndex(alarmNotify.ProcDefName, "[")
+		if index < 0 {
+			return
 		}
-		jsonParam, _ := json.Marshal(param)
-		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", token, jsonParam); err != nil {
+		name = alarmNotify.ProcDefName[:index]
+		version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
+		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/public/process/definitions?name="+name+"&version="+version, token); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
+		log.Logger.Debug("http procDef", log.String("name", name), log.String("version", version), log.String("response", string(resByteArr)))
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
 			return
@@ -2089,21 +2097,13 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
 			return
 		}
-		if len(response.Data) > 0 {
-			for _, procDefDto := range response.Data {
-				if len(procDefDto.ProcDefList) > 0 {
-					for _, procDef := range procDefDto.ProcDefList {
-						if procDef.Version == version {
-							for _, role := range procDef.UseRoles {
-								if hasRoleMap[role] {
-									result = true
-									return
-								}
-							}
-						}
-					}
+		if response.Data != nil && len(response.Data.UseRoles) > 0 {
+			for _, role := range response.Data.UseRoles {
+				if hasRoleMap[role] {
+					return true
 				}
 			}
+			return true
 		}
 	}
 	return
@@ -2132,5 +2132,23 @@ func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []st
 			dbKeywordMonitorMap[row.Guid] = row.ServiceGroup
 		}
 	}
+	return
+}
+
+// HttpGet  Get请求
+func HttpGet(url, userToken string) (byteArr []byte, err error) {
+	req, newReqErr := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+	if newReqErr != nil {
+		err = fmt.Errorf("try to new http request fail,%s ", newReqErr.Error())
+		return
+	}
+	req.Header.Set("Authorization", userToken)
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = fmt.Errorf("try to do http request fail,%s ", respErr.Error())
+		return
+	}
+	byteArr, _ = io.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	return
 }
