@@ -94,6 +94,7 @@ type LogKeywordCronJobQuery struct {
 	Content              string `xorm:"content"`
 	Name                 string `xorm:"name"`
 	LogKeywordConfigGuid string `xorm:"log_keyword_config_guid"`
+	ActiveWindow         string `xorm:"active_window"`
 }
 
 type LogKeywordRowsHttpDto struct {
