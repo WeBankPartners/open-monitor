@@ -39,6 +39,7 @@ type DbMonitorResultObj struct {
 	ServiceGroup string  `json:"service_group"`
 	KeywordGuid  string  `json:"keyword_guid"`
 	KeywordCount int64   `json:"keyword_count"`
+	Step         int64   `json:"step"`
 }
 
 type DbLastKeywordDto struct {
@@ -62,6 +63,8 @@ var (
 
 func StartCronTask() {
 	log.Println("start cron task")
+	//minuteTime, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s:00", time.Now().Format("2006-01-02 15:04")), time.Local)
+	//time.Sleep(time.Duration((minuteTime.Unix()+60)-time.Now().Unix()) * time.Second)
 	t := time.NewTicker(time.Duration(taskInterval) * time.Second).C
 	for {
 		<-t
@@ -85,7 +88,7 @@ func doTask() {
 		if taskObj.DbType == "mysql" {
 			resultValue = mysqlTask(taskObj)
 		}
-		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup, KeywordGuid: taskObj.KeywordGuid, KeywordCount: taskObj.KeywordCount})
+		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup, KeywordGuid: taskObj.KeywordGuid, KeywordCount: taskObj.KeywordCount, Step: taskObj.Step})
 		taskObj.LastTime = nowTime
 	}
 	taskLock.RUnlock()
