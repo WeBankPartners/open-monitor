@@ -648,6 +648,8 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles), token) {
 						v.NotifyPermission = "yes"
 					}
+				} else {
+					v.NotifyStatus = "notStart"
 				}
 			} else {
 				v.NotifyStatus = "notStart"
@@ -1014,8 +1016,9 @@ func getLastFromExpr(expr string) string {
 
 func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
-	if param.Priority != "" {
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+	if len(param.Priority) > 0 {
+		filterSql, filterParam := createListParams(param.Priority, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority in ("+filterSql+")", filterParam...).Find(&alarmRows)
 	} else if len(param.Metric) > 0 {
 		filterSql, filterParam := createListParams(param.Metric, "")
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
@@ -1291,18 +1294,20 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			break
 		}
 	}
+	priorityMap := make(map[string][]string)
+	priorityMap["high"] = []string{"1", "2"}
+	priorityMap["medium"] = []string{"3", "4"}
+	priorityMap["low"] = []string{"5"}
 	if containsCustomMetric && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
-	} else if param.Priority != "" {
-		var levelFilterSql string
-		if param.Priority == "high" {
-			levelFilterSql = " AND alert_level in (1,2) "
-		} else if param.Priority == "medium" {
-			levelFilterSql = " AND alert_level in (3,4) "
-		} else {
-			levelFilterSql = " AND alert_level>=5 "
+	} else if len(param.Priority) > 0 {
+		levelList := []string{}
+		for _, v := range param.Priority {
+			if levelValue, ok := priorityMap[v]; ok {
+				levelList = append(levelList, levelValue...)
+			}
 		}
-		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 " + levelFilterSql).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 AND alert_level in (" + strings.Join(levelList, ",") + ")").Find(&query)
 	} else {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
