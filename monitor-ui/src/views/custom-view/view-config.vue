@@ -200,8 +200,8 @@
                               clearable
                               filterable
                               :placeholder="$t('m_group_name')"
-                              @on-change="(e) => onSingleChartGroupChange(e, index)"
-                              @on-clear="onSingleChartGroupClear"
+                              @on-change="(e) => onSingleChartGroupChange(e, index, item)"
+                              @on-clear="() => onSingleChartGroupClear(item)"
                       >
                         <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                       </Select>
@@ -268,7 +268,7 @@
             <Row v-if="panelGroupInfo.length > 0">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
               <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">
-                <Tooltip :content="panel.label">
+                <Tooltip :content="panel.label" transfer :max-width='200'>
                   <div class="ellipsis-text">{{ panel.label }}</div>
                 </Tooltip>
               </Checkbox>
@@ -829,6 +829,11 @@ export default {
           d.group = ''
         }
       })
+      this.allPageLayoutData.forEach(d => {
+        if (d.group === group) {
+          d.group = ''
+        }
+      })
       this.savePanalEdit()
       this.activeGroup = 'ALL'
     },
@@ -841,13 +846,13 @@ export default {
         this.panel_group_list.push(this.groupName)
         this.panelGroupInfo.forEach(p => {
           if (p.setGroup) {
-            this.layoutData[p.index].group = this.groupName
+            this.allPageLayoutData[p.index].group = this.groupName
           }
         })
       }
       else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
-        this.layoutData.forEach(d => {
+        this.allPageLayoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
             d.group = this.groupName
           }
@@ -855,10 +860,10 @@ export default {
         this.panelGroupInfo.forEach(p => {
           if (p.hasGroup === false) {
             if (p.setGroup && p.group === '') {
-              this.layoutData[p.index].group = this.groupName
+              this.allPageLayoutData[p.index].group = this.groupName
             }
             else if (!p.setGroup) {
-              this.layoutData[p.index].group = ''
+              this.allPageLayoutData[p.index].group = ''
             }
           }
         })
@@ -1011,22 +1016,27 @@ export default {
         })
       })
 
-      if (this.layoutData.length !== this.allPageLayoutData.length) {
-        this.allPageLayoutData.forEach(item => {
-          const single = find(this.layoutData, {id: item.id})
-          if (isEmpty(single)) {
-            finalCharts.push(
-              {
-                id: item.id,
-                group: item.group,
-                name: item.i,
-                displayConfig: item.allGroupDisplayConfig,
-                groupDisplayConfig: item.partGroupDisplayConfig
-              }
-            )
+      this.allPageLayoutData.forEach(item => {
+        const single = find(this.layoutData, {id: item.id})
+        if (isEmpty(single)) {
+          finalCharts.push(
+            {
+              id: item.id,
+              group: item.group,
+              name: item.i,
+              displayConfig: item.allGroupDisplayConfig,
+              groupDisplayConfig: item.partGroupDisplayConfig
+            }
+          )
+        }
+        else {
+          // 解决分组修改后保存失效问题
+          const singleChart = find(finalCharts, {id: item.id})
+          if (!isEmpty(singleChart)) {
+            singleChart.group = item.group
           }
-        })
-      }
+        }
+      })
       return {
         id: this.pannelId,
         name: this.panalName,
@@ -1063,6 +1073,7 @@ export default {
         name: item.i
       })
       this.editChartId = null
+      this.getPannelList(this.activeGroup)
       this.$Message.success(this.$t('m_tips_success'))
     },
     chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
@@ -1156,15 +1167,23 @@ export default {
         this.getPannelList()
       })
     },
-    onSingleChartGroupClear() {
+    onSingleChartGroupClear(item) {
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = ''
+      }
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })
     },
-    onSingleChartGroupChange(group, index) {
+    onSingleChartGroupChange(group, index, item) {
       if (isEmpty(group)) {
         return
+      }
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = group
       }
       if (group !== 'ALL') {
         // 切换分组时，默认填充到最后一个，并保证w=6, h=7
