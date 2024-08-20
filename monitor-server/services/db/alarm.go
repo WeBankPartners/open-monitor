@@ -2083,7 +2083,7 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 		}
 		name = alarmNotify.ProcDefName[:index]
 		version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
-		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/process/definitions/public?name="+name+"&version="+version, token); err != nil {
+		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/public/process/definitions?name="+name+"&version="+version, token); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
