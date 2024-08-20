@@ -649,6 +649,9 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 						v.NotifyPermission = "yes"
 					}
 				} else {
+					if notifyRowObj.ProcCallbackName != "" && checkHasProcDefUsePermission(&m.AlarmNotifyTable{ProcDefName: notifyRowObj.ProcCallbackName}, convertString2Map(userRoles), token) {
+						v.NotifyPermission = "yes"
+					}
 					v.NotifyStatus = "notStart"
 				}
 			} else {
