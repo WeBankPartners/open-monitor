@@ -257,16 +257,17 @@ func SyncDbMetric(initFlag bool) error {
 		} else {
 			keywordCountMap := make(map[string]float64)
 			for _, row := range alarmTable {
-				if existCount, ok := keywordCountMap[row.DbKeywordMonitor]; ok {
+				keywordCountKey := fmt.Sprintf("%s^^^%s", row.DbKeywordMonitor, row.Endpoint)
+				if existCount, ok := keywordCountMap[keywordCountKey]; ok {
 					if existCount < row.EndValue {
-						keywordCountMap[row.DbKeywordMonitor] = row.EndValue
+						keywordCountMap[keywordCountKey] = row.EndValue
 					}
 				} else {
-					keywordCountMap[row.DbKeywordMonitor] = row.EndValue
+					keywordCountMap[keywordCountKey] = row.EndValue
 				}
 			}
 			for _, v := range postData {
-				if findCount, ok := keywordCountMap[v.KeywordGuid]; ok {
+				if findCount, ok := keywordCountMap[fmt.Sprintf("%s^^^%s", v.KeywordGuid, v.Endpoint)]; ok {
 					v.KeywordCount = int64(findCount)
 				}
 			}

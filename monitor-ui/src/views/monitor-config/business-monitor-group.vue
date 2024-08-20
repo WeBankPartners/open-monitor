@@ -1,121 +1,140 @@
 <template>
   <div class="all-content">
-    <section v-if="showManagement" style="margin-top: 16px;">
-      <div class="w-header" slot="title" style="display: flex;justify-content: space-between; margin-bottom: 12px;">
-        <div class="title">
-          {{$t('m_log_file')}}
-          <span class="underline"></span>
-        </div>
-        <div>
-          <div style="display: inline-block;position: relative;bottom: 48px;left: 66px;">
-            <Button
-              type="info"
-              class="btn-left"
-              @click="exportData"
-            >
-              <img src="../../assets/img/import.png" class="btn-img" alt="" />
-              {{ $t('m_export') }}
+    <section>
+      <div class='upload-content'>
+        <Button
+          type="info"
+          class="btn-left"
+          @click="exportData"
+        >
+          <img src="../../assets/img/import.png" class="btn-img" alt="" />
+          {{ $t('m_export') }}
+        </Button>
+        <div style="display: inline-block;margin-bottom: 3px;">
+          <Upload
+            :action="uploadUrl"
+            :show-upload-list="false"
+            :max-size="1000"
+            with-credentials
+            :headers="{'Authorization': token}"
+            :on-success="uploadSucess"
+            :on-error="uploadFailed"
+          >
+            <Button type="primary" class="btn-left">
+              <img src="../../assets/img/export.png" class="btn-img" alt="" />
+              {{ $t('m_import') }}
             </Button>
-            <div style="display: inline-block;margin-bottom: 3px;">
-              <Upload
-                :action="uploadUrl"
-                :show-upload-list="false"
-                :max-size="1000"
-                with-credentials
-                :headers="{'Authorization': token}"
-                :on-success="uploadSucess"
-                :on-error="uploadFailed"
-              >
-                <Button type="primary" class="btn-left">
-                  <img src="../../assets/img/export.png" class="btn-img" alt="" />
-                  {{ $t('m_import') }}
-                </Button>
-              </Upload>
-            </div>
+          </Upload>
+        </div>
+      </div>
+
+      <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
+        <div class='w-header'>
+          <div class="title">
+            {{$t('m_log_file')}}
+            <span class="underline"></span>
           </div>
           <Button type="success" class="btn-right" @click="add">
             {{ $t('m_button_add') }}
           </Button>
         </div>
+
+        <div>
+          <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
+            <Panel v-for="(item, index) in single.logFile.config"
+                   :key="index"
+                   :name="index + ''"
+            >
+              <div class="log-file-collapse-content">
+                <div>
+                  <div class="use-underline-title mr-4">
+                    {{item.log_path}}
+                    <span class="underline"></span>
+                  </div>
+                  <Tag color="blue">{{ item.monitor_type }}</Tag>
+                </div>
+                <div class="log-file-collapse-button" @click="(e) => {e.stopPropagation()}">
+                  <Tooltip :content="$t('m_use_custom')" placement="bottom" transfer>
+                    <Button
+                      size="small"
+                      type="success"
+                      @click.stop="addByCustom(item)"
+                    >
+                      <Icon type="ios-add-circle" size="16" />
+                    </Button>
+                  </Tooltip>
+                  <Dropdown
+                    placement="left-start"
+                    :key="index"
+                    class="chart-option-menu"
+                    @on-click="(guid) => {
+                      selectedTemp = guid;
+                      parentGuid = item.guid;
+                      okTempSelect()
+                    }"
+                  >
+                    <Button type="success" size="small">
+                      <Icon type="ios-link" size="16" />
+                    </Button>
+                    <template slot='list'>
+                      <DropdownMenu>
+                        <DropdownItem v-for="(option, key) in allTemplateList"
+                                      :name="option.guid"
+                                      :key="key"
+                                      :disabled="option.disabled"
+                        >
+                          {{option.name}}
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </template>
+                  </Dropdown>
+                  <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
+                    <Icon type="md-create" size="16" />
+                  </Button>
+                  <Poptip
+                    confirm
+                    :title="$t('m_delConfirm_tip')"
+                    placement="left-end"
+                    @on-ok="deleteLogFiltItem(item)"
+                  >
+                    <Button size="small" type="error" class="mr-2">
+                      <Icon type="md-trash" size="16" />
+                    </Button>
+                  </Poptip>
+                </div>
+              </div>
+              <template slot='content'>
+                <Table
+                  class="log-file-table"
+                  size="small"
+                  :columns="logFileTableColumns"
+                  :data="item.metric_groups"
+                />
+              </template>
+            </Panel>
+          </Collapse>
+          <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
+        </div>
+
+        <div style="margin-top: 16px; padding-bottom: 30px">
+          <div class="w-header" slot="title">
+            <div class="title">
+              {{$t('m_db')}}
+              <span class="underline"></span>
+            </div>
+            <Button type="success" class="btn-right" @click="addDb">
+              {{ $t('m_button_add') }}
+            </Button>
+          </div>
+          <Table
+            class="log-file-table"
+            size="small"
+            :columns="dataBaseTableColumns"
+            :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+          />
+        </div>
       </div>
 
-      <Collapse v-model="logFileCollapseValue" v-if='logFileCollapseData.length'>
-        <Panel v-for="(item, index) in logFileCollapseData"
-               :key="index"
-               :name="index + ''"
-        >
-          <div class="log-file-collapse-content">
-            <div>
-              <div class="use-underline-title mr-4">
-                {{item.log_path}}
-                <span class="underline"></span>
-              </div>
-              <Tag color="blue">{{ item.monitor_type }}</Tag>
-            </div>
-            <div class="log-file-collapse-button" @click="(e) => {e.stopPropagation()}">
-              <Tooltip :content="$t('m_use_custom')" placement="bottom" transfer>
-                <Button
-                  size="small"
-                  type="success"
-                  @click.stop="addByCustom(item)"
-                >
-                  <Icon type="ios-add-circle" size="16" />
-                </Button>
-              </Tooltip>
-              <Dropdown
-                placement="left-start"
-                :key="index"
-                class="chart-option-menu"
-                @on-click="(guid) => {
-                  selectedTemp = guid;
-                  parentGuid = item.guid;
-                  okTempSelect()
-                }"
-              >
-                <Button type="success" size="small">
-                  <Icon type="ios-link" size="16" />
-                </Button>
-                <template slot='list'>
-                  <DropdownMenu>
-                    <DropdownItem v-for="(option, key) in allTemplateList"
-                                  :name="option.guid"
-                                  :key="key"
-                                  :disabled="option.disabled"
-                    >
-                      {{option.name}}
-                    </DropdownItem>
-                  </DropdownMenu>
-                </template>
-              </Dropdown>
-              <Button size="small" class="mr-1"  type="primary" @click.stop="editF(item)">
-                <Icon type="md-create" size="16" />
-              </Button>
-              <!-- <Button size="small" type="error" class="mr-2" @click.stop="deleteConfirmModal(item)">
-                  <Icon type="md-trash" size="16"></Icon>
-                </Button> -->
-              <Poptip
-                confirm
-                :title="$t('m_delConfirm_tip')"
-                placement="left-end"
-                @on-ok="deleteLogFiltItem(item)"
-              >
-                <Button size="small" type="error" class="mr-2">
-                  <Icon type="md-trash" size="16" />
-                </Button>
-              </Poptip>
-            </div>
-          </div>
-          <template slot='content'>
-            <Table
-              class="log-file-table"
-              size="small"
-              :columns="logFileTableColumns"
-              :data="item.metric_groups"
-            />
-          </template>
-        </Panel>
-      </Collapse>
-      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
@@ -358,26 +377,6 @@
         </div>
       </div>
     </ModalComponent>
-    <!-- DB config -->
-    <section v-if="showManagement" style="margin-top: 16px; padding-bottom: 30px">
-      <div class="w-header" style="display: flex;justify-content: space-between;">
-        <div class="title">
-          {{$t('m_db')}}
-          <span class="underline"></span>
-        </div>
-        <Button type="success" class="btn-right" @click="addDb" style="margin: 8px 0">
-          {{ $t('m_button_add') }}
-        </Button>
-      </div>
-      <Table
-        v-if="dataBaseTableData.length"
-        class="log-file-table"
-        size="small"
-        :columns="dataBaseTableColumns"
-        :data="dataBaseTableData"
-      />
-      <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
-    </section>
 
     <!--数据库-->
     <BaseDrawer
@@ -482,9 +481,10 @@
 </template>
 
 <script>
-import cloneDeep from 'lodash/cloneDeep'
-import map from 'lodash/map'
-import Vue from 'vue'
+import {
+  uniq, filter, cloneDeep, map, isEmpty
+} from 'lodash'
+// import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
@@ -505,8 +505,8 @@ export default {
       },
       token: null,
       MODALHEIGHT: 300,
-      targrtId: '',
-      targetDetail: {},
+      targetId: '',
+      logFileDetail: [],
       showManagement: false,
       addAndEditModal: {
         isShow: false,
@@ -684,7 +684,6 @@ export default {
         regular: this.$t('m_standard_regex'),
         json: this.$t('m_standard_json'),
       },
-      logFileCollapseData: [],
       logFileCollapseValue: ['0'],
       logFileTableColumns: [
         {
@@ -834,12 +833,14 @@ export default {
         }
       ],
       dataBaseTableData: [],
-      allTemplateList: []
+      allTemplateList: [],
+      logAndDataBaseAllDetail: [],
+      isEmpty
     }
   },
   computed: {
     uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targrtId}`
+      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targetId}`
     },
     uploadGroupMetricUrl() {
       return baseURL_config + `/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}`
@@ -868,7 +869,7 @@ export default {
       this.isShowGroupMetricUpload = true
     },
     exportData() {
-      const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targrtId}`
+      const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targetId}`
       axios({
         method: 'GET',
         url: api,
@@ -907,7 +908,7 @@ export default {
     },
     uploadSucess() {
       this.$Message.success(this.$t('m_tips_success'))
-      this.getDetail(this.targrtId)
+      this.getDetail(this.targetId)
     },
     uploadFailed(file) {
       this.$Message.warning(file.message)
@@ -917,7 +918,7 @@ export default {
       const api = this.$root.apiCenter.saveTargetDb + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targrtId)
+        this.getDetail(this.targetId)
       })
     },
     editDbItem(rowData) {
@@ -956,12 +957,13 @@ export default {
       if (!endpointRelFlag || this.dbModelConfig.addRow.endpoint_rel.length === 0) {
         return this.$Message.error('指标配置不能为空')
       }
-      this.dbModelConfig.addRow.service_group = this.targrtId
+      this.dbModelConfig.addRow.service_group = this.targetId
       const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.saveTargetDb, this.dbModelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.dbModelConfig.isShow = false
-        this.getDbDetail(this.targrtId)
+        this.getDetail(this.targetId)
+        this.getDbDetail(this.targetId)
       }, {isNeedloading: false})
     },
     cancelDb() {
@@ -974,12 +976,6 @@ export default {
         monitor_type: '',
         endpoint_rel: []
       }
-    },
-    getDbDetail(targetId) {
-      const api = this.$root.apiCenter.getTargetDbDetail + '/group/' + targetId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.dataBaseTableData = responseData
-      }, {isNeedloading: false})
     },
     // other config
     editF(rowData) {
@@ -1040,7 +1036,7 @@ export default {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#custom_metrics').modal('hide')
         this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
-        // this.getDetail(this.targrtId)
+        // this.getDetail(this.targetId)
       })
     },
     editCustomMetricItem(rowData) {
@@ -1101,16 +1097,8 @@ export default {
         this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
       })
     },
-    reloadMetricData(guid) {
-      const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', path, {}, responseData => {
-        const metricGroups = responseData.metric_groups.map(group => {
-          group.log_type_display = this.typeToName[group.log_type]
-          group.logFileIndex = this.currentLogFileIndex
-          return group
-        })
-        Vue.set(this.logFileCollapseData[this.currentLogFileIndex], 'metric_groups', metricGroups)
-      })
+    reloadMetricData() {
+      this.getDetail(this.targetId)
     },
     singleAddF(rowData) {
       this.cancelReg()
@@ -1126,7 +1114,7 @@ export default {
       const api = this.$root.apiCenter.deletePath + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targrtId)
+        this.getDetail(this.targetId)
       })
     },
     okAddAndEdit() {
@@ -1150,14 +1138,14 @@ export default {
       }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
       const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
-      params.service_group = this.targrtId
+      params.service_group = this.targetId
       if (this.addAndEditModal.isAdd) {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricMonitor, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.addAndEditModal.isShow = false
-        this.getDetail(this.targrtId)
+        this.getDetail(this.targetId)
       }, {isNeedloading: false})
     },
     cancelAddAndEdit() {
@@ -1175,11 +1163,11 @@ export default {
       this.dbModelConfig.addRow.endpoint_rel = []
       await this.getDefaultConfig(val, type)
       // get source Endpoint
-      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + type
+      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targetId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
-      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + val
+      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targetId + '/endpoint/' + val
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
       }, {isNeedloading: false})
@@ -1269,7 +1257,7 @@ export default {
       this.addAndEditModal.isShow = true
     },
     getDefaultConfig(val, type) {
-      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         const tmp = responseData.map(r => ({
           source_endpoint: r.source_endpoint,
@@ -1293,23 +1281,74 @@ export default {
         }
       })
     },
-    getDetail(targrtId) {
-      this.targrtId = targrtId
-      const api = this.$root.apiCenter.getTargetDetail + '/group/' + targrtId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.showManagement = true
-        this.targetDetail = responseData
-        this.logFileCollapseData = cloneDeep(responseData.config)
-        this.logFileCollapseData.forEach((item, index) => {
-          const groups = item.metric_groups
-          groups.forEach(group => {
-            group.log_type_display = this.typeToName[group.log_type]
-            group.logFileIndex = index
+    getLogKeyWordDetail() {
+      return new Promise(resolve => {
+        const api = this.$root.apiCenter.getTargetDetail + '/group/' + this.targetId
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.showManagement = true
+          if (Array.isArray(responseData)) {
+            this.logFileDetail = responseData
+          }
+          else {
+            this.logFileDetail = [responseData]
+          }
+
+          this.logFileDetail.forEach(single => {
+            single.config.forEach((item, index) => {
+              const groups = item.metric_groups
+              groups.forEach(group => {
+                group.log_type_display = this.typeToName[group.log_type]
+                group.logFileIndex = index
+              })
+            })
           })
-        })
-        this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading: true})
-      this.getDbDetail(targrtId)
+
+          // this.logFileCollapseData = cloneDeep(responseData.config)
+          // this.logFileCollapseData.forEach((item, index) => {
+          //   const groups = item.metric_groups
+          //   groups.forEach(group => {
+          //     group.log_type_display = this.typeToName[group.log_type]
+          //     group.logFileIndex = index
+          //   })
+          // })
+          this.$root.$store.commit('changeTableExtendActive', -1)
+          resolve(this.logFileDetail)
+        }, {isNeedloading: true})
+      })
+    },
+    async getDetail(targetId) {
+      this.targetId = targetId
+      await this.getLogKeyWordDetail()
+      await this.getDbDetail()
+      this.processAllInfo()
+    },
+    processAllInfo() {
+      this.logAndDataBaseAllDetail = []
+      const allDetail = [...cloneDeep(this.logFileDetail), ...cloneDeep(this.dataBaseTableData)]
+      const allGuid = uniq(map(allDetail, 'guid')) || []
+
+      allGuid.forEach(guid => {
+        const tempInfo = {
+          logFile: filter(this.logFileDetail, item => item.guid === guid)[0],
+          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
+        }
+        this.logAndDataBaseAllDetail.push(tempInfo)
+      })
+    },
+    getDbDetail() {
+      return new Promise(resolve => {
+        const api = this.$root.apiCenter.getTargetDbDetail + '/group/' + this.targetId
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          if (Array.isArray(responseData)) {
+            this.dataBaseTableData = responseData
+          }
+          else {
+            this.dataBaseTableData = [responseData]
+          }
+          // this.dataBaseTableData = responseData
+          resolve(this.dataBaseTableData)
+        }, {isNeedloading: false})
+      })
     },
     // 新增自定指标指标
     addByCustom(item) {
@@ -1359,26 +1398,7 @@ export default {
 .btn-left {
   margin-left: 8px;
 }
-.w-header {
-  display: flex;
-  align-items: center;
-  .title {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 0 10px;
-    .underline {
-      display: block;
-      margin-top: -10px;
-      margin-left: -6px;
-      width: 100%;
-      padding: 0 6px;
-      height: 12px;
-      border-radius: 12px;
-      background-color: #c6eafe;
-      box-sizing: content-box;
-    }
-  }
-}
+
 .ivu-collapse-header {
   display: flex;
   align-items: center;
@@ -1402,6 +1422,28 @@ export default {
 </style>
 
 <style lang="less" scoped>
+.w-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
+}
 
 .use-underline-title {
   display: inline-block;
@@ -1434,7 +1476,18 @@ export default {
 
 .all-content {
   ::-webkit-scrollbar {
+    position: relative;
     display: none;
+  }
+  .upload-content {
+    display: flex;
+    position: absolute;
+    top: 70px;
+    right: 26px;
+    .btn-img {
+      width: 16px;
+      vertical-align: middle;
+    }
   }
 }
 

@@ -587,7 +587,7 @@ type AlarmCloseParam struct {
 	Metric    []string `json:"metric"`
 	Endpoint  []string `json:"endpoint"`
 	AlarmName []string `json:"alarmName"`
-	Priority  string   `json:"priority"`
+	Priority  []string `json:"priority"`
 }
 
 type AlarmCondition struct {
@@ -664,21 +664,11 @@ type ProblemAlarmOptions struct {
 	AlarmNameList []string `json:"alarmNameList"`
 }
 
-type QueryProcessDefinitionParam struct {
-	ProcDefName string `json:"procDefName"` // 编排名称
-}
-
-type QueryProcessDefinitionResponse struct {
-	Code    int                `json:"code"`
-	Status  string             `json:"status"`
-	Message string             `json:"message"`
-	Data    []*ProcDefQueryDto `json:"data"`
-}
-
-type ProcDefQueryDto struct {
-	ManageRole        string        `json:"manageRole"`        //管理角色
-	ManageRoleDisplay string        `json:"manageRoleDisplay"` //管理角色-显示名
-	ProcDefList       []*ProcDefDto `json:"dataList"`          // 编排列表
+type QueryProcessDefinitionPublicResponse struct {
+	Code    int         `json:"code"`
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    *ProcDefDto `json:"data"`
 }
 
 type ProcDefDto struct {
