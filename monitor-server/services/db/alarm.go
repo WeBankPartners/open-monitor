@@ -2097,6 +2097,8 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
 			return
 		}
+		log.Logger.Info("http procDef", log.String("param", string(jsonParam)),
+			log.String("response", string(resByteArr)), log.StringList("hasRoles", convertMap2string(hasRoleMap)))
 		if len(response.Data) > 0 {
 			for _, procDefDto := range response.Data {
 				if len(procDefDto.ProcDefList) > 0 {
