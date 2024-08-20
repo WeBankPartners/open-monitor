@@ -200,8 +200,8 @@
                               clearable
                               filterable
                               :placeholder="$t('m_group_name')"
-                              @on-change="(e) => onSingleChartGroupChange(e, index)"
-                              @on-clear="onSingleChartGroupClear"
+                              @on-change="(e) => onSingleChartGroupChange(e, index, item)"
+                              @on-clear="() => onSingleChartGroupClear(item)"
                       >
                         <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                       </Select>
@@ -1167,15 +1167,23 @@ export default {
         this.getPannelList()
       })
     },
-    onSingleChartGroupClear() {
+    onSingleChartGroupClear(item) {
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = ''
+      }
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })
     },
-    onSingleChartGroupChange(group, index) {
+    onSingleChartGroupChange(group, index, item) {
       if (isEmpty(group)) {
         return
+      }
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = group
       }
       if (group !== 'ALL') {
         // 切换分组时，默认填充到最后一个，并保证w=6, h=7
