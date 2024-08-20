@@ -660,7 +660,7 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
+	if len(param.Metric) == 0 && param.Id == 0 && len(param.Priority) == 0 && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
