@@ -150,7 +150,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.End = nowTime
 		alarm.AlarmConditionGuid = alarmConditionGuid
 	} else if operation == "add" {
-		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
+		if !db.InActiveWindowList(strategyObj.ActiveWindow) {
 			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
 		}
 		alarm.StartValue = alertValue
