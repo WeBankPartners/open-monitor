@@ -21,6 +21,15 @@
               <span slot="close">OFF</span>
             </i-switch>
           </li>
+          <li class="filter-li">
+            <span class="label">{{$t('m_audio_prompt')}}：</span>
+            <i-switch size="large" @on-change="alertSoundChange">
+              <span slot="true">ON</span>
+              <span slot="false">OFF</span>
+            </i-switch>
+            <!-- 新告警声音提示 -->
+            <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
+          </li>
         </ul>
         <div class="top-right-search">
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
@@ -85,8 +94,6 @@
         <Button @click="cancelRemark">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
-    <!-- 新告警声音提示 -->
-    <AlertSoundTrigger :timeInterval="10" ></AlertSoundTrigger>
   </div>
 </template>
 
@@ -286,6 +293,9 @@ export default {
     })
   },
   methods: {
+    alertSoundChange(val) {
+      this.$refs.alertSoundTriggerRef.changeAudioPlay(val)
+    },
     getTodayAlarm() {
       const start = new Date(new Date().toLocaleDateString()).getTime()
       const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1
@@ -496,7 +506,7 @@ export default {
         id: 0,
         custom: true,
         metric: [],
-        priority: ''
+        priority: []
       }
       if (this.isBatch) {
         const find = this.filtersForShow.find(f => f.key === 'metric')
