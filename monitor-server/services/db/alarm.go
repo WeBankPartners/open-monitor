@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -2072,22 +2073,21 @@ func getLevelSQL(levelMap map[string]bool) string {
 func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool, token string) (result bool) {
 	var name = alarmNotify.ProcDefName
 	var version string
-	var param = m.QueryProcessDefinitionParam{}
 	var resByteArr []byte
-	var response m.QueryProcessDefinitionResponse
+	var response m.QueryProcessDefinitionPublicResponse
 	var err error
 	if strings.TrimSpace(alarmNotify.ProcDefName) != "" {
-		index := strings.Index(alarmNotify.ProcDefName, "[")
-		if index != -1 {
-			name = alarmNotify.ProcDefName[:index]
-			version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
-			param.ProcDefName = name
+		index := strings.LastIndex(alarmNotify.ProcDefName, "[")
+		if index < 0 {
+			return
 		}
-		jsonParam, _ := json.Marshal(param)
-		if resByteArr, err = HttpPost(m.CoreUrl+"/platform/v1/process/definitions/list", token, jsonParam); err != nil {
+		name = alarmNotify.ProcDefName[:index]
+		version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
+		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/process/definitions/public?name="+name+"&version="+version, token); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
 			return
 		}
+		log.Logger.Debug("http procDef", log.String("name", name), log.String("version", version), log.String("response", string(resByteArr)))
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
 			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
 			return
@@ -2097,23 +2097,13 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
 			return
 		}
-		log.Logger.Info("http procDef", log.String("param", string(jsonParam)),
-			log.String("response", string(resByteArr)), log.StringList("hasRoles", convertMap2string(hasRoleMap)))
-		if len(response.Data) > 0 {
-			for _, procDefDto := range response.Data {
-				if len(procDefDto.ProcDefList) > 0 {
-					for _, procDef := range procDefDto.ProcDefList {
-						if procDef.Version == version {
-							for _, role := range procDef.UseRoles {
-								if hasRoleMap[role] {
-									result = true
-									return
-								}
-							}
-						}
-					}
+		if response.Data != nil && len(response.Data.UseRoles) > 0 {
+			for _, role := range response.Data.UseRoles {
+				if hasRoleMap[role] {
+					return true
 				}
 			}
+			return true
 		}
 	}
 	return
@@ -2142,5 +2132,23 @@ func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []st
 			dbKeywordMonitorMap[row.Guid] = row.ServiceGroup
 		}
 	}
+	return
+}
+
+// HttpGet  Get请求
+func HttpGet(url, userToken string) (byteArr []byte, err error) {
+	req, newReqErr := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+	if newReqErr != nil {
+		err = fmt.Errorf("try to new http request fail,%s ", newReqErr.Error())
+		return
+	}
+	req.Header.Set("Authorization", userToken)
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = fmt.Errorf("try to do http request fail,%s ", respErr.Error())
+		return
+	}
+	byteArr, _ = io.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	return
 }
