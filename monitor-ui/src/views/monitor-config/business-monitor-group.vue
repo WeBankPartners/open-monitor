@@ -1398,28 +1398,7 @@ export default {
 .btn-left {
   margin-left: 8px;
 }
-.w-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px 0;
-  .title {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 0 10px;
-    .underline {
-      display: block;
-      margin-top: -10px;
-      margin-left: -6px;
-      width: 100%;
-      padding: 0 6px;
-      height: 12px;
-      border-radius: 12px;
-      background-color: #c6eafe;
-      box-sizing: content-box;
-    }
-  }
-}
+
 .ivu-collapse-header {
   display: flex;
   align-items: center;
@@ -1443,6 +1422,28 @@ export default {
 </style>
 
 <style lang="less" scoped>
+.w-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
+}
 
 .use-underline-title {
   display: inline-block;
