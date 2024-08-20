@@ -68,7 +68,7 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(respMessage))
 		return
 	}
-	//taskLock.Lock()
+	taskLock.Lock()
 	for _, v := range param {
 		existTaskObj := &DbMonitorTaskObj{}
 		for _, existTask := range taskList {
@@ -85,7 +85,7 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	taskList = param
-	//taskLock.Unlock()
+	taskLock.Unlock()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 }
