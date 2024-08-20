@@ -1,22 +1,22 @@
 <template>
   <div class=" ">
-    <section v-if="showManagement && !(isEmpty(allPageContentData) && isEmpty(dataBaseTableData))" style="margin-top: 16px;">
-      <div v-for="item in allPageContentData" :key="item.guid">
+    <section v-if='!isEmpty(logAndDataBaseAllDetail)' style="margin-top: 16px;">
+      <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div class="content-header">
           <div class="use-underline-title mr-4">
-            {{item.display_name}}
+            {{ !isEmpty(single.logFile) ? single.logFile.display_name : (!isEmpty(single.database) ? single.database.display_name : '')}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
         </div>
-        <div class="database-title">
-          <div class="use-underline-title">
+        <div class="content-header">
+          <div class="use-underline-title mr-4">
             {{$t('m_log_file')}}
             <span class="underline"></span>
           </div>
         </div>
-        <Collapse v-model="item.logFileCollapseValue">
-          <Panel v-for="(item, index) in item.config"
+        <Collapse v-model="single.logFile.logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
+          <Panel v-for="(item, index) in single.logFile.config"
                  :key="index"
                  :name="index + ''"
           >
@@ -45,19 +45,20 @@
             </template>
           </Panel>
         </Collapse>
-      </div>
+        <div v-else class='no-logfile-data'>{{$t('m_table_noDataTip')}}</div>
 
-      <div class="database-title">
-        <div class="use-underline-title">
-          {{$t('m_db')}}
-          <span class="underline"></span>
+        <div class="database-title">
+          <div class="use-underline-title">
+            {{$t('m_db')}}
+            <span class="underline"></span>
+          </div>
         </div>
+        <Table
+          size="small"
+          :columns="dataBaseTableColumns"
+          :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+        />
       </div>
-      <Table
-        size="small"
-        :columns="dataBaseTableColumns"
-        :data="dataBaseTableData"
-      />
     </section>
     <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     <Modal
@@ -234,7 +235,9 @@
 </template>
 
 <script>
-import {map, isEmpty} from 'lodash'
+import {
+  map, isEmpty, uniq, cloneDeep, filter
+} from 'lodash'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 export default {
@@ -242,7 +245,7 @@ export default {
   data() {
     return {
       MODALHEIGHT: 300,
-      showManagement: false,
+      // showManagement: false,
       regulationOption: [
         {
           label: this.$t('m_regular_match'),
@@ -325,7 +328,7 @@ export default {
         value: 'metric'
       },
       // DB config
-      showDbManagement: false,
+      // showDbManagement: false,
       dbModelConfig: {
         isShow: false,
         isAdd: true,
@@ -485,32 +488,23 @@ export default {
         }
       ],
       dataBaseTableData: [],
-      isEmpty
+      isEmpty,
+      logAndDataBaseAllDetail: []
     }
   },
   methods: {
-    // DB config
-    getDbDetail(targetId) {
-      const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + targetId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.dataBaseTableData = responseData
-        this.showDbManagement = true
-      }, {isNeedloading: false})
-    },
     editDbItem(rowData) {
       this.getEndpoint(rowData.monitor_type, 'mysql', rowData.service_group)
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.dbModelConfig.isAdd = false
       this.dbModelConfig.isShow = true
     },
-    async getEndpoint(val, type, targrtId) {
-      // await this.getDefaultConfig(val, type)
-      // get source Endpoint
-      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + type
+    async getEndpoint(val, type, targetId) {
+      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
-      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + val
+      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + val
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
       }, {isNeedloading: false})
@@ -529,7 +523,7 @@ export default {
       this.addAndEditModal.isShow = true
     },
     getDefaultConfig(val, type) {
-      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         const tmp = responseData.map(r => ({
           source_endpoint: r.source_endpoint,
@@ -563,9 +557,6 @@ export default {
       this.$root.JQ('#custom_metrics').modal('show')
     },
     editRuleItem(rowData) {
-      // this.ruleModelConfig.isAdd = false
-      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      // this.ruleModelConfig.isShow = true
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('view', '', rowData.log_metric_monitor, rowData.guid)
       }
@@ -573,30 +564,56 @@ export default {
         this.$refs.businessMonitorGroupConfigRef.loadPage('view', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
-    getDetail(targrtId) {
-      this.showManagement = false
-      this.showDbManagement = false
-      this.targrtId = targrtId
-      this.getDbDetail(targrtId)
-      const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.allPageContentData = responseData.map((res, index) => {
-          if (index === 0) {
-            res.logFileCollapseValue = ['0']
-          }
-          else {
-            res.logFileCollapseValue = []
-          }
-          res.config.forEach(item => {
-            item.metric_groups.forEach(group => {
-              group.log_type_display = this.typeToName[group.log_type]
+    async getLogKeyWordDetail() {
+      return new Promise(resolve => {
+        const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.allPageContentData = responseData.map((res, index) => {
+            if (index === 0) {
+              res.logFileCollapseValue = ['0']
+            }
+            else {
+              res.logFileCollapseValue = []
+            }
+            res.config.forEach(item => {
+              item.metric_groups.forEach(group => {
+                group.log_type_display = this.typeToName[group.log_type]
+              })
             })
+            return res
           })
-          return res
-        })
-        this.showManagement = true
-        this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading: true})
+          this.$root.$store.commit('changeTableExtendActive', -1)
+          resolve(this.allPageContentData)
+        }, {isNeedloading: true})
+      })
+    },
+    async getDetail(targetId) {
+      this.targetId = targetId
+      await this.getDbDetail()
+      await this.getLogKeyWordDetail()
+      this.processAllInfo()
+    },
+    processAllInfo() {
+      this.logAndDataBaseAllDetail = []
+      const allDetail = [...cloneDeep(this.allPageContentData), ...cloneDeep(this.dataBaseTableData)]
+      const allGuid = uniq(map(allDetail, 'guid')) || []
+
+      allGuid.forEach(guid => {
+        const tempInfo = {
+          logFile: filter(this.allPageContentData, item => item.guid === guid)[0],
+          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
+        }
+        this.logAndDataBaseAllDetail.push(tempInfo)
+      })
+    },
+    getDbDetail() {
+      return new Promise(resolve => {
+        const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.dataBaseTableData = responseData
+          resolve(this.dataBaseTableData)
+        }, {isNeedloading: false})
+      })
     }
   },
   mounted() {
@@ -655,7 +672,13 @@ export default {
     margin-top: -10px
   }
 }
-
+.no-logfile-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
 .no-data-class {
   display: flex;
   justify-content: center;
