@@ -287,31 +287,49 @@ func UpdateLogKeyword(param, existData *models.LogKeywordConfigTable, operator s
 	}
 	if existData.Name != param.Name || existData.Keyword != param.Keyword || existData.Priority != param.Priority {
 		// 关键信息改了，把已有告警关闭
-		var logKeywordAlarmRows []*models.LogKeywordAlarmTable
-		err = x.SQL("select id,alarm_id from log_keyword_alarm where log_keyword_config=? and status='firing'", param.Guid).Find(&logKeywordAlarmRows)
-		if err != nil {
-			err = fmt.Errorf("query log keyword alarm table fail,%s ", err.Error())
+		closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(param.Guid)
+		if tmpErr != nil {
+			err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
 			return
 		}
-		for _, row := range logKeywordAlarmRows {
-			if row.AlarmId > 0 {
-				closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
-				if tmpErr != nil {
-					err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
-					return
-				}
-				if len(closeAlarmActions) > 0 {
-					actions = append(actions, closeAlarmActions...)
-				}
-			}
+		if len(closeAlarmActions) > 0 {
+			actions = append(actions, closeAlarmActions...)
 		}
 	}
 	err = Transaction(actions)
 	return
 }
 
+func getLogKeywordCloseAlarmActions(logKeywordConfigGuid string) (actions []*Action, err error) {
+	var logKeywordAlarmRows []*models.LogKeywordAlarmTable
+	err = x.SQL("select id,alarm_id from log_keyword_alarm where log_keyword_config=? and status='firing'", logKeywordConfigGuid).Find(&logKeywordAlarmRows)
+	if err != nil {
+		err = fmt.Errorf("query log keyword alarm table fail,%s ", err.Error())
+		return
+	}
+	for _, row := range logKeywordAlarmRows {
+		if row.AlarmId > 0 {
+			closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
+			if tmpErr != nil {
+				err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
+				return
+			}
+			if len(closeAlarmActions) > 0 {
+				actions = append(actions, closeAlarmActions...)
+			}
+		}
+	}
+	return
+}
+
 func DeleteLogKeyword(logKeywordConfigGuid string) (err error) {
 	var actions []*Action
+	closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(logKeywordConfigGuid)
+	if tmpErr != nil {
+		err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
+		return
+	}
+	actions = append(actions, closeAlarmActions...)
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
@@ -346,7 +364,7 @@ func doLogKeywordMonitorJob() {
 		return
 	}
 	var logKeywordConfigs []*models.LogKeywordCronJobQuery
-	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t2.content,t2.name,t2.guid as log_keyword_config_guid,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
+	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t2.content,t2.name,t2.guid as log_keyword_config_guid,t2.active_window,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
 	if len(logKeywordConfigs) == 0 {
 		log.Logger.Debug("Check log keyword break with empty config ")
 		return
@@ -398,14 +416,16 @@ func doLogKeywordMonitorJob() {
 			if newValue == oldValue {
 				continue
 			}
-			if existAlarm.Status == "firing" {
+			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
 				addFlag = true
 			}
 		} else {
-			addFlag = true
+			if InActiveWindowList(config.ActiveWindow) {
+				addFlag = true
+			}
 		}
 		if addFlag {
 			//if config.NotifyEnable > 0 {
