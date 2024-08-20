@@ -2114,7 +2114,7 @@ func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []st
 	dbKeywordMonitorMap = make(map[string]string)
 	if len(logKeywordConfigList) > 0 {
 		var logKeywordRows []*m.DbKeywordMonitor
-		err = x.SQL("select t1.guid,t2.service_group from log_keyword_config t1 left join log_keyword_monitor t2 on t1.log_keyword_monitor=t2.guid where t1.guid in ('" + strings.Join(logKeywordConfigList, "','") + "')").Find(&logKeywordRows)
+		err = x.SQL("select t1.guid,t3.display_name as `service_group` from log_keyword_config t1 left join log_keyword_monitor t2 on t1.log_keyword_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.guid in ('" + strings.Join(logKeywordConfigList, "','") + "')").Find(&logKeywordRows)
 		if err != nil {
 			return
 		}
@@ -2124,7 +2124,7 @@ func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []st
 	}
 	if len(dbKeywordMonitorList) > 0 {
 		var dbKeywordRows []*m.DbKeywordMonitor
-		err = x.SQL("select guid,service_group from db_keyword_monitor where guid in ('" + strings.Join(dbKeywordMonitorList, "','") + "')").Find(&dbKeywordRows)
+		err = x.SQL("select t1.guid,t2.display_name as `service_group` from db_keyword_monitor t1 left join service_group t2 on t1.service_group=t2.guid where t1.guid in ('" + strings.Join(dbKeywordMonitorList, "','") + "')").Find(&dbKeywordRows)
 		if err != nil {
 			return
 		}
