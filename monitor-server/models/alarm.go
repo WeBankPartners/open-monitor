@@ -587,7 +587,7 @@ type AlarmCloseParam struct {
 	Metric    []string `json:"metric"`
 	Endpoint  []string `json:"endpoint"`
 	AlarmName []string `json:"alarmName"`
-	Priority  string   `json:"priority"`
+	Priority  []string `json:"priority"`
 }
 
 type AlarmCondition struct {
