@@ -177,6 +177,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       top: '10px'
     },
     tooltip: {
+      appendToBody: true,
       trigger: 'axis',
       backgroundColor: 'rgba(245, 245, 245, 0.8)',
       borderWidth: 1,
@@ -440,6 +441,7 @@ export const drawPieChart = function (that, responseData) {
       left: 'center'
     },
     tooltip: {
+      appendToBody: true,
       confine: true, // tip控制在图像区内
       trigger: 'item',
       formatter: '{b} : {c} ({d}%)'
