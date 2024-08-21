@@ -5,11 +5,14 @@ import (
 	"fmt"
 )
 
-func GetExportMetric() []byte {
+func GetExportMetric(step int64) []byte {
 	var buff bytes.Buffer
 	buff.WriteString("# HELP ping check 0 -> alive, 1 -> dead, 2 -> problem. \n")
 	resultLock.RLock()
 	for _, v := range resultList {
+		if v.Step != step {
+			continue
+		}
 		if v.KeywordGuid != "" {
 			tmpMetricDisplay := dbKeywordMetric
 			valueString := fmt.Sprintf("%d", v.KeywordCount)
