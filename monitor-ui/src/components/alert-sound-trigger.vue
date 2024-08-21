@@ -1,15 +1,17 @@
 <template>
   <div>
     <!-- <button @click="changeAudioPlay">Start Audio</button> -->
-    <audio id="alarmAudioPlay" src="../assets/alarm-audio/level1.mp3" loop></audio>
+    <audio id="alarmAudioPlay" :src="mp3" loop></audio>
   </div>
 </template>
 
 <script>
+const mp3 = require('../assets/alarm-audio/level1.mp3')
 import dayjs from 'dayjs'
 export default {
   data() {
     return {
+      mp3,
       alertSoundTriggerOpen: false, // 告警声音开关
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       latestAlert: {} // 最新已提示告警
