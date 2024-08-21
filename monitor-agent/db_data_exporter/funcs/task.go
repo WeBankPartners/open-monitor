@@ -83,6 +83,8 @@ func doTask() {
 	for _, taskObj := range taskList {
 		if !checkStepActive(taskObj.LastTime, nowTime, taskObj.Step) {
 			continue
+		} else if taskObj.Step > 10 {
+			log.Printf("step:%d task:%s start doTask \n", taskObj.Step, taskObj.Name)
 		}
 		var resultValue float64
 		if taskObj.DbType == "mysql" {
