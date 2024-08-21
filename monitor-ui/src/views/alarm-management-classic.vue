@@ -1,6 +1,6 @@
 <template>
   <div class="classic-table">
-    <Table :columns="columns" :data="tableData"></Table>
+    <Table :columns="columns" :border="false" size="small" :data="tableData"></Table>
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
@@ -41,68 +41,80 @@ export default {
       columns: [
         {
           title: this.$t('m_alarmName'),
-          key: 'alarm_name'
+          key: 'alarm_name',
+          minWidth: 160,
+          render: (h, params) => (
+            <BaseEllipsis content={params.row.alarm_name}></BaseEllipsis>
+          )
         },
         {
           title: this.$t('m_menu_configuration'),
           key: 'strategyGroupsInfo',
           render: (h, params) => (
-            <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
-          )
+            <BaseEllipsis content={params.row.strategyGroupsInfo}></BaseEllipsis>
+          ),
+          minWidth: 120
         },
         {
           title: this.$t('m_field_endpoint'),
-          key: 'endpoint'
+          key: 'endpoint',
+          minWidth: 120
         },
         {
-          title: this.$t('m_alarmContent'),
+          title: this.$t('m_tableKey_content'),
           key: 'content',
-          ellipsis: true,
-          tooltip: true
+          minWidth: 160,
+          render: (h, params) => (
+            <BaseEllipsis content={params.row.content}></BaseEllipsis>
+          )
+        },
+        {
+          title: this.$t('m_log'),
+          key: 'log',
+          minWidth: 160,
+          render: (h, params) => (
+            <BaseEllipsis content={params.row.log}></BaseEllipsis>
+          )
         },
         {
           title: this.$t('m_tableKey_s_priority'),
           key: 's_priority',
-          width: 90,
           render: (h, params) => (
             <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-          )
+          ),
+          width: 80
         },
         {
           title: this.$t('m_field_metric'),
-          key: 'alarm_metric_list_join'
+          key: 'alarm_metric_list_join',
+          width: 120
         },
         {
           title: this.$t('m_field_threshold'),
           key: 'alarm_detail',
-          width: 300,
+          minWidth: 200,
           render: (h, params) => (
-            <Tooltip transfer={true} placement="bottom-start" max-width="300">
-              <div slot="content">
-                <div domPropsInnerHTML={params.row.alarm_detail}></div>
-              </div>
-              <div domPropsInnerHTML={params.row.alarm_detail}></div>
-            </Tooltip>
+            <BaseEllipsis content={params.row.alarm_detail}></BaseEllipsis>
           )
         },
         {
           title: this.$t('m_tableKey_start'),
           key: 'start_string',
-          width: 170,
+          width: 170
         },
         {
           title: this.$t('m_remark'),
           key: 'custom_message',
-          width: 120,
           render: (h, params) => (
             <div>{params.row.custom_message || '-'}</div>
-          )
+          ),
+          minWidth: 160
         },
         {
           title: this.$t('m_table_action'),
           key: 'action',
           width: 160,
-          align: 'left',
+          align: 'center',
           fixed: 'right',
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
