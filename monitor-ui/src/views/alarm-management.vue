@@ -9,23 +9,23 @@
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_alarmStatistics')}}：</span>
-            <i-switch size="large" v-model="showGraph">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <i-switch size="large" v-model="showGraph" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_classic_mode')}}：</span>
-            <i-switch size="large" v-model="isClassicModel">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <i-switch size="large" v-model="isClassicModel" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_audio_prompt')}}：</span>
-            <i-switch size="large" @on-change="alertSoundChange">
-              <span slot="true">ON</span>
-              <span slot="false">OFF</span>
+            <i-switch size="large" @on-change="alertSoundChange" style="vertical-align: bottom;">
+              <span slot="true"></span>
+              <span slot="false"></span>
             </i-switch>
             <!-- 新告警声音提示 -->
             <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
