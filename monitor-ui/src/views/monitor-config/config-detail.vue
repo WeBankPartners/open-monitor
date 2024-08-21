@@ -77,7 +77,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (isEditState ? $t('m_button_add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
+          {{ (modelConfig.isAdd ? $t('m_button_add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
         </span>
         <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
@@ -804,7 +804,7 @@ export default {
     }
   },
   methods: {
-    // 根据告警名称模糊搜索
+  // 根据告警名称模糊搜索
     filterData(alarmName) {
       this.totalPageConfig = cloneDeep(this.originTotalPageConfig)
       this.totalPageConfig = this.totalPageConfig.map(item => {
@@ -842,8 +842,7 @@ export default {
       const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
-      }
-      else {
+      } else {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = ''
       }
     },
@@ -851,8 +850,7 @@ export default {
       const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         this.formData.notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
-      }
-      else {
+      } else {
         this.formData.notify[index].proc_callback_name = ''
       }
     },
@@ -1183,7 +1181,7 @@ export default {
     }
   },
   components: {
-    // eslint-disable-next-line vue/no-unused-components
+  // eslint-disable-next-line vue/no-unused-components
     TagShow
   }
 }
