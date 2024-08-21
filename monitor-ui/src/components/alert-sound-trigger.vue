@@ -48,8 +48,7 @@ export default {
           console.error('开启')
           this.audio.pause()
         }
-      }
-      else { // 关闭提示后停止轮询并暂定播报
+      } else { // 关闭提示后停止轮询并暂定播报
         this.audio.pause()
         clearInterval(this.interval)
       }
@@ -101,11 +100,9 @@ export default {
             let iconSrc = ''
             if (priority === 'high') {
               iconSrc = require('../assets/img/icon_alarm_H_cube.png')
-            }
-            else if (priority === 'medium') {
+            } else if (priority === 'medium') {
               iconSrc = require('../assets/img/icon_alarm_M_cube.png')
-            }
-            else if (priority === 'low') {
+            } else if (priority === 'low') {
               iconSrc = require('../assets/img/icon_alarm_L_cube.png')
             }
             const priorityI18n = {
