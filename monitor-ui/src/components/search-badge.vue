@@ -14,7 +14,7 @@
               multiple
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarm_level')"
-              @on-change="onFilterConditionChange"
+              @on-change="onFilterChange"
             >
               <Option v-for="item in filtersPriorityOptions" :value="item.value" :key="item.value">
                 {{item.name}}
@@ -28,7 +28,7 @@
               multiple
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarmName')"
-              @on-change="onFilterConditionChange"
+              @on-change="onFilterChange"
             >
               <Option v-for="name in filtersAlarmNameOptions" :value="name" :key="name">
                 {{name}}
@@ -41,7 +41,7 @@
               multiple
               filterable
               :placeholder="$t('m_please_select') + $t('m_metric')"
-              @on-change="onFilterConditionChange"
+              @on-change="onFilterChange"
             >
               <Option v-for="name in filtersMetricOptions" :value="name" :key="name">
                 {{name}}
@@ -54,7 +54,7 @@
               multiple
               filterable
               :placeholder="$t('m_please_select') + $t('m_endpoint')"
-              @on-change="onFilterConditionChange"
+              @on-change="onFilterChange"
             >
               <Option v-for="name in filtersEndpointOptions" :value="name" :key="name">
                 {{name}}
@@ -89,7 +89,7 @@ export default ({
       handler(newVal) {
         if (newVal && newVal !== JSON.stringify(this.filters)) {
           this.filters = JSON.parse(newVal)
-          this.onFilterConditionChange()
+          this.onFilterChange()
         }
       }
     }
@@ -149,6 +149,17 @@ export default ({
     }, 300),
     onResetButtonClick() {
       this.filters = cloneDeep(initFilters)
+    },
+    limitFiltersLength() {
+      for (const key in this.filters) {
+        if (Array.isArray(this.filters[key]) && this.filters[key].length > 3) {
+          this.filters[key].splice(3)
+        }
+      }
+    },
+    onFilterChange() {
+      this.limitFiltersLength()
+      this.onFilterConditionChange()
     }
   }
 
