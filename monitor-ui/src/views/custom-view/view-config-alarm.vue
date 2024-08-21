@@ -16,7 +16,6 @@
           <span slot="false">OFF</span>
         </i-switch>
         <!-- 新告警声音提示 -->
-        {{ autoRefresh }}
         <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="autoRefresh" ></AlertSoundTrigger>
       </div>
     </div>
