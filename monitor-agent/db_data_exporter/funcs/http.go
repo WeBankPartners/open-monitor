@@ -13,6 +13,12 @@ func StartHttpServer(port int) {
 	http.Handle("/db/config", http.HandlerFunc(handleAcceptConfig))
 	http.Handle("/db/lastkeyword", http.HandlerFunc(handleGetLastKeyword))
 	http.Handle("/metrics", http.HandlerFunc(handlePrometheus))
+	http.Handle("/metrics_60", http.HandlerFunc(handlePrometheusWith1min))
+	http.Handle("/metrics_300", http.HandlerFunc(handlePrometheusWith5min))
+	http.Handle("/metrics_1800", http.HandlerFunc(handlePrometheusWith30min))
+	http.Handle("/metrics_3600", http.HandlerFunc(handlePrometheusWith1hour))
+	http.Handle("/metrics_43200", http.HandlerFunc(handlePrometheusWith12hour))
+	http.Handle("/metrics_86400", http.HandlerFunc(handlePrometheusWith24hour))
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
@@ -91,7 +97,31 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePrometheus(w http.ResponseWriter, r *http.Request) {
-	w.Write(GetExportMetric())
+	w.Write(GetExportMetric(10))
+}
+
+func handlePrometheusWith1min(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(60))
+}
+
+func handlePrometheusWith5min(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(300))
+}
+
+func handlePrometheusWith30min(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(1800))
+}
+
+func handlePrometheusWith1hour(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(3600))
+}
+
+func handlePrometheusWith12hour(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(43200))
+}
+
+func handlePrometheusWith24hour(w http.ResponseWriter, r *http.Request) {
+	w.Write(GetExportMetric(86400))
 }
 
 func handleGetLastKeyword(w http.ResponseWriter, r *http.Request) {
