@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import alertSoundConfig from '@/assets/alarm-audio/mp3-content.json'
+import alertSoundConfig from '@/assets/static-file/mp3-content.json'
 import dayjs from 'dayjs'
 export default {
   data() {
