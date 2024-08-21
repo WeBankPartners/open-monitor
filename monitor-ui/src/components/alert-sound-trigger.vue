@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- {{ alertSoundTriggerOpen }} -->
     <!-- <button @click="changeAudioPlay">Start Audio</button> -->
     <audio id="alarmAudioPlay" src="../assets/alarm-audio/level1.mp3" loop></audio>
   </div>
@@ -11,9 +10,9 @@ import dayjs from 'dayjs'
 export default {
   data() {
     return {
-      alertSoundTriggerOpen: false,
+      alertSoundTriggerOpen: false, // 告警声音开关
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      latestAlert: {}
+      latestAlert: {} // 最新已提示告警
     }
   },
   props: {
@@ -37,6 +36,7 @@ export default {
     changeAudioPlay(trigger) {
       this.alertSoundTriggerOpen = trigger
       this.latestAlert = {}
+      // 开启提示后轮询告警数据，仅需要最新数据
       if (this.alertSoundTriggerOpen) {
         this.getAlarm()
         this.audio = document.getElementById('alarmAudioPlay')
@@ -49,7 +49,7 @@ export default {
           this.audio.pause()
         }
       }
-      else {
+      else { // 关闭提示后停止轮询并暂定播报
         this.audio.pause()
         clearInterval(this.interval)
       }
@@ -63,7 +63,7 @@ export default {
       const params = {
         page: {
           startIndex: 1,
-          pageSize: 10
+          pageSize: 2
         },
         priority: this.priority
       }
@@ -87,7 +87,6 @@ export default {
             if (this.latestAlert) {
               // 计算两个时间之间的总间隔
               const diff = dayjs(now).diff(dayjs(latestAlert.start_string))
-
               if (diff/1000 > this.timeInterval) {
                 console.error('时间超期了')
                 this.audio.pause()
