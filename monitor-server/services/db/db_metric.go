@@ -77,7 +77,7 @@ func GetDbMetric(dbMetricGuid string) (result models.DbMetricMonitorObj, err err
 }
 
 func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	if param.Step < 10 || param.Step > 600 {
+	if param.Step < 10 {
 		param.Step = 10
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
@@ -86,13 +86,13 @@ func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 }
 
 func getCreateDBMetricActions(param *models.DbMetricMonitorObj, operator, nowTime string) (actions []*Action) {
-	param.Guid = guid.CreateGuid()
+	param.Guid = "dbm_" + guid.CreateGuid()
 	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time,update_user) value (?,?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime, operator}
 	actions = append(actions, &insertAction)
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getDbMetricExpr(param.Metric, param.ServiceGroup), param.ServiceGroup,
-			models.MetricWorkspaceService, nowTime, nowTime, operator, operator}})
+			models.MetricWorkspaceService, nowTime, nowTime, operator, operator, param.Guid}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
 	for i, v := range param.EndpointRel {
 		if v.TargetEndpoint == "" {
