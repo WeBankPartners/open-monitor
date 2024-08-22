@@ -190,9 +190,10 @@ export default {
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
+            const notEmpty = !['', undefined].includes(demo_match_value)
             return (
               <Tooltip content={demo_match_value} max-width="300" >
-                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+                <span style={notEmpty?'':'color:#c5c8ce'}>{notEmpty ? demo_match_value : this.$t('m_no_matching')}</span>
               </Tooltip>
             )
           }
@@ -450,7 +451,9 @@ export default {
     },
     changeJSONKey(index, val) {
       this.configInfo.param_list[index].json_key = val
-      this.configInfo.param_list[index].demo_match_value = ((this.configInfo.calc_result.json_obj[val] || '') + '')
+      const valTmp = this.configInfo.calc_result.json_obj[val]
+      const notEmpty = !['', undefined].includes(valTmp)
+      this.configInfo.param_list[index].demo_match_value = ((notEmpty ? valTmp : '') + '')
     }
   }
 }
