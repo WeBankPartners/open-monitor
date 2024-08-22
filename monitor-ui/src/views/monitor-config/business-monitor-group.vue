@@ -884,8 +884,7 @@ export default {
           if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          }
-          else {
+          } else {
             if ('download' in document.createElement('a')) { // 非IE下载
               const elink = document.createElement('a')
               elink.download = fileName
@@ -895,8 +894,7 @@ export default {
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            }
-            else { // IE10+下载
+            } else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
@@ -1049,19 +1047,16 @@ export default {
     editRuleItem(rowData) {
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
-      }
-      else {
+      } else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
     okDelRow(item) {
       if (this.deleteType === 'custom_metrics') {
         this.delCustomMericsItem(item)
-      }
-      else if (this.deleteType === 'db') {
+      } else if (this.deleteType === 'db') {
         this.delDbItem(item)
-      }
-      else {
+      } else {
         this.delRuleItem(item)
       }
     },
@@ -1126,8 +1121,7 @@ export default {
         if (!pathFlag || this.addAndEditModal.pathOptions.length === 0) {
           return this.$Message.error('日志路径不能为空')
         }
-      }
-      else {
+      } else {
         if (!this.addAndEditModal.dataConfig.log_path) {
           return this.$Message.error('日志路径不能为空')
         }
@@ -1270,8 +1264,7 @@ export default {
               this.addAndEditModal.dataConfig.endpoint_rel.push(t)
             }
           })
-        }
-        else {
+        } else {
           tmp.forEach(t => {
             const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
             if (find === undefined) {
@@ -1288,8 +1281,7 @@ export default {
           this.showManagement = true
           if (Array.isArray(responseData)) {
             this.logFileDetail = responseData
-          }
-          else {
+          } else {
             this.logFileDetail = [responseData]
           }
 
@@ -1341,8 +1333,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
           if (Array.isArray(responseData)) {
             this.dataBaseTableData = responseData
-          }
-          else {
+          } else {
             this.dataBaseTableData = [responseData]
           }
           // this.dataBaseTableData = responseData
@@ -1359,8 +1350,7 @@ export default {
     okTempSelect() {
       if (this.selectedTemp === 'customGuid') {
         this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
-      }
-      else {
+      } else {
         const tmpList = this.templateList.json_list.concat(this.templateList.regular_list)
         const findTarget = tmpList.find(tmp => tmp.guid === this.selectedTemp)
         this.$refs.businessMonitorGroupConfigRef.loadPage('add', findTarget.guid, this.parentGuid, '')

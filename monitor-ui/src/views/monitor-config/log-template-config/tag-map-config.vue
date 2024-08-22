@@ -63,8 +63,7 @@ export default {
       this.tagMap.forEach(item => {
         if (infoSet.has(item.label)) {
           res = false
-        }
-        else {
+        } else {
           infoSet.add(item.label)
         }
       })
