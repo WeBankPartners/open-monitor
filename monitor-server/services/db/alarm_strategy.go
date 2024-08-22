@@ -443,7 +443,7 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 		if len(metricRow.Tags) > 0 {
 			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
 			for tagIndex, tagRow := range metricRow.Tags {
-				actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag(guid,alarm_strategy_metric,name) values (?,?,?)", Param: []interface{}{tagGuidList[tagIndex], metricGuidList[i], tagRow.TagName}})
+				actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag(guid,alarm_strategy_metric,name,equal) values (?,?,?,?)", Param: []interface{}{tagGuidList[tagIndex], metricGuidList[i], tagRow.TagName, tagRow.Equal}})
 				for _, tagValue := range tagRow.TagValue {
 					actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) values (?,?)", Param: []interface{}{tagGuidList[tagIndex], tagValue}})
 				}
