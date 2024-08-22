@@ -119,7 +119,7 @@ export default {
           render: (h, params) => (
             <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="500">
               <div slot="content">
-                <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
+                <div domPropsInnerHTML={this.regRes(params.row.regular)} style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
               </div>
               <Input
                 value={params.row.regular}
@@ -143,9 +143,10 @@ export default {
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
+            const notEmpty = demo_match_value !== ''
             return (
               <Tooltip content={demo_match_value} max-width="300" >
-                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+                <span style={notEmpty?'':'color:#c5c8ce'}>{notEmpty ? demo_match_value : this.$t('m_no_matching')}</span>
               </Tooltip>
             )
           }
@@ -358,6 +359,9 @@ export default {
       this.configInfo.param_list[index].regular_font_result = this.regRes(val)
     },
     regRes(val) {
+      // 测试数据
+      {/* {"time":"2024-08-12 10:04:48","url":"api/v1/ser/user/update","service_code":"updateUser","return_code":"200","cost_ms":0.819}
+      .*"service_code":"(.*)","retu.* */}
       try {
         const reg = new RegExp(val, 'g')
         const match = reg.exec(this.configInfo.demo_log)
