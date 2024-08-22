@@ -1477,7 +1477,7 @@ func UpdateAlarmStrategyMetricExpr(alarmStrategyMetricObj *models.AlarmStrategyM
 }
 
 func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
-	err = x.SQL("select id,endpoint,status,s_metric,tags,alarm_strategy from alarm where status='firing' and alarm_strategy in (select alarm_strategy from alarm_strategy_metric where monitor_engine_expr=1) order by id desc").Find(&alarmList)
+	err = x.SQL("select id,endpoint,status,s_metric,tags,alarm_strategy from alarm where status='firing' and alarm_strategy in (select alarm_strategy from alarm_strategy_metric where monitor_engine=1) order by id desc").Find(&alarmList)
 	if err != nil {
 		err = fmt.Errorf("get monitor engine alarm firing list fail,%s ", err.Error())
 	}
