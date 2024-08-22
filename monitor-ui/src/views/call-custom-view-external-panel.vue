@@ -408,8 +408,7 @@ export default {
       this.activeGridConfig = find
       if (!find._activeCharts) {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
-      }
-      else {
+      } else {
         this.activeChartType = find._activeCharts[0].chartType
         this.chartType = find._activeCharts[0].chartType
         this.editGrid(item)
@@ -449,8 +448,7 @@ export default {
           const findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
           findEditData.aggregate = aggregate
           findEditData.agg_step = agg_step
-        }
-        else {
+        } else {
           parentRouteData.cfg = resViewData
         }
         parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
@@ -458,8 +456,7 @@ export default {
         if (['line','bar'].includes(this.activeChartType)) {
           this.chartType = 'line'
           // this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
-        }
-        else {
+        } else {
           this.chartType = 'pie'
           // this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         }
@@ -627,8 +624,7 @@ export default {
             this.layoutData[p.index].group = this.groupName
           }
         })
-      }
-      else {
+      } else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
         this.layoutData.forEach(d => {
           if (d.group === this.oriGroupName) {

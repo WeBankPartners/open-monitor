@@ -237,8 +237,7 @@ export default {
     changeGraph(val) {
       if (val) {
         this.editGraph(val)
-      }
-      else {
+      } else {
         this.showGraphConfig = false
       }
     },
@@ -317,8 +316,7 @@ export default {
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
             this.$Message.success(this.$t('m_tips_success'))
           })
-        }
-        else {
+        } else {
           const params = {
             id: this.titleManagement.id,
             title: this.titleManagement.title,
@@ -344,8 +342,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
-      }
-      else {
+      } else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
