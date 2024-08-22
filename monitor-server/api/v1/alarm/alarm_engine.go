@@ -46,11 +46,11 @@ func doMonitorEngineRuleJob() {
 			log.Logger.Info("doAlarmEngineRuleJob condition illegal", log.String("alarmStrategyMetric", row.Guid), log.String("condition", row.Condition))
 			continue
 		}
-		alarmObj, tmpErr := buildMonitorEngineAlarm(row, condition, threshold, existAlarmRows)
+		alarmObjList, tmpErr := buildMonitorEngineAlarm(row, condition, threshold, existAlarmRows)
 		if tmpErr != nil {
 			log.Logger.Warn("doAlarmEngineRuleJob buildMonitorEngineAlarm fail", log.Error(tmpErr))
-		} else if alarmObj.Status != "" {
-			alarmList = append(alarmList, alarmObj)
+		} else if len(alarmObjList) > 0 {
+			alarmList = append(alarmList, alarmObjList...)
 		}
 	}
 	if len(alarmList) == 0 {
@@ -141,13 +141,12 @@ func compareFloatValue(inputValue, threshold float64, condition string) (match b
 	return
 }
 
-func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, condition string, threshold float64, existAlarmRows []*models.AlarmTable) (alarmObj *models.AlarmHandleObj, err error) {
+func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, condition string, threshold float64, existAlarmRows []*models.AlarmTable) (alarmObjList []*models.AlarmHandleObj, err error) {
 	lastSec := analyzeLast(alarmStrategyMetric.Last)
 	if lastSec == 0 {
 		err = fmt.Errorf("lastConfig:%s illegal", alarmStrategyMetric.Last)
 		return
 	}
-	alarmObj = &models.AlarmHandleObj{}
 	endTime := time.Now().Unix()
 	startTime := endTime - lastSec
 	queryData, queryErr := datasource.QueryPrometheusRange(alarmStrategyMetric.MonitorEngineExpr, startTime, endTime, 10)
@@ -156,6 +155,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 		return
 	}
 	for _, queryObj := range queryData.Result {
+		alarmObj := &models.AlarmHandleObj{}
 		delete(queryObj.Metric, "__name__")
 		tmpTags, getTagsErr := getNewAlarmTags(&models.AMRespAlert{Labels: queryObj.Metric})
 		if getTagsErr != nil {
@@ -179,6 +179,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 				}
 			}
 		}
+		log.Logger.Debug("buildMonitorEngineAlarm condition", log.JsonObj("queryObj", queryObj), log.Bool("firingMatch", firingMatch), log.Bool("firingNonMatch", firingNonMatch), log.Float64("startValue", startValue), log.Float64("endValue", endValue))
 		// 如果有一个不符合的值，则算是不满足
 		if firingNonMatch {
 			if tmpExistAlarm.Id > 0 {
@@ -226,6 +227,9 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 			} else {
 				// 又没有满足的值，又没不满足的值，可能是没值，不理
 			}
+		}
+		if alarmObj.Status != "" {
+			alarmObjList = append(alarmObjList, alarmObj)
 		}
 	}
 	return
