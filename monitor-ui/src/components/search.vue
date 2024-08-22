@@ -93,8 +93,7 @@ export default {
     endpoint(val) {
       if (val) {
         this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
-      }
-      else {
+      } else {
         this.endpointObject = {}
       }
     },
@@ -251,8 +250,7 @@ export default {
         this.autoRefresh = 0
         this.$parent.showCharts = false
         this.$parent.showRecursive = false
-      }
-      else {
+      } else {
         this.disableTime = false
       }
     },

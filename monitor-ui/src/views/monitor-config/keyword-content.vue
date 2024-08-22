@@ -1022,8 +1022,7 @@ export default {
           if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          }
-          else {
+          } else {
             if ('download' in document.createElement('a')) { // 非IE下载
               const elink = document.createElement('a')
               elink.download = fileName
@@ -1033,8 +1032,7 @@ export default {
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            }
-            else { // IE10+下载
+            } else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
@@ -1126,8 +1124,7 @@ export default {
         if (!pathFlag || this.addAndEditModal.pathOptions.length === 0) {
           return this.$Message.error('日志路径不能为空')
         }
-      }
-      else {
+      } else {
         if (!this.addAndEditModal.dataConfig.log_path) {
           return this.$Message.error('日志路径不能为空')
         }
@@ -1374,8 +1371,7 @@ export default {
             this.isTableChangeFormShow = false
             this.getDetail(this.targetId)
           })
-        }
-        else {
+        } else {
           if (!this.isAddState) { // 数据库编辑
             method = 'PUT'
           }
@@ -1394,8 +1390,7 @@ export default {
       const findFlow = this.allFlows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         item.proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
-      }
-      else {
+      } else {
         item.proc_callback_name = ''
       }
     }
