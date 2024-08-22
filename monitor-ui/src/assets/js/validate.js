@@ -208,8 +208,7 @@ const valueFromExpression = (item, expression, default_value='') => {
   for (n in attrs){
     if (isEmpty(item_tmp) && attrs[n] in item_tmp){
       item_tmp = item_tmp[attrs[n]]
-    }
-    else {
+    } else {
       return default_value
     }
   }
