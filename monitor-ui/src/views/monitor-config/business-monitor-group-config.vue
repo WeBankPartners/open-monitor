@@ -263,8 +263,7 @@ export default {
       this.view = actionType === 'view'
       if (configGuid) {
         this.getConfig(configGuid)
-      }
-      else {
+      } else {
         this.businessConfig = {
           name: '', // 名称
           metric_prefix_code: '', // 指标编码 1到6个字符的字母、数字、下划线或短横线
