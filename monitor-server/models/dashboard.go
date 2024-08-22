@@ -29,6 +29,7 @@ func (e OptionModelSortList) Less(i, j int) bool {
 type OptionModel struct {
 	Id             int    `json:"id"`
 	OptionValue    string `json:"option_value"`
+	OptionName     string `json:"option_name"`
 	OptionText     string `json:"option_text"`
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
