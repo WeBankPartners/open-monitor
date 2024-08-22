@@ -73,8 +73,7 @@ export default {
     handleMgmtRoleTransferChange(newTargetKeys) {
       if (newTargetKeys.length > 1) {
         this.$Message.warning(this.$t('m_choose_one'))
-      }
-      else {
+      } else {
         this.mgmtRolesKeyToFlow = newTargetKeys
       }
     },

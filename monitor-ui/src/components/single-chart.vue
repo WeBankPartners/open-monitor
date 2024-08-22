@@ -90,8 +90,7 @@ export default {
             })
           })
         })
-      }
-      else {
+      } else {
         params.compare = {
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
