@@ -1,17 +1,17 @@
 <template>
   <div>
     <!-- <button @click="changeAudioPlay">Start Audio</button> -->
-    <audio id="alarmAudioPlay" :src="mp3" loop></audio>
+    <audio id="alarmAudioPlay" :src="alertSound"></audio>
   </div>
 </template>
 
 <script>
-const mp3 = require('../assets/alarm-audio/level1.mp3')
+import alertSoundConfig from '@/assets/static-file/mp3-content.json'
 import dayjs from 'dayjs'
 export default {
   data() {
     return {
-      mp3,
+      alertSound: alertSoundConfig.content,
       alertSoundTriggerOpen: false, // 告警声音开关
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       latestAlert: {} // 最新已提示告警
@@ -30,35 +30,36 @@ export default {
     }
   },
   mounted(){
+    this.setInterval()
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
     })
   },
   methods: {
+    setInterval() {
+      this.interval = setInterval(() => {
+        this.getAlarm()
+      }, this.timeInterval * 1000)
+    },
     changeAudioPlay(trigger) {
       this.alertSoundTriggerOpen = trigger
       this.latestAlert = {}
-      // 开启提示后轮询告警数据，仅需要最新数据
+      // 开启提示,仅需要最新数据
       if (this.alertSoundTriggerOpen) {
         this.getAlarm()
         this.audio = document.getElementById('alarmAudioPlay')
-        this.interval = setInterval(() => {
-          this.getAlarm()
-        }, this.timeInterval * 1000)
         this.audio.volume = 0
         if (this.audio) {
           console.error('开启')
           this.audio.pause()
         }
-      } else { // 关闭提示后停止轮询并暂定播报
+      } else { // 关闭提示后暂定播报
         this.audio.pause()
-        clearInterval(this.interval)
       }
+      clearInterval(this.interval)
+      this.setInterval()
     },
     getAlarm() {
-      if (!this.alertSoundTriggerOpen) {
-        return
-      }
       this.audio&&this.audio.pause()
       const now = dayjs().format('YYYY-MM-DD HH:mm:ss')
       const params = {
@@ -142,8 +143,10 @@ export default {
                 </div>
               )
             })
-            this.audio.play()
-            this.audio.volume = 1
+            if (this.alertSoundTriggerOpen) {
+              this.audio.play()
+              this.audio.volume = 1
+            }
           }
         },
         {isNeedloading: false},
