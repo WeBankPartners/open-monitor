@@ -110,8 +110,7 @@ export default {
     isTabActive() {
       if (document.hidden) {
         this.clearAlarmInterval()
-      }
-      else {
+      } else {
         if (this.cacheParams.id) {
           this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         }
@@ -139,7 +138,7 @@ export default {
       const params = {
         customDashboardId: id,
         page: this.paginationInfo,
-        priority: this.filtersForShow.length === 1 ? this.filtersForShow[0].value : undefined
+        priority: this.filtersForShow.length === 1 ? [this.filtersForShow[0].value] : undefined
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, responseData => {
         this.paginationInfo.total = responseData.page.totalRows
