@@ -241,8 +241,7 @@ export default {
             if (!this.modelConfig.addRow[obj.value]){
               obj.isError = true
               flag = false
-            }
-            else {
+            } else {
               obj.isError = false
             }
           }
@@ -254,8 +253,7 @@ export default {
             if (!this.modelConfig.addRow[obj.value]){
               this.modelConfig.config[i].isError = true
               flag = false
-            }
-            else {
+            } else {
               this.modelConfig.config[i].isError = false
             }
           }
@@ -264,8 +262,7 @@ export default {
             if (this.modelConfig.addRow[obj.value] && this.modelConfig.addRow[obj.value].length === 0){
               this.modelConfig.config[i].isError = true
               flag = false
-            }
-            else {
+            } else {
               this.modelConfig.config[i].isError = false
             }
           }
@@ -300,8 +297,7 @@ export default {
         if (result){
           if (val) {
             this.$parent.addPost()
-          }
-          else {
+          } else {
             this.$parent.editPost()
           }
         }

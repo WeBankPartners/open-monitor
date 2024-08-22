@@ -157,8 +157,7 @@ export default {
       for (n in attrs){
         if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
           item_tmp = item_tmp[attrs[n]]
-        }
-        else {
+        } else {
           return ''
         }
       }
@@ -176,8 +175,7 @@ export default {
             callback(value,index,indexx)
           }
         })
-      }
-      else {
+      } else {
         callback(value,index,indexx)
       }
     },

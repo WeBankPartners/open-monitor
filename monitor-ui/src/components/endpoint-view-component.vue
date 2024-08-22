@@ -246,8 +246,7 @@ export default {
       this.isfullscreen = !this.isfullscreen
       if (this.isfullscreen) {
         this.fullscreenTableHight = document.documentElement.clientHeight - 160
-      }
-      else {
+      } else {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },
