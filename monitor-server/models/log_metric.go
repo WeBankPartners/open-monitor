@@ -190,17 +190,19 @@ type LogMetricGroupObj struct {
 }
 
 type LogMetricGroupWithTemplate struct {
-	Name                   string                     `json:"name"`
-	LogMetricMonitorGuid   string                     `json:"log_metric_monitor_guid"`
-	LogMetricGroupGuid     string                     `json:"log_metric_group_guid"`
-	LogMonitorTemplateGuid string                     `json:"log_monitor_template_guid"`
-	CodeStringMap          []*LogMetricStringMapTable `json:"code_string_map"`
-	RetCodeStringMap       []*LogMetricStringMapTable `json:"retcode_string_map"`
-	MetricPrefixCode       string                     `json:"metric_prefix_code"`
-	ServiceGroup           string                     `json:"service_group"`
-	MonitorType            string                     `json:"monitor_type"`
-	AutoCreateWarn         bool                       `json:"auto_create_warn"`      //自动创建告警
-	AutoCreateDashboard    bool                       `json:"auto_create_dashboard"` //自动创建自定义看板
+	Name                      string                     `json:"name"`
+	LogMetricMonitorGuid      string                     `json:"log_metric_monitor_guid"`
+	LogMetricGroupGuid        string                     `json:"log_metric_group_guid"`
+	LogMonitorTemplateGuid    string                     `json:"log_monitor_template_guid"`
+	CodeStringMap             []*LogMetricStringMapTable `json:"code_string_map"`
+	RetCodeStringMap          []*LogMetricStringMapTable `json:"retcode_string_map"`
+	MetricPrefixCode          string                     `json:"metric_prefix_code"`
+	ServiceGroup              string                     `json:"service_group"`
+	MonitorType               string                     `json:"monitor_type"`
+	AutoCreateWarn            bool                       `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard       bool                       `json:"auto_create_dashboard"` //自动创建自定义看板
+	LogMonitorTemplate        *LogMonitorTemplateDto     `json:"log_monitor_template"`
+	LogMonitorTemplateVersion string                     `json:"log_monitor_template_version"`
 }
 
 type LogMetricGroupNeObj struct {
