@@ -44,8 +44,7 @@ export default {
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$router.push({ path: 'systemMonitoring' })
-    }
-    else {
+    } else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData)) {
         this.initPanal()
       }
