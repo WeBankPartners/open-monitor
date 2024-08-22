@@ -80,8 +80,7 @@ export default {
         responseData => {
           if (responseData.legend && responseData.legend.length === 0) {
             this.noDataType = 'noData'
-          }
-          else {
+          } else {
             this.noDataType = 'normal'
             drawPieChart(this, responseData)
           }

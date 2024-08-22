@@ -9,23 +9,23 @@
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_alarmStatistics')}}：</span>
-            <i-switch size="large" v-model="showGraph">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <i-switch size="large" v-model="showGraph" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_classic_mode')}}：</span>
-            <i-switch size="large" v-model="isClassicModel">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <i-switch size="large" v-model="isClassicModel" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
           <li class="filter-li">
             <span class="label">{{$t('m_audio_prompt')}}：</span>
-            <i-switch size="large" @on-change="alertSoundChange">
-              <span slot="true">ON</span>
-              <span slot="false">OFF</span>
+            <i-switch size="large" @on-change="alertSoundChange" style="vertical-align: bottom;">
+              <span slot="true"></span>
+              <span slot="false"></span>
             </i-switch>
             <!-- 新告警声音提示 -->
             <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
@@ -411,8 +411,7 @@ export default {
         }
         if (val1 < val2) {
           return -1
-        }
-        else if (val1 > val2) {
+        } else if (val1 > val2) {
           return 1
         }
         return 0
@@ -469,8 +468,7 @@ export default {
         metricInfo.forEach(item => {
           if (set.has(item.name)) {
             item.itemStyle = itemStyleSet[item.name]
-          }
-          else {
+          } else {
             legendData.push(item.name)
             index++
             const itemStyle = {
@@ -492,8 +490,7 @@ export default {
       const singleArr = this.filters[key]
       if (singleArr.includes(value)) {
         singleArr.splice(singleArr.indexOf(value), 1)
-      }
-      else {
+      } else {
         singleArr.push(value)
       }
     },
@@ -520,8 +517,7 @@ export default {
         params.alarmName = this.filters.alarm_name || []
         params.endpoint = this.filters.endpoint || []
         params.metric = this.filters.metric || []
-      }
-      else {
+      } else {
         params.id = alarmItem.id
       }
       if (!alarmItem.is_custom) {

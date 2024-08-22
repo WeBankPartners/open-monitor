@@ -76,8 +76,7 @@ export default {
       this.$eventBusP.$on('expand-menu', val => {
         this.expand = val
       })
-    }
-    else {
+    } else {
       this.$bus.$on('expand-menu', val => {
         this.expand = val
       })
