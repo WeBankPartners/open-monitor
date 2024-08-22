@@ -205,6 +205,14 @@ type LogMetricGroupWithTemplate struct {
 	LogMonitorTemplateVersion string                     `json:"log_monitor_template_version"`
 }
 
+type LogMetricThreshold struct {
+	MetricId    string
+	Metric      string
+	DisplayName string
+	TagConfig   []string
+	*ThresholdConfig
+}
+
 type LogMetricGroupNeObj struct {
 	LogMetricGroup string                 `json:"log_metric_group"`
 	LogType        string                 `json:"log_type"`
