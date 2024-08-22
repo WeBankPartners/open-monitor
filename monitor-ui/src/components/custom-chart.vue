@@ -62,8 +62,7 @@ export default {
     isTabActive() {
       if (document.hidden) {
         this.clearInterval()
-      }
-      else {
+      } else {
         this.isAutoRefresh()
       }
     },
@@ -81,8 +80,7 @@ export default {
         if (this.interval === null) {
           this.isAutoRefresh()
         }
-      }
-      else {
+      } else {
         clearInterval(this.interval)
         this.interval = null
       }
@@ -109,8 +107,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
-        }
-        else {
+        } else {
           responseData.yaxis.unit = this.chartInfo.panalUnit
           this.elId = this.chartInfo.elId
           this.noDataType = 'normal'

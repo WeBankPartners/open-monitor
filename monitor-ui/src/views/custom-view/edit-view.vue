@@ -1184,13 +1184,11 @@ export default {
     onLineTypeChange(lineType) {
       if (lineType === 'bar') {
         this.chartConfigForm.chartType = 'bar'
-      }
-      else if (lineType === 'twoYaxes') {
+      } else if (lineType === 'twoYaxes') {
         this.chartConfigForm.aggStep = 60
         this.chartConfigForm.aggregate = 'none'
         this.chartConfigForm.unit = ''
-      }
-      else {
+      } else {
         this.chartConfigForm.chartType = 'line'
       }
       this.resetChartTemplate()
@@ -1234,8 +1232,7 @@ export default {
             drawPieChart(this, res)
           }
         )
-      }
-      else {
+      } else {
 
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
@@ -1287,8 +1284,7 @@ export default {
             delete one.seriesName
             return one
           })
-        }
-        else {
+        } else {
           item.metricToColor = []
         }
         delete item.colorGroup
