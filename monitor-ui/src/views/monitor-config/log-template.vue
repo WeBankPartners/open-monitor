@@ -251,8 +251,7 @@ export default {
     changeRegexTableStatus(index, type) {
       if (type === 'in') {
         this.hideRegex.push(index)
-      }
-      else if (type === 'out') {
+      } else if (type === 'out') {
         const findIndex = this.hideRegex.findIndex(rIndex => rIndex === index)
         this.hideRegex.splice(findIndex, 1)
       }
@@ -261,8 +260,7 @@ export default {
     addTemplate(log_type) {
       if (log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage()
-      }
-      else {
+      } else {
         this.$refs.standardRegexRef.loadPage()
       }
     },
@@ -270,8 +268,7 @@ export default {
     editAction(row) {
       if (row.log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage(row.guid)
-      }
-      else {
+      } else {
         this.$refs.standardRegexRef.loadPage(row.guid)
       }
     },
