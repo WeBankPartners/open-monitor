@@ -79,8 +79,7 @@ export default {
           [key]: Base64.encode(this.userInfo[key]),
           re_new_password: Base64.encode(this.userInfo[key])
         }
-      }
-      else {
+      } else {
         // eslint-disable-next-line no-const-assign
         params = {
           [key]: this.userInfo[key]
@@ -95,8 +94,7 @@ export default {
     confirmPassword() {
       if (this.userInfo.new_password.trim() === this.userInfo.re_new_password.trim()) {
         this.saveInfo('new_password')
-      }
-      else {
+      } else {
         this.$Message.success(this.$t('m_tips_failed'))
       }
     },

@@ -494,8 +494,7 @@ export default {
       })
       if (!params.id || isNaN(Number(params.id))) {
         params.id = 0
-      }
-      else {
+      } else {
         params.id = Number(params.id)
       }
       if (params.permission === 'all') {
@@ -562,8 +561,7 @@ export default {
       if (this.authViewType === 'add') {
         params.name = this.addViewName
         path = '/monitor/api/v2/dashboard/custom'
-      }
-      else if (this.authViewType === 'edit') {
+      } else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
         params.id = this.boardId
         path = '/monitor/api/v2/dashboard/custom/permission'
@@ -590,8 +588,7 @@ export default {
           content,
           duration: 5
         })
-      }
-      else {
+      } else {
         this.$Message.success(this.$t('m_tips_success'))
       }
       this.$refs.authDialog.flowRoleManageModal = false
