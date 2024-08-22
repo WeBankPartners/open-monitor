@@ -448,8 +448,7 @@ export default {
       }, res => {
         if (isEmpty(res)) {
           this.$router.push({path: 'viewConfigIndex'})
-        }
-        else {
+        } else {
           this.viewCondition.timeTnterval = res.timeRange || -3600
           this.viewCondition.autoRefresh = res.refreshWeek || 10
           this.boardMgmtRoles = res.mgmtRoles
@@ -552,13 +551,11 @@ export default {
         let parsedDisplayConfig = {}
         if (this.activeGroup === 'ALL') {
           parsedDisplayConfig = JSON.parse(item.displayConfig)
-        }
-        else {
+        } else {
           // 在各个分组中的情况
           if (this.isValidJson(item.groupDisplayConfig) && !isEmpty(JSON.parse(item.groupDisplayConfig))) {
             parsedDisplayConfig = JSON.parse(item.groupDisplayConfig)
-          }
-          else {
+          } else {
             item.groupDisplayConfig = ''
             parsedDisplayConfig = JSON.parse(item.displayConfig)
           }
@@ -582,8 +579,7 @@ export default {
               delete one.seriesName
               return one
             })
-          }
-          else {
+          } else {
             item.metricToColor = []
           }
           params.data.push(item)
@@ -617,8 +613,7 @@ export default {
       })
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
-      }
-      else {
+      } else {
         tmpArr.forEach((tmpItem, index) => {
           this.layoutData[index]._activeCharts = tmpItem._activeCharts
         })
@@ -659,8 +654,7 @@ export default {
       this.activeGridConfig = find
       if (!find._activeCharts) {
         // this.$root.JQ('#set_chart_type_Modal').modal('show')
-      }
-      else {
+      } else {
         this.activeChartType = find._activeCharts[0].chartType
         this.chartType = find._activeCharts[0].chartType
         this.showChartConfig = true
@@ -739,8 +733,7 @@ export default {
         if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
           this.saveAuthType = 'board'
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions)
-        }
-        else {
+        } else {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
             this.refreshPannelNow()
             resolve()
@@ -814,8 +807,7 @@ export default {
         if (!d.group) {
           group.hasGroup = false
           group.setGroup = false
-        }
-        else { // 已绑定
+        } else { // 已绑定
           group.hasGroup = d.group === groupName ? false : true
           group.setGroup = d.group === groupName ? true : false
         }
@@ -849,8 +841,7 @@ export default {
             this.allPageLayoutData[p.index].group = this.groupName
           }
         })
-      }
-      else {
+      } else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
         this.allPageLayoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
@@ -861,8 +852,7 @@ export default {
           if (p.hasGroup === false) {
             if (p.setGroup && p.group === '') {
               this.allPageLayoutData[p.index].group = this.groupName
-            }
-            else if (!p.setGroup) {
+            } else if (!p.setGroup) {
               this.allPageLayoutData[p.index].group = ''
             }
           }
@@ -890,8 +880,7 @@ export default {
       if (lastItem.x + lastItem.w + needSetItem.w > 12) {
         needSetItem.x = 0
         needSetItem.y = lastItem.y + 7
-      }
-      else {
+      } else {
         needSetItem.x = lastItem.x + lastItem.w
         needSetItem.y = lastItem.y
       }
@@ -943,8 +932,7 @@ export default {
             this.showChartConfig = true
           })
         }, 0)
-      }
-      else {
+      } else {
         const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? '' : this.activeGroup)
         const copyParams = {
           dashboardId: this.pannelId,
@@ -1028,8 +1016,7 @@ export default {
               groupDisplayConfig: item.partGroupDisplayConfig
             }
           )
-        }
-        else {
+        } else {
           // 解决分组修改后保存失效问题
           const singleChart = find(finalCharts, {id: item.id})
           if (!isEmpty(singleChart)) {
@@ -1155,8 +1142,7 @@ export default {
         this.useRoles = useRoles
         path = '/monitor/api/v2/chart/custom/permission'
         params.chartId = this.setChartConfigId
-      }
-      else {
+      } else {
         this.boardMgmtRoles = mgmtRoles
         this.boardUseRoles = useRoles
         path = '/monitor/api/v2/dashboard/custom/permission'
@@ -1196,8 +1182,7 @@ export default {
           needChangeItem.h = 7
           needChangeItem.x = 0
           needChangeItem.y = 0
-        }
-        else {
+        } else {
           // 先筛选出最下面的元素，再给这个元素填充
           const maxY = maxBy(layoutDataByGroup, item => item.partGroupDisplayConfig.y).partGroupDisplayConfig.y
           const sameMaxYData = filter(layoutDataByGroup, item => item.partGroupDisplayConfig.y === maxY)
@@ -1208,8 +1193,7 @@ export default {
           if (isStandardArrangement) {
             needChangeItem.w = lastOneArr[0].partGroupDisplayConfig.w
             needChangeItem.h = lastOneArr[0].partGroupDisplayConfig.h
-          }
-          else {
+          } else {
             needChangeItem.w = 6
             needChangeItem.h = 7
           }
@@ -1219,8 +1203,7 @@ export default {
             if (lastOne.x + lastOne.w + needChangeItem.w > 12) {
               needChangeItem.y = lastOne.y + 7
               needChangeItem.x = 0
-            }
-            else {
+            } else {
               needChangeItem.y = lastOne.y
               needChangeItem.x = lastOne.x + lastOne.w
             }
@@ -1248,8 +1231,7 @@ export default {
         this.$nextTick(() => {
           this.chartLayoutType = this.previousChartLayoutType
         })
-      }
-      else {
+      } else {
         this.setChartLayoutType(type)
       }
     },
@@ -1267,33 +1249,27 @@ export default {
           item.w = 6
           item.x = (index % 2) * 6
           item.y = Math.floor(index / 2) * 7
-        }
-        else if (type === 'three') {
+        } else if (type === 'three') {
           item.w = 4
           item.x = (index % 3) * 4
           item.y = Math.floor(index / 3) * 7
-        }
-        else if (type === 'four') {
+        } else if (type === 'four') {
           item.w = 3
           item.x = (index % 4) * 3
           item.y = Math.floor(index / 4) * 7
-        }
-        else if (type === 'five') {
+        } else if (type === 'five') {
           item.w = 2.4
           item.x = (index % 5) * 2.4
           item.y = Math.floor(index / 5) * 7
-        }
-        else if (type === 'six') {
+        } else if (type === 'six') {
           item.w = 2
           item.x = (index % 6) * 2
           item.y = Math.floor(index / 6) * 7
-        }
-        else if (type === 'seven') {
+        } else if (type === 'seven') {
           item.w = 1.7
           item.x = (index % 7) * 1.7
           item.y = Math.floor(index / 7) * 7
-        }
-        else if (type === 'eight') {
+        } else if (type === 'eight') {
           item.w = 1.5
           item.x = (index % 8) * 1.5
           item.y = Math.floor(index / 8) * 7
@@ -1312,8 +1288,7 @@ export default {
     filterLayoutData() {
       if (this.activeGroup === 'ALL') {
         this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
-      }
-      else {
+      } else {
         this.layoutData = this.layoutData.filter(d => d.group === this.activeGroup)
         if (isEmpty(this.layoutData)) {
           return []
@@ -1324,8 +1299,7 @@ export default {
         if (layoutNeedReset || ['two', 'three', 'four', 'five', 'six', 'seven', 'eight'].includes(this.chartLayoutType)) {
           this.sortLayoutData(this.layoutData)
           this.calculateLayout(this.layoutData, this.chartLayoutType)
-        }
-        else {
+        } else {
           this.layoutData.forEach(item => {
             Object.assign(item, item.partGroupDisplayConfig)
           })
@@ -1346,8 +1320,7 @@ export default {
       try {
         JSON.parse(str)
         return true
-      }
-      catch (e) {
+      } catch (e) {
         return false
       }
     },
@@ -1411,8 +1384,7 @@ export default {
         if (isStandardArrangement) {
           finalItem.w = lastOneArr[0].allGroupDisplayConfig.w
           finalItem.h = lastOneArr[0].allGroupDisplayConfig.h
-        }
-        else {
+        } else {
           finalItem.w = 6
           finalItem.h = 7
         }
@@ -1422,18 +1394,15 @@ export default {
           if (lastOne.x + lastOne.w + finalItem.w > 12) {
             finalItem.y = lastOne.y + 7
             finalItem.x = 0
-          }
-          else {
+          } else {
             finalItem.y = lastOne.y
             finalItem.x = lastOne.x + lastOne.w
           }
-        }
-        else {
+        } else {
           finalItem.x = 0
           finalItem.y = 0
         }
-      }
-      else {
+      } else {
         finalItem = {
           x: 0,
           y: 0,
