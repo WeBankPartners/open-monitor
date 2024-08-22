@@ -156,6 +156,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 		return
 	}
 	for _, queryObj := range queryData.Result {
+		delete(queryObj.Metric, "__name__")
 		tmpTags, getTagsErr := getNewAlarmTags(&models.AMRespAlert{Labels: queryObj.Metric})
 		if getTagsErr != nil {
 			log.Logger.Error("buildMonitorEngineAlarm get tags fail", log.JsonObj("labels", queryObj.Metric), log.Error(getTagsErr))
@@ -212,6 +213,15 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 					alarmObj.Status = "firing"
 					alarmObj.StartValue = startValue
 					alarmObj.Start = time.Now()
+					alarmObj.AlarmStrategy = strategyObj.Guid
+					alarmObj.SMetric = strategyObj.MetricName
+					alarmObj.SExpr = strategyObj.MetricExpr
+					alarmObj.SCond = strategyObj.Condition
+					alarmObj.SLast = strategyObj.Last
+					alarmObj.SPriority = strategyObj.Priority
+					alarmObj.Content = strategyObj.Content
+					alarmObj.NotifyEnable = strategyObj.NotifyEnable
+					alarmObj.NotifyDelay = strategyObj.NotifyDelaySecond
 				}
 			} else {
 				// 又没有满足的值，又没不满足的值，可能是没值，不理
