@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	Logger          *zap.Logger
-	AccessLogger    *zap.Logger
-	DatabaseLogger  *zap.Logger
+	Logger         *zap.Logger
+	AccessLogger   *zap.Logger
+	DatabaseLogger *zap.Logger
 )
 
 func InitLogger() {
@@ -80,4 +80,8 @@ func JsonObj(k string, v interface{}) zap.Field {
 
 func StringList(k string, v []string) zap.Field {
 	return zap.Strings(k, v)
+}
+
+func Bool(k string, v bool) zap.Field {
+	return zap.Bool(k, v)
 }
