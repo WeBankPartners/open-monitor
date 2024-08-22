@@ -536,8 +536,7 @@ export default {
               this.addAndEditModal.dataConfig.endpoint_rel.push(t)
             }
           })
-        }
-        else {
+        } else {
           tmp.forEach(t => {
             const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
             if (find === undefined) {
@@ -559,8 +558,7 @@ export default {
     editRuleItem(rowData) {
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('view', '', rowData.log_metric_monitor, rowData.guid)
-      }
-      else {
+      } else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('view', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
@@ -571,8 +569,7 @@ export default {
           this.allPageContentData = responseData.map((res, index) => {
             if (index === 0) {
               res.logFileCollapseValue = ['0']
-            }
-            else {
+            } else {
               res.logFileCollapseValue = []
             }
             res.config.forEach(item => {

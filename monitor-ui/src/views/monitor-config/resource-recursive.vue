@@ -471,8 +471,7 @@ export default {
       // eslint-disable-next-line no-prototype-builtins
       if (Object.keys(cacheColor).includes(type)) {
         color = cacheColor[type]
-      }
-      else {
+      } else {
         color = randomColor[this.count]
         cacheColor[type] = randomColor[this.count]
         this.$root.$store.commit('cacheTagColor', cacheColor)
@@ -513,8 +512,7 @@ export default {
         if (res.length > 0) {
           this.doubleConfirm.isShow= true
           this.doubleConfirm.warningData= res
-        }
-        else {
+        } else {
           this.$root.$eventBus.$emit('updateResource', '')
         }
       })
