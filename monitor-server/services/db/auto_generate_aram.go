@@ -18,12 +18,12 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 		if param.LogMetricMonitorGuid != "" {
 			var logMetricMonitor = &models.LogMetricMonitorTable{}
 			var endpointGroupIds []string
-			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(&logMetricMonitor); err != nil {
+			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
 				return
 			}
 			if logMetricMonitor != nil {
 				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
-				if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MetricType).Find(&endpointGroupIds); err != nil {
+				if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
 					return
 				}
 				if len(endpointGroupIds) > 0 {
@@ -38,13 +38,13 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.EndpointGroup = serviceGroup
-				alarmStrategyParam.Name = fmt.Sprintf("%s%s%s%d%s", code, alarmMetric.DisplayName, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s%s%s %d %s", code, alarmMetric.DisplayName, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
 				alarmStrategyParam.EndpointGroup = endpointGroup
-				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than%d%s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+				alarmStrategyParam.LogMetricGroup = param.LogMetricGroupGuid
+				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than %d %s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
 				// 添加编排与通知
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
