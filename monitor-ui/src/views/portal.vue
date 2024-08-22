@@ -42,8 +42,7 @@ export default {
     endpoint(val) {
       if (val) {
         this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
-      }
-      else {
+      } else {
         this.endpointObject = {}
       }
     },
