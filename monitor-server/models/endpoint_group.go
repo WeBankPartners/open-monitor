@@ -238,6 +238,7 @@ type AlarmStrategyTag struct {
 	Guid                string `json:"guid" xorm:"guid"`                                 // 唯一标识
 	AlarmStrategyMetric string `json:"alarmStrategyMetric" xorm:"alarm_strategy_metric"` // 告警配置指标
 	Name                string `json:"name" xorm:"name"`                                 // 标签名
+	Equal               string `json:"equal" xorm:"equal"`                               // 标签名
 }
 
 type AlarmStrategyTagValue struct {

@@ -3,18 +3,20 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
+
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
-func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroup, operator string) (subCreateAlarmStrategyActions []*Action, err error) {
-	subCreateAlarmStrategyActions = []*Action{}
+func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroup, operator string) (actions []*Action, err error) {
+	var subActions []*Action
+	actions = []*Action{}
 	// 自动创建告警
 	if param.AutoCreateWarn {
 		var endpointGroup string
 		var serviceGroupsRoles []string
 		codeList := getTargetCodeMap(param.CodeStringMap)
-		autoAlarmMetricList := getAutoAlarmMetricList(metricList, serviceGroup)
+		autoAlarmMetricList := getAutoAlarmMetricList(metricList, serviceGroup, param.MetricPrefixCode)
 		if param.LogMetricMonitorGuid != "" {
 			var logMetricMonitor = &models.LogMetricMonitorTable{}
 			var endpointGroupIds []string
@@ -44,6 +46,8 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
 				alarmStrategyParam.EndpointGroup = endpointGroup
 				alarmStrategyParam.LogMetricGroup = param.LogMetricGroupGuid
+				alarmStrategyParam.Metric = alarmMetric.MetricId
+				alarmStrategyParam.MetricName = alarmMetric.Metric
 				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than %d %s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
 				// 添加编排与通知
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
@@ -80,8 +84,11 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 					Last:       fmt.Sprintf("%d%s", alarmMetric.Time, alarmMetric.TimeUnit),
 					Tags:       metricTags,
 				})
-				if subCreateAlarmStrategyActions, err = getCreateAlarmStrategyActions(alarmStrategyParam, time.Now().Format(models.DatetimeFormat), operator); err != nil {
+				if subActions, err = getCreateAlarmStrategyActions(alarmStrategyParam, time.Now().Format(models.DatetimeFormat), operator); err != nil {
 					return
+				}
+				if len(subActions) > 0 {
+					actions = append(actions, subActions...)
 				}
 			}
 		}
@@ -107,17 +114,22 @@ func getServiceGroupRoles(serviceGroup string) []string {
 }
 
 // getAutoAlarmMetricList 获取自动告警的指标列表
-func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup string) []*models.LogMetricThreshold {
+func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metricPrefixCode string) []*models.LogMetricThreshold {
 	var metricThresholdList []*models.LogMetricThreshold
+	var metric string
 	if len(list) == 0 {
 		return metricThresholdList
 	}
 	for _, logMetricTemplate := range list {
+		metric = logMetricTemplate.Metric
+		if metricPrefixCode != "" {
+			metric = metricPrefixCode + "_" + metric
+		}
 		if logMetricTemplate.AutoAlarm && logMetricTemplate.RangeConfig != "" {
 			temp := &models.ThresholdConfig{}
 			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
 			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{
-				MetricId:        generateMetricGuid(logMetricTemplate.Metric, serviceGroup),
+				MetricId:        generateMetricGuid(metric, serviceGroup),
 				Metric:          logMetricTemplate.Metric,
 				DisplayName:     logMetricTemplate.DisplayName,
 				ThresholdConfig: temp,
