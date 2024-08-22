@@ -120,8 +120,7 @@ export default {
         this.interval = setInterval(() => {
           this.initPanal()
         },this.viewCondition.autoRefresh*1000)
-      }
-      else {
+      } else {
         clearInterval(this.interval)
       }
     },

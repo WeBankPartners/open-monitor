@@ -75,8 +75,7 @@ export const deepClone = obj => {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         if (obj[key] && typeof obj[key] === 'object') {
           objClone[key] = deepClone(obj[key])
-        }
-        else {
+        } else {
           objClone[key] = obj[key]
         }
       }

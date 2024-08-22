@@ -113,8 +113,7 @@ export default {
     if (localStorage.getItem('theme')) {
       document.body.className = localStorage.getItem('theme')
       this.defaultTheme = false
-    }
-    else {
+    } else {
       document.body.className = ''
       this.defaultTheme = true
     }
@@ -130,8 +129,7 @@ export default {
           ? 'zh-CN'
           : 'en-US'
       )
-    }
-    else {
+    } else {
       this.activeLang = this.langConfig[localStorage.getItem('lang')]
     }
   },

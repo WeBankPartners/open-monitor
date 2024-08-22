@@ -176,8 +176,7 @@ export default {
           if ('msSaveOrOpenBlob' in navigator){
           // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          }
-          else {
+          } else {
             if ('download' in document.createElement('a')) { // 非IE下载
               const elink = document.createElement('a')
               elink.download = fileName
@@ -187,8 +186,7 @@ export default {
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            }
-            else { // IE10+下载
+            } else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
