@@ -218,8 +218,7 @@ export default {
       }))
       if (find && find.name === 'custom') {
         // this.metricConfigData.prom_expr += val
-      }
-      else {
+      } else {
         this.metricConfigData.prom_expr = val
       }
     },
