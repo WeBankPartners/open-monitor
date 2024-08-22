@@ -1170,17 +1170,28 @@ func GetSimpleLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetri
 }
 
 func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroupWithTemplate, err error) {
+	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
+	}
+	if metricGroupObj.LogMonitorTemplate != "" {
+		if err = json.Unmarshal([]byte(metricGroupObj.LogMonitorTemplate), logMonitorTemplate); err != nil {
+			return
+		}
 	}
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
 	if err != nil {
 		return result, fmt.Errorf("Query table log_metric_string_map fail,%s ", err.Error())
 	}
-	result = &models.LogMetricGroupWithTemplate{Name: metricGroupObj.Name, MetricPrefixCode: metricGroupObj.MetricPrefixCode, LogMetricGroupGuid: logMetricGroupGuid, LogMetricMonitorGuid: metricGroupObj.LogMetricMonitor, LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{}, RetCodeStringMap: []*models.LogMetricStringMapTable{}}
+	result = &models.LogMetricGroupWithTemplate{Name: metricGroupObj.Name, MetricPrefixCode: metricGroupObj.MetricPrefixCode,
+		LogMetricGroupGuid: logMetricGroupGuid, LogMetricMonitorGuid: metricGroupObj.LogMetricMonitor,
+		LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{},
+		LogMonitorTemplateVersion: metricGroupObj.RefTemplateVersion,
+		LogMonitorTemplate:        logMonitorTemplate,
+		RetCodeStringMap:          []*models.LogMetricStringMapTable{}}
 	for _, row := range logMetricStringMapRows {
 		if row.LogParamName == "code" {
 			result.CodeStringMap = append(result.CodeStringMap, row)
