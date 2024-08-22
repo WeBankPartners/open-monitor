@@ -627,6 +627,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 				NotifyDelaySecond: strategyRow.NotifyDelaySecond,
 				ActiveWindow:      strategyRow.ActiveWindow,
 			}
+			tmpStrategyObj.AlarmStrategyMetricGuid = metricRow.Guid
 			tmpStrategyObj.Metric = metricRow.Metric
 			tmpStrategyObj.Condition = metricRow.Condition
 			tmpStrategyObj.Last = metricRow.Last
@@ -1469,7 +1470,7 @@ func GetMonitorEngineMetricMap() (metricMap map[string]int, err error) {
 }
 
 func UpdateAlarmStrategyMetricExpr(alarmStrategyMetricObj *models.AlarmStrategyMetricObj) {
-	_, err := x.Exec("update alarm_strategy_metric set monitor_engine_expr=? where guid=?", alarmStrategyMetricObj.MetricExpr, alarmStrategyMetricObj.Guid)
+	_, err := x.Exec("update alarm_strategy_metric set monitor_engine_expr=? where guid=?", alarmStrategyMetricObj.MetricExpr, alarmStrategyMetricObj.AlarmStrategyMetricGuid)
 	if err != nil {
 		log.Logger.Error("UpdateAlarmStrategyMetricExpr fail", log.String("alarmStrategyMetric", alarmStrategyMetricObj.Guid), log.Error(err))
 	}
