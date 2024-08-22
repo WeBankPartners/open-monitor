@@ -1176,8 +1176,8 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		err = getGroupErr
 		return
 	}
-	if metricGroupObj.LogMonitorTemplate != "" {
-		if err = json.Unmarshal([]byte(metricGroupObj.LogMonitorTemplate), logMonitorTemplate); err != nil {
+	if metricGroupObj.TemplateSnapshot != "" {
+		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
 			return
 		}
 	}
