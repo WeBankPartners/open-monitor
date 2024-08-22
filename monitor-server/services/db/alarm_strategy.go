@@ -418,7 +418,7 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 		conditionRow := models.StrategyConditionObj{Metric: metricRow.Metric, Condition: metricRow.Condition, Last: metricRow.Last, Tags: []*models.MetricTag{}, MetricName: metricRow.MetricName}
 		for _, tagRow := range strategyTagRows {
 			if tagRow.AlarmStrategyMetric == metricRow.Guid {
-				tmpTag := models.MetricTag{TagName: tagRow.Name, TagValue: []string{}}
+				tmpTag := models.MetricTag{TagName: tagRow.Name, TagValue: []string{}, Equal: tagRow.Equal}
 				if existList, ok := tagValueMap[tagRow.Guid]; ok {
 					tmpTag.TagValue = existList
 				}
