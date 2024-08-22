@@ -15,3 +15,7 @@ CREATE TABLE `db_keyword_alarm` (
 
 alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
 alter table custom_chart_series_config modify column series_name varchar(512) default null;
+alter table metric add column db_metric_monitor varchar(64) default null;
+alter table alarm_strategy_metric add column monitor_engine tinyint(4) default 0;
+create index idx_alarm_strategy_monitor_engine on alarm_strategy_metric(monitor_engine);
+alter table alarm_strategy_metric add column monitor_engine_expr text default null;

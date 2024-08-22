@@ -70,6 +70,7 @@ type MetricTable struct {
 	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
 	GroupType          string `json:"group_type" xorm:"-"`            // 组类型
 	GroupName          string `json:"group_name" xorm:"-"`            // 组名
+	DbMetricMonitor    string `json:"db_metric_monitor" xorm:"db_metric_monitor"`
 }
 
 type MetricImportResultDto struct {
