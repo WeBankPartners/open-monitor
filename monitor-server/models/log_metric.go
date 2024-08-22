@@ -199,6 +199,8 @@ type LogMetricGroupWithTemplate struct {
 	MetricPrefixCode       string                     `json:"metric_prefix_code"`
 	ServiceGroup           string                     `json:"service_group"`
 	MonitorType            string                     `json:"monitor_type"`
+	AutoCreateWarn         bool                       `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard    bool                       `json:"auto_create_dashboard"` //自动创建自定义看板
 }
 
 type LogMetricGroupNeObj struct {
