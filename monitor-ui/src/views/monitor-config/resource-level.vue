@@ -134,8 +134,7 @@ export default {
       if (this.activedLevel.includes(guid)) {
         const index = this.activedLevel.findIndex(item => item === guid)
         this.activedLevel.splice(index, 1)
-      }
-      else {
+      } else {
         this.activedLevel.push(guid)
       }
     },

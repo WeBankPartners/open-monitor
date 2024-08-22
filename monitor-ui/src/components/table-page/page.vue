@@ -61,8 +61,7 @@ export default {
     initData(url, params) {
       if (this.pageConfig.researchConfig){
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
-      }
-      else {
+      } else {
         this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
       }
     },
