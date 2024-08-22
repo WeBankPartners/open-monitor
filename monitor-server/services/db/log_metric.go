@@ -1203,6 +1203,8 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 }
 
 func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+	var templateSnapshot []byte
+	var refTemplateVersion string
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	}
@@ -1211,12 +1213,21 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		err = getErr
 		return
 	}
+	if logMonitorTemplateObj == nil {
+		err = fmt.Errorf("LogMonitorTemplateGuid is valid")
+		return
+	}
+	refTemplateVersion = logMonitorTemplateObj.UpdateTime.Format(models.DatetimeDigitFormat)
+	if templateSnapshot, err = json.Marshal(logMonitorTemplateObj); err != nil {
+		return
+	}
+
 	nowTime := time.Now()
 	if param.Name == "" {
 		param.Name = logMonitorTemplateObj.Name
 	}
-	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime,
+	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime, templateSnapshot, refTemplateVersion,
 	}})
 	sucRetCode, createMapActions := getCreateLogMetricGroupMapAction(param, nowTime)
 	actions = append(actions, createMapActions...)
@@ -1243,6 +1254,10 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
+	}
+	// 自动创建告警
+	if param.AutoCreateWarn {
+
 	}
 	return
 }
@@ -1351,6 +1366,9 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
+	// 删除自动生成的告警列表
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	//
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 	var existMetricRows []*models.LogMetricConfigTable

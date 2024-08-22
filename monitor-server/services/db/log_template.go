@@ -119,8 +119,8 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 		param.Guid = "lmt_" + guid.CreateGuid()
 	}
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime,
+	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time,success_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode,
 	}})
 	logParamGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, logParamObj := range param.ParamList {
@@ -134,8 +134,8 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 			tmpTagConfigBytes, _ := json.Marshal(logMetricObj.TagConfigList)
 			logMetricObj.TagConfig = string(tmpTagConfigBytes)
 		}
-		actions = append(actions, &Action{Sql: "insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime,
+		actions = append(actions, &Action{Sql: "insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time,color_group,auto_alarm,range_config) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime, logMetricObj.ColorGroup, logMetricObj.AutoAlarm, logMetricObj.RangeConfig,
 		}})
 	}
 	return
@@ -158,8 +158,8 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 		return
 	}
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "update log_monitor_template set name=?,json_regular=?,demo_log=?,calc_result=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-		param.Name, param.JsonRegular, param.DemoLog, param.CalcResult, operator, nowTime, param.Guid,
+	actions = append(actions, &Action{Sql: "update log_monitor_template set name=?,json_regular=?,demo_log=?,calc_result=?,update_user=?,update_time=?,success_code=? where guid=?", Param: []interface{}{
+		param.Name, param.JsonRegular, param.DemoLog, param.CalcResult, operator, nowTime, param.SuccessCode, param.Guid,
 	}})
 	logParamGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, logParamObj := range param.ParamList {
@@ -188,12 +188,12 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	logMetricGuidList := guid.CreateGuidList(len(param.MetricList))
 	for i, logMetricObj := range param.MetricList {
 		if logMetricObj.Guid == "" {
-			actions = append(actions, &Action{Sql: "insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-				"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime,
+			actions = append(actions, &Action{Sql: "insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time,color_group,auto_alarm,range_config) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime, logMetricObj.ColorGroup, logMetricObj.AutoAlarm, logMetricObj.RangeConfig,
 			}})
 		} else {
-			actions = append(actions, &Action{Sql: "update log_metric_template set log_param_name=?,metric=?,display_name=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-				logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, nowTime, logMetricObj.Guid,
+			actions = append(actions, &Action{Sql: "update log_metric_template set log_param_name=?,metric=?,display_name=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=?,color_group=?,auto_alarm=?,range_config=? where guid=?", Param: []interface{}{
+				logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, nowTime, logMetricObj.ColorGroup, logMetricObj.AutoAlarm, logMetricObj.RangeConfig, logMetricObj.Guid,
 			}})
 		}
 	}

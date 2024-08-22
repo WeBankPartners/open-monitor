@@ -54,19 +54,22 @@ type LogParamTemplateObj struct {
 }
 
 type LogMetricTemplate struct {
-	Guid               string    `json:"guid" xorm:"guid"`
-	LogMonitorTemplate string    `json:"log_monitor_template" xorm:"log_monitor_template"`
-	LogParamName       string    `json:"log_param_name" xorm:"log_param_name"`
-	Metric             string    `json:"metric" xorm:"metric"`
-	DisplayName        string    `json:"display_name" xorm:"display_name"`
-	Step               int       `json:"step" xorm:"step"`
-	AggType            string    `json:"agg_type" xorm:"agg_type"`
-	TagConfig          string    `json:"-" xorm:"tag_config"`
-	TagConfigList      []string  `json:"tag_config" xorm:"-"`
-	CreateUser         string    `json:"create_user" xorm:"create_user"`
-	UpdateUser         string    `json:"update_user" xorm:"update_user"`
-	CreateTime         time.Time `json:"create_time" xorm:"create_time"`
-	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
+	Guid               string      `json:"guid" xorm:"guid"`
+	LogMonitorTemplate string      `json:"log_monitor_template" xorm:"log_monitor_template"`
+	LogParamName       string      `json:"log_param_name" xorm:"log_param_name"`
+	Metric             string      `json:"metric" xorm:"metric"`
+	DisplayName        string      `json:"display_name" xorm:"display_name"`
+	Step               int         `json:"step" xorm:"step"`
+	AggType            string      `json:"agg_type" xorm:"agg_type"`
+	TagConfig          string      `json:"-" xorm:"tag_config"`
+	TagConfigList      []string    `json:"tag_config" xorm:"-"`
+	CreateUser         string      `json:"create_user" xorm:"create_user"`
+	UpdateUser         string      `json:"update_user" xorm:"update_user"`
+	CreateTime         time.Time   `json:"create_time" xorm:"create_time"`
+	UpdateTime         time.Time   `json:"update_time" xorm:"update_time"`
+	ColorGroup         string      `json:"color_group" xorm:"color_group"`
+	AutoAlarm          bool        `json:"auto_alarm" xorm:"auto_alarm"`
+	RangeConfig        interface{} `json:"range_config" xorm:"range_config"`
 }
 
 func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigTable) {
@@ -89,20 +92,8 @@ type LogMonitorTemplateDto struct {
 	ParamList     []*LogParamTemplate           `json:"param_list"`
 	MetricList    []*LogMetricTemplate          `json:"metric_list"`
 	Permission    *LogMonitorTemplatePermission `json:"permission"`
+	SuccessCode   interface{}                   `json:"success_code"`
 }
-
-//func (l *LogMonitorTemplateDto) GetMetrics() (metricConfigList []*LogMetricConfigTable) {
-//	for _, metric := range l.MetricList {
-//		metricObj := LogMetricConfigTable{Metric: metric.Metric, DisplayName: metric.DisplayName, AggType: metric.AggType, TagConfigList: metric.TagConfigList}
-//		for _, param := range l.ParamList {
-//			if param.Name == metric.LogParamName {
-//				metricObj.JsonKey = param.JsonKey
-//				metricObj.Regular = param.Regular
-//			}
-//		}
-//	}
-//	return
-//}
 
 type LogMonitorTemplatePermission struct {
 	MgmtRoles []string `json:"mgmt_roles"`
@@ -139,6 +130,8 @@ type LogMetricGroup struct {
 	CreateTimeString   string    `json:"create_time"`
 	UpdateTime         time.Time `json:"-" xorm:"update_time"`
 	UpdateTimeString   string    `json:"update_time"`
+	TemplateSnapshot   string    `json:"template_snapshot" xorm:"template_snapshot"`
+	RefTemplateVersion string    `json:"ref_template_version" xorm:"ref_template_version"`
 }
 
 type LogMetricParam struct {
