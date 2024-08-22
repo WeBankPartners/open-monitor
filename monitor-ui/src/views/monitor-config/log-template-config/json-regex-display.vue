@@ -153,9 +153,10 @@ export default {
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
+            const notEmpty = demo_match_value !== ''
             return (
               <Tooltip content={demo_match_value} max-width="300" >
-                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+                <span style={notEmpty?'':'color:#c5c8ce'}>{notEmpty ? demo_match_value : this.$t('m_no_matching')}</span>
               </Tooltip>
             )
           }
