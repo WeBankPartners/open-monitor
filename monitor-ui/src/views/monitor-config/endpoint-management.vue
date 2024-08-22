@@ -720,8 +720,7 @@ export default {
     if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.groupMsg = {}
       this.showGroupMsg = false
-    }
-    else {
+    } else {
       this.$parent.activeTab = '/monitorConfigIndex/endpointManagement'
       if (Object.prototype.hasOwnProperty.call(this.$route.params, 'group')) {
         this.groupMsg = this.$route.params.group
@@ -742,8 +741,7 @@ export default {
       this.isfullscreen = !this.isfullscreen
       if (this.isfullscreen) {
         this.fullscreenTableHight = document.documentElement.clientHeight - 160
-      }
-      else {
+      } else {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },
@@ -1193,8 +1191,7 @@ export default {
       this.endpointRejectModel.modalFooter = null
       if (this.$route.params.group) {
         this.add()
-      }
-      else {
+      } else {
         this.endpointReject()
       }
     },
