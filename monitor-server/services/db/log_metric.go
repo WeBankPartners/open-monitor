@@ -1263,6 +1263,9 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
 	}
 	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroup, operator); err != nil {
+		return
+	}
+	if len(subCreateAlarmStrategyActions) > 0 {
 		actions = append(actions, subCreateAlarmStrategyActions...)
 	}
 	return
