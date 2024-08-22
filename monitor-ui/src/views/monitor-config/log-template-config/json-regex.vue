@@ -247,8 +247,7 @@ export default {
           return this.configInfo.demo_log.replace(match[1], '<span style=\'color:red\'>' + match[1] + '</span>')
         }
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
-      }
-      catch (err) {
+      } catch (err) {
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       }
     }
@@ -259,8 +258,7 @@ export default {
       if (guid) {
         this.isAdd = false
         this.getConfigDetail(guid)
-      }
-      else {
+      } else {
         this.configInfo = {
           guid: '',
           name: '',
@@ -427,8 +425,7 @@ export default {
     confirmGenerateBackstageTrial() {
       if (this.isAdd) {
         this.generateBackstageTrial()
-      }
-      else {
+      } else {
         this.generateBackstageTrialWarning = true
       }
     },

@@ -61,11 +61,9 @@ export default {
             validator: (rule, value, callback) => {
               if (value === '') {
                 callback(new Error(this.$t('m_placeholder_input') + this.$t('m_type_name')))
-              }
-              else if (!/^[^\u4e00-\u9fa5_]*$/.test(value)) {
+              } else if (!/^[^\u4e00-\u9fa5_]*$/.test(value)) {
                 callback(new Error(this.$t('m_chinese_underline_valid')))
-              }
-              else {
+              } else {
                 callback()
               }
             },
