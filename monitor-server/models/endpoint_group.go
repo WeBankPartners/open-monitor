@@ -208,6 +208,7 @@ type StrategyConditionObj struct {
 
 type MetricTag struct {
 	TagName  string   `json:"tagName"`
+	Equal    string   `json:"equal"` //  in/not in
 	TagValue []string `json:"tagValue"`
 }
 
