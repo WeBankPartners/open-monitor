@@ -97,30 +97,37 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePrometheus(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 10s data")
 	w.Write(GetExportMetric(10))
 }
 
 func handlePrometheusWith1min(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 1min data")
 	w.Write(GetExportMetric(60))
 }
 
 func handlePrometheusWith5min(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 5min data")
 	w.Write(GetExportMetric(300))
 }
 
 func handlePrometheusWith30min(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 30min data")
 	w.Write(GetExportMetric(1800))
 }
 
 func handlePrometheusWith1hour(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 1h data")
 	w.Write(GetExportMetric(3600))
 }
 
 func handlePrometheusWith12hour(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 12h data")
 	w.Write(GetExportMetric(43200))
 }
 
 func handlePrometheusWith24hour(w http.ResponseWriter, r *http.Request) {
+	log.Println("--> get 24h data")
 	w.Write(GetExportMetric(86400))
 }
 
