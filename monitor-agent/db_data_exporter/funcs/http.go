@@ -13,12 +13,12 @@ func StartHttpServer(port int) {
 	http.Handle("/db/config", http.HandlerFunc(handleAcceptConfig))
 	http.Handle("/db/lastkeyword", http.HandlerFunc(handleGetLastKeyword))
 	http.Handle("/metrics", http.HandlerFunc(handlePrometheus))
-	http.Handle("/metrics_60", http.HandlerFunc(handlePrometheusWith1min))
-	http.Handle("/metrics_300", http.HandlerFunc(handlePrometheusWith5min))
-	http.Handle("/metrics_1800", http.HandlerFunc(handlePrometheusWith30min))
-	http.Handle("/metrics_3600", http.HandlerFunc(handlePrometheusWith1hour))
-	http.Handle("/metrics_43200", http.HandlerFunc(handlePrometheusWith12hour))
-	http.Handle("/metrics_86400", http.HandlerFunc(handlePrometheusWith24hour))
+	//http.Handle("/metrics_60", http.HandlerFunc(handlePrometheusWith1min))
+	//http.Handle("/metrics_300", http.HandlerFunc(handlePrometheusWith5min))
+	//http.Handle("/metrics_1800", http.HandlerFunc(handlePrometheusWith30min))
+	//http.Handle("/metrics_3600", http.HandlerFunc(handlePrometheusWith1hour))
+	//http.Handle("/metrics_43200", http.HandlerFunc(handlePrometheusWith12hour))
+	//http.Handle("/metrics_86400", http.HandlerFunc(handlePrometheusWith24hour))
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
@@ -97,7 +97,7 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePrometheus(w http.ResponseWriter, r *http.Request) {
-	log.Println("--> get 10s data")
+	//log.Println("--> get 10s data")
 	w.Write(GetExportMetric(10))
 }
 

@@ -1128,3 +1128,40 @@ update metric set metric=replace(metric,'.','_'),guid=replace(guid,'.','_') wher
 update prom_metric set metric=replace(metric,'.','_') where metric like '%.%';
 SET FOREIGN_KEY_CHECKS=1;
 #@v3.0.4.1-end@;
+
+#@v3.1.4-begin@;
+alter table monitor_type add column system_type tinyint(1) default 0 COMMENT '系统类型,0为非系统类型,1为系统类型';
+alter table monitor_type add column create_user varchar(64) default null COMMENT '创建人';
+alter table monitor_type add column create_time varchar(32) default null COMMENT '创建时间';
+alter table custom_dashboard_chart_rel add column group_display_config text default null COMMENT '组里视图位置长与宽';
+alter table log_metric_string_map modify column target_value varchar(128) default null COMMENT '目标值';
+alter table db_metric_monitor add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table service_group add column update_user varchar(64) default null COMMENT '更新人';
+alter table log_keyword_config add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table alarm add index alarm_name (alarm_name);
+
+update monitor_type set system_type = 1;
+CREATE TABLE `db_keyword_alarm` (
+    `id` int(11) unsigned NOT NULL auto_increment COMMENT '自增id',
+    `alarm_id` int(11) NOT null COMMENT '告警id',
+    `endpoint` varchar(255) NOT null COMMENT '告警对象',
+    `status` varchar(20) NOT null COMMENT '状态',
+    `db_keyword_monitor` varchar(64) NOT null COMMENT '数据库关键字配置',
+    `content` text COMMENT '告警内容',
+    `tags` varchar(1024) DEFAULT '' COMMENT '告警标签',
+    `start_value` double DEFAULT null COMMENT '开始值',
+    `end_value` double DEFAULT null COMMENT '结束值',
+    `updated_time` datetime DEFAULT null COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_log_keyword_alarm_id` (`alarm_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
+alter table custom_chart_series_config modify column series_name varchar(512) default null;
+alter table metric add column db_metric_monitor varchar(64) default null;
+alter table alarm_strategy_metric add column monitor_engine tinyint(4) default 0;
+create index idx_alarm_strategy_monitor_engine on alarm_strategy_metric(monitor_engine);
+alter table alarm_strategy_metric add column monitor_engine_expr text default null;
+#@v3.1.4-end@;

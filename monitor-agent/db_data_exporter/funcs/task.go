@@ -63,8 +63,8 @@ var (
 
 func StartCronTask() {
 	log.Println("start cron task")
-	//minuteTime, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s:00", time.Now().Format("2006-01-02 15:04")), time.Local)
-	//time.Sleep(time.Duration((minuteTime.Unix()+60)-time.Now().Unix()) * time.Second)
+	minuteTime, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s:00", time.Now().Format("2006-01-02 15:04")), time.Local)
+	time.Sleep(time.Duration((minuteTime.Unix()+60)-time.Now().Unix()) * time.Second)
 	t := time.NewTicker(time.Duration(taskInterval) * time.Second).C
 	for {
 		<-t
@@ -83,7 +83,7 @@ func doTask() {
 	for _, taskObj := range taskList {
 		if !checkStepActive(taskObj.LastTime, nowTime, taskObj.Step) {
 			continue
-		} else if taskObj.Step > 10 {
+		} else if taskObj.Step > 10 && taskObj.LastTime == 0 {
 			log.Printf("step:%d task:%s start doTask \n", taskObj.Step, taskObj.Name)
 		}
 		var resultValue float64
@@ -100,8 +100,15 @@ func doTask() {
 }
 
 func checkStepActive(lastTime, nowTime, step int64) bool {
-	if lastTime == 0 || step < 20 {
+	if step <= 10 {
 		return true
+	}
+	if lastTime == 0 && step > 60 {
+		if checkStepNearbyTime(nowTime, step) {
+			return true
+		} else {
+			return false
+		}
 	}
 	if (nowTime - lastTime) >= step {
 		return true
@@ -182,4 +189,16 @@ func checkIllegal(param DbMonitorTaskObj) error {
 		}
 		return err
 	}
+}
+
+func checkStepNearbyTime(nowTime, step int64) bool {
+	dayTime, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s 00:00:00", time.Now().Format("2006-01-02")), time.Local)
+	lastDayUnix := dayTime.Unix()
+	for lastDayUnix < nowTime {
+		lastDayUnix = lastDayUnix + step
+	}
+	if (lastDayUnix - nowTime) <= 10 {
+		return true
+	}
+	return false
 }
