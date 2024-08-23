@@ -643,7 +643,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 			tmpStrategyObj.Tags = []*models.MetricTag{}
 			for _, tagRow := range tagRows {
 				if tagRow.AlarmStrategyMetric == metricRow.Guid {
-					tmpMetricTag := models.MetricTag{TagName: tagRow.Name}
+					tmpMetricTag := models.MetricTag{TagName: tagRow.Name, Equal: tagRow.Equal}
 					for _, tagValueRow := range tagValueRows {
 						if tagValueRow.AlarmStrategyTag == tagRow.Guid {
 							tmpMetricTag.TagValue = append(tmpMetricTag.TagValue, tagValueRow.Value)
@@ -750,7 +750,11 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 				if len(tagObj.TagValue) == 0 {
 					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
 				} else {
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+					tmpEqual := "=~"
+					if tagObj.Equal == "notin" {
+						tmpEqual = "!~"
+					}
+					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}
