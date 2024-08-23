@@ -519,5 +519,9 @@
   "m_log": "log",
   "m_noProcessPermission": "Operation Failed: No permission to use the current process",
   "m_new_alert": "New Alert",
-  "m_audio_prompt": "Audio Prompt"
+  "m_audio_prompt": "Audio Prompt",
+  "m_color_system": "Color System",
+  "m_automatic_alert": "Automatic Alert",
+  "m_threshold_property": "Threshold Property",
+  "m_success_code": "Success Code"
 }
