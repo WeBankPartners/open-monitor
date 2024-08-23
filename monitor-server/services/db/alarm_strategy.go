@@ -434,6 +434,10 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
 	existCrcMap := make(map[string]int)
+	monitorEngineMetricMap := make(map[string]int)
+	if monitorEngineMetricMap, err = GetMonitorEngineMetricMap(); err != nil {
+		return
+	}
 	for i, metricRow := range conditions {
 		tmpMetricRowString, _ := json.Marshal(metricRow)
 		tmpCrcHash := fmt.Sprintf("%d", crc64.Checksum(tmpMetricRowString, crc64.MakeTable(crc64.ECMA)))
@@ -442,8 +446,12 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 			return
 		}
 		existCrcMap[tmpCrcHash] = 1
-		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash) values (?,?,?,?,?,?,?)", Param: []interface{}{
-			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash,
+		monitorEngineFlag := 0
+		if _, ok := monitorEngineMetricMap[metricRow.Metric]; ok {
+			monitorEngineFlag = 1
+		}
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag,
 		}})
 		if len(metricRow.Tags) > 0 {
 			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
@@ -497,7 +505,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 		return err
 	}
 	// 获取strategy
-	strategyList, getStrategyErr := getAlarmStrategyWithExprNew(endpointGroup)
+	strategyList, monitorEngineStrategyList, getStrategyErr := getAlarmStrategyWithExprNew(endpointGroup)
 	if getStrategyErr != nil {
 		return getStrategyErr
 	}
@@ -534,6 +542,10 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 				log.Logger.Error("Update remote cluster rule file fail", log.String("cluster", cluster), log.Error(tmpErr))
 			}
 		}
+		for _, monitorEngineStrategy := range monitorEngineStrategyList {
+			buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, monitorEngineStrategy)
+			UpdateAlarmStrategyMetricExpr(monitorEngineStrategy)
+		}
 	}
 	return err
 }
@@ -560,7 +572,7 @@ func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrat
 	return
 }
 
-func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
+func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStrategyList []*models.AlarmStrategyMetricObj, err error) {
 	var strategyRows []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&strategyRows)
 	if err != nil {
@@ -568,7 +580,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmSt
 		return
 	}
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
-	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
+	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type',t1.monitor_engine from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm strategy metric with endpointGroup:%s fail,%s ", endpointGroup, err.Error())
 		return
@@ -620,6 +632,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmSt
 				NotifyDelaySecond: strategyRow.NotifyDelaySecond,
 				ActiveWindow:      strategyRow.ActiveWindow,
 			}
+			tmpStrategyObj.AlarmStrategyMetricGuid = metricRow.Guid
 			tmpStrategyObj.Metric = metricRow.Metric
 			tmpStrategyObj.Condition = metricRow.Condition
 			tmpStrategyObj.Last = metricRow.Last
@@ -639,7 +652,11 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmSt
 					tmpStrategyObj.Tags = append(tmpStrategyObj.Tags, &tmpMetricTag)
 				}
 			}
-			result = append(result, &tmpStrategyObj)
+			if metricRow.MonitorEngine > 0 {
+				monitorEngineStrategyList = append(monitorEngineStrategyList, &tmpStrategyObj)
+			} else {
+				result = append(result, &tmpStrategyObj)
+			}
 		}
 	}
 	return
@@ -682,48 +699,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.Condition = strategy.Condition[:1] + " " + strategy.Condition[1:]
 			}
 		}
-		if strings.Contains(strategy.MetricExpr, "$address") {
-			if strings.Contains(addressExpr, "|") {
-				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
-			} else {
-				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=\""+addressExpr+"\"", -1)
-			}
-		}
-		if strings.Contains(strategy.MetricExpr, "$guid") {
-			if strings.Contains(guidExpr, "|") {
-				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
-			} else {
-				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
-			}
-		}
-		if strings.Contains(strategy.MetricExpr, "$ip") {
-			if strings.Contains(ipExpr, "|") {
-				tmpStr := strings.Split(strategy.MetricExpr, "$ip")[1]
-				tmpStr = tmpStr[:strings.Index(tmpStr, "\"")]
-				newList := []string{}
-				for _, v := range strings.Split(ipExpr, "|") {
-					newList = append(newList, v+tmpStr)
-				}
-				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
-			} else {
-				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
-			}
-		}
-		if len(strategy.Tags) > 0 {
-			for _, tagObj := range strategy.Tags {
-				tagSourceString := "$t_" + tagObj.TagName
-				if strings.Contains(strategy.MetricExpr, tagSourceString) {
-					if len(tagObj.TagValue) == 0 {
-						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
-					} else {
-						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
-					}
-				}
-			}
-		}
-		if strings.Contains(strategy.MetricExpr, "@") {
-			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
-		}
+		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, strategy)
 		if strategy.MetricExpr == "" {
 			log.Logger.Warn("metric expr empty", log.String("alertId", tmpRfu.Alert))
 			continue
@@ -737,6 +713,51 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 		result.Rules = append(result.Rules, &tmpRfu)
 	}
 	return result
+}
+
+func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *models.AlarmStrategyMetricObj) {
+	if strings.Contains(strategy.MetricExpr, "$address") {
+		if strings.Contains(addressExpr, "|") {
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
+		} else {
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=\""+addressExpr+"\"", -1)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$guid") {
+		if strings.Contains(guidExpr, "|") {
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
+		} else {
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$ip") {
+		if strings.Contains(ipExpr, "|") {
+			tmpStr := strings.Split(strategy.MetricExpr, "$ip")[1]
+			tmpStr = tmpStr[:strings.Index(tmpStr, "\"")]
+			newList := []string{}
+			for _, v := range strings.Split(ipExpr, "|") {
+				newList = append(newList, v+tmpStr)
+			}
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
+		} else {
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
+		}
+	}
+	if len(strategy.Tags) > 0 {
+		for _, tagObj := range strategy.Tags {
+			tagSourceString := "$t_" + tagObj.TagName
+			if strings.Contains(strategy.MetricExpr, tagSourceString) {
+				if len(tagObj.TagValue) == 0 {
+					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+				} else {
+					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+				}
+			}
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "@") {
+		strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
+	}
 }
 
 func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*models.AlarmStrategyMetricObj) {
@@ -1428,6 +1449,42 @@ func GetMailSender() (mailSender *smtp.MailSender, err error) {
 	err = mailSender.Init()
 	if err != nil {
 		err = fmt.Errorf("mail init fail,%s ", err.Error())
+	}
+	return
+}
+
+func GetMonitorEngineStrategy() (alarmStrategyMetricRows []*models.AlarmStrategyMetric, err error) {
+	err = x.SQL("select * from alarm_strategy_metric where monitor_engine=1").Find(&alarmStrategyMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy metric fail,%s ", err.Error())
+	}
+	return
+}
+
+func GetMonitorEngineMetricMap() (metricMap map[string]int, err error) {
+	metricMap = make(map[string]int)
+	queryRows, queryErr := x.QueryString("select guid from metric where db_metric_monitor<>'' union select metric_id as `guid` from metric_comparison")
+	if queryErr != nil {
+		err = fmt.Errorf("query dbMetric and comparison metric fail,%s ", queryErr.Error())
+		return
+	}
+	for _, row := range queryRows {
+		metricMap[row["guid"]] = 1
+	}
+	return
+}
+
+func UpdateAlarmStrategyMetricExpr(alarmStrategyMetricObj *models.AlarmStrategyMetricObj) {
+	_, err := x.Exec("update alarm_strategy_metric set monitor_engine_expr=? where guid=?", alarmStrategyMetricObj.MetricExpr, alarmStrategyMetricObj.AlarmStrategyMetricGuid)
+	if err != nil {
+		log.Logger.Error("UpdateAlarmStrategyMetricExpr fail", log.String("alarmStrategyMetric", alarmStrategyMetricObj.Guid), log.Error(err))
+	}
+}
+
+func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
+	err = x.SQL("select id,endpoint,status,s_metric,tags,alarm_strategy from alarm where status='firing' and alarm_strategy in (select alarm_strategy from alarm_strategy_metric where monitor_engine=1) order by id desc").Find(&alarmList)
+	if err != nil {
+		err = fmt.Errorf("get monitor engine alarm firing list fail,%s ", err.Error())
 	}
 	return
 }
