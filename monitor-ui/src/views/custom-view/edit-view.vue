@@ -1,6 +1,5 @@
 <template>
   <div class="all-page">
-    <ColorPicker v-model='test' style="display: none" />
     <div class="content">
       <div class="chart-config_view">
         <div class="chart-view">
@@ -696,8 +695,7 @@ export default {
       chartAddTagOptions: {},
       chartAddTags: [],
       getEndpointSearch: '',
-      selectedEndpointOptionItem: {},
-      test: ''
+      selectedEndpointOptionItem: {}
     }
   },
   computed: {
