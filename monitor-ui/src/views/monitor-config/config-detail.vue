@@ -284,7 +284,7 @@ import TagShow from '@/components/Tag-show.vue'
 
 const initFormData = {
   name: '', // 告警名
-  priority: 'low', // 级别
+  priority: 'medium', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
   active_window: ['00:00','23:59'], // 告警时间段

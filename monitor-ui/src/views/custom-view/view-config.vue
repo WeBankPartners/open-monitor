@@ -1411,7 +1411,7 @@ export default {
         }
       }
       return finalItem
-    }
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
