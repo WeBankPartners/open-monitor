@@ -240,6 +240,9 @@ export default {
             (
               <i-switch value={params.row.auto_alarm}
                 on-on-change={val => {
+                  if (!val) {
+                    Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfig))
+                  }
                   this.configInfo.metric_list[params.index].auto_alarm = val
                 }} />
             )
