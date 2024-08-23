@@ -523,5 +523,8 @@
   "m_color_system": "Color System",
   "m_automatic_alert": "Automatic Alert",
   "m_threshold_property": "Threshold Property",
-  "m_success_code": "Success Code"
+  "m_success_code": "Success Code",
+  "m_template_version": "Template Version",
+  "m_auto_create_warn": "Auto Create Warn",
+  "m_auto_create_dashboard": "Auto Create Dashboard"
 }
