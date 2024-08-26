@@ -415,7 +415,7 @@ func getAddCustomChartActions(param models.AddCustomChartParam, user string) (ac
 		guid.CreateGuid(), param.DashboardId, chart.Guid, param.Group, string(displayConfig), user, user, now, now}})
 	return
 }
-func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pageInfo models.PageInfo, list []*models.CustomChart, err error) {
+func QueryCustomChartList(condition models.QueryChartParam, operator string, roles []string) (pageInfo models.PageInfo, list []*models.CustomChart, err error) {
 	var params []interface{}
 	var ids []string
 	var sql = "select * from custom_chart where 1=1 "
@@ -442,6 +442,10 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 	}
 	if condition.UpdateUser != "" {
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
+	}
+	if condition.Show == "me" {
+		sql = sql + " and create_user = ?"
+		params = append(params, operator)
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"
