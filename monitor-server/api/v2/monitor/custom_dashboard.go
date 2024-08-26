@@ -47,7 +47,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
