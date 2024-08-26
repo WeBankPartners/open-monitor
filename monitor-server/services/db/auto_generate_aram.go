@@ -134,7 +134,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				DisplayConfig:      calcDisplayConfig(index * 3),
 				GroupDisplayConfig: calcDisplayConfig(0),
 				Group:              code,
-				LogMetricGroup:     &param.LogMetricMonitorGuid,
+				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
 			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, reqCountMetric))
@@ -161,7 +161,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				DisplayConfig:      calcDisplayConfig(index*3 + 1),
 				GroupDisplayConfig: calcDisplayConfig(1),
 				Group:              code,
-				LogMetricGroup:     &param.LogMetricMonitorGuid,
+				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
 			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, sucRateMetric))
@@ -186,7 +186,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				DisplayConfig:      calcDisplayConfig(index*3 + 2),
 				GroupDisplayConfig: calcDisplayConfig(1),
 				Group:              code,
-				LogMetricGroup:     &param.LogMetricMonitorGuid,
+				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
 			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costTimeAvgMetric))
