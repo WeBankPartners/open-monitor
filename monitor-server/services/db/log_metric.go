@@ -1401,7 +1401,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
+
 	// 删除阈值
 	var strategyGuids []string
 	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
@@ -1429,7 +1429,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	if len(dashboardIds) > 0 {
 		for _, boardId := range dashboardIds {
 			if delDashboardActions = GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
-				actions = append(actions, delAlarmStrategyActions...)
+				actions = append(actions, delDashboardActions...)
 			}
 		}
 	}
@@ -1443,6 +1443,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 			}
 		}
 	}
+	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
 
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
