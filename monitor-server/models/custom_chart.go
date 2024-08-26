@@ -88,6 +88,7 @@ type QueryChartParam struct {
 	UpdatedTimeStart string   `json:"updatedTimeStart"` // 更新时间开始
 	UpdatedTimeEnd   string   `json:"updatedTimeEnd"`   // 更新时间结束
 	Permission       string   `json:"permission"`       // 等于 MGMT表示可编辑
+	Show             string   `json:"show"`             // me 只展示自己创建
 	StartIndex       int      `json:"startIndex"`
 	PageSize         int      `json:"pageSize"`
 }
