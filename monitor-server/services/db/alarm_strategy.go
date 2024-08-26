@@ -17,11 +17,15 @@ import (
 	"time"
 )
 
-func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByGroup(endpointGroup, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
-	strategy := []*models.GroupStrategyObj{}
+	var strategy []*models.GroupStrategyObj
 	var alarmStrategyTable []*models.AlarmStrategyMetricObj
-	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? order by t1.update_time desc", endpointGroup).Find(&alarmStrategyTable)
+	if show == "me" {
+		err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? and t1.create_user = ? order by t1.update_time desc", endpointGroup, operator).Find(&alarmStrategyTable)
+	} else {
+		err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? order by t1.update_time desc", endpointGroup).Find(&alarmStrategyTable)
+	}
 	if err != nil {
 		return
 	}
@@ -56,7 +60,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 	return
 }
 
-func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByEndpoint(endpoint, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	endpointObj, getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
 	if getErr != nil {
 		return result, getErr
@@ -68,7 +72,7 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 		return
 	}
 	for _, v := range endpointGroupTable {
-		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, show, operator)
 		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
 			err = tmpErr
 			break
@@ -82,7 +86,7 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 	return
 }
 
-func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByServiceGroup(serviceGroup, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
 	err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", serviceGroup).Find(&endpointGroupTable)
@@ -90,7 +94,7 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.End
 		return
 	}
 	for _, v := range endpointGroupTable {
-		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, show, operator)
 		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
 			err = tmpErr
 			break
@@ -151,8 +155,8 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 
 func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, operator string) (actions []*Action, err error) {
 	param.Guid = "strategy_" + guid.CreateGuid()
-	var insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,update_user,log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, param.LogMetricGroup}
+	var insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,create_user,update_user,log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, operator, param.LogMetricGroup}
 	actions = append(actions, &insertAction)
 	if len(param.NotifyList) > 0 {
 		for _, v := range param.NotifyList {
@@ -1370,30 +1374,6 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 			break
 		}
 		actions = append(actions, newAction...)
-		//if fMetric, b := metricMap[strategy.Metric]; b {
-		//	if fMetric.MonitorType != monitorType {
-		//		err = fmt.Errorf("Metric:%s is in type:%s ", strategy.Metric, fMetric.MonitorType)
-		//		break
-		//	}
-		//	if serviceGroup != "" {
-		//		if fMetric.ServiceGroup != serviceGroup {
-		//			err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", strategy.Metric, fMetric.ServiceGroup)
-		//			break
-		//		}
-		//	}
-		//} else {
-		//	err = fmt.Errorf("Metric:%s is not exist ", strategy.Metric)
-		//	break
-		//}
-		//if _, b := existStrategyMap[strategy.Guid]; b {
-		//	updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
-		//	updateAction.Param = []interface{}{strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime, strategy.Guid}
-		//	actions = append(actions, &updateAction)
-		//} else {
-		//	insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
-		//	insertAction.Param = []interface{}{strategy.Guid, strategy.EndpointGroup, strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime}
-		//	actions = append(actions, &insertAction)
-		//}
 	}
 	return
 }
