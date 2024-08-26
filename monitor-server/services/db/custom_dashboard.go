@@ -128,7 +128,14 @@ func GetDashboardPermissionMap(dashboard int, permission string) (permissionMap 
 
 func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (insertId int64, err error) {
 	var actions []*Action
+	actions, insertId, err = getAddCustomDashboardActions(customDashboard, mgmtRoles, useRoles)
+	err = Transaction(actions)
+	return
+}
+
+func getAddCustomDashboardActions(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (actions []*Action, insertId int64, err error) {
 	var result sql.Result
+	actions = []*Action{}
 	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
 		customDashboard.UpdateAt.Format(models.DatetimeFormat))
 	if err != nil {
@@ -149,7 +156,6 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 				Param: []interface{}{insertId, models.PermissionUse, role}})
 		}
 	}
-	err = Transaction(actions)
 	return
 }
 
@@ -553,12 +559,82 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 				if len(series.Tags) > 0 {
 					for _, tag := range series.Tags {
 						tagId := guid.CreateGuid()
-						actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
-							tagId, seriesId, tag.TagName}})
+						if tag.Equal == "" {
+							tag.Equal = "in"
+						}
+						actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{
+							tagId, seriesId, tag.TagName, tag.Equal}})
 						if len(tag.TagValue) > 0 {
 							for _, tagValue := range tag.TagValue {
 								actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
 							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, useRoles []string, mgmtRole, operator string) (actions []*Action) {
+	var permissionList []*models.CustomChartPermission
+	newChartId := guid.CreateGuid()
+	now := time.Now()
+	// 新增图表和图表配置
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
+		"create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		newChartId, newDashboardId, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
+		chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate, chart.PieType}})
+	// 新增看板图表关系表
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now, chart.GroupDisplayConfig}})
+	if chart.Public {
+		// 新增图表权限
+		for _, useRole := range useRoles {
+			permissionList = append(permissionList, &models.CustomChartPermission{
+				Guid:           guid.CreateGuid(),
+				DashboardChart: newChartId,
+				RoleId:         useRole,
+				Permission:     string(models.PermissionUse),
+			})
+		}
+		permissionList = append(permissionList, &models.CustomChartPermission{
+			Guid:           guid.CreateGuid(),
+			DashboardChart: newChartId,
+			RoleId:         mgmtRole,
+			Permission:     string(models.PermissionMgmt),
+		})
+		actions = append(actions, GetInsertCustomChartPermissionSQL(permissionList)...)
+	}
+	if len(chart.ChartSeries) > 0 {
+		for _, series := range chart.ChartSeries {
+			seriesId := guid.CreateGuid()
+			actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag, series.EndpointType, series.MetricType, series.MetricGuid}})
+			if len(series.ColorConfig) > 0 {
+				for _, colorConfig := range series.ColorConfig {
+					tags := ""
+					if strings.Contains(colorConfig.SeriesName, "{") {
+						start := strings.LastIndex(colorConfig.SeriesName, "{")
+						tags = colorConfig.SeriesName[start+1 : len(colorConfig.SeriesName)-1]
+					}
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{
+						guid.CreateGuid(), seriesId, tags, colorConfig.Color, colorConfig.SeriesName,
+					}})
+				}
+			}
+			if len(series.Tags) > 0 {
+				for _, tag := range series.Tags {
+					tagId := guid.CreateGuid()
+					if tag.Equal == "" {
+						tag.Equal = "in"
+					}
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{
+						tagId, seriesId, tag.TagName, tag.Equal}})
+					if len(tag.TagValue) > 0 {
+						for _, tagValue := range tag.TagValue {
+							actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
 						}
 					}
 				}
