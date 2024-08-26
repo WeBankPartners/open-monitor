@@ -306,6 +306,7 @@ func generateChartSeries(serviceGroup, monitorType, code string, metric *models.
 		ColorConfig: []*models.ColorConfigDto{
 			{
 				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroup, code),
+				Color:      metric.ColorGroup,
 			},
 		},
 	}
