@@ -24,14 +24,14 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s%s%s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s_%s%s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
 				if strings.TrimSpace(endpointGroup) != "" {
 					alarmStrategyParam.EndpointGroup = endpointGroup
 				}
-				alarmStrategyParam.LogMetricGroup = param.LogMetricGroupGuid
+				alarmStrategyParam.LogMetricGroup = &param.LogMetricGroupGuid
 				alarmStrategyParam.Metric = alarmMetric.MetricId
 				alarmStrategyParam.MetricName = alarmMetric.Metric
 				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than %d %s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
@@ -92,11 +92,12 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 	if param.AutoCreateDashboard {
 		// 1. 先创建看板
 		dashboard := &models.CustomDashboardTable{
-			Name:       fmt.Sprintf("%s%s", serviceGroup, now.Format(models.DatetimeDigitFormat)),
-			CreateUser: operator,
-			UpdateUser: operator,
-			CreateAt:   now,
-			UpdateAt:   now,
+			Name:           fmt.Sprintf("%s_%s", serviceGroup, now.Format(models.DatetimeDigitFormat)),
+			CreateUser:     operator,
+			UpdateUser:     operator,
+			CreateAt:       now,
+			UpdateAt:       now,
+			LogMetricGroup: &param.LogMetricGroupGuid,
 		}
 		if len(serviceGroupsRoles) == 0 {
 			err = fmt.Errorf("config role empty")
@@ -114,10 +115,16 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 		codeList = append(codeList, "other")
 		for index, code := range codeList {
 			// 请求量+失败量 柱状图
+			if reqCountMetric = getMetricByKey(metricMap, "req_count"); reqCountMetric == nil {
+				continue
+			}
+			if failCountMetric = getMetricByKey(metricMap, "fail_count"); failCountMetric == nil {
+				continue
+			}
 			chartParam1 := &models.CustomChartDto{
 				Public:             true,
 				SourceDashboard:    int(newDashboardId),
-				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				Name:               fmt.Sprintf("%s-%s/%s", code, reqCountMetric.Metric, serviceGroup),
 				ChartTemplate:      "one",
 				ChartType:          "bar",
 				LineType:           "bar",
@@ -127,38 +134,34 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				DisplayConfig:      calcDisplayConfig(index * 3),
 				GroupDisplayConfig: calcDisplayConfig(0),
 				Group:              code,
-			}
-			if reqCountMetric = getMetricByKey(metricMap, "req_count"); reqCountMetric == nil {
-				continue
+				LogMetricGroup:     &param.LogMetricMonitorGuid,
 			}
 			// 请求量标签线条
 			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, reqCountMetric))
 			// 失败量标签线条
-			if failCountMetric = getMetricByKey(metricMap, "fail_count"); failCountMetric == nil {
-				continue
-			}
 			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, failCountMetric))
 			subChart1Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart1Actions) > 0 {
 				actions = append(actions, subChart1Actions...)
 			}
 			// 成功率
+			if sucRateMetric = getMetricByKey(metricMap, "req_suc_rate"); sucRateMetric == nil {
+				continue
+			}
 			chartParam2 := &models.CustomChartDto{
 				Public:             true,
 				SourceDashboard:    int(newDashboardId),
-				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				Name:               fmt.Sprintf("%s-%s/%s", code, sucRateMetric.Metric, serviceGroup),
 				ChartTemplate:      "one",
 				ChartType:          "line",
 				LineType:           "line",
 				Aggregate:          "none",
 				AggStep:            60,
 				ChartSeries:        []*models.CustomChartSeriesDto{},
-				DisplayConfig:      calcDisplayConfig(index * 3),
+				DisplayConfig:      calcDisplayConfig(index*3 + 1),
 				GroupDisplayConfig: calcDisplayConfig(1),
 				Group:              code,
-			}
-			if sucRateMetric = getMetricByKey(metricMap, "req_suc_rate"); sucRateMetric == nil {
-				continue
+				LogMetricGroup:     &param.LogMetricMonitorGuid,
 			}
 			// 请求量标签线条
 			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, sucRateMetric))
@@ -167,26 +170,27 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				actions = append(actions, subChart2Actions...)
 			}
 			// 耗时
+			if costTimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costTimeAvgMetric == nil {
+				continue
+			}
 			chartParam3 := &models.CustomChartDto{
 				Public:             true,
 				SourceDashboard:    int(newDashboardId),
-				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				Name:               fmt.Sprintf("%s-%s/%s", code, costTimeAvgMetric.Metric, serviceGroup),
 				ChartTemplate:      "one",
 				ChartType:          "line",
 				LineType:           "line",
 				Aggregate:          "none",
 				AggStep:            60,
 				ChartSeries:        []*models.CustomChartSeriesDto{},
-				DisplayConfig:      calcDisplayConfig(index * 3),
+				DisplayConfig:      calcDisplayConfig(index*3 + 2),
 				GroupDisplayConfig: calcDisplayConfig(1),
 				Group:              code,
-			}
-			if costTimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costTimeAvgMetric == nil {
-				continue
+				LogMetricGroup:     &param.LogMetricMonitorGuid,
 			}
 			// 请求量标签线条
 			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costTimeAvgMetric))
-			subChart3Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
+			subChart3Actions = handleAutoCreateChart(chartParam3, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart3Actions) > 0 {
 				actions = append(actions, subChart3Actions...)
 			}
