@@ -676,7 +676,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
+	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -811,25 +811,6 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 			middleware.ReturnSuccess(c)
 		}
 	}
-}
-
-func CopyLogMetricCustomGroup(c *gin.Context) {
-	var err error
-	var logMetricMonitor string
-	guid := c.Query("guid")
-	if guid == "" {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("guid can not empty"))
-		return
-	}
-	if logMetricMonitor, err = db.CopyLogMetricCustomGroup(guid); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
-	}
-	if err = syncLogMetricMonitorConfig(logMetricMonitor); err != nil {
-		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
-		return
-	}
-	middleware.ReturnSuccess(c)
 }
 
 func UpdateLogMetricCustomGroup(c *gin.Context) {
