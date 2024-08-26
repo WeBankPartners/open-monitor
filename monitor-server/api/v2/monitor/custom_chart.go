@@ -472,7 +472,7 @@ func QueryCustomChart(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
