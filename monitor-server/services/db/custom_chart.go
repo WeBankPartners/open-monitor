@@ -353,8 +353,8 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashbo
 			if len(series.Tags) > 0 {
 				for _, tag := range series.Tags {
 					tagId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
-						tagId, seriesId, tag.TagName}})
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{
+						tagId, seriesId, tag.TagName, tag.Equal}})
 					if len(tag.TagValue) > 0 {
 						for _, tagValue := range tag.TagValue {
 							actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
@@ -633,6 +633,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 					}
 					customChartSeriesDto.Tags = append(customChartSeriesDto.Tags, &models.TagDto{
 						TagName:  tag.Name,
+						Equal:    tag.Equal,
 						TagValue: getChartSeriesTagValues(chartSeriesTagValueList),
 					})
 				}
