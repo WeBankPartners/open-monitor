@@ -21,6 +21,7 @@ func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
+	var customDashboard *models.CustomDashboardObj
 	var err error
 	var exist bool
 	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
@@ -60,6 +61,12 @@ func GetSharedChartList(c *gin.Context) {
 					Id:              chart.Guid,
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
+				}
+				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
+					continue
+				}
+				if customDashboard != nil {
+					sharedDto.DashboardName = customDashboard.Name
 				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
