@@ -1391,6 +1391,7 @@ func DeleteLogMetricGroup(logMetricGroupGuid string) (logMetricMonitorGuid strin
 }
 
 func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
+	var delAlarmStrategyActions, delDashboardActions, delChartActions []*Action
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
@@ -1402,8 +1403,49 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
 	// 删除自动生成的告警列表
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-	//
+	actions = append(actions, &Action{Sql: " from alarm_strategy where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	// 删除阈值
+	var strategyGuids []string
+	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
+		return
+	}
+	if len(strategyGuids) > 0 {
+		for _, strategyGuid := range strategyGuids {
+			if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+				return
+			}
+			if len(delAlarmStrategyActions) > 0 {
+				actions = append(actions, delAlarmStrategyActions...)
+			}
+		}
+	}
+	// 删除看板&图表
+	var dashboardIds []int
+	var chartIds []string
+	if err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&dashboardIds); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartIds); err != nil {
+		return
+	}
+	if len(dashboardIds) > 0 {
+		for _, boardId := range dashboardIds {
+			if delDashboardActions = GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
+				actions = append(actions, delAlarmStrategyActions...)
+			}
+		}
+	}
+	if len(chartIds) > 0 {
+		for _, chartId := range chartIds {
+			if delChartActions, err = GetDeleteCustomDashboardChart(chartId); err != nil {
+				return
+			}
+			if len(delChartActions) > 0 {
+				actions = append(actions, delChartActions...)
+			}
+		}
+	}
+
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 	var existMetricRows []*models.LogMetricConfigTable
