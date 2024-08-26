@@ -1243,6 +1243,8 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	serviceGroup, monitorType := param.ServiceGroup, param.MonitorType
 	if serviceGroup == "" {
 		serviceGroup, monitorType = GetLogMetricServiceGroup(param.LogMetricMonitorGuid)
+		param.ServiceGroup = serviceGroup
+		param.MonitorType = monitorType
 	}
 	for _, v := range logMonitorTemplateObj.MetricList {
 		promExpr := ""
