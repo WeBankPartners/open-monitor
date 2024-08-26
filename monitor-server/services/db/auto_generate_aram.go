@@ -117,10 +117,10 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 		codeList = append(codeList, "other")
 		for index, code := range codeList {
 			// 请求量+失败量 柱状图
-			if reqCountMetric = getMetricByKey(metricMap, "req_count"); reqCountMetric == nil {
+			if reqCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_count"); reqCountMetric == nil {
 				continue
 			}
-			if failCountMetric = getMetricByKey(metricMap, "fail_count"); failCountMetric == nil {
+			if failCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"fail_count"); failCountMetric == nil {
 				continue
 			}
 			chartParam1 := &models.CustomChartDto{
@@ -147,7 +147,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				actions = append(actions, subChart1Actions...)
 			}
 			// 成功率
-			if sucRateMetric = getMetricByKey(metricMap, "req_suc_rate"); sucRateMetric == nil {
+			if sucRateMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_suc_rate"); sucRateMetric == nil {
 				continue
 			}
 			chartParam2 := &models.CustomChartDto{
@@ -172,7 +172,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				actions = append(actions, subChart2Actions...)
 			}
 			// 耗时
-			if costTimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costTimeAvgMetric == nil {
+			if costTimeAvgMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_costtime_avg"); costTimeAvgMetric == nil {
 				continue
 			}
 			chartParam3 := &models.CustomChartDto{
@@ -240,7 +240,7 @@ func getMetricByKey(metricMap map[string]*models.LogMetricTemplate, subKey strin
 		return nil
 	}
 	for key, template := range metricMap {
-		if strings.HasSuffix(key, subKey) {
+		if strings.HasPrefix(key, subKey) {
 			return template
 		}
 	}
