@@ -97,6 +97,8 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 			UpdateUser:     operator,
 			CreateAt:       now,
 			UpdateAt:       now,
+			RefreshWeek:    60,
+			TimeRange:      -1800,
 			LogMetricGroup: &param.LogMetricGroupGuid,
 		}
 		if len(serviceGroupsRoles) == 0 {
