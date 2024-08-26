@@ -524,6 +524,9 @@
   "m_color_system": "色系",
   "m_automatic_alert": "自动告警",
   "m_threshold_property": "符号，阈值，持续时间，时间单位",
-  "m_success_code": "成功码"
+  "m_success_code": "成功码",
+  "m_template_version": "模版版本",
+  "m_auto_create_warn": "自动生成告警",
+  "m_auto_create_dashboard": "自动生成自定义看板"
 }
 
