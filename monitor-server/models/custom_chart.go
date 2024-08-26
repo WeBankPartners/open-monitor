@@ -55,6 +55,7 @@ type CustomChartDto struct {
 	DisplayConfig      interface{}             `json:"displayConfig"`      // 默认所有下面图表位置
 	GroupDisplayConfig interface{}             `json:"groupDisplayConfig"` // 组下面的图表位置
 	Group              string                  `json:"group"`              // 所属分组
+	LogMetricGroup     *string                 `json:"logMetricGroup"`
 }
 
 type ChartSharedDto struct {
