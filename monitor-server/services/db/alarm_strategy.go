@@ -151,12 +151,7 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 
 func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, operator string) (actions []*Action, err error) {
 	param.Guid = "strategy_" + guid.CreateGuid()
-	var insertAction Action
-	if param.LogMetricGroup == "" {
-		insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?,?,)"}
-	} else {
-		insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,update_user,log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"}
-	}
+	var insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,update_user,log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, param.LogMetricGroup}
 	actions = append(actions, &insertAction)
 	if len(param.NotifyList) > 0 {
@@ -209,6 +204,16 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 }
 
 func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string, err error) {
+	var delAlarmStrategyActions []*Action
+	if delAlarmStrategyActions, endpointGroup, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+		return
+	}
+	err = Transaction(delAlarmStrategyActions)
+	return
+}
+
+func GetDeleteAlarmStrategyActions(strategyGuid string) (delAlarmStrategyActions []*Action, endpointGroup string, err error) {
+	delAlarmStrategyActions = []*Action{}
 	var strategyTable []*models.AlarmStrategyTable
 	err = x.SQL("select * from alarm_strategy where guid=?", strategyGuid).Find(&strategyTable)
 	if err != nil {
@@ -219,11 +224,9 @@ func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string, err error) 
 		return
 	}
 	endpointGroup = strategyTable[0].EndpointGroup
-	var actions []*Action
-	actions = append(actions, getNotifyListDeleteAction(strategyGuid, "", "")...)
-	actions = append(actions, getStrategyConditionDeleteAction(strategyGuid)...)
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{strategyGuid}})
-	err = Transaction(actions)
+	delAlarmStrategyActions = append(delAlarmStrategyActions, getNotifyListDeleteAction(strategyGuid, "", "")...)
+	delAlarmStrategyActions = append(delAlarmStrategyActions, getStrategyConditionDeleteAction(strategyGuid)...)
+	delAlarmStrategyActions = append(delAlarmStrategyActions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{strategyGuid}})
 	return
 }
 
