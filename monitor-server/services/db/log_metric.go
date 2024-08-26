@@ -1210,7 +1210,7 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 
 func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, err error) {
 	var templateSnapshot []byte
-	var refTemplateVersion string
+	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles []string
 	if param.LogMetricGroupGuid == "" {
@@ -1274,12 +1274,15 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
 				return
 			}
+			if len(endpointGroupIds) > 0 {
+				endpointGroup = endpointGroupIds[0]
+			}
 		}
 	}
 	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
 		serviceGroupsRoles = roles[:1]
 	}
-	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
+	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, endpointGroup, operator); err != nil {
 		return
 	}
 	if len(subCreateAlarmStrategyActions) > 0 {
