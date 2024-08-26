@@ -15,6 +15,9 @@
             <span style="color: red">*</span>
           </Tooltip>
         </FormItem>
+        <FormItem :label="$t('m_template_version')">
+          <span>{{configInfo.templateVersion}}</span>
+        </FormItem>
         <!-- <FormItem>
             <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" >{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
           </FormItem> -->
@@ -79,7 +82,7 @@
           ></Table>
         </div>
         <!-- 计算指标 -->
-        <div>
+        <div class='calculation-indicators'>
           <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
           <Table
             size="small"
@@ -87,7 +90,10 @@
             :data="configInfo.metric_list"
             width="100%"
           ></Table>
-
+        </div>
+        <div class='auto-create-warn' v-if='isAddState'>
+          <Checkbox v-model="configInfo.autoCreateWarn">{{$t('m_auto_create_warn')}}</Checkbox>
+          <Checkbox v-model="configInfo.autoCreateDashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         </div>
       </div>
       </Col>
@@ -96,6 +102,9 @@
 </template>
 
 <script>
+import {isEmpty} from 'lodash'
+import Vue from 'vue'
+import {thresholdList, lastList} from '@/assets/config/common-config.js'
 export default {
   name: 'json-regex',
   data() {
@@ -164,6 +173,20 @@ export default {
       ],
       columnsForComputeMetrics: [
         {
+          title: this.$t('m_color_system'),
+          key: 'color_group',
+          width: 100,
+          render: (h, params) => (
+            <div class="color_system">
+              <ColorPicker value={params.row.color_group || ''} disabled
+                on-on-open-change={
+                  isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
+                }
+              />
+            </div>
+          )
+        },
+        {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
           width: 120
@@ -181,10 +204,12 @@ export default {
         {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
+          width: 150
         },
         {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
+          width: 150,
           render: (h, params) => (
             <span>
               {params.row.tag_config.join(',')}
@@ -194,6 +219,7 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          width: 200,
           render: (h, params) => {
             const agg_type = params.row.agg_type
             return (
@@ -202,6 +228,98 @@ export default {
               </Tooltip>
             )
           }
+        },
+        {
+          title: this.$t('m_automatic_alert'),
+          key: 'auto_alarm',
+          width: 60,
+          render: (h, params) =>
+            (
+              <i-switch value={params.row.auto_alarm}
+                disabled
+                on-on-change={val => {
+                  this.configInfo.metric_list[params.index].auto_alarm = val
+                }} />
+            )
+        },
+        {
+          title: this.$t('m_symbol'),
+          key: 'operator',
+          align: 'left',
+          minWidth: 100,
+          render: (h, params) => params.row.auto_alarm
+            ? (
+              <Select
+                value={params.row.range_config.operator}
+                on-on-change={v => {
+                  this.configInfo.metric_list[params.index].range_config.operator = v
+                }}
+                disabled
+                filterable
+                clearable
+              >
+                {thresholdList.map((i, index) => (
+                  <Option value={i.value} key={index}>
+                    {i.label}
+                  </Option>
+                ))}
+              </Select>
+            ) : <div></div>
+        },
+        {
+          title: this.$t('m_field_threshold'),
+          key: 'threshold',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.threshold}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
+              }}
+              disabled
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_tableKey_s_last'),
+          key: 'time',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.time}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time = v.target.value
+              }}
+              disabled
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_time_unit'),
+          key: 'time_unit',
+          align: 'left',
+          minWidth: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Select
+              value={params.row.range_config.time_unit}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time_unit = v
+              }}
+              filterable
+              clearable
+              disabled
+            >
+              {lastList.map(i => (
+                <Option value={i.value} key={i.value}>
+                  {i.label}
+                </Option>
+              ))}
+            </Select>
+          ) : <div/>
         }
       ],
       generateBackstageTrialWarning: false,
@@ -212,7 +330,11 @@ export default {
     configInfo: Object,
     prefixCode: String
   },
-  mounted() {},
+  computed: {
+    isAddState() {
+      return this.$parent.$parent.isAdd
+    }
+  },
   methods: {
     hideTemplate() {
       this.showTemplate = false
@@ -223,10 +345,44 @@ export default {
     },
     returnCurrentStatus() {
       return this.showTemplate
+    },
+    changeColorGroup(isShow = true, data, key) {
+      if (isShow) {
+        this.$nextTick(() => {
+          const confirmButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-primary')
+          const resetButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-default')
+          if (isEmpty(confirmButtonList)) {
+            return
+          }
+          confirmButtonList[0].addEventListener('click', () => {
+            const inputList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-input')
+            if (isEmpty(inputList)) {
+              return
+            }
+            const color = inputList[0].value
+            Vue.set(data, key, color)
+          })
+          if (isEmpty(resetButtonList)) {
+            return
+          }
+          resetButtonList[0].addEventListener('click', () => {
+            Vue.set(data, key, '')
+          })
+        })
+      }
     }
   }
 }
 </script>
+
+<style lang="less">
+.calculation-indicators {
+  .ivu-table-cell {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+</style>
 
 <style lang="less" scoped>
 .custom-modal-header {
@@ -243,5 +399,12 @@ export default {
 }
 .ivu-form-item {
   margin-bottom: 0px;
+}
+.auto-create-warn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 80%;
+  margin-top: 10px
 }
 </style>
