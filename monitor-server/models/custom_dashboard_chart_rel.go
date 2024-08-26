@@ -12,3 +12,10 @@ type CustomDashboardChartRel struct {
 	CreateTime         string  `json:"createTime" xorm:"create_time"`                  // 创建时间
 	UpdateTime         string  `json:"updateTime" xorm:"update_time"`                  // 更新时间
 }
+
+type DisplayConfig struct {
+	W float64 `json:"w"`
+	H float64 `json:"h"`
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
