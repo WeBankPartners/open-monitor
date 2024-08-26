@@ -303,7 +303,14 @@ func DeleteCustomChartSeriesByMetricIdSQL(metricId string) (actions []*Action, e
 }
 
 func DeleteCustomDashboardChart(chartId string) (err error) {
-	var actions, subActions []*Action
+	var actions []*Action
+	actions, err = GetDeleteCustomDashboardChart(chartId)
+	return Transaction(actions)
+}
+
+func GetDeleteCustomDashboardChart(chartId string) (actions []*Action, err error) {
+	var subActions []*Action
+	actions = []*Action{}
 	if subActions, err = DeleteCustomChartConfigSQL(chartId); err != nil {
 		return
 	}
@@ -313,7 +320,7 @@ func DeleteCustomDashboardChart(chartId string) (err error) {
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where dashboard_chart = ?", Param: []interface{}{chartId}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart = ?", Param: []interface{}{chartId}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart WHERE guid = ?", Param: []interface{}{chartId}})
-	return Transaction(actions)
+	return
 }
 
 func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashboard int) (err error) {

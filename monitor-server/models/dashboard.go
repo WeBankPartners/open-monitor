@@ -354,18 +354,19 @@ type MaintainDto struct {
 }
 
 type CustomDashboardTable struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	PanelsGroup int       `json:"panels_group"`
-	Cfg         string    `json:"cfg"`
-	Main        int       `json:"main"`
-	CreateUser  string    `json:"create_user"`
-	UpdateUser  string    `json:"update_user"`
-	CreateAt    time.Time `json:"create_at"`
-	UpdateAt    time.Time `json:"update_at"`
-	PanelGroups string    `json:"panel_groups"`
-	TimeRange   int       `json:"time_range"`   //时间范围
-	RefreshWeek int       `json:"refresh_week"` // 刷新周期
+	Id             int       `json:"id"`
+	Name           string    `json:"name"`
+	PanelsGroup    int       `json:"panels_group"`
+	Cfg            string    `json:"cfg"`
+	Main           int       `json:"main"`
+	CreateUser     string    `json:"create_user"`
+	UpdateUser     string    `json:"update_user"`
+	CreateAt       time.Time `json:"create_at"`
+	UpdateAt       time.Time `json:"update_at"`
+	PanelGroups    string    `json:"panel_groups"`
+	TimeRange      int       `json:"time_range"`   //时间范围
+	RefreshWeek    int       `json:"refresh_week"` // 刷新周期
+	LogMetricGroup *string   `json:"log_metric_group"`
 }
 
 type CustomDashboardObj struct {

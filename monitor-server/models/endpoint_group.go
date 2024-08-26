@@ -152,7 +152,7 @@ type GroupStrategyObj struct {
 	Conditions        []*StrategyConditionObj `json:"conditions"`
 	UpdateTime        string                  `json:"update_time"`
 	UpdateUser        string                  `json:"update_user"`
-	LogMetricGroup    string                  `json:"log_metric_group"`
+	LogMetricGroup    *string                 `json:"log_metric_group"`
 }
 
 type EndpointStrategyObj struct {

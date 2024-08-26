@@ -136,8 +136,8 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 func getAddCustomDashboardActions(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (actions []*Action, insertId int64, err error) {
 	var result sql.Result
 	actions = []*Action{}
-	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
-		customDashboard.UpdateAt.Format(models.DatetimeFormat))
+	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at,log_metric_group) values(?,?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
+		customDashboard.UpdateAt.Format(models.DatetimeFormat), customDashboard.LogMetricGroup)
 	if err != nil {
 		return
 	}
@@ -184,7 +184,12 @@ func QueryCustomDashboardManagePermissionByDashboard(dashboard int) (hashMap map
 }
 
 func DeleteCustomDashboardById(dashboard int) (err error) {
-	var actions []*Action
+	var actions = GetDeleteCustomDashboardByIdActions(dashboard)
+	return Transaction(actions)
+}
+
+func GetDeleteCustomDashboardByIdActions(dashboard int) (actions []*Action) {
+	actions = []*Action{}
 	actions = append(actions, &Action{Sql: "delete from main_dashboard where custom_dashboard = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
@@ -197,7 +202,7 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{dashboard}})
 
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
-	return Transaction(actions)
+	return
 }
 
 func UpdateCustomDashboardTimeActions(dashboard int, operator string) []*Action {
@@ -579,8 +584,11 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 
 func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, useRoles []string, mgmtRole, operator string) (actions []*Action) {
 	var permissionList []*models.CustomChartPermission
+	var displayConfig, groupDisplayConfig []byte
 	newChartId := guid.CreateGuid()
 	now := time.Now()
+	displayConfig, _ = json.Marshal(chart.DisplayConfig)
+	groupDisplayConfig, _ = json.Marshal(chart.GroupDisplayConfig)
 	// 新增图表和图表配置
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
 		"create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
@@ -588,7 +596,7 @@ func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, u
 		chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate, chart.PieType}})
 	// 新增看板图表关系表
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now, chart.GroupDisplayConfig}})
+		guid.CreateGuid(), newDashboardId, newChartId, chart.Group, displayConfig, operator, operator, now, now, groupDisplayConfig}})
 	if chart.Public {
 		// 新增图表权限
 		for _, useRole := range useRoles {
