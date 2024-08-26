@@ -3,36 +3,21 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"strings"
 	"time"
 
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
-func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroup, operator string) (actions []*Action, err error) {
+func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, err error) {
 	var subActions []*Action
 	actions = []*Action{}
 	// 自动创建告警
 	if param.AutoCreateWarn {
 		var endpointGroup string
-		var serviceGroupsRoles []string
 		codeList := getTargetCodeMap(param.CodeStringMap)
 		autoAlarmMetricList := getAutoAlarmMetricList(metricList, serviceGroup, param.MetricPrefixCode)
-		if param.LogMetricMonitorGuid != "" {
-			var logMetricMonitor = &models.LogMetricMonitorTable{}
-			var endpointGroupIds []string
-			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
-				return
-			}
-			if logMetricMonitor != nil {
-				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
-				if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
-					return
-				}
-				if len(endpointGroupIds) > 0 {
-					endpointGroup = endpointGroupIds[0]
-				}
-			}
-		}
 		// 添加 other默认告警
 		codeList = append(codeList, "{code}")
 		for _, code := range codeList {
@@ -40,7 +25,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s%s%s %d %s", code, alarmMetric.DisplayName, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s%s%s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
@@ -96,6 +81,119 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 	return
 }
 
+func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, err error) {
+	var subDashboardActions, subChart1Actions, subChart2Actions, subChart3Actions []*Action
+	var newDashboardId int64
+	actions = []*Action{}
+	now := time.Now()
+	var metricMap = getMetricMap(metricList, param.MetricPrefixCode)
+	var reqCountMetric, failCountMetric, sucRateMetric, costtimeAvgMetric *models.LogMetricTemplate
+	if param.AutoCreateDashboard {
+		// 1. 先创建看板
+		dashboard := &models.CustomDashboardTable{
+			Name:       fmt.Sprintf("%s%s", serviceGroup, now.Format(models.DatetimeDigitFormat)),
+			CreateUser: operator,
+			UpdateUser: operator,
+			CreateAt:   now,
+			UpdateAt:   now,
+		}
+		if len(serviceGroupsRoles) == 0 {
+			err = fmt.Errorf("config role empty")
+			return
+		}
+		if subDashboardActions, newDashboardId, err = getAddCustomDashboardActions(dashboard, serviceGroupsRoles[:1], serviceGroupsRoles); err != nil {
+			return
+		}
+		if len(subDashboardActions) > 0 {
+			actions = append(actions, subDashboardActions...)
+		}
+		// 2. 新增图表
+		codeList := getTargetCodeMap(param.CodeStringMap)
+		// 添加 other默认告警
+		codeList = append(codeList, "other")
+		for index, code := range codeList {
+			// 请求量+失败量 柱状图
+			chartParam1 := &models.CustomChartDto{
+				Public:             true,
+				SourceDashboard:    int(newDashboardId),
+				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				ChartTemplate:      "one",
+				ChartType:          "bar",
+				LineType:           "bar",
+				Aggregate:          "none",
+				AggStep:            60,
+				ChartSeries:        []*models.CustomChartSeriesDto{},
+				DisplayConfig:      calcDisplayConfig(index * 3),
+				GroupDisplayConfig: calcDisplayConfig(0),
+				Group:              code,
+			}
+			if reqCountMetric = getMetricByKey(metricMap, "req_count"); reqCountMetric == nil {
+				continue
+			}
+			// 请求量标签线条
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, reqCountMetric))
+			// 失败量标签线条
+			if failCountMetric = getMetricByKey(metricMap, "fail_count"); failCountMetric == nil {
+				continue
+			}
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, failCountMetric))
+			subChart1Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
+			if len(subChart1Actions) > 0 {
+				actions = append(actions, subChart1Actions...)
+			}
+			// 成功率
+			chartParam2 := &models.CustomChartDto{
+				Public:             true,
+				SourceDashboard:    int(newDashboardId),
+				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				ChartTemplate:      "one",
+				ChartType:          "line",
+				LineType:           "line",
+				Aggregate:          "none",
+				AggStep:            60,
+				ChartSeries:        []*models.CustomChartSeriesDto{},
+				DisplayConfig:      calcDisplayConfig(index * 3),
+				GroupDisplayConfig: calcDisplayConfig(1),
+				Group:              code,
+			}
+			if sucRateMetric = getMetricByKey(metricMap, "req_suc_rate"); sucRateMetric == nil {
+				continue
+			}
+			// 请求量标签线条
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, sucRateMetric))
+			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
+			if len(subChart2Actions) > 0 {
+				actions = append(actions, subChart2Actions...)
+			}
+			// 耗时
+			chartParam3 := &models.CustomChartDto{
+				Public:             true,
+				SourceDashboard:    int(newDashboardId),
+				Name:               fmt.Sprintf("%s_%s/%s", code, "", serviceGroup),
+				ChartTemplate:      "one",
+				ChartType:          "line",
+				LineType:           "line",
+				Aggregate:          "none",
+				AggStep:            60,
+				ChartSeries:        []*models.CustomChartSeriesDto{},
+				DisplayConfig:      calcDisplayConfig(index * 3),
+				GroupDisplayConfig: calcDisplayConfig(1),
+				Group:              code,
+			}
+			if costtimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costtimeAvgMetric == nil {
+				continue
+			}
+			// 请求量标签线条
+			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costtimeAvgMetric))
+			subChart3Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
+			if len(subChart3Actions) > 0 {
+				actions = append(actions, subChart3Actions...)
+			}
+		}
+	}
+	return
+}
+
 func generateMetricGuid(metric, serviceGroup string) string {
 	return fmt.Sprintf("%s__%s", metric, serviceGroup)
 }
@@ -111,6 +209,31 @@ func getServiceGroupRoles(serviceGroup string) []string {
 		roles = append(roles, model.OptionName)
 	}
 	return roles
+}
+
+func getMetricMap(list []*models.LogMetricTemplate, metricPrefixCode string) map[string]*models.LogMetricTemplate {
+	var metric string
+	var hashMap = make(map[string]*models.LogMetricTemplate)
+	for _, template := range list {
+		metric = template.Metric
+		if metricPrefixCode != "" {
+			metric = metricPrefixCode + "_" + metric
+		}
+		hashMap[metric] = template
+	}
+	return hashMap
+}
+
+func getMetricByKey(metricMap map[string]*models.LogMetricTemplate, subKey string) *models.LogMetricTemplate {
+	if len(metricMap) == 0 {
+		return nil
+	}
+	for key, template := range metricMap {
+		if strings.HasSuffix(key, subKey) {
+			return template
+		}
+	}
+	return nil
 }
 
 // getAutoAlarmMetricList 获取自动告警的指标列表
@@ -152,6 +275,35 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 	return list
 }
 
+func generateChartSeries(serviceGroup, monitorType, code string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
+	return &models.CustomChartSeriesDto{
+		Endpoint:     serviceGroup,
+		ServiceGroup: serviceGroup,
+		EndpointName: serviceGroup,
+		MonitorType:  monitorType,
+		ColorGroup:   metric.ColorGroup,
+		EndpointType: "system",
+		MetricType:   "business",
+		MetricGuid:   metric.Guid,
+		Metric:       metric.Metric,
+		Tags: []*models.TagDto{
+			{
+				TagName:  "code",
+				Equal:    "in",
+				TagValue: []string{code},
+			},
+			{
+				TagName: "retcode",
+			},
+		},
+		ColorConfig: []*models.ColorConfigDto{
+			{
+				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroup, code),
+			},
+		},
+	}
+}
+
 // translateSymbol 字符翻译
 func translateSymbol(operator string) string {
 	switch operator {
@@ -165,4 +317,13 @@ func translateSymbol(operator string) string {
 		return "less than or equal"
 	}
 	return ""
+}
+
+func calcDisplayConfig(index int) models.DisplayConfig { // index是item在数组中的索引，item是数组中的其中一个
+	item := models.DisplayConfig{}
+	item.W = 4
+	item.H = 7
+	item.X = float64((index % 3) * 4)
+	item.Y = math.Floor(float64(index/3)) * 7
+	return item
 }
