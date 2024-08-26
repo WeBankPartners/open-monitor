@@ -228,11 +228,13 @@ func AddCustomDashboard(c *gin.Context) {
 	now := time.Now()
 	user := middleware.GetOperateUser(c)
 	dashboard := &models.CustomDashboardTable{
-		Name:       param.Name,
-		CreateUser: user,
-		UpdateUser: user,
-		CreateAt:   now,
-		UpdateAt:   now,
+		Name:        param.Name,
+		CreateUser:  user,
+		UpdateUser:  user,
+		CreateAt:    now,
+		UpdateAt:    now,
+		RefreshWeek: 60,
+		TimeRange:   -1800,
 	}
 	if dashboardId, err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)
