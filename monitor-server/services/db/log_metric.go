@@ -1006,7 +1006,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, existMetricMap)
+		tmpActions, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1197,10 +1197,10 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, err = getCreateLogMetricGroupActions(param, operator, make(map[string]string))
+	actions, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string))
 	if err != nil {
 		return
 	}
@@ -1208,10 +1208,11 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, err error) {
 	var templateSnapshot []byte
 	var refTemplateVersion string
-	var subCreateAlarmStrategyActions []*Action
+	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
+	var serviceGroupsRoles []string
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	}
@@ -1262,11 +1263,33 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
 	}
-	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroup, operator); err != nil {
+	if param.LogMetricMonitorGuid != "" {
+		var logMetricMonitor = &models.LogMetricMonitorTable{}
+		var endpointGroupIds []string
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+			return
+		}
+		if logMetricMonitor != nil {
+			serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+				return
+			}
+		}
+	}
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
 		return
 	}
 	if len(subCreateAlarmStrategyActions) > 0 {
 		actions = append(actions, subCreateAlarmStrategyActions...)
+	}
+	if subCreateDashboardActions, err = autoGenerateCustomDashboard(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
+		return
+	}
+	if len(subCreateDashboardActions) > 0 {
+		actions = append(actions, subCreateDashboardActions...)
 	}
 	return
 }
