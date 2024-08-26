@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles []string) (pageInfo models.PageInfo, list []*models.CustomDashboardTable, err error) {
+func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, operator string, roles []string) (pageInfo models.PageInfo, list []*models.CustomDashboardTable, err error) {
 	var params []interface{}
 	var ids []string
 	var sql = "select id,name, create_user,update_user,create_at,update_at from custom_dashboard where 1=1 "
@@ -30,6 +30,10 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles 
 	}
 	if condition.UpdateUser != "" {
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
+	}
+	if condition.Show == "me" {
+		sql = sql + " and create_user = ?"
+		params = append(params, operator)
 	}
 	sql = sql + " and id in (" + strings.Join(ids, ",") + ")"
 	sql = sql + " order by update_at desc "

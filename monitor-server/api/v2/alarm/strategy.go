@@ -16,22 +16,23 @@ import (
 func QueryAlarmStrategy(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
+	show := c.Param("show")
 	if queryType == "endpoint" {
-		result, err := db.QueryAlarmStrategyByEndpoint(guid)
+		result, err := db.QueryAlarmStrategyByEndpoint(guid, show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else if queryType == "group" {
-		result, err := db.QueryAlarmStrategyByGroup(guid)
+		result, err := db.QueryAlarmStrategyByGroup(guid, show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else if queryType == "service" {
-		result, err := db.QueryAlarmStrategyByServiceGroup(guid)
+		result, err := db.QueryAlarmStrategyByServiceGroup(guid, show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -145,13 +146,13 @@ func ExportAlarmStrategy(c *gin.Context) {
 	var result []*models.EndpointStrategyObj
 	var err error
 	if queryType == "group" {
-		result, err = db.QueryAlarmStrategyByGroup(guid)
+		result, err = db.QueryAlarmStrategyByGroup(guid, "", middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 	} else if queryType == "service" {
-		result, err = db.QueryAlarmStrategyByServiceGroup(guid)
+		result, err = db.QueryAlarmStrategyByServiceGroup(guid, "", middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
