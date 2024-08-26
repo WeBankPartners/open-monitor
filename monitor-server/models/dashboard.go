@@ -481,6 +481,7 @@ type CustomDashboardQueryParam struct {
 	MgmtRoles  []string `json:"mgmtRoles"`
 	UseRoles   []string `json:"useRoles"`
 	UpdateUser string   `json:"updateUser"`
+	Show       string   `json:"show"`       // me表示仅展示自己创建
 	Permission string   `json:"permission"` //  MGMT 表示管理权限
 	StartIndex int      `json:"startIndex"`
 	PageSize   int      `json:"pageSize"`
