@@ -1402,8 +1402,6 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
-	// 删除自动生成的告警列表
-	actions = append(actions, &Action{Sql: " from alarm_strategy where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	// 删除阈值
 	var strategyGuids []string
 	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
