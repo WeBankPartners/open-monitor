@@ -10,12 +10,11 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
-func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, err error) {
+func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, endpointGroup, operator string) (actions []*Action, err error) {
 	var subActions []*Action
 	actions = []*Action{}
 	// 自动创建告警
 	if param.AutoCreateWarn {
-		var endpointGroup string
 		codeList := getTargetCodeMap(param.CodeStringMap)
 		autoAlarmMetricList := getAutoAlarmMetricList(metricList, serviceGroup, param.MetricPrefixCode)
 		// 添加 other默认告警
@@ -29,7 +28,9 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
-				alarmStrategyParam.EndpointGroup = endpointGroup
+				if strings.TrimSpace(endpointGroup) != "" {
+					alarmStrategyParam.EndpointGroup = endpointGroup
+				}
 				alarmStrategyParam.LogMetricGroup = param.LogMetricGroupGuid
 				alarmStrategyParam.Metric = alarmMetric.MetricId
 				alarmStrategyParam.MetricName = alarmMetric.Metric
@@ -87,7 +88,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 	actions = []*Action{}
 	now := time.Now()
 	var metricMap = getMetricMap(metricList, param.MetricPrefixCode)
-	var reqCountMetric, failCountMetric, sucRateMetric, costtimeAvgMetric *models.LogMetricTemplate
+	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
 	if param.AutoCreateDashboard {
 		// 1. 先创建看板
 		dashboard := &models.CustomDashboardTable{
@@ -180,11 +181,11 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				GroupDisplayConfig: calcDisplayConfig(1),
 				Group:              code,
 			}
-			if costtimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costtimeAvgMetric == nil {
+			if costTimeAvgMetric = getMetricByKey(metricMap, "req_costtime_avg"); costTimeAvgMetric == nil {
 				continue
 			}
 			// 请求量标签线条
-			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costtimeAvgMetric))
+			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costTimeAvgMetric))
 			subChart3Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart3Actions) > 0 {
 				actions = append(actions, subChart3Actions...)
