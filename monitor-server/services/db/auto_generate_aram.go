@@ -87,7 +87,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 	var newDashboardId int64
 	actions = []*Action{}
 	now := time.Now()
-	var metricMap = getMetricMap(metricList, param.MetricPrefixCode)
+	var metricMap = getMetricMap(metricList, param.MetricPrefixCode, serviceGroup)
 	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
 	if param.AutoCreateDashboard {
 		// 1. 先创建看板
@@ -218,15 +218,19 @@ func getServiceGroupRoles(serviceGroup string) []string {
 	return roles
 }
 
-func getMetricMap(list []*models.LogMetricTemplate, metricPrefixCode string) map[string]*models.LogMetricTemplate {
-	var metric string
+func getMetricMap(list []*models.LogMetricTemplate, metricPrefixCode, serviceGroup string) map[string]*models.LogMetricTemplate {
+	var metricGuid string
 	var hashMap = make(map[string]*models.LogMetricTemplate)
 	for _, template := range list {
-		metric = template.Metric
+		metricGuid = template.Metric
 		if metricPrefixCode != "" {
-			metric = metricPrefixCode + "_" + metric
+			metricGuid = metricPrefixCode + "_" + metricGuid
+			template.Metric = metricPrefixCode + "_" + template.Metric
 		}
-		hashMap[metric] = template
+		metricGuid = generateMetricGuid(metricGuid, serviceGroup)
+		template.Guid = metricGuid
+
+		hashMap[template.Guid] = template
 	}
 	return hashMap
 }
