@@ -108,7 +108,9 @@
         <Card>
           <div slot="title" class="panal-title">
             <div class='panal-title-name'>
-              <span>{{ item.name }}</span>
+              <Tooltip :content="item.name" theme="dark" transfer placement="top">
+                <span class='panal-title-name-test'>{{ item.name }}</span>
+              </Tooltip>
               <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='#98cd72'>auto</Tag>
             </div>
             <span class="panal-title-update">
@@ -693,7 +695,13 @@ li {
       flex-direction: row;
       align-items: center;
       justify-content: flex-start;
-      width: 200px
+      .panal-title-name-test {
+        max-width: 200px;         /* 设置固定宽度 */
+        overflow: hidden;      /* 隐藏溢出内容 */
+        display: -webkit-box;  /* 作为弹性伸缩盒子模型显示 */
+        -webkit-line-clamp: 3; /* 显示的行数 */
+        -webkit-box-orient: vertical; /* 垂直排列子元素 */
+      }
     }
     &-update {
       display: flex;
@@ -702,10 +710,6 @@ li {
       font-size: 13px;
     }
   }
-  // .panal-title > div {
-  //   display: flex;
-  //   flex-direction: column;
-  // }
   .card-divider {
     height: 1px;
     width: 100%;
