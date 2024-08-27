@@ -230,7 +230,7 @@ func GetOrgRole(guid string) (result []*m.OptionModel, err error) {
 				if tmpName == "" {
 					tmpName = vv.Name
 				}
-				result = append(result, &m.OptionModel{OptionText: tmpName, OptionValue: fmt.Sprintf("%d", vv.Id), Id: vv.Id})
+				result = append(result, &m.OptionModel{OptionText: tmpName, OptionValue: fmt.Sprintf("%d", vv.Id), Id: vv.Id, OptionName: vv.Name})
 				break
 			}
 		}

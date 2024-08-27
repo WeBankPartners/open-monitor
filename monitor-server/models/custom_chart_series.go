@@ -36,6 +36,7 @@ type CustomChartSeriesDto struct {
 
 type TagDto struct {
 	TagName  string   `json:"tagName"`  // 标签名称
+	Equal    string   `json:"equal"`    //  in/not in
 	TagValue []string `json:"tagValue"` // 标签值
 }
 

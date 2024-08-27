@@ -693,3 +693,18 @@ type ProcDefDto struct {
 	MgmtRoles        []string `json:"mgmtRoles"`        // 管理角色
 	MgmtRolesDisplay []string `json:"mgmtRolesDisplay"` // 管理角色-显示名
 }
+
+type AlarmEngineConfigRow struct {
+	Guid          string `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy string `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Metric        string `json:"metric" xorm:"metric"`                // 指标
+	Condition     string `json:"condition" xorm:"condition"`          // 条件
+	Last          string `json:"last" xorm:"last"`                    // 持续时间
+	CrcHash       string `json:"crc_hash" xorm:"crc_hash"`            // hash
+	Priority      string `json:"priority" xorm:"priority"`
+	Content       string `json:"content" xorm:"content"`
+	NotifyEnable  int    `json:"notify_enable" xorm:"notify_enable"`
+	NotifyDelay   int    `json:"notify_delay" xorm:"notify_delay"`
+	AlarmName     string `json:"alarm_name" xorm:"alarm_name"`
+	ActiveWindow  string `json:"active_window" xorm:"active_window"`
+}
