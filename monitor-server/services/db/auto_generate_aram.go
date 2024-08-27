@@ -42,7 +42,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %s%s", code, alarmMetric.MetricId, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
+				alarmStrategyParam.Name = fmt.Sprintf("%s-%s %s %s%s", code, alarmMetric.MetricId, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
