@@ -29,6 +29,7 @@ func (e OptionModelSortList) Less(i, j int) bool {
 type OptionModel struct {
 	Id             int    `json:"id"`
 	OptionValue    string `json:"option_value"`
+	OptionName     string `json:"option_name"`
 	OptionText     string `json:"option_text"`
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
@@ -353,18 +354,19 @@ type MaintainDto struct {
 }
 
 type CustomDashboardTable struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	PanelsGroup int       `json:"panels_group"`
-	Cfg         string    `json:"cfg"`
-	Main        int       `json:"main"`
-	CreateUser  string    `json:"create_user"`
-	UpdateUser  string    `json:"update_user"`
-	CreateAt    time.Time `json:"create_at"`
-	UpdateAt    time.Time `json:"update_at"`
-	PanelGroups string    `json:"panel_groups"`
-	TimeRange   int       `json:"time_range"`   //时间范围
-	RefreshWeek int       `json:"refresh_week"` // 刷新周期
+	Id             int       `json:"id"`
+	Name           string    `json:"name"`
+	PanelsGroup    int       `json:"panels_group"`
+	Cfg            string    `json:"cfg"`
+	Main           int       `json:"main"`
+	CreateUser     string    `json:"create_user"`
+	UpdateUser     string    `json:"update_user"`
+	CreateAt       time.Time `json:"create_at"`
+	UpdateAt       time.Time `json:"update_at"`
+	PanelGroups    string    `json:"panel_groups"`
+	TimeRange      int       `json:"time_range"`   //时间范围
+	RefreshWeek    int       `json:"refresh_week"` // 刷新周期
+	LogMetricGroup *string   `json:"log_metric_group"`
 }
 
 type CustomDashboardObj struct {
@@ -479,6 +481,7 @@ type CustomDashboardQueryParam struct {
 	MgmtRoles  []string `json:"mgmtRoles"`
 	UseRoles   []string `json:"useRoles"`
 	UpdateUser string   `json:"updateUser"`
+	Show       string   `json:"show"`       // me表示仅展示自己创建
 	Permission string   `json:"permission"` //  MGMT 表示管理权限
 	StartIndex int      `json:"startIndex"`
 	PageSize   int      `json:"pageSize"`
@@ -496,6 +499,7 @@ type CustomDashboardResultDto struct {
 	UpdateUser       string   `json:"updateUser"`
 	MainPage         []string `json:"mainPage"`
 	UpdateTime       string   `json:"updateTime"`
+	LogMetricGroup   string   `json:"logMetricGroup"`
 }
 
 type CustomDashboardDto struct {
@@ -506,6 +510,7 @@ type CustomDashboardDto struct {
 	UseRoles       []string          `json:"useRoles"`
 	TimeRange      int               `json:"timeRange"`   //时间范围
 	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
+	LogMetricGroup string            `json:"logMetricGroup"`
 }
 
 type AddCustomDashboardParam struct {
