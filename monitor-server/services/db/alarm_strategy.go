@@ -17,15 +17,23 @@ import (
 	"time"
 )
 
-func QueryAlarmStrategyByGroup(endpointGroup, show, operator string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var strategy []*models.GroupStrategyObj
 	var alarmStrategyTable []*models.AlarmStrategyMetricObj
-	if show == "me" {
-		err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? and t1.create_user = ? order by t1.update_time desc", endpointGroup, operator).Find(&alarmStrategyTable)
-	} else {
-		err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? order by t1.update_time desc", endpointGroup).Find(&alarmStrategyTable)
+	var baseSql = "select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? "
+	var params []interface{}
+	params = append(params, endpointGroup)
+	if strings.TrimSpace(alarmName) != "" {
+		baseSql = baseSql + " and t1.name like ?"
+		params = append(params, alarmName)
 	}
+	if show == "me" {
+		baseSql = baseSql + " and t1.create_user = ?"
+		params = append(params, operator)
+	}
+	baseSql = baseSql + " order by t1.update_time desc"
+	err = x.SQL(baseSql, params).Find(&alarmStrategyTable)
 	if err != nil {
 		return
 	}
@@ -60,7 +68,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, show, operator string) (result []*
 	return
 }
 
-func QueryAlarmStrategyByEndpoint(endpoint, show, operator string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByEndpoint(endpoint, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	endpointObj, getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
 	if getErr != nil {
 		return result, getErr
@@ -72,7 +80,7 @@ func QueryAlarmStrategyByEndpoint(endpoint, show, operator string) (result []*mo
 		return
 	}
 	for _, v := range endpointGroupTable {
-		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, show, operator)
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, alarmName, show, operator)
 		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
 			err = tmpErr
 			break
@@ -86,7 +94,7 @@ func QueryAlarmStrategyByEndpoint(endpoint, show, operator string) (result []*mo
 	return
 }
 
-func QueryAlarmStrategyByServiceGroup(serviceGroup, show, operator string) (result []*models.EndpointStrategyObj, err error) {
+func QueryAlarmStrategyByServiceGroup(serviceGroup, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
 	err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", serviceGroup).Find(&endpointGroupTable)
@@ -94,7 +102,7 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup, show, operator string) (resu
 		return
 	}
 	for _, v := range endpointGroupTable {
-		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, show, operator)
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid, alarmName, show, operator)
 		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
 			err = tmpErr
 			break
