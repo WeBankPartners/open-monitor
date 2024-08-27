@@ -527,6 +527,9 @@
   "m_success_code": "成功码",
   "m_template_version": "模版版本",
   "m_auto_create_warn": "自动生成告警",
-  "m_auto_create_dashboard": "自动生成自定义看板"
+  "m_auto_create_dashboard": "自动生成自定义看板",
+  "m_include": "包含",
+  "m_not_include": "不包含",
+  "m_show_user_created": "仅展示用户创建"
 }
 
