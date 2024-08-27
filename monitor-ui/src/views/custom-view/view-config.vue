@@ -14,6 +14,7 @@
               <h5 class="d-inline-block"> {{panalName}}</h5>
               <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
             </template>
+            <Tag v-if='logMetricGroup' class='ml-2' style="width: 40px" color='#98cd72'>auto</Tag>
           </div>
         </div>
         <div class="search-container">
@@ -474,7 +475,8 @@ export default {
       tempChartLayoutType: '', // 用于记录点击后的type,
       allPageLayoutData: [],
       selectedDashBoardId: '',
-      selectedChartId: []
+      selectedChartId: [],
+      logMetricGroup: '' // 该字段非空代表该看板为自动创建
     }
   },
   computed: {
@@ -508,6 +510,7 @@ export default {
           this.boardMgmtRoles = res.mgmtRoles
           this.boardUseRoles = res.useRoles
           this.panalName = res.name
+          this.logMetricGroup = res.logMetricGroup
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
