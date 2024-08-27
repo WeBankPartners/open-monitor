@@ -95,6 +95,8 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 					Last:       fmt.Sprintf("%d%s", alarmMetric.Time, alarmMetric.TimeUnit),
 					Tags:       metricTags,
 				})
+				alarmStrategyParam.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
+				alarmStrategyParam.Last = fmt.Sprintf("%d%s", alarmMetric.Time, alarmMetric.TimeUnit)
 				if subActions, err = getCreateAlarmStrategyActions(alarmStrategyParam, time.Now().Format(models.DatetimeFormat), operator); err != nil {
 					return
 				}
