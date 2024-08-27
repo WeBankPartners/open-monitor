@@ -262,3 +262,10 @@ type AlarmStrategyMetricWithExpr struct {
 	MetricType    string `json:"metric_type" xorm:"metric_type"`
 	MonitorEngine int    `json:"monitor_engine" xorm:"monitor_engine"`
 }
+
+type AlarmStrategyQueryParam struct {
+	QueryType string `json:"queryType"`
+	Guid      string `json:"guid"`
+	Show      string `json:"show"`
+	AlarmName string `json:"alarmName"`
+}
