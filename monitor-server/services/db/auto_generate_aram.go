@@ -24,8 +24,9 @@ const (
 	constSuccess      = "success"
 )
 
-func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, endpointGroup, operator string) (actions []*Action, err error) {
+func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, endpointGroup, operator string) (actions []*Action, result []string, err error) {
 	var subActions []*Action
+	result = []string{}
 	actions = []*Action{}
 	// 自动创建告警
 	if param.AutoCreateWarn {
@@ -52,6 +53,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加编排与通知
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
+				result = append(result, alarmStrategyParam.Name)
 				// 添加指标阈值
 				for _, tag := range alarmMetric.TagConfig {
 					// 标签为code,需要配置 equal和TagValue值
@@ -117,7 +119,7 @@ func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
 	return ""
 }
 
-func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, err error) {
+func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, customDashboard string, err error) {
 	var subDashboardActions, subChart1Actions, subChart2Actions, subChart3Actions []*Action
 	var newDashboardId int64
 	actions = []*Action{}
@@ -136,6 +138,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 			TimeRange:      -1800,
 			LogMetricGroup: &param.LogMetricGroupGuid,
 		}
+		customDashboard = dashboard.Name
 		if len(serviceGroupsRoles) == 0 {
 			err = fmt.Errorf("config role empty")
 			return
