@@ -217,7 +217,11 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 				if len(tagObj.TagValue) == 0 {
 					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
 				} else {
-					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+					tmpEqual := "=~"
+					if tagObj.Equal == "notin" {
+						tmpEqual = "!~"
+					}
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}

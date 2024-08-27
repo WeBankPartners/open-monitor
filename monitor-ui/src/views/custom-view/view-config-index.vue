@@ -8,10 +8,13 @@
         </Tabs>
       </Row>
       <div class="table-data-search">
+        <div style="width: 120px">{{$t('m_show_user_created')}}</div>
+        <i-switch v-model="searchMap.show" class='mr-3' style="width: 60px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.name"
           class="mr-3"
           type="text"
+          style="width: 15%"
           :placeholder="$t('m_name')"
           clearable
           @on-change="onFilterConditionChange"
@@ -20,6 +23,7 @@
           v-model="searchMap.id"
           class="mr-3"
           type="text"
+          style="width: 15%"
           :placeholder="$t('m_id')"
           clearable
           @on-change="onFilterConditionChange"
@@ -28,12 +32,12 @@
         <Select
           v-model="searchMap.useRoles"
           class="mr-3"
+          style="width: 15%"
           clearable
           :max-tag-count="1"
           filterable
           multiple
           :placeholder="$t('m_use_role')"
-          style="width: 90%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
@@ -41,12 +45,12 @@
         <Select
           v-model="searchMap.mgmtRoles"
           class="mr-3"
+          style="width: 15%"
           clearable
           filterable
           :max-tag-count="1"
           multiple
           :placeholder="$t('m_manage_role')"
-          style="width: 90%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
@@ -54,7 +58,7 @@
         <Input
           v-model="searchMap.updateUser"
           class="mr-3"
-          style="width: 90%"
+          style="width: 15%"
           type="text"
           :placeholder="$t('m_updatedBy')"
           clearable
@@ -288,6 +292,7 @@ export default {
       dashboard_id: '',
       pathMap: {},
       searchMap: {
+        show: false,
         permission: '',
         name: '',
         id: '',
@@ -388,7 +393,8 @@ export default {
         id: '',
         useRoles: [],
         mgmtRoles: [],
-        updateUser: ''
+        updateUser: '',
+        show: false
       }
       this.searchMap = Object.assign({}, this.searchMap, resetObj)
       this.pagination.currentPage = 1
@@ -488,7 +494,9 @@ export default {
       })
     },
     getViewList() {
-      const params = Object.assign(cloneDeep(this.searchMap), {
+      const cloneSearchMap = cloneDeep(this.searchMap)
+      cloneSearchMap.show = cloneSearchMap.show === true ? 'me' : ''
+      const params = Object.assign(cloneSearchMap, {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       })
@@ -767,5 +775,6 @@ li {
 .table-data-search {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 </style>

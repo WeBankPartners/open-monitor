@@ -1006,7 +1006,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, existMetricMap)
+		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1151,11 +1151,6 @@ func ImportLogMetricExcel(logMonitorGuid, operator string, param []*models.LogMe
 	return
 }
 
-func GetLogMetricByServiceGroupNew(serviceGroup string) (result models.LogMetricQueryObj, err error) {
-
-	return
-}
-
 func GetSimpleLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup, err error) {
 	var logMetricGroupRows []*models.LogMetricGroup
 	err = x.SQL("select * from log_metric_group where guid=?", logMetricGroupGuid).Find(&logMetricGroupRows)
@@ -1180,6 +1175,12 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
 			return
 		}
+	} else {
+		// 历史数据 模版查询兜底
+		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
+			return
+		}
+		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
@@ -1202,10 +1203,10 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, err = getCreateLogMetricGroupActions(param, operator, make(map[string]string))
+	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string))
 	if err != nil {
 		return
 	}
@@ -1213,12 +1214,15 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
 	var templateSnapshot []byte
-	var refTemplateVersion string
+	var refTemplateVersion, endpointGroup string
+	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
+	var serviceGroupsRoles, alarmStrategyList []string
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	}
+	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
@@ -1246,6 +1250,8 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	serviceGroup, monitorType := param.ServiceGroup, param.MonitorType
 	if serviceGroup == "" {
 		serviceGroup, monitorType = GetLogMetricServiceGroup(param.LogMetricMonitorGuid)
+		param.ServiceGroup = serviceGroup
+		param.MonitorType = monitorType
 	}
 	for _, v := range logMonitorTemplateObj.MetricList {
 		promExpr := ""
@@ -1258,7 +1264,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
 		}
-		tmpMetricGuid := fmt.Sprintf("%s__%s", tmpMetricWithPrefix, serviceGroup)
+		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
@@ -1266,9 +1272,37 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
 	}
-	// 自动创建告警
-	if param.AutoCreateWarn {
-
+	if param.LogMetricMonitorGuid != "" {
+		var logMetricMonitor = &models.LogMetricMonitorTable{}
+		var endpointGroupIds []string
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+			return
+		}
+		if logMetricMonitor != nil {
+			serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+				return
+			}
+			if len(endpointGroupIds) > 0 {
+				endpointGroup = endpointGroupIds[0]
+			}
+		}
+	}
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, endpointGroup, operator); err != nil {
+		return
+	}
+	if len(subCreateAlarmStrategyActions) > 0 {
+		actions = append(actions, subCreateAlarmStrategyActions...)
+		result.AlarmList = alarmStrategyList
+	}
+	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
+		return
+	}
+	if len(subCreateDashboardActions) > 0 {
+		actions = append(actions, subCreateDashboardActions...)
 	}
 	return
 }
@@ -1367,6 +1401,7 @@ func DeleteLogMetricGroup(logMetricGroupGuid string) (logMetricMonitorGuid strin
 }
 
 func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
+	var delAlarmStrategyActions, delDashboardActions, delChartActions []*Action
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
@@ -1376,10 +1411,50 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+
+	// 删除阈值
+	var strategyGuids []string
+	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
+		return
+	}
+	if len(strategyGuids) > 0 {
+		for _, strategyGuid := range strategyGuids {
+			if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+				return
+			}
+			if len(delAlarmStrategyActions) > 0 {
+				actions = append(actions, delAlarmStrategyActions...)
+			}
+		}
+	}
+	// 删除看板&图表
+	var dashboardIds []int
+	var chartIds []string
+	if err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&dashboardIds); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartIds); err != nil {
+		return
+	}
+	if len(dashboardIds) > 0 {
+		for _, boardId := range dashboardIds {
+			if delDashboardActions = GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
+				actions = append(actions, delDashboardActions...)
+			}
+		}
+	}
+	if len(chartIds) > 0 {
+		for _, chartId := range chartIds {
+			if delChartActions, err = GetDeleteCustomDashboardChart(chartId); err != nil {
+				return
+			}
+			if len(delChartActions) > 0 {
+				actions = append(actions, delChartActions...)
+			}
+		}
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
-	// 删除自动生成的告警列表
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-	//
+
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 	var existMetricRows []*models.LogMetricConfigTable
