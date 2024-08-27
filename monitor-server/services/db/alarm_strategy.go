@@ -33,7 +33,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 		params = append(params, operator)
 	}
 	baseSql = baseSql + " order by t1.update_time desc"
-	err = x.SQL(baseSql, params).Find(&alarmStrategyTable)
+	err = x.SQL(baseSql, params...).Find(&alarmStrategyTable)
 	if err != nil {
 		return
 	}
