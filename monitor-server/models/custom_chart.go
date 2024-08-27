@@ -16,6 +16,7 @@ type CustomChart struct {
 	UpdateUser      string `json:"updateUser" xorm:"update_user"`           // 更新人
 	CreateTime      string `json:"createTime" xorm:"create_time"`           // 创建时间
 	UpdateTime      string `json:"updateTime" xorm:"update_time"`           // 更新时间
+	LogMetricGroup  string `json:"log_metric_group" xorm:"log_metric_group"`
 }
 
 type CustomChartExtend struct {
@@ -37,6 +38,7 @@ type CustomChartExtend struct {
 	Group              string `json:"group" xorm:"group"`                             // 所属分组
 	DisplayConfig      string `json:"displayConfig" xorm:"display_config"`            // 视图位置与长宽
 	GroupDisplayConfig string `json:"groupDisplayConfig" xorm:"group_display_config"` // 视图位置与长宽
+	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
 }
 
 type CustomChartDto struct {
@@ -55,12 +57,14 @@ type CustomChartDto struct {
 	DisplayConfig      interface{}             `json:"displayConfig"`      // 默认所有下面图表位置
 	GroupDisplayConfig interface{}             `json:"groupDisplayConfig"` // 组下面的图表位置
 	Group              string                  `json:"group"`              // 所属分组
+	LogMetricGroup     *string                 `json:"logMetricGroup"`
 }
 
 type ChartSharedDto struct {
 	Id              string `json:"id"`
 	SourceDashboard int    `json:"sourceDashboard"` // 源看板
 	Name            string `json:"name"`            // 图表名称
+	DashboardName   string `json:"dashboardName"`   // 看板名称
 }
 
 type ChartSharedParam struct {
@@ -86,6 +90,7 @@ type QueryChartParam struct {
 	UpdatedTimeStart string   `json:"updatedTimeStart"` // 更新时间开始
 	UpdatedTimeEnd   string   `json:"updatedTimeEnd"`   // 更新时间结束
 	Permission       string   `json:"permission"`       // 等于 MGMT表示可编辑
+	Show             string   `json:"show"`             // me 只展示自己创建
 	StartIndex       int      `json:"startIndex"`
 	PageSize         int      `json:"pageSize"`
 }
@@ -104,6 +109,7 @@ type QueryChartResultDto struct {
 	CreatedTime      string   `json:"createdTime"`      // 创建时间
 	UpdatedTime      string   `json:"updatedTime"`      // 更新时间
 	Permission       string   `json:"permission"`       // MGMT表示可编辑,USE可使用
+	LogMetricGroup   string   `json:"logMetricGroup"`
 }
 
 type AddCustomChartParam struct {
