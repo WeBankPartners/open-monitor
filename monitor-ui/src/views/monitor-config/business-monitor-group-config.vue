@@ -76,21 +76,20 @@
                   <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
                   <Col span="4">
-                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
-                         :disabled="view"
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || item.regulative === 0"
                          style="width:90%"
                   >
                   </Input>
                   </Col>
 
                   <Col span="4">
-                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
-                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view"
+                    :disabled="view || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -98,7 +97,12 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                  <Input
+                    :disabled="view || (!item.matchingResult && item.regulative === 1)"
+                    v-model.trim="item.target_value"
+                    style="width:90%"
+                  >
+                  </Input>
                   </Col>
                   <Col span="2" offset="2">
                   <Button
@@ -144,20 +148,19 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
-                         :disabled="view"
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
                          style="width:90%"
                   >
                   </Input>
                   </Col>
                   <Col span="4">
-                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
-                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view"
+                    :disabled="view || retcodeItemDisabled(item) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -165,7 +168,7 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item)" style="width:90%"></Input>
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
