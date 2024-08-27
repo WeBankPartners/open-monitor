@@ -529,5 +529,7 @@
   "m_auto_create_dashboard": "Auto Create Dashboard",
   "m_include": "Include",
   "m_not_include": "Not Include",
-  "m_show_user_created": "Show User Created"
+  "m_show_user_created": "Show User Created",
+  "m_has_create_warn": "Has Create Warn",
+  "m_has_create_dashboard": "Has Create Dashboard"
 }
