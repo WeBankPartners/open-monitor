@@ -588,6 +588,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 		DisplayConfig:      chartExtend.DisplayConfig,
 		GroupDisplayConfig: chartExtend.GroupDisplayConfig,
 		Group:              chartExtend.Group,
+		LogMetricGroup:     &chartExtend.LogMetricGroup,
 	}
 	chart.ChartSeries = []*models.CustomChartSeriesDto{}
 	if list, err = QueryCustomChartSeriesByChart(chartExtend.Guid); err != nil {
