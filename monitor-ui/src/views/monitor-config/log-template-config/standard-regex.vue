@@ -443,7 +443,7 @@ export default {
                 'retcode'
               ],
               color_group: '',
-              auto_alarm: false,
+              auto_alarm: true,
               range_config: cloneDeep(initRangeConfig)
             },
             {
@@ -456,7 +456,7 @@ export default {
                 'retcode'
               ],
               color_group: '',
-              auto_alarm: true,
+              auto_alarm: false,
               range_config: cloneDeep(initRangeConfig)
             }
           ]

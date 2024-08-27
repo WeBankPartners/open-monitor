@@ -408,8 +408,11 @@
               </Select>
             </FormItem>
             <FormItem :label="$t('m_active_window')" prop="active_window">
+              <!-- <div
+                v-for="(time, index) in formData.active_window_list"
+                :key='index'> -->
               <TimePicker
-                v-model="formData.active_window"
+                :value="formData.active_window"
                 :clearable="false"
                 format="HH:mm"
                 :disabled="!isEditState"
@@ -418,6 +421,8 @@
                 style="width: 168px"
               >
               </TimePicker>
+              <!-- </div> -->
+              <!-- </div> -->
             </FormItem>
             <FormItem :label="$t('m_tableKey_content')" prop="content">
               <Input
@@ -620,7 +625,7 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          width: 100,
+          width: 80,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
             return (
@@ -665,7 +670,7 @@ export default {
         {
           title: this.$t('m_regular'), // 更新人
           key: 'regulative',
-          width: 150,
+          width: 100,
           render: (h, params) => {
             const regulative_enable = params.row.regulative === 0
             return (
@@ -688,12 +693,19 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'index',
-          width: 120,
+          width: 150,
           render: (h, params) => this.isEditState ? (
-            <div>
-              <Button size="small" class="mr-1" type='primary' on-click={() => this.editCustomMetricItem(params.row)}>
-                <Icon type="md-create" size="16" />
-              </Button>
+            <div style='display: flex'>
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyCustomMetricItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" class="mr-1" type='primary' on-click={() => this.editCustomMetricItem(params.row)}>
+                  <Icon type="md-create" size="16" />
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
@@ -732,7 +744,7 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          width: 100,
+          width: 60,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
             return (
@@ -789,12 +801,19 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'index',
-          width: 120,
+          width: 150,
           render: (h, params) => this.isEditState ? (
-            <div>
-              <Button size="small" class="mr-1" type="primary" on-click={() => this.editDataBaseItem(params.row)}>
-                <Icon type="md-create" size="16"></Icon>
-              </Button>
+            <div style='display: flex'>
+              <Tooltip placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDataBaseItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" class="mr-1" type="primary" on-click={() => this.editDataBaseItem(params.row)}>
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
@@ -1090,6 +1109,18 @@ export default {
       this.isAddState = false
       this.isTableChangeFormShow = true
     },
+    copyCustomMetricItem(rowData) {
+      this.getFlowsAndRolesOptions()
+      this.currentEditType = 'logFile'
+      this.resetDrawerForm()
+      this.fillingFormData(rowData)
+      this.formData.name += '1'
+      delete this.formData.guid
+      delete this.formData.notify.guid
+      this.isAddState = true
+      this.isTableChangeFormShow = true
+    },
+
     fillingFormData(rowData) {
       for (const key in this.formData) {
         if (hasIn(rowData, key)) {
@@ -1296,6 +1327,18 @@ export default {
       this.fillingFormData(rowData)
       this.dataBaseGuid = rowData.dataBaseGuid
       this.getSqlSourceOptions(rowData.monitor_type)
+      this.isTableChangeFormShow = true
+    },
+    copyDataBaseItem(rowData) {
+      this.getFlowsAndRolesOptions()
+      this.isAddState = true
+      this.currentEditType = 'database'
+      this.resetDrawerForm()
+      this.fillingFormData(rowData)
+      this.dataBaseGuid = rowData.dataBaseGuid
+      this.getSqlSourceOptions(rowData.monitor_type)
+      this.formData.name += '1'
+      this.formData.guid = ''
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
