@@ -15,7 +15,7 @@
         </Tooltip>
       </FormItem>
       <FormItem :label="$t('m_template_version')">
-        <span>{{configInfo.templateVersion}}</span>
+        <span>{{configInfo.log_monitor_template_version}}</span>
       </FormItem>
       <FormItem :label="$t('m_updatedBy')">
         {{ configInfo.update_user }}
@@ -65,8 +65,8 @@
         ></Table>
       </div>
       <div class='auto-create-warn' v-if='isAddState'>
-        <Checkbox v-model="configInfo.autoCreateWarn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-model="configInfo.autoCreateDashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-model="configInfo.auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-model="configInfo.auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
       </div>
     </div>
     </Col>
