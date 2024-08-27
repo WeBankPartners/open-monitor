@@ -25,8 +25,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 	var params []interface{}
 	params = append(params, endpointGroup)
 	if strings.TrimSpace(alarmName) != "" {
-		baseSql = baseSql + " and t1.name like ?"
-		params = append(params, alarmName)
+		baseSql = baseSql + " and t1.name like '%" + alarmName + "%'"
 	}
 	if show == "me" {
 		baseSql = baseSql + " and t1.create_user = ?"
