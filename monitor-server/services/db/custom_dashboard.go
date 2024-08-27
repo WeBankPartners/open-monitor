@@ -14,7 +14,7 @@ import (
 func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, operator string, roles []string) (pageInfo models.PageInfo, list []*models.CustomDashboardTable, err error) {
 	var params []interface{}
 	var ids []string
-	var sql = "select id,name, create_user,update_user,create_at,update_at from custom_dashboard where 1=1 "
+	var sql = "select id,name, create_user,update_user,create_at,update_at,log_metric_group from custom_dashboard where 1=1 "
 	if ids, err = getQueryIdsByPermission(condition, roles); err != nil {
 		return
 	}
