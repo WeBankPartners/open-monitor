@@ -521,6 +521,7 @@ export default {
     },
     processSaveData(data){
       if (isEmpty(data)) {return}
+      this.successCode.source_value = this.successCode.source_value + ''
       data.success_code = JSON.stringify(this.successCode)
       !isEmpty(data.metric_list) && data.metric_list.forEach(item => {
         item.range_config = JSON.stringify(item.range_config)
