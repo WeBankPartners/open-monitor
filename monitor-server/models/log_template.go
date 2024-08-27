@@ -75,7 +75,7 @@ type LogMetricTemplate struct {
 
 type ThresholdConfig struct {
 	Operator  string `json:"operator"`  // 操作符号
-	Threshold int    `json:"threshold"` // 阈值
+	Threshold string `json:"threshold"` // 阈值
 	Time      int    `json:"time"`      // 持续时间
 	TimeUnit  string `json:"time_unit"` // 时间单位
 }
