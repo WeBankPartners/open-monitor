@@ -10,6 +10,20 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
+const (
+	constOtherCode    = "{code}"
+	constOther        = "other"
+	constCode         = "code"
+	constRetCode      = "retcode"
+	constEqualIn      = "in"
+	constEqualNotIn   = "notin"
+	constConstTimeAvg = "req_costtime_avg"
+	constReqCount     = "req_count"
+	constReqFailCount = "req_fail_count"
+	constReqSucCount  = "req_suc_rate"
+	constSuccess      = "success"
+)
+
 func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, endpointGroup, operator string) (actions []*Action, err error) {
 	var subActions []*Action
 	actions = []*Action{}
@@ -18,7 +32,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 		codeList := getTargetCodeMap(param.CodeStringMap)
 		autoAlarmMetricList := getAutoAlarmMetricList(metricList, serviceGroup, param.MetricPrefixCode)
 		// 添加 other默认告警
-		codeList = append(codeList, "{code}")
+		codeList = append(codeList, constOtherCode)
 		for _, code := range codeList {
 			for _, alarmMetric := range autoAlarmMetricList {
 				// 添加告警配置基础信息
@@ -41,25 +55,34 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加指标阈值
 				for _, tag := range alarmMetric.TagConfig {
 					// 标签为code,需要配置 equal和TagValue值
-					if tag == "code" {
+					if tag == code {
 						// code为 other 配置not in,其他配置 in
-						if code == "{code}" {
+						if code == constOtherCode {
 							metricTags = append(metricTags, &models.MetricTag{
-								TagName:  "code",
-								Equal:    "notin",
+								TagName:  constCode,
+								Equal:    constEqualNotIn,
 								TagValue: codeList[:len(codeList)-1],
 							})
 						} else {
 							metricTags = append(metricTags, &models.MetricTag{
-								TagName:  "code",
-								Equal:    "in",
+								TagName:  constCode,
+								Equal:    constEqualIn,
 								TagValue: []string{code},
 							})
 						}
 					} else {
-						metricTags = append(metricTags, &models.MetricTag{
-							TagName: tag,
-						})
+						// 平均耗时,只会统计成功请求的平均耗时
+						if code == constRetCode && strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) {
+							metricTags = append(metricTags, &models.MetricTag{
+								TagName:  constRetCode,
+								Equal:    constEqualIn,
+								TagValue: []string{getRetCodeSuccessCode(param.CodeStringMap)},
+							})
+						} else {
+							metricTags = append(metricTags, &models.MetricTag{
+								TagName: tag,
+							})
+						}
 					}
 				}
 
@@ -80,6 +103,18 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 		}
 	}
 	return
+}
+
+func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
+	if len(stringMap) == 0 {
+		return ""
+	}
+	for _, table := range stringMap {
+		if table.ValueType == constSuccess && table.LogParamName == constRetCode {
+			return table.TargetValue
+		}
+	}
+	return ""
 }
 
 func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, operator string) (actions []*Action, err error) {
@@ -114,13 +149,13 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 		// 2. 新增图表
 		codeList := getTargetCodeMap(param.CodeStringMap)
 		// 添加 other默认告警
-		codeList = append(codeList, "other")
+		codeList = append(codeList, constOther)
 		for index, code := range codeList {
 			// 请求量+失败量 柱状图
-			if reqCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_count"); reqCountMetric == nil {
+			if reqCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+constReqCount); reqCountMetric == nil {
 				continue
 			}
-			if failCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_fail_count"); failCountMetric == nil {
+			if failCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+constReqFailCount); failCountMetric == nil {
 				continue
 			}
 			chartParam1 := &models.CustomChartDto{
@@ -147,7 +182,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				actions = append(actions, subChart1Actions...)
 			}
 			// 成功率
-			if sucRateMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_suc_rate"); sucRateMetric == nil {
+			if sucRateMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+constReqSucCount); sucRateMetric == nil {
 				continue
 			}
 			chartParam2 := &models.CustomChartDto{
@@ -166,13 +201,24 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric))
+			sucCode := getRetCodeSuccessCode(param.CodeStringMap)
+			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric)
+			// 耗时率 只计算成功请求的耗时率
+			if len(chartSeries.Tags) > 0 {
+				for _, tag := range chartSeries.Tags {
+					if tag.TagName == constRetCode {
+						tag.TagValue = []string{sucCode}
+						tag.Equal = constEqualIn
+					}
+				}
+			}
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries)
 			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
 			}
 			// 耗时
-			if costTimeAvgMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_costtime_avg"); costTimeAvgMetric == nil {
+			if costTimeAvgMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+constConstTimeAvg); costTimeAvgMetric == nil {
 				continue
 			}
 			chartParam3 := &models.CustomChartDto{
@@ -303,20 +349,20 @@ func generateChartSeries(serviceGroup, monitorType, code string, codeList []stri
 	if code == "other" && len(codeList) > 0 {
 		dto.Tags = []*models.TagDto{
 			{
-				TagName:  "code",
-				Equal:    "notin",
+				TagName:  constCode,
+				Equal:    constEqualNotIn,
 				TagValue: codeList[:len(codeList)-1],
 			},
 		}
 	} else {
 		dto.Tags = []*models.TagDto{
 			{
-				TagName:  "code",
-				Equal:    "in",
+				TagName:  constCode,
+				Equal:    constEqualIn,
 				TagValue: []string{code},
 			},
 			{
-				TagName: "retcode",
+				TagName: constRetCode,
 			},
 		}
 		dto.ColorConfig = []*models.ColorConfigDto{

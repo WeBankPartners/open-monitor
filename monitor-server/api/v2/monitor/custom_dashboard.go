@@ -109,6 +109,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 				UpdateUser:       dashboard.UpdateUser,
 				UpdateTime:       dashboard.UpdateAt.Format(models.DatetimeFormat),
 				MainPage:         mainPages,
+				LogMetricGroup:   *dashboard.LogMetricGroup,
 			}
 			rowsData = append(rowsData, result)
 		}
@@ -143,6 +144,7 @@ func GetCustomDashboard(c *gin.Context) {
 	customDashboardDto.Name = customDashboard.Name
 	customDashboardDto.TimeRange = customDashboard.TimeRange
 	customDashboardDto.RefreshWeek = customDashboard.RefreshWeek
+	customDashboardDto.LogMetricGroup = *customDashboard.LogMetricGroup
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
