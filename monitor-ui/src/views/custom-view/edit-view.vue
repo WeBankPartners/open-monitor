@@ -117,7 +117,7 @@
       <div class="data-config">
         <div class="w-header" slot="title">
           <div class="title">
-            {{this.$t('m_menu_metricConfiguration')}}
+            {{this.$t('m_menu_metricConfiguration') }}
             <span class="underline"></span>
           </div>
         </div>
@@ -241,6 +241,17 @@ const initTableData = [
   }
 ]
 
+const equalOptionList = [
+  {
+    name: 'm_include',
+    value: 'in'
+  },
+  {
+    name: 'm_not_include',
+    value: 'notin'
+  }
+]
+
 export default {
   name: '',
   props: {
@@ -354,7 +365,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          width: 320,
+          width: 340,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index)
             return (
@@ -363,8 +374,23 @@ export default {
                   ? (params.row.tags.map((i, selectIndex) => (
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
+
                       <Select
-                        style="maxWidth: 200px"
+                        style="width: 80px"
+                        value={i.equal}
+                        on-on-change={v => {
+                          Vue.set(this.tableData[params.index].tags[selectIndex], 'equal', v)
+                        }}
+                        filterable>
+                        {equalOptionList.map((item, index) => (
+                          <Option value={item.value} key={item.value + index}>
+                            {this.$t(item.name)}
+                          </Option>
+                        ))}
+                      </Select>
+
+                      <Select
+                        style="maxWidth: 180px"
                         value={i.tagValue}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
@@ -509,6 +535,21 @@ export default {
                   ? (params.row.tags.map((i, selectIndex) => (
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
+
+                      <Select
+                        style="width: 70px"
+                        value={i.equal}
+                        disabled={!this.isEditState}
+                        on-on-change={v => {
+                          Vue.set(this.tableData[params.index].tags[selectIndex], 'equal', v)
+                        }}>
+                        {equalOptionList.map((item, index) => (
+                          <Option value={item.value} key={item.value + index}>
+                            {this.$t(item.name)}
+                          </Option>
+                        ))}
+                      </Select>
+
                       <Select
                         value={i.tagValue}
                         on-on-change={v => {
@@ -745,7 +786,7 @@ export default {
       await this.getEndpointList()
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
-      }, res => {
+      }, async res => {
         // public是true的时候，是引用态， public为false的时候，为非引用态
         this.chartPublic = res.public
         for (const key in this.chartConfigForm) {
@@ -758,42 +799,45 @@ export default {
         if (res.chartType === 'pie' && isEmpty(this.tableData)) {
           this.tableData = cloneDeep(initTableData)
         }
-        this.processRawTableData(this.tableData)
+        await this.processRawTableData(this.tableData)
         this.drawChartContent()
       })
     },
     async processRawTableData(initialData) {
-      if (isEmpty(initialData)) {
-        return []
-      }
-      for (let i=0; i < initialData.length; i++) {
-        const item = initialData[i]
-        item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
-        Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
-
-        // 同环比修改
-        if (item.comparison) {
-          const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-          item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+      return new Promise(async resolve => {
+        if (isEmpty(initialData)) {
+          return []
         }
-      }
-      if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
-        const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
-          option_value: initialData[0].endpoint
-        })
-        this.endpointValue = initialData[0].endpoint
-        this.serviceGroup = selectedEndpointItem.app_object
+        for (let i=0; i < initialData.length; i++) {
+          const item = initialData[i]
+          item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
+          Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
 
-        this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
-          guid: selectedEndpointItem.option_value
-        }, res => {
-          if (!isEmpty(res)) {
-            this.monitorType = initialData[0].monitorType
-            this.monitorTypeOptions = res
-            this.searchMetricByType()
+          // 同环比修改
+          if (item.comparison) {
+            const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
+            item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
           }
-        })
-      }
+        }
+        if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
+          const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+            option_value: initialData[0].endpoint
+          })
+          this.endpointValue = initialData[0].endpoint
+          this.serviceGroup = selectedEndpointItem.app_object
+
+          this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
+            guid: selectedEndpointItem.option_value
+          }, res => {
+            if (!isEmpty(res)) {
+              this.monitorType = initialData[0].monitorType
+              this.monitorTypeOptions = res
+              this.searchMetricByType()
+            }
+          })
+        }
+        resolve(initialData)
+      })
     },
     getAllRolesOptions() {
       const params = {
@@ -861,7 +905,8 @@ export default {
         tags.push(
           {
             tagName: key,
-            tagValue
+            tagValue,
+            equal: isEmpty(rawTagItem) || isEmpty(rawTagItem.equal) ? 'in' : rawTagItem.equal
           }
         )
       }
