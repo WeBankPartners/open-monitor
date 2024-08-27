@@ -11,17 +11,20 @@ import (
 )
 
 const (
-	constOtherCode    = "{code}"
-	constOther        = "other"
-	constCode         = "code"
-	constRetCode      = "retcode"
-	constEqualIn      = "in"
-	constEqualNotIn   = "notin"
-	constConstTimeAvg = "req_costtime_avg"
-	constReqCount     = "req_count"
-	constReqFailCount = "req_fail_count"
-	constReqSucCount  = "req_suc_rate"
-	constSuccess      = "success"
+	constOtherCode      = "{code}"
+	constOther          = "other"
+	constCode           = "code"
+	constRetCode        = "retcode"
+	constEqualIn        = "in"
+	constEqualNotIn     = "notin"
+	constReqCount       = "req_count"
+	constReqSuccessRate = "req_suc_rate"
+	constReqFailCount   = "req_fail_count"
+	constReqFailRate    = "req_fail_rate"
+	constReqSucCount    = "req_suc_rate"
+	constConstTimeAvg   = "req_costtime_avg"
+	constConstTimeMax   = "req_costtime_max"
+	constSuccess        = "success"
 )
 
 func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricList []*models.LogMetricTemplate, serviceGroupsRoles []string, serviceGroup, endpointGroup, operator string) (actions []*Action, result []string, err error) {
@@ -39,7 +42,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %s %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %s%s", code, alarmMetric.MetricId, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
@@ -49,7 +52,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				alarmStrategyParam.LogMetricGroup = &param.LogMetricGroupGuid
 				alarmStrategyParam.Metric = alarmMetric.MetricId
 				alarmStrategyParam.MetricName = alarmMetric.Metric
-				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than %d %s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+				alarmStrategyParam.Content = fmt.Sprintf("%s continuing for more than %d%s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
 				// 添加编排与通知
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
 				alarmStrategyParam.NotifyList = append(alarmStrategyParam.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
@@ -412,4 +415,14 @@ func calcDisplayConfig(index int) models.DisplayConfig { // index是item在数�
 	item.X = float64((index % 3) * 4)
 	item.Y = math.Floor(float64(index/3)) * 7
 	return item
+}
+
+func getAlarmMetricUnit(metric string) string {
+	if metric == constReqSuccessRate || metric == constReqFailRate {
+		return "%"
+	}
+	if metric == constConstTimeAvg || metric == constConstTimeMax {
+		return "ms"
+	}
+	return ""
 }
