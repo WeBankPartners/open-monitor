@@ -204,18 +204,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			sucCode := getRetCodeSuccessCode(param.CodeStringMap)
-			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric)
-			// 耗时率 只计算成功请求的耗时率
-			if len(chartSeries.Tags) > 0 {
-				for _, tag := range chartSeries.Tags {
-					if tag.TagName == constRetCode {
-						tag.TagValue = []string{sucCode}
-						tag.Equal = constEqualIn
-					}
-				}
-			}
-			chartParam2.ChartSeries = append(chartParam2.ChartSeries)
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric))
 			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
@@ -239,8 +228,19 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				Group:              code,
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
+			sucCode := getRetCodeSuccessCode(param.CodeStringMap)
+			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric)
+			// 耗时率 只计算成功请求的耗时率
+			if len(chartSeries.Tags) > 0 {
+				for _, tag := range chartSeries.Tags {
+					if tag.TagName == constRetCode {
+						tag.TagValue = []string{sucCode}
+						tag.Equal = constEqualIn
+					}
+				}
+			}
 			// 请求量标签线条
-			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, costTimeAvgMetric))
+			chartParam3.ChartSeries = append(chartParam3.ChartSeries, chartSeries)
 			subChart3Actions = handleAutoCreateChart(chartParam3, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart3Actions) > 0 {
 				actions = append(actions, subChart3Actions...)
