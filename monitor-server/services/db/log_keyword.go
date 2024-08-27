@@ -436,7 +436,6 @@ func doLogKeywordMonitorJob() {
 			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
 		}
 	}
-	log.Logger.Debug("doLogKeywordMonitorJob add or modify rows", log.JsonObj("addAlarmRows", addAlarmRows))
 	if len(addAlarmRows) == 0 {
 		return
 	}

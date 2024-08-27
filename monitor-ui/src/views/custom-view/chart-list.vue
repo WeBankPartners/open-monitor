@@ -8,9 +8,12 @@
     </Row>
     <div class="chart-list-header mb-3">
       <div class="chart-search">
+        <div style="width: 90px">{{$t('m_show_user_created')}}</div>
+        <i-switch v-model="searchMap.show" style="width: 43px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.chartName"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_name')"
           clearable
           @on-change="onFilterConditionChange"
@@ -18,6 +21,7 @@
         <Input
           v-model="searchMap.chartId"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_id')"
           clearable
           @on-change="onFilterConditionChange"
@@ -26,6 +30,7 @@
         <Select
           v-model="searchMap.chartType"
           clearable
+          style="width: 10%"
           filterable
           :placeholder="$t('m_field_type')"
           @on-change="onFilterConditionChange"
@@ -35,6 +40,7 @@
         <Select
           v-model="searchMap.sourceDashboard"
           clearable
+          style="width: 10%"
           filterable
           :placeholder="$t('m_source_dashboard')"
           @on-change="onFilterConditionChange"
@@ -48,6 +54,7 @@
           multiple
           :placeholder="$t('m_use_dashboard')"
           :max-tag-count="1"
+          style="width: 10%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in dashboardOptions" :value="item.id" :key="item.id">{{item.name}}</Option>
@@ -58,6 +65,7 @@
           filterable
           :max-tag-count="1"
           multiple
+          style="width: 10%"
           :placeholder="$t('m_manage_role')"
           @on-change="onFilterConditionChange"
         >
@@ -69,6 +77,7 @@
           :max-tag-count="1"
           filterable
           multiple
+          style="width: 10%"
           :placeholder="$t('m_use_role')"
           @on-change="onFilterConditionChange"
         >
@@ -77,6 +86,7 @@
         <Input
           v-model="searchMap.updateUser"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_updatedBy')"
           clearable
           @on-change="onFilterConditionChange"
@@ -129,6 +139,7 @@ import AuthDialog from '@/components/auth.vue'
 import EditView from '@/views/custom-view/edit-view'
 
 const initSearchMap = {
+  show: false,
   chartName: '',
   chartId: '',
   chartType: '',
@@ -160,9 +171,14 @@ export default {
       chartListColumns: [
         {
           title: this.$t('m_graph_name'),
-
-          minWidth: 200,
-          key: 'chartName'
+          width: 250,
+          key: 'chartName',
+          render: (h, params) => params.row.chartName ? (<div>
+            <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.chartName}>
+              {params.row.chartName || '-'}
+            </Tooltip>
+            {params.row.logMetricGroup ? <Tag color='#98cd72'>auto</Tag> : <div></div>}
+          </div>) : (<div>-</div>)
         },
         {
           title: this.$t('m_id'),
@@ -345,7 +361,9 @@ export default {
       this.getChartList()
     }, 300),
     getChartList() {
-      const params = Object.assign(cloneDeep(this.searchMap), {
+      const cloneSearchMap = cloneDeep(this.searchMap)
+      cloneSearchMap.show = cloneSearchMap.show === true ? 'me' : ''
+      const params = Object.assign(cloneSearchMap, {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       })
@@ -426,19 +444,22 @@ export default {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
+        align-items: center;
         margin-right: 10px;
-    }
-    .chart-search > div {
-        width: 8%;
-    }
-    .chart-search > div:nth-child(4),
-    .chart-search > div:nth-child(5),
-    .chart-search > div:nth-child(6),
-    .chart-search > div:nth-child(7) {
-        width: 15%
     }
 }
 .table-pagination {
     float: right;
+}
+</style>
+
+<style lang='less'>
+.table-alarm-name {
+  .ivu-tooltip-rel {
+    width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>
