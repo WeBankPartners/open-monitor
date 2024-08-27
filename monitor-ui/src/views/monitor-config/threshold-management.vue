@@ -1,7 +1,7 @@
 <template>
   <div class="threshold-management">
     <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
-      <div>
+      <div style="display:flex;align-items:center;">
         <RadioGroup
           v-model="type"
           type="button"
@@ -12,7 +12,7 @@
           <Radio v-for="item in typeList" :label="item.value" :key="item.value">{{ $t(item.label) }}</Radio>
         </RadioGroup>
         <Select
-          style="width:300px;margin-left:12px;"
+          style="width:250px;margin-left:12px;"
           v-model="targetId"
           filterable
           clearable
@@ -35,11 +35,21 @@
         <!--告警名称-->
         <Input
           v-model="alarmName"
-          @on-change="filterDataByAlarmName"
-          style="width:300px;margin-left:12px;"
+          @on-change="fetchDetailData"
+          style="width:250px;margin-left:12px;"
           clearable
           :placeholder="$t('m_alarmName')"
         />
+        <div>
+          <span style="margin: 0 10px;">仅展示用户创建</span>
+          <i-switch
+            v-model="onlyShowCreated"
+            true-value="me"
+            false-value="all"
+            size="default"
+            @on-change="fetchDetailData"
+          />
+        </div>
       </div>
       <div>
         <template v-if="type !== 'endpoint' && targetId">
@@ -90,6 +100,8 @@
       <thresholdDetail
         ref='thresholdDetail'
         :type="type"
+        :alarmName="alarmName"
+        :onlyShowCreated="onlyShowCreated"
         @feedbackInfo="feedbackInfo"
       >
       </thresholdDetail>
@@ -133,7 +145,8 @@ export default {
       thresholdTypes: ['group', 'endpoint', 'service'],
       dataEmptyTip: false,
       getTargetOptionsSearch: '',
-      alarmName: ''
+      alarmName: '', // 告警名称
+      onlyShowCreated: 'all' // me用户创建 all所有
     }
   },
   computed: {
@@ -249,9 +262,12 @@ export default {
       }
       await this.getTargetOptions()
     }, 400),
-    filterDataByAlarmName() {
-      this.$refs.thresholdDetail.filterData(this.alarmName)
-    }
+    // filterDataByAlarmName() {
+    //   this.$refs.thresholdDetail.filterData(this.alarmName)
+    // },
+    fetchDetailData: debounce(function () {
+      this.$refs.thresholdDetail.getDetail(this.targetId)
+    }, 300)
   },
   components: {
     TagShow,
