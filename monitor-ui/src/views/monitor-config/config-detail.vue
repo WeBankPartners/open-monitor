@@ -284,7 +284,7 @@ import TagShow from '@/components/Tag-show.vue'
 
 const initFormData = {
   name: '', // 告警名
-  priority: 'low', // 级别
+  priority: 'medium', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
   active_window: ['00:00','23:59'], // 告警时间段
@@ -313,7 +313,7 @@ const initFormData = {
       lastSymbol: null, // 时间单位
       lastValue: null, // 持续时间,
       tagOptions: [], // 标签值options
-      tags: {} // 有内容的标签值
+      tags: {}, // 有内容的标签值
     }
   ]
 }
@@ -337,6 +337,17 @@ const statusButtonLabelMap = {
   1: 'm_alarm_open',
   0: 'm_alarm_close'
 }
+
+const equalOptionList = [
+  {
+    name: 'm_include',
+    value: 'in'
+  },
+  {
+    name: 'm_not_include',
+    value: 'notin'
+  }
+]
 
 export default {
   name: '',
@@ -535,7 +546,21 @@ export default {
                   <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                     <span>{i.tagName}</span>
                     <Select
-                      style="maxWidth: 200px"
+                      style="width: 70px"
+                      value={i.equal}
+                      disabled={!this.isEditState}
+                      on-on-change={v => {
+                        Vue.set(this.formData.conditions[params.index].tags[selectIndex], 'equal', v)
+                      }}
+                      filterable>
+                      {equalOptionList.map((item, index) => (
+                        <Option value={item.value} key={item.value + index}>
+                          {this.$t(item.name)}
+                        </Option>
+                      ))}
+                    </Select>
+                    <Select
+                      style="maxWidth: 130px"
                       value={i.tagValue}
                       disabled={!this.isEditState}
                       on-on-change={v => {
@@ -543,8 +568,7 @@ export default {
                       }}
                       filterable
                       multiple
-                      clearable
-                    >
+                      clearable>
                       {!isEmpty(this.formData.conditions[params.index].tagOptions)
                           && !isEmpty(this.formData.conditions[params.index].tagOptions[i.tagName])
                             && this.formData.conditions[params.index].tagOptions[i.tagName].map((item, index) => (
@@ -665,7 +689,13 @@ export default {
         {
           title: this.$t('m_alarmName'),
           width: 250,
-          key: 'name'
+          key: 'name',
+          render: (h, params) => params.row.name ? (<div>
+            <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.name}>
+              {params.row.name || '-'}
+            </Tooltip>
+            {params.row.log_metric_group ? <Tag color='#98cd72'>auto</Tag> : <div></div>}
+          </div>) : (<div>-</div>)
         },
         {
           title: this.$t('m_alarmPriority'),
@@ -903,7 +933,8 @@ export default {
               this.initialTags.push(
                 {
                   tagName: key,
-                  tagValue: []
+                  tagValue: [],
+                  equal: 'in'
                 }
               )
             }
@@ -935,7 +966,8 @@ export default {
               tags.push(
                 {
                   tagName: key,
-                  tagValue: []
+                  tagValue: [],
+                  equal: 'in'
                 }
               )
             }
@@ -946,6 +978,11 @@ export default {
           Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol)
           Vue.set(item, 'lastValue', lastValueAndSymbol.value)
           Vue.set(item, 'tagOptions', tagOptions)
+          !isEmpty(item.tags) && item.tags.forEach(single => {
+            if (!single.equal) {
+              single.equal = 'in'
+            }
+          })
         })
         this.showAddEditModal()
       })
@@ -1086,7 +1123,8 @@ export default {
         this.$emit('feedbackInfo', responseData.length === 0)
         const allConfigDetail = responseData
         allConfigDetail.forEach((item, alarmIndex) => {
-          const tempTableData = item.strategy.map(s => {
+          const strategy = item.strategy || []
+          const tempTableData = strategy.map(s => {
             s.monitor_type = item.monitor_type
             return s
           })
@@ -1161,7 +1199,8 @@ export default {
           tags.push(
             {
               tagName: key,
-              tagValue: []
+              tagValue: [],
+              equal: 'in'
             }
           )
         }
@@ -1230,6 +1269,14 @@ export default {
 }
 .ivu-select-dropdown {
   max-height: 300px !important;
+}
+.table-alarm-name {
+  .ivu-tooltip-rel {
+    width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>
 <style scoped lang="less">
@@ -1379,4 +1426,5 @@ export default {
 /deep/ .ivu-card-extra {
   top: 6px;
 }
+
 </style>

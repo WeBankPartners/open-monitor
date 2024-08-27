@@ -9,5 +9,6 @@ alter table custom_dashboard add column log_metric_group varchar(64) default nul
 alter table custom_chart add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
 alter table alarm_strategy_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
 alter table custom_chart_series_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
+alter table alarm_strategy add column create_user varchar(64) default null COMMENT '创建人';
 
 

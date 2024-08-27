@@ -520,6 +520,16 @@
   "m_log": "日志",
   "m_noProcessPermission": "没有编排执行权限",
   "m_new_alert": "新增告警",
-  "m_audio_prompt": "音频提示"
+  "m_audio_prompt": "音频提示",
+  "m_color_system": "色系",
+  "m_automatic_alert": "自动告警",
+  "m_threshold_property": "符号，阈值，持续时间，时间单位",
+  "m_success_code": "成功码",
+  "m_template_version": "模版版本",
+  "m_auto_create_warn": "自动生成告警",
+  "m_auto_create_dashboard": "自动生成自定义看板",
+  "m_include": "包含",
+  "m_not_include": "不包含",
+  "m_show_user_created": "仅展示用户创建"
 }
 

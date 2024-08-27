@@ -21,6 +21,7 @@ func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
+	var customDashboard *models.CustomDashboardObj
 	var err error
 	var exist bool
 	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
@@ -60,6 +61,12 @@ func GetSharedChartList(c *gin.Context) {
 					Id:              chart.Guid,
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
+				}
+				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
+					continue
+				}
+				if customDashboard != nil {
+					sharedDto.DashboardName = customDashboard.Name
 				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
@@ -465,7 +472,7 @@ func QueryCustomChart(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -537,6 +544,7 @@ func QueryCustomChart(c *gin.Context) {
 				CreatedTime:      chart.CreateTime,
 				UpdatedTime:      chart.UpdateTime,
 				Permission:       permission,
+				LogMetricGroup:   chart.LogMetricGroup,
 			}
 			dataList = append(dataList, resultDto)
 		}
