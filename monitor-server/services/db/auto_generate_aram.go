@@ -120,7 +120,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 			if reqCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_count"); reqCountMetric == nil {
 				continue
 			}
-			if failCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"fail_count"); failCountMetric == nil {
+			if failCountMetric = getMetricByKey(metricMap, param.MetricPrefixCode+"_"+"req_fail_count"); failCountMetric == nil {
 				continue
 			}
 			chartParam1 := &models.CustomChartDto{
@@ -139,9 +139,9 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, reqCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, reqCountMetric))
 			// 失败量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, failCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, failCountMetric))
 			subChart1Actions = handleAutoCreateChart(chartParam1, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart1Actions) > 0 {
 				actions = append(actions, subChart1Actions...)
@@ -166,7 +166,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, sucRateMetric))
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric))
 			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
@@ -191,7 +191,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, costTimeAvgMetric))
+			chartParam3.ChartSeries = append(chartParam3.ChartSeries, generateChartSeries(serviceGroup, param.MonitorType, code, codeList, costTimeAvgMetric))
 			subChart3Actions = handleAutoCreateChart(chartParam3, newDashboardId, serviceGroupsRoles, serviceGroupsRoles[0], operator)
 			if len(subChart3Actions) > 0 {
 				actions = append(actions, subChart3Actions...)
@@ -286,18 +286,30 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 	return list
 }
 
-func generateChartSeries(serviceGroup, monitorType, code string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
-	return &models.CustomChartSeriesDto{
+func generateChartSeries(serviceGroup, monitorType, code string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
+	var endpointType string
+	x.SQL("SELECT obj_type FROM panel_recursive where guid=?", serviceGroup).Get(&endpointType)
+	dto := &models.CustomChartSeriesDto{
 		Endpoint:     serviceGroup,
 		ServiceGroup: serviceGroup,
 		EndpointName: serviceGroup,
 		MonitorType:  monitorType,
 		ColorGroup:   metric.ColorGroup,
-		EndpointType: "system",
+		EndpointType: endpointType,
 		MetricType:   "business",
 		MetricGuid:   metric.Guid,
 		Metric:       metric.Metric,
-		Tags: []*models.TagDto{
+	}
+	if code == "other" && len(codeList) > 0 {
+		dto.Tags = []*models.TagDto{
+			{
+				TagName:  "code",
+				Equal:    "notin",
+				TagValue: codeList[:len(codeList)-1],
+			},
+		}
+	} else {
+		dto.Tags = []*models.TagDto{
 			{
 				TagName:  "code",
 				Equal:    "in",
@@ -306,14 +318,15 @@ func generateChartSeries(serviceGroup, monitorType, code string, metric *models.
 			{
 				TagName: "retcode",
 			},
-		},
-		ColorConfig: []*models.ColorConfigDto{
+		}
+		dto.ColorConfig = []*models.ColorConfigDto{
 			{
 				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroup, code),
 				Color:      metric.ColorGroup,
 			},
-		},
+		}
 	}
+	return dto
 }
 
 // translateSymbol 字符翻译
