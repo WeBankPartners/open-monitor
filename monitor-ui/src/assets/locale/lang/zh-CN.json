@@ -530,6 +530,8 @@
   "m_auto_create_dashboard": "自动生成自定义看板",
   "m_include": "包含",
   "m_not_include": "不包含",
-  "m_show_user_created": "仅展示用户创建"
+  "m_show_user_created": "仅展示用户创建",
+  "m_has_create_warn": "已生成告警",
+  "m_has_create_dashboard": "已生成看板"
 }
 
