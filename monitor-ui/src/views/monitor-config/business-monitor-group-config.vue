@@ -76,21 +76,20 @@
                   <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
                   <Col span="4">
-                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
-                         :disabled="view"
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || item.regulative === 0"
                          style="width:90%"
                   >
                   </Input>
                   </Col>
 
                   <Col span="4">
-                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
-                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view"
+                    :disabled="view || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -98,7 +97,12 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                  <Input
+                    :disabled="view || (!item.matchingResult && item.regulative === 1)"
+                    v-model.trim="item.target_value"
+                    style="width:90%"
+                  >
+                  </Input>
                   </Col>
                   <Col span="2" offset="2">
                   <Button
@@ -134,30 +138,29 @@
                 <Col span="21">
                 <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
                   <Col span="3">
-                  <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                  <Select v-model="item.regulative" :disabled="view || retcodeItemDisabled(item)" style="width:90%">
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
                   <Col span="3">
-                  <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
+                  <Input v-model.trim="item.source_value" :disabled="view || retcodeItemDisabled(item)" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
                   </Col>
 
                   <Col span="4">
-                  <Input v-show="item.regulative === 1" v-model.trim="item.matchingSourceValue"
-                         :disabled="view"
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
                          style="width:90%"
                   >
                   </Input>
                   </Col>
                   <Col span="4">
-                  <span v-show="item.regulative === 1">{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
                   <Button
-                    v-show="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view"
+                    :disabled="view || retcodeItemDisabled(item) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -165,7 +168,7 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
@@ -230,9 +233,18 @@
 </template>
 
 <script>
+import {cloneDeep, isEmpty, hasIn} from 'lodash'
 import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
 import JsonRegexDisplay from '@/views/monitor-config/log-template-config/json-regex-display.vue'
+
+const initRangeConfig = {
+  operator: '>',
+  threshold: 3,
+  time: 60,
+  time_unit: 's'
+}
+
 export default {
   name: '',
   data() {
@@ -247,7 +259,11 @@ export default {
       },
       businessConfig: {},
       templeteStatus: false,
-      rowKey: ''
+      rowKey: '',
+      template_version: '',
+      autoCreateWarn: true,
+      autoCreateDashboard: true,
+      templateRetCode: {}
     }
   },
   methods: {
@@ -261,6 +277,8 @@ export default {
       // configGuid, 配置唯一标志
       this.isAdd = actionType === 'add'
       this.view = actionType === 'view'
+      this.businessConfig.log_monitor_template_guid = templateGuid
+      this.businessConfig.log_metric_monitor_guid = parentGuid
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -285,14 +303,12 @@ export default {
             }
           ]
         }
+        if (templateGuid) {
+          this.businessConfig.log_monitor_template_guid = templateGuid
+          this.businessConfig.log_metric_monitor_guid = parentGuid
+          this.getTemplateDetail(templateGuid)
+        }
       }
-
-      if (templateGuid) {
-        this.businessConfig.log_monitor_template_guid = templateGuid
-        this.businessConfig.log_metric_monitor_guid = parentGuid
-        this.getTemplateDetail(templateGuid)
-      }
-
       this.$refs.standardRegexDisplayRef && this.$refs.standardRegexDisplayRef.hideTemplate()
       this.$refs.jsonRegexDisplayRef && this.$refs.jsonRegexDisplayRef.hideTemplate()
       this.showModel = true
@@ -307,16 +323,29 @@ export default {
       const res = this.$refs[displayRef] && this.$refs[displayRef].returnCurrentStatus()
       return res
     },
+    processConfigInfo(res) {
+      this.configInfo = res
+      !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfig) : JSON.parse(item.range_config))
+      })
+      Vue.set(this.configInfo, 'autoCreateWarn', true)
+      Vue.set(this.configInfo, 'autoCreateDashboard', true)
+      this.templateRetCode = isEmpty(res.success_code) ? {} : JSON.parse(res.success_code)
+    },
     getTemplateDetail(guid) {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
-        this.configInfo = resp
+        this.processConfigInfo(resp)
+        Object.assign(this.businessConfig.retcode_string_map[0], JSON.parse(resp.success_code))
       })
     },
     getConfig(guid) {
       const api = this.$root.apiCenter.getLogMetricConfig + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.businessConfig = resp
+        this.processConfigInfo(resp.log_monitor_template)
+        this.configInfo.templateVersion = resp.log_monitor_template_version
+
         Array.isArray(this.businessConfig.code_string_map) && this.businessConfig.code_string_map.forEach((item, index) => {
           Vue.set(this.businessConfig.code_string_map[index], 'matchingSourceValue', '')
           Vue.set(this.businessConfig.code_string_map[index], 'matchingResult', false)
@@ -360,9 +389,18 @@ export default {
 
       return false
     },
-
+    processUpdateData(data) {
+      !isEmpty(data.log_monitor_template) && !isEmpty(data.log_monitor_template.metric_list) && data.log_monitor_template.metric_list.forEach(item => {
+        item.range_config = JSON.stringify(item.range_config)
+      })
+      if (this.isAdd) {
+        data.autoCreateWarn = hasIn(this.configInfo, 'autoCreateWarn') ? this.configInfo.autoCreateWarn : true
+        data.autoCreateDashboard = hasIn(this.configInfo, 'autoCreateDashboard') ? this.configInfo.autoCreateDashboard : true
+      }
+    },
     saveConfig() {
-      const tmpData = JSON.parse(JSON.stringify(this.businessConfig))
+      const tmpData = cloneDeep(this.businessConfig)
+      this.processUpdateData(tmpData)
       if (this.paramsValidate(tmpData)) {
         return
       }
@@ -410,6 +448,11 @@ export default {
     onSourceValueChange(event, item) {
       item.matchingResultText = event.target.value
       item.matchingResult = false
+    },
+    retcodeItemDisabled(item) {
+      return item.regulative === this.templateRetCode.regulative
+        && item.source_value === this.templateRetCode.source_value
+          && item.target_value === this.templateRetCode.target_value
     }
   },
   components: {

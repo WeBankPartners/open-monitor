@@ -50,7 +50,7 @@ export default {
         this.audio = document.getElementById('alarmAudioPlay')
         this.audio.volume = 0
         if (this.audio) {
-          console.error('开启')
+          // console.error('开启')
           this.audio.pause()
         }
       } else { // 关闭提示后暂定播报
@@ -77,11 +77,11 @@ export default {
           const alertData = responseData.data || []
           if (alertData.length > 0) {
             if (this.latestAlert.id === alertData[0].id) {
-              console.error('重复了')
+              // console.error('重复了')
               return
             }
             if (!this.priority.includes(alertData[0].s_priority)) {
-              console.error('不在范围内')
+              // console.error('不在范围内')
               return
             }
 
@@ -90,7 +90,7 @@ export default {
               // 计算两个时间之间的总间隔
               const diff = dayjs(now).diff(dayjs(latestAlert.start_string))
               if (diff/1000 > this.timeInterval) {
-                console.error('时间超期了')
+                // console.error('时间超期了')
                 this.audio.pause()
                 return
               }

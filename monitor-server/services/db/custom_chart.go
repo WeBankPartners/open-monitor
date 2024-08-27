@@ -303,7 +303,14 @@ func DeleteCustomChartSeriesByMetricIdSQL(metricId string) (actions []*Action, e
 }
 
 func DeleteCustomDashboardChart(chartId string) (err error) {
-	var actions, subActions []*Action
+	var actions []*Action
+	actions, err = GetDeleteCustomDashboardChart(chartId)
+	return Transaction(actions)
+}
+
+func GetDeleteCustomDashboardChart(chartId string) (actions []*Action, err error) {
+	var subActions []*Action
+	actions = []*Action{}
 	if subActions, err = DeleteCustomChartConfigSQL(chartId); err != nil {
 		return
 	}
@@ -313,7 +320,7 @@ func DeleteCustomDashboardChart(chartId string) (err error) {
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where dashboard_chart = ?", Param: []interface{}{chartId}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart = ?", Param: []interface{}{chartId}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart WHERE guid = ?", Param: []interface{}{chartId}})
-	return Transaction(actions)
+	return
 }
 
 func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashboard int) (err error) {
@@ -346,8 +353,8 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashbo
 			if len(series.Tags) > 0 {
 				for _, tag := range series.Tags {
 					tagId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
-						tagId, seriesId, tag.TagName}})
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{
+						tagId, seriesId, tag.TagName, tag.Equal}})
 					if len(tag.TagValue) > 0 {
 						for _, tagValue := range tag.TagValue {
 							actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
@@ -374,11 +381,18 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashbo
 
 func AddCustomChart(param models.AddCustomChartParam, user string) (id string, err error) {
 	var actions []*Action
+	actions, id = getAddCustomChartActions(param, user)
+	err = Transaction(actions)
+	return
+}
+
+func getAddCustomChartActions(param models.AddCustomChartParam, user string) (actions []*Action, newChartId string) {
+	actions = []*Action{}
 	var displayConfig []byte
-	id = guid.CreateGuid()
+	newChartId = guid.CreateGuid()
 	now := time.Now().Format(models.DatetimeFormat)
 	chart := &models.CustomChart{
-		Guid:            id,
+		Guid:            newChartId,
 		SourceDashboard: param.DashboardId,
 		Name:            param.Name,
 		ChartTemplate:   param.ChartTemplate,
@@ -399,11 +413,9 @@ func AddCustomChart(param models.AddCustomChartParam, user string) (id string, e
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart, `group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		guid.CreateGuid(), param.DashboardId, chart.Guid, param.Group, string(displayConfig), user, user, now, now}})
-	err = Transaction(actions)
 	return
 }
-
-func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pageInfo models.PageInfo, list []*models.CustomChart, err error) {
+func QueryCustomChartList(condition models.QueryChartParam, operator string, roles []string) (pageInfo models.PageInfo, list []*models.CustomChart, err error) {
 	var params []interface{}
 	var ids []string
 	var sql = "select * from custom_chart where 1=1 "
@@ -430,6 +442,10 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 	}
 	if condition.UpdateUser != "" {
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
+	}
+	if condition.Show == "me" {
+		sql = sql + " and create_user = ?"
+		params = append(params, operator)
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"
@@ -572,6 +588,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 		DisplayConfig:      chartExtend.DisplayConfig,
 		GroupDisplayConfig: chartExtend.GroupDisplayConfig,
 		Group:              chartExtend.Group,
+		LogMetricGroup:     &chartExtend.LogMetricGroup,
 	}
 	chart.ChartSeries = []*models.CustomChartSeriesDto{}
 	if list, err = QueryCustomChartSeriesByChart(chartExtend.Guid); err != nil {
@@ -617,6 +634,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 					}
 					customChartSeriesDto.Tags = append(customChartSeriesDto.Tags, &models.TagDto{
 						TagName:  tag.Name,
+						Equal:    tag.Equal,
 						TagValue: getChartSeriesTagValues(chartSeriesTagValueList),
 					})
 				}
