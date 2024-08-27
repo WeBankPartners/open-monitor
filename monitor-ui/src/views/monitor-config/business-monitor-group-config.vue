@@ -261,8 +261,8 @@ export default {
       templeteStatus: false,
       rowKey: '',
       template_version: '',
-      autoCreateWarn: true,
-      autoCreateDashboard: true,
+      auto_create_warn: true,
+      auto_create_dashboard: true,
       templateRetCode: {}
     }
   },
@@ -328,8 +328,8 @@ export default {
       !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
         Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfig) : JSON.parse(item.range_config))
       })
-      Vue.set(this.configInfo, 'autoCreateWarn', true)
-      Vue.set(this.configInfo, 'autoCreateDashboard', true)
+      Vue.set(this.configInfo, 'auto_create_warn', true)
+      Vue.set(this.configInfo, 'auto_create_dashboard', true)
       this.templateRetCode = isEmpty(res.success_code) ? {} : JSON.parse(res.success_code)
     },
     getTemplateDetail(guid) {
@@ -394,8 +394,8 @@ export default {
         item.range_config = JSON.stringify(item.range_config)
       })
       if (this.isAdd) {
-        data.autoCreateWarn = hasIn(this.configInfo, 'autoCreateWarn') ? this.configInfo.autoCreateWarn : true
-        data.autoCreateDashboard = hasIn(this.configInfo, 'autoCreateDashboard') ? this.configInfo.autoCreateDashboard : true
+        data.auto_create_warn = hasIn(this.configInfo, 'auto_create_warn') ? this.configInfo.auto_create_warn : true
+        data.auto_create_dashboard = hasIn(this.configInfo, 'auto_create_dashboard') ? this.configInfo.auto_create_dashboard : true
       }
     },
     saveConfig() {
