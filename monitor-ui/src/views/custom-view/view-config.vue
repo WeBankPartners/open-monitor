@@ -116,42 +116,88 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus" @mousemove="debounceGetAllChartOptionList" @click="getAllChartOptionList">
+        <div class="chart-config-info" v-if="isEditStatus">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown
             placement="bottom-start"
+            trigger="click"
             v-for="(item, index) in allAddChartOptions"
             :key="index"
             class="chart-option-menu"
             @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
           >
-            <Button :type="item.colorType">
+            <Button :type="item.colorType" @click="onCopyButtonClick">
               {{$t(item.name)}}
               <Icon type="ios-arrow-down"></Icon>
             </Button>
-            <template slot='list'>
-              <DropdownMenu v-if="item.options.length > 0">
-                <DropdownItem v-for="(option, key) in item.options"
-                              :name="JSON.stringify(option)"
-                              :key="key"
-                              :disabled="option.disabled"
-                >
-                  <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
-                  {{item.type === 'add' ? $t(option.name) : option.name}}
-                </DropdownItem>
-              </DropdownMenu>
-              <DropdownMenu v-else>
-                <DropdownItem>
-                  {{ $t('m_add_chart_library') }}
-                </DropdownItem>
-              </DropdownMenu>
+            <template slot='list' >
+              <div>
+                <div v-if="item.type === 'add'">
+                  <DropdownMenu v-if="item.options.length > 0">
+                    <DropdownItem v-for="(option, key) in item.options"
+                                  :name="JSON.stringify(option)"
+                                  :key="key"
+                                  :disabled="option.disabled"
+                    >
+                      <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
+                      {{item.type === 'add' ? $t(option.name) : option.name}}
+                    </DropdownItem>
+                  </DropdownMenu>
+                  <DropdownMenu v-else>
+                    <DropdownItem>
+                      {{ $t('m_add_chart_library') }}
+                    </DropdownItem>
+                  </DropdownMenu>
+                </div>
+                <div v-else class='copy-drowdown-slot'>
+                  <div class='copy-drowdown-slot-select'>
+                    <Select v-model="selectedDashBoardId"
+                            clearable
+                            filterable
+                            :placeholder="$t('m_please_select') + $t('m_source_dashboard')"
+                            @on-change="getAllChartOptionList"
+                    >
+                      <Option v-for="single in item.options.sourceBoardOptions"
+                              :value="single.id"
+                              :key="single.id"
+                      >
+                        {{ single.name }}
+                      </Option>
+                    </Select>
+                    <Select v-model="selectedChartId"
+                            clearable
+                            filterable
+                            multiple
+                            :max-tag-count='1'
+                            :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
+                    >
+                      <Option v-for="single in item.options.chartOptions"
+                              :disabled="single.disabled"
+                              :value="single.id"
+                              :key="single.name"
+                      >
+                        {{ single.name }}
+                      </Option>
+                    </Select>
+                  </div>
+
+                  <Button
+                    type="primary"
+                    class='copy-drowdown-confirm-button'
+                    @click="onAddChart(selectedChartId, item.type)"
+                  >
+                    {{$t('m_confirm')}}
+                  </Button>
+                </div>
+
+              </div>
             </template>
           </Dropdown>
         </div>
       </div>
 
       <!-- 图表展示区域 -->
-      <div v-if="tmpLayoutData.length > 0" style="display:flex">
+      <div v-if="tmpLayoutData.length > 0" class='grid-window'>
         <div class="grid-style">
           <grid-layout
             :layout.sync="tmpLayoutData"
@@ -177,6 +223,7 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
+                  <Tag v-if='item.logMetricGroup' color='#98cd72'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <span class='header-grid-name-text'>{{item.i}}</span>
@@ -297,7 +344,7 @@
 
 <script>
 import {
-  isEmpty, remove, cloneDeep, debounce, find, orderBy, maxBy, filter
+  isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter
 } from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
 import {
@@ -391,13 +438,19 @@ export default {
           name: 'm_copy',
           type: 'copy',
           colorType: 'success',
-          options: []
+          options: {
+            chartOptions: [],
+            sourceBoardOptions: []
+          }
         },
         {
           name: 'm_shallow_copy',
           type: 'shallowCopy',
           colorType: 'success',
-          options: []
+          options: {
+            chartOptions: [],
+            sourceBoardOptions: []
+          }
         }
       ],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
@@ -419,13 +472,14 @@ export default {
       chartLayoutType: 'customize',
       previousChartLayoutType: 'customize', // 用于记录radio点击前的type
       tempChartLayoutType: '', // 用于记录点击后的type,
-      allPageLayoutData: []
+      allPageLayoutData: [],
+      selectedDashBoardId: '',
+      selectedChartId: []
     }
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
       return this.layoutData
-      // return this.filterLayoutData()
     },
     isEditStatus() {
       return this.permission === 'edit'
@@ -449,8 +503,8 @@ export default {
         if (isEmpty(res)) {
           this.$router.push({path: 'viewConfigIndex'})
         } else {
-          this.viewCondition.timeTnterval = res.timeRange || -3600
-          this.viewCondition.autoRefresh = res.refreshWeek || 10
+          this.viewCondition.timeTnterval = res.timeRange || -1800
+          this.viewCondition.autoRefresh = res.refreshWeek || 60
           this.boardMgmtRoles = res.mgmtRoles
           this.boardUseRoles = res.useRoles
           this.panalName = res.name
@@ -462,20 +516,41 @@ export default {
         }
       })
     },
-    getAllChartOptionList() {
+    onCopyButtonClick() {
+      this.selectedDashBoardId = ''
+      this.selectedChartId = []
+      this.getAllChartOptionList()
+    },
+    processSourceBoardOptions(rawData) {
+      const options = []
+      for (const key in rawData) {
+        if (!isEmpty(rawData[key])) {
+          rawData[key].forEach(item => {
+            if (!find(options, {id: item.sourceDashboard})) {
+              options.push({
+                name: item.dashboardName,
+                id: item.sourceDashboard
+              })
+            }
+          })
+        }
+      }
+      return options
+    },
+    getAllChartOptionList(sourceBoardId = '') {
+      this.selectedChartId = []
       this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
-        this.allAddChartOptions[1].options = this.processChartOptions(res)
+        this.allAddChartOptions[1].options.sourceBoardOptions = this.processSourceBoardOptions(res)
+        this.allAddChartOptions[1].options.chartOptions = this.processChartOptions(res, sourceBoardId)
       })
       this.request('GET', '/monitor/api/v2/chart/shared/list', {
         dashboard_id: this.pannelId
       }, res => {
-        this.allAddChartOptions[2].options = this.processChartOptions(res)
+        this.allAddChartOptions[2].options.sourceBoardOptions = this.processSourceBoardOptions(res)
+        this.allAddChartOptions[2].options.chartOptions = this.processChartOptions(res, sourceBoardId)
       })
     },
-    debounceGetAllChartOptionList: debounce(function () {
-      this.getAllChartOptionList()
-    }, 500),
-    processChartOptions(rawData) {
+    processChartOptions(rawData, sourceBoardId) {
       const options = []
       const initialOption = {
         line: {
@@ -502,7 +577,13 @@ export default {
         options.push(initialOption[key])
         if (!isEmpty(rawData[key])) {
           rawData[key].forEach(item => {
-            options.push(Object.assign({disabled: false}, item))
+            if (!sourceBoardId) {
+              options.push(Object.assign({disabled: false}, item))
+            } else {
+              if (item.sourceDashboard === sourceBoardId) {
+                options.push(Object.assign({disabled: false}, item))
+              }
+            }
           })
         }
       }
@@ -609,6 +690,7 @@ export default {
           sourceDashboard: item.sourceDashboard,
           allGroupDisplayConfig: JSON.parse(item.displayConfig),
           partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
+          logMetricGroup: item.logMetricGroup
         })
       })
       if (isEmpty(this.layoutData) || type === 'init') {
@@ -874,7 +956,7 @@ export default {
         })
         return Math.max(...allName) + 1 + ''
       }
-      return '10000'
+      return Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000 + ''
     },
     processSingleItem(lastItem, needSetItem) {
       if (lastItem.x + lastItem.w + needSetItem.w > 12) {
@@ -887,6 +969,7 @@ export default {
     },
     async onAddChart(copyInfo, type) {
       if (type === 'add') {
+        // type为add的时候为新增，默认copyInfo只有一个
         const name = this.processInitialChartName()
         const addChartParams = {
           dashboardId: this.pannelId,
@@ -933,38 +1016,46 @@ export default {
           })
         }, 0)
       } else {
-        const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? '' : this.activeGroup)
-        const copyParams = {
-          dashboardId: this.pannelId,
-          ref: type === 'copy' ? false : true,
-          originChartId: copyInfo.id,
-          group,
-          groupDisplayConfig: '',
-          displayConfig: {
+        // type不为add的时候，copyInfo为id的数组
+        if (isEmpty(copyInfo)) {return}
+        let chartId = ''
+        for (let i=0; i<copyInfo.length; i++) {
+          const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? '' : this.activeGroup)
+          const copyParams = {
+            dashboardId: this.pannelId,
+            ref: type === 'copy' ? false : true,
+            originChartId: copyInfo[i],
+            group,
+            groupDisplayConfig: '',
+            displayConfig: {
+              x: 0,
+              y: 0,
+              w: 6,
+              h: 7,
+            }
+          }
+          chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
+          const item = {
             x: 0,
             y: 0,
-            w: 6,
+            w: layoutColumns[this.chartLayoutType].w,
             h: 7,
+            i: this.processInitialChartName(),
+            id: `${chartId}`,
+            group,
+            partGroupDisplayConfig: '',
+            allGroupDisplayConfig: this.calculateDisplayConfig(),
+            sourceDashboard: this.pannelId
           }
+          if (this.layoutData.length) {
+            const lastOne = this.layoutData[this.layoutData.length - 1]
+            this.processSingleItem(lastOne, item)
+          }
+          this.layoutData.unshift(item)
         }
-        const chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
-        const item = {
-          x: 0,
-          y: 0,
-          w: layoutColumns[this.chartLayoutType].w,
-          h: 7,
-          i: '',
-          id: `${chartId}`,
-          group,
-          partGroupDisplayConfig: '',
-          allGroupDisplayConfig: this.calculateDisplayConfig(),
-          sourceDashboard: this.pannelId
+        if (copyInfo.length > 1) {
+          this.initLayoutTypeByWidth(this.layoutData)
         }
-        if (this.layoutData.length) {
-          const lastOne = this.layoutData[this.layoutData.length - 1]
-          this.processSingleItem(lastOne, item)
-        }
-        this.layoutData.unshift(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
           this.getPannelList(this.activeGroup)
@@ -973,7 +1064,7 @@ export default {
             this.showChartConfig = true
           }
           this.getAllChartOptionList()
-        }, 0)
+        }, 50)
       }
       setTimeout(() => {
         document.querySelector('.grid-style').scrollIntoView({
@@ -981,6 +1072,13 @@ export default {
           block: 'end'
         })
       }, 500)
+    },
+    extendTime() {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve()
+        }, 50)
+      })
     },
     processPannelParams() {
       const finalCharts = []
@@ -1411,7 +1509,7 @@ export default {
         }
       }
       return finalItem
-    }
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -1462,6 +1560,30 @@ export default {
 .chart-option-menu {
   .ivu-select-dropdown {
     max-height: 100vh !important;
+  }
+}
+
+.chart-option-menu {
+  .copy-drowdown-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    .copy-drowdown-slot-select {
+      display: flex;
+      justify-content: space-around;
+      width: 400px;
+      height: 70px;
+    }
+    .copy-drowdown-slot-select > :nth-child(1) {
+      width: 35%;
+    }
+    .copy-drowdown-slot-select > :nth-child(2) {
+      width: 55%;
+    }
+    .copy-drowdown-confirm-button {
+      width: 30%;
+    }
   }
 }
 
@@ -1582,6 +1704,12 @@ export default {
 
 .is-not-selected-radio {
   background: #fff
+}
+
+.grid-window {
+  display: flex;
+  max-height: ~"calc(100vh - 250px)";
+  overflow: scroll;
 }
 
 .grid-style {
