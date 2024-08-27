@@ -17,17 +17,15 @@
       <FormItem :label="$t('m_template_version')">
         <span>{{configInfo.templateVersion}}</span>
       </FormItem>
+      <FormItem :label="$t('m_updatedBy')">
+        {{ configInfo.update_user }}
+      </FormItem>
+      <FormItem :label="$t('m_title_updateTime')">
+        {{ configInfo.update_time }}
+      </FormItem>
       <!-- <FormItem>
           <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="bottom: 72px;right: 36px;position: relative;">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
         </FormItem> -->
-      <template v-if="showTemplate === true">
-        <FormItem :label="$t('m_updatedBy')">
-          {{ configInfo.update_user }}
-        </FormItem>
-        <FormItem :label="$t('m_title_updateTime')">
-          {{ configInfo.update_time }}
-        </FormItem>
-      </template>
       <FormItem :label="$t('m_log_example')" v-if="showTemplate === true">
         <Input
           v-model.trim="configInfo.demo_log"
