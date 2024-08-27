@@ -39,7 +39,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %s %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
@@ -91,7 +91,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				alarmStrategyParam.Conditions = append(alarmStrategyParam.Conditions, &models.StrategyConditionObj{
 					Metric:     alarmMetric.MetricId,
 					MetricName: alarmMetric.Metric,
-					Condition:  fmt.Sprintf("%s%d", alarmMetric.Operator, alarmMetric.Threshold),
+					Condition:  fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold),
 					Last:       fmt.Sprintf("%d%s", alarmMetric.Time, alarmMetric.TimeUnit),
 					Tags:       metricTags,
 				})
@@ -126,6 +126,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 	now := time.Now()
 	var metricMap = getMetricMap(metricList, param.MetricPrefixCode, serviceGroup)
 	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
+	var sucCode = getRetCodeSuccessCode(param.RetCodeStringMap)
 	if param.AutoCreateDashboard {
 		// 1. 先创建看板
 		dashboard := &models.CustomDashboardTable{
@@ -228,15 +229,24 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				Group:              code,
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
-			sucCode := getRetCodeSuccessCode(param.RetCodeStringMap)
 			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, costTimeAvgMetric)
 			// 耗时率 只计算成功请求的耗时率
 			if len(chartSeries.Tags) > 0 {
+				var hasRetCode bool
 				for _, tag := range chartSeries.Tags {
 					if tag.TagName == constRetCode {
 						tag.TagValue = []string{sucCode}
 						tag.Equal = constEqualIn
+						hasRetCode = true
 					}
+				}
+				// other code 重新添加 retcode = success
+				if !hasRetCode && code == constOther {
+					chartSeries.Tags = append(chartSeries.Tags, &models.TagDto{
+						TagName:  constRetCode,
+						TagValue: []string{sucCode},
+						Equal:    constEqualIn,
+					})
 				}
 			}
 			// 请求量标签线条
