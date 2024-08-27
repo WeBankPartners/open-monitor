@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -40,6 +41,7 @@ func main() {
 	go db.StartCheckCron()
 	go db.StartLogKeywordMonitorCronJob()
 	go db.StartDbKeywordMonitorCronJob()
+	go alarm.StartAlarmEngineCron()
 	go db.SyncDbMetric(true)
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()

@@ -47,7 +47,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -110,6 +110,9 @@ func QueryCustomDashboardList(c *gin.Context) {
 				UpdateTime:       dashboard.UpdateAt.Format(models.DatetimeFormat),
 				MainPage:         mainPages,
 			}
+			if dashboard.LogMetricGroup != nil {
+				result.LogMetricGroup = *dashboard.LogMetricGroup
+			}
 			rowsData = append(rowsData, result)
 		}
 	}
@@ -143,6 +146,9 @@ func GetCustomDashboard(c *gin.Context) {
 	customDashboardDto.Name = customDashboard.Name
 	customDashboardDto.TimeRange = customDashboard.TimeRange
 	customDashboardDto.RefreshWeek = customDashboard.RefreshWeek
+	if customDashboard.LogMetricGroup != nil {
+		customDashboardDto.LogMetricGroup = *customDashboard.LogMetricGroup
+	}
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -228,11 +234,13 @@ func AddCustomDashboard(c *gin.Context) {
 	now := time.Now()
 	user := middleware.GetOperateUser(c)
 	dashboard := &models.CustomDashboardTable{
-		Name:       param.Name,
-		CreateUser: user,
-		UpdateUser: user,
-		CreateAt:   now,
-		UpdateAt:   now,
+		Name:        param.Name,
+		CreateUser:  user,
+		UpdateUser:  user,
+		CreateAt:    now,
+		UpdateAt:    now,
+		RefreshWeek: 60,
+		TimeRange:   -1800,
 	}
 	if dashboardId, err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)

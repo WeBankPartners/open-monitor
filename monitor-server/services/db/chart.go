@@ -132,10 +132,10 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 			Tags:          []*models.TagDto{},
 			ColorConfig:   nil,
 		}
-		tagNameList := []string{}
-		for _, tagName := range tagRows {
-			tagNameList = append(tagNameList, tagName.Name)
-		}
+		//tagNameList := []string{}
+		//for _, tagName := range tagRows {
+		//	tagNameList = append(tagNameList, tagName.Name)
+		//}
 		tagValueMap := make(map[string][]string)
 		for _, tvRow := range tagValueRows {
 			if tvRow.ChartGuid == row.Guid {
@@ -147,12 +147,12 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 				}
 			}
 		}
-		for _, tagName := range tagNameList {
+		for _, tagName := range tagRows {
 			tmpValueList := []string{}
-			if existTagList, ok := tagValueMap[tagName]; ok {
+			if existTagList, ok := tagValueMap[tagName.Name]; ok {
 				tmpValueList = existTagList
 			}
-			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tmpValueList})
+			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName.Name, TagValue: tmpValueList, Equal: tagName.Equal})
 		}
 		series = append(series, &tmpSerieObj)
 	}
