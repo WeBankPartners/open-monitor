@@ -499,6 +499,7 @@ type CustomDashboardResultDto struct {
 	UpdateUser       string   `json:"updateUser"`
 	MainPage         []string `json:"mainPage"`
 	UpdateTime       string   `json:"updateTime"`
+	LogMetricGroup   string   `json:"logMetricGroup"`
 }
 
 type CustomDashboardDto struct {
@@ -509,6 +510,7 @@ type CustomDashboardDto struct {
 	UseRoles       []string          `json:"useRoles"`
 	TimeRange      int               `json:"timeRange"`   //时间范围
 	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
+	LogMetricGroup string            `json:"logMetricGroup"`
 }
 
 type AddCustomDashboardParam struct {
