@@ -263,7 +263,8 @@ export default {
       template_version: '',
       auto_create_warn: true,
       auto_create_dashboard: true,
-      templateRetCode: {}
+      templateRetCode: {},
+      actionType: ''
     }
   },
   methods: {
@@ -275,7 +276,8 @@ export default {
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志
-      this.isAdd = actionType === 'add'
+      this.isAdd = ['add', 'copy'].includes(actionType)
+      this.actionType = actionType
       this.view = actionType === 'view'
       this.businessConfig.log_monitor_template_guid = templateGuid
       this.businessConfig.log_metric_monitor_guid = parentGuid
@@ -344,7 +346,10 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.businessConfig = resp
         this.processConfigInfo(resp.log_monitor_template)
-        this.configInfo.templateVersion = resp.log_monitor_template_version
+        if (this.actionType === 'copy') {
+          this.businessConfig.name += '1'
+        }
+        this.configInfo.log_monitor_template_version = resp.log_monitor_template_version
 
         Array.isArray(this.businessConfig.code_string_map) && this.businessConfig.code_string_map.forEach((item, index) => {
           Vue.set(this.businessConfig.code_string_map[index], 'matchingSourceValue', '')
@@ -405,8 +410,16 @@ export default {
         return
       }
       const methodType = this.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, () => {
-        this.$Message.success(this.$t('m_tips_success'))
+      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
+        let messageTips = this.$t('m_tips_success')
+        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+          messageTips = (isEmpty(res.alarm_list) ? '' : this.$t('m_has_create_warn') + ':' + res.alarm_list.join(';'))
+            + (isEmpty(res.custom_dashboard) ? '' : this.$t('m_has_create_dashboard') + ':' + res.custom_dashboard)
+        }
+        this.$Message.success({
+          content: messageTips,
+          duration: 5
+        })
         this.showModel = false
         this.$emit('reloadMetricData', this.parentGuid)
       })
