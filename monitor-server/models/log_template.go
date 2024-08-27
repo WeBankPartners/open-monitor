@@ -139,7 +139,7 @@ type LogMetricGroup struct {
 	UpdateTime         time.Time `json:"-" xorm:"update_time"`
 	UpdateTimeString   string    `json:"update_time"`
 	TemplateSnapshot   string    `json:"template_snapshot" xorm:"template_snapshot"`
-	RefTemplateVersion string    `json:"ref_template_version" xorm:"ref_template_version"`
+	RefTemplateVersion string    `json:"log_monitor_template_version" xorm:"ref_template_version"`
 }
 
 type LogMetricParam struct {
