@@ -617,7 +617,7 @@ export default {
       metricOptions: [],
       chartTemplateOptions: [
         {
-          label: this.$t('m_metric_list'),
+          label: this.$t('m_customize'),
           key: 'one',
           value: {
             aggregate: 'none',
