@@ -107,7 +107,10 @@
         <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
         <Card>
           <div slot="title" class="panal-title">
-            <span class="panal-title-name">{{ item.name }}</span>
+            <div class='panal-title-name'>
+              <span>{{ item.name }}</span>
+              <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='#98cd72'>auto</Tag>
+            </div>
             <span class="panal-title-update">
               <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
               <span class="mt-1">{{item.updateTime}}</span>
@@ -685,15 +688,12 @@ li {
     color: @blue-2;
     height: 30px;
     &-name {
+      display: flex;
       font-size: 15px;
-      flex: 1;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-break: break-all;
-      padding-right: 5px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      width: 200px
     }
     &-update {
       display: flex;
@@ -702,10 +702,10 @@ li {
       font-size: 13px;
     }
   }
-  .panal-title > div {
-    display: flex;
-    flex-direction: column;
-  }
+  // .panal-title > div {
+  //   display: flex;
+  //   flex-direction: column;
+  // }
   .card-divider {
     height: 1px;
     width: 100%;
