@@ -544,6 +544,7 @@ func QueryCustomChart(c *gin.Context) {
 				CreatedTime:      chart.CreateTime,
 				UpdatedTime:      chart.UpdateTime,
 				Permission:       permission,
+				LogMetricGroup:   chart.LogMetricGroup,
 			}
 			dataList = append(dataList, resultDto)
 		}
