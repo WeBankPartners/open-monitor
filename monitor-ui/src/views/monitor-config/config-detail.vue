@@ -352,7 +352,9 @@ const equalOptionList = [
 export default {
   name: '',
   props: {
-    type: String // 为枚举类型，gourp为组，service为层级对象，endpoint为对象
+    type: String, // 为枚举类型，gourp为组，service为层级对象，endpoint为对象
+    alarmName: String,
+    onlyShowCreated: String // me我创建的，all所有
   },
   data() {
     return {
@@ -834,14 +836,14 @@ export default {
     }
   },
   methods: {
-  // 根据告警名称模糊搜索
-    filterData(alarmName) {
-      this.totalPageConfig = cloneDeep(this.originTotalPageConfig)
-      this.totalPageConfig = this.totalPageConfig.map(item => {
-        item.tableData = item.tableData.filter(row => row.name.toLowerCase().indexOf(alarmName.toLowerCase()) > -1)
-        return item
-      })
-    },
+    // 根据告警名称模糊搜索
+    // filterData(alarmName) {
+    //   this.totalPageConfig = cloneDeep(this.originTotalPageConfig)
+    //   this.totalPageConfig = this.totalPageConfig.map(item => {
+    //     item.tableData = item.tableData.filter(row => row.name.toLowerCase().indexOf(alarmName.toLowerCase()) > -1)
+    //     return item
+    //   })
+    // },
     mgmtConfigDetail(val) {
       const res = {
         showBtn: true,
@@ -865,7 +867,7 @@ export default {
       const api = this.getUpdateNotifyApi(tableData)
       this.request('POST', api, tableData.notify, () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
     procCallbackKeyChange(proc_callback_key, tableIndex, index) {
@@ -888,7 +890,7 @@ export default {
       const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
       this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
     deleteConfirmModal(rowData) {
@@ -1081,7 +1083,7 @@ export default {
       this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.closeAddEditModal()
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
     showAddEditModal() {
@@ -1117,9 +1119,15 @@ export default {
     },
     getDetail(targetId) {
       this.targetId = targetId
-      const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
+      const api = '/monitor/api/v2/alarm/strategy/query'
+      const params = {
+        queryType: this.type,
+        guid: this.targetId,
+        show: this.onlyShowCreated,
+        alarmName: this.alarmName
+      }
       this.totalPageConfig = []
-      this.request('GET', api, '', responseData => {
+      this.request('post', api, params, responseData => {
         this.$emit('feedbackInfo', responseData.length === 0)
         const allConfigDetail = responseData
         allConfigDetail.forEach((item, alarmIndex) => {
