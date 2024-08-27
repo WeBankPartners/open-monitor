@@ -89,7 +89,11 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
       }
     } else {
       if (response.status < 400 && callback !== undefined) {
-        return callback(response.data.data,response.data.message, response.data)
+        if (response.data.status === 'OK') {
+          return callback(response.data.data ,response.data.message, response.data)
+        }
+        errorMessage(response.data.message)
+
       }
     }
   })
@@ -169,7 +173,6 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
         return response
 
       }
-
       // errorMessage(error.response.data.message)
       err.response&&err.response.data&&errorMessage(err.response.data.message)
       // if (!window.request && error.response && error.response.status === 401) {
