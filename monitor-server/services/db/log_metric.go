@@ -1006,7 +1006,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap)
+		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1175,6 +1175,12 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
 			return
 		}
+	} else {
+		// 历史数据 模版查询兜底
+		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
+			return
+		}
+		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
@@ -1197,10 +1203,10 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string))
+	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string))
 	if err != nil {
 		return
 	}
@@ -1208,14 +1214,15 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
 	var templateSnapshot []byte
 	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
-	var serviceGroupsRoles []string
+	var serviceGroupsRoles, alarmStrategyList []string
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	}
+	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
@@ -1284,13 +1291,14 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
 		serviceGroupsRoles = roles[:1]
 	}
-	if subCreateAlarmStrategyActions, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, endpointGroup, operator); err != nil {
+	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, endpointGroup, operator); err != nil {
 		return
 	}
 	if len(subCreateAlarmStrategyActions) > 0 {
 		actions = append(actions, subCreateAlarmStrategyActions...)
+		result.AlarmList = alarmStrategyList
 	}
-	if subCreateDashboardActions, err = autoGenerateCustomDashboard(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
+	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
 		return
 	}
 	if len(subCreateDashboardActions) > 0 {
