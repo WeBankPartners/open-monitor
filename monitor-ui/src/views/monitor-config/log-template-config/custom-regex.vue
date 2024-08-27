@@ -361,7 +361,8 @@ export default {
         }
       ],
       editTagMappingIndex: -1, // 正在编辑的参数采集
-      isNumericValue: {} // 缓存后参数key对应的匹配结果能否转成数字
+      isNumericValue: {}, // 缓存后参数key对应的匹配结果能否转成数字
+      actionType: ''
     }
   },
   methods: {
@@ -372,7 +373,8 @@ export default {
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志
-      this.isAdd = actionType === 'add'
+      this.isAdd = ['add', 'copy'].includes(actionType)
+      this.actionType = actionType
       this.view = actionType === 'view'
       if (configGuid) {
         this.getConfig(configGuid)
@@ -505,6 +507,9 @@ export default {
       const api = this.$root.apiCenter.customLogMetricConfig + '/' + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.configInfo = resp
+        if (this.actionType === 'copy') {
+          this.configInfo.name = this.configInfo.name + '1'
+        }
         {/* 整理计算类型可选项 */}
         const param_list = this.configInfo.param_list || []
         param_list.forEach(item => {

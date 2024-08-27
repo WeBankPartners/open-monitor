@@ -618,7 +618,6 @@ export default {
               value={params.row.thresholdValue}
               disabled={!this.isEditState}
               on-on-change={v => {
-
                 this.formData.conditions[params.index].thresholdValue = v.target.value
               }}
               clearable
@@ -805,19 +804,36 @@ export default {
           fixed: 'right',
           width: 150,
           render: (h, params) => (
-            <div>
-              <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
-                {
-                  this.type==='endpoint'
-                    ? <Icon type="md-eye" size="16"></Icon>
-                    : <Icon type="md-create" size="16"></Icon>
-                }
-              </Button>
+            <div style='display: flex'>
+              {this.type==='endpoint'
+                ? (
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_preview')}>
+                    <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
+                      <Icon type="md-eye" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                )
+                : (<span style='display: flex'>
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                    <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                      <Icon type="md-document" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_edit')}>
+                    <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
+                      <Icon type="md-create" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                </span>
+                )
+              }
               {
                 this.isEditState ? (
-                  <Button size="small" type="error" on-click={() => this.deleteConfirmModal(params.row)}>
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_remove')}>
+                    <Button size="small" type="error" on-click={() => this.deleteConfirmModal(params.row)}>
+                      <Icon type="md-trash" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
                 ) : null
               }
             </div>
@@ -956,6 +972,52 @@ export default {
         this.modelConfig.modalTitle = 'm_button_edit',
         this.formData = cloneDeep(initFormData)
         this.manageEditParams(this.formData, rowData)
+        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
+        const conditions = this.formData.conditions
+        conditions.length && conditions.forEach(async item => {
+          const thresholdsAndSymbols = this.getSymbolAndValue(item.condition)
+          const lastValueAndSymbol = this.getSymbolAndValue(item.last)
+          const tagOptions = await this.findTagsByMetric(item.metric) // 指标下拉option获取
+          if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
+            const tags = []
+            for (const key in tagOptions) {
+              tags.push(
+                {
+                  tagName: key,
+                  tagValue: [],
+                  equal: 'in'
+                }
+              )
+            }
+            Vue.set(item, 'tags', tags)
+          }
+          Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
+          Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
+          Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol)
+          Vue.set(item, 'lastValue', lastValueAndSymbol.value)
+          Vue.set(item, 'tagOptions', tagOptions)
+          !isEmpty(item.tags) && item.tags.forEach(single => {
+            if (!single.equal) {
+              single.equal = 'in'
+            }
+          })
+        })
+        this.showAddEditModal()
+      })
+    },
+    async copySingleItem(rowData) {
+      this.isfullscreen = true
+      this.currentAlarmListIndex = rowData.alarmListIndex
+      this.selectedData = rowData
+      this.selectedTableData = rowData
+      const api = this.getMetricListPath(rowData)
+      this.request('GET', api, '', responseData => {
+        this.modelConfig.metricList = responseData
+        this.modelConfig.isAdd = true
+        this.modelConfig.modalTitle = 'm_button_add',
+        this.formData = cloneDeep(initFormData)
+        this.manageEditParams(this.formData, rowData)
+        this.formData.name = this.formData.name + '1'
         this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
         const conditions = this.formData.conditions
         conditions.length && conditions.forEach(async item => {
