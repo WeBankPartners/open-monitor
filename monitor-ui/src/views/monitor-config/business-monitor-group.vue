@@ -752,22 +752,29 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 120,
+          width: 150,
           key: 'index',
           fixed: 'right',
           render: (h, params) => (
-            <div>
-              <Button size="small" class="mr-1" type="primary" on-click={() => {
-                this.currentLogFileIndex = params.row.logFileIndex; this.editRuleItem(params.row)
-              }}>
-                <Icon type="md-create" size="16"></Icon>
-              </Button>
+            <div style='display: flex'>
+              <Tooltip placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" class="mr-1" type="primary" on-click={() => {
+                  this.editRuleItem(params.row)
+                }}>
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => {
-                  this.currentLogFileIndex = params.row.logFileIndex; this.deleteType = 'rules'; this.okDelRow(params.row)
+                  this.deleteType = 'rules'; this.okDelRow(params.row)
                 }}>
                 <Button size="small" type="error" class="mr-2" on-click={() => {
                   showPoptipOnTable()
@@ -779,7 +786,6 @@ export default {
           )
         }
       ],
-      currentLogFileIndex: 0,
       dataBaseTableColumns: [
         // {
         //   title: this.$t('m_metric_name'),
@@ -808,15 +814,22 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 120,
+          width: 150,
           key: 'index',
           render: (h, params) => (
-            <div>
-              <Button size="small" class="mr-1" type="primary" on-click={() => {
-                this.editDbItem(params.row)
-              }}>
-                <Icon type="md-create" size="16"></Icon>
-              </Button>
+            <div style='display: flex'>
+              <Tooltip placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDbItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" class="mr-1" type="primary" on-click={() => {
+                  this.editDbItem(params.row)
+                }}>
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
@@ -923,6 +936,13 @@ export default {
       this.getEndpoint(rowData.monitor_type, 'mysql')
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.dbModelConfig.isAdd = false
+      this.dbModelConfig.isShow = true
+    },
+    copyDbItem(rowData) {
+      this.getEndpoint(rowData.monitor_type, 'mysql')
+      this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
+      this.dbModelConfig.addRow.metric += '1'
+      this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
     addDb() {
@@ -1049,6 +1069,13 @@ export default {
         this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
       } else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
+      }
+    },
+    copySingleItem(rowData) {
+      if (rowData.log_type === 'custom') {
+        this.$refs.customRegexRef.loadPage('copy', '', rowData.log_metric_monitor, rowData.guid)
+      } else {
+        this.$refs.businessMonitorGroupConfigRef.loadPage('copy', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
     okDelRow(item) {
