@@ -39,7 +39,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加告警配置基础信息
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategyParam.Name = fmt.Sprintf("%s_%s%s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
+				alarmStrategyParam.Name = fmt.Sprintf("%s_%s %s %d %s", code, alarmMetric.Metric, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, alarmMetric.TimeUnit)
 				alarmStrategyParam.Priority = "medium"
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
@@ -57,7 +57,7 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				// 添加指标阈值
 				for _, tag := range alarmMetric.TagConfig {
 					// 标签为code,需要配置 equal和TagValue值
-					if tag == code {
+					if tag == constCode {
 						// code为 other 配置not in,其他配置 in
 						if code == constOtherCode {
 							metricTags = append(metricTags, &models.MetricTag{
@@ -74,11 +74,11 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 						}
 					} else {
 						// 平均耗时,只会统计成功请求的平均耗时
-						if code == constRetCode && strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) {
+						if tag == constRetCode && strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) {
 							metricTags = append(metricTags, &models.MetricTag{
 								TagName:  constRetCode,
 								Equal:    constEqualIn,
-								TagValue: []string{getRetCodeSuccessCode(param.CodeStringMap)},
+								TagValue: []string{getRetCodeSuccessCode(param.RetCodeStringMap)},
 							})
 						} else {
 							metricTags = append(metricTags, &models.MetricTag{
@@ -112,7 +112,7 @@ func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
 		return ""
 	}
 	for _, table := range stringMap {
-		if table.ValueType == constSuccess && table.LogParamName == constRetCode {
+		if table.ValueType == constSuccess {
 			return table.TargetValue
 		}
 	}
@@ -228,8 +228,8 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				Group:              code,
 				LogMetricGroup:     &param.LogMetricGroupGuid,
 			}
-			sucCode := getRetCodeSuccessCode(param.CodeStringMap)
-			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, sucRateMetric)
+			sucCode := getRetCodeSuccessCode(param.RetCodeStringMap)
+			chartSeries := generateChartSeries(serviceGroup, param.MonitorType, code, codeList, costTimeAvgMetric)
 			// 耗时率 只计算成功请求的耗时率
 			if len(chartSeries.Tags) > 0 {
 				for _, tag := range chartSeries.Tags {
