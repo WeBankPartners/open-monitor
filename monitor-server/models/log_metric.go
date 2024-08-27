@@ -234,3 +234,8 @@ type LogMetricDataMapMatchDto struct {
 	Regexp   string `json:"regexp"`
 	Match    bool   `json:"match"`
 }
+
+type CreateLogMetricGroupDto struct {
+	AlarmList       []string `json:"alarm_list"`
+	CustomDashboard string   `json:"custom_dashboard"`
+}

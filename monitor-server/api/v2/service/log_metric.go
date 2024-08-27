@@ -641,7 +641,10 @@ func GetLogMetricGroup(c *gin.Context) {
 
 func CreateLogMetricGroup(c *gin.Context) {
 	var param models.LogMetricGroupWithTemplate
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var prefixMap map[string]int
+	var result *models.CreateLogMetricGroupDto
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -656,7 +659,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		return
 	}
 	param.Name = strings.TrimSpace(param.Name)
-	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+	if err = db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -666,9 +669,8 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	prefixMap, queryErr := db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid)
-	if queryErr != nil {
-		middleware.ReturnHandleError(c, queryErr.Error(), queryErr)
+	if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if _, ok := prefixMap[param.MetricPrefixCode]; ok {
@@ -676,17 +678,15 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c))
-	if err != nil {
+	if result, err = db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
-		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		return
 	}
+	if err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func UpdateLogMetricGroup(c *gin.Context) {
