@@ -431,75 +431,82 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList, priorityList, userRoles []string, token string) (error, m.AlarmProblemList) {
+func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
-	if query.Id > 0 {
+	if cond.AlarmTable.Id > 0 {
 		whereSql += " and id=? "
-		params = append(params, query.Id)
+		params = append(params, cond.AlarmTable.Id)
 	}
-	if query.StrategyId > 0 {
+	if cond.AlarmTable.StrategyId > 0 {
 		whereSql += " and strategy_id=? "
-		params = append(params, query.StrategyId)
+		params = append(params, cond.AlarmTable.StrategyId)
 	}
-	if query.Endpoint != "" {
-		endpointFilterList = append(endpointFilterList, query.Endpoint)
+	if cond.AlarmTable.Endpoint != "" {
+		cond.EndpointFilterList = append(cond.EndpointFilterList, cond.AlarmTable.Endpoint)
 	}
-	if len(endpointFilterList) > 0 {
-		endpointFilterSql, endpointFilterParam := createListParams(endpointFilterList, "")
+	if len(cond.EndpointFilterList) > 0 {
+		endpointFilterSql, endpointFilterParam := createListParams(cond.EndpointFilterList, "")
 		whereSql += " and endpoint in (" + endpointFilterSql + ") "
 		params = append(params, endpointFilterParam...)
 	}
-	if query.SMetric != "" {
-		metricFilterList = append(metricFilterList, query.SMetric)
+	if cond.AlarmTable.SMetric != "" {
+		cond.MetricFilterList = append(cond.MetricFilterList, cond.AlarmTable.SMetric)
 	}
-	if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
+	if len(cond.MetricFilterList) > 0 {
+		metricFilterSql, metricFilterParam := createListParams(cond.MetricFilterList, "")
 		whereSql += " and s_metric in (" + metricFilterSql + ") "
 		params = append(params, metricFilterParam...)
 	}
-	if query.AlarmName != "" {
-		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+	if cond.AlarmTable.AlarmName != "" {
+		cond.AlarmNameFilterList = append(cond.AlarmNameFilterList, cond.AlarmTable.AlarmName)
 	}
-	if len(alarmNameFilterList) > 0 {
-		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
+	if len(cond.AlarmNameFilterList) > 0 {
+		alarmNameFilterSql, alarmNameFilterParam := createListParams(cond.AlarmNameFilterList, "")
 		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
 		params = append(append(params, alarmNameFilterParam...), alarmNameFilterParam...)
 	}
-	if query.SCond != "" {
+	if cond.AlarmTable.SCond != "" {
 		whereSql += " and s_cond=? "
-		params = append(params, query.SCond)
+		params = append(params, cond.AlarmTable.SCond)
 	}
-	if query.SLast != "" {
+	if cond.AlarmTable.SLast != "" {
 		whereSql += " and s_last=? "
-		params = append(params, query.SLast)
+		params = append(params, cond.AlarmTable.SLast)
 	}
-	if query.SPriority != "" {
-		priorityList = append(priorityList, query.SPriority)
+	if cond.AlarmTable.SPriority != "" {
+		cond.PriorityList = append(cond.PriorityList, cond.AlarmTable.SPriority)
 	}
-	if len(priorityList) > 0 {
-		priorityFilterSql, priorityFilterParam := createListParams(priorityList, "")
+	if len(cond.PriorityList) > 0 {
+		priorityFilterSql, priorityFilterParam := createListParams(cond.PriorityList, "")
 		whereSql += " and s_priority in (" + priorityFilterSql + ") "
 		params = append(params, priorityFilterParam...)
 	}
-	if query.Tags != "" {
+	if cond.AlarmTable.Tags != "" {
 		whereSql += " and tags=? "
-		params = append(params, query.Tags)
+		params = append(params, cond.AlarmTable.Tags)
 	}
-	if query.Status != "" {
+	if cond.AlarmTable.Status != "" {
 		whereSql += " and status=? "
-		params = append(params, query.Status)
+		params = append(params, cond.AlarmTable.Status)
 	}
-	if !query.Start.IsZero() {
-		whereSql += fmt.Sprintf(" and start>='%s' ", query.Start.Format(m.DatetimeFormat))
+	if !cond.AlarmTable.Start.IsZero() {
+		whereSql += fmt.Sprintf(" and start>='%s' ", cond.AlarmTable.Start.Format(m.DatetimeFormat))
 	}
-	if !query.End.IsZero() {
-		whereSql += fmt.Sprintf(" and end<='%s' ", query.End.Format(m.DatetimeFormat))
+	if !cond.AlarmTable.End.IsZero() {
+		whereSql += fmt.Sprintf(" and end<='%s' ", cond.AlarmTable.End.Format(m.DatetimeFormat))
 	}
+	//  支持 告警任意搜索,但是只能搜索不关闭的告警
+	if strings.TrimSpace(cond.Query) != "" {
+		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query),
+			fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query)}...)
+	}
+
 	sql := "SELECT * FROM alarm where 1=1 " + whereSql + " ORDER BY id DESC "
-	if limit > 0 {
-		sql += fmt.Sprintf(" LIMIT %d", limit)
+	if cond.Limit > 0 {
+		sql += fmt.Sprintf(" LIMIT %d", cond.Limit)
 	}
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
@@ -573,7 +580,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		if v.Id > 0 {
 			alarmIdList = append(alarmIdList, fmt.Sprintf("%d", v.Id))
 		}
-		alarmDetailList := []*m.AlarmDetailData{}
+		var alarmDetailList []*m.AlarmDetailData
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
@@ -588,11 +595,11 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
-		if query.Endpoint == "" && len(endpointFilterList) == 0 {
-			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
-				if extOpenAlarm {
-					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: []string{query.SPriority}}) {
+	if cond.AlarmTable.AlarmName == "" && len(cond.AlarmNameFilterList) == 0 {
+		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 {
+			if (cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0) || cond.AlarmTable.SMetric == "custom" {
+				if cond.ExtOpenAlarm {
+					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: []string{cond.AlarmTable.SPriority}}) {
 						result = append(result, v)
 					}
 				}
@@ -608,14 +615,6 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		sortResult = []*m.AlarmProblemQuery{}
 	}
 
-	//for _, v := range sortResult {
-	//	if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
-	//		if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-	//			v.Content = v.Content[:brIndex]
-	//			v.Log = v.Content[brIndex+5:]
-	//		}
-	//	}
-	//}
 	if len(notifyIdList) > 0 {
 		var notifyRows []*m.NotifyTable
 		filterSql, filterParams := createListParams(notifyIdList, "")
@@ -646,11 +645,11 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
 				if alarmNotify, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
 					v.NotifyStatus = "started"
-					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(userRoles), token) {
+					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(cond.UserRoles), cond.Token) {
 						v.NotifyPermission = "yes"
 					}
 				} else {
-					if notifyRowObj.ProcCallbackName != "" && checkHasProcDefUsePermission(&m.AlarmNotifyTable{ProcDefName: notifyRowObj.ProcCallbackName}, convertString2Map(userRoles), token) {
+					if notifyRowObj.ProcCallbackName != "" && checkHasProcDefUsePermission(&m.AlarmNotifyTable{ProcDefName: notifyRowObj.ProcCallbackName}, convertString2Map(cond.UserRoles), cond.Token) {
 						v.NotifyPermission = "yes"
 					}
 					v.NotifyStatus = "notStart"
@@ -1586,29 +1585,6 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			}
 		}
 	}
-	//if len(alarmStrategyList) > 0 {
-	//	strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
-	//	if matchErr != nil {
-	//		log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
-	//	} else {
-	//		for _, v := range result.Data {
-	//			tmpStrategyGroups := []*m.AlarmStrategyGroup{}
-	//			if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
-	//				if strategyRow.ServiceGroup == "" {
-	//					tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
-	//					if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
-	//						for _, endpointServiceRelRow := range endpointServiceList {
-	//							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
-	//						}
-	//					}
-	//				} else {
-	//					tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
-	//				}
-	//			}
-	//			v.StrategyGroups = tmpStrategyGroups
-	//		}
-	//	}
-	//}
 	return err, result
 }
 
@@ -1620,6 +1596,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		return fmt.Errorf("param start or end format fail"), result
 	}
 	var sql, whereSql string
+	var params []interface{}
 	if len(param.Endpoint) > 0 {
 		whereSql += fmt.Sprintf(" AND endpoint in ('" + strings.Join(param.Endpoint, "','") + "') ")
 	}
@@ -1631,6 +1608,12 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	}
 	if len(param.AlarmName) > 0 {
 		whereSql += fmt.Sprintf(" AND alarm_name in ('" + strings.Join(param.AlarmName, "','") + "') ")
+	}
+	//  支持 告警任意搜索,但是只能搜索不关闭的告警
+	if strings.TrimSpace(param.Query) != "" {
+		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query),
+			fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query)}...)
 	}
 	if param.Filter == "all" {
 		sql = "SELECT * FROM alarm WHERE (start<='" + endString + "' OR end>='" + startString + "') " + whereSql + " ORDER BY id DESC"
@@ -1655,7 +1638,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	} else {
 		customQueryParam.Enable = true
 	}
-	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam, param.Page)
+	err, result = QueryAlarmBySql(sql, params, customQueryParam, param.Page)
 	return err, result
 }
 
