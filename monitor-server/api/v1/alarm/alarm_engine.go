@@ -210,7 +210,6 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 					alarmObj.Endpoint = endpointObj.Guid
 					alarmObj.Tags = tmpTags
 					alarmObj.AlarmConditionCrcHash = alarmStrategyMetric.CrcHash
-					alarmObj.AlarmName = strategyObj.Name
 					alarmObj.Status = "firing"
 					alarmObj.StartValue = startValue
 					alarmObj.Start = time.Now()
@@ -220,7 +219,14 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 					alarmObj.SCond = strategyObj.Condition
 					alarmObj.SLast = strategyObj.Last
 					alarmObj.SPriority = strategyObj.Priority
-					alarmObj.Content = strategyObj.Content
+					// 自动化生成 告警阈值,包含 {code} 需要替换成真实的报警code
+					if len(queryObj.Metric) > 0 {
+						alarmObj.AlarmName = strings.ReplaceAll(strategyObj.Name, "{code}", queryObj.Metric["code"])
+						alarmObj.Content = strings.ReplaceAll(strategyObj.Content, "{code}", queryObj.Metric["code"])
+					} else {
+						alarmObj.AlarmName = strategyObj.Name
+						alarmObj.Content = strategyObj.Content
+					}
 					alarmObj.NotifyEnable = strategyObj.NotifyEnable
 					alarmObj.NotifyDelay = strategyObj.NotifyDelaySecond
 				}
