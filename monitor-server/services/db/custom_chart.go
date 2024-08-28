@@ -21,7 +21,7 @@ func QueryCustomChartByName(name string) (list []*models.CustomChart, err error)
 	return
 }
 
-func QueryAllPublicCustomChartList(dashboardId int, roles []string) (list []*models.CustomChart, err error) {
+func QueryAllPublicCustomChartList(dashboardId int, chartName string, roles []string) (list []*models.CustomChart, err error) {
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	var params []interface{}
 	var ids, newIds []string
@@ -49,7 +49,11 @@ func QueryAllPublicCustomChartList(dashboardId int, roles []string) (list []*mod
 	}
 	if len(newIds) > 0 {
 		idFilterSql, idFilterParam := createListParams(newIds, "")
-		err = x.SQL("select * from custom_chart where public = 1 and guid in ( "+idFilterSql+")", idFilterParam...).Find(&list)
+		if chartName == "" {
+			err = x.SQL("select * from custom_chart where public = 1 and guid in ( "+idFilterSql+")", idFilterParam...).Find(&list)
+		} else {
+			err = x.SQL("select * from custom_chart where public = 1 and name like '%"+chartName+"%' and guid in ( "+idFilterSql+")", idFilterParam...).Find(&list)
+		}
 	}
 	return
 }
