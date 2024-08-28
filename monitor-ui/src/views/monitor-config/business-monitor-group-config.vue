@@ -67,18 +67,30 @@
                 </Row>
                 <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" class='action-row'>
                   <Col span="3">
-                  <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                  <Select v-model="item.regulative"
+                          :disabled="view"
+                          style="width:90%"
+                          @on-change='onRegulativeChange(item)'
+                  >
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
                   <Col span="3">
-                  <Input v-model.trim="item.source_value" :disabled="view" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
+                  <Input v-model.trim="item.source_value"
+                         :disabled="view"
+                         @on-change="(e) => onSourceValueChange(e, item)"
+                         @on-blur="refreshPage"
+                         style="width:90%"
+                  >
+                  </Input>
                   </Col>
                   <Col span="4">
                   <Input v-model.trim="item.matchingSourceValue"
                          :disabled="view || item.regulative === 0"
                          style="width:90%"
+                         @on-change="debounceRefresh"
+                         @on-blur="refreshPage"
                   >
                   </Input>
                   </Col>
@@ -138,19 +150,31 @@
                 <Col span="21">
                 <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
                   <Col span="3">
-                  <Select v-model="item.regulative" :disabled="view || retcodeItemDisabled(item)" style="width:90%">
+                  <Select v-model="item.regulative"
+                          :disabled="view || retcodeItemDisabled(item)"
+                          style="width:90%"
+                          @on-change='onRegulativeChange(item)'
+                  >
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
                   <Col span="3">
-                  <Input v-model.trim="item.source_value" :disabled="view || retcodeItemDisabled(item)" @on-change="(e) => onSourceValueChange(e, item)" style="width:90%"></Input>
+                  <Input v-model.trim="item.source_value"
+                         :disabled="view || retcodeItemDisabled(item)"
+                         @on-change="(e) => onSourceValueChange(e, item)"
+                         style="width:90%"
+                         @on-blur="refreshPage"
+                  >
+                  </Input>
                   </Col>
 
                   <Col span="4">
                   <Input v-model.trim="item.matchingSourceValue"
                          :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
                          style="width:90%"
+                         @on-change="debounceRefresh"
+                         @on-blur="refreshPage"
                   >
                   </Input>
                   </Col>
@@ -233,7 +257,9 @@
 </template>
 
 <script>
-import {cloneDeep, isEmpty, hasIn} from 'lodash'
+import {
+  cloneDeep, isEmpty, hasIn, debounce
+} from 'lodash'
 import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
 import JsonRegexDisplay from '@/views/monitor-config/log-template-config/json-regex-display.vue'
@@ -404,6 +430,20 @@ export default {
       }
     },
     saveConfig() {
+      // const res = {
+      //   alarm_list: ['xxxsdsddsffeeee', 'wefwefweffffwewe', 'werqqqqqqqqqwwee'],
+      //   custom_dashboard: 'wefwefeeeeeeeeeee'
+      // }
+      // let messageTips = this.$t('m_tips_success')
+      // if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+      //   messageTips = (isEmpty(res.alarm_list) ? '' : this.$t('m_has_create_warn') + ':' + res.alarm_list.join(';'))
+      //     + (isEmpty(res.custom_dashboard) ? '' : this.$t('m_has_create_dashboard') + ':' + res.custom_dashboard)
+      // }
+      // this.$Message.success({
+      //   content: messageTips,
+      //   duration: 100000
+      // })
+
       const tmpData = cloneDeep(this.businessConfig)
       this.processUpdateData(tmpData)
       if (this.paramsValidate(tmpData)) {
@@ -455,17 +495,29 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
         Vue.set(item, 'matchingResult', res.match)
-        this.rowKey = +new Date() + ''
+        this.refreshPage()
       })
     },
     onSourceValueChange(event, item) {
       item.matchingResultText = event.target.value
       item.matchingResult = false
+      this.debounceRefresh()
     },
+    debounceRefresh: debounce(function (){
+      this.refreshPage()
+    }, 1000),
     retcodeItemDisabled(item) {
       return item.regulative === this.templateRetCode.regulative
         && item.source_value === this.templateRetCode.source_value
           && item.target_value === this.templateRetCode.target_value
+    },
+    onRegulativeChange(item) {
+      item.matchingSourceValue = ''
+      item.matchingResult = false
+      this.refreshPage()
+    },
+    refreshPage() {
+      this.rowKey = +new Date() + ''
     }
   },
   components: {
