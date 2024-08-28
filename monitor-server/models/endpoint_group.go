@@ -132,6 +132,7 @@ type AlarmStrategyMetricObj struct {
 	ConditionCrc            string       `json:"condition_crc"`
 	Tags                    []*MetricTag `json:"tags"`
 	UpdateUser              string       `json:"update_user" xorm:"update_user"`
+	LogMetricGroup          string       `json:"log_metric_group" xorm:"log_metric_group"`
 	AlarmStrategyMetricGuid string       `json:"alarm_strategy_metric_guid" xorm:"-"`
 }
 
