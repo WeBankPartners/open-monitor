@@ -274,6 +274,33 @@ func DeleteCustomDashboard(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
+func CopyCustomDashboard(c *gin.Context) {
+	var customDashboard *models.CustomDashboardTable
+	var param models.CopyCustomDashboardParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if param.DashboardId == 0 {
+		middleware.ReturnParamEmptyError(c, "dashboardId")
+		return
+	}
+	if customDashboard, err = db.GetCustomDashboardById(param.DashboardId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard == nil {
+		middleware.ReturnValidateError(c, "invalid id")
+		return
+	}
+	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
 // UpdateCustomDashboard 修改自定义看板
 func UpdateCustomDashboard(c *gin.Context) {
 	var err error
