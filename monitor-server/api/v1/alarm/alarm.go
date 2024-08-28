@@ -93,7 +93,11 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		return
 	}
 	alarm.Endpoint = endpointObj.Guid
-	alarm.AlarmName = strategyObj.Name
+	if len(param.Labels) > 0 {
+		alarm.AlarmName = strings.ReplaceAll(strategyObj.Name, "{code}", param.Labels["code"])
+	} else {
+		alarm.AlarmName = strategyObj.Name
+	}
 	var alertValue float64
 	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
@@ -281,7 +285,11 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 	alarm.SCond = strategyObj.Condition
 	alarm.SLast = strategyObj.Last
 	alarm.SPriority = strategyObj.Priority
-	alarm.Content = param.Annotations["description"]
+	if len(param.Labels) > 0 {
+		alarm.Content = strings.ReplaceAll(param.Annotations["description"], "{code}", param.Labels["code"])
+	} else {
+		alarm.Content = param.Annotations["description"]
+	}
 	alarm.NotifyEnable = strategyObj.NotifyEnable
 	alarm.NotifyDelay = strategyObj.NotifyDelaySecond
 	if strings.Contains(alarm.SMetric, "ping_alive") || strings.Contains(alarm.SMetric, "telnet_alive") || strings.Contains(alarm.SMetric, "http_alive") {
