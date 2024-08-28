@@ -23,6 +23,7 @@ func GetSharedChartList(c *gin.Context) {
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
 	var param models.SharedChartListParam
+	var customDashboard *models.CustomDashboardObj
 	var err error
 	var exist bool
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -66,6 +67,12 @@ func GetSharedChartList(c *gin.Context) {
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
 					UpdateTime:      chart.UpdateTime,
+				}
+				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
+					continue
+				}
+				if customDashboard != nil {
+					sharedDto.DashboardName = customDashboard.Name
 				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
