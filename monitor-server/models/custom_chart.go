@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type CustomChart struct {
 	Guid            string `json:"id" xorm:"'guid' pk"`
 	SourceDashboard int    `json:"sourceDashboard" xorm:"source_dashboard"` // 源看板
@@ -64,7 +66,7 @@ type ChartSharedDto struct {
 	Id              string `json:"id"`
 	SourceDashboard int    `json:"sourceDashboard"` // 源看板
 	Name            string `json:"name"`            // 图表名称
-	DashboardName   string `json:"dashboardName"`   // 看板名称
+	UpdateTime      string `json:"updateTime"`      // 更新时间
 }
 
 type ChartSharedParam struct {
@@ -90,7 +92,7 @@ type QueryChartParam struct {
 	UpdatedTimeStart string   `json:"updatedTimeStart"` // 更新时间开始
 	UpdatedTimeEnd   string   `json:"updatedTimeEnd"`   // 更新时间结束
 	Permission       string   `json:"permission"`       // 等于 MGMT表示可编辑
-	Show             string   `json:"show"`             // me 只展示自己创建
+	Show             string   `json:"show"`             // me 只展示人工创建
 	StartIndex       int      `json:"startIndex"`
 	PageSize         int      `json:"pageSize"`
 }
@@ -152,4 +154,29 @@ func ConvertCustomChartToExtend(chart *CustomChart) *CustomChartExtend {
 		CreateTime:      chart.CreateTime,
 		UpdateTime:      chart.UpdateTime,
 	}
+}
+
+type SharedChartListParam struct {
+	CurDashboardId int `json:"curDashboardId"` //当前看板Id
+	DashboardId    int `json:"dashboardId"`    // 选择看板Id
+	ChartName      int `json:"chartName"`      //图表名称
+}
+
+type ChartSharedDtoSort []*ChartSharedDto
+
+func (s ChartSharedDtoSort) Len() int {
+	return len(s)
+}
+
+func (s ChartSharedDtoSort) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ChartSharedDtoSort) Less(i, j int) bool {
+	if s[i].UpdateTime != "" && s[j].UpdateTime != "" {
+		updateTime1, _ := time.Parse(DatetimeFormat, s[i].UpdateTime)
+		updateTime2, _ := time.Parse(DatetimeFormat, s[j].UpdateTime)
+		return updateTime1.Before(updateTime2)
+	}
+	return true
 }
