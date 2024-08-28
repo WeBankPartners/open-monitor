@@ -32,8 +32,7 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, operat
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	if condition.Show == "me" {
-		sql = sql + " and create_user = ?"
-		params = append(params, operator)
+		sql = sql + " and log_metric_group is not null"
 	}
 	sql = sql + " and id in (" + strings.Join(ids, ",") + ")"
 	sql = sql + " order by update_at desc "

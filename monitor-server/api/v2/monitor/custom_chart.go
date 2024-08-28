@@ -11,6 +11,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,18 +22,21 @@ func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
-	var customDashboard *models.CustomDashboardObj
+	var param models.SharedChartListParam
 	var err error
 	var exist bool
-	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
-	if chartList, err = db.QueryAllPublicCustomChartList(middleware.GetOperateUserRoles(c)); err != nil {
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chartList, err = db.QueryAllPublicCustomChartList(param.DashboardId, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(chartList) > 0 {
 		// 去掉看板里面 已有重复的图表
-		if dashboardId != 0 {
-			if customChartList, err = db.QueryCustomChartListByDashboard(dashboardId); err != nil {
+		if param.CurDashboardId != 0 {
+			if customChartList, err = db.QueryCustomChartListByDashboard(param.CurDashboardId); err != nil {
 				middleware.ReturnServerHandleError(c, err)
 				return
 			}
@@ -61,12 +65,7 @@ func GetSharedChartList(c *gin.Context) {
 					Id:              chart.Guid,
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
-				}
-				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
-					continue
-				}
-				if customDashboard != nil {
-					sharedDto.DashboardName = customDashboard.Name
+					UpdateTime:      chart.UpdateTime,
 				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
@@ -78,9 +77,21 @@ func GetSharedChartList(c *gin.Context) {
 			}
 		}
 	}
+	// 每种类型中最多展示20条数据
+	for key, valueList := range sharedResultMap {
+		sort.Sort(models.ChartSharedDtoSort(valueList))
+		valueList = valueList[:min(20, len(valueList))]
+		sharedResultMap[key] = valueList
+	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
 }
 
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
 func AddCustomChart(c *gin.Context) {
 	var err error
 	var param models.AddCustomChartParam
