@@ -176,7 +176,7 @@ func (s ChartSharedDtoSort) Less(i, j int) bool {
 	if s[i].UpdateTime != "" && s[j].UpdateTime != "" {
 		updateTime1, _ := time.Parse(DatetimeFormat, s[i].UpdateTime)
 		updateTime2, _ := time.Parse(DatetimeFormat, s[j].UpdateTime)
-		return updateTime1.Before(updateTime2)
+		return updateTime1.After(updateTime2)
 	}
 	return true
 }
