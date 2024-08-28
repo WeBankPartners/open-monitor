@@ -29,7 +29,7 @@ func GetSharedChartList(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if chartList, err = db.QueryAllPublicCustomChartList(param.DashboardId, middleware.GetOperateUserRoles(c)); err != nil {
+	if chartList, err = db.QueryAllPublicCustomChartList(param.DashboardId, param.ChartName, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
