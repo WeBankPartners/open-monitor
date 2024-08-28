@@ -487,6 +487,7 @@ type QueryProblemAlarmPageDto struct {
 	Page              *PageInfo `json:"page"`
 	AlarmName         []string  `json:"alarm_name"`
 	CustomDashboardId int       `json:"custom_dashboard_id"`
+	Query             string    `json:"query"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -498,6 +499,7 @@ type QueryHistoryAlarmParam struct {
 	AlarmName []string  `json:"alarm_name"`
 	Priority  []string  `json:"priority"`
 	Page      *PageInfo `json:"page"`
+	Query     string    `json:"query"`
 }
 
 type AlertWindowTable struct {
@@ -707,4 +709,17 @@ type AlarmEngineConfigRow struct {
 	NotifyDelay   int    `json:"notify_delay" xorm:"notify_delay"`
 	AlarmName     string `json:"alarm_name" xorm:"alarm_name"`
 	ActiveWindow  string `json:"active_window" xorm:"active_window"`
+}
+
+type QueryAlarmCondition struct {
+	AlarmTable          AlarmTable
+	Limit               int
+	ExtOpenAlarm        bool
+	EndpointFilterList  []string
+	MetricFilterList    []string
+	AlarmNameFilterList []string
+	PriorityList        []string
+	UserRoles           []string
+	Token               string
+	Query               string // 支持告警任意搜索
 }
