@@ -5,14 +5,15 @@
       <Form :label-width="120" style="margin-top:12px">
         <FormItem :label="$t('m_template_name')">
           <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
-            <Input
+            <span>{{configInfo.name}}</span>
+            <!-- <Input
               v-model.trim="configInfo.name"
               maxlength="30"
               show-word-limit
               style="width: 96%"
               disabled
             />
-            <span style="color: red">*</span>
+            <span style="color: red">*</span> -->
           </Tooltip>
         </FormItem>
         <FormItem :label="$t('m_template_version')">
