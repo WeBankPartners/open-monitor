@@ -691,11 +691,11 @@ export default {
           title: this.$t('m_alarmName'),
           width: 250,
           key: 'name',
-          render: (h, params) => params.row.name ? (<div>
+          render: (h, params) => params.row.name ? (<div style='display: flex; align-items:center'>
             <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.name}>
               {params.row.name || '-'}
             </Tooltip>
-            {params.row.log_metric_group ? <Tag color='#98cd72'>auto</Tag> : <div></div>}
+            {params.row.log_metric_group ? <Tag color='green'>auto</Tag> : <div></div>}
           </div>) : (<div>-</div>)
         },
         {

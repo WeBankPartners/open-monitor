@@ -137,17 +137,31 @@ import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import Vue from 'vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
 
-const initRangeConfig = {
-  operator: '>',
-  threshold: 3,
-  time: 60,
-  time_unit: 's'
+const initRangeConfigMap = {
+  req_suc_rate: {
+    operator: '<',
+    threshold: '90',
+    time: '60',
+    time_unit: 's'
+  },
+  req_costtime_avg: {
+    operator: '>',
+    threshold: '500',
+    time: '60',
+    time_unit: 's'
+  },
+  other: {
+    operator: '',
+    threshold: '',
+    time: '',
+    time_unit: ''
+  }
 }
 
 const initSuccessCode = {
   regulative: 1,
   source_value: '200',
-  target_value: 'suc'
+  target_value: 'success'
 }
 
 export default {
@@ -282,13 +296,14 @@ export default {
         {
           title: this.$t('m_automatic_alert'),
           key: 'auto_alarm',
-          width: 60,
+          width: 80,
           render: (h, params) =>
             (
               <i-switch value={params.row.auto_alarm}
                 on-on-change={val => {
                   if (!val) {
-                    Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfig))
+                    const key = ['req_suc_rate', 'req_costtime_avg'].includes(params.row.metric) ? params.row.metric : 'other'
+                    Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap[key]))
                   }
                   this.configInfo.metric_list[params.index].auto_alarm = val
                 }} />
@@ -443,9 +458,9 @@ export default {
               tag_config: [
                 'code'
               ],
-              color_group: '',
+              color_group: '#1a94bc',
               auto_alarm: false,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -456,9 +471,9 @@ export default {
                 'code',
                 'retcode'
               ],
-              color_group: '',
+              color_group: '#bec936',
               auto_alarm: false,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -468,9 +483,9 @@ export default {
               tag_config: [
                 'code'
               ],
-              color_group: '',
+              color_group: '#20a162',
               auto_alarm: true,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.req_suc_rate)
             },
             {
               log_param_name: 'code',
@@ -481,9 +496,9 @@ export default {
                 'code',
                 'retcode'
               ],
-              color_group: '',
+              color_group: '#ee3f4d',
               auto_alarm: false,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -493,9 +508,9 @@ export default {
               tag_config: [
                 'code'
               ],
-              color_group: '',
+              color_group: '#7c1823',
               auto_alarm: false,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'costtime',
@@ -506,9 +521,9 @@ export default {
                 'code',
                 'retcode'
               ],
-              color_group: '',
+              color_group: '#d6a01d',
               auto_alarm: true,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.req_costtime_avg)
             },
             {
               log_param_name: 'costtime',
@@ -519,9 +534,9 @@ export default {
                 'code',
                 'retcode'
               ],
-              color_group: '',
+              color_group: '#815c94',
               auto_alarm: false,
-              range_config: cloneDeep(initRangeConfig)
+              range_config: cloneDeep(initRangeConfigMap.other)
             }
           ]
         }
@@ -594,6 +609,8 @@ export default {
       this.successCode.source_value = this.successCode.source_value + ''
       data.success_code = JSON.stringify(this.successCode)
       !isEmpty(data.metric_list) && data.metric_list.forEach(item => {
+        item.range_config.threshold += ''
+        item.range_config.time += ''
         item.range_config = JSON.stringify(item.range_config)
       })
     },
@@ -607,7 +624,7 @@ export default {
     },
     processConfigInfo() {
       !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
-        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfig) : JSON.parse(item.range_config))
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfigMap.other) : JSON.parse(item.range_config))
         Vue.set(item, 'auto_alarm', hasIn(item, 'auto_alarm') ? item.auto_alarm : false)
         Vue.set(item, 'color_group', isEmpty(item.color_group) ? '' : item.color_group)
       })
