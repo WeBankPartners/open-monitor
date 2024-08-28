@@ -109,9 +109,9 @@
           <div slot="title" class="panal-title">
             <div class='panal-title-name'>
               <Tooltip :content="item.name" theme="dark" transfer placement="top">
-                <span class='panal-title-name-test'>{{ item.name }}</span>
+                <span class='panal-title-name-text'>{{ item.name }}</span>
               </Tooltip>
-              <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='#98cd72'>auto</Tag>
+              <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='green'>auto</Tag>
             </div>
             <span class="panal-title-update">
               <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
@@ -695,12 +695,13 @@ li {
       flex-direction: row;
       align-items: center;
       justify-content: flex-start;
-      .panal-title-name-test {
-        max-width: 200px;         /* 设置固定宽度 */
-        overflow: hidden;      /* 隐藏溢出内容 */
-        display: -webkit-box;  /* 作为弹性伸缩盒子模型显示 */
-        -webkit-line-clamp: 3; /* 显示的行数 */
-        -webkit-box-orient: vertical; /* 垂直排列子元素 */
+      .panal-title-name-text {
+        max-width: 200px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        line-height: 20px
       }
     }
     &-update {
