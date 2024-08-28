@@ -566,3 +566,9 @@ type ComparisonChartQueryParam struct {
 	CalcType       []string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
 	TimeSecond     int64    `json:"timeSecond"`     // 时间范围
 }
+
+type CopyCustomDashboardParam struct {
+	MgmtRole    string   `json:"mgmtRole"`
+	UseRoles    []string `json:"useRoles"`
+	DashboardId int      `json:"dashboardId"`
+}
