@@ -108,7 +108,7 @@ func QueryAllRoleDisplayNameMap() (roleMap map[string]string, err error) {
 
 func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTable, err error) {
 	customDashboard = &models.CustomDashboardTable{}
-	_, err = x.SQL("select id,name,create_user,update_user,panel_groups,time_range,refresh_week from custom_dashboard where id = ?", id).Get(customDashboard)
+	_, err = x.SQL("select id,name,create_user,update_user,panel_groups,time_range,refresh_week,log_metric_group from custom_dashboard where id = ?", id).Get(customDashboard)
 	return
 }
 
