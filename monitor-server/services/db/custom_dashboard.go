@@ -389,6 +389,64 @@ func SyncData() (err error) {
 	return
 }
 
+func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string) (err error) {
+	var result sql.Result
+	var newDashboardId int64
+	var actions, subDashboardPermActions, subDashboardChartActions []*Action
+	var customChartExtendList []*models.CustomChartExtend
+	var exportDto = &models.CustomDashboardExportDto{Charts: make([]*models.CustomChartDto, 0)}
+	var chart *models.CustomChartDto
+	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
+	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
+	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	now := time.Now()
+	// 新增看板
+	customDashboard.Name = customDashboard.Name + "(1)"
+	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
+		customDashboard.Name, customDashboard.PanelGroups, operator, operator, now, now, customDashboard.TimeRange, customDashboard.RefreshWeek)
+	if err != nil {
+		return
+	}
+	if newDashboardId, err = result.LastInsertId(); err != nil {
+		return
+	}
+	if configMap, err = QueryAllChartSeriesConfig(); err != nil {
+		return
+	}
+	if tagMap, err = QueryAllChartSeriesTag(); err != nil {
+		return
+	}
+	if tagValueMap, err = QueryAllChartSeriesTagValue(); err != nil {
+		return
+	}
+	// 插入看板权限表
+	subDashboardPermActions = GetInsertCustomDashboardRoleRelSQL(int(newDashboardId), []string{param.MgmtRole}, param.UseRoles)
+	if len(subDashboardPermActions) > 0 {
+		actions = append(actions, subDashboardPermActions...)
+	}
+	if customChartExtendList, err = QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
+		return
+	}
+	if len(customChartExtendList) > 0 {
+		for _, chartExtend := range customChartExtendList {
+			if chart, err = CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap); err != nil {
+				return
+			}
+			if chart != nil {
+				exportDto.Charts = append(exportDto.Charts, chart)
+			}
+		}
+	}
+	if subDashboardChartActions, _, err = handleDashboardChart(exportDto, newDashboardId, operator, now.Format(models.DatetimeFormat), param.MgmtRole, param.UseRoles); err != nil {
+		return
+	}
+	if len(subDashboardChartActions) > 0 {
+		actions = append(actions, subDashboardChartActions...)
+	}
+	err = Transaction(actions)
+	return
+}
+
 func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
 	var customDashboardList []*models.CustomDashboardTable
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
