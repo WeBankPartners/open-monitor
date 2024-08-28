@@ -28,7 +28,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 		baseSql = baseSql + " and t1.name like '%" + alarmName + "%'"
 	}
 	if show == "me" {
-		baseSql = baseSql + " and t1.log_metric_group is not null"
+		baseSql = baseSql + " and t1.log_metric_group is null"
 	}
 	baseSql = baseSql + " order by t1.update_time desc"
 	err = x.SQL(baseSql, params...).Find(&alarmStrategyTable)
