@@ -21,17 +21,34 @@ func QueryCustomChartByName(name string) (list []*models.CustomChart, err error)
 	return
 }
 
-func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, err error) {
+func QueryAllPublicCustomChartList(dashboardId int, roles []string) (list []*models.CustomChart, err error) {
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	var params []interface{}
-	var ids []string
+	var ids, newIds []string
 	var sql = "select distinct dashboard_chart from custom_chart_permission where role_id  in (" + roleFilterSql + ") and permission = ?"
 	params = append(append(params, roleFilterParam...), models.PermissionUse)
 	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
 	}
-	if len(ids) > 0 {
-		idFilterSql, idFilterParam := createListParams(ids, "")
+	if dashboardId != 0 {
+		var dashboardChartList []string
+		if err = x.SQL("select dashboard_chart from  custom_dashboard_chart_rel where custom_dashboard=?", dashboardId).Find(&dashboardChartList); err != nil {
+			return
+		}
+		// 取图表id交集
+		for _, id := range ids {
+			for _, chartId := range dashboardChartList {
+				if id == chartId {
+					newIds = append(newIds, id)
+					break
+				}
+			}
+		}
+	} else {
+		newIds = ids
+	}
+	if len(newIds) > 0 {
+		idFilterSql, idFilterParam := createListParams(newIds, "")
 		err = x.SQL("select * from custom_chart where public = 1 and guid in ( "+idFilterSql+")", idFilterParam...).Find(&list)
 	}
 	return
@@ -444,8 +461,7 @@ func QueryCustomChartList(condition models.QueryChartParam, operator string, rol
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	if condition.Show == "me" {
-		sql = sql + " and create_user = ?"
-		params = append(params, operator)
+		sql = sql + " and log_metric_group is not null"
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"

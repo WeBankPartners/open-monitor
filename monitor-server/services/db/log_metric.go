@@ -1307,6 +1307,11 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	return
 }
 
+// checkDataValid 前置校验数据合法性
+func checkDataValid() (bool, error) {
+	return true, nil
+}
+
 func getCreateLogMetricGroupMapAction(param *models.LogMetricGroupWithTemplate, nowTime time.Time) (sucRetCode string, actions []*Action) {
 	codeGuidList := guid.CreateGuidList(len(param.CodeStringMap))
 	for i, v := range param.CodeStringMap {
