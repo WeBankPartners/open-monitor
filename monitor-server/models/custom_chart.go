@@ -157,9 +157,9 @@ func ConvertCustomChartToExtend(chart *CustomChart) *CustomChartExtend {
 }
 
 type SharedChartListParam struct {
-	CurDashboardId int `json:"curDashboardId"` //当前看板Id
-	DashboardId    int `json:"dashboardId"`    // 选择看板Id
-	ChartName      int `json:"chartName"`      //图表名称
+	CurDashboardId int    `json:"curDashboardId"` //当前看板Id
+	DashboardId    int    `json:"dashboardId"`    // 选择看板Id
+	ChartName      string `json:"chartName"`      //图表名称
 }
 
 type ChartSharedDtoSort []*ChartSharedDto
