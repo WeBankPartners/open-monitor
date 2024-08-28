@@ -43,7 +43,11 @@ func autoGenerateAlarmStrategy(param *models.LogMetricGroupWithTemplate, metricL
 				alarmStrategyParam := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
 				alarmStrategyParam.Name = fmt.Sprintf("%s-%s %s %s%s", code, alarmMetric.MetricId, translateSymbol(alarmMetric.Operator), alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
-				alarmStrategyParam.Priority = "medium"
+				if code == constOtherCode {
+					alarmStrategyParam.Priority = "medium"
+				} else {
+					alarmStrategyParam.Priority = "high"
+				}
 				alarmStrategyParam.NotifyEnable = 1
 				alarmStrategyParam.ActiveWindow = "00:00-23:59"
 				if strings.TrimSpace(endpointGroup) != "" {
@@ -135,7 +139,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 	if param.AutoCreateDashboard {
 		// 1. 先创建看板
 		dashboard := &models.CustomDashboardTable{
-			Name:           fmt.Sprintf("%s_%s", serviceGroup, now.Format(models.DatetimeDigitFormat)),
+			Name:           fmt.Sprintf("%s_%s", serviceGroup, param.MetricPrefixCode),
 			CreateUser:     operator,
 			UpdateUser:     operator,
 			CreateAt:       now,
@@ -174,7 +178,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				ChartTemplate:      "one",
 				ChartType:          "bar",
 				LineType:           "bar",
-				Aggregate:          "none",
+				Aggregate:          "sum",
 				AggStep:            60,
 				ChartSeries:        []*models.CustomChartSeriesDto{},
 				DisplayConfig:      calcDisplayConfig(index * 3),
@@ -203,6 +207,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LineType:           "line",
 				Aggregate:          "none",
 				AggStep:            60,
+				Unit:               "%",
 				ChartSeries:        []*models.CustomChartSeriesDto{},
 				DisplayConfig:      calcDisplayConfig(index*3 + 1),
 				GroupDisplayConfig: calcDisplayConfig(1),
@@ -228,6 +233,7 @@ func autoGenerateCustomDashboard(param *models.LogMetricGroupWithTemplate, metri
 				LineType:           "line",
 				Aggregate:          "none",
 				AggStep:            60,
+				Unit:               "ms",
 				ChartSeries:        []*models.CustomChartSeriesDto{},
 				DisplayConfig:      calcDisplayConfig(index*3 + 2),
 				GroupDisplayConfig: calcDisplayConfig(1),
@@ -351,18 +357,21 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 }
 
 func generateChartSeries(serviceGroup, monitorType, code string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
-	var endpointType string
-	x.SQL("SELECT obj_type FROM panel_recursive where guid=?", serviceGroup).Get(&endpointType)
+	var serviceGroupTable = &models.ServiceGroupTable{}
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	dto := &models.CustomChartSeriesDto{
 		Endpoint:     serviceGroup,
 		ServiceGroup: serviceGroup,
 		EndpointName: serviceGroup,
 		MonitorType:  monitorType,
 		ColorGroup:   metric.ColorGroup,
-		EndpointType: endpointType,
 		MetricType:   "business",
 		MetricGuid:   metric.Guid,
 		Metric:       metric.Metric,
+	}
+	if serviceGroupTable != nil {
+		dto.EndpointName = serviceGroupTable.DisplayName
+		dto.EndpointType = serviceGroupTable.ServiceType
 	}
 	if code == "other" && len(codeList) > 0 {
 		dto.Tags = []*models.TagDto{

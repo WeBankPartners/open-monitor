@@ -28,8 +28,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 		baseSql = baseSql + " and t1.name like '%" + alarmName + "%'"
 	}
 	if show == "me" {
-		baseSql = baseSql + " and t1.create_user = ?"
-		params = append(params, operator)
+		baseSql = baseSql + " and t1.log_metric_group is not null"
 	}
 	baseSql = baseSql + " order by t1.update_time desc"
 	err = x.SQL(baseSql, params...).Find(&alarmStrategyTable)
@@ -40,6 +39,9 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, Name: v.Name, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
 		tmpStrategyObj.UpdateTime = v.UpdateTime
 		tmpStrategyObj.UpdateUser = v.UpdateUser
+		if strings.TrimSpace(v.LogMetricGroup) != "" {
+			tmpStrategyObj.LogMetricGroup = &v.LogMetricGroup
+		}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		if tmpStrategyConditions, tmpErr := getStrategyConditions(v.Guid); tmpErr != nil {
 			err = tmpErr
