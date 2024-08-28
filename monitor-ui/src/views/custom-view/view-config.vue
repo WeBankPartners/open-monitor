@@ -14,7 +14,7 @@
               <h5 class="d-inline-block"> {{panalName}}</h5>
               <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
             </template>
-            <Tag v-if='logMetricGroup' class='ml-2' style="width: 40px" color='#98cd72'>auto</Tag>
+            <Tag v-if='logMetricGroup' class='ml-2' style="width: 40px" color='green'>auto</Tag>
           </div>
         </div>
         <div class="search-container">
@@ -224,7 +224,7 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
-                  <Tag v-if='item.logMetricGroup' color='#98cd72'>auto</Tag>
+                  <Tag v-if='item.logMetricGroup' color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <span class='header-grid-name-text'>{{item.i}}</span>
@@ -492,7 +492,7 @@ export default {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
-    this.getAllChartOptionList()
+    // this.getAllChartOptionList()
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
