@@ -465,7 +465,7 @@ func QueryCustomChartList(condition models.QueryChartParam, operator string, rol
 		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	if condition.Show == "me" {
-		sql = sql + " and log_metric_group is not null"
+		sql = sql + " and log_metric_group is null"
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"
