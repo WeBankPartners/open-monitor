@@ -63,7 +63,7 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 				alarmStrategy.LogMetricGroup = &alarmStrategyParam.LogMetricGroupGuid
 				alarmStrategy.Metric = alarmMetric.MetricId
 				alarmStrategy.MetricName = alarmMetric.Metric
-				alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategyParam.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+				alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategy.Name, alarmMetric.Time, alarmMetric.TimeUnit)
 				// 添加编排与通知
 				alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: alarmStrategyParam.ServiceGroupsRoles})
 				alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: alarmStrategyParam.ServiceGroupsRoles})
