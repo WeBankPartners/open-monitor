@@ -376,10 +376,10 @@ li {
   align-items: center;
   .custom-title-text {
     display: inline-block;
-    max-width: 300px; /* 设置固定宽度 */
-    white-space: nowrap; /* 禁止换行 */
-    overflow: hidden; /* 隐藏溢出内容 */
-    text-overflow: ellipsis; /* 显示省略号 */
+    max-width: ~"calc(40vw - 250px)";
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
   }
 }
