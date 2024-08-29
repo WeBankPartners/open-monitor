@@ -1,183 +1,130 @@
 <template>
-  <div>
-    <ul>
-      <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
-        <div @click="hide(itemIndex)" class="tree-title" :style="[addTag(item.fetch_search), stylePadding]">
-          <div style="display:flex;justify-content: space-between;">
-            <div>
-              <span class="title-style">{{item.display_name}}</span>
-              <TagShow :tagName='item.type' />
-              <!-- <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag> -->
-            </div>
-            <div>
-              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedObject')">
-                <Button size="small" type="primary" @click="associatedObject(item)">
-                  <Icon type="ios-cube" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" max-width="400" :content="$t('m_button_edit')">
-                <Button size="small" type="primary" @click="editPanal(item)">
-                  <Icon type="md-create" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_addAssociatedRole')">
-                <Button size="small" type="warning" @click="associatedRole(item)">
-                  <Icon type="md-person" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" max-width="400" :content="$t('m_resourceLevel_alarmCallback')">
-                <Button size="small" type="info" @click="alarmCallback(item)">
-                  <Icon type="md-warning" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" max-width="400" :content="$t('m_add')">
-                <Button size="small" type="success" @click="addPanel(item)">
-                  <Icon type="md-add" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" max-width="400" :content="$t('m_button_remove')">
-                <Button size="small" class="mr-2" type="error" @click="deleteConfirmModal(item)">
-                  <Icon type="md-trash" />
-                </Button>
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-        <transition name="fade">
-
-          <!-- v-show="item._isShow" -->
-          <div>
-            <recursive
-              :increment="count"
-              v-if="item.children"
-              :recursiveViewConfig="item.children"
-            ></recursive>
-            <div>
-            </div>
-          </div>
-        </transition>
-      </li>
-    </ul>
+  <div class="monitor-resource-recursive">
+    <Tree :data="treeData" :render="renderTree" expand-node @on-select-change="handleSelectNode"></Tree>
     <!-- 节点新增、编辑 -->
-    <Modal
-      label-colon
-      v-model="isEditPanal"
-      :mask-closable="false"
+    <BaseDrawer
       :title="$t('m_resourceLevel_levelMsg')"
+      :visible.sync="isEditPanal"
+      :realWidth="800"
+      :scrollable="true"
     >
-      <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem :label="$t('m_field_guid')">
-          <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
-        </FormItem>
-        <FormItem :label="$t('m_field_displayName')">
-          <Input v-model="currentData.display_name"></Input>
-        </FormItem>
-        <FormItem :label="$t('m_field_type')">
-          <Input v-model="currentData.type"></Input>
-        </FormItem>
-      </Form>
-      <div slot="footer">
+      <template slot="content">
+        <Form :model="currentData" label-position="left" :label-width="60">
+          <FormItem :label="$t('m_field_guid')">
+            <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
+          </FormItem>
+          <FormItem :label="$t('m_field_displayName')">
+            <Input v-model="currentData.display_name"></Input>
+          </FormItem>
+          <FormItem :label="$t('m_field_type')">
+            <Input v-model="currentData.type"></Input>
+          </FormItem>
+        </Form>
+      </template>
+      <template slot="footer">
         <Button @click="isEditPanal = false">{{$t('m_button_cancel')}}</Button>
-        <Button @click="savePanal">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
+        <Button type="primary" @click="savePanal">{{$t('m_button_save')}}</Button>
+      </template>
+    </BaseDrawer>
     <!-- 关联角色 -->
-    <Modal
-      label-colon
-      v-model="isAssociatedRole"
-      :mask-closable="false"
+    <BaseDrawer
+      :visible.sync="isAssociatedRole"
+      :realWidth="800"
+      :scrollable="true"
       :title="$t('m_resourceLevel_associatedRole')"
     >
-      <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem :label="$t('m_resourceLevel_role')">
-          <Select v-model="selectedRole" multiple filterable>
-            <Option v-for="item in allRole" :value="item.value" :key="item.value">{{ item.name }}</Option>
-          </Select>
-        </FormItem>
-      </Form>
-      <div slot="footer">
+      <template slot="content">
+        <Form :model="currentData" label-position="left" :label-width="60">
+          <FormItem :label="$t('m_resourceLevel_role')">
+            <Select v-model="selectedRole" multiple filterable>
+              <Option v-for="item in allRole" :value="item.value" :key="item.value">{{ item.display_name }}</Option>
+            </Select>
+          </FormItem>
+        </Form>
+      </template>
+      <template slot="footer">
         <Button @click="isAssociatedRole = false">{{$t('m_button_cancel')}}</Button>
         <Button type="primary" @click="saveAssociatedRole">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
+      </template>
+    </BaseDrawer>
 
     <!-- 关联对象 -->
-    <Modal
-      label-colon
-      v-model="isAssociatedObject"
-      :mask-closable="false"
-      :width="550"
+    <BaseDrawer
+      :visible.sync="isAssociatedObject"
+      realWidth="800"
+      :scrollable="true"
       :title="$t('m_resourceLevel_associatedObject')"
     >
-      <Form :model="currentData" label-position="right" label-colon :label-width="100">
-        <FormItem :label="$t('m_add_object')">
-          <Select
-            v-model="addObject"
-            filterable
-            clearable
-            multiple
-            style="width:300px"
-            :placeholder="$t('m_requestMoreData')"
-            :remote-method="getAllObject"
-          >
-            <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
-              <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow>
-              {{ item.option_text }}</Option>
-          </Select>
-          <Button @click="addObjectItem">{{$t('m_button_add')}}</Button>
-        </FormItem>
-        <FormItem :label="$t('m_selected_object')" style="max-height:500px;overflow:auto">
-          <template v-for="(obj, objIndex) in selectedObject">
-            <Tooltip :key="objIndex" transfer>
-              <Tag
-                :key="objIndex"
-                type="border"
-                closable
-                @on-close="removeObj(objIndex)"
-                color="primary"
-              >
-                <span style="color:red">{{obj.type}}:</span>
-                {{obj.option_text.length > 40 ? obj.option_text.substring(0,40) + '...' : obj.option_text}}
-              </Tag>
-              <div slot="content" style="white-space: normal;max-width:200px;word-break: break-all;">
-                {{obj.option_text}}
-              </div>
-            </Tooltip>
-          </template>
-        </FormItem>
-      </Form>
-      <div slot="footer">
+      <template slot="content">
+        <Form :model="currentData" label-position="right" label-colon :label-width="100">
+          <FormItem :label="$t('m_add_object')">
+            <Select
+              v-model="addObject"
+              filterable
+              clearable
+              multiple
+              style="width:300px"
+              :placeholder="$t('m_requestMoreData')"
+              :remote-method="getAllObject"
+            >
+              <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
+                <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow>
+                {{ item.option_text }}</Option>
+            </Select>
+            <Button @click="addObjectItem">{{$t('m_button_add')}}</Button>
+          </FormItem>
+          <FormItem :label="$t('m_selected_object')" style="max-height:500px;overflow:auto">
+            <div v-for="(obj, objIndex) in selectedObject" :key="objIndex" style="display:flex;flex-direction:column;">
+              <Tooltip :key="objIndex" transfer>
+                <Tag
+                  :key="objIndex"
+                  type="border"
+                  closable
+                  @on-close="removeObj(objIndex)"
+                  color="primary"
+                >
+                  <span style="color:red">{{obj.type}}:</span>
+                  {{obj.option_text.length > 40 ? obj.option_text.substring(0,40) + '...' : obj.option_text}}
+                </Tag>
+                <div slot="content" style="white-space: normal;max-width:200px;word-break: break-all;">
+                  {{obj.option_text}}
+                </div>
+              </Tooltip>
+            </div>
+          </FormItem>
+        </Form>
+      </template>
+      <template slot="footer">
         <Button @click="isAssociatedObject = false">{{$t('m_button_cancel')}}</Button>
         <Button type="primary" @click="saveAssociatedObject">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
+      </template>
+    </BaseDrawer>
     <!-- 告警回调 -->
-    <Modal
-      label-colon
-      v-model="isAlarmCallback"
-      :mask-closable="false"
+    <BaseDrawer
+      :visible.sync="isAlarmCallback"
+      realWidth="800"
+      :scrollable="true"
       :title="$t('m_resourceLevel_alarmCallback')"
     >
-      <Form label-position="left" :label-width="80">
-        <FormItem :label="$t('m_resourceLevel_alarmFiring')">
-          <Select v-model="selectedFiring" filterable clearable>
-            <Option v-for="item in allFiring" :value="item.option_text" :key="item.option_text + 'ab'">{{ item.option_text }}</Option>
-          </Select>
-        </FormItem>
-        <FormItem :label="$t('m_resourceLevel_alarmRecover')">
-          <Select v-model="selectedRecover" filterable clearable>
-            <Option v-for="item in allRecover" :value="item.option_text" :key="item.option_text + 'cd'">{{ item.option_text }}</Option>
-          </Select>
-        </FormItem>
-      </Form>
-      <div slot="footer">
+      <template slot="content">
+        <Form label-position="left" :label-width="80">
+          <FormItem :label="$t('m_resourceLevel_alarmFiring')">
+            <Select v-model="selectedFiring" filterable clearable>
+              <Option v-for="item in allFiring" :value="item.option_text" :key="item.option_text + 'ab'">{{ item.option_text }}</Option>
+            </Select>
+          </FormItem>
+          <FormItem :label="$t('m_resourceLevel_alarmRecover')">
+            <Select v-model="selectedRecover" filterable clearable>
+              <Option v-for="item in allRecover" :value="item.option_text" :key="item.option_text + 'cd'">{{ item.option_text }}</Option>
+            </Select>
+          </FormItem>
+        </Form>
+      </template>
+      <template slot="footer">
         <Button @click="isAlarmCallback = false">{{$t('m_button_cancel')}}</Button>
         <Button type="primary" @click="saveAlarmCallback">{{$t('m_button_save')}}</Button>
-      </div>
-    </Modal>
+      </template>
+    </BaseDrawer>
     <!-- 告警接收人 -->
     <Modal
       label-colon
@@ -268,10 +215,12 @@
 <script>
 import {randomColor} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
+import cloneDeep from 'lodash/cloneDeep'
 export default {
   name: 'recursive',
   data() {
     return {
+      treeData: [],
       isShowWarning: false,
       isEditPanal: false,
       isAdd: true,
@@ -338,6 +287,16 @@ export default {
       return window.request ? true: false
     }
   },
+  watch: {
+    recursiveViewConfig: {
+      handler(val) {
+        this.treeData = cloneDeep(val || [])
+        this.setExpand(this.treeData, true)
+      },
+      immediate: true,
+      deep: true
+    }
+  },
   created() {
     // if (!this.recursiveViewConfig) {
     //   return
@@ -347,6 +306,69 @@ export default {
     // })
   },
   methods: {
+    // eslint-disable-next-line
+    handleSelectNode(data, item) {
+      if (item.selected === true) {
+        this.setExpand([item], true)
+      } else {
+        this.setExpand([item], false)
+      }
+    },
+    // 递归实现当前点击节点下所有节点展开/折叠
+    setExpand(arr, expand) {
+      arr.forEach(item => {
+        this.$set(item, 'expand', expand)
+        if (Array.isArray(item.children) && item.children.length > 0) {
+          this.setExpand(item.children, expand)
+        }
+      })
+    },
+    // eslint-disable-next-line
+    renderTree(h, { root, node, data }) {
+      return (
+        <div class="tree-border tree-item">
+          <div class="tree-item-title" style={[this.addTag(data.fetch_search)]}>
+            <TagShow tagName={data.type} style="margin-left:5px;" />
+            <span>{data.display_name}</span>
+          </div>
+          {
+            data.selected && <div class="tree-item-btn" onClick={e => {e.stopPropagation()}}>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedObject')}>
+                <Button size="small" type="primary" onClick={() => {this.associatedObject(data)}}>
+                  <Icon type="ios-cube" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
+                <Button size="small" type="primary" onClick={() => {this.editPanal(data)}}>
+                  <Icon type="md-create" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedRole')}>
+                <Button size="small" type="warning" onClick={() => {this.associatedRole(data)}}>
+                  <Icon type="md-person" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_alarmCallback')}>
+                <Button size="small" type="info" onClick={() => {this.alarmCallback(data)}}>
+                  <Icon type="md-warning" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" content={this.$t('m_add')}>
+                <Button size="small" type="success" onClick={() => {this.addPanel(data)}}>
+                  <Icon type="md-add" />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" max-width="400" content={this.$t('m_button_remove')}>
+                <Button size="small" class="mr-2" type="error" onClick={() => {this.deleteConfirmModal(data)}}>
+                  <Icon type="md-trash" />
+                </Button>
+              </Tooltip>
+            </div>
+          }
+        </div>
+      )
+    },
     addObjectItem() {
       this.addObject.forEach(obj => {
         const isExist = this.selectedObject.find(s => s.option_value === obj)
@@ -743,4 +765,44 @@ export default {
     color: red;
     margin-bottom: 0px;
   }
+</style>
+<style lang="less">
+.monitor-resource-recursive {
+  .tree-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &-title {
+      width: 800px;
+    }
+    &-btn {
+      margin-left: 300px;
+      button {
+        margin-right: 6px;
+      }
+    }
+  }
+  .ivu-tree > .ivu-tree-children {
+    width: 100%;
+    border: 1px solid #9966;
+    margin: 6px 0;
+    padding: 0px 5px;
+  }
+  .ivu-tree ul li {
+    margin: 4px 0;
+  }
+  .ivu-tree-title {
+    width: 800px;
+    padding: 2px 4px;
+    &:hover {
+      background: transparent;
+    }
+  }
+  .ivu-tree-title-selected {
+    background-color: #d5e8fc !important;
+  }
+  .ivu-tree-arrow {
+    display: none;
+  }
+}
 </style>
