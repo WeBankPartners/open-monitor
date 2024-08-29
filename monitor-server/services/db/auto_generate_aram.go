@@ -163,7 +163,9 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			LogMetricGroup: &dashboardParam.LogMetricGroupGuid,
 		}
 		// 看板名称使用显示名
-		dashboard.Name = fmt.Sprintf("%s_%s", displayServiceGroup, dashboardParam.MetricPrefixCode)
+		if displayServiceGroup != "" {
+			dashboard.Name = fmt.Sprintf("%s_%s", displayServiceGroup, dashboardParam.MetricPrefixCode)
+		}
 		customDashboard = dashboard.Name
 		// 查询看板 名称是否已存在
 		if customDashboardList, err = QueryCustomDashboardListByName(customDashboard); err != nil {
@@ -301,7 +303,7 @@ func generateMetricGuid(metric, serviceGroup string) string {
 
 func generateMetricGuidDisplayName(metricPrefixCode, metric, displayServiceGroup string) string {
 	if metricPrefixCode != "" {
-		metric = metricPrefixCode + metric
+		metric = metricPrefixCode + "_" + metric
 	}
 	return fmt.Sprintf("%s__%s", metric, displayServiceGroup)
 }
