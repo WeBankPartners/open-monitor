@@ -746,7 +746,7 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 	return
 }
 
-func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err error) {
+func ImportLogMetric(param *models.LogMetricQueryObj, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
 	existData, queryErr := GetLogMetricByServiceGroup(param.Guid)
 	if queryErr != nil {
@@ -777,7 +777,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 			inputLogMonitor.Guid = "lmm_" + guid.CreateGuid()
 			actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{inputLogMonitor.Guid, param.Guid, inputLogMonitor.LogPath, inputLogMonitor.MetricType, inputLogMonitor.MonitorType, nowTime}})
 		}
-		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap)
+		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -856,7 +856,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 	return
 }
 
-func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
+func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
 	if existObj.Guid != "" {
 		// compare log json monitor
 		for _, inputJsonObj := range inputObj.JsonConfigList {
@@ -919,7 +919,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 				actions = append(actions, tmpMetricGroupActions...)
 				affectEndpointGroup = append(affectEndpointGroup, tmpAffect...)
 			} else {
-				tmpMetricGroupActions, tmpErr := getCreateLogMetricGroupByImport(inputMetricGroup, operator, existMetricMap)
+				tmpMetricGroupActions, tmpErr := getCreateLogMetricGroupByImport(inputMetricGroup, operator, existMetricMap, errMsgObj)
 				if tmpErr != nil {
 					err = tmpErr
 					return
@@ -968,7 +968,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			metricGroup.LogMetricMonitor = inputObj.Guid
 			metricGroup.ServiceGroup = inputObj.ServiceGroup
 			metricGroup.MonitorType = inputObj.MonitorType
-			tmpActions, tmpErr := getCreateLogMetricGroupByImport(metricGroup, operator, existMetricMap)
+			tmpActions, tmpErr := getCreateLogMetricGroupByImport(metricGroup, operator, existMetricMap, errMsgObj)
 			if tmpErr != nil {
 				err = tmpErr
 				return
@@ -984,7 +984,7 @@ func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTi
 	return
 }
 
-func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, err error) {
 	if metricGroup.LogMonitorTemplate != "" {
 		metricGroup.LogMonitorTemplate, err = GetLogTemplateGuidByName(metricGroup.LogMonitorTemplateName)
 		if err != nil {
@@ -1006,7 +1006,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap)
+		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1203,10 +1203,10 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (result *models.CreateLogMetricGroupDto, err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string))
+	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj)
 	if err != nil {
 		return
 	}
@@ -1214,7 +1214,7 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
 	var templateSnapshot []byte
 	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
@@ -1291,25 +1291,24 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
 		serviceGroupsRoles = roles[:1]
 	}
-	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateAlarmStrategy(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, endpointGroup, operator); err != nil {
+	alarmStrategyParam := models.AutoAlarmStrategyParam{LogMetricGroupWithTemplate: param, MetricList: logMonitorTemplateObj.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
+		ServiceGroup: serviceGroup, EndpointGroup: endpointGroup, Operator: operator, ErrMsgObj: errMsgObj}
+	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateAlarmStrategy(alarmStrategyParam); err != nil {
 		return
 	}
 	if len(subCreateAlarmStrategyActions) > 0 {
 		actions = append(actions, subCreateAlarmStrategyActions...)
 		result.AlarmList = alarmStrategyList
 	}
-	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(param, logMonitorTemplateObj.MetricList, serviceGroupsRoles, serviceGroup, operator); err != nil {
+	var dashboardParam = models.AutoCreateDashboardParam{LogMetricGroupWithTemplate: param, MetricList: logMonitorTemplateObj.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
+		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj}
+	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(dashboardParam); err != nil {
 		return
 	}
 	if len(subCreateDashboardActions) > 0 {
 		actions = append(actions, subCreateDashboardActions...)
 	}
 	return
-}
-
-// checkDataValid 前置校验数据合法性
-func checkDataValid() (bool, error) {
-	return true, nil
 }
 
 func getCreateLogMetricGroupMapAction(param *models.LogMetricGroupWithTemplate, nowTime time.Time) (sucRetCode string, actions []*Action) {

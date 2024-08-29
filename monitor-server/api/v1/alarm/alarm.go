@@ -480,7 +480,7 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		MetricList:    []string{},
 		AlarmNameList: []string{},
 	}
-	if data.AlarmNameList, err = db.GetAlarmNameList(status); err != nil {
+	if data.AlarmNameList, err = db.GetAlarmNameList(status, ""); err != nil {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
@@ -488,11 +488,60 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
-	if data.MetricList, err = db.GetAllMetricNameList(); err != nil {
+	if data.MetricList, err = db.QueryMetricNameList(""); err != nil {
 		mid.ReturnServerHandleError(c, err)
 		return
 	}
 
+	mid.ReturnSuccessData(c, data)
+}
+
+func GetProblemAlarmOptionsNew(c *gin.Context) {
+	var err error
+	var param m.AlarmOptionsParam
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	var data = &m.ProblemAlarmOptionsNew{
+		EndpointList:  []m.AlarmEndpoint{},
+		MetricList:    []string{},
+		AlarmNameList: []string{},
+	}
+	// 查询全量
+	if strings.TrimSpace(param.AlarmName) != "" {
+		if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, ""); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
+		return
+	}
+	if strings.TrimSpace(param.Endpoint) != "" {
+		if data.EndpointList, err = db.QueryEndpointList(""); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
+		return
+	}
+	if strings.TrimSpace(param.Metric) != "" {
+		if data.MetricList, err = db.QueryMetricNameList(""); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
+		return
+	}
+	if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, param.AlarmName); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
+	if data.EndpointList, err = db.QueryEndpointList(param.Endpoint); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
+	if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
 	mid.ReturnSuccessData(c, data)
 }
 

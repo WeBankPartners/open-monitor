@@ -133,6 +133,7 @@ func init() {
 		// 告警列表
 		&handlerFuncObj{Url: "/alarm/history", Method: http.MethodGet, HandlerFunc: alarm.GetHistoryAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/options", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarmOptions},
+		&handlerFuncObj{Url: "/alarm/problem/options-new", Method: http.MethodPost, HandlerFunc: alarm.GetProblemAlarmOptionsNew},
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
