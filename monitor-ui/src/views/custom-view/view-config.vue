@@ -1,5 +1,5 @@
 <template>
-  <div class="view-config-all-content">
+  <div>
     <div>
       <header>
         <div class="header-name">
@@ -14,7 +14,7 @@
               <h5 class="d-inline-block"> {{panalName}}</h5>
               <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
             </template>
-            <Tag v-if='logMetricGroup' class='ml-2' style="width: 40px" color='green'>auto</Tag>
+            <Tag v-if='logMetricGroup' class='ml-2' style="font-size: 14px; min-width: 46px" color='green'>auto</Tag>
           </div>
         </div>
         <div class="search-container">
@@ -151,41 +151,47 @@
                   </DropdownMenu>
                 </div>
                 <div v-else class='copy-drowdown-slot'>
-                  <div class='copy-drowdown-slot-select'>
+                  <div class='copy-drowdown-slot-select' @click="e => e.stopPropagation()">
+                    <Input v-model.trim="filterChartName"
+                           clearable
+                           :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
+                           @on-change="(e) => {
+                             filterChartName = e.target.value
+                             debounceGetAllChartOptionList()
+                           }"
+                    />
                     <Select v-model="selectedDashBoardId"
                             clearable
                             filterable
                             :placeholder="$t('m_please_select') + $t('m_source_dashboard')"
-                            @on-change="getAllChartOptionList"
+                            @on-change="(id) => {
+                              selectedDashBoardId = id
+                              debounceGetAllChartOptionList()
+                            }"
                     >
-                      <Option v-for="single in item.options.sourceBoardOptions"
+                      <Option v-for="single in allDashBoardList"
                               :value="single.id"
                               :key="single.id"
                       >
                         {{ single.name }}
                       </Option>
                     </Select>
-                    <Select v-model="selectedChartId"
-                            clearable
-                            filterable
-                            multiple
-                            :max-tag-count='1'
-                            :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
-                    >
-                      <Option v-for="single in item.options.chartOptions"
-                              :disabled="single.disabled"
-                              :value="single.id"
-                              :key="single.name"
-                      >
-                        {{ single.name }}
-                      </Option>
-                    </Select>
                   </div>
+                  <div class="copy-table-tips">{{$t('m_copy_table_tips')}}</div>
+                  <Table
+                    class="copy-detail-table"
+                    size="small"
+                    max-height="400"
+                    :border="false"
+                    :columns="copyTableColumns"
+                    :data="allChartFilteredList"
+                    @on-selection-change='onCopyTableSelected'
+                  />
 
                   <Button
                     type="primary"
                     class='copy-drowdown-confirm-button'
-                    @click="onAddChart(selectedChartId, item.type)"
+                    @click="onAddChart(selectedChartList, item.type)"
                   >
                     {{$t('m_confirm')}}
                   </Button>
@@ -224,14 +230,33 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
-                  <Tag v-if='item.logMetricGroup' color='green'>auto</Tag>
+                  <Tag style="font-size: 14px; min-width: 46px" v-if='item.logMetricGroup' color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
-                      <span class='header-grid-name-text'>{{item.i}}</span>
+                      <div v-html="processHtmlText(item.i)" class='header-grid-name-text'></div>
                     </Tooltip>
-                    <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:150px" size="small" placeholder="" />
+                    <span v-else @click.stop="">
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="100" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
+                    <!-- <Poptip
+                      transfer
+                      placement="left-end"
+                      @on-ok="confirmDeleteGroup(item, index)"
+                    >
+                      <template slot='content'>
+                        <div>
+                          <Input :value="item.i"
+                            placeholder=""
+                            show-word-limit />
+                        </div>
+                      </template>
+                      <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
+                        <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)"
+                          class="fa fa-pencil-square"
+                          style="font-size: 16px;"
+                        aria-hidden="true"></i>
+                      </Tooltip>
+                    </Poptip> -->
                     <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" ></Icon>
@@ -345,7 +370,7 @@
 
 <script>
 import {
-  isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter
+  isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter, debounce
 } from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
 import {
@@ -360,6 +385,12 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+
+const lineTypeNameMap = {
+  line: 'm_line_chart_s',
+  pie: 'm_pie_chart',
+  bar: 'm_bar_chart'
+}
 
 export default {
   name: '',
@@ -474,9 +505,39 @@ export default {
       previousChartLayoutType: 'customize', // 用于记录radio点击前的type
       tempChartLayoutType: '', // 用于记录点击后的type,
       allPageLayoutData: [],
-      selectedDashBoardId: '',
-      selectedChartId: [],
-      logMetricGroup: '' // 该字段非空代表该看板为自动创建
+      selectedDashBoardId: 0,
+      selectedChartList: [],
+      logMetricGroup: '', // 该字段非空代表该看板为自动创建
+      allDashBoardList: [],
+      allChartFilteredList: [],
+      filterChartName: '',
+      copyTableColumns: [
+        {
+          type: 'selection',
+          width: 60,
+          align: 'center'
+        },
+        {
+          title: this.$t('m_graph_name'),
+          minWidth: 350,
+          key: 'name',
+        },
+        {
+          title: this.$t('m_screen_name'),
+          minWidth: 220,
+          key: 'dashboardName',
+        },
+        {
+          title: this.$t('m_graph_type'),
+          minWidth: 220,
+          key: 'lineType',
+          render: (h, params) => (
+            <div>
+              {this.$t(lineTypeNameMap[params.row.lintType])}
+            </div>
+          )
+        }
+      ]
     }
   },
   computed: {
@@ -492,7 +553,7 @@ export default {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
-    // this.getAllChartOptionList()
+    this.getAllChartOptionList()
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
@@ -520,73 +581,47 @@ export default {
       })
     },
     onCopyButtonClick() {
-      this.selectedDashBoardId = ''
-      this.selectedChartId = []
+      this.filterChartName = ''
+      this.selectedDashBoardId = 0
+      this.selectedChartList = []
       this.getAllChartOptionList()
     },
-    processSourceBoardOptions(rawData) {
-      const options = []
-      for (const key in rawData) {
-        if (!isEmpty(rawData[key])) {
-          rawData[key].forEach(item => {
-            if (!find(options, {id: item.sourceDashboard})) {
-              options.push({
-                name: item.dashboardName,
-                id: item.sourceDashboard
-              })
-            }
-          })
-        }
-      }
-      return options
-    },
-    getAllChartOptionList(sourceBoardId = '') {
-      this.selectedChartId = []
-      this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
-        this.allAddChartOptions[1].options.sourceBoardOptions = this.processSourceBoardOptions(res)
-        this.allAddChartOptions[1].options.chartOptions = this.processChartOptions(res, sourceBoardId)
-      })
-      this.request('GET', '/monitor/api/v2/chart/shared/list', {
-        dashboard_id: this.pannelId
-      }, res => {
-        this.allAddChartOptions[2].options.sourceBoardOptions = this.processSourceBoardOptions(res)
-        this.allAddChartOptions[2].options.chartOptions = this.processChartOptions(res, sourceBoardId)
-      })
-    },
-    processChartOptions(rawData, sourceBoardId) {
-      const options = []
-      const initialOption = {
-        line: {
-          name: '折线图',
-          id: 'line',
-          iconType: 'md-trending-up',
-          disabled: true
-        },
-        pie: {
-          name: '饼图',
-          id: 'pie',
-          iconType: 'md-pie',
-          disabled: true
-        },
-        bar: {
-          name: '柱状图',
-          id: 'bar',
-          iconType: 'ios-stats',
-          disabled: true
-        }
-      }
+    debounceGetAllChartOptionList: debounce(function (){
+      this.getAllChartOptionList()
+    }, 500),
 
+    getAllChartOptionList() {
+      this.selectedChartList = []
+      const dashboardParams = {
+        show: '',
+        permission: '',
+        name: '',
+        id: 0,
+        useRoles: [],
+        mgmtRoles: [],
+        updateUser: '',
+        pageSize: 10000,
+        startIndex: 0
+      }
+      this.request('POST', '/monitor/api/v2/dashboard/custom/list', dashboardParams, res => {
+        this.allDashBoardList = res.contents
+      })
+
+      const params = {
+        curDashboardId: this.pannelId,
+        dashboardId: this.selectedDashBoardId,
+        chartName: this.filterChartName
+      }
+      this.request('POST', '/monitor/api/v2/chart/shared/list', params, res => {
+        this.allChartFilteredList = this.processChartOptions(res)
+      })
+    },
+    processChartOptions(rawData) {
+      const options = []
       for (const key in rawData) {
-        options.push(initialOption[key])
         if (!isEmpty(rawData[key])) {
           rawData[key].forEach(item => {
-            if (!sourceBoardId) {
-              options.push(Object.assign({disabled: false}, item))
-            } else {
-              if (item.sourceDashboard === sourceBoardId) {
-                options.push(Object.assign({disabled: false}, item))
-              }
-            }
+            options.push(Object.assign({lintType: key}, item))
           })
         }
       }
@@ -949,8 +984,9 @@ export default {
 
     processInitialChartName() {
       let allName = []
-      if (!isEmpty(this.allPageLayoutData)) {
-        allName = this.allPageLayoutData.map(item => {
+      const initialList = this.layoutData.length > this.allPageLayoutData.length ? this.layoutData : this.allPageLayoutData
+      if (!isEmpty(initialList)) {
+        allName = initialList.map(item => {
           if (!isNaN(Number(item.i))) {
             return Number(item.i)
           }
@@ -969,7 +1005,16 @@ export default {
         needSetItem.y = lastItem.y
       }
     },
+    closeDropDownView(){
+      const elements = document.querySelectorAll('.ivu-select-dropdown')
+      elements.forEach(el => {
+        if (getComputedStyle(el).display !== 'none') {
+          el.style.display = 'none'
+        }
+      })
+    },
     async onAddChart(copyInfo, type) {
+      this.closeDropDownView()
       if (type === 'add') {
         // type为add的时候为新增，默认copyInfo只有一个
         const name = this.processInitialChartName()
@@ -1026,7 +1071,7 @@ export default {
           const copyParams = {
             dashboardId: this.pannelId,
             ref: type === 'copy' ? false : true,
-            originChartId: copyInfo[i],
+            originChartId: copyInfo[i].id,
             group,
             groupDisplayConfig: '',
             displayConfig: {
@@ -1069,7 +1114,7 @@ export default {
         }, 50)
       }
       setTimeout(() => {
-        document.querySelector('.grid-style').scrollIntoView({
+        document.querySelector('.vue-grid-layout').scrollIntoView({
           behavior: 'smooth',
           block: 'end'
         })
@@ -1512,6 +1557,16 @@ export default {
       }
       return finalItem
     },
+    processHtmlText(name) {
+      if (name.split('/').length > 1) {
+        return '<span style=\'font-size: 14px; line-height: 15px; display: inline-block\'>' + name.split('/').join('<br>') + '</span>'
+      }
+      return name
+
+    },
+    onCopyTableSelected(chartList) {
+      this.selectedChartList = chartList
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -1528,52 +1583,72 @@ export default {
 </script>
 
 <style lang="less">
-.view-config-all-content {
 
-  .chart-layout-poptip {
-    .ivu-poptip-popper {
-      top: 10px !important;
-      left: 565px !important
-    }
-    .ivu-poptip-confirm .ivu-poptip-popper {
-      max-width: 330px;
-    }
-  }
+.chart-layout-poptip {
   .ivu-poptip-popper {
-    color: #515a6e
+    top: 10px !important;
+    left: 565px !important
   }
-
-  .chart-config-info {
-    .ivu-dropdown-item-disabled {
-      color: inherit
-    }
+  .ivu-poptip-confirm .ivu-poptip-popper {
+    max-width: 330px;
   }
+}
+.ivu-poptip-popper {
+  color: #515a6e
+}
 
-  .chart-option-menu {
-    .ivu-dropdown-menu {
-      max-height: 600px;
-      overflow: scroll;
-    }
+.chart-config-info {
+  .ivu-dropdown-item-disabled {
+    color: inherit
   }
+}
 
-  .references-button {
-    background-color: #edf4fe !important;
-    border-color: #b5d0fb !important;
+.chart-option-menu {
+  .ivu-dropdown-menu {
+    max-height: 600px;
+    overflow: scroll;
   }
+}
 
-  .ivu-select-dropdown {
-    max-height: 100vh !important;
+.references-button {
+  background-color: #edf4fe !important;
+  border-color: #b5d0fb !important;
+}
+
+.references-button {
+  background-color: #edf4fe !important;
+  border-color: #b5d0fb !important;
+}
+
+.ivu-select-dropdown {
+  max-height: 100vh !important;
+}
+
+.grid-content {
+  display: flex;
+  padding: 0 5px;
+  font-size: 16px;
+  align-items: center;
+  margin-top: 3px;
+}
+
+.header-grid-tools {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  i {
+    font-size: 18px !important
   }
-
-  .grid-content {
-    display: flex;
-    padding: 0 5px;
-    font-size: 16px;
-    align-items: center;
-    margin-top: 3px;
+}
+.header-tools {
+  .ivu-btn-info {
+    background-color: #aa8aea;
+    border-color: #aa8aea;
   }
+}
 
-  .header-grid-tools {
+.header-grid-name {
+  .ivu-tooltip-rel {
     display: flex;
     align-items: center;
     flex-grow: 1;
@@ -1637,7 +1712,7 @@ export default {
 }
 .header-grid {
   display: flex;
-  flex-grow: 1;
+  // flex-grow: 1;
   justify-content: flex-end;
   line-height: 32px;
   i {
@@ -1664,6 +1739,7 @@ export default {
 }
 .chart-config-info {
   font-size: 14px;
+  padding-bottom: 10px;
 }
 
 .radio-group-radio {
@@ -1742,17 +1818,48 @@ export default {
     vertical-align: bottom;
   }
 
-.all-content {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-}
-
 .header-grid-name-text {
   display: inline-block;
-  max-width: 150px;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.copy-drowdown-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  // max-height: 220px;
+
+  .copy-drowdown-slot-select {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 5px;
+    width: 100%
+  }
+  .copy-drowdown-slot-select > :nth-child(1) {
+    margin-left: 20px;
+    width: 35%;
+  }
+  .copy-drowdown-slot-select > :nth-child(2) {
+    margin-left: 20px;
+    width: 35%;
+  }
+  .copy-drowdown-confirm-button {
+    width: 100px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    align-self: flex-end;
+  }
+  .copy-detail-table {
+    max-width: 850px;
+    margin-bottom: 10px;
+  }
+  .copy-table-tips {
+    margin-left: 20px;
+    margin-bottom: 5px;
+    color: #535a6c
+  }
 }
 </style>
