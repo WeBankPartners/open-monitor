@@ -222,8 +222,7 @@ import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
 import { generateUuid } from '@/assets/js/utils'
-import { generateAdjacentColors } from '@/assets/config/random-color'
-
+import { generateAdjacentColors, stringToNumber } from '@/assets/config/random-color'
 const initTableData = [
   {
     endpoint: '',
@@ -817,6 +816,10 @@ export default {
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
             item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+          } else {
+            if (isEmpty(item.series)) {
+              this.updateAllColorLine(i)
+            }
           }
         }
         if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
@@ -1120,9 +1123,8 @@ export default {
           tags: this.chartAddTags,
           tagOptions: this.chartAddTagOptions
         }
-
-        item.series = series.map((line, index) => {
-          line.color = generateAdjacentColors(colorGroup, 1, 35 * (index - 0.3))[0]
+        item.series = series.map(line => {
+          line.color = generateAdjacentColors(colorGroup, 1, stringToNumber(item.seriesName))[0]
           return line
         })
         this.tableData.push(item)
@@ -1342,7 +1344,7 @@ export default {
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
       this.tableData[index].series = series.map(item => {
-        item.color = item.color || this.getRandomColor()
+        item.color = item.color || generateAdjacentColors(this.tableData[index].colorGroup, 1, stringToNumber(item.seriesName))[0]
         return item
       })
     },
@@ -1362,8 +1364,8 @@ export default {
             const color = inputList[0].value
             data[key] = color
             if (key === 'colorGroup') {
-              Array.isArray(data.series) && data.series.forEach((line, index) => {
-                line.color = generateAdjacentColors(color, 1, 35 * (index - 0.3))[0]
+              Array.isArray(data.series) && data.series.forEach(line => {
+                line.color = generateAdjacentColors(color, 1, stringToNumber(line.seriesName))[0]
               })
             }
           })

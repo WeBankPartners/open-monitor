@@ -74,16 +74,30 @@
               ></Table>
             </div>
             <Divider orientation="left" size="small">{{ $t('m_success_code') }}</Divider>
-            <div class='success-code'>
-              <div class='mr-3'>{{$t('m_return_code')}}</div>
-              <Select class='mr-3' v-model="successCode.regulative" style="width:20%">
+            <Row class="mb-2">
+              <Col offset="3"  span="5">{{$t('m_match_type')}}</Col>
+              <Col span="5">{{$t('m_source_value')}}</Col>
+              <Col span="5">{{$t('m_match_value')}}</Col>
+              <Col span="4">{{$t('m_type')}}</Col>
+            </Row>
+            <Row class="mb-3">
+              <Col span="3">{{$t('m_return_code')}}</Col>
+              <Col span="5">
+              <Select style="width:90%" v-model="successCode.regulative">
                 <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                 <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
               </Select>
-              <Input class='mr-3' style="width:20%" v-model.trim="successCode.source_value" />
-              <Input style="width:20%" v-model.trim="successCode.target_value" />
+              </Col>
+              <Col span="5">
+              <Input style="width:90%" v-model.trim="successCode.source_value" />
+              </Col>
+              <Col span="5">
+              <Input style="width:90%" v-model.trim="successCode.target_value" />
+              </Col>
+              <Col span="4">
               <div>{{$t('m_success')}}</div>
-            </div>
+              </Col>
+            </Row>
           </div>
           </Col>
         </Row>
@@ -503,10 +517,19 @@ export default {
         const list = tmpData.metric_list
         for (let i=0; i<list.length; i++) {
           const item = list[i]
-          if (item.auto_alarm === true
-            && (isEmpty(item.range_config.operator) || isEmpty(item.range_config.threshold + '') || isEmpty(item.range_config.time + '') || isEmpty(item.range_config.time_unit))) {
-            this.$Message.warning(`${this.$t('m_threshold_property')}${this.$t('m_cannot_be_empty')}`)
-            return true
+          if (item.auto_alarm === true) {
+            if (!item.range_config.operator || !item.range_config.threshold || !item.range_config.time || !item.range_config.time_unit) {
+              this.$Message.warning(`${this.$t('m_threshold_property')}${this.$t('m_cannot_be_empty')}`)
+              return true
+            }
+            if (!this.isNumericString(item.range_config.threshold + '')) {
+              this.$Message.warning(`${this.$t('m_threshold_tips')}`)
+              return true
+            }
+            if (!this.isPositiveNumericString(item.range_config.time + '')) {
+              this.$Message.warning(`${this.$t('m_time_tips')}`)
+              return true
+            }
           }
         }
       }
@@ -620,6 +643,12 @@ export default {
           })
         })
       }
+    },
+    isNumericString(str) {
+      return !isNaN(str) && !isNaN(parseFloat(str))
+    },
+    isPositiveNumericString(str) {
+      return /^\d+(\.\d+)?$/.test(str) && parseFloat(str) >= 0
     }
   }
 }

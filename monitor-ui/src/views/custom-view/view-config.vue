@@ -1,5 +1,5 @@
 <template>
-  <div class="all-content">
+  <div class="view-config-all-content">
     <div>
       <header>
         <div class="header-name">
@@ -762,11 +762,10 @@ export default {
     },
     async confirmRemoveGrid(item) {
       this.deleteConfirm.id = item.id
+      remove(this.layoutData, {id: this.deleteConfirm.id})
+      remove(this.allPageLayoutData, {id: this.deleteConfirm.id})
+      this.filterLayoutData()
       const params = this.processPannelParams()
-      remove(params.charts, {id: this.deleteConfirm.id})
-      if (!isEmpty(params.charts)) {
-        params.charts[params.charts.length -1].displayConfig.x = 0
-      }
       await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params)
       this.getPannelList()
       this.getAllChartOptionList()
@@ -1529,92 +1528,72 @@ export default {
 </script>
 
 <style lang="less">
-.chart-layout-poptip {
+.view-config-all-content {
+
+  .chart-layout-poptip {
+    .ivu-poptip-popper {
+      top: 10px !important;
+      left: 565px !important
+    }
+    .ivu-poptip-confirm .ivu-poptip-popper {
+      max-width: 330px;
+    }
+  }
   .ivu-poptip-popper {
-    top: 10px !important;
-    left: 565px !important
+    color: #515a6e
   }
-  .ivu-poptip-confirm .ivu-poptip-popper {
-    max-width: 330px;
+
+  .chart-config-info {
+    .ivu-dropdown-item-disabled {
+      color: inherit
+    }
   }
-}
-.ivu-poptip-popper {
-  color: #515a6e
-}
 
-.chart-config-info {
-  .ivu-dropdown-item-disabled {
-    color: inherit
+  .chart-option-menu {
+    .ivu-dropdown-menu {
+      max-height: 600px;
+      overflow: scroll;
+    }
   }
-}
 
-.chart-option-menu {
-  .ivu-dropdown-menu {
-    max-height: 600px;
-    overflow: scroll;
+  .references-button {
+    background-color: #edf4fe !important;
+    border-color: #b5d0fb !important;
   }
-}
 
-.references-button {
-  background-color: #edf4fe;
-  border-color: #b5d0fb;
-}
-
-.chart-option-menu {
   .ivu-select-dropdown {
     max-height: 100vh !important;
   }
-}
 
-.chart-option-menu {
-  .copy-drowdown-slot {
+  .grid-content {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-
-    .copy-drowdown-slot-select {
-      display: flex;
-      justify-content: space-around;
-      width: 400px;
-      height: 70px;
-    }
-    .copy-drowdown-slot-select > :nth-child(1) {
-      width: 35%;
-    }
-    .copy-drowdown-slot-select > :nth-child(2) {
-      width: 55%;
-    }
-    .copy-drowdown-confirm-button {
-      width: 30%;
-    }
+    padding: 0 5px;
+    font-size: 16px;
+    align-items: center;
+    margin-top: 3px;
   }
-}
 
-.grid-content {
-  display: flex;
-  padding: 0 5px;
-  font-size: 16px;
-}
-
-.header-grid-tools {
-  display: flex;
-  align-items: center;
-  i {
-    font-size: 18px !important
-  }
-}
-.header-tools {
-  .ivu-btn-info {
-    background-color: #aa8aea;
-    border-color: #aa8aea;
-  }
-}
-
-.header-grid-name {
-  .ivu-tooltip-rel {
+  .header-grid-tools {
     display: flex;
     align-items: center;
-    height: 30px;
+    flex-grow: 1;
+    i {
+      font-size: 18px !important
+    }
+  }
+  .header-tools {
+    .ivu-btn-info {
+      background-color: #aa8aea;
+      border-color: #aa8aea;
+    }
+  }
+
+  .header-grid-name {
+    .ivu-tooltip-rel {
+      display: flex;
+      align-items: center;
+      height: 30px;
+    }
   }
 }
 </style>
