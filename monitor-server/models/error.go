@@ -32,6 +32,7 @@ type ErrorMessageObj struct {
 	DashboardNameRepeatError                  string `json:"dashboard_name_repeat_error"`
 	DashboardIdExistError                     string `json:"dashboard_id_exist_error"`
 	ImportDashboardNameExistError             string `json:"import_dashboard_name_exist_error"`
+	CreateDashboardNameExistError             string `json:"create_dashboard_name_exist_error"`
 	MetricNotSupportPreview                   string `json:"metric_not_support_preview"`
 	TypeConfigNameRepeatError                 string `json:"type_config_name_repeat_error"`
 	TypeConfigNameAssociationObjectError      string `json:"type_config_association_obj_error"`
@@ -39,4 +40,5 @@ type ErrorMessageObj struct {
 	AlertNameRepeatError                      string `json:"alert_name_repeat_error"`
 	AlertKeywordRepeatError                   string `json:"alert_keyword_repeat_error"`
 	EndpointHostDeleteError                   string `json:"endpoint_host_delete_error"`
+	LogMonitorTemplateDeleteError             string `json:"log_monitor_template_delete_error"`
 }

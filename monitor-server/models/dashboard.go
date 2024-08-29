@@ -2,6 +2,15 @@ package models
 
 import "time"
 
+type AutoCreateDashboardParam struct {
+	*LogMetricGroupWithTemplate
+	MetricList         []*LogMetricTemplate
+	ServiceGroupsRoles []string
+	ServiceGroup       string
+	Operator           string
+	ErrMsgObj          *ErrorMessageObj
+}
+
 type SearchModel struct {
 	Id             int    `json:"id"`
 	Enable         bool   `json:"enable"`
