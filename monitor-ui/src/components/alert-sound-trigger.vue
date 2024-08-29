@@ -37,6 +37,7 @@ export default {
   },
   methods: {
     setInterval() {
+      if (this.timeInterval === 0) {return}
       this.interval = setInterval(() => {
         this.getAlarm()
       }, this.timeInterval * 1000)
