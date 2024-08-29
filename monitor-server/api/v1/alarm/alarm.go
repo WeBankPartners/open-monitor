@@ -510,7 +510,7 @@ func GetProblemAlarmOptionsNew(c *gin.Context) {
 	}
 	// 查询全量
 	if strings.TrimSpace(param.AlarmName) != "" {
-		if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, ""); err != nil {
+		if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, param.AlarmName); err != nil {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}
@@ -518,7 +518,7 @@ func GetProblemAlarmOptionsNew(c *gin.Context) {
 		return
 	}
 	if strings.TrimSpace(param.Endpoint) != "" {
-		if data.EndpointList, err = db.QueryEndpointList(""); err != nil {
+		if data.EndpointList, err = db.QueryEndpointList(param.Endpoint); err != nil {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}
@@ -526,7 +526,7 @@ func GetProblemAlarmOptionsNew(c *gin.Context) {
 		return
 	}
 	if strings.TrimSpace(param.Metric) != "" {
-		if data.MetricList, err = db.QueryMetricNameList(""); err != nil {
+		if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}

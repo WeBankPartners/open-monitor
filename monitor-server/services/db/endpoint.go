@@ -203,7 +203,7 @@ func QueryEndpointList(endpoint string) (list []models.AlarmEndpoint, err error)
 			return
 		}
 	} else {
-		if err = x.SQL("select  * from service_group where display_name like '%'" + endpoint + "%' order by update_time desc limit 20").Find(&serviceGroupList); err != nil {
+		if err = x.SQL("select  * from service_group where display_name like '%" + endpoint + "%' order by update_time desc limit 20").Find(&serviceGroupList); err != nil {
 			return
 		}
 	}

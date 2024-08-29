@@ -2001,10 +2001,27 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	if status == "firing" {
 		closed = 0
 	}
-	if status == "" {
-		err = x.SQL("select alarm_name from (select distinct alarm_name,start from alarm union select distinct alert_title as alarm_name,update_at as start from alarm_custom) t order by t.start desc limit 20").Find(&list)
-	} else {
-		err = x.SQL("select alarm_name from (select distinct alarm_name,start from alarm where status=? union select distinct alert_title as alarm_name,update_at as start from alarm_custom where closed=?) t order by t.start desc limit 20", status, closed).Find(&list)
+	baseSQL := "select alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
+	var params []interface{}
+	if status != "" {
+		baseSQL = baseSQL + " and status=?"
+		params = append(params, status)
+	}
+	if strings.TrimSpace(alarmName) != "" {
+		baseSQL = baseSQL + " and alarm_name like '%" + alarmName + "%'"
+	}
+	baseSQL = baseSQL + " union select distinct alert_title as alarm_name,update_at as start from alarm_custom where 1=1"
+	if status != "" {
+		baseSQL = baseSQL + " and closed=?"
+		params = append(params, closed)
+	}
+	if strings.TrimSpace(alarmName) != "" {
+		baseSQL = baseSQL + " and alert_title like '%" + alarmName + "%'"
+	}
+	baseSQL = baseSQL + " ) t order by t.start desc limit 20"
+
+	if err = x.SQL(baseSQL, params...).Find(&list); err != nil {
+		return
 	}
 	if len(list) > 0 {
 		for _, s := range list {
