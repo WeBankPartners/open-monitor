@@ -496,12 +496,36 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 	tagConfigValue = make(map[string][]string)
 	if metricRow.LogMetricGroup != "" {
 		var stringMapRows []*models.LogMetricStringMapTable
-		err = x.SQL("select target_value,log_param_name from log_metric_string_map where log_metric_group=?", metricRow.LogMetricGroup).Find(&stringMapRows)
+		err = x.SQL("select target_value,log_param_name,value_type from log_metric_string_map where log_metric_group=?", metricRow.LogMetricGroup).Find(&stringMapRows)
 		if err != nil {
 			err = fmt.Errorf("query log metric string map table fail,%s ", err.Error())
 			return
 		}
+		var isSuccessMetric, isFailMetric bool
+		if metricRow.LogMetricTemplate != "" {
+			var logMetricTemplateRows []*models.LogMetricTemplate
+			err = x.SQL("select metric from log_metric_template where guid=?", metricRow.LogMetricTemplate).Find(&logMetricTemplateRows)
+			if err != nil {
+				err = fmt.Errorf("query log metric template table fail,%s ", err.Error())
+				return
+			}
+			if len(logMetricTemplateRows) > 0 {
+				if logMetricTemplateRows[0].Metric == "req_suc_count" {
+					isSuccessMetric = true
+				} else if logMetricTemplateRows[0].Metric == "req_fail_count" {
+					isFailMetric = true
+				}
+			}
+		}
 		for _, row := range stringMapRows {
+			if row.ValueType != "" {
+				if isSuccessMetric && row.ValueType == "fail" {
+					continue
+				}
+				if isFailMetric && row.ValueType == "success" {
+					continue
+				}
+			}
 			if v, ok := tagConfigValue[row.LogParamName]; ok {
 				tagConfigValue[row.LogParamName] = append(v, row.TargetValue)
 			} else {
