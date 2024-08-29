@@ -68,7 +68,7 @@
               <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
             <div class="card-pagination">
-              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-sizer show-total />
             </div>
           </div>
         </div>
@@ -667,7 +667,7 @@ export default {
     }
   }
   .card-pagination {
-    width: 40%;
+    max-width: 40%;
     position: fixed;
     bottom: 0px;
     right: 0px;

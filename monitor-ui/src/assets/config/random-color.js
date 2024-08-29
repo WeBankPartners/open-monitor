@@ -65,9 +65,16 @@ const generateAdjacentColors = (hexColor, count, degree) => {
   }
   return adjacentColors
 }
+const stringToNumber = (str, min = 10, max = 99) => {
+  if (!str) {return Math.floor(Math.random() * (max - min + 1)) + min}
+  const hash = Array.from(str).reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return parseInt((((hash % (max - min + 1)) + min) + '').split('').reverse()
+    .join(''), 10)
+}
 
 export {
-  generateAdjacentColors
+  generateAdjacentColors,
+  stringToNumber
 }
 // 示例
 // let colors = generateAdjacentColors("#ff5733", 3, 10);

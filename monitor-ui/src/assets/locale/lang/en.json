@@ -531,5 +531,9 @@
   "m_not_include": "Not Include",
   "m_show_user_created": "Show User Created",
   "m_has_create_warn": "Has Create Warn",
-  "m_has_create_dashboard": "Has Create Dashboard"
+  "m_has_create_dashboard": "Has Create Dashboard",
+  "m_screen_name": "Screen Name",
+  "m_copy_table_tips": "Copy Table Tips",
+  "m_threshold_tips": "Please enter a number for the threshold",
+  "m_time_tips": "Please enter a positive number for time"
 }
