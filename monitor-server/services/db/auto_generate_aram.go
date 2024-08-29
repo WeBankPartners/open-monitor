@@ -29,15 +29,15 @@ const (
 
 func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam) (actions []*Action, result []string, err error) {
 	var subActions []*Action
-	var serviceGroupTable *models.ServiceGroupTable
+	var serviceGroupTable models.ServiceGroupTable
 	// 显示名
 	var displayServiceGroup = alarmStrategyParam.ServiceGroup
 	result = []string{}
 	actions = []*Action{}
 	// 自动创建告警
 	if alarmStrategyParam.AutoCreateWarn {
-		x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", alarmStrategyParam.ServiceGroup).Get(serviceGroupTable)
-		if serviceGroupTable != nil {
+		x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", alarmStrategyParam.ServiceGroup).Get(&serviceGroupTable)
+		if serviceGroupTable.DisplayName != "" {
 			displayServiceGroup = serviceGroupTable.DisplayName
 		}
 		codeList := getTargetCodeMap(alarmStrategyParam.CodeStringMap)
@@ -49,7 +49,7 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 				// 添加告警配置基础信息
 				alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
-				alarmStrategy.Name = fmt.Sprintf("%s-%s %s %s%s", code, generateMetricGuidDisplayName(alarmStrategyParam.MetricPrefixCode, alarmMetric.Metric, displayServiceGroup), alarmMetric.Operator, alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
+				alarmStrategy.Name = fmt.Sprintf("%s-%s%s%s%s", code, generateMetricGuidDisplayName(alarmStrategyParam.MetricPrefixCode, alarmMetric.Metric, displayServiceGroup), alarmMetric.Operator, alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
 				if code == constOtherCode {
 					alarmStrategy.Priority = "medium"
 				} else {
@@ -141,13 +141,13 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	var metricMap = getMetricMap(dashboardParam.MetricList, dashboardParam.MetricPrefixCode, dashboardParam.ServiceGroup)
 	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
 	var sucCode = getRetCodeSuccessCode(dashboardParam.RetCodeStringMap)
-	var serviceGroupTable = &models.ServiceGroupTable{}
+	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
 	var customDashboardList []*models.CustomDashboardTable
 	actions = []*Action{}
 	now := time.Now()
-	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", dashboardParam.ServiceGroup).Get(serviceGroupTable)
-	if serviceGroupTable != nil {
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", dashboardParam.ServiceGroup).Get(&serviceGroupTable)
+	if serviceGroupTable.DisplayName != "" {
 		displayServiceGroup = serviceGroupTable.DisplayName
 	}
 	if dashboardParam.AutoCreateDashboard {
