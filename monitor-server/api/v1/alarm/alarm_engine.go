@@ -202,6 +202,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 						log.Logger.Error("buildMonitorEngineAlarm get strategy object fail", log.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), log.Error(tmpGetStrategyErr))
 						continue
 					}
+					queryObj.Metric["strategy_guid"] = strategyObj.Guid
 					endpointObj, tmpGetEndpointErr := getNewAlarmEndpoint(&models.AMRespAlert{Labels: queryObj.Metric}, &strategyObj)
 					if tmpGetEndpointErr != nil {
 						log.Logger.Error("buildMonitorEngineAlarm get endpoint fail", log.JsonObj("labels", queryObj.Metric), log.Error(tmpGetEndpointErr))
