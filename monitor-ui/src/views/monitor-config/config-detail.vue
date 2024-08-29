@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class='config-detail-info'>
     <div v-for="(tableItem, tableIndex) in totalPageConfig" :key="tableIndex + 'f'">
       <Card style="margin-bottom: 16px;">
         <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
@@ -232,6 +232,7 @@
             <span class="underline"></span>
           </div>
           <Table
+            class='metric-table'
             style="width:100%;"
             :border="false"
             size="small"
@@ -936,7 +937,7 @@ export default {
         return {}
       }
       return {
-        symbol: str.match(/[<>=smh]+/g)[0],
+        symbol: str.match(/[!<>=smh]+/g)[0],
         value: str.match(/[-+]?[\d.]+/)[0]
       }
     },
@@ -1106,9 +1107,21 @@ export default {
           if (!conditions[i][needValidateKey[k]]) {
             return false
           }
+          if (needValidateKey[k] === 'thresholdValue' && !this.isNumericString(conditions[i][needValidateKey[k]])) {
+            return false
+          }
+          if (needValidateKey[k] === 'lastValue' && !this.isPositiveNumericString(conditions[i][needValidateKey[k]])) {
+            return false
+          }
         }
       }
       return true
+    },
+    isNumericString(str) {
+      return !isNaN(str) && !isNaN(parseFloat(str))
+    },
+    isPositiveNumericString(str) {
+      return /^\d+(\.\d+)?$/.test(str) && parseFloat(str) >= 0
     },
     validateDuplicateName(alarmName, guid = '') {
       const currentTableList = this.totalPageConfig[this.currentAlarmListIndex].tableData
@@ -1128,7 +1141,7 @@ export default {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_tips_required'))
       }
       if (!this.validateConditions(this.formData.conditions)) {
-        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('m_tips_emptyToSave'))
+        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('m_tips_emptyToSave') + this.$t('m_threshold_tips')+ ';' + this.$t('m_time_tips'))
       }
       if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'))
@@ -1297,9 +1310,12 @@ export default {
 </script>
 
 <style lang="less">
-.ivu-table-cell {
-  padding: 4px;
+.metric-table {
+  .ivu-table-cell {
+    padding: 4px;
+  }
 }
+
 .ivu-table-wrapper {
   overflow: inherit;
 }
@@ -1337,9 +1353,9 @@ export default {
 .modal-dialog[data-v-0eaeaf66] {
   top: 10%;
 }
-.ivu-select-dropdown {
-  max-height: 300px !important;
-}
+// .ivu-select-dropdown {
+//   max-height: 300px !important;
+// }
 .table-alarm-name {
   .ivu-tooltip-rel {
     width: 180px;
@@ -1348,6 +1364,7 @@ export default {
     text-overflow: ellipsis;
   }
 }
+
 </style>
 <style scoped lang="less">
   /deep/ .ivu-form-item {
