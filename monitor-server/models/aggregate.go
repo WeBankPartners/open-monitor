@@ -21,6 +21,12 @@ func Aggregate(data [][]float64, step int64, method string) [][]float64 {
 			result = append(result, []float64{start, CalcData(tmpV, method)})
 			start = end
 			end = start + float64(step)
+			if v[0] > end {
+				for v[0] > end {
+					start = end
+					end = start + float64(step)
+				}
+			}
 			tmpV = []float64{}
 		}
 		tmpV = append(tmpV, v[1])
