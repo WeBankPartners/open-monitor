@@ -176,6 +176,59 @@ func GetAllEndpointIdList() (list []string, err error) {
 	err = x.SQL("select  guid from endpoint_new").Find(&list)
 	return
 }
+
+func QueryEndpointList(endpoint string) (list []models.AlarmEndpoint, err error) {
+	var endpointList []string
+	if endpoint == "" {
+		if err = x.SQL("select  guid from endpoint_new order by update_time desc limit 20").Find(&endpointList); err != nil {
+			return
+		}
+	} else {
+		if err = x.SQL("select  guid from endpoint_new where guid like '%" + endpoint + "%' order by update_time desc limit 20").Find(&endpointList); err != nil {
+			return
+		}
+	}
+
+	if len(endpointList) > 0 {
+		for _, endpoint := range endpointList {
+			list = append(list, models.AlarmEndpoint{
+				Name:        endpoint,
+				DisplayName: endpoint,
+			})
+		}
+	}
+	var serviceGroupList []*models.ServiceGroupTable
+	if endpoint == "" {
+		if err = x.SQL("select  * from service_group order by update_time desc limit 20").Find(&serviceGroupList); err != nil {
+			return
+		}
+	} else {
+		if err = x.SQL("select  * from service_group where display_name like '%'" + endpoint + "%' order by update_time desc limit 20").Find(&serviceGroupList); err != nil {
+			return
+		}
+	}
+
+	if len(serviceGroupList) > 0 {
+		for _, serviceGroup := range serviceGroupList {
+			list = append(list, models.AlarmEndpoint{
+				Name:        "sg__" + serviceGroup.Guid,
+				DisplayName: serviceGroup.DisplayName,
+			})
+		}
+	}
+	if len(list) > 0 {
+		list = list[:min(20, len(list))]
+	}
+	return
+}
+
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
 func CheckEndpointInAgentManager(guid string) bool {
 	queryRows, _ := x.QueryString("select endpoint_guid from agent_manager where endpoint_guid=?", guid)
 	if len(queryRows) > 0 {
