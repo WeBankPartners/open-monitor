@@ -723,3 +723,23 @@ type QueryAlarmCondition struct {
 	Token               string
 	Query               string // 支持告警任意搜索
 }
+
+type AlarmFiring struct {
+	Id            int       `json:"id" xorm:"id"`
+	Endpoint      string    `json:"endpoint" xorm:"endpoint"`            // 告警对象
+	Metric        string    `json:"metric" xorm:"metric"`                // 告警指标
+	Tags          string    `json:"tags" xorm:"tags"`                    // 告警标签
+	AlarmName     string    `json:"alarmName" xorm:"alarm_name"`         // 告警名称
+	AlarmStrategy string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警策略配置
+	NotifyId      string    `json:"notifyId" xorm:"notify_id"`           // 告警通知配置
+	Expr          string    `json:"expr" xorm:"expr"`                    // 告警表达式
+	Cond          string    `json:"cond" xorm:"cond"`                    // 告警条件
+	Last          string    `json:"last" xorm:"last"`                    // 告警持续时间
+	Priority      string    `json:"priority" xorm:"priority"`            // 告警级别
+	Content       string    `json:"content" xorm:"content"`              // 告警描述内容
+	StartValue    float64   `json:"startValue" xorm:"start_value"`       // 告警发生值
+	Start         time.Time `json:"start" xorm:"start"`                  // 告警发生时间
+	CustomMessage string    `json:"customMessage" xorm:"custom_message"` // 告警人工备注
+	UniqueHash    string    `json:"uniqueHash" xorm:"unique_hash"`       // 告警唯一标识(对象+指标+标签+配置)
+	AlarmId       int       `json:"alarmId" xorm:"alarm_id"`             // 告警历史表id
+}
