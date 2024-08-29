@@ -147,10 +147,10 @@ func (c *logKeywordCollector) init() {
 	c.TailLastUnixTime = 0
 	c.DestroyChan = make(chan int, 1)
 	c.TailDataCancelChan = make(chan int, 1)
-	go c.start()
+	go c.start(1)
 }
 
-func (c *logKeywordCollector) start() {
+func (c *logKeywordCollector) start(currentTry int) {
 	level.Info(monitorLogger).Log("log_keyword -> logKeywordCollectorStart", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
@@ -191,8 +191,13 @@ func (c *logKeywordCollector) start() {
 	if destroyFlag {
 		return
 	}
-	time.Sleep(10 * time.Second)
-	go c.start()
+	currentTry = currentTry + 1
+	if currentTry > 10 {
+		level.Info(monitorLogger).Log("log_keyword break with current max try:", currentTry)
+		return
+	}
+	time.Sleep(60 * time.Second)
+	go c.start(currentTry)
 	//for line := range c.TailSession.Lines {
 	//	if len(c.DataChan) == logMetricChanLength {
 	//		level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
