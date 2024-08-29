@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
 	"time"
 )
 
@@ -222,26 +223,25 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	return
 }
 
-func DeleteLogMonitorTemplate(logMonitorTemplateGuid string) (err error) {
+func DeleteLogMonitorTemplate(logMonitorTemplateGuid string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
-	actions, err = getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid)
+	if actions, err = getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid, errMsgObj); err != nil {
+		return
+	}
 	err = Transaction(actions)
 	return
 }
 
-func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string) (actions []*Action, err error) {
-	_, getErr := GetSimpleLogMonitorTemplate(logMonitorTemplateGuid)
-	if getErr != nil {
-		err = getErr
+func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string, errMsgObj *models.ErrorMessageObj) (actions []*Action, err error) {
+	var logMetricGroupNameList []string
+	if _, err = GetSimpleLogMonitorTemplate(logMonitorTemplateGuid); err != nil {
 		return
 	}
-	refServiceGroup, getRefErr := GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid)
-	if getRefErr != nil {
-		err = getRefErr
+	if logMetricGroupNameList, err = GetLogMetricGroupNameByLogMonitorTemplate(logMonitorTemplateGuid); err != nil {
 		return
 	}
-	if len(refServiceGroup) > 0 {
-		err = fmt.Errorf("template used by other service group! ")
+	if len(logMetricGroupNameList) > 0 {
+		err = fmt.Errorf(errMsgObj.LogMonitorTemplateDeleteError, strings.Join(logMetricGroupNameList, ","))
 		return
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_template where log_monitor_template=?", Param: []interface{}{logMonitorTemplateGuid}})
@@ -255,6 +255,11 @@ func GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid string) (result []
 	if err != nil {
 		err = fmt.Errorf("query service_group table fail,%s ", err.Error())
 	}
+	return
+}
+
+func GetLogMetricGroupNameByLogMonitorTemplate(logMonitorTemplateGuid string) (result []string, err error) {
+	err = x.SQL(" select name from log_metric_group where log_monitor_template=?", logMonitorTemplateGuid).Find(&result)
 	return
 }
 

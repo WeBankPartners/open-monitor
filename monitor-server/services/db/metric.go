@@ -577,15 +577,31 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	_, err = x.SQL("select * from metric where guid=?", id).Get(metric)
 	return
 }
-func GetAllMetricNameList() (list []string, err error) {
-	var hashMap = make(map[string]bool)
-	err = x.SQL("select distinct metric from metric ").Find(&list)
-	hashMap = convertString2Map(list)
-	// 添加写死的关键字指标
-	hashMap["log_monitor"] = true
-	hashMap["db_keyword_monitor"] = true
-	list = convertMap2string(hashMap)
+func QueryMetricNameList(metric string) (list []string, err error) {
+	if metric != "" {
+		err = x.SQL("select distinct metric from metric  where metric like '%" + metric + "%'order by update_time desc limit 20").Find(&list)
+	} else {
+		err = x.SQL("select distinct metric from metric order by update_time desc limit 20").Find(&list)
+	}
+	if strings.Contains("log_monitor", metric) && notContains(list, "log_monitor") {
+		list = append(list, "log_monitor")
+	}
+	if strings.Contains("db_keyword_monitor", metric) && notContains(list, "db_keyword_monitor") {
+		list = append(list, "db_keyword_monitor")
+	}
 	return
+}
+
+func notContains(list []string, str string) bool {
+	if len(list) == 0 {
+		return true
+	}
+	for _, s := range list {
+		if s == str {
+			return false
+		}
+	}
+	return true
 }
 
 func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *models.MetricTable, operator string) (actions []*Action) {
