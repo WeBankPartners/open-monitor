@@ -453,8 +453,30 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
         let messageTips = this.$t('m_tips_success')
         if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
-          messageTips = (isEmpty(res.alarm_list) ? '' : this.$t('m_has_create_warn') + ':' + res.alarm_list.join(';'))
-            + (isEmpty(res.custom_dashboard) ? '' : this.$t('m_has_create_dashboard') + ':' + res.custom_dashboard)
+          const tipOne = isEmpty(res.alarm_list) ? '' : res.alarm_list.join('<br/>')
+          const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
+          this.$Message.success({
+            render: h => h('div', { class: 'add-business-config' }, [
+              h('div', { class: 'add-business-config-item' }, [
+                h('div', this.$t('m_has_create_warn') + ':'),
+                h('div', {
+                  domProps: {
+                    innerHTML: tipOne
+                  }
+                })
+              ]),
+              h('div', {class: 'add-business-config-item'}, [
+                h('div', this.$t('m_has_create_dashboard') + ':'),
+                h('div', tipTwo)
+              ])
+            ]),
+            duration: 5
+          })
+        } else {
+          this.$Message.success({
+            content: messageTips,
+            duration: 2
+          })
         }
         this.$Message.success({
           content: messageTips,
@@ -574,6 +596,25 @@ export default {
   margin:6px 0;
   display: flex;
   align-items: center;
+}
+
+</style>
+
+<style lang="less">
+.add-business-config {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 900px;
+  .add-business-config-item {
+    display: flex;
+    flex-direction: row;
+  }
+}
+.add-business-config > div {
+  max-width: 850px;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 </style>

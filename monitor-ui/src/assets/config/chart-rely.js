@@ -9,7 +9,7 @@ require('echarts/lib/component/legend')
 require('echarts/lib/component/toolbox')
 require('echarts/lib/component/legendScroll')
 
-import { generateAdjacentColors } from './random-color'
+import { generateAdjacentColors, stringToNumber } from './random-color'
 const echarts = require('echarts/lib/echarts')
 
 export const readyToDraw = function (that, responseData, viewIndex, chartConfig, elId) {
@@ -53,13 +53,13 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     })
     // 处理在最初没数据，后面来数据 metricToColor 为空时的指标颜色处理
     if (isHostOrSys) {
-      responseData.series.forEach((item, itemIndex) => {
+      responseData.series.forEach(item => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
           const keys = Object.keys(metricEndpointColorInChartConfig)
           keys.forEach(key => {
             if (item.name.startsWith(key)) {
-              const color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, 20 * (itemIndex - 0.3))
+              const color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, stringToNumber(item.name))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -69,13 +69,13 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
         }
       })
     } else {
-      responseData.series.forEach((item, itemIndex) => {
+      responseData.series.forEach(item => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
           const keys = Object.keys(metricSysColorInChartConfig)
           keys.forEach(key => {
             if (item.name.includes(key)) {
-              const color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1))
+              const color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, stringToNumber(item.name))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -114,6 +114,7 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     item.itemStyle = {
       normal: {
         color
+        // color: index === 2 ? '#43D34C' : color
       }
     }
     item.areaStyle = null
