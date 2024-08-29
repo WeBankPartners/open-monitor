@@ -430,20 +430,6 @@ export default {
       }
     },
     saveConfig() {
-      // const res = {
-      //   alarm_list: ['xxxsdsddsffeeee', 'wefwefweffffwewe', 'werqqqqqqqqqwwee'],
-      //   custom_dashboard: 'wefwefeeeeeeeeeee'
-      // }
-      // let messageTips = this.$t('m_tips_success')
-      // if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
-      //   messageTips = (isEmpty(res.alarm_list) ? '' : this.$t('m_has_create_warn') + ':' + res.alarm_list.join(';'))
-      //     + (isEmpty(res.custom_dashboard) ? '' : this.$t('m_has_create_dashboard') + ':' + res.custom_dashboard)
-      // }
-      // this.$Message.success({
-      //   content: messageTips,
-      //   duration: 100000
-      // })
-
       const tmpData = cloneDeep(this.businessConfig)
       this.processUpdateData(tmpData)
       if (this.paramsValidate(tmpData)) {
@@ -478,10 +464,6 @@ export default {
             duration: 2
           })
         }
-        this.$Message.success({
-          content: messageTips,
-          duration: 5
-        })
         this.showModel = false
         this.$emit('reloadMetricData', this.parentGuid)
       })
