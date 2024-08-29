@@ -674,7 +674,6 @@ type ProblemAlarmOptionsNew struct {
 type AlarmEndpoint struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
-	UpdateTime  string `json:"updateTime"`
 }
 
 type QueryProcessDefinitionPublicResponse struct {
