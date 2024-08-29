@@ -2,7 +2,6 @@ package db
 
 import (
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
@@ -705,12 +704,12 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 	if len(alarms) == 0 {
 		return alarms
 	}
-	var rowAffected int64
+	//var rowAffected int64
 	for _, v := range alarms {
-		rowAffected = 0
-		var action Action
-		var cErr error
-		var execResult sql.Result
+		//rowAffected = 0
+		//var action Action
+		//var cErr error
+		//var execResult sql.Result
 		calcAlarmUniqueFlag(&v.AlarmTable)
 		if v.MultipleConditionFlag {
 			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
@@ -720,29 +719,34 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 				successAlarms = append(successAlarms, alarmObj)
 			}
 		} else {
-			if v.Id > 0 {
-				action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
-				execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+			if tmpErr := doInsertOrUpdateAlarm(v); tmpErr != nil {
+				log.Logger.Warn("doInsertOrUpdateAlarm fail", log.JsonObj("alarm", v), log.Error(tmpErr))
 			} else {
-				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-				execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
+				successAlarms = append(successAlarms, v)
 			}
-			if cErr != nil {
-				log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
-			} else {
-				rowAffected, _ = execResult.RowsAffected()
-				if rowAffected > 0 {
-					if v.Id <= 0 {
-						lastInsertId, _ := execResult.LastInsertId()
-						if lastInsertId > 0 {
-							v.Id = int(lastInsertId)
-						}
-					}
-					successAlarms = append(successAlarms, v)
-				} else {
-					log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
-				}
-			}
+			//if v.Id > 0 {
+			//	action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
+			//	execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+			//} else {
+			//	action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			//	execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
+			//}
+			//if cErr != nil {
+			//	log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
+			//} else {
+			//	rowAffected, _ = execResult.RowsAffected()
+			//	if rowAffected > 0 {
+			//		if v.Id <= 0 {
+			//			lastInsertId, _ := execResult.LastInsertId()
+			//			if lastInsertId > 0 {
+			//				v.Id = int(lastInsertId)
+			//			}
+			//		}
+			//		successAlarms = append(successAlarms, v)
+			//	} else {
+			//		log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
+			//	}
+			//}
 		}
 	}
 	return successAlarms
