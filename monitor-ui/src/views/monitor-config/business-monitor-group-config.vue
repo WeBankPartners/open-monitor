@@ -451,7 +451,7 @@ export default {
       }
       const methodType = this.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
-        let messageTips = this.$t('m_tips_success')
+        const messageTips = this.$t('m_tips_success')
         if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
           const tipOne = isEmpty(res.alarm_list) ? '' : res.alarm_list.join('<br/>')
           const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
