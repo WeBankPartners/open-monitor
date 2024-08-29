@@ -93,7 +93,6 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
           return callback(response.data.data ,response.data.message, response.data)
         }
         errorMessage(response.data.message)
-
       }
     }
   })
