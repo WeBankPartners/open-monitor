@@ -1053,6 +1053,7 @@ func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
+		actions = append(actions, &Action{Sql: "delete from alarm_firing where alarm_id=?", Param: []interface{}{v.Id}})
 	}
 	return
 }
@@ -1551,6 +1552,12 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			v.AlarmMetricList = []string{v.SMetric}
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
 	}
 	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
 		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
@@ -1961,7 +1968,7 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 	}
 	var strategyGroupRows []*m.StrategyGroupRow
 	strategyFilter, strategyParams := createListParams(alarmStrategyList, "")
-	err = x.SQL("select t1.guid,t1.endpoint_group,t2.service_group from alarm_strategy t1 left join endpoint_group t2 on t1.endpoint_group=t2.guid where t1.guid in ("+strategyFilter+")", strategyParams...).Find(&strategyGroupRows)
+	err = x.SQL("select t1.guid,t1.endpoint_group,t3.display_name as service_group from alarm_strategy t1 left join endpoint_group t2 on t1.endpoint_group=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.guid in ("+strategyFilter+")", strategyParams...).Find(&strategyGroupRows)
 	if err != nil {
 		err = fmt.Errorf("matchAlarmGroups -> query alarm strategy table fail,%s ", err.Error())
 		return
