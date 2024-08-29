@@ -938,6 +938,20 @@ export default {
       this.dbModelConfig.isAdd = false
       this.dbModelConfig.isShow = true
     },
+    getEndpointDefaultValue(monitorType) {
+      this.dbModelConfig.addRow.endpoint_rel = this.dbModelConfig.addRow.endpoint_rel || []
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=mysql&targetType=${monitorType}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        if (!isEmpty(responseData)) {
+          responseData.forEach(item => {
+            this.dbModelConfig.addRow.endpoint_rel.push({
+              target_endpoint: item.target_endpoint,
+              source_endpoint: item.source_endpoint
+            })
+          })
+        }
+      })
+    },
     copyDbItem(rowData) {
       this.getEndpoint(rowData.monitor_type, 'mysql')
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
@@ -955,6 +969,7 @@ export default {
         step: 10,
         endpoint_rel: []
       }
+      this.getEndpointDefaultValue('process')
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
