@@ -193,7 +193,7 @@ export default {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  margin: 15px 0;
+  margin: 15px 0 0 24px;
   .add-content-item {
     margin-left: auto;
   }
@@ -213,6 +213,7 @@ export default {
 </style>
 <style lang="less">
 .monitor-resource-level {
+  width: 98%;
   .ivu-radio-group-button .ivu-radio-wrapper-checked {
     background: #2d8cf0;
     color: #fff;
