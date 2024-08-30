@@ -2001,7 +2001,7 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	if status == "firing" {
 		closed = 0
 	}
-	baseSQL := "select alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
+	baseSQL := "select distinct alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
 	var params []interface{}
 	if status != "" {
 		baseSQL = baseSQL + " and status=?"
