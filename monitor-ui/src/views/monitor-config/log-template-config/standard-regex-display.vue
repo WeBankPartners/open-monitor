@@ -57,7 +57,23 @@
       </div>
       <!-- 计算指标 -->
       <div class='calculation-indicators'>
-        <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
+        <Divider orientation="left" size="small">
+          {{ $t('m_compute_metrics') }}
+          <Tooltip content="" placement="top" :max-width="500" transfer>
+            <div slot="content" style="white-space: normal;">
+              <div>{{ $t('m_calculation_title') }}</div>
+              <div>{{ $t('m_calculation_tip1') }}</div>
+              <div>{{ $t('m_calculation_tip2') }}</div>
+              <div>{{ $t('m_calculation_tip3') }}</div>
+              <div>{{ $t('m_calculation_tip4') }}</div>
+              <div>{{ $t('m_calculation_tip5') }}</div>
+              <div>{{ $t('m_calculation_tip6') }}</div>
+              <div>{{ $t('m_calculation_tip7') }}</div>
+              <div>{{ $t('m_calculation_tip8') }}</div>
+            </div>
+            <Icon style="cursor: pointer;" type="ios-alert-outline" :size="18" />
+          </Tooltip>
+        </Divider>
         <Table
           size="small"
           :columns="columnsForComputeMetrics"
