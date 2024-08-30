@@ -1,6 +1,6 @@
 <template>
   <div class="monitor-resource-recursive">
-    <Tree :data="treeData" :render="renderTree" @on-select-change="handleSelectNode"></Tree>
+    <Tree :data="treeData" :render="renderTree" @on-select-change="handleSelectNode" class="custom-tree"></Tree>
     <!-- 节点新增、编辑 -->
     <BaseDrawer
       :title="$t('m_resourceLevel_levelMsg')"
@@ -814,4 +814,9 @@ export default {
     display: none;
   }
 }
+</style>
+<style lang="less" scoped>
+  .custom-tree ::v-deep .ivu-tree-children {
+    margin-left: 24px;
+  }
 </style>
