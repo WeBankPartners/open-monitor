@@ -22,7 +22,7 @@
 
           <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
             <FormItem :label="$t('m_graph_name')" prop="name">
-              <Input v-model.trim="chartConfigForm.name" :maxlength="30" show-word-limit/>
+              <Input v-model.trim="chartConfigForm.name" :maxlength="100" show-word-limit/>
             </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
