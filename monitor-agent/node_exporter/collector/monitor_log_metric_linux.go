@@ -322,7 +322,7 @@ func (c *logMetricMonitorNeObj) start() {
 	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	go c.startFileHandlerCheck()
+	//go c.startFileHandlerCheck()
 	reopenFlag := false
 	destroyFlag := false
 	for {
@@ -339,11 +339,12 @@ func (c *logMetricMonitorNeObj) start() {
 		}
 		if reopenFlag || destroyFlag {
 			break
-		} else {
-			c.TailTimeLock.Lock()
-			c.TailLastUnixTime = time.Now().Unix()
-			c.TailTimeLock.Unlock()
 		}
+		//else {
+		//	c.TailTimeLock.Lock()
+		//	c.TailLastUnixTime = time.Now().Unix()
+		//	c.TailTimeLock.Unlock()
+		//}
 	}
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
@@ -352,8 +353,8 @@ func (c *logMetricMonitorNeObj) start() {
 	if destroyFlag {
 		return
 	}
-	time.Sleep(60 * time.Second)
-	go c.start()
+	//time.Sleep(60 * time.Second)
+	//go c.start()
 }
 
 func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
