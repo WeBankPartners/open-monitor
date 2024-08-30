@@ -40,4 +40,4 @@ v3.1.0
 Update control shell to support custom exporter port
 
 v3.2.0
-Fix log tail chanel closed when handler check active
+Fix log tail chanel closed when handler check active && modify tail recover func
