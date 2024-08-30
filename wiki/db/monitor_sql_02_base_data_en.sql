@@ -1216,4 +1216,5 @@ update log_metric_template set tag_config='["code"]' where metric='req_suc_count
 -- 把新视图和阈值配置中req_fail_count改成req_fail_count_detail
 update custom_chart_series set metric=replace(metric,'req_fail_count','req_fail_count_detail'),metric_guid=replace(metric_guid,'req_fail_count','req_fail_count_detail') where metric like '%req_fail_count';
 update alarm_strategy_metric set metric=replace(metric,'req_fail_count','req_fail_count_detail') where metric in (select guid from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count'));
+update metric set prom_expr=replace(prom_expr,',code="$t_code"',',retcode="$t_retcode",code="$t_code"') where log_metric_template in (select guid from log_metric_template where metric='req_fail_count_detail');
 #@v3.1.4-end@;
