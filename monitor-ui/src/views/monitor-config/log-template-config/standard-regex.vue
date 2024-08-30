@@ -454,7 +454,7 @@ export default {
             },
             {
               log_param_name: 'code',
-              metric: 'req_count-req_suc_count',
+              metric: 'req_fail_count',
               display_name: this.$t('m_failure_volume'),
               agg_type: '{req_count}-{req_suc_count}',
               tag_config: [
