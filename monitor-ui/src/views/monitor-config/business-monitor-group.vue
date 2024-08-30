@@ -758,7 +758,7 @@ export default {
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -819,7 +819,7 @@ export default {
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDbItem(params.row)}>
+                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyDbItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>

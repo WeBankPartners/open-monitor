@@ -7,7 +7,6 @@
       </div>
       <template slot='list'>
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
-
           <FormItem :label="$t('m_alarm_level')">
             <Select
               v-model="filters.priority"
@@ -29,8 +28,16 @@
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarmName')"
               @on-change="onFilterChange"
+              @on-query-change="(query) => {
+                if (query) {
+                  filterParams.alarmName = query
+                  filterParams.endpoint = ''
+                  filterParams.metric = ''
+                  onFilterOptions()
+                }
+              }"
             >
-              <Option v-for="name in filtersAlarmNameOptions" :value="name" :key="name">
+              <Option v-for="(name, index) in filtersAlarmNameOptions" :value="name" :key="index">
                 {{name}}
               </Option>
             </Select>
@@ -42,8 +49,16 @@
               filterable
               :placeholder="$t('m_please_select') + $t('m_metric')"
               @on-change="onFilterChange"
+              @on-query-change="(query) => {
+                if (query) {
+                  filterParams.metric = query
+                  filterParams.alarmName = ''
+                  filterParams.endpoint = ''
+                  onFilterOptions()
+                }
+              }"
             >
-              <Option v-for="name in filtersMetricOptions" :value="name" :key="name">
+              <Option v-for="(name, index) in filtersMetricOptions" :value="name" :key="index">
                 {{name}}
               </Option>
             </Select>
@@ -55,9 +70,17 @@
               filterable
               :placeholder="$t('m_please_select') + $t('m_endpoint')"
               @on-change="onFilterChange"
+              @on-query-change="(query) => {
+                if (query) {
+                  filterParams.endpoint = query
+                  filterParams.metric = ''
+                  filterParams.alarmName = ''
+                  onFilterOptions()
+                }
+              }"
             >
-              <Option v-for="name in filtersEndpointOptions" :value="name" :key="name">
-                {{name}}
+              <Option v-for="(item, index) in filtersEndpointOptions" :value="item.name" :key="index">
+                {{item.displayName}}
               </Option>
             </Select>
           </FormItem>
@@ -70,14 +93,20 @@
 </template>
 
 <script>
-import debounce from 'lodash/debounce'
-import cloneDeep from 'lodash/cloneDeep'
+import {debounce, cloneDeep} from 'lodash'
 
 const initFilters = {
   alarm_name: [],
   metric: [],
   endpoint: [],
   priority: []
+}
+
+const initFilterParams = {
+  status: '',
+  alarmName: '',
+  endpoint: '',
+  metric: ''
 }
 
 export default ({
@@ -114,7 +143,8 @@ export default ({
           name: this.$t('m_high'),
           value: 'high'
         }
-      ]
+      ],
+      filterParams: cloneDeep(initFilterParams)
     }
   },
   computed: {
@@ -131,14 +161,18 @@ export default ({
   mounted(){
     document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
     document.querySelector('.badge-content').addEventListener('click', () => {
+      this.filterParams = cloneDeep(initFilterParams)
+      this.filterParams.status = this.$route.path === '/alarmManagement' ? 'firing' : ''
       this.getFilterAllOptions()
     })
   },
   methods: {
+    onFilterOptions: debounce(function () {
+      this.getFilterAllOptions()
+    }, 300),
     getFilterAllOptions() {
-      const query = this.$route.path === '/alarmManagement' ? '?status=firing' : ''
-      const api = '/monitor/api/v1/alarm/problem/options' + query
-      this.request('GET', api, {}, res => {
+      const api = '/monitor/api/v1/alarm/problem/options'
+      this.request('POST', api, this.filterParams, res => {
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
         this.filtersMetricOptions = res.metricList
