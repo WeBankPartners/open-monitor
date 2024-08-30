@@ -161,7 +161,7 @@ func (c *logKeywordCollector) start() {
 	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logKeywordChanLength)
 	go c.startHandleTailData()
-	go c.startFileHandlerCheck()
+	//go c.startFileHandlerCheck()
 	reopenFlag := false
 	destroyFlag := false
 	for {
@@ -178,11 +178,12 @@ func (c *logKeywordCollector) start() {
 		}
 		if reopenFlag || destroyFlag {
 			break
-		} else {
-			c.TailTimeLock.Lock()
-			c.TailLastUnixTime = time.Now().Unix()
-			c.TailTimeLock.Unlock()
 		}
+		//else {
+		//	c.TailTimeLock.Lock()
+		//	c.TailLastUnixTime = time.Now().Unix()
+		//	c.TailTimeLock.Unlock()
+		//}
 	}
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
@@ -191,14 +192,8 @@ func (c *logKeywordCollector) start() {
 	if destroyFlag {
 		return
 	}
-	time.Sleep(60 * time.Second)
-	go c.start()
-	//for line := range c.TailSession.Lines {
-	//	if len(c.DataChan) == logMetricChanLength {
-	//		level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
-	//	}
-	//	c.DataChan <- line.Text
-	//}
+	//time.Sleep(60 * time.Second)
+	//go c.start()
 }
 
 func (c *logKeywordCollector) startFileHandlerCheck() {
