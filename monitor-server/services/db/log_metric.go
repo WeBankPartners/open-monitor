@@ -67,6 +67,17 @@ func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.
 			err = tmpErr
 			break
 		}
+		for _, logMetricConfig := range tmpObj.Config {
+			for _, logMetricGroup := range logMetricConfig.MetricGroups {
+				for _, tmpLogMetric := range logMetricGroup.MetricList {
+					if tmpLogMetric.Metric == "req_suc_count" {
+						if len(tmpLogMetric.TagConfigList) == 1 {
+							tmpLogMetric.TagConfigList = append(tmpLogMetric.TagConfigList, "retcode")
+						}
+					}
+				}
+			}
+		}
 		result = append(result, &tmpObj)
 	}
 	return
