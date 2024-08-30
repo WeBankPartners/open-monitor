@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"math"
 	"strings"
 	"time"
@@ -342,6 +343,8 @@ func getMetricByKey(metricMap map[string]*models.LogMetricTemplate, subKey strin
 	if len(metricMap) == 0 {
 		return nil
 	}
+	log.Logger.Debug("getMetricByKey", log.JsonObj("metricMap", metricMap))
+	subKey = subKey + "__"
 	for key, template := range metricMap {
 		if strings.HasPrefix(key, subKey) {
 			return template
