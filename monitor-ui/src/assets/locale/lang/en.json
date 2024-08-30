@@ -156,6 +156,7 @@
   "m_success_rate": "Success Rate",
   "m_failure_rate": "Failure Rate",
   "m_failure_volume": "Failure Volume",
+  "m_total_failures": "Total Failures",
   "m_average_time": "Average Time",
   "m_max_costtime": "Maximum Time",
   "m_is_start_match": "Start Matching",
@@ -535,5 +536,15 @@
   "m_screen_name": "Screen Name",
   "m_copy_table_tips": "Copy Table Tips",
   "m_threshold_tips": "Please enter a number for the threshold",
-  "m_time_tips": "Please enter a positive number for time"
+  "m_time_tips": "Please enter a positive number for time",
+  "m_categorized_failure_count": "Categorized Failure Count",
+  "m_calculation_title": "Calculation indicator description:",
+  "m_calculation_tip1": "Color scheme: Used as the default color scheme for the indicator, applied in custom dashboards.",
+  "m_calculation_tip2": "2.Display Name: Explanation of the indicator.",
+  "m_calculation_tip3": "3.Indicator Key: Unique identifier of the indicator.",
+  "m_calculation_tip4": "4.Statistical Parameters: Basic data of the indicator, sourced from the acquisition parameters configured above.",
+  "m_calculation_tip5": "5.Filter Tags: Tags supported for filtering the indicator when configuring alerts and dashboards. Condition fields are sourced from acquisition parameters, and optional condition values are sourced from business-configured tag values + actual acquisition values (e.g., failure quantity can only filter by service code, while categorized failure quantity can filter by both service code and return code).",
+  "m_calculation_tip6": "6.Calculation Type: The formula used to calculate the indicator, allowing other indicators to be used as parameters.",
+  "m_calculation_tip7": "7.Automatic Alert: A toggle to control whether alerts are created.",
+  "m_calculation_tip8": "8.Threshold Alert Configuration: Becomes effective when automatic alerts are enabled, automatically generating alerts according to the template rules."
 }
