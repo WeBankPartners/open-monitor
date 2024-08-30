@@ -1765,7 +1765,7 @@ export default {
 }
 
 .grid-window {
-  // display: flex;
+  display: flex;
   // max-height: ~"calc(100vh - 250px)";
   height: ~"calc(100vh - 280px)";
   overflow: auto;
