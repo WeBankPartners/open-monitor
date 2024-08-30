@@ -661,11 +661,6 @@ type EndpointListParam struct {
 }
 
 type ProblemAlarmOptions struct {
-	EndpointList  []string `json:"endpointList"`
-	MetricList    []string `json:"metricList"`
-	AlarmNameList []string `json:"alarmNameList"`
-}
-type ProblemAlarmOptionsNew struct {
 	EndpointList  []AlarmEndpoint `json:"endpointList"`
 	MetricList    []string        `json:"metricList"`
 	AlarmNameList []string        `json:"alarmNameList"`
