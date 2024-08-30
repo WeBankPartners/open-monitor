@@ -1193,16 +1193,28 @@ CREATE TABLE `alarm_firing` (
     KEY `alarm_firing_alarm_id` (`alarm_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
+alter table log_monitor_template add column success_code varchar(200) default null COMMENT '成功码';
+alter table log_metric_template add column color_group varchar(32) default null COMMENT '默认色系';
+alter table log_metric_template add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
+alter table log_metric_template add column range_config tinytext default null COMMENT '阈值配置json';
+alter table log_metric_group add column template_snapshot text default null COMMENT '模版快照';
+alter table log_metric_group add column ref_template_version varchar(32) default null COMMENT '引用模版版本';
+alter table alarm_strategy add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table custom_dashboard add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table custom_chart add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table alarm_strategy_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
+alter table custom_chart_series_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
+alter table alarm_strategy add column create_user varchar(64) default null COMMENT '创建人';
+
 -- 新增明细失败量
 insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) select concat(guid,'_1'),log_monitor_template,log_param_name,'req_fail_count_detail' as metric,'分类失败量' as display_name,step,agg_type,'["code","retcode"]' as tag_config,create_user,update_user,create_time,update_time from log_metric_template where metric='req_fail_count';
 insert into metric(guid,metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,log_metric_template,log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor) select replace(guid,'req_fail_count','req_fail_count_detail') as guid,replace(metric,'req_fail_count','req_fail_count_detail') as metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,concat(log_metric_template,'_1'),log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count');
 -- 把失败量表达式改成汇总失败量
-update log_metric_template set tag_config='["code"]' where metric='req_fail_count' and tag_config='["code","retcode"]';
+update log_metric_template set tag_config='["code"]',agg_type='{req_count}-{req_suc_count}' where metric='req_fail_count';
 update metric t1,metric t2,metric t3 set t1.prom_expr=concat(replace(t2.prom_expr,'(key,agg,service_group,code)','(service_group,code)'),'-',replace(t3.prom_expr,'(key,agg,service_group,code,retcode)','(service_group,code)')) where t1.log_metric_group=t2.log_metric_group and t1.log_metric_group=t3.log_metric_group and t1.log_metric_template in (select guid from log_metric_template where metric='req_fail_count') and t2.metric like '%req_count' and t3.metric like '%req_suc_count';
 -- 去掉成功量返回码
 update log_metric_template set tag_config='["code"]' where metric='req_suc_count' and tag_config='["code","retcode"]';
 -- 把新视图和阈值配置中req_fail_count改成req_fail_count_detail
 update custom_chart_series set metric=replace(metric,'req_fail_count','req_fail_count_detail'),metric_guid=replace(metric_guid,'req_fail_count','req_fail_count_detail') where metric like '%req_fail_count';
 update alarm_strategy_metric set metric=replace(metric,'req_fail_count','req_fail_count_detail') where metric in (select guid from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count'));
-
 #@v3.1.4-end@;
