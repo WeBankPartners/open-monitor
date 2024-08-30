@@ -556,7 +556,7 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_fail_count" {
-		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",retcode=~\"$t_retcode\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",retcode=\"$t_retcode\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
