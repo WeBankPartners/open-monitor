@@ -474,36 +474,12 @@ func recursiveHistoryEndpoint(input *m.RecursivePanelObj) []string {
 
 func GetProblemAlarmOptions(c *gin.Context) {
 	var err error
-	status := c.Query("status")
-	var data = &m.ProblemAlarmOptions{
-		EndpointList:  []string{},
-		MetricList:    []string{},
-		AlarmNameList: []string{},
-	}
-	if data.AlarmNameList, err = db.GetAlarmNameList(status, ""); err != nil {
-		mid.ReturnServerHandleError(c, err)
-		return
-	}
-	if data.EndpointList, err = db.GetAllEndpointIdList(); err != nil {
-		mid.ReturnServerHandleError(c, err)
-		return
-	}
-	if data.MetricList, err = db.QueryMetricNameList(""); err != nil {
-		mid.ReturnServerHandleError(c, err)
-		return
-	}
-
-	mid.ReturnSuccessData(c, data)
-}
-
-func GetProblemAlarmOptionsNew(c *gin.Context) {
-	var err error
 	var param m.AlarmOptionsParam
 	if err = c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	var data = &m.ProblemAlarmOptionsNew{
+	var data = &m.ProblemAlarmOptions{
 		EndpointList:  []m.AlarmEndpoint{},
 		MetricList:    []string{},
 		AlarmNameList: []string{},
