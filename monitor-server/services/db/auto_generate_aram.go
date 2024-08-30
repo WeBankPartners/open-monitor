@@ -158,7 +158,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			UpdateUser:     dashboardParam.Operator,
 			CreateAt:       now,
 			UpdateAt:       now,
-			RefreshWeek:    60,
+			RefreshWeek:    10,
 			TimeRange:      -1800,
 			LogMetricGroup: &dashboardParam.LogMetricGroupGuid,
 		}
