@@ -564,6 +564,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		if strings.Contains(v.Log, "\n") {
 			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 		}
+		// 显示 endpointGuid
+		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
 			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
