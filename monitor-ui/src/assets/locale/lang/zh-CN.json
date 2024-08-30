@@ -156,6 +156,7 @@
   "m_success_rate": "成功率",
   "m_failure_rate": "失败率",
   "m_failure_volume": "失败量",
+  "m_total_failures": "总失败量",
   "m_average_time": "平均耗时",
   "m_max_costtime": "最大耗时",
   "m_is_start_match": "是否执行匹配",
@@ -536,6 +537,16 @@
   "m_screen_name": "看板名",
   "m_copy_table_tips": "还有更多数据，请搜索查找",
   "m_threshold_tips": "阈值请输入数字",
-  "m_time_tips": "时间请输入正数"
+  "m_time_tips": "时间请输入正数",
+  "m_categorized_failure_count": "分类失败量",
+  "m_calculation_title": "计算指标说明:",
+  "m_calculation_tip1": "1.色系:作为指标默认的色系,在自定义看板中使用",
+  "m_calculation_tip2": "2.显示名:指标说明",
+  "m_calculation_tip3": "3.指标key:指标唯一标志",
+  "m_calculation_tip4": "4.统计参数:指标的基础数据,来源于上面配置的采集参数",
+  "m_calculation_tip5": "5.筛选标签:指标在配置告警、看板的时候支持的标签筛选,条件字段来源于采集参数,条件可选值来源于业务配置的标签值+真实采集值(比如失败量仅可筛选服务码,分类失败量可筛选服务码和返回码)",
+  "m_calculation_tip6": "6.计算类型:指标的计算公式,可使用其他指标作为参数",
+  "m_calculation_tip7": "7.自动告警:开关,控制是否创建告警",
+  "m_calculation_tip8": "8.阈值告警配置:打开自动告警时生效,将按照模版的规则自动生成告警"
 }
 

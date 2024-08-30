@@ -512,7 +512,7 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 			if len(logMetricTemplateRows) > 0 {
 				if logMetricTemplateRows[0].Metric == "req_suc_count" {
 					isSuccessMetric = true
-				} else if logMetricTemplateRows[0].Metric == "req_fail_count" {
+				} else if logMetricTemplateRows[0].Metric == "req_fail_count" || logMetricTemplateRows[0].Metric == "req_fail_count_detail" {
 					isFailMetric = true
 				}
 			}
