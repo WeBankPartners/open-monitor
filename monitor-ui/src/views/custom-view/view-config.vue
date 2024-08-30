@@ -217,7 +217,7 @@
             :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
-                       style="cursor: auto; overflow-y: hidden; overflow-x: scroll"
+                       style="cursor: auto; overflow-y: hidden;"
                        class="c-dark"
                        :x="item.x"
                        :y="item.y"
@@ -230,7 +230,7 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
-                  <Tag style="font-size: 14px; min-width: 46px" v-if='item.logMetricGroup' color='green'>auto</Tag>
+                  <Tag style="font-size: 14px; width: 46px" :style="{'visibility': item.logMetricGroup ? 'initial' : 'hidden'}" color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <div v-html="processHtmlText(item.i)" class='header-grid-name-text'></div>
@@ -1765,9 +1765,10 @@ export default {
 }
 
 .grid-window {
-  display: flex;
-  max-height: ~"calc(100vh - 250px)";
-  overflow: scroll;
+  // display: flex;
+  // max-height: ~"calc(100vh - 250px)";
+  height: ~"calc(100vh - 280px)";
+  overflow: auto;
 }
 
 .grid-style {
@@ -1853,7 +1854,6 @@ export default {
     align-self: flex-end;
   }
   .copy-detail-table {
-    max-width: 850px;
     margin-bottom: 10px;
   }
   .copy-table-tips {
