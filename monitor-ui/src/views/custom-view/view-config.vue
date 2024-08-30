@@ -1596,34 +1596,34 @@ export default {
   .ivu-poptip-popper {
     color: #515a6e
   }
-  
+
   .chart-config-info {
     .ivu-dropdown-item-disabled {
       color: inherit
     }
   }
-  
+
   .chart-option-menu {
     .ivu-dropdown-menu {
       max-height: 600px;
       overflow: scroll;
     }
   }
-  
+
   .references-button {
     background-color: #edf4fe !important;
     border-color: #b5d0fb !important;
   }
-  
+
   .references-button {
     background-color: #edf4fe !important;
     border-color: #b5d0fb !important;
   }
-  
+
   .ivu-select-dropdown {
     max-height: 100vh !important;
   }
-  
+
   .grid-content {
     display: flex;
     padding: 0 5px;
@@ -1631,7 +1631,7 @@ export default {
     align-items: center;
     margin-top: 3px;
   }
-  
+
   .header-grid-tools {
     display: flex;
     align-items: center;
@@ -1646,7 +1646,7 @@ export default {
       border-color: #aa8aea;
     }
   }
-  
+
   .header-grid-name {
     .ivu-tooltip-rel {
       display: flex;
@@ -1662,7 +1662,7 @@ export default {
         border-color: #aa8aea;
       }
     }
-  
+
     .header-grid-name {
       .ivu-tooltip-rel {
         display: flex;
