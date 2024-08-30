@@ -177,7 +177,7 @@ export default {
             <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.chartName}>
               {params.row.chartName || '-'}
             </Tooltip>
-            {params.row.logMetricGroup ? <Tag color='green'>auto</Tag> : <div></div>}
+            {params.row.logMetricGroup ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
           </div>) : (<div>-</div>)
         },
         {
@@ -454,9 +454,15 @@ export default {
 </style>
 
 <style lang='less'>
+.auto-tag-style {
+  .ivu-tag-text.ivu-tag-color-white {
+    display: inline-block;
+    min-width: 40px;
+  }
+}
 .table-alarm-name {
   .ivu-tooltip-rel {
-    width: 180px;
+    width: 170px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

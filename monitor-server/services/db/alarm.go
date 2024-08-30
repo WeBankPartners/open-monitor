@@ -564,6 +564,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		if strings.Contains(v.Log, "\n") {
 			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 		}
+		// 显示 endpointGuid
+		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
 			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
@@ -2001,7 +2003,7 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	if status == "firing" {
 		closed = 0
 	}
-	baseSQL := "select alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
+	baseSQL := "select distinct alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
 	var params []interface{}
 	if status != "" {
 		baseSQL = baseSQL + " and status=?"
