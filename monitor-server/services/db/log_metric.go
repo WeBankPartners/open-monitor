@@ -555,8 +555,12 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
-	if metric == "req_fail_count" {
+	if metric == "req_fail_count_detail" {
 		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",retcode=\"$t_retcode\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		return
+	}
+	if metric == "req_fail_count" {
+		result = fmt.Sprintf("(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) - (sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))", models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
@@ -1259,7 +1263,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		if param.MetricPrefixCode != "" {
 			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
 		}
-		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 			promExpr = getLogMetricRatePromExpr(v.Metric, param.MetricPrefixCode, v.AggType, serviceGroup, sucRetCode)
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
@@ -1379,7 +1383,7 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 				tmpMetricWithPrefix = logMetricGroupObj.MetricPrefixCode + "_" + v.Metric
 			}
 			promExpr := ""
-			if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+			if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 				promExpr = getLogMetricRatePromExpr(v.Metric, logMetricGroupObj.MetricPrefixCode, v.AggType, serviceGroup, newSucRetCode)
 			} else {
 				promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
