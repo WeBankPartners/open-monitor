@@ -286,6 +286,14 @@ func CopyCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "dashboardId")
 		return
 	}
+	if strings.TrimSpace(param.MgmtRole) == "" {
+		middleware.ReturnValidateError(c, "mgmtRoles empty!")
+		return
+	}
+	if len(param.UseRoles) == 0 {
+		middleware.ReturnParamEmptyError(c, "useRoles empty!")
+		return
+	}
 	if customDashboard, err = db.GetCustomDashboardById(param.DashboardId); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
