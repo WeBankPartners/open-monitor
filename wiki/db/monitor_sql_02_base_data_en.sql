@@ -1191,4 +1191,17 @@ CREATE TABLE `alarm_firing` (
     KEY `alarm_firing_name` (`alarm_name`),
     KEY `alarm_firing_alarm_id` (`alarm_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+-- 新增明细失败量
+insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) select concat(guid,'_1'),log_monitor_template,log_param_name,'req_fail_count_detail' as metric,'分类失败量' as display_name,step,agg_type,'["code","retcode"]' as tag_config,create_user,update_user,create_time,update_time from log_metric_template where metric='req_fail_count';
+insert into metric(guid,metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,log_metric_template,log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor) select replace(guid,'req_fail_count','req_fail_count_detail') as guid,replace(metric,'req_fail_count','req_fail_count_detail') as metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,concat(log_metric_template,'_1'),log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count');
+-- 把失败量表达式改成汇总失败量
+update log_metric_template set tag_config='["code"]' where metric='req_fail_count' and tag_config='["code","retcode"]';
+update metric t1,metric t2,metric t3 set t1.prom_expr=concat(replace(t2.prom_expr,'(key,agg,service_group,code)','(service_group,code)'),'-',replace(t3.prom_expr,'(key,agg,service_group,code,retcode)','(service_group,code)')) where t1.log_metric_group=t2.log_metric_group and t1.log_metric_group=t3.log_metric_group and t1.log_metric_template in (select guid from log_metric_template where metric='req_fail_count') and t2.metric like '%req_count' and t3.metric like '%req_suc_count';
+-- 去掉成功量返回码
+update log_metric_template set tag_config='["code"]' where metric='req_suc_count' and tag_config='["code","retcode"]';
+-- 把新视图和阈值配置中req_fail_count改成req_fail_count_detail
+update custom_chart_series set metric=replace(metric,'req_fail_count','req_fail_count_detail'),metric_guid=replace(metric_guid,'req_fail_count','req_fail_count_detail') where metric like '%req_fail_count';
+update alarm_strategy_metric set metric=replace(metric,'req_fail_count','req_fail_count_detail') where metric in (select guid from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count'));
+
 #@v3.1.4-end@;
