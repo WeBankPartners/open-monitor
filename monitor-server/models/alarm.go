@@ -100,6 +100,7 @@ type AlarmProblemQuery struct {
 	Id                 int                   `json:"id"`
 	StrategyId         int                   `json:"strategy_id"`
 	Endpoint           string                `json:"endpoint"`
+	EndpointGuid       string                `json:"endpointGuid"`
 	Status             string                `json:"status"`
 	SMetric            string                `json:"s_metric"`
 	SExpr              string                `json:"s_expr"`
