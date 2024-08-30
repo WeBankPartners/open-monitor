@@ -1,6 +1,6 @@
 <template>
   <div class="monitor-resource-recursive">
-    <Tree :data="treeData" :render="renderTree" expand-node @on-select-change="handleSelectNode"></Tree>
+    <Tree :data="treeData" :render="renderTree" @on-select-change="handleSelectNode"></Tree>
     <!-- 节点新增、编辑 -->
     <BaseDrawer
       :title="$t('m_resourceLevel_levelMsg')"
@@ -291,7 +291,8 @@ export default {
     recursiveViewConfig: {
       handler(val) {
         this.treeData = cloneDeep(val || [])
-        this.setExpand(this.treeData, true)
+        this.setSelectedAttr(this.treeData)
+        this.setExpandAttr(this.treeData, true)
       },
       immediate: true,
       deep: true
@@ -309,17 +310,25 @@ export default {
     // eslint-disable-next-line
     handleSelectNode(data, item) {
       if (item.selected === true) {
-        this.setExpand([item], true)
+        this.setExpandAttr([item], true)
       } else {
-        this.setExpand([item], false)
+        this.setExpandAttr([item], false)
       }
     },
     // 递归实现当前点击节点下所有节点展开/折叠
-    setExpand(arr, expand) {
+    setExpandAttr(arr, expand) {
       arr.forEach(item => {
         this.$set(item, 'expand', expand)
         if (Array.isArray(item.children) && item.children.length > 0) {
-          this.setExpand(item.children, expand)
+          this.setExpandAttr(item.children, expand)
+        }
+      })
+    },
+    setSelectedAttr(arr) {
+      arr.forEach(item => {
+        this.$set(item, 'selected', false)
+        if (Array.isArray(item.children) && item.children.length > 0) {
+          this.setSelectedAttr(item.children)
         }
       })
     },
