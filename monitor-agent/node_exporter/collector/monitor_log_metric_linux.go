@@ -311,7 +311,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 	return
 }
 
-func (c *logMetricMonitorNeObj) start(currentTry int) {
+func (c *logMetricMonitorNeObj) start() {
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
@@ -352,13 +352,8 @@ func (c *logMetricMonitorNeObj) start(currentTry int) {
 	if destroyFlag {
 		return
 	}
-	currentTry = currentTry + 1
-	if currentTry > 10 {
-		level.Info(monitorLogger).Log("log_metric break with current max try:", currentTry)
-		return
-	}
 	time.Sleep(60 * time.Second)
-	go c.start(currentTry)
+	go c.start()
 }
 
 func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
@@ -422,7 +417,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 		initLogMetricGroupNeObj(metricGroupObj)
 		c.MetricGroupConfig = append(c.MetricGroupConfig, metricGroupObj)
 	}
-	go c.start(1)
+	go c.start()
 }
 
 // 把所有正则初始化
