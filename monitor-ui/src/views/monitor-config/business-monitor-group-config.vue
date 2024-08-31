@@ -249,6 +249,8 @@
         </div>
       </div>
       <template slot='footer'>
+        <Checkbox v-if="actionType === 'add'" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="actionType === 'add'" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
@@ -356,8 +358,6 @@ export default {
       !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
         Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfig) : JSON.parse(item.range_config))
       })
-      Vue.set(this.configInfo, 'auto_create_warn', true)
-      Vue.set(this.configInfo, 'auto_create_dashboard', true)
       this.templateRetCode = isEmpty(res.success_code) ? {} : JSON.parse(res.success_code)
     },
     getTemplateDetail(guid) {
@@ -424,9 +424,9 @@ export default {
       !isEmpty(data.log_monitor_template) && !isEmpty(data.log_monitor_template.metric_list) && data.log_monitor_template.metric_list.forEach(item => {
         item.range_config = JSON.stringify(item.range_config)
       })
-      if (this.isAdd) {
-        data.auto_create_warn = hasIn(this.configInfo, 'auto_create_warn') ? this.configInfo.auto_create_warn : true
-        data.auto_create_dashboard = hasIn(this.configInfo, 'auto_create_dashboard') ? this.configInfo.auto_create_dashboard : true
+      if (this.actionType === 'add') {
+        data.auto_create_warn = this.auto_create_warn
+        data.auto_create_dashboard = this.auto_create_dashboard
       }
     },
     saveConfig() {
@@ -446,6 +446,7 @@ export default {
               h('div', { class: 'add-business-config-item' }, [
                 h('div', this.$t('m_has_create_warn') + ':'),
                 h('div', {
+                  class: 'create_warn_text',
                   domProps: {
                     innerHTML: tipOne
                   }
@@ -591,6 +592,9 @@ export default {
   .add-business-config-item {
     display: flex;
     flex-direction: row;
+    .create_warn_text {
+      text-align: left
+    }
   }
 }
 .add-business-config > div {

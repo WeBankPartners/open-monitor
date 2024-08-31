@@ -546,5 +546,6 @@
   "m_calculation_tip5": "5.Filter Tags: Tags supported for filtering the indicator when configuring alerts and dashboards. Condition fields are sourced from acquisition parameters, and optional condition values are sourced from business-configured tag values + actual acquisition values (e.g., failure quantity can only filter by service code, while categorized failure quantity can filter by both service code and return code).",
   "m_calculation_tip6": "6.Calculation Type: The formula used to calculate the indicator, allowing other indicators to be used as parameters.",
   "m_calculation_tip7": "7.Automatic Alert: A toggle to control whether alerts are created.",
-  "m_calculation_tip8": "8.Threshold Alert Configuration: Becomes effective when automatic alerts are enabled, automatically generating alerts according to the template rules."
+  "m_calculation_tip8": "8.Threshold Alert Configuration: Becomes effective when automatic alerts are enabled, automatically generating alerts according to the template rules.",
+  "m_save_success": "Save success"
 }

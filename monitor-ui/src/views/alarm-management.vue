@@ -99,7 +99,7 @@
 
 <script>
 import Vue from 'vue'
-import isEmpty from 'lodash/isEmpty'
+import {isEmpty, cloneDeep} from 'lodash'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -312,7 +312,8 @@ export default {
           this.tlow = responseData.low
           this.tmid = responseData.mid
           this.thigh = responseData.high
-        }
+        },
+        {isNeedloading: false}
       )
     },
     remarkModal(item) {
@@ -356,16 +357,25 @@ export default {
           pageSize: this.paginationInfo.pageSize
         }
       }
-      const keys = Object.keys(this.filters)
+      const filters = cloneDeep(this.filters)
+      const endpointList = []
+      !isEmpty(filters.endpoint) && filters.endpoint.forEach(val => {
+        if (val.indexOf('$*$') > -1) {
+          endpointList.push(val.split('$*$')[1])
+        } else {
+          endpointList.push(val)
+        }
+      })
+      filters.endpoint = endpointList
+      const keys = Object.keys(filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length; i++) {
-        params[keys[i]] = this.filters[keys[i]]
+        params[keys[i]] = filters[keys[i]]
         this.filtersForShow.push({
           key: keys[i],
-          value: this.filters[keys[i]]
+          value: filters[keys[i]]
         })
       }
-
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
