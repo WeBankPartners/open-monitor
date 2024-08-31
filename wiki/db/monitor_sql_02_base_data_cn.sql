@@ -1218,4 +1218,7 @@ update log_metric_template set tag_config='["code"]' where metric='req_suc_count
 update custom_chart_series set metric=replace(metric,'req_fail_count','req_fail_count_detail'),metric_guid=replace(metric_guid,'req_fail_count','req_fail_count_detail') where metric like '%req_fail_count';
 update alarm_strategy_metric set metric=replace(metric,'req_fail_count','req_fail_count_detail') where metric in (select guid from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count'));
 update metric set prom_expr=replace(prom_expr,',code="$t_code"',',retcode="$t_retcode",code="$t_code"') where log_metric_template in (select guid from log_metric_template where metric='req_fail_count_detail');
+
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_13','service_metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_14','metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
 #@v3.1.4-end@;
