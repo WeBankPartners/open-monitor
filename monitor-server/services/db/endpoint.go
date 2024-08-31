@@ -172,11 +172,6 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	return
 }
 
-func GetAllEndpointIdList() (list []string, err error) {
-	err = x.SQL("select  guid from endpoint_new").Find(&list)
-	return
-}
-
 func QueryEndpointList(endpoint string) (list []models.AlarmEndpoint, err error) {
 	var endpointList []string
 	if endpoint == "" {
