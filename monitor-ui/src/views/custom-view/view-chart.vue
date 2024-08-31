@@ -195,7 +195,10 @@ export default {
   border-radius: 4px;
 }
 .zone-chart-title {
-  padding: 20px 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
   font-size: 14px;
 }
 
