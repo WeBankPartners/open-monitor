@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -139,8 +140,8 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 func getAddCustomDashboardActions(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (actions []*Action, insertId int64, err error) {
 	var result sql.Result
 	actions = []*Action{}
-	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at,log_metric_group,time_range,refresh_week) values(?,?,?,?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
-		customDashboard.UpdateAt.Format(models.DatetimeFormat), customDashboard.LogMetricGroup, customDashboard.TimeRange, customDashboard.RefreshWeek)
+	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at,log_metric_group,time_range,refresh_week,panel_groups) values(?,?,?,?,?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
+		customDashboard.UpdateAt.Format(models.DatetimeFormat), customDashboard.LogMetricGroup, customDashboard.TimeRange, customDashboard.RefreshWeek, customDashboard.PanelGroups)
 	if err != nil {
 		return
 	}
@@ -296,6 +297,7 @@ func TransformMapToArray(hashMap map[string]bool) []string {
 			}
 		}
 	}
+	sort.Strings(res)
 	return res
 }
 
