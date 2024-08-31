@@ -65,11 +65,15 @@ const generateAdjacentColors = (hexColor, count, degree) => {
   }
   return adjacentColors
 }
-const stringToNumber = (str, min = 10, max = 99) => {
+const stringToNumber = (str, min = 1, max = 30) => {
   if (!str) {return Math.floor(Math.random() * (max - min + 1)) + min}
   const hash = Array.from(str).reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return parseInt((((hash % (max - min + 1)) + min) + '').split('').reverse()
+  const reversed = parseInt((((hash % (max - min + 1)) + min) + '').split('').reverse()
     .join(''), 10)
+  if (reversed > 50) {
+    return reversed - 50
+  }
+  return reversed
 }
 
 export {

@@ -342,7 +342,7 @@ export default {
           width: 150,
           key: 'monitorType',
           render: (h, params) => params.row.monitorType ? (
-            <Button size="small">{params.row.monitorType}</Button>
+            <Button size="small" style="font-size: 12px">{params.row.monitorType}</Button>
           ) : <span>-</span>
         },
         {
@@ -811,13 +811,12 @@ export default {
           const item = initialData[i]
           item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
           Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
-
           // 同环比修改
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
             item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
           } else {
-            if (isEmpty(item.series)) {
+            if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
               this.updateAllColorLine(i)
             }
           }
@@ -1347,6 +1346,9 @@ export default {
         item.color = item.color || generateAdjacentColors(this.tableData[index].colorGroup, 1, stringToNumber(item.seriesName))[0]
         return item
       })
+      // if (this.tableData[index].series.length === 1) {
+      //   this.tableData[index].series[0].color = this.tableData[index].colorGroup
+      // }
     },
     changeColorGroup(isShow = true, data, key) {
       if (isShow) {
@@ -1453,7 +1455,7 @@ export default {
 
   }
   .new-line-tag {
-    width: fit-content
+    min-width: 28px;
   }
 }
 
