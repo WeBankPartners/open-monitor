@@ -153,7 +153,7 @@ const initRangeConfigMap = {
 }
 
 const initSuccessCode = {
-  regulative: 1,
+  regulative: 0,
   source_value: 200,
   target_value: 'success'
 }
