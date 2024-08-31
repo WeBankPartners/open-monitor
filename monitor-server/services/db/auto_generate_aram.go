@@ -150,6 +150,9 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	if serviceGroupTable.DisplayName != "" {
 		displayServiceGroup = serviceGroupTable.DisplayName
 	}
+	codeList := getTargetCodeMap(dashboardParam.CodeStringMap)
+	// 添加 other默认告警
+	codeList = append(codeList, constOther)
 	if dashboardParam.AutoCreateDashboard {
 		// 1. 先创建看板
 		dashboard := &models.CustomDashboardTable{
@@ -160,6 +163,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			UpdateAt:       now,
 			RefreshWeek:    10,
 			TimeRange:      -1800,
+			PanelGroups:    strings.Join(codeList, ","),
 			LogMetricGroup: &dashboardParam.LogMetricGroupGuid,
 		}
 		// 看板名称使用显示名
@@ -186,9 +190,6 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			actions = append(actions, subDashboardActions...)
 		}
 		// 2. 新增图表
-		codeList := getTargetCodeMap(dashboardParam.CodeStringMap)
-		// 添加 other默认告警
-		codeList = append(codeList, constOther)
 		for index, code := range codeList {
 			// 请求量+失败量 柱状图
 			if reqCountMetric = getMetricByKey(metricMap, dashboardParam.MetricPrefixCode+"_"+constReqCount); reqCountMetric == nil {
