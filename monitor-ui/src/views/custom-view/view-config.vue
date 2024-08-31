@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="monitor-custom-view-config">
     <div>
       <header>
         <div class="header-name">
@@ -1583,72 +1583,56 @@ export default {
 </script>
 
 <style lang="less">
-
-.chart-layout-poptip {
+.monitor-custom-view-config {
+  .chart-layout-poptip {
+    .ivu-poptip-popper {
+      top: 10px !important;
+      left: 565px !important
+    }
+    .ivu-poptip-confirm .ivu-poptip-popper {
+      max-width: 330px;
+    }
+  }
   .ivu-poptip-popper {
-    top: 10px !important;
-    left: 565px !important
+    color: #515a6e
   }
-  .ivu-poptip-confirm .ivu-poptip-popper {
-    max-width: 330px;
+
+  .chart-config-info {
+    .ivu-dropdown-item-disabled {
+      color: inherit
+    }
   }
-}
-.ivu-poptip-popper {
-  color: #515a6e
-}
 
-.chart-config-info {
-  .ivu-dropdown-item-disabled {
-    color: inherit
+  .chart-option-menu {
+    .ivu-dropdown-menu {
+      max-height: 600px;
+      overflow: scroll;
+    }
   }
-}
 
-.chart-option-menu {
-  .ivu-dropdown-menu {
-    max-height: 600px;
-    overflow: scroll;
+  .references-button {
+    background-color: #edf4fe !important;
+    border-color: #b5d0fb !important;
   }
-}
 
-.references-button {
-  background-color: #edf4fe !important;
-  border-color: #b5d0fb !important;
-}
-
-.references-button {
-  background-color: #edf4fe !important;
-  border-color: #b5d0fb !important;
-}
-
-.ivu-select-dropdown {
-  max-height: 100vh !important;
-}
-
-.grid-content {
-  display: flex;
-  padding: 0 5px;
-  font-size: 16px;
-  align-items: center;
-  margin-top: 3px;
-}
-
-.header-grid-tools {
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  i {
-    font-size: 18px !important
+  .references-button {
+    background-color: #edf4fe !important;
+    border-color: #b5d0fb !important;
   }
-}
-.header-tools {
-  .ivu-btn-info {
-    background-color: #aa8aea;
-    border-color: #aa8aea;
-  }
-}
 
-.header-grid-name {
-  .ivu-tooltip-rel {
+  .ivu-select-dropdown {
+    max-height: 100vh !important;
+  }
+
+  .grid-content {
+    display: flex;
+    padding: 0 5px;
+    font-size: 16px;
+    align-items: center;
+    margin-top: 3px;
+  }
+
+  .header-grid-tools {
     display: flex;
     align-items: center;
     flex-grow: 1;
@@ -1667,7 +1651,24 @@ export default {
     .ivu-tooltip-rel {
       display: flex;
       align-items: center;
-      height: 30px;
+      flex-grow: 1;
+      i {
+        font-size: 18px !important
+      }
+    }
+    .header-tools {
+      .ivu-btn-info {
+        background-color: #aa8aea;
+        border-color: #aa8aea;
+      }
+    }
+
+    .header-grid-name {
+      .ivu-tooltip-rel {
+        display: flex;
+        align-items: center;
+        height: 30px;
+      }
     }
   }
 }
