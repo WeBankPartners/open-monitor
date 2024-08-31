@@ -311,5 +311,17 @@ func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHt
 	for _, path := range pathList {
 		result = append(result, &models.LogKeywordHttpDto{Path: path, Keywords: pathMap[path]})
 	}
+	pathKeywordExistMap := make(map[string]int)
+	for _, tmpPath := range result {
+		for _, tmpKeyword := range tmpPath.Keywords {
+			duplicateKey := fmt.Sprintf("%s^^^%s", tmpPath.Path, tmpKeyword.Keyword)
+			if _, ok := pathKeywordExistMap[duplicateKey]; ok {
+				err = fmt.Errorf("Endpint:%s path:%s keyword:%s duplicated ", endpoint, tmpPath.Path, tmpKeyword.Keyword)
+				return
+			} else {
+				pathKeywordExistMap[duplicateKey] = 1
+			}
+		}
+	}
 	return
 }
