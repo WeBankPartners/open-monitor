@@ -457,7 +457,7 @@ export default {
 .auto-tag-style {
   .ivu-tag-text.ivu-tag-color-white {
     display: inline-block;
-    min-width: 40px;
+    min-width: 24px;
   }
 }
 .table-alarm-name {

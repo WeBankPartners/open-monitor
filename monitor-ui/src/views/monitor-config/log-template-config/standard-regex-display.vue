@@ -81,10 +81,6 @@
           width="100%"
         ></Table>
       </div>
-      <div class='auto-create-warn' v-if='isAddState'>
-        <Checkbox v-model="configInfo.auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-model="configInfo.auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
-      </div>
     </div>
     </Col>
   </Row>
@@ -370,13 +366,6 @@ export default {
 }
 .ivu-form-item {
   margin-bottom: 0px;
-}
-.auto-create-warn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-left: 80%;
-  margin-top: 10px
 }
 </style>
 
