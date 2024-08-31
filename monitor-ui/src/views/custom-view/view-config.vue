@@ -99,21 +99,21 @@
               icon="md-add"
             ></Button>
           </span>
+        </div>
 
-          <div class="ml-4">
-            <span class="params-title">{{$t('m_automatic_layout')}}：</span>
-            <Poptip
-              class='chart-layout-poptip'
-              confirm
-              :title="$t('m_layout_change_tips')"
-              @on-ok="onLayoutPopTipConfirm"
-            >
-              <Button id='chartLayoutPopTipButton' style="display: none"></Button>
-            </Poptip>
-            <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
-              <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
-            </RadioGroup>
-          </div>
+        <div class="ml-2 mt-3 mb-3">
+          <span class="params-title">{{$t('m_automatic_layout')}}：</span>
+          <Poptip
+            class='chart-layout-poptip'
+            confirm
+            :title="$t('m_layout_change_tips')"
+            @on-ok="onLayoutPopTipConfirm"
+          >
+            <Button id='chartLayoutPopTipButton' style="display: none"></Button>
+          </Poptip>
+          <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
+            <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
+          </RadioGroup>
         </div>
 
         <!-- 图表新增 -->
@@ -151,7 +151,7 @@
                   </DropdownMenu>
                 </div>
                 <div v-else class='copy-drowdown-slot'>
-                  <div class='copy-drowdown-slot-select' @click="e => e.stopPropagation()">
+                  <div class='copy-drowdown-slot-select'>
                     <Input v-model.trim="filterChartName"
                            clearable
                            :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
@@ -181,7 +181,7 @@
                   <Table
                     class="copy-detail-table"
                     size="small"
-                    max-height="400"
+                    max-height="300"
                     :border="false"
                     :columns="copyTableColumns"
                     :data="allChartFilteredList"
@@ -204,8 +204,8 @@
       </div>
 
       <!-- 图表展示区域 -->
-      <div v-if="tmpLayoutData.length > 0" class='grid-window'>
-        <div class="grid-style">
+      <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
+        <div class="grid-window">
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -230,7 +230,7 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
-                  <Tag style="font-size: 14px; width: 46px" :style="{'visibility': item.logMetricGroup ? 'initial' : 'hidden'}" color='green'>auto</Tag>
+                  <Tag class='grid-auto-tag-style' color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <div v-html="processHtmlText(item.i)" class='header-grid-name-text'></div>
@@ -422,7 +422,7 @@ export default {
       panalName: '',
       pannelId: this.boardId || this.$route.params.pannelId,
       viewCondition: {
-        timeTnterval: -3600,
+        timeTnterval: -1800,
         dateRange: ['', ''],
         autoRefresh: 10,
         agg: 'none' // 聚合类型
@@ -524,7 +524,7 @@ export default {
         },
         {
           title: this.$t('m_screen_name'),
-          minWidth: 220,
+          width: 200,
           key: 'dashboardName',
         },
         {
@@ -557,6 +557,9 @@ export default {
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
+    setTimeout(() => {
+      document.querySelector('.copy-drowdown-slot').addEventListener('click', e => e.stopPropagation())
+    }, 100)
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
@@ -863,7 +866,7 @@ export default {
 
     async savePanelInfo() {
       await this.submitPanelInfo()
-      this.$Message.success(this.$t('m_tips_success'))
+      this.$Message.success(this.$t('m_save_success'))
       this.chartLayoutType = 'customize'
       this.getPannelList(this.activeGroup)
     },
@@ -881,7 +884,7 @@ export default {
         return
       }
       await this.submitPanelInfo()
-      this.$Message.success(this.$t('m_tips_success'))
+      this.$Message.success(this.$t('m_save_success'))
       this.isEditPanal = false
       this.getPannelList(this.activeGroup)
     },
@@ -893,7 +896,7 @@ export default {
     async selectGroup(item) {
       if (this.isEditStatus) {
         await this.submitPanelInfo() // 保存完毕后切换
-        this.$Message.success(this.$t('m_tips_success'))
+        this.$Message.success(this.$t('m_save_success'))
       }
       this.activeGroup = item
       this.chartLayoutType = 'customize'
@@ -1206,7 +1209,7 @@ export default {
       })
       this.editChartId = null
       this.getPannelList(this.activeGroup)
-      this.$Message.success(this.$t('m_tips_success'))
+      this.$Message.success(this.$t('m_save_success'))
     },
     chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
       return new Promise(resolve => {
@@ -1583,46 +1586,57 @@ export default {
 </script>
 
 <style lang="less">
-.monitor-custom-view-config {
-  .chart-layout-poptip {
-    .ivu-poptip-popper {
-      top: 10px !important;
-      left: 565px !important
-    }
-    .ivu-poptip-confirm .ivu-poptip-popper {
-      max-width: 330px;
-    }
-  }
+.chart-layout-poptip {
   .ivu-poptip-popper {
-    color: #515a6e
+    top: 60px !important;
+    left: 245px !important
+  }
+  .ivu-poptip-confirm .ivu-poptip-popper {
+    max-width: 330px;
+  }
+}
+.ivu-poptip-popper {
+  top: 55px !important;
+  left: 230px !important
+}
+
+.chart-config-info {
+  .ivu-dropdown-item-disabled {
+    color: inherit
+  }
+}
+
+.chart-option-menu > .ivu-select-dropdown {
+  max-height: 520px !important;
+}
+
+.references-button {
+  background-color: #edf4fe !important;
+  border-color: #b5d0fb !important;
+}
+
+.grid-content {
+  display: flex;
+  padding: 0 5px;
+  font-size: 16px;
+  align-items: flex-start;
+  .grid-auto-tag-style {
+    font-size: 14px;
+    min-width: 45px;
+  }
+}
+
+.header-grid-tools {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  i {
+    font-size: 18px !important
   }
 
-  .chart-config-info {
-    .ivu-dropdown-item-disabled {
-      color: inherit
-    }
-  }
-
-  .chart-option-menu {
-    .ivu-dropdown-menu {
-      max-height: 600px;
-      overflow: scroll;
-    }
-  }
-
-  .references-button {
-    background-color: #edf4fe !important;
-    border-color: #b5d0fb !important;
-  }
-
-  .references-button {
-    background-color: #edf4fe !important;
-    border-color: #b5d0fb !important;
-  }
-
-  .ivu-select-dropdown {
-    max-height: 100vh !important;
-  }
+  // .ivu-select-dropdown {
+  //   max-height: 100vh !important;
+  // }
 
   .grid-content {
     display: flex;
@@ -1662,15 +1676,17 @@ export default {
         border-color: #aa8aea;
       }
     }
-
-    .header-grid-name {
-      .ivu-tooltip-rel {
-        display: flex;
-        align-items: center;
-        height: 30px;
-      }
-    }
   }
+}
+
+.copy-drowdown-slot-select > :nth-child(2) {
+  .ivu-select-dropdown {
+    max-height: 400px !important;
+    overflow: auto !important;
+  }
+}
+.vue-grid-item::-webkit-scrollbar {
+  display: none;
 }
 </style>
 
@@ -1708,14 +1724,14 @@ export default {
   display: inline-block;
 }
 .params-title {
-  margin-left: 4px;
+  margin-left: 7px;
   font-size: 13px;
 }
 .header-grid {
   display: flex;
   // flex-grow: 1;
   justify-content: flex-end;
-  line-height: 32px;
+  // line-height: 32px;
   i {
     margin: 0 4px;
     cursor: pointer;
@@ -1736,7 +1752,6 @@ export default {
   display: flex;
   align-items: center;
   font-size: 14px;
-  margin-bottom: 15px;
 }
 .chart-config-info {
   font-size: 14px;
@@ -1766,59 +1781,57 @@ export default {
 }
 
 .grid-window {
-  display: flex;
-  // max-height: ~"calc(100vh - 250px)";
-  height: ~"calc(100vh - 280px)";
+  height: ~"calc(100vh - 300px)";
+  overflow: auto;
+  width: 100%;
+  display: inline-block;
+}
+.alarm-style {
+  width: 800px;
+  display: inline-block;
+}
+.fa-line-chart, .fa-pie-chart {
+  cursor: pointer;
+  font-size: 36px;
+  padding: 24px 48px;
+  border: 1px solid @gray-d;
+  margin: 8px;
+  border-radius: 4px;
+}
+.fa-line-chart:hover, .fa-pie-chart:hover {
+  box-shadow: 0 1px 8px @gray-d;
+  border-color: @blue-2;
+}
+.active-tag {
+  color: @blue-2;
+  border-color: @blue-2;
+}
+.i-icon-menu-fold:before {
+  content: "\E600";
+}
+.view-config-alarm {
+  min-width: 700px;
+  height: ~"calc(100vh - 300px)";
   overflow: auto;
 }
+.view-config-alarm::-webkit-scrollbar {
+  display: none;
+}
+.no-data {
+  text-align: center;
+  margin: 32px;
+  font-size: 14px;
+  color: gray;
+}
 
-.grid-style {
-    width: 100%;
-    display: inline-block;
-  }
-  .alarm-style {
-    width: 800px;
-    display: inline-block;
-  }
-  .fa-line-chart, .fa-pie-chart {
-    cursor: pointer;
-    font-size: 36px;
-    padding: 24px 48px;
-    border: 1px solid @gray-d;
-    margin: 8px;
-    border-radius: 4px;
-  }
-  .fa-line-chart:hover, .fa-pie-chart:hover {
-    box-shadow: 0 1px 8px @gray-d;
-    border-color: @blue-2;
-  }
-  .active-tag {
-    color: @blue-2;
-    border-color: @blue-2;
-  }
-  .i-icon-menu-fold:before {
-    content: "\E600";
-  }
-
-  .view-config-alarm {
-    // width: 700px
-  }
-
-  .no-data {
-    text-align: center;
-    margin: 32px;
-    font-size: 14px;
-    color: gray;
-  }
-
-  .ellipsis-text {
-    width: 170px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: bottom;
-  }
+.ellipsis-text {
+  width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: bottom;
+}
 
 .header-grid-name-text {
   display: inline-block;
@@ -1832,7 +1845,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  // max-height: 220px;
+  width: 835px;
 
   .copy-drowdown-slot-select {
     display: flex;

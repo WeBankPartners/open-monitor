@@ -153,7 +153,7 @@
             <img
               v-if="!$attrs.hideFilter"
               class="filter-icon-flex"
-              @click="addParams('endpoint', data.endpoint)"
+              @click="addParams('endpoint', data.endpoint + '$*$' + data.endpoint_guid)"
               src="../assets/img/icon_filter.png"
             />
           </div>
@@ -212,7 +212,7 @@
       :fullscreen="true"
       :title="$t('m_menu_endpointView')"
     >
-      <EndpointViewComponent ref="endpointViewComponentRef"></EndpointViewComponent>
+      <EndpointViewComponent v-if='showEndpointView' ref="endpointViewComponentRef"></EndpointViewComponent>
     </Modal>
   </Card>
 </template>
