@@ -612,7 +612,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		if delFlag {
 			// delete config
 			logMetricMonitorJob.destroy()
-			deletePath = append(logMetricMonitorJob.Path)
+			deletePath = append(deletePath, logMetricMonitorJob.Path)
 		} else {
 			tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, logMetricMonitorJob)
 		}
