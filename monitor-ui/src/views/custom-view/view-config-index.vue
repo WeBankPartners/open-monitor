@@ -108,10 +108,10 @@
         <Card>
           <div slot="title" class="panal-title">
             <div class='panal-title-name'>
+              <Tag v-if='item.logMetricGroup' style="width: 40px" color='green'>auto</Tag>
               <Tooltip :content="item.name" :max-width='400' theme="dark" transfer placement="top">
                 <span class='panal-title-name-text'>{{ item.name }}</span>
               </Tooltip>
-              <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='green'>auto</Tag>
             </div>
             <span class="panal-title-update">
               <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
@@ -703,6 +703,7 @@ li {
       align-items: center;
       justify-content: flex-start;
       .panal-title-name-text {
+        line-height: 18px;
         display: inline-block;
         max-width: 200px;
         white-space: nowrap;
