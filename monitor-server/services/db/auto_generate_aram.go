@@ -88,8 +88,8 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 							})
 						}
 					} else {
-						// 平均耗时,只会统计成功请求的平均耗时
-						if tag == constRetCode && strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) {
+						// 平均耗时&最大耗时,只会统计成功请求的平均耗时
+						if tag == constRetCode && (strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) || strings.HasSuffix(alarmMetric.Metric, constConstTimeMax)) {
 							metricTags = append(metricTags, &models.MetricTag{
 								TagName:  constRetCode,
 								Equal:    constEqualIn,
@@ -248,7 +248,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
 			}
-			// 耗时
+			// 平均耗时
 			if costTimeAvgMetric = getMetricByKey(metricMap, dashboardParam.MetricPrefixCode+"_"+constConstTimeAvg); costTimeAvgMetric == nil {
 				continue
 			}
