@@ -7,7 +7,7 @@
             {{this.$t('m_preview')}}
             <span class="underline"></span>
           </div>
-          <div v-if="isChartDataError" class="echart error-chart">
+          <div v-if="isChartDataError || isChartSeriesEmpty" class="echart error-chart">
             {{this.$t('m_noData')}}
           </div>
           <div v-else>
@@ -373,7 +373,6 @@ export default {
                   ? (params.row.tags.map((i, selectIndex) => (
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
-
                       <Select
                         style="width: 80px"
                         value={i.equal}
@@ -735,7 +734,8 @@ export default {
       chartAddTagOptions: {},
       chartAddTags: [],
       getEndpointSearch: '',
-      selectedEndpointOptionItem: {}
+      selectedEndpointOptionItem: {},
+      isChartSeriesEmpty: false
     }
   },
   computed: {
@@ -1277,7 +1277,6 @@ export default {
           }
         )
       } else {
-
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
           agg_step: this.chartConfigForm.aggStep || 60,
@@ -1293,18 +1292,29 @@ export default {
         if (isEmpty(params.data)) {
           return
         }
+        if (!isEmpty(params.data) && params.data.some(item => isEmpty(item.series))) {
+          this.isChartSeriesEmpty = true
+          return
+        }
         this.request(
           'POST',
           '/monitor/api/v1/dashboard/chart',
           params,
           responseData => {
+            if (isEmpty(responseData.series)) {
+              this.isChartSeriesEmpty = true
+              return
+            }
             responseData.yaxis.unit = this.chartConfigForm.unit
-            readyToDraw(this, responseData, 1, {
-              eye: false,
-              lineBarSwitch: true,
-              chartType: this.chartConfigForm.chartType,
-              params
-            })
+            this.isChartSeriesEmpty = false
+            setTimeout(() => {
+              readyToDraw(this, responseData, 1, {
+                eye: false,
+                lineBarSwitch: true,
+                chartType: this.chartConfigForm.chartType,
+                params
+              })
+            }, 100)
           }
         )
       }
@@ -1312,7 +1322,7 @@ export default {
 
     debounceDrawChart: debounce(function () {
       this.drawChartContent()
-    }, 500),
+    }, 300),
 
     generateLineParamsData() {
       if (isEmpty(this.tableData)) {
@@ -1346,9 +1356,9 @@ export default {
         item.color = item.color || generateAdjacentColors(this.tableData[index].colorGroup, 1, stringToNumber(item.seriesName))[0]
         return item
       })
-      // if (this.tableData[index].series.length === 1) {
-      //   this.tableData[index].series[0].color = this.tableData[index].colorGroup
-      // }
+      if (this.tableData[index].series.length === 1) {
+        this.tableData[index].series[0].color = this.tableData[index].colorGroup
+      }
     },
     changeColorGroup(isShow = true, data, key) {
       if (isShow) {
@@ -1366,9 +1376,15 @@ export default {
             const color = inputList[0].value
             data[key] = color
             if (key === 'colorGroup') {
-              Array.isArray(data.series) && data.series.forEach(line => {
-                line.color = generateAdjacentColors(color, 1, stringToNumber(line.seriesName))[0]
-              })
+              if (Array.isArray(data.series) && !isEmpty(data.series)) {
+                if (data.series.length === 1) {
+                  data.series[0].color = color
+                } else {
+                  data.series.forEach(line => {
+                    line.color = generateAdjacentColors(color, 1, stringToNumber(line.seriesName))[0]
+                  })
+                }
+              }
             }
           })
           if (isEmpty(resetButtonList)) {

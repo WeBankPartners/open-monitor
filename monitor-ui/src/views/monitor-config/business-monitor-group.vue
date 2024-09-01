@@ -969,6 +969,7 @@ export default {
         step: 10,
         endpoint_rel: []
       }
+      this.getEndpoint('process', 'mysql')
       this.getEndpointDefaultValue('process')
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
