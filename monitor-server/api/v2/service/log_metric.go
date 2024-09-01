@@ -697,6 +697,10 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if middleware.IsIllegalTargetValueCode(param.CodeStringMap) {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
+		return
+	}
 	if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -737,6 +741,10 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalTargetValueCode(param.CodeStringMap) {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
 		return
 	}
 	err := db.UpdateLogMetricGroup(&param, middleware.GetOperateUser(c))
