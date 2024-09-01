@@ -693,10 +693,10 @@ export default {
           width: 250,
           key: 'name',
           render: (h, params) => params.row.name ? (<div style='display: flex; align-items:center'>
+            {params.row.log_metric_group ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
             <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.name}>
               {params.row.name || '-'}
             </Tooltip>
-            {params.row.log_metric_group ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
           </div>) : (<div>-</div>)
         },
         {
@@ -1121,7 +1121,7 @@ export default {
       return !isNaN(str) && !isNaN(parseFloat(str))
     },
     isPositiveNumericString(str) {
-      return /^\d+(\.\d+)?$/.test(str) && parseFloat(str) >= 0
+      return /^\d+$/.test(str) && parseFloat(str) >= 0
     },
     validateDuplicateName(alarmName, guid = '') {
       const currentTableList = this.totalPageConfig[this.currentAlarmListIndex].tableData

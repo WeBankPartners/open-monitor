@@ -114,7 +114,6 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     item.itemStyle = {
       normal: {
         color
-        // color: index === 2 ? '#43D34C' : color
       }
     }
     item.areaStyle = null
