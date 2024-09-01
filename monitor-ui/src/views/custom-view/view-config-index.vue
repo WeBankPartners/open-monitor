@@ -8,7 +8,7 @@
         </Tabs>
       </Row>
       <div class="table-data-search">
-        <div style="width: 120px">{{$t('m_show_user_created')}}</div>
+        <div style="font-size: 14px;min-width: 110px">{{$t('m_show_user_created')}}</div>
         <i-switch v-model="searchMap.show" class='mr-3' style="width: 60px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.name"
@@ -101,14 +101,14 @@
         <Button @click="setDashboard">{{$t('m_button_setDashboard')}}</Button>
       </div>
     </div>
-    <div class="mt-3">
+    <div class="mt-3 all-card-content">
       <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
       <Row class="all-card-item" :gutter="15" v-else>
         <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
         <Card>
           <div slot="title" class="panal-title">
             <div class='panal-title-name'>
-              <Tooltip :content="item.name" theme="dark" transfer placement="top">
+              <Tooltip :content="item.name" :max-width='400' theme="dark" transfer placement="top">
                 <span class='panal-title-name-text'>{{ item.name }}</span>
               </Tooltip>
               <Tag v-if='item.logMetricGroup' class='ml-2' style="width: 40px" color='green'>auto</Tag>
@@ -645,6 +645,13 @@ export default {
 </style>
 
 <style scoped lang="less">
+.all-card-content {
+  max-height: ~'calc(100vh - 190px)';
+  overflow: scroll;
+}
+// .all-card-content::-webkit-scrollbar {
+//     display: inline-block;
+// }
 .screen-config-menu {
   width: 150px;
 }
@@ -696,12 +703,11 @@ li {
       align-items: center;
       justify-content: flex-start;
       .panal-title-name-text {
+        display: inline-block;
         max-width: 200px;
+        white-space: nowrap;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        line-height: 20px
+        text-overflow: ellipsis;
       }
     }
     &-update {

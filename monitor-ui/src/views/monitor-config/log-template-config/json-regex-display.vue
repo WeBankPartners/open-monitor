@@ -1,7 +1,7 @@
 <template>
   <div>
     <Row>
-      <Col span="8" :style="{height: showTemplate ? '' : '510px'}" style="overflow: auto;">
+      <Col span="8">
       <Form :label-width="120" style="margin-top:12px">
         <FormItem :label="$t('m_template_name')">
           <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
@@ -105,10 +105,6 @@
             :data="configInfo.metric_list"
             width="100%"
           ></Table>
-        </div>
-        <div class='auto-create-warn' v-if='isAddState'>
-          <Checkbox v-model="configInfo.auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-          <Checkbox v-model="configInfo.auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         </div>
       </div>
       </Col>
@@ -414,12 +410,5 @@ export default {
 }
 .ivu-form-item {
   margin-bottom: 0px;
-}
-.auto-create-warn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-left: 80%;
-  margin-top: 10px
 }
 </style>
