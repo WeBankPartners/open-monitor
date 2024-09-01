@@ -174,10 +174,10 @@ export default {
           width: 250,
           key: 'chartName',
           render: (h, params) => params.row.chartName ? (<div style='display: flex; align-items:center'>
+            {params.row.logMetricGroup ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
             <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.chartName}>
               {params.row.chartName || '-'}
             </Tooltip>
-            {params.row.logMetricGroup ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
           </div>) : (<div>-</div>)
         },
         {

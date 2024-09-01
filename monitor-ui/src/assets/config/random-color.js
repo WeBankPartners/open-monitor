@@ -65,21 +65,17 @@ const generateAdjacentColors = (hexColor, count, degree) => {
   }
   return adjacentColors
 }
-const stringToNumber = (str, min = 1, max = 30) => {
+const stringToNumber = (str, min = 1, max = 99) => {
   if (!str) {return Math.floor(Math.random() * (max - min + 1)) + min}
   const hash = Array.from(str).reduce((acc, char) => acc + char.charCodeAt(0), 0)
   const reversed = parseInt((((hash % (max - min + 1)) + min) + '').split('').reverse()
     .join(''), 10)
-  if (reversed > 50) {
-    return reversed - 50
-  }
-  return reversed
+  const minOutput = 10
+  const maxOutput = 90
+  return ((reversed - min) / (reversed - max)) * (maxOutput - minOutput) + minOutput
 }
 
 export {
   generateAdjacentColors,
   stringToNumber
 }
-// 示例
-// let colors = generateAdjacentColors("#ff5733", 3, 10);
-// console.log(colors);
