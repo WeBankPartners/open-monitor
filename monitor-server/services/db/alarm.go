@@ -1554,6 +1554,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			v.AlarmMetricList = []string{v.SMetric}
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
 			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
