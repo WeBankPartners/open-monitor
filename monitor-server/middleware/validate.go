@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
@@ -156,14 +157,16 @@ func ValidateActiveWindowString(str string) bool {
 	return regActiveWindow.MatchString(str)
 }
 
-func InitRoleEndpointMap() {
-
-}
-
-func CheckRoleEndpointOwner(roles []string) {
-
-}
-
-func UpdateRoleEndpointMap() {
-
+func IsIllegalTargetValueCode(codeList []*models.LogMetricStringMapTable) bool {
+	var hashMap = make(map[string]bool)
+	if len(codeList) == 0 {
+		return false
+	}
+	for _, table := range codeList {
+		if hashMap[table.TargetValue] {
+			return true
+		}
+		hashMap[table.TargetValue] = true
+	}
+	return false
 }
