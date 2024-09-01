@@ -15,7 +15,7 @@
             <span class="underline"></span>
           </div>
         </div>
-        <Row :key='rowKey'>
+        <Row>
           <Col span="8">
           <Form :label-width="120">
             <FormItem :label="$t('m_tableKey_name')">
@@ -95,8 +95,8 @@
                   </Input>
                   </Col>
 
-                  <Col span="4">
-                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <Col span="4" :key='rowKey'>
+                  <span>{{ item.regulative === 0 ? '' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
                   <Button
                     type="info"
                     ghost
@@ -178,8 +178,8 @@
                   >
                   </Input>
                   </Col>
-                  <Col span="4">
-                  <span>{{item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed')}}</span>
+                  <Col span="4" :key='rowKey'>
+                  <span>{{item.regulative === 0 ? '' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
                   <Button
                     type="info"
                     ghost
@@ -260,7 +260,7 @@
 
 <script>
 import {
-  cloneDeep, isEmpty, hasIn, debounce
+  cloneDeep, isEmpty, hasIn, debounce, countBy, some
 } from 'lodash'
 import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
@@ -417,7 +417,37 @@ export default {
         this.$Message.warning(`${this.$t('m_return_code')}: ${this.$t('m_fields_cannot_be_empty')}`)
         return true
       }
+      if (!isEmpty(tmpData.code_string_map)) {
+        const targetValueCount = countBy(tmpData.code_string_map, 'target_value')
+        const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
+        if (targetValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
 
+        const sourceValueCount = countBy(tmpData.code_string_map, 'source_value')
+        const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
+        if (sourceValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+      }
+
+      if (!isEmpty(tmpData.retcode_string_map)) {
+        const targetValueCount = countBy(tmpData.retcode_string_map, 'target_value')
+        const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
+        if (targetValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+
+        const sourceValueCount = countBy(tmpData.retcode_string_map, 'source_value')
+        const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
+        if (sourceValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+      }
       return false
     },
     processUpdateData(data) {
@@ -439,10 +469,18 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
         const messageTips = this.$t('m_tips_success')
         if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
-          const tipOne = isEmpty(res.alarm_list) ? '' : res.alarm_list.join('<br/>')
+          const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
           const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
           this.$Message.success({
             render: h => h('div', { class: 'add-business-config' }, [
+              h('div', {class: 'add-business-config-item'}, [
+                h('div', this.$t('m_has_create_dashboard') + ':'),
+                h('div', {
+                  domProps: {
+                    innerHTML: tipTwo
+                  }
+                })
+              ]),
               h('div', { class: 'add-business-config-item' }, [
                 h('div', this.$t('m_has_create_warn') + ':'),
                 h('div', {
@@ -451,13 +489,9 @@ export default {
                     innerHTML: tipOne
                   }
                 })
-              ]),
-              h('div', {class: 'add-business-config-item'}, [
-                h('div', this.$t('m_has_create_dashboard') + ':'),
-                h('div', tipTwo)
               ])
             ]),
-            duration: 5
+            duration: 100000
           })
         } else {
           this.$Message.success({
@@ -589,6 +623,8 @@ export default {
   flex-direction: column;
   align-items: flex-start;
   max-width: 900px;
+  max-height: 600px;
+  overflow-y: scroll;
   .add-business-config-item {
     display: flex;
     flex-direction: row;

@@ -711,6 +711,7 @@ export default {
 
       .alarm-card-container {
         // height: 740px;
+        width: 40vw;
         height: ~"calc(100vh - 310px)";
         padding-bottom: 20px;
         overflow-y: auto;
