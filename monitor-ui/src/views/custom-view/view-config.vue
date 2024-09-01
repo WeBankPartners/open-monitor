@@ -1,205 +1,209 @@
 <template>
   <div class="monitor-custom-view-config">
     <div>
-      <header>
-        <div class="header-name">
-          <div v-if="pageType !== 'dashboard'">
-            <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" ></Icon>
-            <template v-if="isEditPanal">
-              <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit/>
-              <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" ></Icon>
-              <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" ></Icon>
-            </template>
-            <template v-else>
-              <h5 class="d-inline-block"> {{panalName}}</h5>
-              <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
-            </template>
-            <Tag v-if='logMetricGroup' class='ml-2' style="font-size: 14px; min-width: 46px" color='green'>auto</Tag>
-          </div>
-        </div>
-        <div class="search-container">
-          <div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
-              <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
-                <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
-              </RadioGroup>
-            </div>
-            <div class="search-zone ml-2">
-              <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
-              <DatePicker
-                type="datetimerange"
-                :value="viewCondition.dateRange"
-                format="yyyy-MM-dd HH:mm:ss"
-                placement="bottom-start"
-                split-panels
-                @on-change="datePick"
-                :placeholder="$t('m_placeholder_datePicker')"
-                style="width: 250px"
-              ></DatePicker>
-            </div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
-                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
+      <div class='view-config-top-content'>
+        <header>
+          <div class="header-name">
+            <div v-if="pageType !== 'dashboard'">
+              <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" ></Icon>
+              <Tag v-if='logMetricGroup' class='ml-2 mr-2' style="font-size: 14px; min-width: 46px" color='green'>auto</Tag>
+              <template v-if="isEditPanal">
+                <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit/>
+                <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" ></Icon>
+                <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" ></Icon>
+              </template>
+              <template v-else>
+                <h5 class="d-inline-block"> {{panalName}}</h5>
+                <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
+              </template>
             </div>
           </div>
+          <div class="search-container">
+            <div>
+              <div class="search-zone">
+                <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
+                <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                  <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
+                </RadioGroup>
+              </div>
+              <div class="search-zone ml-2">
+                <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
+                <DatePicker
+                  type="datetimerange"
+                  :value="viewCondition.dateRange"
+                  format="yyyy-MM-dd HH:mm:ss"
+                  placement="bottom-start"
+                  split-panels
+                  @on-change="datePick"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 250px"
+                ></DatePicker>
+              </div>
+              <div class="search-zone">
+                <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+                <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
+                  <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                </Select>
+              </div>
+            </div>
 
-          <div class="header-tools">
-            <template v-if="isEditStatus">
-              <Button type="info" @click.stop="exportPanel">
-                <Icon type="md-cloud-upload" size="20"></Icon>
-                {{$t('m_export')}}
+            <div class="header-tools">
+              <template v-if="isEditStatus">
+                <Button type="info" @click.stop="exportPanel">
+                  <Icon type="md-cloud-upload" size="20"></Icon>
+                  {{$t('m_export')}}
+                </Button>
+                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
+              </template>
+              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
+                {{$t('m_alert')}}
               </Button>
-              <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
-            </template>
-
-            <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
-              {{$t('m_alert')}}
-            </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <!-- 分组 -->
-      <div>
-        <div class="radio-group">
-          <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
-          <div
-            :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
-          >
-            <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
+        <!-- 分组 -->
+        <div>
+          <div class="radio-group">
+            <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
+            <div class='group-region'>
+              <div
+                :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
+              >
+                <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
+              </div>
+              <div
+                v-for="(item, index) in panel_group_list"
+                :key="index"
+                :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
+              >
+                <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" ></Icon>
+                <span @click="selectGroup(item)">
+                  {{ `${item}` }}
+                </span>
+                <Poptip
+                  confirm
+                  :title="$t('m_delConfirm_tip')"
+                  placement="left-end"
+                  @on-ok="confirmDeleteGroup(item, index)"
+                >
+                  <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" ></Icon>
+                </Poptip>
+              </div>
+              <span>
+                <Button
+                  v-if="isEditStatus"
+                  @click="addGroupItem"
+                  style="margin-top: -5px;"
+                  type="success"
+                  shape="circle"
+                  icon="md-add"
+                ></Button>
+              </span>
+            </div>
           </div>
-          <div
-            v-for="(item, index) in panel_group_list"
-            :key="index"
-            :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
-          >
-            <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" ></Icon>
-            <span @click="selectGroup(item)">
-              {{ `${item}` }}
-            </span>
+
+          <div class="ml-2 mt-3 mb-3">
+            <span class="params-title">{{$t('m_automatic_layout')}}：</span>
             <Poptip
               confirm
-              :title="$t('m_delConfirm_tip')"
-              placement="left-end"
-              @on-ok="confirmDeleteGroup(item, index)"
+              popper-class='chart-layout-poptip'
+              :title="$t('m_layout_change_tips')"
+              @on-ok="onLayoutPopTipConfirm"
             >
-              <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" ></Icon>
+              <Button id='chartLayoutPopTipButton' style="display: none"></Button>
             </Poptip>
+            <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
+              <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
+            </RadioGroup>
           </div>
-          <span>
-            <Button
-              v-if="isEditStatus"
-              @click="addGroupItem"
-              style="margin-top: -5px;"
-              type="success"
-              shape="circle"
-              icon="md-add"
-            ></Button>
-          </span>
-        </div>
 
-        <div class="ml-2 mt-3 mb-3">
-          <span class="params-title">{{$t('m_automatic_layout')}}：</span>
-          <Poptip
-            class='chart-layout-poptip'
-            confirm
-            :title="$t('m_layout_change_tips')"
-            @on-ok="onLayoutPopTipConfirm"
-          >
-            <Button id='chartLayoutPopTipButton' style="display: none"></Button>
-          </Poptip>
-          <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
-            <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
-          </RadioGroup>
-        </div>
-
-        <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus">
-          <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
-          <Dropdown
-            placement="bottom-start"
-            trigger="click"
-            v-for="(item, index) in allAddChartOptions"
-            :key="index"
-            class="chart-option-menu"
-            @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
-          >
-            <Button :type="item.colorType" @click="onCopyButtonClick">
-              {{$t(item.name)}}
-              <Icon type="ios-arrow-down"></Icon>
-            </Button>
-            <template slot='list' >
-              <div>
-                <div v-if="item.type === 'add'">
-                  <DropdownMenu v-if="item.options.length > 0">
-                    <DropdownItem v-for="(option, key) in item.options"
-                                  :name="JSON.stringify(option)"
-                                  :key="key"
-                                  :disabled="option.disabled"
-                    >
-                      <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
-                      {{item.type === 'add' ? $t(option.name) : option.name}}
-                    </DropdownItem>
-                  </DropdownMenu>
-                  <DropdownMenu v-else>
-                    <DropdownItem>
-                      {{ $t('m_add_chart_library') }}
-                    </DropdownItem>
-                  </DropdownMenu>
-                </div>
-                <div v-else class='copy-drowdown-slot'>
-                  <div class='copy-drowdown-slot-select'>
-                    <Input v-model.trim="filterChartName"
-                           clearable
-                           :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
-                           @on-change="(e) => {
-                             filterChartName = e.target.value
-                             debounceGetAllChartOptionList()
-                           }"
-                    />
-                    <Select v-model="selectedDashBoardId"
-                            clearable
-                            filterable
-                            :placeholder="$t('m_please_select') + $t('m_source_dashboard')"
-                            @on-change="(id) => {
-                              selectedDashBoardId = id
-                              debounceGetAllChartOptionList()
-                            }"
-                    >
-                      <Option v-for="single in allDashBoardList"
-                              :value="single.id"
-                              :key="single.id"
+          <!-- 图表新增 -->
+          <div class="chart-config-info" v-if="isEditStatus">
+            <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
+            <Dropdown
+              placement="bottom-start"
+              trigger="click"
+              v-for="(item, index) in allAddChartOptions"
+              :key="index"
+              class="chart-option-menu"
+              transfer-class-name='filter-chart-layer'
+              @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
+            >
+              <Button :type="item.colorType" @click="onCopyButtonClick">
+                {{$t(item.name)}}
+                <Icon type="ios-arrow-down"></Icon>
+              </Button>
+              <template slot='list' >
+                <div>
+                  <div v-if="item.type === 'add'">
+                    <DropdownMenu v-if="item.options.length > 0">
+                      <DropdownItem v-for="(option, key) in item.options"
+                                    :name="JSON.stringify(option)"
+                                    :key="key"
+                                    :disabled="option.disabled"
                       >
-                        {{ single.name }}
-                      </Option>
-                    </Select>
+                        <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
+                        {{item.type === 'add' ? $t(option.name) : option.name}}
+                      </DropdownItem>
+                    </DropdownMenu>
+                    <DropdownMenu v-else>
+                      <DropdownItem>
+                        {{ $t('m_add_chart_library') }}
+                      </DropdownItem>
+                    </DropdownMenu>
                   </div>
-                  <div class="copy-table-tips">{{$t('m_copy_table_tips')}}</div>
-                  <Table
-                    class="copy-detail-table"
-                    size="small"
-                    max-height="300"
-                    :border="false"
-                    :columns="copyTableColumns"
-                    :data="allChartFilteredList"
-                    @on-selection-change='onCopyTableSelected'
-                  />
+                  <div v-else class='copy-drowdown-slot'>
+                    <div class='copy-drowdown-slot-select'>
+                      <Input v-model.trim="filterChartName"
+                             clearable
+                             :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
+                             @on-change="(e) => {
+                               filterChartName = e.target.value
+                               debounceGetAllChartOptionList()
+                             }"
+                      />
+                      <Select v-model="selectedDashBoardId"
+                              clearable
+                              filterable
+                              :placeholder="$t('m_please_select') + $t('m_source_dashboard')"
+                              @on-change="(id) => {
+                                selectedDashBoardId = id
+                                debounceGetAllChartOptionList()
+                              }"
+                      >
+                        <Option v-for="single in allDashBoardList"
+                                :value="single.id"
+                                :key="single.id"
+                        >
+                          {{ single.name }}
+                        </Option>
+                      </Select>
+                    </div>
+                    <div class="copy-table-tips">{{$t('m_copy_table_tips')}}</div>
+                    <Table
+                      class="copy-detail-table"
+                      size="small"
+                      max-height="300"
+                      :border="false"
+                      :columns="copyTableColumns"
+                      :data="allChartFilteredList"
+                      @on-selection-change='onCopyTableSelected'
+                    />
 
-                  <Button
-                    type="primary"
-                    class='copy-drowdown-confirm-button'
-                    @click="onAddChart(selectedChartList, item.type)"
-                  >
-                    {{$t('m_confirm')}}
-                  </Button>
+                    <Button
+                      type="primary"
+                      class='copy-drowdown-confirm-button'
+                      @click="onAddChart(selectedChartList, item.type)"
+                    >
+                      {{$t('m_confirm')}}
+                    </Button>
+                  </div>
+
                 </div>
-
-              </div>
-            </template>
-          </Dropdown>
+              </template>
+            </Dropdown>
+          </div>
         </div>
       </div>
 
@@ -230,7 +234,7 @@
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
-                  <Tag class='grid-auto-tag-style' color='green'>auto</Tag>
+                  <Tag v-if="item.logMetricGroup" class='grid-auto-tag-style' color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
                     <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
                       <div v-html="processHtmlText(item.i)" class='header-grid-name-text'></div>
@@ -264,7 +268,7 @@
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Button v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Button>
+                    <Tag v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Tag>
                     <span @click.stop="">
                       <Select v-model="item.group"
                               style="width:100px;"
@@ -662,9 +666,10 @@ export default {
       timestamp = timestamp / 1000
       return timestamp
     },
-    initPanals(type) {
+    async initPanals(type) {
       const tmpArr = []
-      this.viewData.forEach(item => {
+      for (let k=0; k<this.viewData.length; k++) {
+        const item = this.viewData[k]
         // 先对groupDisplayConfig进行初始化，防止异常值
         if (!this.isValidJson(item.groupDisplayConfig) || isEmpty(JSON.parse(item.groupDisplayConfig))) {
           item.groupDisplayConfig = ''
@@ -693,19 +698,28 @@ export default {
           unit: '',
           data: []
         }
-        item.chartSeries.forEach(item => {
-          item.defaultColor = item.colorGroup
-          if (item.series && !isEmpty(item.series)) {
-            item.metricToColor = cloneDeep(item.series).map(one => {
+        for (let i=0; i<item.chartSeries.length; i++) {
+          const single = item.chartSeries[i]
+          single.defaultColor = single.colorGroup
+          if (isEmpty(single.series) && item.chartType !== 'pie') {
+            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
+            const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            if (!isEmpty(series) && series.length === 1) {
+              series[0].color = single.colorGroup
+            }
+            single.series = series
+          }
+          if (single.series && !isEmpty(single.series)) {
+            single.metricToColor = cloneDeep(single.series).map(one => {
               one.metric = one.seriesName
               delete one.seriesName
               return one
             })
           } else {
-            item.metricToColor = []
+            single.metricToColor = []
           }
-          params.data.push(item)
-        })
+          params.data.push(single)
+        }
         const height = (parsedDisplayConfig.h + 1) * 30-8
         const _activeCharts = []
         _activeCharts.push({
@@ -733,7 +747,7 @@ export default {
           partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
           logMetricGroup: item.logMetricGroup
         })
-      })
+      }
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
@@ -747,6 +761,20 @@ export default {
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
       }, 300)
+    },
+    processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
+      let tempTags = tags
+      if (allItem.comparison && !isEmpty(tags) && tags[0].tagName === 'calc_type' && isEmpty(tags[0].tagValue)) {
+        tempTags = []
+      }
+      return {
+        metric,
+        endpoint,
+        serviceGroup,
+        monitorType,
+        tags: tempTags,
+        chartSeriesGuid
+      }
     },
     isShowGridPlus(item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
@@ -993,11 +1021,11 @@ export default {
           if (!isNaN(Number(item.i))) {
             return Number(item.i)
           }
-          return 10000
+          return '10000'
         })
         return Math.max(...allName) + 1 + ''
       }
-      return Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000 + ''
+      return '10000'
     },
     processSingleItem(lastItem, needSetItem) {
       if (lastItem.x + lastItem.w + needSetItem.w > 12) {
@@ -1560,7 +1588,7 @@ export default {
       }
       return finalItem
     },
-    processHtmlText(name) {
+    processHtmlText(name = '') {
       if (name.split('/').length > 1) {
         return '<span style=\'font-size: 14px; line-height: 15px; display: inline-block\'>' + name.split('/').join('<br>') + '</span>'
       }
@@ -1587,16 +1615,8 @@ export default {
 
 <style lang="less">
 .chart-layout-poptip {
-  .ivu-poptip-popper {
-    top: 60px !important;
-    left: 245px !important
-  }
-  .ivu-poptip-confirm .ivu-poptip-popper {
-    max-width: 330px;
-  }
-}
-.ivu-poptip-popper {
-  top: 55px !important;
+  max-width: 350px !important;
+  top: 75px !important;
   left: 230px !important
 }
 
@@ -1606,11 +1626,17 @@ export default {
   }
 }
 
-.chart-option-menu > .ivu-select-dropdown {
+.filter-chart-layer {
   max-height: 520px !important;
 }
 
+.filter-chart-layer::-webkit-scrollbar {
+  display: none;
+}
+
 .references-button {
+  font-size: 14px;
+  min-width: 47px;
   background-color: #edf4fe !important;
   border-color: #b5d0fb !important;
 }
@@ -1633,10 +1659,6 @@ export default {
   i {
     font-size: 18px !important
   }
-
-  // .ivu-select-dropdown {
-  //   max-height: 100vh !important;
-  // }
 
   .grid-content {
     display: flex;
@@ -1685,14 +1707,22 @@ export default {
     overflow: auto !important;
   }
 }
-.vue-grid-item::-webkit-scrollbar {
-  display: none;
-}
+// .vue-grid-item::-webkit-scrollbar {
+//   display: none;
+// }
 </style>
 
 <style scoped lang="less">
 /deep/ .ivu-form-item {
   margin-bottom: 0;
+}
+
+.view-config-top-content {
+  max-height: 220px;
+  overflow: scroll;
+}
+.view-config-top-content::-webkit-scrollbar {
+  display: none;
 }
 
 .arrow-back {
@@ -1752,6 +1782,12 @@ export default {
   display: flex;
   align-items: center;
   font-size: 14px;
+  .group-region {
+    display: inline-block;
+    white-space: nowrap;
+    max-width: ~'calc(100vw - 300px)';
+    overflow-x: scroll;
+  }
 }
 .chart-config-info {
   font-size: 14px;
@@ -1781,7 +1817,7 @@ export default {
 }
 
 .grid-window {
-  height: ~"calc(100vh - 300px)";
+  height: ~"calc(100vh - 330px)";
   overflow: auto;
   width: 100%;
   display: inline-block;
@@ -1811,7 +1847,7 @@ export default {
 }
 .view-config-alarm {
   min-width: 700px;
-  height: ~"calc(100vh - 300px)";
+  height: ~"calc(100vh - 330px)";
   overflow: auto;
 }
 .view-config-alarm::-webkit-scrollbar {
@@ -1845,7 +1881,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 835px;
+  width: 840px;
 
   .copy-drowdown-slot-select {
     display: flex;
@@ -1869,6 +1905,7 @@ export default {
   }
   .copy-detail-table {
     margin-bottom: 10px;
+    max-width: 830px;
   }
   .copy-table-tips {
     margin-left: 20px;
