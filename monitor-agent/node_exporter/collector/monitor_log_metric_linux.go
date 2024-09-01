@@ -184,6 +184,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 		select {
 		case lineText = <-c.DataChan:
 		case <-c.TailDataCancelChan:
+			level.Info(monitorLogger).Log("log_metric -> logMetricMonitorNeObj_tail_data_cancel,", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 			return
 		}
 		//lineText := <-c.DataChan
@@ -351,7 +352,13 @@ func (c *logMetricMonitorNeObj) start() {
 	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
 	if destroyFlag {
+		level.Info(monitorLogger).Log("log_metric -> destroy", c.Path)
 		return
+	}
+	if reopenFlag {
+		level.Info(monitorLogger).Log("log_metric -> reopen", c.Path)
+		time.Sleep(5 * time.Second)
+		go c.start()
 	}
 	//time.Sleep(60 * time.Second)
 	//go c.start()
@@ -591,6 +598,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		return err
 	}
 	var tmpLogMetricObjJobs []*logMetricMonitorNeObj
+	var deletePath []string
 	for _, logMetricMonitorJob := range logMetricMonitorJobs {
 		delFlag := true
 		for _, paramObj := range param {
@@ -604,8 +612,23 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		if delFlag {
 			// delete config
 			logMetricMonitorJob.destroy()
+			deletePath = append(logMetricMonitorJob.Path)
 		} else {
 			tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, logMetricMonitorJob)
+		}
+	}
+	if len(deletePath) > 0 && len(tmpLogMetricObjJobs) > 0 {
+		for _, existJob := range tmpLogMetricObjJobs {
+			matchDeletePath := false
+			for _, tmpDeletePath := range deletePath {
+				if existJob.Path == tmpDeletePath {
+					matchDeletePath = true
+					break
+				}
+			}
+			if matchDeletePath {
+				existJob.ReOpenHandlerChan <- 1
+			}
 		}
 	}
 	for _, paramObj := range param {
