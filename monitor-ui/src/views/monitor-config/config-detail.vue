@@ -38,7 +38,7 @@
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.display_name }}</Option>
                 </Select>
                 </Col>
                 <Col span="5">
@@ -198,7 +198,7 @@
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('m_field_role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.display_name }}</Option>
                 </Select>
                 </Col>
                 <Col span="5">
