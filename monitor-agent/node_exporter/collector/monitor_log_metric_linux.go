@@ -184,7 +184,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 		select {
 		case lineText = <-c.DataChan:
 		case <-c.TailDataCancelChan:
-			level.Info(monitorLogger).Log("log_metric -> logMetricMonitorNeObj_tail_data_cancel,", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+			level.Info(monitorLogger).Log("log_metric -> logMetricMonitorNeObj_tail_data_cancel", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 			return
 		}
 		//lineText := <-c.DataChan
@@ -313,7 +313,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 }
 
 func (c *logMetricMonitorNeObj) start() {
-	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", c.Path)
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -350,13 +350,13 @@ func (c *logMetricMonitorNeObj) start() {
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
 	c.TailDataCancelChan <- 1
-	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	if destroyFlag {
-		level.Info(monitorLogger).Log("log_metric -> destroy", c.Path)
+		level.Info(monitorLogger).Log("log_metric -> destroy", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		return
 	}
 	if reopenFlag {
-		level.Info(monitorLogger).Log("log_metric -> reopen", c.Path)
+		level.Info(monitorLogger).Log("log_metric -> reopen", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		time.Sleep(5 * time.Second)
 		go c.start()
 	}
