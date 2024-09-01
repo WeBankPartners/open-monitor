@@ -10,6 +10,7 @@
           <FormItem :label="$t('m_alarm_level')">
             <Select
               v-model="filters.priority"
+              placement='bottom'
               multiple
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarm_level')"
@@ -26,6 +27,7 @@
               v-model="filters.alarm_name"
               multiple
               filterable
+              placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_alarmName')"
               @on-change="onFilterChange"
               @on-query-change="(query) => {
@@ -47,6 +49,7 @@
               v-model="filters.metric"
               multiple
               filterable
+              placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_metric')"
               @on-change="onFilterChange"
               @on-query-change="(query) => {
@@ -68,6 +71,7 @@
               v-model="filters.endpoint"
               multiple
               filterable
+              placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_endpoint')"
               @on-change="onFilterChange"
               @on-query-change="(query) => {
@@ -79,7 +83,7 @@
                 }
               }"
             >
-              <Option v-for="(item, index) in filtersEndpointOptions" :value="item.name" :key="index">
+              <Option v-for="(item, index) in filtersEndpointOptions" :value="item.displayName + '$*$' + item.name" :key="index">
                 {{item.displayName}}
               </Option>
             </Select>
@@ -93,7 +97,9 @@
 </template>
 
 <script>
-import {debounce, cloneDeep} from 'lodash'
+import {
+  debounce, cloneDeep, isEmpty, find
+} from 'lodash'
 
 const initFilters = {
   alarm_name: [],
@@ -176,6 +182,7 @@ export default ({
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
         this.filtersMetricOptions = res.metricList
+        this.processOptions()
       })
     },
     onFilterConditionChange: debounce(function () {
@@ -191,8 +198,35 @@ export default ({
         }
       }
     },
+    processOptions() {
+      !isEmpty(this.filters.alarm_name) && this.filters.alarm_name.forEach(name => {
+        if (!this.filtersAlarmNameOptions.includes(name)) {
+          this.filtersAlarmNameOptions.unshift(name)
+        }
+      })
+
+      !isEmpty(this.filters.metric) && this.filters.metric.forEach(val => {
+        if (!this.filtersMetricOptions.includes(val)) {
+          this.filtersMetricOptions.unshift(val)
+        }
+      })
+
+      !isEmpty(this.filters.endpoint) && this.filters.endpoint.forEach(val => {
+        if (!find(this.filtersEndpointOptions, {
+          displayName: val.split('$*$')[0],
+          name: val.split('$*$')[1]
+        })) {
+          this.filtersEndpointOptions.unshift({
+            displayName: val.split('$*$')[0],
+            name: val.split('$*$')[1]
+          })
+        }
+      })
+
+    },
     onFilterChange() {
       this.limitFiltersLength()
+      this.processOptions()
       this.onFilterConditionChange()
     }
   }
