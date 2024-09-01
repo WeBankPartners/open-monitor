@@ -1620,7 +1620,9 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		whereSql += fmt.Sprintf(" AND s_metric in ('" + strings.Join(param.Metric, "','") + "') ")
 	}
 	if len(param.AlarmName) > 0 {
-		whereSql += fmt.Sprintf(" AND alarm_name in ('" + strings.Join(param.AlarmName, "','") + "') ")
+		alarmNameSql, alarmNameParam := createListParams(param.AlarmName, "")
+		whereSql += " AND alarm_name  in (" + alarmNameSql + ")"
+		params = append(params, alarmNameParam...)
 	}
 	//  支持 告警任意搜索,但是只能搜索不关闭的告警
 	if strings.TrimSpace(param.Query) != "" {
