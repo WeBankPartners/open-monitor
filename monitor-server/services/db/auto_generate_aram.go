@@ -145,8 +145,15 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
 	var customDashboardList []*models.CustomDashboardTable
+	var serviceGroupName string
 	actions = []*Action{}
 	now := time.Now()
+	if serviceGroupObj, getErr := getSimpleServiceGroup(dashboardParam.ServiceGroup); getErr != nil {
+		err = getErr
+		return
+	} else {
+		serviceGroupName = serviceGroupObj.DisplayName
+	}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", dashboardParam.ServiceGroup).Get(&serviceGroupTable)
 	if serviceGroupTable.DisplayName != "" {
 		displayServiceGroup = serviceGroupTable.DisplayName
@@ -215,9 +222,9 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, codeList, reqCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, reqCountMetric))
 			// 失败量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, codeList, failCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, failCountMetric))
 			subChart1Actions = handleAutoCreateChart(chartParam1, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
 			if len(subChart1Actions) > 0 {
 				actions = append(actions, subChart1Actions...)
@@ -243,7 +250,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, codeList, sucRateMetric))
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, sucRateMetric))
 			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
@@ -268,7 +275,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				Group:              code,
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
-			chartSeries := generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, codeList, costTimeAvgMetric)
+			chartSeries := generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, costTimeAvgMetric)
 			// 耗时率 只计算成功请求的耗时率
 			if len(chartSeries.Tags) > 0 {
 				var hasRetCode bool
@@ -393,7 +400,7 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 	return list
 }
 
-func generateChartSeries(serviceGroup, monitorType, code string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
+func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	dto := &models.CustomChartSeriesDto{
@@ -431,7 +438,7 @@ func generateChartSeries(serviceGroup, monitorType, code string, codeList []stri
 		}
 		dto.ColorConfig = []*models.ColorConfigDto{
 			{
-				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroup, code),
+				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroupName, code),
 				Color:      metric.ColorGroup,
 			},
 		}
