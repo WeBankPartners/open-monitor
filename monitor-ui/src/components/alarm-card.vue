@@ -376,7 +376,7 @@ li {
   align-items: center;
   .custom-title-text {
     display: inline-block;
-    max-width: ~"calc(40vw - 250px)";
+    max-width: ~"calc(40vw - 285px)";
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

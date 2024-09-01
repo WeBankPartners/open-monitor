@@ -537,7 +537,7 @@
   "m_screen_name": "看板名",
   "m_copy_table_tips": "还有更多数据，请搜索查找",
   "m_threshold_tips": "阈值请输入数字",
-  "m_time_tips": "时间请输入正数",
+  "m_time_tips": "时间请输入正整数",
   "m_categorized_failure_count": "分类失败量",
   "m_calculation_title": "计算指标说明:",
   "m_calculation_tip1": "1.色系:作为指标默认的色系,在自定义看板中使用",
