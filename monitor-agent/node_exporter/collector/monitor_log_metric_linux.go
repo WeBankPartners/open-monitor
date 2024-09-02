@@ -242,7 +242,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 					for _, metricParam := range metricGroup.ParamList {
 						if fetchValue, ok := fetchJsonDataMap[metricParam.JsonKey]; !ok {
 							allMatchFlag = false
-							level.Info(monitorLogger).Log("log_json_group -> check key fail", metricParam.JsonKey)
+							//level.Info(monitorLogger).Log("log_json_group -> check key fail", metricParam.JsonKey)
 							break
 						} else {
 							fetchParamValueMap[metricParam.Name] = transMetricGroupData(fetchValue, metricParam.StringMap)
@@ -336,6 +336,7 @@ func (c *logMetricMonitorNeObj) start() {
 			if line == nil {
 				continue
 			}
+			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
 			c.DataChan <- line.Text
 		}
 		if reopenFlag || destroyFlag {
@@ -348,7 +349,7 @@ func (c *logMetricMonitorNeObj) start() {
 		//}
 	}
 	c.TailSession.Stop()
-	c.TailSession.Cleanup()
+	//c.TailSession.Cleanup()
 	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	if destroyFlag {
@@ -357,11 +358,9 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	if reopenFlag {
 		level.Info(monitorLogger).Log("log_metric -> reopen", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		go c.start()
 	}
-	//time.Sleep(60 * time.Second)
-	//go c.start()
 }
 
 func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
@@ -598,7 +597,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		return err
 	}
 	var tmpLogMetricObjJobs []*logMetricMonitorNeObj
-	var deletePath []string
+	deletePathMap := make(map[string]int)
 	for _, logMetricMonitorJob := range logMetricMonitorJobs {
 		delFlag := true
 		for _, paramObj := range param {
@@ -612,21 +611,14 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		if delFlag {
 			// delete config
 			logMetricMonitorJob.destroy()
-			deletePath = append(deletePath, logMetricMonitorJob.Path)
+			deletePathMap[logMetricMonitorJob.Path] = 1
 		} else {
 			tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, logMetricMonitorJob)
 		}
 	}
-	if len(deletePath) > 0 && len(tmpLogMetricObjJobs) > 0 {
+	if len(deletePathMap) > 0 && len(tmpLogMetricObjJobs) > 0 {
 		for _, existJob := range tmpLogMetricObjJobs {
-			matchDeletePath := false
-			for _, tmpDeletePath := range deletePath {
-				if existJob.Path == tmpDeletePath {
-					matchDeletePath = true
-					break
-				}
-			}
-			if matchDeletePath {
+			if _, ok := deletePathMap[existJob.Path]; ok {
 				existJob.ReOpenHandlerChan <- 1
 			}
 		}
