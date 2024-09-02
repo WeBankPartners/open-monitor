@@ -563,8 +563,12 @@ export default {
     this.getAllRolesOptions()
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
-      isEmpty(domArr).forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
+      !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
     }, 100)
+
+    setTimeout(() => {
+      this.refreshNow = !this.refreshNow
+    }, 2000)
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
