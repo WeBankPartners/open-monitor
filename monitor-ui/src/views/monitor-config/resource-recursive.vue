@@ -292,7 +292,6 @@ export default {
       handler(val) {
         this.treeData = cloneDeep(val || [])
         this.setSelectedAttr(this.treeData)
-        this.setExpandAttr(this.treeData, true)
       },
       immediate: true,
       deep: true
@@ -800,6 +799,9 @@ export default {
   .ivu-tree ul li {
     margin: 4px 0;
   }
+  .ivu-tree li ul {
+    padding: 0 0 0 26px;
+  }
   .ivu-tree-title {
     width: 800px;
     padding: 2px 4px;
@@ -814,9 +816,4 @@ export default {
     display: none;
   }
 }
-</style>
-<style lang="less" scoped>
-  .custom-tree ::v-deep .ivu-tree-children {
-    margin-left: 24px;
-  }
 </style>
