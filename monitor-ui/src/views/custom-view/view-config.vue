@@ -389,6 +389,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
   line: 'm_line_chart_s',
@@ -709,8 +710,8 @@ export default {
           if (isEmpty(single.series) && item.chartType !== 'pie') {
             const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
             const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-            if (!isEmpty(series) && series.length === 1) {
-              series[0].color = single.colorGroup
+            if (!isEmpty(series)) {
+              changeSeriesColor(series, single.colorGroup)
             }
             single.series = series
           }
