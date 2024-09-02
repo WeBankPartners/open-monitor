@@ -1792,6 +1792,7 @@ export default {
     display: inline-block;
     white-space: nowrap;
     max-width: ~'calc(100vw - 300px)';
+    overflow: auto;
   }
 }
 .chart-config-info {

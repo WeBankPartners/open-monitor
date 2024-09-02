@@ -624,7 +624,7 @@ export default {
   align-items: flex-start;
   max-width: 900px;
   max-height: 600px;
-  overflow-y: scroll;
+  overflow-y: auto;
   .add-business-config-item {
     display: flex;
     flex-direction: row;
