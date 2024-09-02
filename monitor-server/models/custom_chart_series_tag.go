@@ -11,4 +11,5 @@ type CustomChartTagValueRow struct {
 	ChartGuid string `json:"chartGuid" xorm:"chart_guid"`
 	Name      string `json:"name" xorm:"name"`
 	Value     string `json:"value" xorm:"value"`
+	Equal     string `json:"equal" xorm:"equal"` // in | notin
 }
