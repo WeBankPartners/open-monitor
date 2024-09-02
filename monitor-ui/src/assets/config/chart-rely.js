@@ -69,6 +69,7 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
         }
       })
     } else {
+      window.metricToColor = metricToColor
       responseData.series.forEach(item => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
