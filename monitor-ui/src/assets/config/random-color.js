@@ -82,7 +82,7 @@ const changeSeriesColor = (series = [], color = '') => {
     series[0].color = color
   } else {
     const len = series.length
-    const colorArr = generateAdjacentColors(color, len, 15)
+    const colorArr = generateAdjacentColors(color, len, 10)
     const seriesNameList = series.map(item => item.seriesName)
     seriesNameList.sort()
     for (let i=0; i<seriesNameList.length; i++) {
