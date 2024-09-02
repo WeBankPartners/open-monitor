@@ -652,7 +652,7 @@ body::-webkit-scrollbar {
 .all-card-content {
   max-height: ~'calc(100vh - 190px)';
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 // .all-card-content::-webkit-scrollbar {
 //     display: inline-block;
