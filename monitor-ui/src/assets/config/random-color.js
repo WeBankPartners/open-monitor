@@ -1,3 +1,4 @@
+const lodash = require('lodash')
 const hexToHSL = H => {
   const r = parseInt(H.substring(1, 3), 16) / 255
   const g = parseInt(H.substring(3, 5), 16) / 255
@@ -75,7 +76,27 @@ const stringToNumber = (str, min = 1, max = 99) => {
   return ((reversed - min) / (reversed - max)) * (maxOutput - minOutput) + minOutput
 }
 
+const changeSeriesColor = (series = [], color = '') => {
+  if (series.length === 0 || !color) {return}
+  if (series.length === 1) {
+    series[0].color = color
+  } else {
+    const len = series.length
+    const colorArr = generateAdjacentColors(color, len, 15)
+    const seriesNameList = series.map(item => item.seriesName)
+    seriesNameList.sort()
+    for (let i=0; i<seriesNameList.length; i++) {
+      const item = lodash.find(series, {
+        seriesName: seriesNameList[i]
+      })
+      item.color = colorArr[i]
+    }
+  }
+  return series
+}
+
 export {
   generateAdjacentColors,
-  stringToNumber
+  stringToNumber,
+  changeSeriesColor
 }
