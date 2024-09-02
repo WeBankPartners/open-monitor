@@ -222,7 +222,7 @@ import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
 import { generateUuid } from '@/assets/js/utils'
-import { generateAdjacentColors, stringToNumber } from '@/assets/config/random-color'
+import { changeSeriesColor } from '@/assets/config/random-color'
 const initTableData = [
   {
     endpoint: '',
@@ -1122,10 +1122,7 @@ export default {
           tags: this.chartAddTags,
           tagOptions: this.chartAddTagOptions
         }
-        item.series = series.map(line => {
-          line.color = generateAdjacentColors(colorGroup, 1, stringToNumber(item.seriesName))[0]
-          return line
-        })
+        item.series = changeSeriesColor(series, colorGroup)
         this.tableData.push(item)
         this.metricGuid = ''
         this.endpointValue = ''
@@ -1352,13 +1349,7 @@ export default {
       const item = this.tableData[index]
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-      this.tableData[index].series = series.map(item => {
-        item.color = item.color || generateAdjacentColors(this.tableData[index].colorGroup, 1, stringToNumber(item.seriesName))[0]
-        return item
-      })
-      if (this.tableData[index].series.length === 1) {
-        this.tableData[index].series[0].color = this.tableData[index].colorGroup
-      }
+      this.tableData[index].series = changeSeriesColor(series, this.tableData[index].colorGroup)
     },
     changeColorGroup(isShow = true, data, key) {
       if (isShow) {
@@ -1377,13 +1368,7 @@ export default {
             data[key] = color
             if (key === 'colorGroup') {
               if (Array.isArray(data.series) && !isEmpty(data.series)) {
-                if (data.series.length === 1) {
-                  data.series[0].color = color
-                } else {
-                  data.series.forEach(line => {
-                    line.color = generateAdjacentColors(color, 1, stringToNumber(line.seriesName))[0]
-                  })
-                }
+                changeSeriesColor(data.series, color)
               }
             }
           })
