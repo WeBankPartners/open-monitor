@@ -564,10 +564,10 @@ export default {
         this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_cannot_be_empty')}`)
         return true
       }
-      if (!hasIn(tmpData, 'calc_result.match_text') || isEmpty(tmpData.calc_result.match_text)) {
-        this.$Message.warning(`${this.$t('m_matching_result')}${this.$t('m_cannot_be_empty')}`)
-        return true
-      }
+      // if (!hasIn(tmpData, 'calc_result.match_text') || isEmpty(tmpData.calc_result.match_text)) {
+      //   this.$Message.warning(`${this.$t('m_matching_result')}${this.$t('m_cannot_be_empty')}`)
+      //   return true
+      // }
 
       return false
     },

@@ -491,7 +491,7 @@ export default {
                 })
               ])
             ]),
-            duration: 100000
+            duration: 5
           })
         } else {
           this.$Message.success({
