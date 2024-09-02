@@ -532,8 +532,8 @@ func CopyCustomChart(dashboardId int, user, group string, chart *models.CustomCh
 			if len(tagArr) > 0 {
 				for _, tag := range tagArr {
 					newTagId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
-						newTagId, seriesId, tag.Name}})
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{
+						newTagId, seriesId, tag.Name, tag.Equal}})
 					if tagValueArr, ok2 := tagValueMap[tag.Guid]; ok2 {
 						if len(tagValueArr) > 0 {
 							for _, tagValue := range tagValueArr {
