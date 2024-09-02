@@ -1292,7 +1292,7 @@ export default {
         if (isEmpty(params.data)) {
           return
         }
-        if (!isEmpty(params.data) && params.data.some(item => isEmpty(item.series))) {
+        if (!isEmpty(params.data) && params.data.every(item => isEmpty(item.series))) {
           this.isChartSeriesEmpty = true
           return
         }
