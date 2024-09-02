@@ -96,8 +96,9 @@
                   </Col>
 
                   <Col span="4" :key='rowKey'>
-                  <span>{{ item.regulative === 0 ? '' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
+                  <span>{{ item.regulative === 0 ? '-' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
                   <Button
+                    v-if="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
@@ -179,8 +180,9 @@
                   </Input>
                   </Col>
                   <Col span="4" :key='rowKey'>
-                  <span>{{item.regulative === 0 ? '' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
+                  <span>{{item.regulative === 0 ? '-' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
                   <Button
+                    v-if="item.regulative === 1"
                     type="info"
                     ghost
                     size="small"
