@@ -104,7 +104,7 @@
           </div>
 
           <div class="ml-2 mt-3 mb-3">
-            <span class="params-title">{{$t('m_automatic_layout')}}：</span>
+            <span class="params-title mr-3">{{$t('m_automatic_layout')}}：</span>
             <Poptip
               confirm
               popper-class='chart-layout-poptip'
@@ -562,7 +562,8 @@ export default {
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
     setTimeout(() => {
-      document.querySelector('.copy-drowdown-slot').addEventListener('click', e => e.stopPropagation())
+      const domArr = document.querySelectorAll('.copy-drowdown-slot')
+      isEmpty(domArr).forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
     }, 100)
   },
   methods: {
@@ -612,7 +613,7 @@ export default {
       }
       this.request('POST', '/monitor/api/v2/dashboard/custom/list', dashboardParams, res => {
         this.allDashBoardList = res.contents
-      })
+      }, {isNeedloading: false})
 
       const params = {
         curDashboardId: this.pannelId,
@@ -621,7 +622,7 @@ export default {
       }
       this.request('POST', '/monitor/api/v2/chart/shared/list', params, res => {
         this.allChartFilteredList = this.processChartOptions(res)
-      })
+      }, {isNeedloading: false})
     },
     processChartOptions(rawData) {
       const options = []
@@ -1718,7 +1719,7 @@ export default {
 }
 
 .view-config-top-content {
-  max-height: 220px;
+  max-height: 230px;
   overflow: scroll;
 }
 .view-config-top-content::-webkit-scrollbar {
@@ -1786,7 +1787,6 @@ export default {
     display: inline-block;
     white-space: nowrap;
     max-width: ~'calc(100vw - 300px)';
-    overflow-x: scroll;
   }
 }
 .chart-config-info {
@@ -1905,7 +1905,7 @@ export default {
   }
   .copy-detail-table {
     margin-bottom: 10px;
-    max-width: 830px;
+    max-width: 850px;
   }
   .copy-table-tips {
     margin-left: 20px;
