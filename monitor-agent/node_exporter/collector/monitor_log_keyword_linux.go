@@ -186,7 +186,7 @@ func (c *logKeywordCollector) start() {
 		//}
 	}
 	c.TailSession.Stop()
-	c.TailSession.Cleanup()
+	//c.TailSession.Cleanup()
 	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_keyword -> startLogMetricMonitorNeObj__end", c.Path)
 	if destroyFlag {
