@@ -535,9 +535,8 @@ export default {
                       <span>{i.tagName}</span>
 
                       <Select
-                        style="width: 70px"
+                        style="width: 80px"
                         value={i.equal}
-                        disabled={!this.isEditState}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'equal', v)
                         }}>
