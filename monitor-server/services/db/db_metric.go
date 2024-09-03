@@ -12,10 +12,14 @@ import (
 	"time"
 )
 
-func GetDbMetricByServiceGroup(serviceGroup string) (result []*models.DbMetricMonitorObj, err error) {
+func GetDbMetricByServiceGroup(serviceGroup, metricKey string) (result []*models.DbMetricMonitorObj, err error) {
 	result = []*models.DbMetricMonitorObj{}
 	var dbMetricTable []*models.DbMetricMonitorTable
-	err = x.SQL("select * from db_metric_monitor where service_group=? order by update_time desc", serviceGroup).Find(&dbMetricTable)
+	if metricKey != "" {
+		err = x.SQL("select * from db_metric_monitor where service_group=? and metric like '%"+metricKey+"%' order by update_time desc", serviceGroup).Find(&dbMetricTable)
+	} else {
+		err = x.SQL("select * from db_metric_monitor where service_group=? order by update_time desc", serviceGroup).Find(&dbMetricTable)
+	}
 	if err != nil {
 		return result, fmt.Errorf("Query db_metric_monitor table fail,%s ", err.Error())
 	}
@@ -35,7 +39,7 @@ func QueryDbMetricWithServiceGroup(serviceGroup string) (result *models.DbMetric
 		return
 	}
 	result = &models.DbMetricQueryObj{ServiceGroupTable: serviceGroupObj}
-	result.Config, err = GetDbMetricByServiceGroup(serviceGroup)
+	result.Config, err = GetDbMetricByServiceGroup(serviceGroup, "")
 	return
 }
 
@@ -47,17 +51,13 @@ func GetDbMetricByEndpoint(endpointGuid string) (result []*models.DbMetricQueryO
 		return result, fmt.Errorf("Query database fail,%s ", err.Error())
 	}
 	for _, v := range serviceGroupTable {
-		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid)
+		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
 		}
 		resultObj := models.DbMetricQueryObj{ServiceGroupTable: *v, Config: tmpResult}
 		result = append(result, &resultObj)
-		//for _, vv := range tmpResult {
-		//	vv.ServiceGroupName = v.DisplayName
-		//}
-		//result = append(result, tmpResult...)
 	}
 	return
 }
