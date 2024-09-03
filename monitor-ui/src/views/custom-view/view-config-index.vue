@@ -134,19 +134,32 @@
           </div>
           <div class="card-divider"></div>
           <div class="card-content-footer">
-            <Button size="small" type="info" @click="goToPanal(item, 'view')">
-              <Icon type="md-eye" />
-            </Button>
-            <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
-              <Icon type="md-cloud-upload" />
-            </Button>
+            <Tooltip placement="top" transfer :content="$t('m_copy')">
+              <Button size="small" class="mr-1" type="success" @click="onDashboardItemCopy(item)">
+                <Icon type="md-document" size="16"></Icon>
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" transfer :content="$t('m_preview')">
+              <Button size="small" type="info" @click="goToPanal(item, 'view')">
+                <Icon type="md-eye" />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" transfer :content="$t('m_export')">
+              <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
+                <Icon type="md-cloud-upload" />
+              </Button>
+            </Tooltip>
             <template v-if="item.permission === 'mgmt'">
-              <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
-                <Icon type="md-create" />
-              </Button>
-              <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
-                <Icon type="md-person" />
-              </Button>
+              <Tooltip placement="top" transfer :content="$t('m_button_edit')">
+                <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
+                  <Icon type="md-create" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" transfer :content="$t('m_role_drawer_title')">
+                <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
+                  <Icon type="md-person" />
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 :title="$t('m_delConfirm_tip')"
@@ -614,6 +627,17 @@ export default {
       this.panalName = item.name
       this.pannelId = item.id
       this.isModalShow = true
+    },
+    onDashboardItemCopy(item) {
+      const params = {
+        dashboardId: item.id,
+        mgmtRole: item.mgmtRoles[0],
+        useRoles: item.useRoles
+      }
+      this.request('POST','/monitor/api/v2/dashboard/custom/copy', params, () => {
+        this.$Message.success(this.$t('m_tips_success'))
+        this.getViewList()
+      })
     }
   },
   components: {
@@ -654,9 +678,6 @@ body::-webkit-scrollbar {
   overflow-x: hidden;
   overflow-y: auto;
 }
-// .all-card-content::-webkit-scrollbar {
-//     display: inline-block;
-// }
 .screen-config-menu {
   width: 150px;
 }
