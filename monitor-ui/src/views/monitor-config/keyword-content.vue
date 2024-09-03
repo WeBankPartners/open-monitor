@@ -407,22 +407,13 @@
                 </Option>
               </Select>
             </FormItem>
-            <FormItem :label="$t('m_active_window')" prop="active_window">
-              <!-- <div
-                v-for="(time, index) in formData.active_window_list"
-                :key='index'> -->
-              <TimePicker
-                v-model="formData.active_window"
-                :clearable="false"
-                format="HH:mm"
-                :disabled="!isEditState"
-                type="timerange"
-                placement="bottom-end"
-                style="width: 168px"
+            <FormItem :label="$t('m_active_window')" prop="active_window_list">
+              <activeWindowTime
+                :activeWindowList='formData.active_window_list'
+                :isDisabled="!isEditState"
+                @timeChange="onActiveTimeChange"
               >
-              </TimePicker>
-              <!-- </div> -->
-              <!-- </div> -->
+              </activeWindowTime>
             </FormItem>
             <FormItem :label="$t('m_tableKey_content')" prop="content">
               <Input
@@ -494,6 +485,8 @@ import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import {priorityList} from '@/assets/config/common-config.js'
+import activeWindowTime from '../../components/active-window-time.vue'
+import {showPoptipOnTable} from '@/assets/js/utils.js'
 
 const alarmLevelMap = {
   low: {
@@ -544,7 +537,7 @@ const initFormData = {
   priority: 'low',
   notify_enable: 1, // 通知,默认启用
   step: 10,
-  active_window: ['00:00','23:59'], // 告警时间段
+  active_window_list: ['00:00-23:59'], // 告警时间段
   content: '', // 通知内容
   notify: {
     alarm_action: 'firing',
@@ -562,6 +555,9 @@ export default {
       type: String,
       default: 'service' // 为枚举，service代表层级对象，endpoint代表对象
     }
+  },
+  components: {
+    activeWindowTime
   },
   data() {
     return {
@@ -610,7 +606,10 @@ export default {
         {
           title: this.$t('m_alarmName'),
           width: 150,
-          key: 'name'
+          key: 'name',
+          render: (h, params) => (<Tooltip class='table-key-word-name' placement="right" max-width="400" content={params.row.name}>
+            {params.row.name}
+          </Tooltip>)
         },
         {
           title: this.$t('m_alarmPriority'),
@@ -625,7 +624,7 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          width: 80,
+          width: 100,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
             return (
@@ -636,8 +635,13 @@ export default {
         {
           title: this.$t('m_field_relativeTime'),
           width: 130,
-          key: 'active_window',
-          render: (h, params) => <div>{params.row.active_window ? params.row.active_window : '-' }</div>
+          key: 'active_window_list',
+          render: (h, params) => {
+            const text = !isEmpty(params.row.active_window_list) ? params.row.active_window_list.join(';') : '-'
+            return (<Tooltip class='table-active-time' placement="right" max-width="400" content={text}>
+              {text}
+            </Tooltip>)
+          }
         },
         {
           title: this.$t('m_firing'),
@@ -665,7 +669,9 @@ export default {
           title: this.$t('m_field_log'),
           key: 'keyword',
           minWidth: 150,
-          render: (h, params) => <span>{params.row.keyword || '-'}</span>
+          render: (h, params) => (<Tooltip class='table-key-word-name' placement="right" max-width="400" content={params.row.keyword || '-'}>
+            {params.row.keyword || '-'}
+          </Tooltip>)
         },
         {
           title: this.$t('m_regular'), // 更新人
@@ -693,11 +699,12 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'index',
+          fixed: 'right',
           width: 150,
           render: (h, params) => this.isEditState ? (
             <div style='display: flex'>
               <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyCustomMetricItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyCustomMetricItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -729,7 +736,10 @@ export default {
         {
           title: this.$t('m_alarmName'),
           width: 150,
-          key: 'name'
+          key: 'name',
+          render: (h, params) => (<Tooltip class='table-key-word-name' placement="right" max-width="400" content={params.row.name}>
+            {params.row.name}
+          </Tooltip>)
         },
         {
           title: this.$t('m_alarmPriority'),
@@ -744,7 +754,7 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          width: 60,
+          width: 100,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
             return (
@@ -755,8 +765,13 @@ export default {
         {
           title: this.$t('m_field_relativeTime'),
           width: 200,
-          key: 'active_window',
-          render: (h, params) => <div>{params.row.active_window ? params.row.active_window : '-' }</div>
+          key: 'active_window_list',
+          render: (h, params) => {
+            const text = !isEmpty(params.row.active_window_list) ? params.row.active_window_list.join(';') : '-'
+            return (<Tooltip class='table-active-time' placement="right" max-width="400" content={text}>
+              {text}
+            </Tooltip>)
+          }
         },
         {
           title: this.$t('m_firing'),
@@ -784,7 +799,9 @@ export default {
           title: this.$t('m_sql_script'), // 更新人
           key: 'query_sql',
           minWidth: 250,
-          render: (h, params) => <span>{params.row.query_sql || '-'}</span>
+          render: (h, params) => (<Tooltip class='table-sql-script' placement="top" max-width="400" content={params.row.query_sql || '-'}>
+            {params.row.query_sql || '-'}
+          </Tooltip>)
         },
         {
           title: this.$t('m_updatedBy'),
@@ -801,11 +818,12 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'index',
+          fixed: 'right',
           width: 150,
           render: (h, params) => this.isEditState ? (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyDataBaseItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDataBaseItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -819,7 +837,9 @@ export default {
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => this.deleteDataBaseItem(params.row)}>
-                <Button size="small" type="error">
+                <Button size="small" type="error" on-click={() => {
+                  showPoptipOnTable()
+                }}>
                   <Icon type="md-trash" size="16" />
                 </Button>
               </Poptip>
@@ -946,7 +966,7 @@ export default {
             trigger: 'blur'
           }
         ],
-        active_window: [
+        active_window_list: [
           {
             type: 'array',
             required: true,
@@ -1127,7 +1147,6 @@ export default {
           Vue.set(this.formData, key, rowData[key])
         }
       }
-      this.formData.active_window = rowData.active_window ? rowData.active_window.split('-') : ['00:00', '23:59']
       this.formData.notify = isEmpty(this.formData.notify) ? cloneDeep(initNotify) : this.formData.notify
     },
     delCustomMericsItem(rowData) {
@@ -1403,7 +1422,6 @@ export default {
       const validResult = await this.$refs.formData.validate()
       if (validResult) {
         const params = cloneDeep(this.formData)
-        params.active_window = params.active_window.length ? params.active_window.join('-') : ''
         let method = 'POST'
         if (this.isLogFile) {
           if (!this.isAddState) { // 日志编辑
@@ -1436,6 +1454,9 @@ export default {
       } else {
         item.proc_callback_name = ''
       }
+    },
+    onActiveTimeChange(time) {
+      this.formData.active_window_list = time
     }
   }
 }
@@ -1472,6 +1493,33 @@ export default {
   }
   .ivu-tooltip-rel {
     width: 100%
+  }
+}
+
+.table-active-time {
+  .ivu-tooltip-rel {
+    width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.table-key-word-name {
+  .ivu-tooltip-rel {
+    width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.table-sql-script {
+  .ivu-tooltip-rel {
+    width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

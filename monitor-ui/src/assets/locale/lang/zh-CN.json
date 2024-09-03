@@ -548,6 +548,8 @@
   "m_calculation_tip6": "6.计算类型:指标的计算公式,可使用其他指标作为参数",
   "m_calculation_tip7": "7.自动告警:开关,控制是否创建告警",
   "m_calculation_tip8": "8.阈值告警配置:打开自动告警时生效,将按照模版的规则自动生成告警",
-  "m_save_success": "保存成功"
+  "m_save_success": "保存成功",
+  "m_alarm_query": "告警查询",
+  "m_alarm_query_tips": "请输入告警等级、名称、指标或对象"
 }
 
