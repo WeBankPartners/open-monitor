@@ -704,7 +704,7 @@ export default {
           render: (h, params) => this.isEditState ? (
             <div style='display: flex'>
               <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyCustomMetricItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyCustomMetricItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -823,7 +823,7 @@ export default {
           render: (h, params) => this.isEditState ? (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyDataBaseItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDataBaseItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
