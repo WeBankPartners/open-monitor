@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQueryObj, err error) {
+func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.LogMetricQueryObj, err error) {
 	serviceGroupObj, getErr := getSimpleServiceGroup(serviceGroup)
 	if getErr != nil {
 		return result, getErr
@@ -27,9 +27,8 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 	for _, logMetricMonitor := range logMetricMonitorTable {
 		tmpConfig := models.LogMetricMonitorObj{Guid: logMetricMonitor.Guid, ServiceGroup: logMetricMonitor.ServiceGroup, LogPath: logMetricMonitor.LogPath, MetricType: logMetricMonitor.MetricType, MonitorType: logMetricMonitor.MonitorType}
 		tmpConfig.EndpointRel = ListLogMetricEndpointRel(logMetricMonitor.Guid)
-		//tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
 		tmpConfig.MetricConfigList = ListLogMetricConfig("", logMetricMonitor.Guid)
-		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid)
+		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid, metricKey)
 		for _, logJsonObj := range tmpConfig.JsonConfigList {
 			for _, logMetricObj := range logJsonObj.MetricList {
 				logMetricObj.ServiceGroup = serviceGroup
@@ -46,7 +45,7 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 		}
 		result.Config = append(result.Config, &tmpConfig)
 	}
-	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup)
+	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup, metricKey)
 	if err != nil {
 		err = fmt.Errorf("query db metric config fail,%s ", err.Error())
 	}
@@ -62,7 +61,7 @@ func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.
 		err = x.SQL("select distinct t2.service_group from log_metric_endpoint_rel t1 left join log_metric_monitor t2 on t1.log_metric_monitor=t2.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpoint, endpoint).Find(&endpointServiceRelTable)
 	}
 	for _, v := range endpointServiceRelTable {
-		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup)
+		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -240,7 +239,7 @@ func GetLogMetricMonitor(logMetricMonitorGuid string) (result models.LogMetricMo
 	result.EndpointRel = ListLogMetricEndpointRel(logMetricMonitorTable[0].Guid)
 	result.JsonConfigList = ListLogMetricJson(logMetricMonitorTable[0].Guid)
 	result.MetricConfigList = ListLogMetricConfig("", logMetricMonitorTable[0].Guid)
-	result.MetricGroups = ListLogMetricGroups(logMetricMonitorTable[0].Guid)
+	result.MetricGroups = ListLogMetricGroups(logMetricMonitorTable[0].Guid, "")
 	return result, nil
 }
 
@@ -291,7 +290,7 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 	endpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
 	jsonConfigList := ListLogMetricJson(logMetricMonitorGuid)
 	metricConfigList := ListLogMetricConfig("", logMetricMonitorGuid)
-	logMetricGroupList := ListLogMetricGroups(logMetricMonitorGuid)
+	logMetricGroupList := ListLogMetricGroups(logMetricMonitorGuid, "")
 	for _, v := range endpointRel {
 		affectHost = append(affectHost, v.SourceEndpoint)
 	}
@@ -763,7 +762,7 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 
 func ImportLogMetric(param *models.LogMetricQueryObj, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
-	existData, queryErr := GetLogMetricByServiceGroup(param.Guid)
+	existData, queryErr := GetLogMetricByServiceGroup(param.Guid, "")
 	if queryErr != nil {
 		return fmt.Errorf("get exist log metric data fail,%s ", queryErr.Error())
 	}
@@ -1539,7 +1538,7 @@ func getDeleteMetricActions(metricGuid string) (actions []*Action, affectEndpoin
 	return
 }
 
-func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGroupObj) {
+func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.LogMetricGroupObj) {
 	result = []*models.LogMetricGroupObj{}
 	var logMetricGroupTable []*models.LogMetricGroup
 	x.SQL("select * from log_metric_group where log_metric_monitor=? order by update_time desc", logMetricMonitor).Find(&logMetricGroupTable)
@@ -1581,7 +1580,16 @@ func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGro
 				logMetricGroupData = customGroupData
 			}
 		}
-		result = append(result, logMetricGroupData)
+		if metricKey != "" && len(logMetricGroupData.MetricList) > 0 {
+			for _, metric := range logMetricGroupData.MetricList {
+				if strings.Contains(metric.FullMetric, metricKey) {
+					result = append(result, logMetricGroupData)
+					break
+				}
+			}
+		} else {
+			result = append(result, logMetricGroupData)
+		}
 	}
 	return result
 }

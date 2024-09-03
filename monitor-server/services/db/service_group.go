@@ -214,7 +214,7 @@ func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime, operator s
 func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err error) {
 	guidList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	for _, sg := range guidList {
-		logMetricConfig, tmpErr := GetLogMetricByServiceGroup(sg)
+		logMetricConfig, tmpErr := GetLogMetricByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -229,7 +229,7 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 				result = append(result, fmt.Sprintf("logMetric  path:%s metric:%s", logMetricMonitor.LogPath, logMetricConfig.Metric))
 			}
 		}
-		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg)
+		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
