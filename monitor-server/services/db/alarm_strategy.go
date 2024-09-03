@@ -37,6 +37,7 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 	}
 	for _, v := range alarmStrategyTable {
 		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, Name: v.Name, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
+		tmpStrategyObj.ActiveWindowList = strings.Split(tmpStrategyObj.ActiveWindow, ",")
 		tmpStrategyObj.UpdateTime = v.UpdateTime
 		tmpStrategyObj.UpdateUser = v.UpdateUser
 		if strings.TrimSpace(v.LogMetricGroup) != "" {
