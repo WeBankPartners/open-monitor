@@ -228,6 +228,8 @@
                        :w="item.w"
                        :h="item.h"
                        :i="item.i"
+                       :minW="1"
+                       :minH="5"
                        :key="index"
                        @resize="resizeEvent"
                        @resized="resizeEvent"
