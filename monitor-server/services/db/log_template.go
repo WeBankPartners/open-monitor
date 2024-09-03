@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+func ListLogMonitorTemplateOptions() (result []string, err error) {
+	err = x.SQL("select update_user from log_monitor_template").Find(&result)
+	return
+}
+
 func ListLogMonitorTemplate(param *models.LogMonitorTemplateListParam, userRoles []string) (result *models.LogMonitorTemplateListResp, err error) {
 	var rows []*models.LogMonitorTemplate
 	var filterSql string
