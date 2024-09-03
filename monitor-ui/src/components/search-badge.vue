@@ -7,6 +7,13 @@
       </div>
       <template slot='list'>
         <Form ref="fliters" :label-width="70" class="drop-down-content" @click="(e) => {e.stopPropagation()}">
+          <FormItem :label="$t('m_alarm_query')">
+            <Input v-model.trim="filters.query"
+                   clearable
+                   :placeholder="$t('m_alarm_query_tips')"
+                   @on-change="onFilterChange"
+            />
+          </FormItem>
           <FormItem :label="$t('m_alarm_level')">
             <Select
               v-model="filters.priority"
@@ -102,6 +109,7 @@ import {
 } from 'lodash'
 
 const initFilters = {
+  query: '',
   alarm_name: [],
   metric: [],
   endpoint: [],
@@ -175,7 +183,7 @@ export default ({
   methods: {
     onFilterOptions: debounce(function () {
       this.getFilterAllOptions()
-    }, 300),
+    }, 400),
     getFilterAllOptions() {
       const api = '/monitor/api/v1/alarm/problem/options'
       this.request('POST', api, this.filterParams, res => {
@@ -185,11 +193,9 @@ export default ({
         this.processOptions()
       })
     },
-    onFilterConditionChange: debounce(function () {
-      this.$emit('filtersChange', cloneDeep(this.filters))
-    }, 300),
     onResetButtonClick() {
       this.filters = cloneDeep(initFilters)
+      this.onFilterChange()
     },
     limitFiltersLength() {
       for (const key in this.filters) {
@@ -224,10 +230,13 @@ export default ({
       })
 
     },
-    onFilterChange() {
+    onFilterChange: debounce(function (){
       this.limitFiltersLength()
       this.processOptions()
       this.onFilterConditionChange()
+    }, 400),
+    onFilterConditionChange() {
+      this.$emit('filtersChange', cloneDeep(this.filters))
     }
   }
 
