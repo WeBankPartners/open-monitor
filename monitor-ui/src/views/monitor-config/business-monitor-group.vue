@@ -758,7 +758,7 @@ export default {
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -819,7 +819,7 @@ export default {
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copyDbItem(params.row)}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copyDbItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
@@ -969,8 +969,8 @@ export default {
         step: 10,
         endpoint_rel: []
       }
-      this.getEndpoint('process', 'mysql')
-      this.getEndpointDefaultValue('process')
+      this.getEndpoint('process', 'mysql', true)
+      // this.getEndpointDefaultValue('process')
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
@@ -1195,10 +1195,12 @@ export default {
         endpoint_rel: []
       }
     },
-    async getEndpoint(val, type) {
+    async getEndpoint(val, type, needGetDefault = false) {
       this.addAndEditModal.dataConfig.endpoint_rel = []
       this.dbModelConfig.addRow.endpoint_rel = []
-      await this.getDefaultConfig(val, type)
+      if (needGetDefault) {
+        await this.getDefaultConfig(val, type)
+      }
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targetId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
@@ -1289,7 +1291,7 @@ export default {
     },
     async add() {
       this.cancelAddAndEdit()
-      this.getEndpoint(this.addAndEditModal.dataConfig.monitor_type, 'host')
+      this.getEndpoint(this.addAndEditModal.dataConfig.monitor_type, 'host', true)
       this.addAndEditModal.isAdd = true
       this.addAndEditModal.isShow = true
     },
