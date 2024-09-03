@@ -631,9 +631,15 @@ func GetChartSeriesColor(c *gin.Context) {
 	}
 	if len(param.Tags) > 0 && len(querySeriesConfigList) > 0 {
 		var tagValue []string
+		var equal string
 		for _, tag := range param.Tags {
 			if tag.TagName == "calc_type" {
 				tagValue = tag.TagValue
+				if tag.Equal == db.ConstEqualIn {
+					equal = "="
+				} else {
+					equal = "!="
+				}
 				break
 			}
 		}
@@ -646,17 +652,17 @@ func GetChartSeriesColor(c *gin.Context) {
 				if strings.Contains(data.PromQ, "{") {
 					for i, tag := range tagValue {
 						if i == 0 {
-							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type" + equal + "'" + tag + "'}"
 						} else {
-							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type" + equal + "'" + tag + "'}"
 						}
 					}
 				} else {
 					for i, tag := range tagValue {
 						if i == 0 {
-							data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + "{calc_type" + equal + "'" + tag + "'}"
 						} else {
-							data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + " or " + promQ + "{calc_type" + equal + "'" + tag + "'}"
 						}
 					}
 				}
