@@ -21,6 +21,7 @@ import (
 func ListLogMetricMonitor(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
+	metricKey := c.Query("metricKey")
 	if queryType == "endpoint" {
 		result, err := db.GetLogMetricByEndpoint(guid, false)
 		if err != nil {
@@ -29,7 +30,7 @@ func ListLogMetricMonitor(c *gin.Context) {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.GetLogMetricByServiceGroup(guid)
+		result, err := db.GetLogMetricByServiceGroup(guid, metricKey)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -362,7 +363,7 @@ func GetServiceGroupEndpointRel(c *gin.Context) {
 
 func ExportLogMetric(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
-	result, err := db.GetLogMetricByServiceGroup(serviceGroup)
+	result, err := db.GetLogMetricByServiceGroup(serviceGroup, "")
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -487,6 +488,16 @@ func ListLogMonitorTemplate(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccessData(c, result)
 	}
+}
+
+func ListLogMonitorTemplateOptions(c *gin.Context) {
+	var result []string
+	var err error
+	if result, err = db.ListLogMonitorTemplateOptions(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func GetLogMonitorTemplate(c *gin.Context) {
