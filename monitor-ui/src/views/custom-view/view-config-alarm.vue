@@ -274,8 +274,8 @@ label {
   margin-bottom: 8px;
 }
 .alarm-list {
-  margin-top: 50px;
-  height: ~"calc(100vh - 425px)";
+  margin-top: 74px;
+  height: ~"calc(100vh - 445px)";
   width: 700px;
   overflow-y: auto;
 }

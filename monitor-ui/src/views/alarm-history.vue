@@ -611,6 +611,9 @@ export default {
       }
 
     }
+    .right::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
 
