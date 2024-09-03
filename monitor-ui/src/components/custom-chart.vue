@@ -136,6 +136,7 @@ export default {
   .single-chart {
     font-size: 14px;
     padding: 5px;
+    padding-top: 0;
     .echart {
        border-radius: 4px;
     }

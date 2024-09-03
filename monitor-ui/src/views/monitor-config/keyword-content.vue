@@ -412,7 +412,7 @@
                 v-for="(time, index) in formData.active_window_list"
                 :key='index'> -->
               <TimePicker
-                :value="formData.active_window"
+                v-model="formData.active_window"
                 :clearable="false"
                 format="HH:mm"
                 :disabled="!isEditState"
