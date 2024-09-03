@@ -1653,6 +1653,7 @@ export default {
   font-size: 16px;
   align-items: flex-start;
   .grid-auto-tag-style {
+    margin-top: 3px;
     font-size: 14px;
     min-width: 45px;
   }
@@ -1881,6 +1882,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 2px
 }
 
 .copy-drowdown-slot {
