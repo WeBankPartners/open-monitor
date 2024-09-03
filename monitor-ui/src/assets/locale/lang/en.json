@@ -547,5 +547,7 @@
   "m_calculation_tip6": "6.Calculation Type: The formula used to calculate the indicator, allowing other indicators to be used as parameters.",
   "m_calculation_tip7": "7.Automatic Alert: A toggle to control whether alerts are created.",
   "m_calculation_tip8": "8.Threshold Alert Configuration: Becomes effective when automatic alerts are enabled, automatically generating alerts according to the template rules.",
-  "m_save_success": "Save success"
+  "m_save_success": "Save success",
+  "m_alarm_query": "Alarm Query",
+  "m_alarm_query_tips": "Please enter the alarm level, name, indicator or object"
 }
