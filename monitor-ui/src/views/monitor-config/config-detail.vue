@@ -816,7 +816,7 @@ export default {
                 )
                 : (<span style='display: flex'>
                   <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
-                    <Button style='display: none' size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                    <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
                       <Icon type="md-document" size="16"></Icon>
                     </Button>
                   </Tooltip>

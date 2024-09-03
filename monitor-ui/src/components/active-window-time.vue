@@ -2,6 +2,7 @@
   <div>
     <div class='mb-2' v-for="(time, index) in allTimeList" :key="index">
       <TimePicker
+        style="width: 211px"
         v-model="allTimeList[index]"
         :clearable="false"
         format="HH:mm"
@@ -89,7 +90,7 @@ export default ({
 
 <style scoped lang='less'>
 .add-button {
-  margin-left: 206px
+  margin-left: 220px
 }
 
 </style>
