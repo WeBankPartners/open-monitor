@@ -16,8 +16,8 @@ const (
 	constOther          = "other"
 	constCode           = "code"
 	constRetCode        = "retcode"
-	constEqualIn        = "in"
-	constEqualNotIn     = "notin"
+	ConstEqualIn        = "in"
+	ConstEqualNotIn     = "notin"
 	constReqCount       = "req_count"
 	constReqSuccessRate = "req_suc_rate"
 	constReqFailCount   = "req_fail_count"
@@ -77,13 +77,13 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 						if code == constOtherCode {
 							metricTags = append(metricTags, &models.MetricTag{
 								TagName:  constCode,
-								Equal:    constEqualNotIn,
+								Equal:    ConstEqualNotIn,
 								TagValue: codeList[:len(codeList)-1],
 							})
 						} else {
 							metricTags = append(metricTags, &models.MetricTag{
 								TagName:  constCode,
-								Equal:    constEqualIn,
+								Equal:    ConstEqualIn,
 								TagValue: []string{code},
 							})
 						}
@@ -92,7 +92,7 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 						if tag == constRetCode && (strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) || strings.HasSuffix(alarmMetric.Metric, constConstTimeMax)) {
 							metricTags = append(metricTags, &models.MetricTag{
 								TagName:  constRetCode,
-								Equal:    constEqualIn,
+								Equal:    ConstEqualIn,
 								TagValue: []string{getRetCodeSuccessCode(alarmStrategyParam.RetCodeStringMap)},
 							})
 						} else {
@@ -282,7 +282,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				for _, tag := range chartSeries.Tags {
 					if tag.TagName == constRetCode {
 						tag.TagValue = []string{sucCode}
-						tag.Equal = constEqualIn
+						tag.Equal = ConstEqualIn
 						hasRetCode = true
 					}
 				}
@@ -291,7 +291,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 					chartSeries.Tags = append(chartSeries.Tags, &models.TagDto{
 						TagName:  constRetCode,
 						TagValue: []string{sucCode},
-						Equal:    constEqualIn,
+						Equal:    ConstEqualIn,
 					})
 				}
 			}
@@ -421,7 +421,7 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 		dto.Tags = []*models.TagDto{
 			{
 				TagName:  constCode,
-				Equal:    constEqualNotIn,
+				Equal:    ConstEqualNotIn,
 				TagValue: codeList[:len(codeList)-1],
 			},
 		}
@@ -429,7 +429,7 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 		dto.Tags = []*models.TagDto{
 			{
 				TagName:  constCode,
-				Equal:    constEqualIn,
+				Equal:    ConstEqualIn,
 				TagValue: []string{code},
 			},
 			{
