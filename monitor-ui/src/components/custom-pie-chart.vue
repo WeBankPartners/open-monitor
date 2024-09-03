@@ -96,6 +96,7 @@ export default {
 <style scoped lang="less">
   .single-chart {
     padding: 5px;
+    padding-top: 0;
     .echart {
        border-radius: 4px;
     }
