@@ -562,11 +562,6 @@ export default {
     overflow: scroll;
   }
 }
-.all-content {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-}
 </style>
 
 <style scoped lang="less">

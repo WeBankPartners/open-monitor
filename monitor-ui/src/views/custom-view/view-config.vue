@@ -1598,7 +1598,7 @@ export default {
     },
     processHtmlText(name = '') {
       if (name.split('/').length > 1) {
-        return '<span style=\'font-size: 14px; line-height: 15px; display: inline-block\'>' + name.split('/').join('<br>') + '</span>'
+        return '<span style=\'font-size: 14px; line-height: 16px; display: inline-block\'>' + name.split('/').join('<br>') + '</span>'
       }
       return name
 
@@ -1655,7 +1655,7 @@ export default {
   font-size: 16px;
   align-items: flex-start;
   .grid-auto-tag-style {
-    margin-top: 3px;
+    margin-top: 4px;
     font-size: 14px;
     min-width: 45px;
   }
@@ -1884,7 +1884,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px
+  margin-top: 3px
 }
 
 .copy-drowdown-slot {
