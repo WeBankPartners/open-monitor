@@ -2,6 +2,7 @@ package alarm
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/pcre"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -61,11 +62,11 @@ func AddLogStrategy(c *gin.Context) {
 			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
-		/*_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
+		_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
 		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword validate fail")
 			return
-		}*/
+		}
 		var logMonitorObj m.LogMonitorTable
 		logMonitorObj.Path = param.Path
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
@@ -167,11 +168,11 @@ func EditLogStrategy(c *gin.Context) {
 			mid.ReturnParamEmptyError(c, "priority")
 			return
 		}
-		/*	_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
-			if regErr != nil {
-				mid.ReturnValidateError(c, "keyword is illegal")
-				return
-			}*/
+		_, regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
+		if regErr != nil {
+			mid.ReturnValidateError(c, "keyword is illegal")
+			return
+		}
 		// Update log_monitor
 		logMonitorObj := m.LogMonitorTable{Id: param.Strategy[0].Id, StrategyId: param.EndpointId, Path: param.Path, Keyword: param.Strategy[0].Keyword, Priority: param.Strategy[0].Priority, NotifyEnable: param.Strategy[0].NotifyEnable, OwnerEndpoint: param.OwnerEndpoint}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&logMonitorObj}, Operation: "update"})
