@@ -489,7 +489,8 @@ export default {
       ],
       dataBaseTableData: [],
       isEmpty,
-      logAndDataBaseAllDetail: []
+      logAndDataBaseAllDetail: [],
+      metricKey: ''
     }
   },
   methods: {
@@ -564,7 +565,10 @@ export default {
     },
     async getLogKeyWordDetail() {
       return new Promise(resolve => {
-        const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
+        let api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
           this.allPageContentData = responseData.map((res, index) => {
             if (index === 0) {
@@ -584,7 +588,10 @@ export default {
         }, {isNeedloading: true})
       })
     },
-    async getDetail(targetId) {
+    async getDetail(targetId, metricKey = this.metricKey) {
+      if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
+        this.metricKey = metricKey
+      }
       this.targetId = targetId
       await this.getDbDetail()
       await this.getLogKeyWordDetail()
@@ -605,7 +612,10 @@ export default {
     },
     getDbDetail() {
       return new Promise(resolve => {
-        const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
+        let api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
           this.dataBaseTableData = responseData
           resolve(this.dataBaseTableData)
