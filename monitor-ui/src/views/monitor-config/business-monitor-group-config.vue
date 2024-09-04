@@ -376,6 +376,7 @@ export default {
         this.processConfigInfo(resp.log_monitor_template)
         if (this.actionType === 'copy') {
           this.businessConfig.name += '1'
+          this.businessConfig.metric_prefix_code += '1'
         }
         this.configInfo.log_monitor_template_version = resp.log_monitor_template_version
 
