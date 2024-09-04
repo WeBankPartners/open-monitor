@@ -368,15 +368,22 @@ export default {
           ) : <div/>
         }
       ],
-      successCode: cloneDeep(initSuccessCode)
+      successCode: cloneDeep(initSuccessCode),
+      actionType: ''
     }
   },
   methods: {
-    loadPage(guid) {
+    loadPage(guid, actionType) {
       this.isfullscreen = true
       this.successCode = cloneDeep(initSuccessCode)
       if (guid) {
-        this.isAdd = false
+        if (actionType === 'copy') {
+          this.actionType = actionType
+          this.isAdd = true
+        } else {
+          this.isAdd = false
+          this.actionType = ''
+        }
         this.getConfigDetail(guid)
       } else {
         this.configInfo = {
@@ -606,6 +613,9 @@ export default {
           r.regular_font_result = this.regRes(r.regular)
         })
         this.processConfigInfo()
+        if (this.actionType === 'copy') {
+          this.configInfo.name += '(1)'
+        }
         this.showModal = true
       })
     },
