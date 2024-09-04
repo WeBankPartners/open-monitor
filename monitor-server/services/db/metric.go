@@ -280,7 +280,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 	return
 }
 
-func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query string) (result []*models.MetricTable, err error) {
+func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric string) (result []*models.MetricTable, err error) {
 	var params []interface{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -288,9 +288,6 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		params = append(params, guid)
 	} else {
 		if serviceGroup != "" {
-			//if monitorType == "" {
-			//	return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
-			//}
 			if onlyService == "Y" {
 				baseSql = "select * from metric m where service_group=?"
 				params = []interface{}{serviceGroup}
@@ -319,6 +316,9 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 		} else if query != "all" {
 			baseSql = baseSql + " and not exists (select guid from metric_comparison mc where mc.metric_id = m.guid)"
 		}
+	}
+	if strings.TrimSpace(metric) != "" {
+		baseSql = baseSql + " and metric like '%" + metric + "%'"
 	}
 	result = []*models.MetricTable{}
 	baseSql = baseSql + " order by update_time desc"
@@ -406,7 +406,7 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
 	var failList []string
 	var err error
-	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "", "all")
+	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "", "all", "")
 	if getExistErr != nil {
 		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
