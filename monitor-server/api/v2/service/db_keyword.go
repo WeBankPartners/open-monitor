@@ -12,7 +12,8 @@ import (
 func ListDBKeywordConfig(c *gin.Context) {
 	listType := c.Query("type")
 	listGuid := c.Query("guid")
-	result, err := db.ListDBKeywordConfig(listType, listGuid)
+	alarmName := c.Query("alarmName")
+	result, err := db.ListDBKeywordConfig(listType, listGuid, alarmName)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
