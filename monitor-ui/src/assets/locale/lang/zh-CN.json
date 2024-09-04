@@ -550,6 +550,7 @@
   "m_calculation_tip8": "8.阈值告警配置:打开自动告警时生效,将按照模版的规则自动生成告警",
   "m_save_success": "保存成功",
   "m_alarm_query": "告警查询",
-  "m_alarm_query_tips": "请输入告警等级、名称、指标或对象"
+  "m_alarm_query_tips": "请输入告警等级、名称、指标或对象",
+  "m_enter_indicator_key_tips": "请输入指标key"
 }
 

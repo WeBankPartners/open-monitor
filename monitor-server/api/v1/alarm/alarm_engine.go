@@ -202,6 +202,11 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 						log.Logger.Error("buildMonitorEngineAlarm get strategy object fail", log.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), log.Error(tmpGetStrategyErr))
 						continue
 					}
+					// 如果不在告警窗口内跳过
+					if !db.InActiveWindowList(strategyObj.ActiveWindow) {
+						log.Logger.Warn("buildMonitorEngineAlarm alarm not in active window", log.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), log.String("activeWindow", strategyObj.ActiveWindow))
+						continue
+					}
 					queryObj.Metric["strategy_guid"] = strategyObj.Guid
 					endpointObj, tmpGetEndpointErr := getNewAlarmEndpoint(&models.AMRespAlert{Labels: queryObj.Metric}, &strategyObj)
 					if tmpGetEndpointErr != nil {

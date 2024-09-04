@@ -600,7 +600,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 {
 			if (cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0) || cond.AlarmTable.SMetric == "custom" {
 				if cond.ExtOpenAlarm {
-					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: []string{cond.AlarmTable.SPriority}}) {
+					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList}) {
 						result = append(result, v)
 					}
 				}
