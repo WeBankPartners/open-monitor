@@ -1,7 +1,7 @@
 <template>
   <div class="monitor-level-group">
     <Row>
-      <Col :span="8">
+      <Col :span="16">
       <!--对象组-->
       <span style="font-size: 14px;">
         {{$t('m_object_group')}}:
@@ -10,15 +10,25 @@
         style="width:300px;"
         v-model="endpointGroup"
         filterable
-        @on-change="changeEndpointGroup"
+        @on-change="() => {
+          metric = ''
+          changeEndpointGroup()
+        }"
       >
         <Option v-for="(option, index) in objectGroupOptions" :value="option.guid" :label="'[' + option.monitor_type + '] ' + option.display_name" :key="index">
           <TagShow :list="objectGroupOptions" name="type" :tagName="option.monitor_type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
       </Select>
+      <Input
+        v-model="metric"
+        clearable
+        style="width: 250px; margin-left: 10px"
+        :placeholder="$t('m_placeholder_input') + $t('m_metric_name')"
+        @on-change='onFilterChange'
+      />
       </Col>
-      <Col :span="16">
+      <Col :span="8">
       <div class="btn-group">
         <Button
           type="info"
@@ -82,6 +92,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
@@ -323,6 +334,7 @@ export default {
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
+      metric: ''
     }
   },
   computed: {
@@ -350,9 +362,13 @@ export default {
       }
       this.getList()
     },
+    onFilterChange: debounce(function () {
+      this.getList()
+    }, 300),
     getList() {
       const params = {
-        endpointGroup: this.endpointGroup
+        endpointGroup: this.endpointGroup,
+        metric: this.metric
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
