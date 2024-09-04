@@ -41,4 +41,5 @@ type ErrorMessageObj struct {
 	AlertKeywordRepeatError                   string `json:"alert_keyword_repeat_error"`
 	EndpointHostDeleteError                   string `json:"endpoint_host_delete_error"`
 	LogMonitorTemplateDeleteError             string `json:"log_monitor_template_delete_error"`
+	AddComparisonMetricRepeatError            string `json:"add_comparison_metric_repeat_error"`
 }
