@@ -154,7 +154,14 @@ func IsIllegalLogParamNameOrMetric(str string) bool {
 }
 
 func ValidateActiveWindowString(str string) bool {
-	return regActiveWindow.MatchString(str)
+	legal := true
+	for _, v := range strings.Split(str, ",") {
+		if !regActiveWindow.MatchString(v) {
+			legal = false
+			break
+		}
+	}
+	return legal
 }
 
 func IsIllegalTargetValueCode(codeList []*models.LogMetricStringMapTable) bool {
