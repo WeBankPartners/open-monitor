@@ -1,16 +1,32 @@
 <template>
   <div class="monitor-general-group">
     <Row>
-      <Col :span="8">
+      <Col :span="16">
       <!--对象类型-->
       <span style="font-size: 14px;">
         {{$t('m_basic_type')}}：
       </span>
-      <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
+      <Select
+        v-model="monitorType"
+        filterable
+        clearable
+        @on-change="() => {
+          metric = ''
+          onFilterChange()
+        }"
+        style="width:300px"
+      >
         <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
       </Select>
+      <Input
+        v-model="metric"
+        clearable
+        style="width: 250px; margin-left: 10px"
+        :placeholder="$t('m_placeholder_input') + $t('m_metric_name')"
+        @on-change='onFilterChange'
+      />
       </Col>
-      <Col :span="16">
+      <Col :span="8">
       <div class="btn-group">
         <Button
           type="info"
@@ -45,16 +61,6 @@
       :max-height="maxHeight"
       class="general-table"
     />
-    <Modal
-      v-model="deleteVisible"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="submitDelete"
-      @on-cancel="deleteVisible = false"
-    >
-      <div class="modal-body" style="padding: 10px 20px">
-        <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
-      </div>
-    </Modal>
     <AddGroupDrawer
       v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
@@ -81,6 +87,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
@@ -238,11 +245,16 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 170,
+          width: 220,
           showType: ['originalMetrics', 'comparisonMetrics'],
           fixed: 'right',
           render: (h, params) => (
             <div style="display:flex;justify-content:center;">
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.handleCopyItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
               {
                 this.metricType === 'originalMetrics'
                   /* 新增同环比指标 */
@@ -290,16 +302,18 @@ export default {
               {
                 /* 删除 */
                 <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
-                  <Button
-                    size="small"
-                    type="error"
-                    onClick={() => {
-                      this.handleDelete(params.row)
-                    }}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
+                  <Poptip
+                    confirm
+                    transfer
+                    title={this.$t('m_delConfirm_tip')}
+                    placement="left-end"
+                    on-on-ok={() => {
+                      this.submitDelete(params.row)
+                    }}>
+                    <Button size="small" type="error">
+                      <Icon type="md-trash" size="16" />
+                    </Button>
+                  </Poptip>
                 </Tooltip>
               }
             </div>
@@ -309,11 +323,11 @@ export default {
       row: {},
       type: '', // add、edit
       addVisible: false,
-      deleteVisible: false,
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
-      token: null
+      token: null,
+      metric: ''
     }
   },
   computed: {
@@ -335,7 +349,8 @@ export default {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        metric: this.metric
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, responseData => {
@@ -361,9 +376,9 @@ export default {
         this.getList()
       }, {isNeedloading: false})
     },
-    changeMonitorType() {
+    onFilterChange: debounce(function () {
       this.getList()
-    },
+    }, 300),
     handleAdd() {
       this.type = 'add'
       this.viewOnly = false
@@ -378,12 +393,15 @@ export default {
       this.row = row
       this.addVisible = true
     },
-    handleDelete(row) {
+    handleCopyItem(row) {
+      this.showDrawer = this.metricType
+      this.type = 'copy'
+      this.viewOnly = false
       this.row = row
-      this.deleteVisible = true
+      this.addVisible = true
     },
-    submitDelete() {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.guid}`
+    submitDelete(row) {
+      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'DELETE',
         api,
