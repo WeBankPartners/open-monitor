@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (operator === 'add' ? $t('m_button_add') : $t('m_button_edit')) + $t('m_original_metric') }}<span class="underline"></span></div>
+        <div class="title">{{ (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit')) + $t('m_original_metric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">
@@ -24,7 +24,7 @@
           </FormItem>
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
-            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-change="changeWorkspace">
+            <Select v-model="workspace" :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)" @on-change="changeWorkspace">
               <Option v-if="['level', 'objectGroup'].includes(fromPage)" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
             </Select>
@@ -37,7 +37,7 @@
           </FormItem>
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
-            <Select  filterable clearable v-model="templatePl" :disabled="metricConfigData.metric_type === 'business' || viewOnly" @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+            <Select  filterable clearable v-model="templatePl" :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)" @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
               <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
             </Select>
           </FormItem>
@@ -69,7 +69,7 @@
           </FormItem>
           <!--表达式-->
           <FormItem :label="$t('m_field_metric')" required>
-            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business' || viewOnly" type="textarea" :rows="5" style="margin:5px 0;" />
+            <Input v-model="metricConfigData.prom_expr" :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + ' ' + $t('m_endpoint')">
@@ -181,6 +181,14 @@ export default {
         ...this.data
       }
       this.metricConfigData.endpoint_type = this.metricConfigData.monitor_type
+    }
+    if (this.operator === 'copy') {
+      this.workspace = this.data.workspace
+      this.metricConfigData = {
+        ...this.data
+      }
+      this.metricConfigData.endpoint_type = this.metricConfigData.monitor_type
+      this.metricConfigData.metric += '1'
     }
     this.getEndpoint()
   },
@@ -370,7 +378,7 @@ export default {
       if (!this.metricConfigData.prom_expr) {
         return this.$Message.error(this.$t('m_field_metric') + this.$t('m_tips_required'))
       }
-      const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
+      const type = ['add', 'copy'].includes(this.operator) ? 'POST' : 'PUT'
       // 在层级对象页面需要使用页面中选择的对象类型
       this.metricConfigData.monitor_type = this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType
       this.metricConfigData.endpoint_group = this.endpoint_group

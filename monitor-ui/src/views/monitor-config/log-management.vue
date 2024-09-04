@@ -1,37 +1,38 @@
 <template>
   <div class="log-management">
-    <section>
-      <ul class="search-ul">
-        <li class="search-li">
-          <RadioGroup
-            v-model="type"
-            type="button"
-            button-style="solid"
-            @on-change="typeChange"
-            style="margin-right: 5px"
-          >
-            <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
-            <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
-          </RadioGroup>
-        </li>
-        <li class="search-li">
-          <Select
-            style="width:300px;"
-            v-model="targetId"
-            filterable
-            clearable
-            remote
-            ref="select"
-            @on-change="search"
-          >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
-              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
-              {{option.display_name}}
-            </Option>
-          </Select>
-        </li>
-      </ul>
-    </section>
+    <div class='log-management-top'>
+      <RadioGroup
+        v-model="type"
+        type="button"
+        button-style="solid"
+        @on-change="typeChange"
+        style="margin-right: 5px"
+      >
+        <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
+        <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
+      </RadioGroup>
+      <Select
+        style="width:300px;"
+        v-model="targetId"
+        filterable
+        clearable
+        remote
+        ref="select"
+        @on-change="onFilterChange"
+      >
+        <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
+          <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
+          {{option.display_name}}
+        </Option>
+      </Select>
+      <Input
+        v-model="alarmName"
+        @on-change="onFilterChange"
+        style="width:250px;margin-left:12px;"
+        clearable
+        :placeholder="$t('m_placeholder_input') + $t('m_alarmName')"
+      />
+    </div>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
     </section>
@@ -39,6 +40,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
 export default {
@@ -52,7 +54,8 @@ export default {
       typeMap: {
         group: 'service',
         endpoint: 'endpoint'
-      }
+      },
+      alarmName: ''
     }
   },
   async mounted() {
@@ -83,9 +86,12 @@ export default {
     search() {
       if (this.targetId) {
         this.showTargetManagement = true
-        this.$refs.keywordContent.getDetail(this.targetId)
+        this.$refs.keywordContent.getDetail(this.targetId, this.alarmName)
       }
-    }
+    },
+    onFilterChange: debounce(function () {
+      this.search()
+    }, 300)
   },
   components: {
     TagShow,
@@ -100,43 +106,41 @@ export default {
     background: #2d8cf0;
     color: #fff;
   }
-  .search-li {
-    display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 12px;
-  }
 }
 </style>
 <style scoped lang="less">
-  .is-danger {
-    color: red;
-    margin-bottom: 0px;
-  }
-  .search-input {
-    height: 32px;
-    padding: 4px 7px;
-    font-size: 12px;
-    border: 1px solid #dcdee2;
-    border-radius: 4px;
-    width: 230px;
-  }
+.log-management-top {
+  display: flex;
+  align-items: center;
+}
+.is-danger {
+  color: red;
+  margin-bottom: 0px;
+}
+.search-input {
+  height: 32px;
+  padding: 4px 7px;
+  font-size: 12px;
+  border: 1px solid #dcdee2;
+  border-radius: 4px;
+  width: 230px;
+}
 
-  .section-table-tip {
-    margin: 24px 20px 0;
-  }
-  .search-input:focus {
-    outline: 0;
-    border-color: #57a3f3;
-  }
+.section-table-tip {
+  margin: 24px 20px 0;
+}
+.search-input:focus {
+  outline: 0;
+  border-color: #57a3f3;
+}
 
-  .search-input-content {
-    display: inline-block;
-    vertical-align: middle;
-  }
-  .tag-width {
-    cursor: auto;
-    width: 55px;
-    text-align: center;
-  }
+.search-input-content {
+  display: inline-block;
+  vertical-align: middle;
+}
+.tag-width {
+  cursor: auto;
+  width: 55px;
+  text-align: center;
+}
 </style>
