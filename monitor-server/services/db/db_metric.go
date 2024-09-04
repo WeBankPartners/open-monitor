@@ -32,18 +32,18 @@ func GetDbMetricByServiceGroup(serviceGroup, metricKey string) (result []*models
 	return
 }
 
-func QueryDbMetricWithServiceGroup(serviceGroup string) (result *models.DbMetricQueryObj, err error) {
+func QueryDbMetricWithServiceGroup(serviceGroup, metricKey string) (result *models.DbMetricQueryObj, err error) {
 	serviceGroupObj, getServiceGroupErr := getSimpleServiceGroup(serviceGroup)
 	if getServiceGroupErr != nil {
 		err = getServiceGroupErr
 		return
 	}
 	result = &models.DbMetricQueryObj{ServiceGroupTable: serviceGroupObj}
-	result.Config, err = GetDbMetricByServiceGroup(serviceGroup, "")
+	result.Config, err = GetDbMetricByServiceGroup(serviceGroup, metricKey)
 	return
 }
 
-func GetDbMetricByEndpoint(endpointGuid string) (result []*models.DbMetricQueryObj, err error) {
+func GetDbMetricByEndpoint(endpointGuid, metricKey string) (result []*models.DbMetricQueryObj, err error) {
 	result = []*models.DbMetricQueryObj{}
 	var serviceGroupTable []*models.ServiceGroupTable
 	err = x.SQL("select distinct t3.* from db_metric_endpoint_rel t1 left join db_metric_monitor t2 on t1.db_metric_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpointGuid, endpointGuid).Find(&serviceGroupTable)
@@ -51,7 +51,7 @@ func GetDbMetricByEndpoint(endpointGuid string) (result []*models.DbMetricQueryO
 		return result, fmt.Errorf("Query database fail,%s ", err.Error())
 	}
 	for _, v := range serviceGroupTable {
-		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid, "")
+		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid, metricKey)
 		if tmpErr != nil {
 			err = tmpErr
 			break

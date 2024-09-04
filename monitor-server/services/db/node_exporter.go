@@ -34,7 +34,7 @@ func SyncLogMetricExporterConfig(endpoints []string) error {
 }
 
 func updateEndpointLogMetric(endpointGuid string) error {
-	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid, true)
+	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid, "", true)
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
