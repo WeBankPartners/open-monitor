@@ -35,21 +35,33 @@ func MetricList(id string, endpointType, serviceGroup string) (result []*models.
 	return
 }
 
-func MetricCreate(param []*models.MetricTable, operator string) error {
+func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *models.ErrorMessageObj) error {
 	var actions []*Action
+	var metricTemp *models.MetricTable
+	var guid string
+	var err error
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
 		if metric.ServiceGroup != "" {
+			guid = fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType)
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, nowTime, operator, operator}})
+				Param: []interface{}{guid, metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, nowTime, operator, operator}})
 		} else if metric.EndpointGroup != "" {
 			var monitorType string
+			guid = fmt.Sprintf("%s__%s", metric.Metric, monitorType)
 			x.SQL("select monitor_type from endpoint_group where guid=?", metric.EndpointGroup).Get(&monitorType)
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time,create_time,create_user,update_user,endpoint_group) value (?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, monitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator, metric.EndpointGroup}})
+				Param: []interface{}{guid, metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator, metric.EndpointGroup}})
 		} else {
+			guid = fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType)
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator}})
+				Param: []interface{}{guid, metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator}})
+		}
+		if metricTemp, err = GetMetric(guid); err != nil {
+			return err
+		}
+		if metricTemp != nil {
+			return fmt.Errorf(errMsgObj.AddMetricRepeatError)
 		}
 	}
 	return Transaction(actions)
@@ -697,8 +709,8 @@ func AddComparisonMetric(param models.MetricComparisonParam, metric *models.Metr
 	return Transaction(actions)
 }
 
-func GetComparisonMetric(guid string) (comparison models.MetricComparison, err error) {
-	_, err = x.SQL("select * from metric_comparison where guid=?", guid).Get(&comparison)
+func GetComparisonMetricByMetricId(metricId string) (comparison models.MetricComparison, err error) {
+	_, err = x.SQL("select * from metric_comparison where metric_id=?", metricId).Get(&comparison)
 	return
 }
 
