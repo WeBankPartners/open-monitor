@@ -237,7 +237,7 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 		for _, dbMetric := range dbMetricConfig {
 			result = append(result, fmt.Sprintf("dbMetric metric:%s", dbMetric.Metric))
 		}
-		keyWordConfigList, tmpErr := GetLogKeywordByServiceGroup(sg)
+		keyWordConfigList, tmpErr := GetLogKeywordByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break

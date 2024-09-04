@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func GetLogKeywordByServiceGroup(serviceGroupGuid string) (result []*models.LogKeywordServiceGroupObj, err error) {
+func GetLogKeywordByServiceGroup(serviceGroupGuid, alarmName string) (result []*models.LogKeywordServiceGroupObj, err error) {
 	serviceGroupObj, getErr := getSimpleServiceGroup(serviceGroupGuid)
 	if getErr != nil {
 		return result, getErr
@@ -26,10 +26,10 @@ func GetLogKeywordByServiceGroup(serviceGroupGuid string) (result []*models.LogK
 	if err != nil {
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
-	configList := []*models.LogKeywordMonitorObj{}
+	var configList []*models.LogKeywordMonitorObj
 	for _, v := range logKeywordTable {
 		configObj := models.LogKeywordMonitorObj{Guid: v.Guid, ServiceGroup: serviceGroupGuid, LogPath: v.LogPath, MonitorType: v.MonitorType}
-		if configObj.KeywordList, err = ListLogKeyword(v.Guid); err != nil {
+		if configObj.KeywordList, err = ListLogKeyword(v.Guid, alarmName); err != nil {
 			return
 		}
 		configObj.EndpointRel = ListLogKeywordEndpointRel(v.Guid)
@@ -42,7 +42,7 @@ func GetLogKeywordByServiceGroup(serviceGroupGuid string) (result []*models.LogK
 	return
 }
 
-func GetLogKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*models.LogKeywordServiceGroupObj, err error) {
+func GetLogKeywordByEndpoint(endpointGuid, alarmName string, onlySource bool) (result []*models.LogKeywordServiceGroupObj, err error) {
 	result = []*models.LogKeywordServiceGroupObj{}
 	var logKeywordMonitorTable []*models.LogKeywordMonitorTable
 	if onlySource {
@@ -54,7 +54,7 @@ func GetLogKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*mo
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
 	for _, v := range logKeywordMonitorTable {
-		tmpResult, tmpErr := GetLogKeywordByServiceGroup(v.ServiceGroup)
+		tmpResult, tmpErr := GetLogKeywordByServiceGroup(v.ServiceGroup, alarmName)
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -164,9 +164,13 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	return actions
 }
 
-func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable, err error) {
+func ListLogKeyword(logKeywordMonitor, alarmName string) (result []*models.LogKeywordConfigTable, err error) {
 	result = []*models.LogKeywordConfigTable{}
-	err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? order by update_time desc", logKeywordMonitor).Find(&result)
+	if strings.TrimSpace(alarmName) == "" {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? order by update_time desc", logKeywordMonitor).Find(&result)
+	} else {
+		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and name like '%"+alarmName+"%' order by update_time desc", logKeywordMonitor).Find(&result)
+	}
 	if err != nil {
 		return
 	}
@@ -519,7 +523,7 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 }
 
 func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) (err error) {
-	existSGs, getExistDataErr := GetLogKeywordByServiceGroup(param.Guid)
+	existSGs, getExistDataErr := GetLogKeywordByServiceGroup(param.Guid, "")
 	if getExistDataErr != nil {
 		return fmt.Errorf("get exist log keyword data fail,%s ", getExistDataErr.Error())
 	}
