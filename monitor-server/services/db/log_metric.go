@@ -52,7 +52,7 @@ func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.L
 	return
 }
 
-func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.LogMetricQueryObj, err error) {
+func GetLogMetricByEndpoint(endpoint, metricKey string, onlySource bool) (result []*models.LogMetricQueryObj, err error) {
 	result = []*models.LogMetricQueryObj{}
 	var endpointServiceRelTable []*models.EndpointServiceRelTable
 	if onlySource {
@@ -61,7 +61,7 @@ func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.
 		err = x.SQL("select distinct t2.service_group from log_metric_endpoint_rel t1 left join log_metric_monitor t2 on t1.log_metric_monitor=t2.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpoint, endpoint).Find(&endpointServiceRelTable)
 	}
 	for _, v := range endpointServiceRelTable {
-		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup, "")
+		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup, metricKey)
 		if tmpErr != nil {
 			err = tmpErr
 			break
