@@ -151,21 +151,14 @@
                 </Option>
               </Select>
             </FormItem>
-            <FormItem :label="$t('m_active_window')" prop="active_window">
-              <span slot="label">
-                <span style="color:red">*</span>
-                {{ $t('m_active_window') }}
-              </span>
-              <TimePicker
-                v-model="formData.active_window"
-                :clearable="false"
-                format="HH:mm"
-                :disabled="!isEditState"
-                type="timerange"
-                placement="bottom-end"
-                style="width: 168px"
+            <FormItem :label="$t('m_active_window')" prop="active_window_list">
+              <activeWindowTime
+                class='mb-3'
+                :activeWindowList='formData.active_window_list'
+                :isDisabled="!isEditState"
+                @timeChange="onActiveTimeChange"
               >
-              </TimePicker>
+              </activeWindowTime>
             </FormItem>
             <FormItem :label="$t('m_tableKey_content')" prop="content">
               <Input
@@ -282,13 +275,14 @@ import isEmpty from 'lodash/isEmpty'
 import find from 'lodash/find'
 import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
+import activeWindowTime from '@/components/active-window-time.vue'
 
 const initFormData = {
   name: '', // 告警名
   priority: 'medium', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
-  active_window: ['00:00','23:59'], // 告警时间段
+  active_window_list: ['00:00-23:59'], // 告警时间段
   content: '', // 通知内容
   notify: [
     {
@@ -723,7 +717,13 @@ export default {
         {
           title: this.$t('m_field_relativeTime'),
           width: 130,
-          key: 'active_window'
+          key: 'active_window_list',
+          render: (h, params) => {
+            const text = !isEmpty(params.row.active_window_list) ? params.row.active_window_list.join(';') : '-'
+            return (<Tooltip class='table-active-time' placement="top" max-width="400" content={text}>
+              {text}
+            </Tooltip>)
+          }
         },
         {
           title: this.$t('m_firing'),
@@ -772,7 +772,6 @@ export default {
         {
           title: this.$t('m_tableKey_metricName'),
           key: 'metric_name',
-
           minWidth: 300
         },
         {
@@ -973,7 +972,6 @@ export default {
         this.modelConfig.modalTitle = 'm_button_edit',
         this.formData = cloneDeep(initFormData)
         this.manageEditParams(this.formData, rowData)
-        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
         const conditions = this.formData.conditions
         conditions.length && conditions.forEach(async item => {
           const thresholdsAndSymbols = this.getSymbolAndValue(item.condition)
@@ -1019,7 +1017,6 @@ export default {
         this.formData = cloneDeep(initFormData)
         this.manageEditParams(this.formData, rowData)
         this.formData.name = this.formData.name + '1'
-        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
         const conditions = this.formData.conditions
         conditions.length && conditions.forEach(async item => {
           const thresholdsAndSymbols = this.getSymbolAndValue(item.condition)
@@ -1149,8 +1146,7 @@ export default {
       const params = cloneDeep(this.formData)
       const needMergeParams = {
         endpoint_group: this.modelConfig.isAdd ? this.selectedTableData.endpoint_group : this.selectedData.endpoint_group,
-        guid: this.selectedData.guid,
-        active_window: params.active_window.join('-')
+        guid: this.selectedData.guid
       }
       Object.assign(params, needMergeParams)
       this.processConditions(params.conditions)
@@ -1295,6 +1291,9 @@ export default {
       this.request('GET', api, '', res => {
         this.modelConfig.metricList = res
       })
+    },
+    onActiveTimeChange(time) {
+      this.formData.active_window_list = time
     }
   },
   computed: {
@@ -1304,7 +1303,8 @@ export default {
   },
   components: {
   // eslint-disable-next-line vue/no-unused-components
-    TagShow
+    TagShow,
+    activeWindowTime
   }
 }
 </script>
@@ -1359,6 +1359,15 @@ export default {
 .table-alarm-name {
   .ivu-tooltip-rel {
     width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.table-active-time {
+  .ivu-tooltip-rel {
+    width: 110px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
