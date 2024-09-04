@@ -549,5 +549,6 @@
   "m_calculation_tip8": "8.Threshold Alert Configuration: Becomes effective when automatic alerts are enabled, automatically generating alerts according to the template rules.",
   "m_save_success": "Save success",
   "m_alarm_query": "Alarm Query",
-  "m_alarm_query_tips": "Please enter the alarm level, name, indicator or object"
+  "m_alarm_query_tips": "Please enter the alarm level, name, indicator or object",
+  "m_enter_indicator_key_tips": "Enter indicator key"
 }

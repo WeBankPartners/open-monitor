@@ -54,7 +54,8 @@ export default ({
             this.allTimeList.push(arr)
           })
         }
-      }
+      },
+      immediate: true
     }
   },
   data() {
