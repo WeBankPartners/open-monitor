@@ -1220,4 +1220,8 @@ update metric set prom_expr=replace(prom_expr,',code="$t_code"',',retcode="$t_re
 
 INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_13','service_metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
 INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_14','metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_15','service_metric_template','{"name":"a+b","prom_expr":"@a+@b","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_16','metric_template','{"name":"a+b","prom_expr":"@a+@b)","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_17','service_metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_18','metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
 #@v3.1.4-end@;
