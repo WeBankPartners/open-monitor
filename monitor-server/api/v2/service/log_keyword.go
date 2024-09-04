@@ -16,15 +16,16 @@ import (
 func ListLogKeywordMonitor(c *gin.Context) {
 	queryType := c.Query("type")
 	guid := c.Query("guid")
+	alarmName := c.Query("alarmName")
 	if queryType == "endpoint" {
-		result, err := db.GetLogKeywordByEndpoint(guid, false)
+		result, err := db.GetLogKeywordByEndpoint(guid, alarmName, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.GetLogKeywordByServiceGroup(guid)
+		result, err := db.GetLogKeywordByServiceGroup(guid, alarmName)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -221,7 +222,7 @@ func syncLogKeywordNodeExporterConfig(endpointList []string) error {
 
 func ExportLogKeyword(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
-	result, err := db.GetLogKeywordByServiceGroup(serviceGroup)
+	result, err := db.GetLogKeywordByServiceGroup(serviceGroup, "")
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
