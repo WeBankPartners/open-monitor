@@ -293,6 +293,7 @@ func QueryMetricTagValue(c *gin.Context) {
 func AddOrUpdateComparisonMetric(c *gin.Context) {
 	var param models.MetricComparisonParam
 	var metric *models.MetricTable
+	var comparison models.MetricComparison
 	var err error
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -322,6 +323,16 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		return
 	}
 	if strings.TrimSpace(param.MetricComparisonId) == "" {
+		// 查询同环比数据
+		newMetricId := db.GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+		if comparison, err = db.GetComparisonMetric(newMetricId); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		if comparison.Guid != "" {
+			middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AddComparisonMetricRepeatError))
+			return
+		}
 		// 新增同环比
 		if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
 			middleware.ReturnServerHandleError(c, err)
