@@ -989,7 +989,8 @@ export default {
       service_group: '',
       isEmpty,
       dataBaseGuid: '',
-      logAndDataBaseAllDetail: []
+      logAndDataBaseAllDetail: [],
+      alarmName: ''
     }
   },
   computed: {
@@ -1272,7 +1273,10 @@ export default {
         }
       })
     },
-    async getDetail(targetId) {
+    async getDetail(targetId, alarmName = this.alarmName) {
+      if (this.alarmName !== alarmName) {
+        this.alarmName = alarmName
+      }
       this.targetId = targetId
       await this.getLogKeyWordDetail()
       await this.getDataBaseDetail()
@@ -1295,7 +1299,8 @@ export default {
       return new Promise(resolve => {
         this.request('GET', '/monitor/api/v2/service/log_keyword/list', {
           type: this.keywordType,
-          guid: this.targetId
+          guid: this.targetId,
+          alarmName: this.alarmName
         }, res => {
           this.allLogFileData = isEmpty(res) ? [] : res
           this.allLogFileData.forEach(logFile => {
@@ -1313,7 +1318,8 @@ export default {
       return new Promise(resolve => {
         this.request('GET', '/monitor/api/v2/service/db_keyword/list', {
           type: this.keywordType,
-          guid: this.targetId
+          guid: this.targetId,
+          alarmName: this.alarmName
         }, res => {
           const detail = isEmpty(res) ? [] : res
           detail.forEach(item => {
