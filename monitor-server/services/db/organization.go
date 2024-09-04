@@ -120,7 +120,10 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
 	log.Logger.Info("start UpdateOrganization", log.String("operation", operation), log.String("guid", param.Guid))
 	var tableData []*m.PanelRecursiveTable
-	var actions []*Action
+	var dbMetricMonitorList []*m.DbMetricMonitorObj
+	var actions, delLogMetricMonitorActions []*Action
+	var endpointGroup, affectHost, subHost, affectEndpointGroup []string
+	var logMetricMonitorList []*m.LogMetricMonitorTable
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	if operation == "add" {
 		if param.Guid == "" || param.DisplayName == "" {
@@ -171,11 +174,55 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			}
 		}
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
+		// 删除业务配置列表-数据库
+		if dbMetricMonitorList, err = GetDbMetricByServiceGroup(param.Guid, ""); err != nil {
+			return err
+		}
+		if len(dbMetricMonitorList) > 0 {
+			for _, obj := range dbMetricMonitorList {
+				if subDbMetricList, subEndpointGroup := GetDeleteDbMetricActions(obj.Guid); len(subDbMetricList) > 0 {
+					actions = append(actions, subDbMetricList...)
+					if len(subEndpointGroup) > 0 {
+						endpointGroup = append(endpointGroup, subEndpointGroup...)
+					}
+				}
+			}
+		}
+		// 删除业务配置列表-日志文件
+		if err = x.SQL("select * from log_metric_monitor where service_group=?", param.Guid).Find(&logMetricMonitorList); err != nil {
+			return
+		}
+		if len(logMetricMonitorList) > 0 {
+			for _, logMetricMonitor := range logMetricMonitorList {
+				delLogMetricMonitorActions, subHost, affectEndpointGroup = getDeleteLogMetricMonitor(logMetricMonitor.Guid)
+				if len(delLogMetricMonitorActions) > 0 {
+					actions = append(actions, delLogMetricMonitorActions...)
+				}
+				if len(affectEndpointGroup) > 0 {
+					endpointGroup = append(endpointGroup, affectEndpointGroup...)
+				}
+				if len(subHost) > 0 {
+					affectHost = append(affectHost, subHost...)
+				}
+			}
+		}
+
 		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
 		err = Transaction(actions)
 		if err == nil {
 			DeleteServiceWithChildConfig(param.Guid)
 			deleteGlobalServiceGroupNode(param.Guid)
+			if len(affectHost) > 0 {
+				err = SyncLogMetricExporterConfig(affectHost)
+				if err != nil {
+					log.Logger.Error("SyncLogMetricExporterConfig fail", log.Error(err))
+				}
+			}
+			if len(endpointGroup) > 0 {
+				for _, v := range endpointGroup {
+					SyncPrometheusRuleFile(v, false)
+				}
+			}
 		}
 	}
 	return err
