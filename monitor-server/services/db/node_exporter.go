@@ -258,7 +258,7 @@ func updateEndpointLogKeyword(endpoint string) error {
 }
 
 func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHttpDto, err error) {
-	serviceGroupKeywordList, queryConfigErr := GetLogKeywordByEndpoint(endpoint, true)
+	serviceGroupKeywordList, queryConfigErr := GetLogKeywordByEndpoint(endpoint, "", true)
 	if queryConfigErr != nil {
 		return result, queryConfigErr
 	}
