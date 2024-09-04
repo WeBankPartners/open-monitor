@@ -13,16 +13,16 @@ import (
 	"time"
 )
 
-func ListDBKeywordConfig(listType, listGuid string) (result []*models.ListDbKeywordData, err error) {
+func ListDBKeywordConfig(listType, listGuid, alarmName string) (result []*models.ListDbKeywordData, err error) {
 	if listType == "endpoint" {
-		result, err = GetDbKeywordByEndpoint(listGuid, false)
+		result, err = GetDbKeywordByEndpoint(listGuid, alarmName, false)
 	} else {
-		result, err = GetDbKeywordByServiceGroup(listGuid)
+		result, err = GetDbKeywordByServiceGroup(listGuid, alarmName)
 	}
 	return
 }
 
-func GetDbKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*models.ListDbKeywordData, err error) {
+func GetDbKeywordByEndpoint(endpointGuid, alarmName string, onlySource bool) (result []*models.ListDbKeywordData, err error) {
 	result = []*models.ListDbKeywordData{}
 	var logKeywordMonitorTable []*models.LogKeywordMonitorTable
 	if onlySource {
@@ -34,7 +34,7 @@ func GetDbKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*mod
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
 	for _, v := range logKeywordMonitorTable {
-		tmpResult, tmpErr := GetDbKeywordByServiceGroup(v.ServiceGroup)
+		tmpResult, tmpErr := GetDbKeywordByServiceGroup(v.ServiceGroup, alarmName)
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -44,14 +44,18 @@ func GetDbKeywordByEndpoint(endpointGuid string, onlySource bool) (result []*mod
 	return
 }
 
-func GetDbKeywordByServiceGroup(serviceGroupGuid string) (result []*models.ListDbKeywordData, err error) {
+func GetDbKeywordByServiceGroup(serviceGroupGuid, alarmName string) (result []*models.ListDbKeywordData, err error) {
 	serviceGroupObj, getErr := getSimpleServiceGroup(serviceGroupGuid)
 	if getErr != nil {
 		return result, getErr
 	}
 	result = []*models.ListDbKeywordData{}
 	var dbKeywordTable []*models.DbKeywordMonitor
-	err = x.SQL("select * from db_keyword_monitor where service_group=? order by  update_time desc", serviceGroupGuid).Find(&dbKeywordTable)
+	if strings.TrimSpace(alarmName) == "" {
+		err = x.SQL("select * from db_keyword_monitor where service_group=? order by  update_time desc", serviceGroupGuid).Find(&dbKeywordTable)
+	} else {
+		err = x.SQL("select * from db_keyword_monitor where service_group=? and name like '%"+alarmName+"%'order by  update_time desc", serviceGroupGuid).Find(&dbKeywordTable)
+	}
 	if err != nil {
 		return result, fmt.Errorf("Query table fail,%s ", err.Error())
 	}
