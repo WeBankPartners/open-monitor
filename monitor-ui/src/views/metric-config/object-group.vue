@@ -53,16 +53,6 @@
       :max-height="maxHeight"
       class="level-table"
     />
-    <Modal
-      v-model="deleteVisible"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="submitDelete"
-      @on-cancel="deleteVisible = false"
-    >
-      <div class="modal-body" style="padding:10px 20px;">
-        <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
-      </div>
-    </Modal>
     <AddGroupDrawer
       v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
@@ -247,10 +237,15 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 170,
+          width: 220,
           fixed: 'right',
           render: (h, params) => (
             <div style="display:flex;justify-content:center;">
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.handleCopyItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
               {
                 this.metricType === 'originalMetrics'
                   /* 新增同环比指标 */
@@ -299,17 +294,18 @@ export default {
               {
                 /* 删除 */
                 <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
-                  <Button
-                    size="small"
-                    type="error"
-                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
-                    onClick={() => {
-                      this.handleDelete(params.row)
-                    }}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
+                  <Poptip
+                    confirm
+                    transfer
+                    title={this.$t('m_delConfirm_tip')}
+                    placement="left-end"
+                    on-on-ok={() => {
+                      this.submitDelete(params.row)
+                    }}>
+                    <Button size="small" type="error">
+                      <Icon type="md-trash" size="16" />
+                    </Button>
+                  </Poptip>
                 </Tooltip>
               }
             </div>
@@ -324,7 +320,6 @@ export default {
       row: {},
       type: '', // add、edit
       addVisible: false,
-      deleteVisible: false,
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
@@ -463,12 +458,15 @@ export default {
       this.row = row
       this.addVisible = true
     },
-    handleDelete(row) {
+    handleCopyItem(row) {
+      this.showDrawer = this.metricType
+      this.type = 'copy'
+      this.viewOnly = false
       this.row = row
-      this.deleteVisible = true
+      this.addVisible = true
     },
-    submitDelete() {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.guid}`
+    submitDelete(row) {
+      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'DELETE',
         api,
