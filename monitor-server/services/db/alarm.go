@@ -1494,6 +1494,10 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			alarmQuery = append(alarmQuery, v)
 		}
 	}
+	var alarmSortQuery m.AlarmProblemList
+	alarmSortQuery = alarmQuery
+	sort.Sort(alarmSortQuery)
+	alarmQuery = alarmSortQuery
 	metricMap := make(map[string]int)
 	for _, v := range alarmQuery {
 		if v.SPriority == "high" {
