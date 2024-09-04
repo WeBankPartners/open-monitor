@@ -417,7 +417,8 @@ export default {
       ],
       generateBackstageTrialWarning: false,
       successCode: cloneDeep(initSuccessCode),
-      cloneDeep
+      cloneDeep,
+      actionType: ''
     }
   },
   computed: {
@@ -435,11 +436,17 @@ export default {
     }
   },
   methods: {
-    loadPage(guid) {
+    loadPage(guid, actionType) {
       this.successCode = cloneDeep(initSuccessCode)
       this.isfullscreen = true
       if (guid) {
-        this.isAdd = false
+        if (actionType === 'copy') {
+          this.actionType = actionType
+          this.isAdd = true
+        } else {
+          this.isAdd = false
+          this.actionType = ''
+        }
         this.getConfigDetail(guid)
       } else {
         this.configInfo = {
@@ -673,6 +680,9 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.configInfo = resp
         this.processConfigInfo()
+        if (this.actionType === 'copy') {
+          this.configInfo.name += '(1)'
+        }
         this.showModal = true
       })
     },
