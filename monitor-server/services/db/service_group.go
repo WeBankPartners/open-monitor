@@ -228,6 +228,15 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 			for _, logMetricConfig := range logMetricMonitor.MetricConfigList {
 				result = append(result, fmt.Sprintf("logMetric  path:%s metric:%s", logMetricMonitor.LogPath, logMetricConfig.Metric))
 			}
+			for _, metricList := range logMetricMonitor.MetricGroups {
+				var metricArr []string
+				for _, metric := range metricList.MetricList {
+					metricArr = append(metricArr, metric.FullMetric)
+				}
+				if len(metricArr) > 0 {
+					result = append(result, fmt.Sprintf("businessConfig metirc:%s", strings.Join(metricArr, ",")))
+				}
+			}
 		}
 		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg, "")
 		if tmpErr != nil {
