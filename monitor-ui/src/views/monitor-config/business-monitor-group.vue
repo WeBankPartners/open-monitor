@@ -848,7 +848,8 @@ export default {
       dataBaseTableData: [],
       allTemplateList: [],
       logAndDataBaseAllDetail: [],
-      isEmpty
+      isEmpty,
+      metricKey: ''
     }
   },
   computed: {
@@ -1321,7 +1322,10 @@ export default {
     },
     getLogKeyWordDetail() {
       return new Promise(resolve => {
-        const api = this.$root.apiCenter.getTargetDetail + '/group/' + this.targetId
+        let api = this.$root.apiCenter.getTargetDetail + '/group/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
           this.showManagement = true
           if (Array.isArray(responseData)) {
@@ -1353,7 +1357,10 @@ export default {
         }, {isNeedloading: true})
       })
     },
-    async getDetail(targetId) {
+    async getDetail(targetId, metricKey) {
+      if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
+        this.metricKey = metricKey
+      }
       this.targetId = targetId
       await this.getLogKeyWordDetail()
       await this.getDbDetail()
@@ -1374,7 +1381,10 @@ export default {
     },
     getDbDetail() {
       return new Promise(resolve => {
-        const api = this.$root.apiCenter.getTargetDbDetail + '/group/' + this.targetId
+        let api = this.$root.apiCenter.getTargetDbDetail + '/group/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
           if (Array.isArray(responseData)) {
             this.dataBaseTableData = responseData
