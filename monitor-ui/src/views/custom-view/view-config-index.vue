@@ -258,7 +258,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
@@ -591,6 +590,10 @@ export default {
         // 修改自定义看板权限
         params.id = this.boardId
         path = '/monitor/api/v2/dashboard/custom/permission'
+      } else if (this.authViewType === 'copyDashboard') {
+        params.dashboardId = this.pannelId
+        path = '/monitor/api/v2/dashboard/custom/copy'
+        params.mgmtRole = params.mgmtRoles[0]
       }
       this.request('POST', path, params, val => {
         this.getViewList()
@@ -629,15 +632,9 @@ export default {
       this.isModalShow = true
     },
     onDashboardItemCopy(item) {
-      const params = {
-        dashboardId: item.id,
-        mgmtRole: item.mgmtRoles[0],
-        useRoles: item.useRoles
-      }
-      this.request('POST','/monitor/api/v2/dashboard/custom/copy', params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.getViewList()
-      })
+      this.pannelId = item.id
+      this.authViewType = 'copyDashboard'
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     }
   },
   components: {
