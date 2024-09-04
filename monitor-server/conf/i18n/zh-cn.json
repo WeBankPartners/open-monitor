@@ -31,5 +31,6 @@
   "alert_keyword_repeat_error": "保存失败:同名告警关键字已存在",
   "endpoint_host_delete_error": "删除失败:主机对象有关联的进程对象",
   "log_monitor_template_delete_error": "删除失败：当前模版已被%s业务配置引用，无法删除",
-  "add_comparison_metric_repeat_error": "保存失败：当前同环比指标已存在，请修改配置后重试"
+  "add_comparison_metric_repeat_error": "保存失败：当前同环比指标已存在，请修改配置后重试",
+  "add_metric_repeat_error": "保存失败：当前指标已存在，请修改配置后重试"
 }
