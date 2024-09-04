@@ -26,6 +26,7 @@ func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.L
 	for _, logMetricMonitor := range logMetricMonitorTable {
 		tmpConfig := models.LogMetricMonitorObj{Guid: logMetricMonitor.Guid, ServiceGroup: logMetricMonitor.ServiceGroup, LogPath: logMetricMonitor.LogPath, MetricType: logMetricMonitor.MetricType, MonitorType: logMetricMonitor.MonitorType}
 		tmpConfig.EndpointRel = ListLogMetricEndpointRel(logMetricMonitor.Guid)
+		tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
 		tmpConfig.MetricConfigList = ListLogMetricConfig("", logMetricMonitor.Guid)
 		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid, metricKey)
 		for _, logJsonObj := range tmpConfig.JsonConfigList {
