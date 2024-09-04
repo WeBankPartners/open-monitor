@@ -1,25 +1,30 @@
 <template>
   <div>
-    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
-      <div>
+    <div class='log-template-header'>
+      <div class='log-template-header-left'>
         <Input
           v-model.trim="searchParams.name"
+          style='width: 450px; margin-right: 20px'
           :placeholder="$t('m_template_name')"
           class="search-item"
           clearable
-          @on-change="getTemplateList"
+          @on-change="onFilterChange"
         ></Input>
-        <Input
-          v-model.trim="searchParams.update_user"
-          :placeholder="$t('m_updatedBy')"
-          class="search-item"
+        <Select
+          v-model="searchParams.update_user"
+          filterable
           clearable
-          @on-change="getTemplateList"
-        ></Input>
-        <span style="margin-top: 8px;margin-left: 24px;">
+          :placeholder="$t('m_updatedBy')"
+          @on-change="onFilterChange"
+        >
+          <Option v-for="(user, index) in updateUserOptions" :value="user" :key="index">{{
+            user
+          }}</Option>
+        </Select>
+        <!-- <span style="margin-top: 8px;margin-left: 24px;">
           <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('m_button_search') }}</Button>
           <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
-        </span>
+        </span> -->
       </div>
       <div>
         <ExportImport
@@ -115,6 +120,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
@@ -217,7 +223,8 @@ export default {
       showServiceGroup: false,
       filterServiceGroup: '',
       serviceGroup: [], // 层级对象
-      selectedParams: [] // 待导出数据
+      selectedParams: [], // 待导出数据
+      updateUserOptions: []
     }
   },
   computed: {
@@ -227,6 +234,7 @@ export default {
   },
   mounted() {
     this.getTemplateList()
+    this.getUpdateUserOptions()
   },
   methods: {
     getTemplateList() {
@@ -237,6 +245,9 @@ export default {
       })
       this.spinShow = false
     },
+    onFilterChange: debounce(function () {
+      this.getTemplateList()
+    }, 300),
     handleReset() {
       this.searchParams = {
         name: '',
@@ -320,6 +331,12 @@ export default {
         param => param.guid === row.guid && param.tableIndex === tableIndex
       )
       this.selectedParams.splice(findIndex, 1)
+    },
+    getUpdateUserOptions() {
+      const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', res => {
+        this.updateUserOptions = res
+      })
     }
   },
   components: {
@@ -330,6 +347,16 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.log-template-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  .log-template-header-left {
+    display: flex;
+    align-items: center;
+  }
+}
+
 .search-item {
   width: 200px;
   margin-right: 6px;
