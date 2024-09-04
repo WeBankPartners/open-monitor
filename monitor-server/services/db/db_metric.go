@@ -153,31 +153,36 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 	return err
 }
 
-func DeleteDbMetric(dbMetricGuid string) error {
-	var dbMetricTable []*models.DbMetricMonitorTable
-	x.SQL("select * from db_metric_monitor where guid=?", dbMetricGuid).Find(&dbMetricTable)
-	if len(dbMetricTable) == 0 {
-		return nil
+func DeleteDbMetric(dbMetricGuid string) (err error) {
+	var actions, endpointGroup = GetDeleteDbMetricActions(dbMetricGuid)
+	if err = Transaction(actions); err != nil {
+		return
 	}
-	var actions []*Action
-	var endpointGroup []string
-	var alarmStrategyTable []*models.AlarmStrategyTable
-	alarmMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
-	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
-	for _, v := range alarmStrategyTable {
-		endpointGroup = append(endpointGroup, v.EndpointGroup)
-	}
-	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
-	err := Transaction(actions)
-	if err == nil && len(endpointGroup) > 0 {
+	if len(endpointGroup) > 0 {
 		for _, v := range endpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
-	return err
+	return
+}
+
+func GetDeleteDbMetricActions(dbMetricGuid string) (actions []*Action, endpointGroup []string) {
+	actions = []*Action{}
+	endpointGroup = []string{}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	var alarmStrategyTable []*models.AlarmStrategyTable
+	x.SQL("select * from db_metric_monitor where guid=?", dbMetricGuid).Find(&dbMetricTable)
+	if len(dbMetricTable) == 0 {
+		return
+	}
+	alarmMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
+
+	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
+	return
 }
 
 func getDbMetricEndpointRel(dbMetricMonitorGuid string) (result []*models.DbMetricEndpointRelTable) {
