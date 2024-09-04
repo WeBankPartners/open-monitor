@@ -8,7 +8,7 @@
     </Row>
     <div class="chart-list-header mb-3">
       <div class="chart-search">
-        <div style="width: 90px">{{$t('m_show_user_created')}}</div>
+        <div style="font-size: 14px;min-width: 110px">{{$t('m_show_user_created')}}</div>
         <i-switch v-model="searchMap.show" style="width: 43px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.chartName"
