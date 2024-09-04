@@ -697,6 +697,11 @@ func AddComparisonMetric(param models.MetricComparisonParam, metric *models.Metr
 	return Transaction(actions)
 }
 
+func GetComparisonMetric(guid string) (comparison models.MetricComparison, err error) {
+	_, err = x.SQL("select * from metric_comparison where guid=?", guid).Get(&comparison)
+	return
+}
+
 func UpdateComparisonMetric(metricComparisonId string, calcTypeList []string) (err error) {
 	var calcType string
 	if len(calcTypeList) > 0 {
