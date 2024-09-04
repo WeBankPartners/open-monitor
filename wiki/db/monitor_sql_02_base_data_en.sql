@@ -1225,3 +1225,7 @@ INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_
 INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_17','service_metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
 INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_18','metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
 #@v3.1.4-end@;
+
+#@v3.2.3-begin@;
+alter table alarm_strategy modify column active_window varchar(255) default null;
+#@v3.2.3-end@;
