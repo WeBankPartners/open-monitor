@@ -11,7 +11,7 @@ import (
 )
 
 func ListLogMonitorTemplateOptions() (result []string, err error) {
-	err = x.SQL("select update_user from log_monitor_template").Find(&result)
+	err = x.SQL("select distinct update_user from log_monitor_template").Find(&result)
 	return
 }
 
