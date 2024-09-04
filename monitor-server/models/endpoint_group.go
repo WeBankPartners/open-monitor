@@ -154,6 +154,7 @@ type GroupStrategyObj struct {
 	UpdateTime        string                  `json:"update_time"`
 	UpdateUser        string                  `json:"update_user"`
 	LogMetricGroup    *string                 `json:"log_metric_group"`
+	ActiveWindowList  []string                `json:"active_window_list"`
 }
 
 type EndpointStrategyObj struct {
