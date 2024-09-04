@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/go-common-lib/pcre"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/dlclark/regexp2"
@@ -700,14 +701,14 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 }
 
 func CheckRegExpMatchPCRE(param models.CheckRegExpParam) (message, matchString string) {
-	/*re, tmpErr := pcre.Compile(param.RegString, 0)
+	re, tmpErr := pcre.Compile(param.RegString, 0)
 	if tmpErr != nil {
 		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Message), matchString
 	}
 	matchString = pcreMatchSubString(&re, param.TestContext)
 	if matchString == "" {
 		return fmt.Sprintf("can not match any data"), matchString
-	}*/
+	}
 	return fmt.Sprintf("success match:%s", matchString), matchString
 }
 
@@ -723,7 +724,6 @@ func CheckRegExpMatch(param models.CheckRegExpParam) (message string) {
 	return fmt.Sprintf("success match:%s", matchString)
 }
 
-/*
 func pcreMatchSubString(re *pcre.Regexp, lineText string) (matchString string) {
 	if re == nil {
 		return
@@ -740,7 +740,7 @@ func pcreMatchSubString(re *pcre.Regexp, lineText string) (matchString string) {
 		}
 	}
 	return
-}*/
+}
 
 func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
 	if re == nil {
