@@ -30,5 +30,6 @@
   "alert_name_repeat_error": "Save failed: The alarm with the same name already exists",
   "alert_keyword_repeat_error": "Save failed: The alarm with the same keyword already exists",
   "endpoint_host_delete_error": "Delete failed: Host endpoint have some relative process endpoint",
-  "log_monitor_template_delete_error": "Deleting Failed: The current template cannot be deleted because it has been referenced by the %s service configuration"
+  "log_monitor_template_delete_error": "Deleting Failed: The current template cannot be deleted because it has been referenced by the %s service configuration",
+  "add_comparison_metric_repeat_error": "Save Failed: The current Year-over-Year Metric already exists. Please modify the configuration and try again."
 }
