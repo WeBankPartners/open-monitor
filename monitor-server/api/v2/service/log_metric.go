@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/WeBankPartners/go-common-lib/pcre"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -1013,7 +1014,7 @@ func LogMonitorDataMapRegMatch(c *gin.Context) {
 		middleware.ReturnSuccessData(c, param)
 		return
 	}
-	/*ce, err := pcre.Compile(param.Regexp, 0)
+	ce, err := pcre.Compile(param.Regexp, 0)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Message, fmt.Errorf(err.Message))
 		return
@@ -1022,6 +1023,6 @@ func LogMonitorDataMapRegMatch(c *gin.Context) {
 		if mat.Matches() {
 			param.Match = true
 		}
-	}*/
+	}
 	middleware.ReturnSuccessData(c, param)
 }
