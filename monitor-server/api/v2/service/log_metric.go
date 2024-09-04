@@ -23,7 +23,7 @@ func ListLogMetricMonitor(c *gin.Context) {
 	guid := c.Param("guid")
 	metricKey := c.Query("metricKey")
 	if queryType == "endpoint" {
-		result, err := db.GetLogMetricByEndpoint(guid, false)
+		result, err := db.GetLogMetricByEndpoint(guid, metricKey, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
