@@ -87,19 +87,6 @@
     </div>
     <JsonRegex ref="jsonRegexRef" @refreshData="getTemplateList"></JsonRegex>
     <StandardRegex ref="standardRegexRef" @refreshData="getTemplateList"></StandardRegex>
-    <!-- 删除组 -->
-    <Modal
-      v-model="isShowDeleteWarning"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="confirmDeleteTemplate"
-      @on-cancel="isShowDeleteWarning = false"
-    >
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delete_tip')}}: {{ toBeDeleted }}</p>
-        </div>
-      </div>
-    </Modal>
     <!-- 查看管理层级对象 -->
     <Modal
       v-model="showServiceGroup"
@@ -131,6 +118,7 @@
 import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
+import {showPoptipOnTable} from '@/assets/js/utils.js'
 
 export default {
   name: 'log-template',
@@ -181,7 +169,12 @@ export default {
           fixed: 'right',
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
-              <Tooltip content={this.$t('m_button_edit')} placement="top" transfer={true}>
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip content={this.$t('m_button_edit') + '12'} placement="top" transfer={true}>
                 <Button
                   size="small"
                   type="primary"
@@ -202,22 +195,25 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip content={this.$t('m_button_remove')} placement="top" transfer={true}>
-                <Button
-                  size="small"
-                  type="error"
-                  onClick={() => this.removeAction(params.row)}
-                  style="margin-right:5px;"
-                >
-                  <Icon type="md-trash" size="16"></Icon>
-                </Button>
+                <Poptip
+                  confirm
+                  transfer
+                  title={this.$t('m_delConfirm_tip')}
+                  placement="left-end"
+                  on-on-ok={() => {
+                    this.confirmDeleteTemplate(params.row)
+                  }}>
+                  <Button size="small" type="error" class="mr-2" on-click={() => {
+                    showPoptipOnTable()
+                  }}>
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
               </Tooltip>
             </div>
           )
         }
       ],
-      isShowDeleteWarning: false,
-      toBeDeleted: '', // 将被删除的模版名
-      toBeDeletedGuid: '', // 待删除数据
       showServiceGroup: false,
       filterServiceGroup: '',
       serviceGroup: [], // 层级对象
@@ -272,6 +268,13 @@ export default {
         this.$refs.standardRegexRef.loadPage(row.guid)
       }
     },
+    copySingleItem(row) {
+      if (row.log_type === 'json') {
+        this.$refs.jsonRegexRef.loadPage(row.guid, 'copy')
+      } else {
+        this.$refs.standardRegexRef.loadPage(row.guid, 'copy')
+      }
+    },
     // 查看关联层级对象
     viewAction(row) {
       this.filterServiceGroup = ''
@@ -281,14 +284,8 @@ export default {
         this.showServiceGroup = true
       })
     },
-    // 删除模版
-    removeAction(row) {
-      this.toBeDeleted = row.name
-      this.toBeDeletedGuid = row.guid
-      this.isShowDeleteWarning = true
-    },
-    confirmDeleteTemplate() {
-      const api = this.$root.apiCenter.deleteLogTemplate + this.toBeDeletedGuid
+    confirmDeleteTemplate(row) {
+      const api = this.$root.apiCenter.deleteLogTemplate + row.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, {}, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getTemplateList()
@@ -323,8 +320,7 @@ export default {
         param => param.guid === row.guid && param.tableIndex === tableIndex
       )
       this.selectedParams.splice(findIndex, 1)
-    },
-    // #endregion
+    }
   },
   components: {
     JsonRegex,
