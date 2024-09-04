@@ -325,7 +325,7 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 	if strings.TrimSpace(param.MetricComparisonId) == "" {
 		// 查询同环比数据
 		newMetricId := db.GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
-		if comparison, err = db.GetComparisonMetric(newMetricId); err != nil {
+		if comparison, err = db.GetComparisonMetricByMetricId(newMetricId); err != nil {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
