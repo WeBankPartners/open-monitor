@@ -1,53 +1,54 @@
 <!--业务配置-->
 <template>
   <div class="business-monitor">
-    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
-      <ul class="search-ul">
-        <li class="search-li">
-          <RadioGroup
-            v-model="type"
-            type="button"
-            button-style="solid"
-            @on-change="typeChange(true)"
-            style="margin-right: 5px"
-          >
-            <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
-            <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
-          </RadioGroup>
-        </li>
-        <li class="search-li">
-          <Select
-            style="width:300px;"
-            v-model="targrtId"
-            filterable
-            clearable
-            remote
-            ref="select"
-            @on-change="search"
-            @on-clear="typeChange(false)"
-          >
-            <Option v-for="(option, index) in targetOptions"
-                    :value="option.guid"
-                    :key="index"
-                    :label="option.display_name"
-            >
-              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
-              {{option.display_name}}
-            </Option>
-          </Select>
-        </li>
-        <li class="search-li" style="cursor: pointer;">
-          <span style="font-size: 14px;" @click="openDoc">
-            <i
-              class="fa fa-book"
-              aria-hidden="true"
-              style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px"
-            >
-            </i>
-            {{$t('m_operationDoc')}}
-          </span>
-        </li>
-      </ul>
+    <div class="business-monitor-header">
+      <RadioGroup
+        v-model="type"
+        type="button"
+        button-style="solid"
+        @on-change="typeChange(true)"
+        style="margin-right: 5px"
+      >
+        <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
+        <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
+      </RadioGroup>
+      <Select
+        style="width:250px;"
+        v-model="targrtId"
+        filterable
+        clearable
+        remote
+        ref="select"
+        @on-change="() => {
+          metricKey = ''
+          search()
+        }"
+        @on-clear="typeChange(false)"
+      >
+        <Option v-for="(option, index) in targetOptions"
+                :value="option.guid"
+                :key="index"
+                :label="option.display_name"
+        >
+          <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
+          {{option.display_name}}
+        </Option>
+      </Select>
+      <Input v-model.trim="metricKey"
+             :placeholder="$t('m_enter_indicator_key_tips')"
+             clearable
+             style="width:250px; margin-left: 5px"
+             @on-change='search'
+      />
+      <span style="font-size: 14px; cursor: pointer;" @click="openDoc">
+        <i
+          class="fa fa-book"
+          aria-hidden="true"
+          style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px"
+        >
+        </i>
+        {{$t('m_operationDoc')}}
+      </span>
     </div>
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <template v-if="type === 'group'">
@@ -61,6 +62,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import endpointManagement from './business-monitor-endpoint.vue'
 import groupManagement from './business-monitor-group.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -71,7 +73,8 @@ export default {
       type: 'group',
       targrtId: '',
       targetOptions: [],
-      showTargetManagement: false
+      showTargetManagement: false,
+      metricKey: ''
     }
   },
 
@@ -83,6 +86,7 @@ export default {
   },
   methods: {
     typeChange(needDefaultTarget) {
+      this.metricKey = ''
       this.clearTargrt()
       this.getTargrtList(needDefaultTarget)
     },
@@ -102,12 +106,12 @@ export default {
       this.showTargetManagement = false
       this.$refs.select.query = ''
     },
-    search() {
+    search: debounce(function () {
       if (this.targrtId) {
         this.showTargetManagement = true
-        this.$refs[this.type].getDetail(this.targrtId)
+        this.$refs[this.type].getDetail(this.targrtId, this.metricKey)
       }
-    },
+    }, 300),
     openDoc() {
       window.open('https://webankpartners.github.io/wecube-docs/manual-open-monitor-config-metrics/')
     }
@@ -125,12 +129,6 @@ export default {
   .ivu-radio-group-button .ivu-radio-wrapper-checked {
     background: #2d8cf0;
     color: #fff;
-  }
-  .search-li {
-    display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 12px;
   }
 }
 </style>
@@ -164,5 +162,11 @@ export default {
     cursor: auto;
     width: 55px;
     text-align: center;
+  }
+  .business-monitor-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 8px
   }
 </style>
