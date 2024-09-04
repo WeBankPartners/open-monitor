@@ -11,15 +11,16 @@ import (
 func ListDbMetricMonitor(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
+	metricKey := c.Query("metricKey")
 	if queryType == "endpoint" {
-		result, err := db.GetDbMetricByEndpoint(guid)
+		result, err := db.GetDbMetricByEndpoint(guid, metricKey)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.QueryDbMetricWithServiceGroup(guid)
+		result, err := db.QueryDbMetricWithServiceGroup(guid, metricKey)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
