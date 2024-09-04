@@ -600,7 +600,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 {
 		if (cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0) || cond.AlarmTable.SMetric == "custom" {
 			if cond.ExtOpenAlarm {
-				for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList}) {
+				for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList}) {
 					result = append(result, v)
 				}
 			}
@@ -1252,6 +1252,13 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	levelFilterSql := getLevelSQL(convertString2Map(param.Level))
 	if len(levelFilterSql) > 0 {
 		sql += levelFilterSql
+	}
+	if len(param.AlterTitleList) > 0 {
+		var alterTitleFilterList []string
+		for _, v := range param.AlterTitleList {
+			alterTitleFilterList = append(alterTitleFilterList, fmt.Sprintf("alert_title like '%%%s%%'", v))
+		}
+		sql += " AND (" + strings.Join(alterTitleFilterList, " OR ") + ")"
 	}
 	sql += " ORDER BY id DESC"
 	x.SQL(sql).Find(&query)

@@ -525,11 +525,12 @@ type AlertWindowParam struct {
 }
 
 type CustomAlarmQueryParam struct {
-	Enable bool
-	Level  []string
-	Start  string
-	End    string
-	Status string
+	Enable         bool
+	Level          []string
+	Start          string
+	End            string
+	Status         string
+	AlterTitleList []string
 }
 
 type EventTreeventNotifyDto struct {
