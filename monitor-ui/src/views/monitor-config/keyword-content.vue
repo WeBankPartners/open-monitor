@@ -1288,7 +1288,10 @@ export default {
     },
     async getDetail(targetId, alarmName = this.alarmName) {
       if (this.alarmName !== alarmName) {
+        this.keywordCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
         this.alarmName = alarmName
+      } else {
+        this.keywordCollapseValue = ['0']
       }
       this.targetId = targetId
       await this.getLogKeyWordDetail()
