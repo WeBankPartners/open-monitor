@@ -250,20 +250,6 @@
         <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
-
-    <Modal
-      v-model="isShowWarningDelete"
-      :title="$t('m_delConfirm_title')"
-      :ok-text="$t('m_confirm')"
-      @on-ok="okDelRow"
-      @on-cancel="cancleDelRow"
-    >
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -438,7 +424,6 @@ export default {
         key: '',
         value: ''
       },
-      isShowWarningDelete: false,
       selectedData: {},
       notify: [],
       callbackMode: [
@@ -829,10 +814,20 @@ export default {
               }
               {
                 this.isEditState ? (
+
                   <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_remove')}>
-                    <Button size="small" type="error" on-click={() => this.deleteConfirmModal(params.row)}>
-                      <Icon type="md-trash" size="16"></Icon>
-                    </Button>
+                    <Poptip
+                      confirm
+                      transfer
+                      title={this.$t('m_delConfirm_tip')}
+                      placement="left-end"
+                      on-on-ok={() => {
+                        this.okDelRow(params.row)
+                      }}>
+                      <Button size="small" type="error">
+                        <Icon type="md-trash" size="16" />
+                      </Button>
+                    </Poptip>
                   </Tooltip>
                 ) : null
               }
@@ -909,15 +904,8 @@ export default {
         this.getDetail(this.targetId)
       })
     },
-    deleteConfirmModal(rowData) {
-      this.selectedData = rowData
-      this.isShowWarningDelete = true
-    },
-    okDelRow() {
-      this.deleteAlarmItem(this.selectedData)
-    },
-    cancleDelRow() {
-      this.isShowWarningDelete = false
+    okDelRow(rowData) {
+      this.deleteAlarmItem(rowData)
     },
     manageEditParams(addParams, rowparams){
       for (const key in addParams) {
@@ -1008,6 +996,7 @@ export default {
       this.isfullscreen = true
       this.currentAlarmListIndex = rowData.alarmListIndex
       this.selectedData = rowData
+      delete this.selectedData.guid
       this.selectedTableData = rowData
       const api = this.getMetricListPath(rowData)
       this.request('GET', api, '', responseData => {

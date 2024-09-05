@@ -51,6 +51,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	param.Guid = ""
 	if len(param.ActiveWindowList) > 0 {
 		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}

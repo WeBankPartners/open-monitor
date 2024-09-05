@@ -659,6 +659,9 @@ export default {
       delete tmpData.update_user
       delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
+      if (this.actionType === 'copy') {
+        delete tmpData.guid
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logTemplateConfig, tmpData, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.showModal = false
