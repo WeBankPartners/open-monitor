@@ -391,7 +391,7 @@ func SyncData() (err error) {
 	return
 }
 
-func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string) (err error) {
+func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var result sql.Result
 	var newDashboardId int64
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
@@ -404,6 +404,10 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	now := time.Now()
 	// 新增看板
 	customDashboard.Name = customDashboard.Name + "(1)"
+	if CountCustomDashboardByName(customDashboard.Name) > 0 {
+		err = fmt.Errorf("%s", errMsgObj.DashboardNameRepeatError)
+		return
+	}
 	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
 		customDashboard.Name, customDashboard.PanelGroups, operator, operator, now, now, customDashboard.TimeRange, customDashboard.RefreshWeek)
 	if err != nil {
@@ -447,6 +451,12 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	}
 	err = Transaction(actions)
 	return
+}
+
+func CountCustomDashboardByName(name string) int {
+	var count int
+	x.SQL("select count(1) from custom_dashboard where name=?", name).Get(&count)
+	return count
 }
 
 func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
