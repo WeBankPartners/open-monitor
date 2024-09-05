@@ -109,7 +109,7 @@ func getDbMetricExpr(metric, serviceGroup string) (result string) {
 }
 
 func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	if param.Step < 10 || param.Step > 600 {
+	if param.Step < 10 {
 		param.Step = 10
 	}
 	var dbMetricTable []*models.DbMetricMonitorTable
