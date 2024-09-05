@@ -321,7 +321,7 @@ export default {
     },
     onFilterChange: debounce(function () {
       this.getList()
-    }, 400),
+    }, 500),
     getList() {
       const params = {
         endpoint: this.endpoint,

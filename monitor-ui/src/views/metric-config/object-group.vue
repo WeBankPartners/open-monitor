@@ -364,7 +364,7 @@ export default {
     },
     onFilterChange: debounce(function () {
       this.getList()
-    }, 300),
+    }, 500),
     getList() {
       const params = {
         endpointGroup: this.endpointGroup,
