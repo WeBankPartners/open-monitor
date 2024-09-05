@@ -385,6 +385,9 @@ export default {
 
       this.metricConfigData.service_group = this.serviceGroup
       this.metricConfigData.workspace = this.workspace
+      if (this.operator === 'copy') {
+        delete this.metricConfigData.guid
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         type,
         this.$root.apiCenter.metricManagement,
