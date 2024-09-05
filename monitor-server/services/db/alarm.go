@@ -1657,6 +1657,10 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		param.Page = &m.PageInfo{}
 	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
+	if param.Query != "" {
+		customQueryParam.Enable = true
+		customQueryParam.Query = param.Query
+	}
 	if len(param.Metric) > 0 {
 		for _, s := range param.Metric {
 			if s != "custom" {
