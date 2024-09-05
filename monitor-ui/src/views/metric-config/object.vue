@@ -24,7 +24,7 @@
         v-model="metric"
         clearable
         style="width: 250px; margin-left: 10px"
-        :placeholder="$t('m_placeholder_input') + $t('m_metric_name')"
+        :placeholder="$t('m_placeholder_input') + (metricType === 'comparisonMetrics' ? $t('m_button_MoM') : '' ) + $t('m_metric')"
         @on-change='onFilterChange'
       />
       </Col>
@@ -341,7 +341,8 @@ export default {
     },
     getMetricTotalNumber() {
       const params = {
-        endpoint: this.endpoint
+        endpoint: this.endpoint,
+        metric: this.metric
       }
       const api = '/monitor/api/v2/monitor/metric/list/count'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
