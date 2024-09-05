@@ -284,9 +284,9 @@ func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHt
 					if existTarget, sameFlag := existKeywordMap[logKeywordConfig.Keyword]; sameFlag {
 						if existTarget == targetEndpoint {
 							// path keyword target is same
-							err = fmt.Errorf("Endpint:%s Path:%s keyword:%s duplicated ", endpoint, logKeywordMonitor.LogPath, logKeywordConfig.Keyword)
-							return
-							//continue
+							//err = fmt.Errorf("Endpint:%s Path:%s keyword:%s duplicated ", endpoint, logKeywordMonitor.LogPath, logKeywordConfig.Keyword)
+							//return
+							continue
 						}
 					}
 					tmpKeywordObj := models.LogKeywordHttpRuleObj{Keyword: logKeywordConfig.Keyword, TargetEndpoint: targetEndpoint, RegularEnable: false}
