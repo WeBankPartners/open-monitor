@@ -46,7 +46,7 @@ func ListMetricCount(c *gin.Context) {
 	if metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", metric); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
-	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint); err != nil {
+	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, ""); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
 	countRes.Count = len(metricList)
@@ -61,7 +61,8 @@ func ListMetricComparison(c *gin.Context) {
 	onlyService := c.Query("onlyService")
 	endpointGroup := c.Query("endpointGroup")
 	endpoint := c.Query("endpoint")
-	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint)
+	metric := c.Query("metric")
+	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -89,7 +90,7 @@ func ExportMetric(c *gin.Context) {
 	comparison := c.Query("comparison")
 	if comparison == "Y" {
 		fileNamePrefix = "metric_comparison_"
-		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
+		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "")
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
