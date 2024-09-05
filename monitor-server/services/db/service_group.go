@@ -259,6 +259,11 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 				result = append(result, fmt.Sprintf("logKeywrod path:%s keyword:%s", keywordConfig.LogPath, keyword.Keyword))
 			}
 		}
+		var tempMetricNames []string
+		x.SQL("select metric from metric where service_group=?", serviceGroup).Find(&tempMetricNames)
+		if len(tempMetricNames) > 0 {
+			result = append(result, fmt.Sprintf("metricList metric:%s", strings.Join(tempMetricNames, ",")))
+		}
 	}
 	return
 }
