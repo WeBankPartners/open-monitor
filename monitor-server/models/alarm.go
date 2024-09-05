@@ -531,6 +531,7 @@ type CustomAlarmQueryParam struct {
 	End            string
 	Status         string
 	AlterTitleList []string
+	Query          string
 }
 
 type EventTreeventNotifyDto struct {
