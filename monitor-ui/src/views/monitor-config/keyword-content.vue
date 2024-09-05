@@ -715,6 +715,7 @@ export default {
               </Tooltip>
               <Poptip
                 confirm
+                transfer
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => {
@@ -834,6 +835,7 @@ export default {
               </Tooltip>
               <Poptip
                 confirm
+                transfer
                 title={this.$t('m_delConfirm_tip')}
                 placement="left-end"
                 on-on-ok={() => this.deleteDataBaseItem(params.row)}>
@@ -990,7 +992,8 @@ export default {
       isEmpty,
       dataBaseGuid: '',
       logAndDataBaseAllDetail: [],
-      alarmName: ''
+      alarmName: '',
+      actionType: ''
     }
   },
   computed: {
@@ -1137,7 +1140,17 @@ export default {
       this.fillingFormData(rowData)
       this.formData.name += '1'
       delete this.formData.guid
-      delete this.formData.notify.guid
+      const needUseNotifyKeys = ['alarm_action', 'proc_callback_key', 'notify_roles', 'proc_callback_mode', 'description']
+      if (!isEmpty(this.formData.notify)) {
+        for (const key in this.formData.notify) {
+          if (!needUseNotifyKeys.includes(key)) {
+            delete this.formData.notify[key]
+          }
+        }
+      }
+      this.formData.guid = ''
+      this.formData.log_keyword_monitor = rowData.log_keyword_monitor
+      this.formData.keyword += '1'
       this.isAddState = true
       this.isTableChangeFormShow = true
     },
@@ -1336,6 +1349,7 @@ export default {
       this.getFlowsAndRolesOptions()
       this.currentEditType = 'database'
       this.isAddState = true
+      this.actionType = ''
       this.resetDrawerForm()
       this.formData.service_group = this.targetId
       this.formData.monitor_type = 'process'
@@ -1345,6 +1359,7 @@ export default {
       this.isTableChangeFormShow = true
     },
     editDataBaseItem(rowData) {
+      this.actionType = 'edit'
       this.getFlowsAndRolesOptions()
       this.isAddState = false
       this.currentEditType = 'database'
@@ -1355,6 +1370,7 @@ export default {
       this.isTableChangeFormShow = true
     },
     copyDataBaseItem(rowData) {
+      this.actionType = 'copy'
       this.getFlowsAndRolesOptions()
       this.isAddState = true
       this.currentEditType = 'database'
@@ -1397,7 +1413,7 @@ export default {
         this.request('GET', targetApi, '', responseData => {
           this.sqlTargetEndpoints = responseData
         })
-        if (this.isAddState) {
+        if (this.isAddState && this.actionType !== 'copy') {
           this.formData.endpoint_rel = this.formData.endpoint_rel || []
           const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=mysql&targetType=${monitorType}`
           this.request('GET', api, '', responseData => {
