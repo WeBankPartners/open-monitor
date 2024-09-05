@@ -43,17 +43,18 @@
 
     <ModalComponent :modelConfig="modelConfig"/>
 
-    <ModalComponent :modelConfig="authorizationModel">
-      <div slot="authorization">
-        <div>
-          <label class="col-md-2 label-name">{{$t('m_field_role')}}:</label>
-          <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
-            <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
-              {{item.display_name}}</Option>
-          </Select>
-        </div>
-      </div>
-    </ModalComponent>
+    <Modal
+      v-model="isAuthorizationModelShow"
+      :title="$t('m_button_authorization')"
+      @on-ok="onAuthorizationSave"
+      @on-cancel="onAuthorizationConfirmReset"
+    >
+      <label class="col-md-2 label-name">{{$t('m_field_role')}}:</label>
+      <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
+        <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
+          {{item.display_name}}</Option>
+      </Select>
+    </Modal>
 
     <ModalComponent :modelConfig="endpointModel">
       <div slot="endpointOperate">
@@ -157,7 +158,6 @@ export default {
         modalId: 'authorization_model',
         modalTitle: 'm_button_authorization',
         isAdd: true,
-        saveFunc: 'authorizationSave',
         config: [
           {
             name: 'authorization',
@@ -276,7 +276,8 @@ export default {
           )
         }
       ],
-      objectTypeList: []
+      objectTypeList: [],
+      isAuthorizationModelShow: false
     }
   },
   mounted() {
@@ -415,18 +416,23 @@ export default {
         responseData.forEach(item => {
           this.authorizationModel.addRow.role.push(item.id)
         })
-        this.$root.JQ('#authorization_model').modal('show')
+        this.isAuthorizationModelShow = true
       })
     },
-    authorizationSave() {
+    onAuthorizationSave() {
       const params = {
         grp_id: this.id,
         role_id: this.authorizationModel.addRow.role
       }
       this.request('POST', this.$root.apiCenter.groupManagement.updateRoles.api, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.$root.JQ('#authorization_model').modal('hide')
+        this.authorizationModel.addRow.role = []
+        this.isAuthorizationModelShow = false
       })
+    },
+    onAuthorizationConfirmReset() {
+      this.authorizationModel.addRow.role = []
+      this.isAuthorizationModelShow = false
     },
     onFilterConditionChange: debounce(function () {
       this.pagination.page = 1
