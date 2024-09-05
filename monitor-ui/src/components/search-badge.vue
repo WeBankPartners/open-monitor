@@ -1,6 +1,11 @@
 <template>
   <Badge :count="filterParamsCount" class="mr-2">
-    <Dropdown trigger="click" transfer transfer-class-name='search-badge-dropdown'>
+    <Dropdown
+      trigger="click"
+      transfer
+      transfer-class-name='search-badge-dropdown'
+      @on-visible-change='onDropdownVisibleChange'
+    >
       <div class="badge-content">
         <Icon type="md-search" class="search-icon mr-1" />
         {{$t('m_filter')}}
@@ -16,6 +21,7 @@
           </FormItem>
           <FormItem :label="$t('m_alarm_level')">
             <Select
+              v-if='isSelectShow'
               v-model="filters.priority"
               placement='bottom'
               multiple
@@ -23,7 +29,7 @@
               :placeholder="$t('m_please_select') + $t('m_alarm_level')"
               @on-change="onFilterChange"
             >
-              <Option v-for="item in filtersPriorityOptions" :value="item.value" :key="item.value">
+              <Option v-for="item in filtersPriorityOptions" :label="item.name" :value="item.value" :key="item.value">
                 {{item.name}}
               </Option>
             </Select>
@@ -31,6 +37,7 @@
 
           <FormItem :label="$t('m_alarmName')">
             <Select
+              v-if='isSelectShow'
               v-model="filters.alarm_name"
               multiple
               filterable
@@ -46,13 +53,14 @@
                 }
               }"
             >
-              <Option v-for="(name, index) in filtersAlarmNameOptions" :value="name" :key="index">
+              <Option v-for="(name, index) in filtersAlarmNameOptions" :label="name" :value="name" :key="index">
                 {{name}}
               </Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('m_metric')">
             <Select
+              v-if='isSelectShow'
               v-model="filters.metric"
               multiple
               filterable
@@ -68,13 +76,14 @@
                 }
               }"
             >
-              <Option v-for="(name, index) in filtersMetricOptions" :value="name" :key="index">
+              <Option v-for="(name, index) in filtersMetricOptions" :label="name" :value="name" :key="index">
                 {{name}}
               </Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('m_endpoint')">
             <Select
+              v-if='isSelectShow'
               v-model="filters.endpoint"
               multiple
               filterable
@@ -90,7 +99,7 @@
                 }
               }"
             >
-              <Option v-for="(item, index) in filtersEndpointOptions" :value="item.displayName + '$*$' + item.name" :key="index">
+              <Option v-for="(item, index) in filtersEndpointOptions" :label="item.displayName" :value="item.displayName + '$*$' + item.name" :key="index">
                 {{item.displayName}}
               </Option>
             </Select>
@@ -158,7 +167,8 @@ export default ({
           value: 'high'
         }
       ],
-      filterParams: cloneDeep(initFilterParams)
+      filterParams: cloneDeep(initFilterParams),
+      isSelectShow: false
     }
   },
   computed: {
@@ -237,9 +247,11 @@ export default ({
     }, 400),
     onFilterConditionChange() {
       this.$emit('filtersChange', cloneDeep(this.filters))
+    },
+    onDropdownVisibleChange(show) {
+      this.isSelectShow = show
     }
   }
-
 })
 </script>
 
