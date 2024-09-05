@@ -1713,6 +1713,12 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		actions = append(actions, &Action{Sql: "insert into log_metric_param(guid,name,display_name,log_metric_group,regular,demo_match_value,create_user,create_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
 			"lmp_" + paramGuidList[i], v.Name, v.DisplayName, param.Guid, v.Regular, v.DemoMatchValue, operator, nowTime,
 		}})
+		tmpStringMapGuidList := guid.CreateGuidList(len(v.StringMap))
+		for stringMapIndex, stringMapObj := range v.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, v.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
+			}})
+		}
 	}
 	metricGuidList := guid.CreateGuidList(len(param.MetricList))
 	serviceGroup, monitorType := param.ServiceGroup, param.MonitorType
@@ -1780,6 +1786,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,demo_log=?,calc_result=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 		param.Name, param.DemoLog, param.CalcResult, operator, nowTime, param.Guid,
 	}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{param.Guid}})
 	paramGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, inputParamObj := range param.ParamList {
 		if inputParamObj.Guid == "" {
@@ -1789,6 +1796,12 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		} else {
 			actions = append(actions, &Action{Sql: "update log_metric_param set name=?,display_name=?,regular=?,demo_match_value=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputParamObj.Name, inputParamObj.DisplayName, inputParamObj.Regular, inputParamObj.DemoMatchValue, operator, nowTime, inputParamObj.Guid,
+			}})
+		}
+		tmpStringMapGuidList := guid.CreateGuidList(len(inputParamObj.StringMap))
+		for stringMapIndex, stringMapObj := range inputParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, inputParamObj.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
 			}})
 		}
 	}
