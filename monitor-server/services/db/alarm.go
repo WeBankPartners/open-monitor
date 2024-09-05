@@ -1243,7 +1243,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	result := []*m.AlarmProblemQuery{}
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
 	if param.Status == "problem" {
-		sql = "SELECT * FROM alarm_custom WHERE closed<>1 "
+		sql = "SELECT * FROM alarm_custom WHERE closed=0 "
 	} else {
 		if param.Start != "" && param.End != "" {
 			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
