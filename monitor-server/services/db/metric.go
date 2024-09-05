@@ -634,7 +634,7 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 
 func GetMetricByName(name string) (metricList []*models.MetricTable, err error) {
 	metricList = []*models.MetricTable{}
-	err = x.SQL("select * from metric where name =?", name).Find(&metricList)
+	err = x.SQL("select * from metric where metric =?", name).Find(&metricList)
 	return
 }
 
