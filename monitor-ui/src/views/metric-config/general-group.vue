@@ -378,7 +378,7 @@ export default {
     },
     onFilterChange: debounce(function () {
       this.getList()
-    }, 300),
+    }, 500),
     handleAdd() {
       this.type = 'add'
       this.viewOnly = false
