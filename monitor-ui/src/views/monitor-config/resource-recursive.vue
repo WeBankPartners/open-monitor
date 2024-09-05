@@ -200,13 +200,16 @@
     </Modal>
     <Modal
       v-model="doubleConfirm.isShow"
+      :width='70'
       :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel"
     >
       <div class="modal-body" style="padding:10px">
         <div style="color:#ed4014">{{$t('m_delete_follow')}}:</div>
-        <p v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</p>
+        <div class='will-delete-content'>
+          <div v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</div>
+        </div>
       </div>
     </Modal>
   </div>
@@ -772,6 +775,11 @@ export default {
   .is-danger {
     color: red;
     margin-bottom: 0px;
+  }
+  .will-delete-content {
+    max-width: 90%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 </style>
 <style lang="less">
