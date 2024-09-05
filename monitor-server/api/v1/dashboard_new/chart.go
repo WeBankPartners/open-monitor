@@ -693,7 +693,7 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if metric == nil {
+	if metric == nil || metric.Guid == "" {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
