@@ -60,7 +60,7 @@ func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *model
 		if metricTemp, err = GetMetric(guid); err != nil {
 			return err
 		}
-		if metricTemp != nil && metricTemp.Guid == "" {
+		if metricTemp != nil && metricTemp.Guid != "" {
 			return fmt.Errorf(errMsgObj.AddMetricRepeatError)
 		}
 	}
