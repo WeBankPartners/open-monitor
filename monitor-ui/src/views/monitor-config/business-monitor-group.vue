@@ -787,11 +787,6 @@ export default {
         }
       ],
       dataBaseTableColumns: [
-        // {
-        //   title: this.$t('m_metric_name'),
-        //   width: 250,
-        //   key: 'display_name'
-        // },
         {
           title: this.$t('m_metric_key'),
           width: 350,
@@ -1360,6 +1355,9 @@ export default {
     async getDetail(targetId, metricKey) {
       if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
         this.metricKey = metricKey
+        this.logFileCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+      } else {
+        this.logFileCollapseValue = ['0']
       }
       this.targetId = targetId
       await this.getLogKeyWordDetail()
