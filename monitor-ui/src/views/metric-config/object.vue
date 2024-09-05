@@ -341,7 +341,8 @@ export default {
     },
     getMetricTotalNumber() {
       const params = {
-        endpoint: this.endpoint
+        endpoint: this.endpoint,
+        metric: this.metric
       }
       const api = '/monitor/api/v2/monitor/metric/list/count'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
