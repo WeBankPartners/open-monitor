@@ -38,6 +38,7 @@ func MetricList(id string, endpointType, serviceGroup string) (result []*models.
 func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *models.ErrorMessageObj) error {
 	var actions []*Action
 	var metricTemp *models.MetricTable
+	var metricList []*models.MetricTable
 	var guid string
 	var err error
 	nowTime := time.Now().Format(models.DatetimeFormat)
@@ -48,8 +49,8 @@ func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *model
 				Param: []interface{}{guid, metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, nowTime, operator, operator}})
 		} else if metric.EndpointGroup != "" {
 			var monitorType string
-			guid = fmt.Sprintf("%s__%s", metric.Metric, monitorType)
 			x.SQL("select monitor_type from endpoint_group where guid=?", metric.EndpointGroup).Get(&monitorType)
+			guid = fmt.Sprintf("%s__%s", metric.Metric, monitorType)
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time,create_time,create_user,update_user,endpoint_group) value (?,?,?,?,?,?,?,?,?)",
 				Param: []interface{}{guid, metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator, metric.EndpointGroup}})
 		} else {
@@ -62,6 +63,20 @@ func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *model
 		}
 		if metricTemp != nil && metricTemp.Guid != "" {
 			return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+		}
+		// 同一个层级对象或者对象组里面指标名称重复,也需要校验
+		if metricList, err = GetMetricByName(metric.Metric); err != nil {
+			return err
+		}
+		if len(metricList) > 0 {
+			for _, m := range metricList {
+				if m.ServiceGroup != "" && m.ServiceGroup == metric.ServiceGroup {
+					return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+				}
+				if m.EndpointGroup != "" && m.EndpointGroup == metric.EndpointGroup {
+					return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+				}
+			}
 		}
 	}
 	return Transaction(actions)
@@ -210,7 +225,7 @@ func MetricDelete(id string) error {
 	return err
 }
 
-func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint string) (result []*models.MetricComparisonExtend, err error) {
+func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric string) (result []*models.MetricComparisonExtend, err error) {
 	var params []interface{}
 	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid "
 	if guid != "" {
@@ -243,6 +258,9 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 		} else {
 			baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid  and  m.monitor_type=? and m.service_group is null and m.endpoint_group is null"
 			params = []interface{}{monitorType}
+		}
+		if strings.TrimSpace(metric) != "" {
+			baseSql = baseSql + " and m.metric like '%" + metric + "%'"
 		}
 	}
 	result = []*models.MetricComparisonExtend{}
@@ -613,6 +631,13 @@ func GetMetric(id string) (metric *models.MetricTable, err error) {
 	_, err = x.SQL("select * from metric where guid=?", id).Get(metric)
 	return
 }
+
+func GetMetricByName(name string) (metricList []*models.MetricTable, err error) {
+	metricList = []*models.MetricTable{}
+	err = x.SQL("select * from metric where name =?", name).Find(&metricList)
+	return
+}
+
 func QueryMetricNameList(metric string) (list []string, err error) {
 	if metric != "" {
 		err = x.SQL("select distinct metric from metric  where metric like '%" + metric + "%'order by update_time desc limit 20").Find(&list)
