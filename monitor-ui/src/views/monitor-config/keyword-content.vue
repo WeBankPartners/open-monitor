@@ -279,7 +279,7 @@
       </div>
       <div slot="footer">
         <Button @click="cancelAddAndEdit" :disabled="!isEditState">{{$t('m_button_cancel')}}</Button>
-        <Button @click="okAddAndEdit" :disabled="!isEditState" type="primary">{{$t('m_button_save')}}</Button>
+        <Button @click="okAddAndEdit" :disabled="!isEditState" type="primary">{{$t('m_button_save') }}</Button>
       </div>
     </Modal>
     <BaseDrawer
@@ -1304,7 +1304,7 @@ export default {
         }, res => {
           this.allLogFileData = isEmpty(res) ? [] : res
           this.allLogFileData.forEach(logFile => {
-            isEmpty(logFile.config) && logFile.config.forEach(item => {
+            !isEmpty(logFile.config) && logFile.config.forEach(item => {
               if (isEmpty(item.notify)) {
                 item.notify = cloneDeep(initNotify)
               }

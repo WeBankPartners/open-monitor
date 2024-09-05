@@ -1,6 +1,6 @@
 <template>
   <Badge :count="filterParamsCount" class="mr-2">
-    <Dropdown trigger="click">
+    <Dropdown trigger="click" transfer transfer-class-name='search-badge-dropdown'>
       <div class="badge-content">
         <Icon type="md-search" class="search-icon mr-1" />
         {{$t('m_filter')}}
@@ -242,6 +242,12 @@ export default ({
 
 })
 </script>
+
+<style lang='less'>
+.search-badge-dropdown {
+  min-height: 370px
+}
+</style>
 
 <style scoped lang='less'>
 .badge-content {
