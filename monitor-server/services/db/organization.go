@@ -207,6 +207,27 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			}
 		}
 
+		// 删除 层级对象下面的指标列表
+		var metricList []*m.MetricTable
+		if err = x.SQL("select * from metric  where service_group = ?", param.Guid).Find(&metricList); err != nil {
+			return
+		}
+		if len(metricList) > 0 {
+			// 删除同环比 指标
+			for _, metric := range metricList {
+				tmpActions, tmpEndpointGroup := getMetricComparisonDeleteAction(metric.Guid)
+				actions = append(actions, tmpActions...)
+				affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+				tmpActions, tmpEndpointGroup = getDeleteMetricActions(metric.Guid)
+				actions = append(actions, tmpActions...)
+				affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+				tmpActions = getDeleteEndpointDashboardChartMetricAction(metric.Metric, metric.MetricType)
+				actions = append(actions, tmpActions...)
+				if len(affectEndpointGroup) > 0 {
+					endpointGroup = append(endpointGroup, affectEndpointGroup...)
+				}
+			}
+		}
 		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
 		err = Transaction(actions)
 		if err == nil {
