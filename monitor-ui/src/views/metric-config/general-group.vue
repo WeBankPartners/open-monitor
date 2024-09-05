@@ -362,7 +362,8 @@ export default {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        metric: this.metric
       }
       const api = '/monitor/api/v2/monitor/metric/list/count'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
