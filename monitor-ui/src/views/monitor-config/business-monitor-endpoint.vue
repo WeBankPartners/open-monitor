@@ -457,12 +457,8 @@ export default {
         regular: this.$t('m_standard_regex'),
         json: this.$t('m_standard_json'),
       },
+
       dataBaseTableColumns: [
-        {
-          title: this.$t('m_metric_name'),
-          width: 250,
-          key: 'display_name'
-        },
         {
           title: this.$t('m_metric_key'),
           width: 350,
@@ -470,11 +466,22 @@ export default {
         },
         {
           title: this.$t('m_field_type'),
-          key: 'monitor_type'
+          key: 'monitor_type',
+          minWidth: 100,
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          width: 100,
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
         },
         {
           title: this.$t('m_table_action'),
-          width: 250,
+          width: 100,
           key: 'index',
           render: (h, params) => (
             <div>
