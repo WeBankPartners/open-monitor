@@ -302,7 +302,7 @@ func CopyCustomDashboard(c *gin.Context) {
 		middleware.ReturnValidateError(c, "invalid id")
 		return
 	}
-	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c)); err != nil {
+	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
