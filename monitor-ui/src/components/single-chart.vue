@@ -107,6 +107,7 @@ export default {
           title: this.chartInfo.title
         })
       }
+      window.intervalFrom = 'single-chart'
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {
           clear: false,
