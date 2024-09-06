@@ -187,7 +187,6 @@ export default {
         })
       })
       this.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-
         this.elId = id
         const chartConfig = {
           eye: false,
