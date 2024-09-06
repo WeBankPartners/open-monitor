@@ -323,7 +323,7 @@
       </div>
     </div>
     <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
-      <ViewChart ref="viewChart"></ViewChart>
+      <ViewChart v-if="showMaxChart" ref="viewChart"></ViewChart>
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
@@ -853,11 +853,13 @@ export default {
       const templateData = {
         cfg: JSON.stringify(resViewData)
       }
-      this.$refs.viewChart.initChart({
-        templateData,
-        panal: item,
-        viewCondition: this.viewCondition
-      })
+      setTimeout(() => {
+        this.$refs.viewChart.initChart({
+          templateData,
+          panal: item,
+          viewCondition: this.viewCondition
+        })
+      }, 50)
     },
     async modifyLayoutData() {
       const resViewData = []
