@@ -104,6 +104,7 @@ export default {
         ...this.chartInfo.chartParams,
         custom_chart_guid: this.chartInfo.elId
       }
+      window.intervalFrom = 'custom-chart'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
