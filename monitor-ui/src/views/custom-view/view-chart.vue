@@ -164,6 +164,7 @@ export default {
         params.data.push(item)
       })
       if (params !== []) {
+        window.intervalFrom = 'view-chart'
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',
           this.$root.apiCenter.metricConfigView.api,
