@@ -209,7 +209,7 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window">
+        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''">
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -314,7 +314,7 @@
             </grid-item>
           </grid-layout>
         </div>
-        <div class="view-config-alarm" v-if="showAlarm">
+        <div class="view-config-alarm" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" v-if="showAlarm">
           <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
         </div>
       </div>
@@ -644,6 +644,7 @@ export default {
     },
     openAlarmDisplay() {
       this.showAlarm = !this.showAlarm
+      this.$emit('alarmStatueChange', this.showAlarm)
       setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
         this.refreshNow = !this.refreshNow
