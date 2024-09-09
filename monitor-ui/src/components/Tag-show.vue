@@ -1,5 +1,5 @@
 <template>
-  <Tooltip :content="tagName" placement="top-start">
+  <Tooltip transfer :content="tagName" placement="top-start">
     <div class="diy-tag"
          :style="{
            color: getGroupColor(tagName) + ' !important',

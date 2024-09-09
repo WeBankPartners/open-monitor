@@ -1299,7 +1299,8 @@ export default {
   margin-right: 20px;
 }
 .content-table {
-  padding-bottom: 65px;
+  max-height: ~'calc(100vh - 200px)';
+  overflow-y: auto;
 }
 .table-pagination {
   position: fixed;
