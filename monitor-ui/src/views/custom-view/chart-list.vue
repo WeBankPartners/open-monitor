@@ -96,7 +96,9 @@
       <!-- <Button @click="getChartList" type="primary">{{ $t('m_search') }}</Button> -->
       <Button @click="resetSearchCondition">{{ $t('m_reset') }}</Button>
     </div>
+
     <Table
+      class='chart-list-talbe-content'
       size="small"
       :columns="chartListColumns"
       :data="tableData"
@@ -448,8 +450,15 @@ export default {
         margin-right: 10px;
     }
 }
+.chart-list-talbe-content {
+  max-height: ~'calc(100vh - 250px)';
+  overflow-y: auto;
+}
 .table-pagination {
-    float: right;
+  position: fixed;
+  bottom:20px;
+  right: 15px;
+  z-index: 10000;
 }
 </style>
 

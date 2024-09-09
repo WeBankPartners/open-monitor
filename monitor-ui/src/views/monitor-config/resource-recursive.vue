@@ -344,33 +344,33 @@ export default {
           </div>
           {
             data.selected && <div class="tree-item-btn" onClick={e => {e.stopPropagation()}}>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedObject')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedObject')}>
                 <Button size="small" type="primary" onClick={() => {this.associatedObject(data)}}>
                   <Icon type="ios-cube" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_edit')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_button_edit')}>
                 <Button size="small" type="primary" onClick={() => {this.editPanal(data)}}>
                   <Icon type="md-create" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedRole')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_resourceLevel_addAssociatedRole')}>
                 <Button size="small" type="warning" onClick={() => {this.associatedRole(data)}}>
                   <Icon type="md-person" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_resourceLevel_alarmCallback')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_resourceLevel_alarmCallback')}>
                 <Button size="small" type="info" onClick={() => {this.alarmCallback(data)}}>
                   <Icon type="md-warning" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" max-width="400" content={this.$t('m_add')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_add')}>
                 <Button size="small" type="success" onClick={() => {this.addPanel(data)}}>
                   <Icon type="md-add" />
                 </Button>
               </Tooltip>
 
-              <Tooltip placement="top" max-width="400" content={this.$t('m_button_remove')}>
+              <Tooltip transfer placement="top" max-width="400" content={this.$t('m_button_remove')}>
                 <Button size="small" class="mr-2" type="error" onClick={() => {this.deleteConfirmModal(data)}}>
                   <Icon type="md-trash" />
                 </Button>

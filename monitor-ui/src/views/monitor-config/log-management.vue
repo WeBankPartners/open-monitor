@@ -33,7 +33,7 @@
         :placeholder="$t('m_placeholder_input') + $t('m_alarmName')"
       />
     </div>
-    <section v-show="showTargetManagement" style="margin-top: 16px;">
+    <section v-show="showTargetManagement" class='key-word-content'>
       <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
     </section>
   </div>
@@ -143,4 +143,13 @@ export default {
   width: 55px;
   text-align: center;
 }
+</style>
+
+<style scoped lang='less'>
+.key-word-content {
+  margin-top: 16px;
+  max-height: ~'calc(100vh - 170px)';
+  overflow-y: auto;
+}
+
 </style>
