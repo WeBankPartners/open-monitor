@@ -50,7 +50,7 @@
         {{$t('m_operationDoc')}}
       </span>
     </div>
-    <section v-show="showTargetManagement" style="margin-top: 16px;">
+    <section v-show="showTargetManagement" class='business-monitor-content' style="margin-top: 16px;">
       <template v-if="type === 'group'">
         <groupManagement ref="group"></groupManagement>
       </template>
@@ -168,5 +168,9 @@ export default {
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 8px
+  }
+  .business-monitor-content {
+    max-height: ~'calc(100vh - 170px)';
+    overflow-y: auto;
   }
 </style>
