@@ -34,7 +34,7 @@
       </Select>
       <Button type="success" class='add-content-item' @click="addPanel">{{ $t('m_add') }}</Button>
     </div>
-    <recursive :recursiveViewConfig="resourceRecursive"></recursive>
+    <recursive class='recursive-content' :recursiveViewConfig="resourceRecursive"></recursive>
     <!-- <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
     </template>
@@ -188,6 +188,10 @@ export default {
 </script>
 
 <style scoped lang="less">
+.recursive-content {
+  max-height: ~'calc(100vh - 200px)';
+  overflow-y: auto;
+}
 .content-seatch {
   display: flex;
   flex-direction: row;
@@ -218,4 +222,5 @@ export default {
     color: #fff;
   }
 }
+
 </style>

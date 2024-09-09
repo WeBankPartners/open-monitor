@@ -323,7 +323,7 @@ export default {
   }
 
   .table-zone {
-    overflow: auto;
+    overflow-y: auto;
     height: ~"calc(100vh - 180px)";
   }
 </style>
