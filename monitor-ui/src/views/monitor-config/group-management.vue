@@ -474,6 +474,13 @@ export default {
   z-index: 10000
 }
 
+.main-content {
+  .content-table {
+    max-height: ~'calc(100vh - 200px)';
+    overflow-y: auto;
+  }
+}
+
 </style>
 
 <style lang='less'>
