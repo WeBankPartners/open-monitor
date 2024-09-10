@@ -385,6 +385,10 @@ func InitHttpServer() {
 		entityApi.POST("/alarm/close", alarmv2.PluginCloseAlarm)
 		entityApi.POST("/alarm_event/query", alarm.QueryEntityAlarmEvent)
 		entityApi.POST("/alarm_event/update", alarm.UpdateEntityAlarm)
+		entityApi.POST("/endpoint/query", monitor.QueryEntityEndpoint)
+		entityApi.POST("/service_group/query", monitor.QueryEntityServiceGroup)
+		entityApi.POST("/endpoint_group/query", monitor.QueryEntityEndpointGroup)
+		entityApi.POST("/monitor_type/query", monitor.QueryEntityMonitorType)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())
