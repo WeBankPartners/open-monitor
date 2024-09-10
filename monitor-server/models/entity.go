@@ -113,3 +113,56 @@ type AlarmEventUpdateResponse struct {
 	Message string                   `json:"message"`
 	Data    []map[string]interface{} `json:"data"`
 }
+
+type EndpointEntityResp struct {
+	Status  string               `json:"status"`
+	Message string               `json:"message"`
+	Data    []*EndpointEntityObj `json:"data"`
+}
+
+type EndpointEntityObj struct {
+	Id          string `json:"id" xorm:"guid"`
+	DisplayName string `json:"displayName" xorm:"guid"`
+	Name        string `json:"name" xorm:"name"`
+	Ip          string `json:"ip" xorm:"ip"`
+	MonitorType string `json:"monitorType" xorm:"monitor_type"`
+}
+
+type EndpointGroupEntityResp struct {
+	Status  string                    `json:"status"`
+	Message string                    `json:"message"`
+	Data    []*EndpointGroupEntityObj `json:"data"`
+}
+
+type EndpointGroupEntityObj struct {
+	Id          string `json:"id" xorm:"guid"`
+	DisplayName string `json:"displayName" xorm:"display_name"`
+	Description string `json:"description" xorm:"description"`
+	MonitorType string `json:"monitorType" xorm:"monitor_type"`
+}
+
+type ServiceGroupEntityResp struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Data    []*ServiceGroupEntityObj `json:"data"`
+}
+
+type ServiceGroupEntityObj struct {
+	Id          string `json:"id" xorm:"guid"`
+	DisplayName string `json:"displayName" xorm:"display_name"`
+	Description string `json:"description" xorm:"description"`
+	Parent      string `json:"parent" xorm:"parent"`
+	ServiceType string `json:"serviceType" xorm:"service_type"`
+}
+
+type MonitorTypeEntityResp struct {
+	Status  string                  `json:"status"`
+	Message string                  `json:"message"`
+	Data    []*MonitorTypeEntityObj `json:"data"`
+}
+
+type MonitorTypeEntityObj struct {
+	Id          string `json:"id" xorm:"guid"`
+	DisplayName string `json:"displayName" xorm:"display_name"`
+	Description string `json:"description" xorm:"description"`
+}
