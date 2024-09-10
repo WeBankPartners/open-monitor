@@ -32,7 +32,7 @@
         clearable
         :placeholder="$t('m_placeholder_input') + $t('m_alarmName')"
       />
-      <div class='upload-content'>
+      <div class='upload-content mr-4'>
         <Button
           type="info"
           v-if="typeMap[type] === 'service'"
@@ -231,7 +231,7 @@ export default {
 <style scoped lang='less'>
 .upload-content {
   display: flex;
-  margin-left: 402px
+  margin-left: auto
 }
 .key-word-content {
   margin-top: 16px;
