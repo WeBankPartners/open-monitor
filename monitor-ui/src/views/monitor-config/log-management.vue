@@ -32,6 +32,32 @@
         clearable
         :placeholder="$t('m_placeholder_input') + $t('m_alarmName')"
       />
+      <div class='upload-content'>
+        <Button
+          type="info"
+          v-if="typeMap[type] === 'service'"
+          @click="exportData"
+        >
+          <img src="../../assets/img/export.png" class="btn-img" alt="" />
+          {{ $t('m_export') }}
+        </Button>
+        <Upload
+          v-if="typeMap[type] === 'service'"
+          :action="uploadUrl"
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed"
+        >
+          <!-- <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button> -->
+          <Button type="primary" class="btn-left">
+            <img src="../../assets/img/import.png" class="btn-img" alt="" />
+            {{ $t('m_import') }}
+          </Button>
+        </Upload>
+      </div>
     </div>
     <section v-show="showTargetManagement" class='key-word-content'>
       <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
@@ -40,7 +66,10 @@
 </template>
 
 <script>
+import axios from 'axios'
 import {debounce} from 'lodash'
+import {baseURL_config} from '@/assets/js/baseURL'
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
 export default {
@@ -55,11 +84,18 @@ export default {
         group: 'service',
         endpoint: 'endpoint'
       },
-      alarmName: ''
+      alarmName: '',
+      token: ''
     }
   },
   async mounted() {
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     this.getTargrtList()
+  },
+  computed: {
+    uploadUrl() {
+      return baseURL_config + `${this.$root.apiCenter.bussinessMonitorImport}?serviceGroup=${this.targetId}`
+    }
   },
   beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -91,7 +127,50 @@ export default {
     },
     onFilterChange: debounce(function () {
       this.search()
-    }, 300)
+    }, 300),
+    exportData() {
+      const api = `${this.$root.apiCenter.bussinessMonitorExport}?serviceGroup=${this.targetId}`
+      axios({
+        method: 'GET',
+        url: api,
+        headers: {
+          Authorization: this.token
+        }
+      }).then(response => {
+        if (response.status < 400) {
+          const content = JSON.stringify(response.data)
+          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          const blob = new Blob([content])
+          if ('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              const elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
+          }
+        }
+      })
+        .catch(() => {
+          this.$Message.warning(this.$t('m_tips_failed'))
+        })
+    },
+    uploadSucess() {
+      this.$Message.success(this.$t('m_tips_success'))
+      this.search()
+    },
+    uploadFailed(file) {
+      this.$Message.warning(file.message)
+    }
   },
   components: {
     TagShow,
@@ -112,6 +191,10 @@ export default {
 .log-management-top {
   display: flex;
   align-items: center;
+  .btn-img {
+    width: 16px;
+    vertical-align: middle;
+  }
 }
 .is-danger {
   color: red;
@@ -146,6 +229,10 @@ export default {
 </style>
 
 <style scoped lang='less'>
+.upload-content {
+  display: flex;
+  margin-left: 402px
+}
 .key-word-content {
   margin-top: 16px;
   max-height: ~'calc(100vh - 170px)';

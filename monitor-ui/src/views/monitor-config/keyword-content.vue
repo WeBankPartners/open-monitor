@@ -1,34 +1,6 @@
 <template>
   <div>
     <section class="section-content">
-      <div class="upload-content">
-        <Button
-          type="info"
-          class="btn-left"
-          v-if="isEditState"
-          @click="exportData"
-        >
-          <img src="../../assets/img/export.png" class="btn-img" alt="" />
-          {{ $t('m_export') }}
-        </Button>
-        <Upload
-          v-if="isEditState"
-          :action="uploadUrl"
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed"
-        >
-          <!-- <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button> -->
-          <Button type="primary" class="btn-left">
-            <img src="../../assets/img/import.png" class="btn-img" alt="" />
-            {{ $t('m_import') }}
-          </Button>
-        </Upload>
-      </div>
-
       <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div v-if="!isEditState" class="content-header mb-2 mt-3">
           <div class="use-underline-title header-title mr-4">
@@ -477,13 +449,11 @@
 </template>
 
 <script>
-import axios from 'axios'
 import {
   cloneDeep, isEmpty, hasIn, map, uniq, find, filter
 } from 'lodash'
 import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
-import {baseURL_config} from '@/assets/js/baseURL'
 import {priorityList} from '@/assets/config/common-config.js'
 import activeWindowTime from '../../components/active-window-time.vue'
 import {showPoptipOnTable} from '@/assets/js/utils.js'
@@ -997,9 +967,6 @@ export default {
     }
   },
   computed: {
-    uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.bussinessMonitorImport}?serviceGroup=${this.targetId}`
-    },
     isEditState() {
       return this.keywordType === 'service'
     },
@@ -1048,49 +1015,6 @@ export default {
         res.showBtn = false
       }
       return res
-    },
-    exportData() {
-      const api = `${this.$root.apiCenter.bussinessMonitorExport}?serviceGroup=${this.targetId}`
-      axios({
-        method: 'GET',
-        url: api,
-        headers: {
-          Authorization: this.token
-        }
-      }).then(response => {
-        if (response.status < 400) {
-          const content = JSON.stringify(response.data)
-          const fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
-          const blob = new Blob([content])
-          if ('msSaveOrOpenBlob' in navigator){
-            // Microsoft Edge and Microsoft Internet Explorer 10-11
-            window.navigator.msSaveOrOpenBlob(blob, fileName)
-          } else {
-            if ('download' in document.createElement('a')) { // 非IE下载
-              const elink = document.createElement('a')
-              elink.download = fileName
-              elink.style.display = 'none'
-              elink.href = URL.createObjectURL(blob)
-              document.body.appendChild(elink)
-              elink.click()
-              URL.revokeObjectURL(elink.href) // 释放URL 对象
-              document.body.removeChild(elink)
-            } else { // IE10+下载
-              navigator.msSaveOrOpenBlob(blob, fileName)
-            }
-          }
-        }
-      })
-        .catch(() => {
-          this.$Message.warning(this.$t('m_tips_failed'))
-        })
-    },
-    uploadSucess() {
-      this.$Message.success(this.$t('m_tips_success'))
-      this.getDetail(this.targetId)
-    },
-    uploadFailed(file) {
-      this.$Message.warning(file.message)
     },
     // other config
     editF(rowData) {
@@ -1579,16 +1503,6 @@ export default {
 .section-content {
   position: relative;
   margin-top: 16px;
-  .upload-content {
-    display: flex;
-    position: absolute;
-    top: -45px;
-    right: 20px;
-    .btn-img {
-      width: 16px;
-      vertical-align: middle;
-    }
-  }
 
   .keyword-collapse-content {
     width: 100%;
