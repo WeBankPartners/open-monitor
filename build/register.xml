@@ -65,6 +65,11 @@
             <attribute name="displayName" datatype="str" description="显示名"/>
             <attribute name="description" datatype="str" description="描述"/>
         </entity>
+        <entity name="log_monitor_template" displayName="日志监控模版" description="日志监控模版模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="logType" datatype="str" description="json或正则"/>
+        </entity>
     </dataModel>
 
     <!-- 4.系统参数 - 描述运行本插件包需要的系统参数 -->
