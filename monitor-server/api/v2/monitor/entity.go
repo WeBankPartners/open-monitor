@@ -91,3 +91,24 @@ func QueryEntityMonitorType(c *gin.Context) {
 	}
 	middleware.ReturnData(c, result)
 }
+
+func QueryEntityLogMonitorTemplate(c *gin.Context) {
+	var param models.EntityQueryParam
+	result := models.LogMonitorTemplateEntityResp{}
+	if err := c.ShouldBindJSON(&param); err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Request body json unmarshal failed: %s", err.Error())
+		middleware.ReturnData(c, result)
+		return
+	}
+	queryResult, queryErr := db.QueryEntityLogMonitorTemplate(&param)
+	if queryErr != nil {
+		result.Status = "ERROR"
+		result.Message = queryErr.Error()
+	} else {
+		result.Status = "OK"
+		result.Message = "Success"
+		result.Data = queryResult
+	}
+	middleware.ReturnData(c, result)
+}
