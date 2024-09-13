@@ -51,3 +51,14 @@ func QueryEntityMonitorType(param *models.EntityQueryParam) (result []*models.Mo
 	}
 	return
 }
+
+func QueryEntityLogMonitorTemplate(param *models.EntityQueryParam) (result []*models.LogMonitorTemplateEntityObj, err error) {
+	queryParam := param.TransToQueryParam()
+	filterSql, _, filterParam := transFiltersToSQL(queryParam, &models.TransFiltersParam{IsStruct: true, StructObj: models.LogMonitorTemplateEntityObj{}, PrimaryKey: "guid"})
+	result = []*models.LogMonitorTemplateEntityObj{}
+	err = x.SQL("SELECT * FROM log_monitor_template WHERE 1=1 "+filterSql, filterParam...).Find(&result)
+	if err != nil {
+		err = fmt.Errorf("query log monitor template table fail,%s ", err.Error())
+	}
+	return
+}
