@@ -530,7 +530,7 @@ func CreateLogMonitorTemplate(c *gin.Context) {
 }
 
 func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err error) {
-	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType {
+	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType && param.LogType != models.LogMonitorCustomType {
 		err = fmt.Errorf("param json type illegal")
 		return
 	}
