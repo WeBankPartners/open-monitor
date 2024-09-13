@@ -529,7 +529,16 @@ export default {
           params.priority = priority.value
         }
         params.alarmName = this.filters.alarm_name || []
-        params.endpoint = this.filters.endpoint || []
+
+        const endpointList = []
+        !isEmpty(this.filters.endpoint) && this.filters.endpoint.forEach(val => {
+          if (val.indexOf('$*$') > -1) {
+            endpointList.push(val.split('$*$')[1])
+          } else {
+            endpointList.push(val)
+          }
+        })
+        params.endpoint = endpointList
         params.metric = this.filters.metric || []
       } else {
         params.id = alarmItem.id
