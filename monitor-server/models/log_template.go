@@ -116,6 +116,7 @@ type LogMonitorTemplateListParam struct {
 type LogMonitorTemplateListResp struct {
 	JsonList    []*LogMonitorTemplate `json:"json_list"`
 	RegularList []*LogMonitorTemplate `json:"regular_list"`
+	CustomList  []*LogMonitorTemplate `json:"custom_list"`
 }
 
 type LogMonitorRegMatchParam struct {
