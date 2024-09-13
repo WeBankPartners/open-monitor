@@ -683,9 +683,7 @@ export default {
           key: 'priority',
           width: 100,
           render: (h, params) => (
-            <Tooltip placement="right" max-width="400">
-              <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
-            </Tooltip>
+            <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
           )
         },
         {
