@@ -578,7 +578,7 @@ export default {
           width: 150,
           key: 'name',
           render: (h, params) => (<Tooltip class='table-key-word-name' placement="right" max-width="400" content={params.row.name}>
-            {params.row.name}
+            {params.row.name || '-'}
           </Tooltip>)
         },
         {
@@ -586,9 +586,7 @@ export default {
           key: 'priority',
           width: 100,
           render: (h, params) => (
-            <Tooltip placement="right" max-width="400">
-              <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
-            </Tooltip>
+            <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
           )
         },
         {
@@ -717,9 +715,7 @@ export default {
           key: 'priority',
           width: 100,
           render: (h, params) => (
-            <Tooltip placement="right" max-width="400">
-              <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
-            </Tooltip>
+            <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
           )
         },
         {
