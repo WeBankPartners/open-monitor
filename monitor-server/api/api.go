@@ -389,6 +389,7 @@ func InitHttpServer() {
 		entityApi.POST("/service_group/query", monitor.QueryEntityServiceGroup)
 		entityApi.POST("/endpoint_group/query", monitor.QueryEntityEndpointGroup)
 		entityApi.POST("/monitor_type/query", monitor.QueryEntityMonitorType)
+		entityApi.POST("/log_monitor_template/query", monitor.QueryEntityLogMonitorTemplate)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())

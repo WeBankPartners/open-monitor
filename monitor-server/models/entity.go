@@ -166,3 +166,15 @@ type MonitorTypeEntityObj struct {
 	DisplayName string `json:"displayName" xorm:"display_name"`
 	Description string `json:"description" xorm:"description"`
 }
+
+type LogMonitorTemplateEntityResp struct {
+	Status  string                         `json:"status"`
+	Message string                         `json:"message"`
+	Data    []*LogMonitorTemplateEntityObj `json:"data"`
+}
+
+type LogMonitorTemplateEntityObj struct {
+	Id          string `json:"id" xorm:"guid"`
+	DisplayName string `json:"displayName" xorm:"name"`
+	LogType     string `json:"logType" xorm:"log_type"`
+}
