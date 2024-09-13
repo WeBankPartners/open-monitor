@@ -65,7 +65,7 @@
             <div>
               <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
               <Table
-                style="position: inherit;"
+                class='compute-metrics-style'
                 size="small"
                 :columns="columnsForComputeMetrics"
                 :data="configInfo.metric_list"
@@ -80,6 +80,8 @@
         </Row>
       </div>
       <div slot="footer">
+        <Checkbox v-if="isBaseCustomeTemplateAdd" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isBaseCustomeTemplateAdd" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -89,7 +91,30 @@
 </template>
 
 <script>
+import {isEmpty, hasIn, cloneDeep} from 'lodash'
+import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
+import {thresholdList, lastList} from '@/assets/config/common-config.js'
+import {isStringFromNumber, isPositiveNumericString} from '@/assets/js/utils.js'
+
+const initRangeConfigMap = {
+  operator: '',
+  threshold: '',
+  time: '',
+  time_unit: ''
+}
+
+const initMetricItem = {
+  log_param_name: '',
+  metric: '',
+  display_name: '',
+  agg_type: '',
+  tag_config: [],
+  color_group: '#1a94bc',
+  auto_alarm: true,
+  range_config: cloneDeep(initRangeConfigMap)
+}
+
 export default {
   name: 'standard-regex',
   data() {
@@ -176,7 +201,7 @@ export default {
           tooltip: true,
           key: 'string_map',
           render: (h, params) => {
-            const val = params.row.string_map.map(item => item.target_value).join(',')
+            const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',')
             return (
               <div>
                 <Input disabled style="width:80%" value={val}/>
@@ -214,8 +239,37 @@ export default {
       ],
       columnsForComputeMetrics: [
         {
+          title: this.$t('m_color_system'),
+          key: 'color_group',
+          width: 80,
+          render: (h, params) => (
+            <div class="color_system">
+              <ColorPicker value={params.row.color_group || ''}
+                on-on-open-change={
+                  isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
+                }
+              />
+            </div>
+          )
+        },
+        {
+          title: this.$t('m_field_displayName'),
+          key: 'display_name',
+          width: 120,
+          render: (h, params) => (
+            <Input
+              value={params.row.display_name}
+              placeholder={this.$t('m_metric_key_placeholder')}
+              onInput={v => {
+                this.changeVal('metric_list', params.index, 'display_name', v)
+              }}
+            />
+          )
+        },
+        {
           title: this.$t('m_metric_key'),
           key: 'metric',
+          width: 120,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -236,6 +290,7 @@ export default {
         {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
+          width: 130,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -266,6 +321,7 @@ export default {
         {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
+          width: 120,
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
@@ -291,6 +347,7 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          width: 120,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -326,7 +383,6 @@ export default {
                 filterable
                 disabled={params.row.log_param_name===''}
                 value={params.row.agg_type}
-                disabled={this.view}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
                 }}
@@ -341,17 +397,108 @@ export default {
           }
         },
         {
+          title: this.$t('m_automatic_alert'),
+          key: 'auto_alarm',
+          width: 80,
+          render: (h, params) =>
+            (
+              <i-switch value={params.row.auto_alarm}
+                on-on-change={val => {
+                  if (!val) {
+                    Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap))
+                  }
+                  Vue.set(this.configInfo.metric_list[params.index], 'auto_alarm', val)
+                  // this.configInfo.metric_list[params.index].auto_alarm = val
+                }} />
+            )
+        },
+        {
+          title: this.$t('m_symbol'),
+          key: 'operator',
+          align: 'left',
+          minWidth: 100,
+          render: (h, params) => params.row.auto_alarm
+            ? (
+              <Select
+                value={params.row.range_config.operator}
+                on-on-change={v => {
+                  this.configInfo.metric_list[params.index].range_config.operator = v
+                }}
+                filterable
+                clearable
+              >
+                {thresholdList.map((i, index) => (
+                  <Option value={i.value} key={index}>
+                    {i.label}
+                  </Option>
+                ))}
+              </Select>
+            ) : <div></div>
+        },
+        {
+          title: this.$t('m_field_threshold'),
+          key: 'threshold',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.threshold}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
+              }}
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_tableKey_s_last'),
+          key: 'time',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.time}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time = v.target.value
+              }}
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_time_unit'),
+          key: 'time_unit',
+          align: 'left',
+          minWidth: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Select
+              value={params.row.range_config.time_unit}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time_unit = v
+              }}
+              filterable
+              clearable
+            >
+              {lastList.map(i => (
+                <Option value={i.value} key={i.value}>
+                  {i.label}
+                </Option>
+              ))}
+            </Select>
+          ) : <div/>
+        },
+        {
           title: this.$t('m_table_action'),
           key: 'action',
           width: 80,
-          align: 'left',
+          fixed: 'right',
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
               <Button
+                disabled={this.configInfo.metric_list.length === 1}
                 size="small"
                 type="error"
                 style="margin-right:5px;"
-                disabled={this.view}
                 onClick={() => this.deleteAction('metric_list', params.index)}
               >
                 <Icon type="md-trash" size="16"></Icon>
@@ -362,11 +509,21 @@ export default {
       ],
       editTagMappingIndex: -1, // 正在编辑的参数采集
       isNumericValue: {}, // 缓存后参数key对应的匹配结果能否转成数字
-      actionType: ''
+      actionType: '',
+      isLogTemplate: false, // 该组件在业务配置和日志模板中均使用，true代表在日志模板中， false为业务配置中
+      isEmpty,
+      auto_create_warn: true,
+      auto_create_dashboard: true
+    }
+  },
+  computed: {
+    isBaseCustomeTemplateAdd() {
+      return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
     }
   },
   methods: {
-    loadPage(actionType, templateGuid, parentGuid, configGuid) {
+    loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
+      this.isLogTemplate = isLogTemplate
       this.isfullscreen = true
       this.parentGuid = parentGuid
       // actionType add/edit
@@ -402,15 +559,7 @@ export default {
               ]
             }
           ],
-          metric_list: [
-            {
-              log_param_name: '',
-              metric: '',
-              display_name: '',
-              agg_type: '',
-              tag_config: []
-            }
-          ]
+          metric_list: [cloneDeep(initMetricItem)]
         }
         this.configInfo.log_metric_monitor = parentGuid
       }
@@ -472,6 +621,26 @@ export default {
         this.$Message.warning(`${this.$t('m_metric_key')}${this.$t('m_cannot_be_repeated')}`)
         return true
       }
+      if (!isEmpty(tmpData.metric_list)) {
+        const list = tmpData.metric_list
+        for (let i=0; i<list.length; i++) {
+          const item = list[i]
+          if (item.auto_alarm === true) {
+            if (!item.range_config.operator || !item.range_config.threshold || !item.range_config.time || !item.range_config.time_unit) {
+              this.$Message.warning(`${this.$t('m_threshold_property')}${this.$t('m_cannot_be_empty')}`)
+              return true
+            }
+            if (!isStringFromNumber(item.range_config.threshold + '')) {
+              this.$Message.warning(`${this.$t('m_threshold_tips')}`)
+              return true
+            }
+            if (!isPositiveNumericString(item.range_config.time + '')) {
+              this.$Message.warning(`${this.$t('m_time_tips')}`)
+              return true
+            }
+          }
+        }
+      }
       return false
     },
     // 更新筛选标签中的值
@@ -497,18 +666,105 @@ export default {
       delete tmpData.update_user
       delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.customLogMetricConfig, tmpData, () => {
-        this.$Message.success(this.$t('m_tips_success'))
+      let api = ''
+      if (this.isLogTemplate && isEmpty(this.parentGuid)) { // 在模板配置页面
+        api = this.$root.apiCenter.logTemplateConfig
+        tmpData.calc_result = {
+          match_text: '',
+          json_key_list: [],
+          json_obj: {}
+        }
+        !isEmpty(tmpData.param_list) && tmpData.param_list.forEach(item => {
+          item.display_name = item.name
+        })
+        this.processSaveData(tmpData)
+        // !isEmpty(tmpData.metric_list) && tmpData.metric_list.forEach(item => {
+        //   item.display_name = item.log_param_name
+        // })
+      } else {
+        api = this.$root.apiCenter.customLogMetricConfig
+        if (this.isAdd) {
+          tmpData.log_monitor_template_guid = tmpData.guid
+          tmpData.guid = ''
+          if (hasIn(tmpData, 'calc_result')) {
+            delete tmpData.calc_result
+          }
+          if (hasIn(tmpData, 'success_code')) {
+            delete tmpData.success_code
+          }
+          tmpData.log_metric_monitor = this.parentGuid
+
+        }
+      }
+      if (this.isBaseCustomeTemplateAdd) {
+        tmpData.auto_create_dashboard = this.auto_create_dashboard
+        tmpData.auto_create_warn = this.auto_create_warn
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, tmpData, res => {
+        const messageTips = this.$t('m_tips_success')
+        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+          const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
+          const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
+          this.$Message.success({
+            render: h => h('div', { class: 'add-business-config' }, [
+              h('div', {class: 'add-business-config-item'}, [
+                h('div', this.$t('m_has_create_dashboard') + ':'),
+                h('div', {
+                  domProps: {
+                    innerHTML: tipTwo
+                  }
+                })
+              ]),
+              h('div', { class: 'add-business-config-item' }, [
+                h('div', this.$t('m_has_create_warn') + ':'),
+                h('div', {
+                  class: 'create_warn_text',
+                  domProps: {
+                    innerHTML: tipOne
+                  }
+                })
+              ])
+            ]),
+            duration: 5
+          })
+        } else {
+          this.$Message.success({
+            content: messageTips,
+            duration: 2
+          })
+        }
         this.showModal = false
         this.$emit('reloadMetricData', this.parentGuid)
       })
     },
+    processSaveData(data){
+      if (isEmpty(data)) {return}
+      !isEmpty(data.metric_list) && data.metric_list.forEach(item => {
+        if (!isEmpty(item.range_config)) {
+          item.range_config.threshold += ''
+          item.range_config.time += ''
+          item.range_config = JSON.stringify(item.range_config)
+        }
+      })
+    },
+    processConfigInfo() {
+      !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfigMap.other) : JSON.parse(item.range_config))
+        Vue.set(item, 'auto_alarm', hasIn(item, 'auto_alarm') ? item.auto_alarm : false)
+        Vue.set(item, 'color_group', isEmpty(item.color_group) ? '' : item.color_group)
+      })
+    },
     getConfig(guid) {
-      const api = this.$root.apiCenter.customLogMetricConfig + '/' + guid
+      const api = this.isLogTemplate ? this.$root.apiCenter.getConfigDetailByGuid + guid : this.$root.apiCenter.customLogMetricConfig + '/' + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.configInfo = resp
+        this.processConfigInfo()
         if (this.actionType === 'copy') {
           this.configInfo.name = this.configInfo.name + '1'
+        }
+
+        if (this.isBaseCustomeTemplateAdd) {
+          this.configInfo.name = ''
         }
         {/* 整理计算类型可选项 */}
         const param_list = this.configInfo.param_list || []
@@ -603,17 +859,36 @@ export default {
     // #endregion
     // #region 计算指标
     addComputeMetrics() {
-      this.configInfo.metric_list.push({
-        log_param_name: '',
-        metric: '',
-        display_name: '',
-        agg_type: '',
-        tag_config: []
-      })
+      this.configInfo.metric_list.push(cloneDeep(initMetricItem))
     },
     // #endregion
     deleteAction(key, index) {
       this.configInfo[key].splice(index, 1)
+    },
+    changeColorGroup(isShow = true, data, key) {
+      if (isShow) {
+        this.$nextTick(() => {
+          const confirmButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-primary')
+          const resetButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-default')
+          if (isEmpty(confirmButtonList)) {
+            return
+          }
+          confirmButtonList[0].addEventListener('click', () => {
+            const inputList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-input')
+            if (isEmpty(inputList)) {
+              return
+            }
+            const color = inputList[0].value
+            Vue.set(data, key, color)
+          })
+          if (isEmpty(resetButtonList)) {
+            return
+          }
+          resetButtonList[0].addEventListener('click', () => {
+            Vue.set(data, key, '')
+          })
+        })
+      }
     }
   },
   components: {
@@ -646,4 +921,15 @@ export default {
 .ivu-form-item {
   margin-bottom: 0px;
 }
+</style>
+
+<style lang='less'>
+.compute-metrics-style {
+  position: inherit;
+  .ivu-table-cell {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+}
+
 </style>

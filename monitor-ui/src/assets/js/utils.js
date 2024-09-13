@@ -100,3 +100,7 @@ export const showPoptipOnTable = (className='.ivu-poptip-popper') => {
     resElement.style.left = rect.left + 'px'
   }, 0)
 }
+
+export const isStringFromNumber = str => !isNaN(str) && !isNaN(parseFloat(str))
+
+export const isPositiveNumericString = str => /^\d+$/.test(str) && parseFloat(str) >= 0
