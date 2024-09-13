@@ -5,6 +5,7 @@ import "time"
 const (
 	LogMonitorJsonType    = "json"
 	LogMonitorRegularType = "regular"
+	LogMonitorCustomType  = "custom"
 )
 
 type LogMetricMonitorTable struct {
