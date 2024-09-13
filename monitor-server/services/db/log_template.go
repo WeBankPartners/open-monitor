@@ -44,7 +44,7 @@ func ListLogMonitorTemplate(param *models.LogMonitorTemplateListParam, userRoles
 			result.JsonList = append(result.JsonList, row)
 		} else if row.LogType == models.LogMonitorRegularType {
 			result.RegularList = append(result.RegularList, row)
-		} else if row.LogType == models.LogMonitorRegularType {
+		} else if row.LogType == models.LogMonitorCustomType {
 			result.CustomList = append(result.CustomList, row)
 		}
 	}
