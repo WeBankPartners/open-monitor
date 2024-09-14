@@ -95,8 +95,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Checkbox v-if="isBaseCustomeTemplateAdd" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="isBaseCustomeTemplateAdd" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -112,7 +112,7 @@ import {
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
-import {isStringFromNumber, isPositiveNumericString} from '@/assets/js/utils.js'
+import {isStringFromNumber, isPositiveNumericString, getRandomColor} from '@/assets/js/utils.js'
 
 const initRangeConfigMap = {
   operator: '',
@@ -555,6 +555,9 @@ export default {
     }
   },
   computed: {
+    isInBusinessConfigAdd() {
+      return this.actionType === 'add' && !isEmpty(this.parentGuid)
+    },
     isBaseCustomeTemplateAdd() { // 在业务配置页面新增
       return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
     },
@@ -568,6 +571,8 @@ export default {
       this.isfullscreen = true
       this.parentGuid = parentGuid
       this.metricPrefixCode = ''
+      this.auto_create_dashboard = true
+      this.auto_create_warn = true
       // actionType add/edit
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
@@ -617,7 +622,7 @@ export default {
       return true
     },
     paramsValidate(tmpData) {
-      if (this.isBaseCustomeTemplateAdd) {
+      if (this.isAdd && !this.isInTemplatePage) {
         if (this.metricPrefixCode === '') {
           this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_cannot_be_empty')}`)
           return true
@@ -751,7 +756,7 @@ export default {
           tmpData.metric_prefix_code = this.metricPrefixCode
         }
       }
-      if (this.isBaseCustomeTemplateAdd) {
+      if (this.isInBusinessConfigAdd) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
       }
@@ -915,7 +920,9 @@ export default {
     // #endregion
     // #region 计算指标
     addComputeMetrics() {
-      this.configInfo.metric_list.push(cloneDeep(initMetricItem))
+      const item = cloneDeep(initMetricItem)
+      item.color_group = getRandomColor()
+      this.configInfo.metric_list.push(item)
     },
     // #endregion
     deleteAction(key, index) {
