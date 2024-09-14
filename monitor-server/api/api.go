@@ -334,6 +334,9 @@ func init() {
 
 		// 获取seed
 		&handlerFuncObj{Url: "/seed", Method: http.MethodGet, HandlerFunc: monitor.GetEncryptSeed},
+
+		// 给平台分析迁移数据
+		&handlerFuncObj{Url: "/trans-export/analyze", Method: http.MethodPost, HandlerFunc: monitor.AnalyzeTransExportData},
 	)
 }
 
