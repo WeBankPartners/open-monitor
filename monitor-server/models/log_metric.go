@@ -209,7 +209,7 @@ type CheckRegExpResult struct {
 
 type LogMetricGroupObj struct {
 	LogMonitorTemplateGuid string `json:"log_monitor_template_guid"`
-	LogMetricGroup         `json:"log_metric_group"`
+	LogMetricGroup
 	LogMonitorTemplateName string                `json:"log_monitor_template_name"`
 	ServiceGroup           string                `json:"service_group"`
 	MonitorType            string                `json:"monitor_type"`
