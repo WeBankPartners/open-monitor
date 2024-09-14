@@ -802,15 +802,30 @@ func GetLogMetricCustomGroup(c *gin.Context) {
 
 func CreateLogMetricCustomGroup(c *gin.Context) {
 	var param models.LogMetricGroupObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var prefixMap map[string]int
+	var result *models.CreateLogMetricGroupDto
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
 	if param.LogMetricMonitor == "" {
-		err := fmt.Errorf("LogMetricMonitor can not empty")
+		err = fmt.Errorf("LogMetricMonitor can not empty")
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if param.LogMetricGroup.LogMetricMonitor != "" && param.MetricPrefixCode != "" {
+		if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricGroup.LogMetricMonitor); err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if _, ok := prefixMap[param.MetricPrefixCode]; ok {
+			err := fmt.Errorf("Prefix: %s duplidate ", param.MetricPrefixCode)
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	}
+
 	if len(param.MetricList) > 0 {
 		for _, metric := range param.MetricList {
 			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
@@ -847,17 +862,15 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnError(c, 200, err.Error(), err)
 		return
 	}
-	err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
-	if err != nil {
-		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
-		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+	if result, err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
 	}
+	if err = syncLogMetricMonitorConfig(param.LogMetricMonitor); err != nil {
+		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func UpdateLogMetricCustomGroup(c *gin.Context) {
