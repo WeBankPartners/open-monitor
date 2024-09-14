@@ -417,18 +417,17 @@ func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDas
 		// 2. 新增图表
 		for index, metric := range dashboardParam.MetricList {
 			chartParam := &models.CustomChartDto{
-				Public:             true,
-				SourceDashboard:    int(newDashboardId),
-				Name:               fmt.Sprintf("%s_%s/%s", dashboardParam.MetricPrefixCode, metric.Metric, displayServiceGroup),
-				ChartTemplate:      "one",
-				ChartType:          "line",
-				LineType:           "line",
-				Aggregate:          "none",
-				AggStep:            60,
-				ChartSeries:        []*models.CustomChartSeriesDto{},
-				DisplayConfig:      calcDisplayConfig(index * 3),
-				GroupDisplayConfig: calcDisplayConfig(0),
-				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
+				Public:          true,
+				SourceDashboard: int(newDashboardId),
+				Name:            fmt.Sprintf("%s_%s/%s", dashboardParam.MetricPrefixCode, metric.Metric, displayServiceGroup),
+				ChartTemplate:   "one",
+				ChartType:       "line",
+				LineType:        "line",
+				Aggregate:       "none",
+				AggStep:         60,
+				ChartSeries:     []*models.CustomChartSeriesDto{},
+				DisplayConfig:   calcDisplayConfig(index),
+				LogMetricGroup:  &dashboardParam.LogMetricGroupGuid,
 			}
 			//标签线条
 			chartParam.ChartSeries = append(chartParam.ChartSeries, generateSimpleChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, metric))
