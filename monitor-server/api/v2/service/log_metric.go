@@ -862,7 +862,6 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
-	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
