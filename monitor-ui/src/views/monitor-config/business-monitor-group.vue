@@ -34,7 +34,7 @@
             {{$t('m_log_file')}}
             <span class="underline"></span>
           </div>
-          <Button type="success" class="btn-right" @click="addLogFile">
+          <Button type="success" class="btn-right mr-4" @click="addLogFile">
             {{ $t('m_button_add') }}
           </Button>
         </div>
@@ -123,7 +123,7 @@
               {{$t('m_db')}}
               <span class="underline"></span>
             </div>
-            <Button type="success" class="btn-right" @click="addDb">
+            <Button type="success" class="btn-right mr-4" @click="addDb">
               {{ $t('m_button_add') }}
             </Button>
           </div>
