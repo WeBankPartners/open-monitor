@@ -178,6 +178,7 @@ type SysAlertMailParameter struct {
 	AuthServer   string `json:"auth_server"`
 	AuthPassword string `json:"auth_password"`
 	SSL          string `json:"ssl"`
+	AuthUser     string `json:"auth_user"`
 }
 
 type SysMetricTemplateParameter struct {
