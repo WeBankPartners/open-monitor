@@ -124,6 +124,67 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 	return
 }
 
+func autoGenerateSimpleAlarmStrategy(alarmStrategyParam models.AutoSimpleAlarmStrategyParam) (actions []*Action, result []string, err error) {
+	var subActions []*Action
+	var serviceGroupTable models.ServiceGroupTable
+	// 显示名
+	var displayServiceGroup = alarmStrategyParam.ServiceGroup
+	result = []string{}
+	actions = []*Action{}
+	// 自动创建告警
+	if alarmStrategyParam.AutoCreateWarn {
+		x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", alarmStrategyParam.ServiceGroup).Get(&serviceGroupTable)
+		if serviceGroupTable.DisplayName != "" {
+			displayServiceGroup = serviceGroupTable.DisplayName
+		}
+		autoAlarmMetricList := getAutoSimpleAlarmMetricList(alarmStrategyParam.MetricList, alarmStrategyParam.ServiceGroup, alarmStrategyParam.MetricPrefixCode)
+		for _, alarmMetric := range autoAlarmMetricList {
+			// 添加告警配置基础信息
+			alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
+			metricTags := make([]*models.MetricTag, 0)
+			alarmStrategy.Name = fmt.Sprintf("%s%s%s%s", generateMetricGuidDisplayName(alarmStrategyParam.MetricPrefixCode, alarmMetric.Metric, displayServiceGroup), alarmMetric.Operator, alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
+			alarmStrategy.Priority = "medium"
+			alarmStrategy.NotifyEnable = 1
+			alarmStrategy.ActiveWindow = "00:00-23:59"
+			if strings.TrimSpace(alarmStrategyParam.EndpointGroup) != "" {
+				alarmStrategy.EndpointGroup = alarmStrategyParam.EndpointGroup
+			}
+			alarmStrategy.LogMetricGroup = &alarmStrategyParam.LogMetricGroupGuid
+			alarmStrategy.Metric = alarmMetric.MetricId
+			alarmStrategy.MetricName = alarmMetric.Metric
+			alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategy.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+			// 添加编排与通知
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: alarmStrategyParam.ServiceGroupsRoles})
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: alarmStrategyParam.ServiceGroupsRoles})
+			result = append(result, alarmStrategy.Name)
+			// 添加指标阈值
+			for _, tag := range alarmMetric.TagConfig {
+				metricTags = append(metricTags, &models.MetricTag{
+					TagName: tag,
+					Equal:   ConstEqualIn,
+				})
+			}
+
+			alarmStrategy.Conditions = append(alarmStrategy.Conditions, &models.StrategyConditionObj{
+				Metric:     alarmMetric.MetricId,
+				MetricName: alarmMetric.Metric,
+				Condition:  fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold),
+				Last:       fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit),
+				Tags:       metricTags,
+			})
+			alarmStrategy.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
+			alarmStrategy.Last = fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit)
+			if subActions, err = getCreateAlarmStrategyActions(alarmStrategy, time.Now().Format(models.DatetimeFormat), alarmStrategyParam.Operator); err != nil {
+				return
+			}
+			if len(subActions) > 0 {
+				actions = append(actions, subActions...)
+			}
+		}
+	}
+	return
+}
+
 func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
 	if len(stringMap) == 0 {
 		return ""
@@ -306,6 +367,80 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	return
 }
 
+func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDashboardParam) (actions []*Action, customDashboard string, err error) {
+	var subDashboardActions, subChartActions []*Action
+	var newDashboardId int64
+	var serviceGroupTable = models.ServiceGroupTable{}
+	var displayServiceGroup = dashboardParam.ServiceGroup
+	var customDashboardList []*models.CustomDashboardTable
+	actions = []*Action{}
+	now := time.Now()
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", dashboardParam.ServiceGroup).Get(&serviceGroupTable)
+	if serviceGroupTable.DisplayName != "" {
+		displayServiceGroup = serviceGroupTable.DisplayName
+	}
+	if dashboardParam.AutoCreateDashboard {
+		// 1. 先创建看板
+		dashboard := &models.CustomDashboardTable{
+			Name:           fmt.Sprintf("%s_%s", dashboardParam.ServiceGroup, dashboardParam.MetricPrefixCode),
+			CreateUser:     dashboardParam.Operator,
+			UpdateUser:     dashboardParam.Operator,
+			CreateAt:       now,
+			UpdateAt:       now,
+			RefreshWeek:    10,
+			TimeRange:      -1800,
+			LogMetricGroup: &dashboardParam.LogMetricGroupGuid,
+		}
+		// 看板名称使用显示名
+		if displayServiceGroup != "" {
+			dashboard.Name = fmt.Sprintf("%s_%s", displayServiceGroup, dashboardParam.MetricPrefixCode)
+		}
+		customDashboard = dashboard.Name
+		// 查询看板 名称是否已存在
+		if customDashboardList, err = QueryCustomDashboardListByName(customDashboard); err != nil {
+			return
+		}
+		if len(customDashboardList) > 0 {
+			err = fmt.Errorf(dashboardParam.ErrMsgObj.ImportDashboardNameExistError, customDashboardList[0].Name)
+			return
+		}
+		if len(dashboardParam.ServiceGroupsRoles) == 0 {
+			err = fmt.Errorf("config role empty")
+			return
+		}
+		if subDashboardActions, newDashboardId, err = getAddCustomDashboardActions(dashboard, dashboardParam.ServiceGroupsRoles[:1], dashboardParam.ServiceGroupsRoles); err != nil {
+			return
+		}
+		if len(subDashboardActions) > 0 {
+			actions = append(actions, subDashboardActions...)
+		}
+		// 2. 新增图表
+		for index, metric := range dashboardParam.MetricList {
+			chartParam := &models.CustomChartDto{
+				Public:             true,
+				SourceDashboard:    int(newDashboardId),
+				Name:               fmt.Sprintf("%s_%s/%s", dashboardParam.MetricPrefixCode, metric.Metric, displayServiceGroup),
+				ChartTemplate:      "one",
+				ChartType:          "line",
+				LineType:           "line",
+				Aggregate:          "none",
+				AggStep:            60,
+				ChartSeries:        []*models.CustomChartSeriesDto{},
+				DisplayConfig:      calcDisplayConfig(index * 3),
+				GroupDisplayConfig: calcDisplayConfig(0),
+				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
+			}
+			//标签线条
+			chartParam.ChartSeries = append(chartParam.ChartSeries, generateSimpleChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, metric))
+			subChartActions = handleAutoCreateChart(chartParam, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
+			if len(subChartActions) > 0 {
+				actions = append(actions, subChartActions...)
+			}
+		}
+	}
+	return
+}
+
 func generateMetricGuid(metric, serviceGroup string) string {
 	return fmt.Sprintf("%s__%s", metric, serviceGroup)
 }
@@ -388,6 +523,32 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 	return metricThresholdList
 }
 
+func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigTable, serviceGroup, metricPrefixCode string) []*models.LogMetricThreshold {
+	var metricThresholdList []*models.LogMetricThreshold
+	var metric string
+	if len(list) == 0 {
+		return metricThresholdList
+	}
+	for _, logMetricTemplate := range list {
+		metric = logMetricTemplate.Metric
+		if metricPrefixCode != "" {
+			metric = metricPrefixCode + "_" + metric
+		}
+		if logMetricTemplate.AutoAlarm && logMetricTemplate.RangeConfig != "" {
+			temp := &models.ThresholdConfig{}
+			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
+			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{
+				MetricId:        generateMetricGuid(metric, serviceGroup),
+				Metric:          logMetricTemplate.Metric,
+				DisplayName:     logMetricTemplate.DisplayName,
+				ThresholdConfig: temp,
+				TagConfig:       logMetricTemplate.TagConfigList,
+			})
+		}
+	}
+	return metricThresholdList
+}
+
 // getTargetCodeMap 获取配置的目标code集合
 func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 	var list []string
@@ -442,6 +603,30 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 				Color:      metric.ColorGroup,
 			},
 		}
+	}
+	return dto
+}
+
+func generateSimpleChartSeries(serviceGroup, monitorType string, metric *models.LogMetricConfigTable) *models.CustomChartSeriesDto {
+	var serviceGroupTable = &models.ServiceGroupTable{}
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
+	dto := &models.CustomChartSeriesDto{
+		Endpoint:     serviceGroup,
+		ServiceGroup: serviceGroup,
+		EndpointName: serviceGroup,
+		MonitorType:  monitorType,
+		ColorGroup:   metric.ColorGroup,
+		MetricType:   "business",
+		MetricGuid:   metric.Guid,
+		Metric:       metric.Metric,
+		Tags:         make([]*models.TagDto, 0),
+	}
+	if serviceGroupTable != nil {
+		dto.EndpointName = serviceGroupTable.DisplayName
+		dto.EndpointType = serviceGroupTable.ServiceType
+	}
+	if len(metric.TagConfigList) > 0 {
+		dto.Tags = append(dto.Tags, &models.TagDto{TagName: constCode, Equal: ConstEqualIn})
 	}
 	return dto
 }
