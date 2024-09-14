@@ -178,3 +178,22 @@ type LogMonitorTemplateEntityObj struct {
 	DisplayName string `json:"displayName" xorm:"name"`
 	LogType     string `json:"logType" xorm:"log_type"`
 }
+
+type AnalyzeTransParam struct {
+	EndpointList     []string `json:"endpointList"`
+	ServiceGroupList []string `json:"serviceGroupList"`
+}
+
+type AnalyzeTransData struct {
+	MonitorType               []string `json:"monitorType"`
+	EndpointGroup             []string `json:"endpointGroup"`
+	CustomMetricServiceGroup  []string `json:"customMetricServiceGroup"`
+	CustomMetricEndpointGroup []string `json:"customMetricEndpointGroup"`
+	CustomMetricMonitorType   []string `json:"CustomMetricMonitorType"`
+	LogMonitorServiceGroup    []string `json:"logMonitorServiceGroup"`
+	LogMonitorTemplate        []string `json:"logMonitorTemplate"`
+	StrategyServiceGroup      []string `json:"strategyServiceGroup"`
+	StrategyEndpointGroup     []string `json:"strategyEndpointGroup"`
+	LogKeywordServiceGroup    []string `json:"logKeywordServiceGroup"`
+	DashboardIdList           []string `json:"dashboardIdList"`
+}
