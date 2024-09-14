@@ -748,16 +748,8 @@ export default {
             delete tmpData.success_code
           }
           tmpData.log_metric_monitor = this.parentGuid
+          tmpData.metric_prefix_code = this.metricPrefixCode
         }
-        tmpData.log_metric_group = {
-          name: tmpData.name,
-          guid: tmpData.guid,
-          metric_prefix_code: this.metricPrefixCode,
-          log_type: tmpData.log_type,
-          log_metric_monitor: this.parentGuid,
-          demo_log: tmpData.demo_log,
-        }
-
       }
       if (this.isBaseCustomeTemplateAdd) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
