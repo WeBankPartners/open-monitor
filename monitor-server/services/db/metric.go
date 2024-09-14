@@ -578,7 +578,7 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, tagConfigValue
 					return
 				}
 				if len(tmpTagList) > 0 {
-					tags = []string{"tags"}
+					tags = tmpTagList
 				}
 			}
 		}
