@@ -221,7 +221,7 @@ import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
-import { generateUuid } from '@/assets/js/utils'
+import { generateUuid, getRandomColor } from '@/assets/js/utils'
 import { changeSeriesColor } from '@/assets/config/random-color'
 const initTableData = [
   {
@@ -1091,14 +1091,6 @@ export default {
         item.endpointType = this.endpointType
       }
     },
-    getRandomColor() {
-      const letters = '0123456789ABCDEF'
-      let color = '#'
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)]
-      }
-      return color
-    },
     async addConfiguration() {
       if (this.endpointValue && this.metricGuid) {
         const metricItem = find(this.metricOptions, {
@@ -1106,7 +1098,7 @@ export default {
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
         const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-        const colorGroup = this.getRandomColor()
+        const colorGroup = getRandomColor()
         const item = {
           endpoint: this.endpointValue,
           serviceGroup: this.serviceGroup,
