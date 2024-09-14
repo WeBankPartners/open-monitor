@@ -867,18 +867,6 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	for _, v := range param.MetricList {
-		if _, existFlag := existMetricMap[v.Metric]; existFlag {
-			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
-			break
-		} else {
-			existMetricMap[v.Metric] = param.MonitorType
-		}
-	}
-	if err != nil {
-		middleware.ReturnError(c, 200, err.Error(), err)
-		return
-	}
 	if result, err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
