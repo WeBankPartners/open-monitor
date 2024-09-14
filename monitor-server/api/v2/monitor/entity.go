@@ -112,3 +112,17 @@ func QueryEntityLogMonitorTemplate(c *gin.Context) {
 	}
 	middleware.ReturnData(c, result)
 }
+
+func AnalyzeTransExportData(c *gin.Context) {
+	var param models.AnalyzeTransParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.AnalyzeTransExportData(&param)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
+}
