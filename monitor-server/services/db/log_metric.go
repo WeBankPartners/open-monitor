@@ -1729,10 +1729,10 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 	}
-	if param.LogMetricMonitorGuid != "" {
+	if param.LogMetricGroup.LogMetricMonitor != "" {
 		var logMetricMonitor = &models.LogMetricMonitorTable{}
 		var endpointGroupIds []string
-		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricGroup.LogMonitorTemplate).Get(logMetricMonitor); err != nil {
 			return
 		}
 		if logMetricMonitor != nil {
