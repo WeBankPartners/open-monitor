@@ -3,11 +3,11 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"math"
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
@@ -523,7 +523,7 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 	return metricThresholdList
 }
 
-func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigTable, serviceGroup, metricPrefixCode string) []*models.LogMetricThreshold {
+func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigDto, serviceGroup, metricPrefixCode string) []*models.LogMetricThreshold {
 	var metricThresholdList []*models.LogMetricThreshold
 	var metric string
 	if len(list) == 0 {
@@ -536,7 +536,8 @@ func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigTable, serviceGr
 		}
 		if logMetricTemplate.AutoAlarm && logMetricTemplate.RangeConfig != "" {
 			temp := &models.ThresholdConfig{}
-			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
+			byteArr, _ := json.Marshal(logMetricTemplate.RangeConfig)
+			json.Unmarshal(byteArr, temp)
 			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{
 				MetricId:        generateMetricGuid(metric, serviceGroup),
 				Metric:          logMetricTemplate.Metric,
@@ -607,7 +608,7 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 	return dto
 }
 
-func generateSimpleChartSeries(serviceGroup, monitorType string, metric *models.LogMetricConfigTable) *models.CustomChartSeriesDto {
+func generateSimpleChartSeries(serviceGroup, monitorType string, metric *models.LogMetricConfigDto) *models.CustomChartSeriesDto {
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	dto := &models.CustomChartSeriesDto{
