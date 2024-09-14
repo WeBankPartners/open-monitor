@@ -1685,12 +1685,12 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	nowTime := time.Now()
 	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
 	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
-		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime,
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
 		}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime,
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
 		}})
 	}
 	paramGuidList := guid.CreateGuidList(len(param.ParamList))
