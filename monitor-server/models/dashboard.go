@@ -12,7 +12,7 @@ type AutoCreateDashboardParam struct {
 }
 
 type AutoSimpleCreateDashboardParam struct {
-	MetricList          []*LogMetricConfigTable
+	MetricList          []*LogMetricConfigDto
 	ServiceGroupsRoles  []string
 	ServiceGroup        string
 	Operator            string

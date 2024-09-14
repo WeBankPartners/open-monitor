@@ -80,8 +80,8 @@ type ThresholdConfig struct {
 	TimeUnit  string `json:"time_unit"` // 时间单位
 }
 
-func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigTable) {
-	output = &LogMetricConfigTable{
+func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigDto) {
+	output = &LogMetricConfigDto{
 		Guid:          l.Guid,
 		Metric:        l.Metric,
 		DisplayName:   l.DisplayName,
