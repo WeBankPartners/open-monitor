@@ -218,7 +218,7 @@ export default {
           tooltip: true,
           key: 'string_map',
           render: (h, params) => {
-            const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',')
+            const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',') || ''
             return (
               <div>
                 <Input disabled style="width:80%" value={val}/>
@@ -262,6 +262,7 @@ export default {
           render: (h, params) => (
             <div class="color_system">
               <ColorPicker value={params.row.color_group || ''}
+                disabled={this.view}
                 on-on-open-change={
                   isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
                 }
@@ -276,6 +277,7 @@ export default {
           render: (h, params) => (
             <Input
               value={params.row.display_name}
+              disabled={this.view}
               placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'display_name', v)
@@ -411,7 +413,7 @@ export default {
             return (
               <Select
                 filterable
-                disabled={params.row.log_param_name===''}
+                disabled={params.row.log_param_name==='' || this.view}
                 value={params.row.agg_type}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
@@ -433,6 +435,7 @@ export default {
           render: (h, params) =>
             (
               <i-switch value={params.row.auto_alarm}
+                disabled={this.view}
                 on-on-change={val => {
                   if (!val) {
                     Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap))
@@ -451,6 +454,7 @@ export default {
             ? (
               <Select
                 value={params.row.range_config.operator}
+                disabled={this.view}
                 on-on-change={v => {
                   this.configInfo.metric_list[params.index].range_config.operator = v
                 }}
@@ -473,6 +477,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.threshold}
+              disabled={this.view}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
               }}
@@ -488,6 +493,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.time}
+              disabled={this.view}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time = v.target.value
               }}
@@ -503,6 +509,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Select
               value={params.row.range_config.time_unit}
+              disabled={this.view}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time_unit = v
               }}
@@ -525,7 +532,7 @@ export default {
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
               <Button
-                disabled={this.configInfo.metric_list.length === 1}
+                disabled={this.configInfo.metric_list.length === 1 || this.view}
                 size="small"
                 type="error"
                 style="margin-right:5px;"
