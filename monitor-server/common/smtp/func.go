@@ -11,6 +11,7 @@ import (
 type MailSender struct {
 	SenderName   string
 	SenderMail   string
+	AuthUser     string
 	AuthServer   string
 	AuthPassword string
 	SSL          bool
@@ -32,7 +33,10 @@ func (ms *MailSender) Init() error {
 			ms.AuthServer = ms.AuthServer + ":25"
 		}
 	}
-	ms.Auth = PlainAuth("", ms.SenderMail, ms.AuthPassword, ms.AuthServer)
+	if ms.AuthUser == "" {
+		ms.AuthUser = ms.SenderMail
+	}
+	ms.Auth = PlainAuth("", ms.AuthUser, ms.AuthPassword, ms.AuthServer)
 	return nil
 }
 
