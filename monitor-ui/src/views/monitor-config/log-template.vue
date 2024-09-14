@@ -295,8 +295,10 @@ export default {
     copySingleItem(row) {
       if (row.log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage(row.guid, 'copy')
-      } else {
+      } else if (row.log_type === 'regular') {
         this.$refs.standardRegexRef.loadPage(row.guid, 'copy')
+      } else {
+        this.$refs.customRegexRef.loadPage('copy', '', '', row.guid, true)
       }
     },
     // 查看关联层级对象
