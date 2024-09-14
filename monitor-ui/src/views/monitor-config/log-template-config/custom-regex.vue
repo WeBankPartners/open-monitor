@@ -737,11 +737,7 @@ export default {
           item.display_name = item.name
         })
         this.processSaveData(tmpData)
-        // !isEmpty(tmpData.metric_list) && tmpData.metric_list.forEach(item => {
-        //   item.display_name = item.log_param_name
-        // })
       } else {
-        // api = this.$root.apiCenter.logMetricGroup
         api = this.$root.apiCenter.customLogMetricConfig
         if (this.isAdd) {
           tmpData.log_monitor_template_guid = tmpData.guid
@@ -762,7 +758,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, tmpData, res => {
         const messageTips = this.$t('m_tips_success')
-        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard') && (!isEmpty(res.alarm_list) || !isEmpty(res.custom_dashboard))) {
           const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
           const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
           this.$Message.success({
@@ -822,7 +818,7 @@ export default {
         this.processConfigInfo()
         if (this.actionType === 'copy') {
           this.configInfo.name = this.configInfo.name + '1'
-          this.metricPrefixCode = ''
+          this.metricPrefixCode = this.configInfo.metric_prefix_code + '1'
         }
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
@@ -915,7 +911,7 @@ export default {
       this.$refs.tagMapConfigRef.loadPage(tagMap)
     },
     setTagMap(arr) {
-      this.configInfo.param_list[this.editTagMappingIndex].string_map = arr
+      Vue.set(this.configInfo.param_list[this.editTagMappingIndex], 'string_map', arr)
     },
     // #endregion
     // #region 计算指标
