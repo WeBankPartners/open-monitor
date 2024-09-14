@@ -551,5 +551,6 @@
   "m_alarm_query": "Alarm Query",
   "m_alarm_query_tips": "Please enter the alarm level, name, indicator or object",
   "m_enter_indicator_key_tips": "Enter indicator key",
-  "m_custom_templates": "Custom templates"
+  "m_custom_templates": "Custom templates",
+  "m_final_metric_key": "Final Metric Key"
 }
