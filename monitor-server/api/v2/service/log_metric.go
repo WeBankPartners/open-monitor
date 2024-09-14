@@ -814,7 +814,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if param.LogMetricGroup.LogMetricMonitor != "" && param.MetricPrefixCode != "" {
+	if param.LogMetricMonitor != "" && param.MetricPrefixCode != "" {
 		if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricGroup.LogMetricMonitor); err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
@@ -824,8 +824,25 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
+	} else {
+		existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		for _, v := range param.MetricList {
+			if _, existFlag := existMetricMap[v.Metric]; existFlag {
+				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				break
+			} else {
+				existMetricMap[v.Metric] = param.MonitorType
+			}
+		}
+		if err != nil {
+			middleware.ReturnError(c, 200, err.Error(), err)
+			return
+		}
 	}
-
 	if len(param.MetricList) > 0 {
 		for _, metric := range param.MetricList {
 			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
