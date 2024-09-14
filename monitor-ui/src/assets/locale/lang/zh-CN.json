@@ -552,6 +552,7 @@
   "m_alarm_query": "告警查询",
   "m_alarm_query_tips": "请输入告警等级、名称、指标或对象",
   "m_enter_indicator_key_tips": "请输入指标key",
-  "m_custom_templates": "自定义模板"
+  "m_custom_templates": "自定义模板",
+  "m_final_metric_key": "最终指标key"
 }
 
