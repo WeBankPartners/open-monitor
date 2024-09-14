@@ -30,6 +30,21 @@
                 <span style="color: red">*</span>
               </Tooltip>
             </FormItem>
+            <FormItem
+              v-if='!isInTemplatePage'
+              :label="$t('m_metric_code')"
+            >
+              <Input
+                v-model.trim="metricPrefixCode"
+                maxlength="15"
+                :disabled="!isAdd || view"
+                show-word-limit
+                :placeholder="$t('m_metric_code_placeholder')"
+                style="width:96%"
+              >
+              </Input>
+              <span style="color: red">*</span>
+            </FormItem>
             <FormItem :label="$t('m_log_example')">
               <Input
                 v-model="configInfo.demo_log"
@@ -91,7 +106,9 @@
 </template>
 
 <script>
-import {isEmpty, hasIn, cloneDeep} from 'lodash'
+import {
+  isEmpty, hasIn, cloneDeep
+} from 'lodash'
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
@@ -228,7 +245,7 @@ export default {
                 size="small"
                 type="error"
                 style="margin-right:5px;"
-                disabled={this.view}
+                disabled={this.configInfo.param_list.length === 1}
                 onClick={() => this.deleteAction('param_list', params.index)}
               >
                 <Icon type="md-trash" size="16"></Icon>
@@ -285,6 +302,19 @@ export default {
                 this.changeVal('metric_list', params.index, 'metric', v)
               }}
             />
+          )
+        },
+        {
+          title: this.$t('m_metric_key'),
+          key: 'index',
+          width: 120,
+          renderHeader: () => (
+            <span>
+              <span>{this.$t('m_final_metric_key')}</span>
+            </span>
+          ),
+          render: (h, params) => (
+            <div>{this.metricPrefixCode ? this.metricPrefixCode + '_' + params.row.metric : params.row.metric}</div>
           )
         },
         {
@@ -513,12 +543,16 @@ export default {
       isLogTemplate: false, // 该组件在业务配置和日志模板中均使用，true代表在日志模板中， false为业务配置中
       isEmpty,
       auto_create_warn: true,
-      auto_create_dashboard: true
+      auto_create_dashboard: true,
+      metricPrefixCode: ''
     }
   },
   computed: {
-    isBaseCustomeTemplateAdd() {
+    isBaseCustomeTemplateAdd() { // 在业务配置页面新增
       return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
+    },
+    isInTemplatePage() { // 在模板配置也新增or修改
+      return this.isLogTemplate && isEmpty(this.parentGuid)
     }
   },
   methods: {
@@ -526,6 +560,7 @@ export default {
       this.isLogTemplate = isLogTemplate
       this.isfullscreen = true
       this.parentGuid = parentGuid
+      this.metricPrefixCode = ''
       // actionType add/edit
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
@@ -575,6 +610,18 @@ export default {
       return true
     },
     paramsValidate(tmpData) {
+      if (this.isBaseCustomeTemplateAdd) {
+        if (this.metricPrefixCode === '') {
+          this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_cannot_be_empty')}`)
+          return true
+        }
+        const regex = /^[A-Za-z][A-Za-z0-9]{0,14}$/
+
+        if (!regex.test(this.metricPrefixCode)) {
+          this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_metric_prefix_code_validate')}`)
+          return true
+        }
+      }
       if (!this.regularCheckValue(tmpData.param_list, 'name')) {
         return this.$Message.warning(`${this.$t('m_parameter_key')}: ${this.$t('m_regularization_check_failed_tips')}`)
       }
@@ -667,7 +714,7 @@ export default {
       delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
       let api = ''
-      if (this.isLogTemplate && isEmpty(this.parentGuid)) { // 在模板配置页面
+      if (this.isInTemplatePage) { // 在模板配置页面
         api = this.$root.apiCenter.logTemplateConfig
         tmpData.calc_result = {
           match_text: '',
@@ -682,6 +729,7 @@ export default {
         //   item.display_name = item.log_param_name
         // })
       } else {
+        // api = this.$root.apiCenter.logMetricGroup
         api = this.$root.apiCenter.customLogMetricConfig
         if (this.isAdd) {
           tmpData.log_monitor_template_guid = tmpData.guid
@@ -693,8 +741,16 @@ export default {
             delete tmpData.success_code
           }
           tmpData.log_metric_monitor = this.parentGuid
-
         }
+        tmpData.log_metric_group = {
+          name: tmpData.name,
+          guid: tmpData.guid,
+          metric_prefix_code: this.metricPrefixCode,
+          log_type: tmpData.log_type,
+          log_metric_monitor: this.parentGuid,
+          demo_log: tmpData.demo_log,
+        }
+
       }
       if (this.isBaseCustomeTemplateAdd) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
@@ -753,6 +809,7 @@ export default {
         Vue.set(item, 'auto_alarm', hasIn(item, 'auto_alarm') ? item.auto_alarm : false)
         Vue.set(item, 'color_group', isEmpty(item.color_group) ? '' : item.color_group)
       })
+      this.metricPrefixCode = this.configInfo.metric_prefix_code
     },
     getConfig(guid) {
       const api = this.isLogTemplate ? this.$root.apiCenter.getConfigDetailByGuid + guid : this.$root.apiCenter.customLogMetricConfig + '/' + guid
@@ -930,6 +987,27 @@ export default {
     padding-left: 5px;
     padding-right: 5px;
   }
+}
+
+.add-business-config {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 900px;
+  max-height: 600px;
+  overflow-y: auto;
+  .add-business-config-item {
+    display: flex;
+    flex-direction: row;
+    .create_warn_text {
+      text-align: left
+    }
+  }
+}
+.add-business-config > div {
+  max-width: 850px;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 </style>
