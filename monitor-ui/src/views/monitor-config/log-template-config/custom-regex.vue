@@ -911,7 +911,7 @@ export default {
       this.$refs.tagMapConfigRef.loadPage(tagMap)
     },
     setTagMap(arr) {
-      this.configInfo.param_list[this.editTagMappingIndex].string_map = arr
+      Vue.set(this.configInfo.param_list[this.editTagMappingIndex], 'string_map', arr)
     },
     // #endregion
     // #region 计算指标
