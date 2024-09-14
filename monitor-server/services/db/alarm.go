@@ -596,13 +596,27 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 {
-		if (cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0) || cond.AlarmTable.SMetric == "custom" {
-			if cond.ExtOpenAlarm {
-				for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
-					result = append(result, v)
+	if !cond.ExtOpenAlarm {
+		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 && cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0 {
+			cond.ExtOpenAlarm = true
+		} else {
+			for _, v := range cond.EndpointFilterList {
+				if v == "custom_alarm" {
+					cond.ExtOpenAlarm = true
+					break
 				}
 			}
+			for _, v := range cond.MetricFilterList {
+				if v == "custom" {
+					cond.ExtOpenAlarm = true
+					break
+				}
+			}
+		}
+	}
+	if cond.ExtOpenAlarm {
+		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
+			result = append(result, v)
 		}
 	}
 	//}

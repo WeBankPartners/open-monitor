@@ -665,6 +665,12 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 				metricMap[tmpMetricLevel] = 1
 			}
 		}
+		if v.AlarmName == "" && v.Title != "" {
+			v.AlarmName = v.Title
+		}
+		if v.Endpoint == "custom_alarm" {
+			v.EndpointGuid = "custom_alarm"
+		}
 	}
 	if len(data) == 0 {
 		data = []*m.AlarmProblemQuery{}
