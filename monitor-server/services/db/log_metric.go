@@ -1715,23 +1715,27 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		tmpTagListBytes, _ := json.Marshal(v.TagConfigList)
 		tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
 		rangeConf, _ := json.Marshal(v.RangeConfig)
+		tmpMetricWithPrefix := v.Metric
+		if param.MetricPrefixCode != "" {
+			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
+		}
 		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name," +
 			"regular,step,agg_type,tag_config,create_user,create_time,auto_alarm,range_config,color_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, v.Metric, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes),
+			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, tmpMetricWithPrefix, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes),
 			operator, nowTime, v.AutoAlarm, string(rangeConf), v.ColorGroup,
 		}})
 		// 自动添加增加 metric
-		tmpMetricTags := []string{}
+		var tmpMetricTags []string
 		if len(v.TagConfigList) > 0 {
 			tmpMetricTags = []string{"tags"}
 		}
-		tmpMetricGuid := fmt.Sprintf("%s__%s", v.Metric, serviceGroup)
+		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
 		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
+			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 	}
 	if param.LogMetricMonitor != "" {
 		var logMetricMonitor = &models.LogMetricMonitorTable{}
