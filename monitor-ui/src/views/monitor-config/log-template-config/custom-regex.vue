@@ -817,8 +817,8 @@ export default {
         this.processConfigInfo()
         if (this.actionType === 'copy') {
           this.configInfo.name = this.configInfo.name + '1'
+          this.metricPrefixCode = ''
         }
-
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
         }
