@@ -46,3 +46,8 @@ CREATE TABLE `alarm_firing` (
     KEY `alarm_firing_name` (`alarm_name`),
     KEY `alarm_firing_alarm_id` (`alarm_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+
+alter table log_metric_config add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
+alter table log_metric_config add column range_config tinytext default null COMMENT '阈值配置json';
+alter table log_metric_config add column color_group varchar(32) default null COMMENT '默认色系';

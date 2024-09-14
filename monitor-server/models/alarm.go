@@ -729,6 +729,18 @@ type AutoAlarmStrategyParam struct {
 	ErrMsgObj          *ErrorMessageObj
 }
 
+type AutoSimpleAlarmStrategyParam struct {
+	MetricList         []*LogMetricConfigTable
+	ServiceGroupsRoles []string
+	ServiceGroup       string
+	EndpointGroup      string
+	Operator           string
+	ErrMsgObj          *ErrorMessageObj
+	AutoCreateWarn     bool
+	LogMetricGroupGuid string
+	MetricPrefixCode   string
+}
+
 type AlarmOptionsParam struct {
 	Status    string `json:"status"`
 	AlarmName string `json:"alarmName"`

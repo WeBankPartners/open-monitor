@@ -11,6 +11,18 @@ type AutoCreateDashboardParam struct {
 	ErrMsgObj          *ErrorMessageObj
 }
 
+type AutoSimpleCreateDashboardParam struct {
+	MetricList          []*LogMetricConfigTable
+	ServiceGroupsRoles  []string
+	ServiceGroup        string
+	Operator            string
+	ErrMsgObj           *ErrorMessageObj
+	AutoCreateDashboard bool
+	LogMetricGroupGuid  string
+	MetricPrefixCode    string
+	MonitorType         string
+}
+
 type SearchModel struct {
 	Id             int    `json:"id"`
 	Enable         bool   `json:"enable"`
