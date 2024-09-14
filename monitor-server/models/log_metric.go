@@ -46,6 +46,9 @@ type LogMetricConfigTable struct {
 	UpdateUser       string    `json:"update_user" xorm:"update_user"`
 	CreateTime       time.Time `json:"create_time" xorm:"create_time"`
 	UpdateTime       time.Time `json:"update_time" xorm:"update_time"`
+	AutoAlarm        bool      `json:"auto_alarm" xorm:"auto_alarm"`
+	RangeConfig      string    `json:"range_config" xorm:"range_config"`
+	ColorGroup       string    `json:"color_group" xorm:"color_group"`
 	FullMetric       string    `json:"full_metric" xorm:"-"`
 }
 
@@ -181,6 +184,7 @@ type CheckRegExpResult struct {
 }
 
 type LogMetricGroupObj struct {
+	LogMonitorTemplateGuid string `json:"log_monitor_template_guid"`
 	LogMetricGroup
 	LogMonitorTemplateName string                  `json:"log_monitor_template_name"`
 	ServiceGroup           string                  `json:"service_group"`
@@ -188,6 +192,8 @@ type LogMetricGroupObj struct {
 	JsonRegular            string                  `json:"json_regular"`
 	ParamList              []*LogMetricParamObj    `json:"param_list"`
 	MetricList             []*LogMetricConfigTable `json:"metric_list"`
+	AutoCreateWarn         bool                    `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard    bool                    `json:"auto_create_dashboard"` //自动创建自定义看板
 }
 
 type LogMetricGroupWithTemplate struct {
