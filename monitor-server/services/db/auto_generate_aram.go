@@ -430,7 +430,7 @@ func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDas
 				LogMetricGroup:  &dashboardParam.LogMetricGroupGuid,
 			}
 			//标签线条
-			chartParam.ChartSeries = append(chartParam.ChartSeries, generateSimpleChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, metric))
+			chartParam.ChartSeries = append(chartParam.ChartSeries, generateSimpleChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, dashboardParam.MetricPrefixCode, metric))
 			subChartActions = handleAutoCreateChart(chartParam, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
 			if len(subChartActions) > 0 {
 				actions = append(actions, subChartActions...)
@@ -607,9 +607,14 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 	return dto
 }
 
-func generateSimpleChartSeries(serviceGroup, monitorType string, metric *models.LogMetricConfigDto) *models.CustomChartSeriesDto {
+func generateSimpleChartSeries(serviceGroup, monitorType, metricPrefixCode string, metric *models.LogMetricConfigDto) *models.CustomChartSeriesDto {
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
+	metricGuid := metric.Metric
+	if metricPrefixCode != "" {
+		metricGuid = metricPrefixCode + "_" + metricGuid
+		metric.Metric = metricPrefixCode + "_" + metric.Metric
+	}
 	dto := &models.CustomChartSeriesDto{
 		Endpoint:     serviceGroup,
 		ServiceGroup: serviceGroup,
@@ -617,7 +622,7 @@ func generateSimpleChartSeries(serviceGroup, monitorType string, metric *models.
 		MonitorType:  monitorType,
 		ColorGroup:   metric.ColorGroup,
 		MetricType:   "business",
-		MetricGuid:   metric.Guid,
+		MetricGuid:   generateMetricGuid(metricGuid, serviceGroup),
 		Metric:       metric.Metric,
 		Tags:         make([]*models.TagDto, 0),
 	}
