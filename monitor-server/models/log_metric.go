@@ -52,6 +52,30 @@ type LogMetricConfigTable struct {
 	FullMetric       string    `json:"full_metric" xorm:"-"`
 }
 
+type LogMetricConfigDto struct {
+	Guid             string      `json:"guid"`
+	LogMetricMonitor string      `json:"log_metric_monitor"`
+	LogMetricGroup   string      `json:"log_metric_group"`
+	LogParamName     string      `json:"log_param_name"`
+	LogMetricJson    string      `json:"log_metric_json"`
+	Metric           string      `json:"metric"`
+	DisplayName      string      `json:"display_name"`
+	JsonKey          string      `json:"json_key"`
+	TagConfig        string      `json:"-"`
+	Regular          string      `json:"regular"`
+	AggType          string      `json:"agg_type"`
+	Step             int64       `json:"step"`
+	TagConfigList    []string    `json:"tag_config"`
+	CreateUser       string      `json:"create_user"`
+	UpdateUser       string      `json:"update_user"`
+	CreateTime       string      `json:"create_time"`
+	UpdateTime       string      `json:"update_time"`
+	AutoAlarm        bool        `json:"auto_alarm"`
+	RangeConfig      interface{} `json:"range_config"`
+	ColorGroup       string      `json:"color_group"`
+	FullMetric       string      `json:"full_metric"`
+}
+
 type LogMetricStringMapTable struct {
 	Guid            string `json:"guid" xorm:"guid"`
 	LogMetricConfig string `json:"log_metric_config" xorm:"log_metric_config"`
@@ -186,14 +210,14 @@ type CheckRegExpResult struct {
 type LogMetricGroupObj struct {
 	LogMonitorTemplateGuid string `json:"log_monitor_template_guid"`
 	LogMetricGroup
-	LogMonitorTemplateName string                  `json:"log_monitor_template_name"`
-	ServiceGroup           string                  `json:"service_group"`
-	MonitorType            string                  `json:"monitor_type"`
-	JsonRegular            string                  `json:"json_regular"`
-	ParamList              []*LogMetricParamObj    `json:"param_list"`
-	MetricList             []*LogMetricConfigTable `json:"metric_list"`
-	AutoCreateWarn         bool                    `json:"auto_create_warn"`      //自动创建告警
-	AutoCreateDashboard    bool                    `json:"auto_create_dashboard"` //自动创建自定义看板
+	LogMonitorTemplateName string                `json:"log_monitor_template_name"`
+	ServiceGroup           string                `json:"service_group"`
+	MonitorType            string                `json:"monitor_type"`
+	JsonRegular            string                `json:"json_regular"`
+	ParamList              []*LogMetricParamObj  `json:"param_list"`
+	MetricList             []*LogMetricConfigDto `json:"metric_list"`
+	AutoCreateWarn         bool                  `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard    bool                  `json:"auto_create_dashboard"` //自动创建自定义看板
 }
 
 type LogMetricGroupWithTemplate struct {
