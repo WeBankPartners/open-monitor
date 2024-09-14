@@ -1150,7 +1150,7 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	if err != nil {
 		return err
 	}
-	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName, SenderMail: mailConfig.SenderMail, AuthServer: mailConfig.AuthServer, AuthPassword: mailConfig.AuthPassword}
+	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName, SenderMail: mailConfig.SenderMail, AuthServer: mailConfig.AuthServer, AuthPassword: mailConfig.AuthPassword, AuthUser: mailConfig.AuthUser}
 	mailConfig.SSL = strings.ToLower(mailConfig.SSL)
 	if mailConfig.SSL == "y" {
 		mailSender.SSL = true
