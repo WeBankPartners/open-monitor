@@ -1683,6 +1683,7 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		param.Guid = "lmg_" + guid.CreateGuid()
 	}
 	nowTime := time.Now()
+	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
 	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
 		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime,
@@ -1732,10 +1733,10 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 	}
-	if param.LogMetricGroup.LogMetricMonitor != "" {
+	if param.LogMetricMonitor != "" {
 		var logMetricMonitor = &models.LogMetricMonitorTable{}
 		var endpointGroupIds []string
-		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricGroup.LogMonitorTemplate).Get(logMetricMonitor); err != nil {
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
 			return
 		}
 		if logMetricMonitor != nil {
