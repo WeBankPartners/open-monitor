@@ -1476,7 +1476,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
-	var existMetricRows []*models.LogMetricConfigTable
+	var existMetricRows []*models.LogMetricConfigDto
 	if metricGroupObj.LogMonitorTemplate != "" {
 		logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
 		if getTemplateErr != nil {
@@ -1601,7 +1601,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		err = getGroupErr
 		return
 	}
-	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigTable{}}
+	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
 	result.UpdateTimeString = result.UpdateTime.Format(models.DatetimeFormat)
 	logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(logMetricGroupGuid)
@@ -1633,7 +1633,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		} else {
 			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
 		}
-		result.MetricList = append(result.MetricList, row)
+		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
 	}
 	return
 }
@@ -1713,8 +1713,11 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		v.Step = 10
 		tmpTagListBytes, _ := json.Marshal(v.TagConfigList)
 		tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, v.Metric, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes), operator, nowTime,
+		rangeConf, _ := json.Marshal(v.RangeConfig)
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name," +
+			"regular,step,agg_type,tag_config,create_user,create_time,auto_alarm,range_config,color_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, v.Metric, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes),
+			operator, nowTime, v.AutoAlarm, string(rangeConf), v.ColorGroup,
 		}})
 		// 自动添加增加 metric
 		tmpMetricTags := []string{}
@@ -1840,7 +1843,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	}
 	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
 	metricGuidList := guid.CreateGuidList(len(param.MetricList))
-	existMetricDataMap := make(map[string]*models.LogMetricConfigTable)
+	existMetricDataMap := make(map[string]*models.LogMetricConfigDto)
 	for _, existMetricObj := range existLogGroupData.MetricList {
 		existMetricDataMap[existMetricObj.Guid] = existMetricObj
 		deleteFlag := true
@@ -1964,6 +1967,44 @@ func getServiceGroupMetricMap(serviceGroup string) (metricGuidMap map[string]str
 	metricGuidMap = make(map[string]string)
 	for _, row := range metricRows {
 		metricGuidMap[row.Guid] = row.Metric
+	}
+	return
+}
+
+func convertLogMetricConfigTable2DtoList(logMetricConfigList []*models.LogMetricConfigTable) (list []*models.LogMetricConfigDto) {
+	list = []*models.LogMetricConfigDto{}
+	for _, config := range logMetricConfigList {
+		list = append(list, convertLogMetricConfigTable2Dto(config))
+	}
+	return list
+}
+
+func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *models.LogMetricConfigDto) {
+	if config.TagConfig != "" && len(config.TagConfigList) == 0 {
+		config.TagConfigList = strings.Split(config.TagConfig, ",")
+	}
+	dto = &models.LogMetricConfigDto{
+		Guid:             config.Guid,
+		LogMetricMonitor: config.LogMetricMonitor,
+		LogMetricGroup:   config.LogMetricGroup,
+		LogParamName:     config.LogParamName,
+		LogMetricJson:    config.LogMetricJson,
+		Metric:           config.Metric,
+		DisplayName:      config.DisplayName,
+		JsonKey:          config.JsonKey,
+		TagConfig:        config.TagConfig,
+		Regular:          config.Regular,
+		AggType:          config.AggType,
+		Step:             config.Step,
+		TagConfigList:    config.TagConfigList,
+		CreateUser:       config.CreateUser,
+		UpdateUser:       config.UpdateUser,
+		CreateTime:       config.CreateTime.Format(models.DatetimeFormat),
+		UpdateTime:       config.UpdateTime.Format(models.DatetimeFormat),
+		AutoAlarm:        config.AutoAlarm,
+		RangeConfig:      config.RangeConfig,
+		ColorGroup:       config.ColorGroup,
+		FullMetric:       config.FullMetric,
 	}
 	return
 }
