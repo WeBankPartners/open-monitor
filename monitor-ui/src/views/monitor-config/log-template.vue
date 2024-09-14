@@ -92,6 +92,7 @@
     </div>
     <JsonRegex ref="jsonRegexRef" @refreshData="getTemplateList"></JsonRegex>
     <StandardRegex ref="standardRegexRef" @refreshData="getTemplateList"></StandardRegex>
+    <CustomRegex ref="customRegexRef" @reloadMetricData="getTemplateList"></CustomRegex>
     <!-- 查看管理层级对象 -->
     <Modal
       v-model="showServiceGroup"
@@ -120,11 +121,12 @@
 </template>
 
 <script>
-import {debounce} from 'lodash'
+import {debounce, isEmpty} from 'lodash'
 import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
 import {showPoptipOnTable} from '@/assets/js/utils.js'
+import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 
 export default {
   name: 'log-template',
@@ -146,6 +148,11 @@ export default {
         {
           name: this.$t('m_standard_regex'),
           log_type: 'regular',
+          tableData: []
+        },
+        {
+          name: this.$t('m_custom_templates'),
+          log_type: 'custom',
           tableData: []
         }
       ],
@@ -180,7 +187,7 @@ export default {
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
-              <Tooltip content={this.$t('m_button_edit') + '12'} placement="top" transfer={true}>
+              <Tooltip content={this.$t('m_button_edit')} placement="top" transfer={true}>
                 <Button
                   size="small"
                   type="primary"
@@ -242,6 +249,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, resp => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
+        this.data[2].tableData = !isEmpty(resp.custom_list) ? resp.custom_list : []
       })
       this.spinShow = false
     },
@@ -267,16 +275,21 @@ export default {
     addTemplate(log_type) {
       if (log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage()
-      } else {
+      } else if (log_type === 'regular') {
         this.$refs.standardRegexRef.loadPage()
+      } else {
+        this.$refs.customRegexRef.loadPage('add', '', '', '', true)
       }
     },
     // 编辑模版
     editAction(row) {
       if (row.log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage(row.guid)
-      } else {
+      } else if (row.log_type === 'regular') {
         this.$refs.standardRegexRef.loadPage(row.guid)
+      } else {
+        this.$refs.customRegexRef.loadPage('edit', '', '', row.guid, true)
+        // this.$refs.customRegexRef.loadPage('add', '', '', '', true)
       }
     },
     copySingleItem(row) {
@@ -342,7 +355,8 @@ export default {
   components: {
     JsonRegex,
     ExportImport,
-    StandardRegex
+    StandardRegex,
+    CustomRegex
   }
 }
 </script>
