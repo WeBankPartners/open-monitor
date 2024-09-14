@@ -34,7 +34,7 @@
             {{$t('m_log_file')}}
             <span class="underline"></span>
           </div>
-          <Button type="success" class="btn-right" @click="add">
+          <Button type="success" class="btn-right" @click="addLogFile">
             {{ $t('m_button_add') }}
           </Button>
         </div>
@@ -67,9 +67,10 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
-                    @on-click="(guid) => {
-                      selectedTemp = guid;
+                    @on-click="(index) => {
+                      selectedTemp = allTemplateList[index].guid;
                       parentGuid = item.guid;
+                      addConfigType = allTemplateList[index].log_type
                       okTempSelect()
                     }"
                   >
@@ -79,7 +80,7 @@
                     <template slot='list'>
                       <DropdownMenu>
                         <DropdownItem v-for="(option, key) in allTemplateList"
-                                      :name="option.guid"
+                                      :name="key"
                                       :key="key"
                                       :disabled="option.disabled"
                         >
@@ -501,7 +502,8 @@ export default {
       parentGuid: '', // 新增在该数据下
       templateList: {
         json_list: [],
-        regular_list: []
+        regular_list: [],
+        custom_list: []
       },
       token: null,
       MODALHEIGHT: 300,
@@ -844,7 +846,8 @@ export default {
       allTemplateList: [],
       logAndDataBaseAllDetail: [],
       isEmpty,
-      metricKey: ''
+      metricKey: '',
+      addConfigType: ''
     }
   },
   computed: {
@@ -859,8 +862,9 @@ export default {
     this.MODALHEIGHT = document.body.scrollHeight - 300
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, resp => {
-      this.templateList.json_list = resp.json_list
-      this.templateList.regular_list = resp.regular_list
+      this.templateList.json_list = resp.json_list || []
+      this.templateList.regular_list = resp.regular_list || []
+      this.templateList.custom_list = resp.custom_list || []
       this.allTemplateList = [{
         name: this.$t('m_standard_json'),
         value: 'm_standard_json',
@@ -869,7 +873,11 @@ export default {
         name: this.$t('m_standard_regex'),
         value: 'm_standard_regex',
         disabled: true
-      }, ...resp.regular_list]
+      }, ...resp.regular_list, {
+        name: this.$t('m_custom_regex'),
+        value: 'm_custom_regex',
+        disabled: true
+      }, ...this.templateList.custom_list]
     })
   },
   methods: {
@@ -1285,7 +1293,7 @@ export default {
         }
       }
     },
-    async add() {
+    async addLogFile() {
       this.cancelAddAndEdit()
       this.getEndpoint(this.addAndEditModal.dataConfig.monitor_type, 'host', true)
       this.addAndEditModal.isAdd = true
@@ -1398,13 +1406,14 @@ export default {
     addByCustom(item) {
       this.selectedTemp = 'customGuid'
       this.parentGuid = item.guid
-      this.okTempSelect()
+      this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
+      // this.okTempSelect()
     },
     okTempSelect() {
-      if (this.selectedTemp === 'customGuid') {
-        this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
+      if (this.addConfigType === 'custom') {
+        this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, this.selectedTemp, true)
       } else {
-        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list)
+        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list).concat(this.templateList.custom_list)
         const findTarget = tmpList.find(tmp => tmp.guid === this.selectedTemp)
         this.$refs.businessMonitorGroupConfigRef.loadPage('add', findTarget.guid, this.parentGuid, '')
       }
