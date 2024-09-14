@@ -730,7 +730,7 @@ type AutoAlarmStrategyParam struct {
 }
 
 type AutoSimpleAlarmStrategyParam struct {
-	MetricList         []*LogMetricConfigTable
+	MetricList         []*LogMetricConfigDto
 	ServiceGroupsRoles []string
 	ServiceGroup       string
 	EndpointGroup      string
