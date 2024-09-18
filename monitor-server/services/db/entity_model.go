@@ -112,7 +112,7 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 			}
 		}
 		var customDashboardRows []*models.CustomDashboardChartRel
-		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where endpoint in ("+endpointFilterSql+")", endpointFilterParams...).Find(&customDashboardRows)
+		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where endpoint in ("+endpointFilterSql+"))", endpointFilterParams...).Find(&customDashboardRows)
 		if err != nil {
 			err = fmt.Errorf("query custom dashboard with endpoint fail,%s ", err.Error())
 			return
