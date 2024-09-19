@@ -64,7 +64,7 @@ func QueryEntityLogMonitorTemplate(param *models.EntityQueryParam) (result []*mo
 }
 
 func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.AnalyzeTransData, err error) {
-	result = &models.AnalyzeTransData{}
+	result = &models.AnalyzeTransData{MonitorType: []string{}, EndpointGroup: []string{}, CustomMetricMonitorType: []string{}, CustomMetricEndpointGroup: []string{}, CustomMetricServiceGroup: []string{}, LogMonitorServiceGroup: []string{}, LogMonitorTemplate: []string{}, StrategyEndpointGroup: []string{}, StrategyServiceGroup: []string{}, LogKeywordServiceGroup: []string{}, DashboardIdList: []string{}}
 	if len(param.EndpointList) == 0 && len(param.ServiceGroupList) == 0 {
 		return
 	}
@@ -112,7 +112,7 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 			}
 		}
 		var customDashboardRows []*models.CustomDashboardChartRel
-		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where endpoint in ("+endpointFilterSql+")", endpointFilterParams...).Find(&customDashboardRows)
+		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where endpoint in ("+endpointFilterSql+"))", endpointFilterParams...).Find(&customDashboardRows)
 		if err != nil {
 			err = fmt.Errorf("query custom dashboard with endpoint fail,%s ", err.Error())
 			return
@@ -160,7 +160,7 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 			result.StrategyServiceGroup = append(result.StrategyServiceGroup, row.ServiceGroup)
 		}
 		var customDashboardRows []*models.CustomDashboardChartRel
-		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where service_group in ("+serviceGroupFilterSql+")", serviceGroupFilterParams...).Find(&customDashboardRows)
+		err = x.SQL("select distinct custom_dashboard from custom_dashboard_chart_rel where dashboard_chart in (select dashboard_chart from custom_chart_series where service_group in ("+serviceGroupFilterSql+"))", serviceGroupFilterParams...).Find(&customDashboardRows)
 		if err != nil {
 			err = fmt.Errorf("query custom dashboard with service group fail,%s ", err.Error())
 			return
