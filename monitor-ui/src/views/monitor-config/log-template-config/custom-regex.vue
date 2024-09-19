@@ -274,11 +274,17 @@ export default {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
           width: 120,
+          renderHeader: () => (
+            <span>
+              <span style="color:red">*</span>
+              <span>{this.$t('m_field_displayName')}</span>
+            </span>
+          ),
           render: (h, params) => (
             <Input
+              clearable
               value={params.row.display_name}
               disabled={this.view}
-              placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'display_name', v)
               }}
@@ -297,6 +303,7 @@ export default {
           ),
           render: (h, params) => (
             <Input
+              clearable
               value={params.row.metric}
               disabled={this.view}
               placeholder={this.$t('m_metric_key_placeholder')}
@@ -335,6 +342,7 @@ export default {
             return (
               <Select
                 filterable
+                clearable
                 value={params.row.log_param_name}
                 disabled={this.view}
                 on-on-change={v => {
@@ -413,6 +421,7 @@ export default {
             return (
               <Select
                 filterable
+                clearable
                 disabled={params.row.log_param_name==='' || this.view}
                 value={params.row.agg_type}
                 on-on-change={v => {
@@ -684,6 +693,18 @@ export default {
         const list = tmpData.metric_list
         for (let i=0; i<list.length; i++) {
           const item = list[i]
+          if (!item.log_param_name) {
+            this.$Message.warning(`${this.$t('m_statistical_parameters')}${this.$t('m_cannot_be_empty')}`)
+            return true
+          }
+          if (!item.agg_type) {
+            this.$Message.warning(`${this.$t('m_filter_label')}${this.$t('m_cannot_be_empty')}`)
+            return true
+          }
+          if (!item.display_name) {
+            this.$Message.warning(`${this.$t('m_field_displayName')}${this.$t('m_cannot_be_empty')}`)
+            return true
+          }
           if (item.auto_alarm === true) {
             if (!item.range_config.operator || !item.range_config.threshold || !item.range_config.time || !item.range_config.time_unit) {
               this.$Message.warning(`${this.$t('m_threshold_property')}${this.$t('m_cannot_be_empty')}`)
@@ -818,7 +839,7 @@ export default {
         this.processConfigInfo()
         if (this.actionType === 'copy') {
           this.configInfo.name = this.configInfo.name + '1'
-          this.metricPrefixCode = this.configInfo.metric_prefix_code + '1'
+          this.metricPrefixCode = hasIn(this.configInfo, 'metric_prefix_code') ? this.configInfo.metric_prefix_code + '1' : ''
         }
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
