@@ -226,6 +226,11 @@ func QueryChartPermissionByCustomChart(customChart string) (list []*models.Custo
 	return
 }
 
+func QueryChartPermissionByCustomChartList(chartIds []string) (list []*models.CustomChartPermission, err error) {
+	err = x.SQL("select * from custom_chart_permission where dashboard_chart in ('" + strings.Join(chartIds, "','") + "')").Find(&list)
+	return
+}
+
 func GetUpdateCustomChartPublicSQL(chartId string) []*Action {
 	var actions []*Action
 	now := time.Now().Format(models.DatetimeFormat)

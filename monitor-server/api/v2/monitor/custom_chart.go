@@ -468,6 +468,25 @@ func GetSharedChartPermission(c *gin.Context) {
 	middleware.ReturnSuccessData(c, result)
 }
 
+func GetSharedChartPermissionBatch(c *gin.Context) {
+	var err error
+	var param models.ChartPermissionBatchParam
+	var list []*models.CustomChartPermission
+	var roles []string
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if list, err = db.QueryChartPermissionByCustomChartList(param.Ids); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, permission := range list {
+		roles = append(roles, permission.RoleId)
+	}
+	middleware.ReturnSuccessData(c, roles)
+}
+
 // QueryCustomChart 查询图表管理列表
 func QueryCustomChart(c *gin.Context) {
 	var param models.QueryChartParam
