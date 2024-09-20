@@ -28,9 +28,11 @@ monitor-agent/transgateway/transgateway
 monitor-agent/db_data_exporter/db_data_exporter
 monitor-agent/daemon_proc/daemon_proc
 monitor-agent/metric_comparison_exporter/metric_comparison_exporter
+monitor-agent/node_exporter/monitor_exporter
 
 #tmp
 monitor-ui/.history/*
 build/node_exporter/node_exporter_new
+build/node_exporter/monitor_exporter
 build/node_exporter/VERSION
 node_exporter.tar.gz
