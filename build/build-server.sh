@@ -9,7 +9,7 @@ go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../ping_exporter
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../node_exporter
-go build -ldflags "-linkmode external -extldflags -static -s" -o node_exporter_new
+go build -ldflags "-linkmode external -extldflags -static -s" -o monitor_exporter
 cd ../transgateway
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../db_data_exporter
