@@ -108,7 +108,7 @@
             </Option>
           </Select>
         </div>
-        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type)) && systemType === '1'">
+        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type)) && ['0', '1'].includes(systemType)">
           <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
           <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
