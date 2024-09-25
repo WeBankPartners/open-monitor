@@ -248,6 +248,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/endpoint_group/query", Method: http.MethodGet, HandlerFunc: alarmv2.ListEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/options", Method: http.MethodGet, HandlerFunc: alarmv2.EndpointGroupOptions},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPost, HandlerFunc: alarmv2.CreateEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/import", Method: http.MethodPost, HandlerFunc: alarmv2.ImportEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/endpoint/list", Method: http.MethodGet, HandlerFunc: alarmv2.GetGroupEndpointRel},
@@ -331,6 +332,7 @@ func init() {
 		// 类型配置
 		&handlerFuncObj{Url: "/config/type/query", Method: http.MethodGet, HandlerFunc: monitor.QueryTypeConfigList},
 		&handlerFuncObj{Url: "/config/type", Method: http.MethodPost, HandlerFunc: monitor.AddTypeConfig},
+		&handlerFuncObj{Url: "/config/type-batch", Method: http.MethodPost, HandlerFunc: monitor.BatchAddTypeConfig},
 		&handlerFuncObj{Url: "/config/type", Method: http.MethodDelete, HandlerFunc: monitor.DeleteTypeConfig},
 
 		// 获取seed
