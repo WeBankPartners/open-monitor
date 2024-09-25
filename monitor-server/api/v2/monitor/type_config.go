@@ -67,7 +67,7 @@ func BatchAddTypeConfig(c *gin.Context) {
 		newMonitorTypeList = append(newMonitorTypeList, s)
 	}
 	for _, monitorType := range newMonitorTypeList {
-		typeConfig := models.TypeConfig{DisplayName: monitorType, CreateUser: middleware.GetOperateUser(c)}
+		typeConfig := models.TypeConfig{Guid: monitorType, DisplayName: monitorType, CreateUser: middleware.GetOperateUser(c)}
 		if typeConfigList, err = db.QueryTypeConfigByName(monitorType); err != nil {
 			middleware.ReturnServerHandleError(c, err)
 			return
