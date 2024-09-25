@@ -1,7 +1,7 @@
 <!--类型配置-->
 <template>
   <div class="admin-metric-config">
-    <BasicMetric from="admin" :showTabs='false' />
+    <BasicMetric from="admin" />
   </div>
 </template>
 
