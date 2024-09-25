@@ -1,10 +1,12 @@
 package alarm
 
 import (
+	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -54,6 +56,40 @@ func EndpointGroupOptions(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccessData(c, result)
+}
+
+func ImportEndpointGroup(c *gin.Context) {
+	var list []*models.EndpointGroupTable
+	file, err := c.FormFile("file")
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	b, err := io.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	if err = json.Unmarshal(b, &list); err != nil {
+		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
+		return
+	}
+	if len(list) == 0 {
+		middleware.ReturnValidateError(c, "can not import empty file")
+		return
+	}
+	for _, endpointGroup := range list {
+		if err = db.CreateEndpointGroup(endpointGroup, middleware.GetOperateUser(c)); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+		}
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func CreateEndpointGroup(c *gin.Context) {
