@@ -5,7 +5,7 @@ cd $WORKSPACE
 
 mkdir -p var
 
-app=node_exporter_new
+app=monitor_exporter
 port={{exporter_port}}
 pidfile=var/app.pid
 logfile=var/app.log

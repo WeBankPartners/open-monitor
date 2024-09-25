@@ -1,6 +1,6 @@
 <template>
   <div class="monitor-metric-config">
-    <Tabs v-model="activeName" v-show="showTabs">
+    <Tabs v-model="activeName">
       <!--通用对象-->
       <TabPane v-if="from === 'admin'" :label="$t('m_basic_type')" name="1">
       </TabPane>
@@ -40,10 +40,6 @@ export default {
     from: {
       type: String,
       default: ''
-    },
-    showTabs: {
-      type: Boolean,
-      default: true
     }
   },
   data() {
