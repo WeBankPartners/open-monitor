@@ -105,7 +105,7 @@
   "agent" : [
     {
       "agent_type" : "host",
-      "agent_bin" : "node_exporter_new",
+      "agent_bin" : "monitor_exporter",
       "port" : "9100"
     },
     {
