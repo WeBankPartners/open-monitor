@@ -18,6 +18,8 @@
           <FormItem :label="$t('m_metric_key')" required>
             <Input
               :disabled="operator === 'edit' || viewOnly"
+              :maxlength='40'
+              show-word-limit
               v-model="metricConfigData.metric"
               :placeholder="$t('m_metric_key_placeholder_second')"
             ></Input>
