@@ -9,3 +9,7 @@ type TypeConfig struct {
 	CreateTime  string `json:"createTime" xorm:"create_time"`
 	ObjectCount int    `json:"objectCount" xorm:"-"` // 对象数
 }
+
+type BatchAddTypeConfigParam struct {
+	DisplayNameList []string `json:"displayNameList"`
+}
