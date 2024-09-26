@@ -15,6 +15,21 @@ import (
 	"time"
 )
 
+var defaultMonitorTypeMetricMap = map[string][]string{
+	"host": {"file_handler_free_percent", "mem_used", "disk_iops", "load_1min", "mem_total", "ping_loss", "ping_time",
+		"ping_alive", "telnet_alive", "disk_read_bytes", "net_if_in_bytes", "cpu_used_percent", "disk_write_bytes", "mem_used_percent",
+		"net_if_out_bytes", "process_mem_byte", "cpu_detail_percent", "process_alive_count", "volume_used_percent", "process_cpu_used_percent"},
+	"telnet":  {"telnet_alive"},
+	"redis":   {"redis_alive", "redis_cmd_num", "redis_db_keys", "redis_mem_used", "redis_expire_key", "redis_client_used_percent"},
+	"process": {"process_mem_byte", "process_alive_count", "process_cpu_used_percent"},
+	"pod":     {"pod_cpu_used_percent", "pod_mem_used_percent"},
+	"ping":    {"ping_loss", "ping_alive"},
+	"nginx":   {"nginx_connect_active", "nginx_handle_request"},
+	"mysql":   {"mysql_alive", "mysql_requests", "db_count_change", "db_monitor_count", "mysql_threads_max", "mysql_buffer_status", "mysql_threads_connected", "mysql_connect_used_percent"},
+	"jvm":     {"jvm_gc_time", "tomcat_request", "jvm_thread_count", "gc_marksweep_time", "tomcat_connection", "jvm_memory_heap_max", "jvm_memory_heap_used", "heap_mem_used_percent"},
+	"http":    {"http_status"},
+}
+
 func ListMetric(c *gin.Context) {
 	guid := c.Query("guid")
 	monitorType := c.Query("monitorType")
