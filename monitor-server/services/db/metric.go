@@ -452,7 +452,11 @@ func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, inputMetric := range inputMetrics {
-		inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+		if serviceGroup != "" {
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+		} else {
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, inputMetric.MonitorType)
+		}
 		matchMetric := &models.MetricTable{}
 		for _, existMetric := range existMetrics {
 			if existMetric.Guid == inputMetric.Guid {
