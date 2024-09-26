@@ -66,6 +66,10 @@ func BatchAddTypeConfig(c *gin.Context) {
 		}
 		newMonitorTypeList = append(newMonitorTypeList, s)
 	}
+	// 如果 role_new表还未初始化,需要先同步数据
+	if !db.ExistRoles() {
+		db.SyncCoreRoleList()
+	}
 	for _, monitorType := range newMonitorTypeList {
 		typeConfig := models.TypeConfig{Guid: monitorType, DisplayName: monitorType, CreateUser: middleware.GetOperateUser(c)}
 		if typeConfigList, err = db.QueryTypeConfigByName(monitorType); err != nil {
