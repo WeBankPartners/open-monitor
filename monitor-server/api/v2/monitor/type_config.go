@@ -77,6 +77,7 @@ func BatchAddTypeConfig(c *gin.Context) {
 			return
 		}
 		if err = db.AddTypeConfig(typeConfig); err != nil {
+			err = fmt.Errorf("monitorType:%s,fail:%v", monitorType, err.Error())
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
