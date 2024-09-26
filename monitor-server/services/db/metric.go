@@ -485,8 +485,13 @@ func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*
 			if tempMetric != "" {
 				failList = append(failList, tempMetric)
 			} else {
-				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
-					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
+				if serviceGroup == "" {
+					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?)",
+						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
+				} else {
+					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
+						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
+				}
 			}
 		}
 	}
