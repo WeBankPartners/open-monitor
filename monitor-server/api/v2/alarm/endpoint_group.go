@@ -2,6 +2,7 @@ package alarm
 
 import (
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v2/monitor"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -10,6 +11,10 @@ import (
 	"strconv"
 	"strings"
 )
+
+// defaultEndpointGroup 默认对象组
+var defaultEndpointGroup = []string{"default_pod_group", "default_host_group", "default_http_group", "default_java_group", "default_ping_group",
+	"default_snmp_group", "default_mysql_group", "default_nginx_group", "default_redis_group", "default_telnet_group", "default_process_group"}
 
 func ListEndpointGroup(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
@@ -84,9 +89,15 @@ func ImportEndpointGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, "can not import empty file")
 		return
 	}
+	defaultEndpointGroupMap := monitor.ConvertArr2Map(defaultEndpointGroup)
 	for _, endpointGroup := range list {
+		// 默认对象组直接过滤掉
+		if defaultEndpointGroupMap[endpointGroup.DisplayName] {
+			continue
+		}
 		if err = db.CreateEndpointGroup(endpointGroup, middleware.GetOperateUser(c)); err != nil {
 			middleware.ReturnServerHandleError(c, err)
+			return
 		}
 	}
 	middleware.ReturnSuccess(c)
