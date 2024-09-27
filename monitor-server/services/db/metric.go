@@ -433,10 +433,13 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 	return
 }
 
-func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
+func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
 	var failList []string
 	var err error
-	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y", endPointGroup, "", "all", "")
+	if monitorType == "" {
+		monitorType = inputMetrics[0].MonitorType
+	}
+	existMetrics, getExistErr := MetricListNew("", monitorType, serviceGroup, "Y", endPointGroup, "", "all", "")
 	if getExistErr != nil {
 		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
@@ -455,7 +458,7 @@ func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*
 		if serviceGroup != "" {
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
 		} else {
-			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, inputMetric.MonitorType)
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
 		}
 		matchMetric := &models.MetricTable{}
 		for _, existMetric := range existMetrics {
@@ -467,7 +470,11 @@ func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*
 		if matchMetric.Guid != "" {
 			// 指标重复后,指标名_1,如果还是重复,记录在失败列表
 			inputMetric.Metric = inputMetric.Metric + "_1"
-			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+			if serviceGroup != "" {
+				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+			} else {
+				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
+			}
 			matchMetric = &models.MetricTable{}
 			for _, existMetric := range existMetrics {
 				if existMetric.Guid == inputMetric.Guid {
@@ -487,10 +494,10 @@ func MetricImport(serviceGroup, endPointGroup, operator string, inputMetrics []*
 			} else {
 				if serviceGroup == "" {
 					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?)",
-						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
+						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
 				} else {
 					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
+						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
 				}
 			}
 		}
