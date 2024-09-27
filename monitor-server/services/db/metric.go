@@ -488,17 +488,16 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			failList = append(failList, inputMetric.Metric)
 		} else {
 			var tempMetric string
+			var newServiceGroup, newEndpointGroup, dbMetricMonitor *string
 			x.SQL("select metric from metric where guid = ?", inputMetric.Guid).Get(&tempMetric)
 			if tempMetric != "" {
 				failList = append(failList, tempMetric)
 			} else {
-				if serviceGroup == "" {
-					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?)",
-						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
-				} else {
-					actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-						Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, endPointGroup, inputMetric.DbMetricMonitor}})
-				}
+				newServiceGroup = &serviceGroup
+				newEndpointGroup = &endPointGroup
+				dbMetricMonitor = &inputMetric.DbMetricMonitor
+				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
+					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, newServiceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, newEndpointGroup, dbMetricMonitor}})
 			}
 		}
 	}
