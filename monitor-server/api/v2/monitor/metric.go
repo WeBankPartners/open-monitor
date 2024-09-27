@@ -163,8 +163,9 @@ func ImportMetric(c *gin.Context) {
 	}
 	serviceGroup := c.Query("serviceGroup")
 	endPointGroup := c.Query("endpointGroup")
-	if serviceGroup == "" && endPointGroup == "" {
-		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup can not empty")
+	monitorType := c.Query("monitorType")
+	if serviceGroup == "" && endPointGroup == "" && monitorType == "" {
+		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup  or monitorType can not empty")
 		return
 	}
 	for i, obj := range paramObj {
@@ -191,7 +192,7 @@ func ImportMetric(c *gin.Context) {
 		}
 	} else {
 		// 走原始指标的导入逻辑
-		if subFaiList, err = db.MetricImport(serviceGroup, endPointGroup, middleware.GetOperateUser(c), ConvertMetricComparison2MetricList(newParamObj)); err != nil {
+		if subFaiList, err = db.MetricImport(monitorType, serviceGroup, endPointGroup, middleware.GetOperateUser(c), ConvertMetricComparison2MetricList(newParamObj)); err != nil {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
