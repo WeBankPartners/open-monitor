@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
@@ -488,14 +489,14 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			failList = append(failList, inputMetric.Metric)
 		} else {
 			var tempMetric string
-			var newServiceGroup, newEndpointGroup, dbMetricMonitor *string
+			var newServiceGroup, newEndpointGroup, dbMetricMonitor sql.NullString
 			x.SQL("select metric from metric where guid = ?", inputMetric.Guid).Get(&tempMetric)
 			if tempMetric != "" {
 				failList = append(failList, tempMetric)
 			} else {
-				newServiceGroup = &serviceGroup
-				newEndpointGroup = &endPointGroup
-				dbMetricMonitor = &inputMetric.DbMetricMonitor
+				newServiceGroup = sql.NullString{String: serviceGroup}
+				newEndpointGroup = sql.NullString{String: endPointGroup}
+				dbMetricMonitor = sql.NullString{String: inputMetric.DbMetricMonitor}
 				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, newServiceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, newEndpointGroup, dbMetricMonitor}})
 			}
