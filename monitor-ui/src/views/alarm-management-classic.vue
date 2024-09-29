@@ -1,6 +1,6 @@
 <template>
   <div class="classic-table">
-    <Table :columns="columns" :border="false" size="small" :data="tableData"></Table>
+    <Table class='classic-table-detail' :columns="columns" :border="true" size="small" :data="tableData"></Table>
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
@@ -224,3 +224,18 @@ export default {
   components: {}
 }
 </script>
+
+<style scoped lang="less">
+.classic-table-detail {
+  max-height: ~'calc(100vh - 300px)';
+  overflow-y: scroll;
+}
+</style>
+
+<style lang='less'>
+.classic-table-detail {
+  .ivu-table.ivu-table-small.ivu-table-border::before {
+      position: relative
+  }
+}
+</style>
