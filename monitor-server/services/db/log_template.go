@@ -357,3 +357,14 @@ func GetLogTemplateGuidByName(name string) (logTemplateGuid string, err error) {
 	logTemplateGuid = queryResult[0]["guid"]
 	return
 }
+
+func GetLogMetricGroupById(id string) (result *models.LogMetricGroup, err error) {
+	var list []*models.LogMetricGroup
+	if err = x.SQL("select * from log_metric_group where guid=?", id).Find(&list); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		result = list[0]
+	}
+	return
+}
