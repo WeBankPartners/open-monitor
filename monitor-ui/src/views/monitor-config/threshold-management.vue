@@ -209,7 +209,11 @@ export default {
           this.$Message.warning(this.$t('m_tips_failed'))
         })
     },
-    uploadSucess() {
+    uploadSucess(res) {
+      if (res.status === 'ERROR') {
+        this.$Message.error(res.message)
+        return
+      }
       this.$Message.success(this.$t('m_tips_success'))
       this.searchTableDetail()
     },
