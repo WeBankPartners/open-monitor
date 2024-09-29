@@ -476,7 +476,9 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 		if serviceGroup != "" {
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
 		} else {
-			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
+			var originMonitorType string
+			x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
 		}
 		matchMetric := &models.MetricTable{}
 		for _, existMetric := range existMetrics {
@@ -491,7 +493,9 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			if serviceGroup != "" {
 				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
 			} else {
-				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
+				var originMonitorType string
+				x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
+				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
 			}
 			matchMetric = &models.MetricTable{}
 			for _, existMetric := range existMetrics {
