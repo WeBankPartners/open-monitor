@@ -572,6 +572,8 @@ type CustomDashboardExportDto struct {
 	TimeRange   int               `json:"timeRange"`   //时间范围
 	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
 	Charts      []*CustomChartDto `json:"charts"`      // 图表
+	MgmtRole    string            `json:"mgmtRole"`    // 管理角色
+	UseRoles    []string          `json:"useRoles"`    // 使用角色
 }
 
 type CustomDashboardImportRes struct {
