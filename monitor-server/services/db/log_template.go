@@ -283,21 +283,41 @@ func GetLogMonitorTemplateByName(guid, name string) (logMonitorTemplate *models.
 	return
 }
 
-func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator string) (affectEndpoints []string, err error) {
-	var existTemplateRows []*models.LogMonitorTemplate
-	err = x.SQL("select guid,name from log_monitor_template").Find(&existTemplateRows)
+func GetLogMonitorTemplateById(guid string) (logMonitorTemplate *models.LogMonitorTemplate, err error) {
+	var logMonitorTemplateRows []*models.LogMonitorTemplate
+	err = x.SQL("select * from log_monitor_template where guid=?", guid).Find(&logMonitorTemplateRows)
 	if err != nil {
 		err = fmt.Errorf("query log monitor template table fail,%s ", err.Error())
 		return
 	}
+	if len(logMonitorTemplateRows) > 0 {
+		logMonitorTemplate = logMonitorTemplateRows[0]
+	}
+	return
+}
+
+func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator string) (affectEndpoints []string, err error) {
 	var actions []*Action
+	var existLogMonitorTemplate *models.LogMonitorTemplate
 	for _, inputParam := range params {
-		inputParam.Guid = ""
-		inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
-		if existLogMonitorTemplate, getErr := GetLogMonitorTemplateByName("", inputParam.Name); getErr != nil {
-			err = getErr
+		if existLogMonitorTemplate, err = GetLogMonitorTemplateById(inputParam.Guid); err != nil {
 			return
-		} else if existLogMonitorTemplate != nil {
+		}
+		if existLogMonitorTemplate != nil {
+			inputParam.Guid = ""
+		}
+		// 看下ID 能否复用
+		if existLogMonitorTemplate, err = GetLogMonitorTemplateByName("", inputParam.Name); err != nil {
+			return
+		}
+		// 看下名称能否复用
+		if existLogMonitorTemplate != nil {
+			inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
+		}
+		if existLogMonitorTemplate, err = GetLogMonitorTemplateByName("", inputParam.Name); err != nil {
+			return
+		}
+		if existLogMonitorTemplate != nil {
 			err = fmt.Errorf("log monitor template name:%s duplicate", inputParam.Name)
 			return
 		}
@@ -305,28 +325,8 @@ func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator s
 		inputParam.CalcResult = string(calcResultBytes)
 		tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
 		actions = append(actions, tmpActions...)
-		//addFlag := true
-		//for _, existRow := range existTemplateRows {
-		//	if existRow.Guid == inputParam.Guid {
-		//		addFlag = false
-		//		break
-		//	}
-		//}
-		//if addFlag {
-		//	tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
-		//	actions = append(actions, tmpActions...)
-		//} else {
-		//	tmpActions, tmpAffect, tmpErr := getUpdateLogMonitorTemplateActions(inputParam, operator)
-		//	if tmpErr != nil {
-		//		err = tmpErr
-		//		return
-		//	}
-		//	actions = append(actions, tmpActions...)
-		//	affectEndpoints = append(affectEndpoints, tmpAffect...)
-		//}
 	}
-	err = Transaction(actions)
-	if err == nil {
+	if err = Transaction(actions); err != nil {
 		affectEndpoints = distinctStringList(affectEndpoints)
 	}
 	return
