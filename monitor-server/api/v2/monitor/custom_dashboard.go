@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -536,6 +537,9 @@ func ExportCustomDashboard(c *gin.Context) {
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var exportChartIdMap = make(map[string]bool)
+	var dashboardPermissionList []*models.CustomDashBoardRoleRel
+	var useRoles []string
+	var mgmtRole string
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -558,6 +562,17 @@ func ExportCustomDashboard(c *gin.Context) {
 			exportChartIdMap[id] = true
 		}
 	}
+	if dashboardPermissionList, err = db.QueryCustomDashboardRoleRelByCustomDashboard(customDashboard.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, role := range dashboardPermissionList {
+		if role.Permission == string(models.PermissionMgmt) {
+			mgmtRole = role.RoleId
+		} else if role.Permission == string(models.PermissionUse) {
+			useRoles = append(useRoles, role.RoleId)
+		}
+	}
 	result = &models.CustomDashboardExportDto{
 		Id:          customDashboard.Id,
 		Name:        customDashboard.Name,
@@ -565,6 +580,8 @@ func ExportCustomDashboard(c *gin.Context) {
 		TimeRange:   customDashboard.TimeRange,
 		RefreshWeek: customDashboard.RefreshWeek,
 		Charts:      []*models.CustomChartDto{},
+		UseRoles:    useRoles,
+		MgmtRole:    mgmtRole,
 	}
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -683,6 +700,41 @@ func ImportCustomDashboard(c *gin.Context) {
 	}
 	if importRes != nil && len(importRes.ChartMap) > 0 {
 		middleware.ReturnSuccessData(c, importRes.ChartMap)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+func TransImportCustomDashboard(c *gin.Context) {
+	var param *models.CustomDashboardExportDto
+	var customDashboard *models.CustomDashboardTable
+	file, err := c.FormFile("file")
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	b, err := io.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &param)
+	if param == nil || strings.TrimSpace(param.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "import data is empty")
+		return
+	}
+	if len(param.Charts) == 0 {
+		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
+		return
+	}
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "insert", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard != nil && customDashboard.Id != 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
 		return
 	}
 	middleware.ReturnSuccess(c)
