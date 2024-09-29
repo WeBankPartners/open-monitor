@@ -775,15 +775,8 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, errMsgObj
 		err = getErr
 		return
 	}
-	//logMonitorMap := make(map[string]int)
 	for _, inputLogMonitor := range param.Config {
 		existObj := &models.LogMetricMonitorObj{}
-		//for _, existLogMonitor := range existData.Config {
-		//	if existLogMonitor.Guid == inputLogMonitor.Guid {
-		//		existObj = existLogMonitor
-		//		break
-		//	}
-		//}
 		if existObj.Guid != "" {
 			if existObj.LogPath != inputLogMonitor.LogPath || existObj.MonitorType != inputLogMonitor.MonitorType {
 				actions = append(actions, &Action{Sql: "update log_metric_monitor set log_path=?,monitor_type=? where guid=?", Param: []interface{}{inputLogMonitor.LogPath, inputLogMonitor.MonitorType, inputLogMonitor.Guid}})
