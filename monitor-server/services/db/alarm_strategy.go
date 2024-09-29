@@ -1325,7 +1325,7 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	var existStrategyTable []*models.AlarmStrategyTable
 	var systemAlarmStrategyMap = convertString2Map(systemAlarmStrategyIds)
 	var list []*models.GroupStrategyObj
-	for i := 1; i <= 20; i++ {
+	for i := 1; i <= 24; i++ {
 		systemAlarmStrategyMap[fmt.Sprintf("old_%d", i)] = true
 	}
 	// 过滤掉系统自带数据,根据ID过滤,ID是固定的
