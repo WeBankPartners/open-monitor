@@ -972,7 +972,18 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			actions = append(actions, tmpActions...)
 		}
 		for _, metricGroup := range inputObj.MetricGroups {
-			metricGroup.Guid = "lmg_" + guid.CreateGuid()
+			var tempLogMetricGroup *models.LogMetricGroup
+			// log_metric_group guid 先查询存在则新增
+			if metricGroup.Guid == "" {
+				metricGroup.Guid = "lmg_" + guid.CreateGuid()
+			} else {
+				if tempLogMetricGroup, err = GetLogMetricGroupById(metricGroup.Guid); err != nil {
+					return
+				}
+				if tempLogMetricGroup != nil {
+					metricGroup.Guid = "lmg_" + guid.CreateGuid()
+				}
+			}
 			metricGroup.LogMetricMonitor = inputObj.Guid
 			metricGroup.ServiceGroup = inputObj.ServiceGroup
 			metricGroup.MonitorType = inputObj.MonitorType
@@ -1727,6 +1738,15 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
 		}
+		// 基于 log_metric_group & metric查询 指标是否存在
+		var metricList []*models.MetricTable
+		if metricList, err = getMetricByLogMetricGroupAndMetric(tmpMetricWithPrefix, param.Guid); err != nil {
+			return
+		}
+		if len(metricList) > 0 {
+			// 指标已经存在,说明指标层级对象已经存在(底座迁移逻辑用)
+			continue
+		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 	}
@@ -1921,6 +1941,11 @@ func GetLogMetricMonitorMetricPrefixMap(logMetricMonitor string) (existPrefixMap
 	for _, v := range queryResult {
 		existPrefixMap[v["metric_prefix_code"]] = 1
 	}
+	return
+}
+
+func getMetricByLogMetricGroupAndMetric(logMetricGroup, metric string) (result []*models.MetricTable, err error) {
+	err = x.SQL("select * from metric where metric=? and log_metric_group=?", metric, logMetricGroup).Find(&result)
 	return
 }
 
