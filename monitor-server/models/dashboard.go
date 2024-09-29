@@ -566,14 +566,15 @@ type CustomDashboardExportParam struct {
 }
 
 type CustomDashboardExportDto struct {
-	Id          int               `json:"id"`
-	Name        string            `json:"name"`
-	PanelGroups string            `json:"panelGroups"`
-	TimeRange   int               `json:"timeRange"`   //时间范围
-	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
-	Charts      []*CustomChartDto `json:"charts"`      // 图表
-	MgmtRole    string            `json:"mgmtRole"`    // 管理角色
-	UseRoles    []string          `json:"useRoles"`    // 使用角色
+	Id             int               `json:"id"`
+	Name           string            `json:"name"`
+	PanelGroups    string            `json:"panelGroups"`
+	TimeRange      int               `json:"timeRange"`      //时间范围
+	RefreshWeek    int               `json:"refreshWeek"`    // 刷新周期
+	Charts         []*CustomChartDto `json:"charts"`         // 图表
+	MgmtRole       string            `json:"mgmtRole"`       // 管理角色
+	UseRoles       []string          `json:"useRoles"`       // 使用角色
+	LogMetricGroup string            `json:"logMetricGroup"` // 关联业务配置
 }
 
 type CustomDashboardImportRes struct {
