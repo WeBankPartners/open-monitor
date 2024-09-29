@@ -10,6 +10,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -389,7 +390,7 @@ func ImportLogMetric(c *gin.Context) {
 		return
 	}
 	var paramObj models.LogMetricQueryObj
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	defer f.Close()
 	if err != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", err)
