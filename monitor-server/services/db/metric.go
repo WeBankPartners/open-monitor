@@ -16,6 +16,18 @@ import (
 	"time"
 )
 
+var systemMetricList = []string{"cpu_detail_percent__host", "cpu_used_percent__host", "db_count_change__mysql", "db_monitor_count__mysql",
+	"disk_iops__host", "disk_read_bytes__host", "disk_write_bytes__host", "file_handler_free_percent__host", "gc_marksweep_time__java",
+	"heap_mem_used_percent__java", "http_status__http", "jvm_gc_time__java", "jvm_memory_heap_max__java", "jvm_memory_heap_used__java",
+	"jvm_thread_count__java", "load_1min__host", "mem_total__host", "mem_used_percent__host", "mem_used__host", "mysql_alive__mysql",
+	"mysql_buffer_status__mysql", "mysql_connect_used_percent__mysql", "mysql_requests__mysql", "mysql_threads_connected__mysql",
+	"mysql_threads_max__mysql", "net_if_in_bytes__host", "net_if_out_bytes__host", "nginx_connect_active__nginx", "nginx_handle_request__nginx",
+	"ping_alive__host", "ping_alive__ping", "ping_loss__host", "ping_loss__ping", "ping_time__host", "pod_cpu_used_percent__pod",
+	"pod_mem_used_percent__pod", "process_alive_count__host", "process_alive_count__process", "process_cpu_used_percent__host",
+	"process_cpu_used_percent__process", "process_mem_byte__host", "process_mem_byte__process", "redis_alive__redis", "redis_client_used_percent__redis",
+	"redis_cmd_num__redis", "redis_db_keys__redis", "redis_expire_key__redis", "redis_mem_used__redis", "telnet_alive__host", "telnet_alive__telnet",
+	"tomcat_connection__java", "tomcat_request__java", "volume_used_percent__host"}
+
 func MetricList(id string, endpointType, serviceGroup string) (result []*models.PromMetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select guid as id,metric,monitor_type as metric_type,prom_expr as prom_ql from metric where 1=1 "
@@ -455,7 +467,12 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 	}
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
+	systemMetricMap := convertString2Map(systemMetricList)
 	for _, inputMetric := range inputMetrics {
+		// 命中系统自带指标直接跳过
+		if systemMetricMap[inputMetric.Guid] {
+			continue
+		}
 		if serviceGroup != "" {
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
 		} else {
