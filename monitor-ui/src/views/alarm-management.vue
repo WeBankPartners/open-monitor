@@ -76,7 +76,7 @@
     </div>
     <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
       <template v-slot:pagination>
-        <div class="page-left">
+        <div class="pagination-style">
           <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
         </div>
       </template>
@@ -803,11 +803,11 @@ label {
   cursor: pointer;
 }
 
-.page-left {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
-  margin-bottom: 10px;
+.pagination-style {
+  z-index: 1000;
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
 }
 
 /* 可以设置不同的进入和离开动画 */
