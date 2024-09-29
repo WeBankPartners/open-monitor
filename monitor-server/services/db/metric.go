@@ -514,6 +514,7 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 				newServiceGroup = sql.NullString{String: serviceGroup}
 				newEndpointGroup = sql.NullString{String: endPointGroup}
 				dbMetricMonitor = sql.NullString{String: inputMetric.DbMetricMonitor}
+				log.Logger.Info("insert metric", log.String("metric", inputMetric.Metric), log.String("serviceGroup", newServiceGroup.String), log.String("newEndpointGroup", newEndpointGroup.String))
 				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, newServiceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, newEndpointGroup, dbMetricMonitor}})
 			}
