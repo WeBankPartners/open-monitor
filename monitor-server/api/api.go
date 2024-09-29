@@ -308,6 +308,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
 		&handlerFuncObj{Url: "/dashboard/custom/export", Method: http.MethodPost, HandlerFunc: monitor.ExportCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom/import", Method: http.MethodPost, HandlerFunc: monitor.ImportCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/trans_import", Method: http.MethodPost, HandlerFunc: monitor.TransImportCustomDashboard},
 		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodPost, HandlerFunc: monitor.GetSharedChartList},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
