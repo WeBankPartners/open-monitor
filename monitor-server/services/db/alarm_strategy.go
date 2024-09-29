@@ -17,6 +17,9 @@ import (
 	"time"
 )
 
+// 系统内置 指标阈值-组 ,& old_1~old_20
+var systemAlarmStrategyIds = []string{"new_host_ping_loss", "new_ping_ping_loss", "old_process_group"}
+
 func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var strategy []*models.GroupStrategyObj
@@ -1320,6 +1323,20 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 
 func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
 	var existStrategyTable []*models.AlarmStrategyTable
+	var systemAlarmStrategyMap = convertString2Map(systemAlarmStrategyIds)
+	var list []*models.GroupStrategyObj
+	for i := 1; i <= 20; i++ {
+		systemAlarmStrategyMap[fmt.Sprintf("old_%d", i)] = true
+	}
+	// 过滤掉系统自带数据,根据ID过滤,ID是固定的
+	for _, obj := range param.Strategy {
+		if systemAlarmStrategyMap[obj.Guid] {
+			continue
+		}
+		list = append(list, obj)
+	}
+	param.Strategy = list
+
 	err = x.SQL("select guid,name,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
 	if err != nil {
 		err = fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
@@ -1329,11 +1346,6 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	for _, v := range existStrategyTable {
 		existNameMap[v.Name] = v.Guid
 	}
-	//for _, v := range existStrategyTable {
-	//	actions = append(actions, getNotifyListDeleteAction(v.Guid, "", "")...)
-	//	actions = append(actions, getStrategyConditionDeleteAction(v.Guid)...)
-	//	actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{v.Guid}})
-	//}
 	for _, strategy := range param.Strategy {
 		strategy.EndpointGroup = endpointGroup
 		if _, ok := existNameMap[strategy.Name]; ok {
