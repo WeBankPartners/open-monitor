@@ -168,17 +168,6 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup  or monitorType can not empty")
 		return
 	}
-	// 如果endpointGroup 不为空,monitorType null则去对象组表查询下 monitorType值
-	if endPointGroup != "" && monitorType == "" {
-		var endpointGroupTable *models.EndpointGroupTable
-		if endpointGroupTable, err = db.GetSimpleEndpointGroup(endPointGroup); err != nil {
-			middleware.ReturnServerHandleError(c, err)
-			return
-		}
-		if endpointGroupTable != nil {
-			monitorType = endpointGroupTable.MonitorType
-		}
-	}
 	for i, obj := range paramObj {
 		if !metricMap[obj.Metric] {
 			metricMap[obj.Metric] = true
