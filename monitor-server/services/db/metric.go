@@ -511,12 +511,16 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			if tempMetric != "" {
 				failList = append(failList, tempMetric)
 			} else {
-				newServiceGroup = sql.NullString{String: serviceGroup}
-				newEndpointGroup = sql.NullString{String: endPointGroup}
-				dbMetricMonitor = sql.NullString{String: inputMetric.DbMetricMonitor}
-				log.Logger.Info("insert metric", log.String("metric", inputMetric.Metric), log.String("serviceGroup", newServiceGroup.String), log.String("newEndpointGroup", newEndpointGroup.String))
-				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, newServiceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator, newEndpointGroup, dbMetricMonitor}})
+				newServiceGroup = sql.NullString{String: serviceGroup, Valid: serviceGroup != ""}
+				newEndpointGroup = sql.NullString{String: endPointGroup, Valid: endPointGroup != ""}
+				dbMetricMonitor = sql.NullString{String: inputMetric.DbMetricMonitor, Valid: inputMetric.DbMetricMonitor != ""}
+				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace," +
+					"update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor,log_metric_config,log_metric_template," +
+					"log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, monitorType, inputMetric.PromExpr, newServiceGroup,
+						inputMetric.Workspace, nowTime, nowTime, operator, operator, newEndpointGroup, dbMetricMonitor, inputMetric.LogMetricConfig,
+						inputMetric.LogMetricTemplate, inputMetric.LogMetricGroup,
+					}})
 			}
 		}
 	}
@@ -736,19 +740,16 @@ func GetAddComparisonMetricActions(param models.MetricComparisonParam, metric *m
 	} else {
 		promExpr = promExpr + "{calc_type=\"$t_calc_type\"}"
 	}
-
-	if metric.ServiceGroup == "" {
-		if metric.EndpointGroup == "" {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
-		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,workspace,update_time,create_time,create_user,update_user,endpoint_group,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.Workspace, now, now, operator, operator, metric.EndpointGroup, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
-		}
-	} else {
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,log_metric_config,log_metric_template,log_metric_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, metric.ServiceGroup, metric.Workspace, now, now, operator, operator, metric.LogMetricConfig, metric.LogMetricTemplate, metric.LogMetricGroup}})
-	}
+	newServiceGroup := sql.NullString{String: metric.ServiceGroup, Valid: metric.ServiceGroup != ""}
+	newEndpointGroup := sql.NullString{String: metric.EndpointGroup, Valid: metric.EndpointGroup != ""}
+	dbMetricMonitor := sql.NullString{String: metric.DbMetricMonitor, Valid: metric.DbMetricMonitor != ""}
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace," +
+		"update_time,create_time,create_user,update_user,endpoint_group,db_metric_monitor,log_metric_config,log_metric_template," +
+		"log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+		Param: []interface{}{newMetricId, metricName, metric.MonitorType, promExpr, newServiceGroup,
+			metric.Workspace, now, now, operator, operator, newEndpointGroup, dbMetricMonitor, metric.LogMetricConfig,
+			metric.LogMetricTemplate, metric.LogMetricGroup,
+		}})
 	actions = append(actions, &Action{Sql: "insert into metric_comparison(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,origin_metric,origin_prom_expr,create_user,create_time) values(?,?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, calcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, metric.Metric, metric.PromExpr, operator, now}})
 	return
