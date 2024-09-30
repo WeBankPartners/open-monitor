@@ -1283,15 +1283,6 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
 		}
-		// 基于 log_metric_group & metric查询 指标是否存在
-		var metricList []*models.MetricTable
-		if metricList, err = getMetricByLogMetricGroupAndMetric(tmpMetricWithPrefix, param.LogMetricGroupGuid); err != nil {
-			return
-		}
-		if len(metricList) > 0 {
-			// 指标已经存在,说明指标层级对象已经存在(底座迁移逻辑用)
-			continue
-		}
 		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
@@ -1742,15 +1733,6 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		if len(v.TagConfigList) > 0 {
 			tmpMetricTags = []string{"tags"}
 		}
-		// 基于 log_metric_group & metric查询 指标是否存在
-		var metricList []*models.MetricTable
-		if metricList, err = getMetricByLogMetricGroupAndMetric(tmpMetricWithPrefix, param.Guid); err != nil {
-			return
-		}
-		if len(metricList) > 0 {
-			// 指标已经存在,说明指标层级对象已经存在(底座迁移逻辑用)
-			continue
-		}
 		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
@@ -1950,11 +1932,6 @@ func GetLogMetricMonitorMetricPrefixMap(logMetricMonitor string) (existPrefixMap
 	for _, v := range queryResult {
 		existPrefixMap[v["metric_prefix_code"]] = 1
 	}
-	return
-}
-
-func getMetricByLogMetricGroupAndMetric(logMetricGroup, metric string) (result []*models.MetricTable, err error) {
-	err = x.SQL("select * from metric where metric=? and log_metric_group=?", metric, logMetricGroup).Find(&result)
 	return
 }
 
