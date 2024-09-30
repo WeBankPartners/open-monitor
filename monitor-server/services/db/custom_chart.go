@@ -89,10 +89,12 @@ func QueryAllChartSeriesConfig() (configMap map[string][]*models.CustomChartSeri
 	}
 	if len(list) > 0 {
 		for _, config := range list {
-			if _, ok := configMap[*config.DashboardChartConfig]; !ok {
-				configMap[*config.DashboardChartConfig] = []*models.CustomChartSeriesConfig{}
+			if config.DashboardChartConfig != nil {
+				if _, ok := configMap[*config.DashboardChartConfig]; !ok {
+					configMap[*config.DashboardChartConfig] = []*models.CustomChartSeriesConfig{}
+				}
+				configMap[*config.DashboardChartConfig] = append(configMap[*config.DashboardChartConfig], config)
 			}
-			configMap[*config.DashboardChartConfig] = append(configMap[*config.DashboardChartConfig], config)
 		}
 	}
 	return
