@@ -544,7 +544,7 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) 
 		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime, operator}})
 		for _, keywordObj := range inputKeywordConfig.KeywordList {
 			actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority," +
-				"update_time,name,content,active_window,create_time,update_user) value (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{keywordObj.Guid,
+				"update_time,name,content,active_window,create_time,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{keywordObj.Guid,
 				keywordObj.LogKeywordMonitor, keywordObj.Keyword, keywordObj.Regulative, keywordObj.NotifyEnable, keywordObj.Priority,
 				nowTime, keywordObj.Name, keywordObj.Content, keywordObj.ActiveWindow, nowTime, operator}})
 		}

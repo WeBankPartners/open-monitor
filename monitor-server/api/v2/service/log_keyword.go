@@ -7,7 +7,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -252,7 +252,7 @@ func ImportLogKeyword(c *gin.Context) {
 		return
 	}
 	var paramObj models.LogKeywordServiceGroupObj
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	defer f.Close()
 	if err != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", err)
@@ -273,7 +273,7 @@ func ImportLogKeyword(c *gin.Context) {
 		logKeyword.ServiceGroup = serviceGroup
 	}
 	if err = db.ImportLogKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
-		middleware.ReturnHandleError(c, "import log keyword fail", err)
+		middleware.ReturnServerHandleError(c, err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}
