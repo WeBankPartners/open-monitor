@@ -210,14 +210,15 @@ type CheckRegExpResult struct {
 type LogMetricGroupObj struct {
 	LogMonitorTemplateGuid string `json:"log_monitor_template_guid"`
 	LogMetricGroup
-	LogMonitorTemplateName string                `json:"log_monitor_template_name"`
-	ServiceGroup           string                `json:"service_group"`
-	MonitorType            string                `json:"monitor_type"`
-	JsonRegular            string                `json:"json_regular"`
-	ParamList              []*LogMetricParamObj  `json:"param_list"`
-	MetricList             []*LogMetricConfigDto `json:"metric_list"`
-	AutoCreateWarn         bool                  `json:"auto_create_warn"`      //自动创建告警
-	AutoCreateDashboard    bool                  `json:"auto_create_dashboard"` //自动创建自定义看板
+	LogMonitorTemplateName string                 `json:"log_monitor_template_name"`
+	ServiceGroup           string                 `json:"service_group"`
+	MonitorType            string                 `json:"monitor_type"`
+	JsonRegular            string                 `json:"json_regular"`
+	ParamList              []*LogMetricParamObj   `json:"param_list"`
+	MetricList             []*LogMetricConfigDto  `json:"metric_list"`
+	AutoCreateWarn         bool                   `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard    bool                   `json:"auto_create_dashboard"` //自动创建自定义看板
+	LogMonitorTemplateDto  *LogMonitorTemplateDto `json:"log_monitor_template_data"`
 }
 
 type LogMetricGroupWithTemplate struct {
