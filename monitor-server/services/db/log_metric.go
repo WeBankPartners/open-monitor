@@ -41,8 +41,15 @@ func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.L
 			logMetricObj.MonitorType = logMetricMonitor.MonitorType
 		}
 		for _, logMetricGroupObj := range tmpConfig.MetricGroups {
+			var logMonitorTemplateDto *models.LogMonitorTemplateDto
 			logMetricGroupObj.ServiceGroup = serviceGroup
 			logMetricGroupObj.MonitorType = logMetricMonitor.MonitorType
+			if strings.TrimSpace(logMetricGroupObj.LogMonitorTemplate) != "" {
+				if logMonitorTemplateDto, err = GetLogMonitorTemplate(logMetricGroupObj.LogMonitorTemplate); err != nil {
+					return
+				}
+				logMetricGroupObj.LogMonitorTemplateDto = logMonitorTemplateDto
+			}
 		}
 		result.Config = append(result.Config, &tmpConfig)
 	}
@@ -1017,6 +1024,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 			MetricPrefixCode:       metricGroup.MetricPrefixCode,
 			ServiceGroup:           metricGroup.ServiceGroup,
 			MonitorType:            metricGroup.MonitorType,
+			LogMonitorTemplate:     metricGroup.LogMonitorTemplateDto,
 		}
 		for _, mgParamObj := range metricGroup.ParamList {
 			if mgParamObj.Name == "code" {
@@ -1248,8 +1256,15 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		return
 	}
 	if logMonitorTemplateObj == nil {
-		err = fmt.Errorf("LogMonitorTemplateGuid is valid")
-		return
+		// 业务配置导入会带业务日志模版,如果模版未提前创建好,需要自动支持先导入模版
+		if param.LogMonitorTemplate != nil {
+			if tmpActions := getCreateLogMonitorTemplateActions(param.LogMonitorTemplate, operator); len(tmpActions) > 0 {
+				actions = append(actions, tmpActions...)
+			}
+		} else {
+			err = fmt.Errorf("LogMonitorTemplateGuid is valid")
+			return
+		}
 	}
 	refTemplateVersion = logMonitorTemplateObj.UpdateTime.Format(models.DatetimeDigitFormat)
 	if templateSnapshot, err = json.Marshal(logMonitorTemplateObj); err != nil {
