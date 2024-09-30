@@ -118,8 +118,10 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 			return
 		}
 		for _, row := range customDashboardRows {
-			result.DashboardIdList = append(result.DashboardIdList, fmt.Sprintf("%d", *row.CustomDashboard))
-			customDashboardDistinctMap[*row.CustomDashboard] = 1
+			if row.CustomDashboard != nil {
+				result.DashboardIdList = append(result.DashboardIdList, fmt.Sprintf("%d", *row.CustomDashboard))
+				customDashboardDistinctMap[*row.CustomDashboard] = 1
+			}
 		}
 	}
 	if len(param.ServiceGroupList) > 0 {
@@ -166,11 +168,13 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 			return
 		}
 		for _, row := range customDashboardRows {
-			if _, existFlag := customDashboardDistinctMap[*row.CustomDashboard]; existFlag {
-				continue
+			if row.CustomDashboard != nil {
+				if _, existFlag := customDashboardDistinctMap[*row.CustomDashboard]; existFlag {
+					continue
+				}
+				result.DashboardIdList = append(result.DashboardIdList, fmt.Sprintf("%d", *row.CustomDashboard))
+				customDashboardDistinctMap[*row.CustomDashboard] = 1
 			}
-			result.DashboardIdList = append(result.DashboardIdList, fmt.Sprintf("%d", *row.CustomDashboard))
-			customDashboardDistinctMap[*row.CustomDashboard] = 1
 		}
 		var metricRows []*models.MetricTable
 		err = x.SQL("select distinct service_group from metric where service_group in ("+serviceGroupFilterSql+") and log_metric_group is null", serviceGroupFilterParams...).Find(&metricRows)

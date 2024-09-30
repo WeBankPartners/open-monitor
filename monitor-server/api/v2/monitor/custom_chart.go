@@ -564,7 +564,9 @@ func QueryCustomChart(c *gin.Context) {
 			}
 			if len(chartRelList) > 0 {
 				for _, rel := range chartRelList {
-					useDashboard = append(useDashboard, customDashboardMap[*rel.CustomDashboard])
+					if rel.CustomDashboard != nil {
+						useDashboard = append(useDashboard, customDashboardMap[*rel.CustomDashboard])
+					}
 				}
 			}
 			resultDto := &models.QueryChartResultDto{
