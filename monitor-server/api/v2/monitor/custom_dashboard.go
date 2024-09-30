@@ -379,7 +379,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	for _, chart := range param.Charts {
 		insert = true
 		for _, chartRel := range hasChartRelList {
-			if *chartRel.DashboardChart == chart.Id {
+			if chartRel.DashboardChart != nil && *chartRel.DashboardChart == chart.Id {
 				displayConfig, _ := json.Marshal(chart.DisplayConfig)
 				groupDisplayConfig, _ := json.Marshal(chart.GroupDisplayConfig)
 				updateChartRelList = append(updateChartRelList, &models.CustomDashboardChartRel{
@@ -574,15 +574,17 @@ func ExportCustomDashboard(c *gin.Context) {
 		}
 	}
 	result = &models.CustomDashboardExportDto{
-		Id:             customDashboard.Id,
-		Name:           customDashboard.Name,
-		PanelGroups:    customDashboard.PanelGroups,
-		TimeRange:      customDashboard.TimeRange,
-		RefreshWeek:    customDashboard.RefreshWeek,
-		Charts:         []*models.CustomChartDto{},
-		UseRoles:       useRoles,
-		MgmtRole:       mgmtRole,
-		LogMetricGroup: *customDashboard.LogMetricGroup,
+		Id:          customDashboard.Id,
+		Name:        customDashboard.Name,
+		PanelGroups: customDashboard.PanelGroups,
+		TimeRange:   customDashboard.TimeRange,
+		RefreshWeek: customDashboard.RefreshWeek,
+		Charts:      []*models.CustomChartDto{},
+		UseRoles:    useRoles,
+		MgmtRole:    mgmtRole,
+	}
+	if customDashboard.LogMetricGroup != nil {
+		result.LogMetricGroup = *customDashboard.LogMetricGroup
 	}
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
