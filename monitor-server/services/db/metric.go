@@ -475,6 +475,15 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 		}
 		if serviceGroup != "" {
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+			// serviceGroup 不为空,guid已经生成,并且 log_metric_group || db_metric_monitor不为空,
+			// 则跳过当前这条处理记录(主要用在底座迁移用,业务配置也会生成指标和指标导入指标重复了
+			var metricRow *models.MetricTable
+			if metricRow, err = GetSimpleMetric(inputMetric.Guid); err != nil {
+				return failList, err
+			}
+			if metricRow != nil && (metricRow.LogMetricGroup != "" || metricRow.DbMetricMonitor != "") {
+				continue
+			}
 		} else {
 			var originMonitorType string
 			x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
