@@ -478,10 +478,10 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			// serviceGroup 不为空,guid已经生成,并且 log_metric_group || db_metric_monitor不为空,
 			// 则跳过当前这条处理记录(主要用在底座迁移用,业务配置也会生成指标和指标导入指标重复了
 			var metricRow *models.MetricTable
-			if metricRow, err = GetSimpleMetric(inputMetric.Guid); err != nil {
+			if metricRow, err = GetMetric(inputMetric.Guid); err != nil {
 				return failList, err
 			}
-			if metricRow != nil && (metricRow.LogMetricGroup != "" || metricRow.DbMetricMonitor != "") {
+			if metricRow != nil && metricRow.Guid != "" && (metricRow.LogMetricGroup != "" || metricRow.DbMetricMonitor != "") {
 				continue
 			}
 		} else {
