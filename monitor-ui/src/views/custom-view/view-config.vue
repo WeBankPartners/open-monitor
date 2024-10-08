@@ -659,9 +659,7 @@ export default {
       this.viewCondition.dateRange = data
       this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
-        if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
-          this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
-        }
+        this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
@@ -760,8 +758,13 @@ export default {
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
-        tmpArr.forEach((tmpItem, index) => {
-          this.layoutData[index]._activeCharts = tmpItem._activeCharts
+        tmpArr.forEach(tmpItem => {
+          const item = find(this.layoutData, {
+            id: tmpItem.id
+          })
+          if (!isEmpty(item)) {
+            item._activeCharts = tmpItem._activeCharts
+          }
         })
       }
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
