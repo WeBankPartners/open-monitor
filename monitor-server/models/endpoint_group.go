@@ -272,3 +272,9 @@ type AlarmStrategyQueryParam struct {
 	Show      string `json:"show"`
 	AlarmName string `json:"alarmName"`
 }
+
+type WorkflowDto struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Key     string `json:"key"`
+}
