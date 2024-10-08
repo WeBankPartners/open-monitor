@@ -257,3 +257,21 @@ func ListCallbackEvent(c *gin.Context) {
 		middleware.ReturnSuccessData(c, eventList.Data)
 	}
 }
+
+func ListAlarmStrategyWorkFlow(c *gin.Context) {
+	var result []*models.WorkflowDto
+	var err error
+	if result, err = db.GetAlarmStrategyNotifyWorkflowList(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, dto := range result {
+		index := strings.Index(dto.Name, "[")
+		name := dto.Name
+		if index >= 0 {
+			dto.Name = name[:index]
+			dto.Version = name[index+1 : len(name)-1]
+		}
+	}
+	middleware.ReturnSuccessData(c, result)
+}
