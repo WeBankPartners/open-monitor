@@ -760,8 +760,13 @@ export default {
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
-        tmpArr.forEach((tmpItem, index) => {
-          this.layoutData[index]._activeCharts = tmpItem._activeCharts
+        tmpArr.forEach(tmpItem => {
+          const item = find(this.layoutData, {
+            id: tmpItem.id
+          })
+          if (!isEmpty(item)) {
+            item._activeCharts = tmpItem._activeCharts
+          }
         })
       }
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
