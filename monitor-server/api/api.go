@@ -258,6 +258,7 @@ func init() {
 
 		&handlerFuncObj{Url: "/alarm/strategy/search", Method: http.MethodGet, HandlerFunc: alarmv2.ListStrategyQueryOptions},
 		&handlerFuncObj{Url: "/alarm/strategy/query", Method: http.MethodPost, HandlerFunc: alarmv2.QueryAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy/workflow", Method: http.MethodGet, HandlerFunc: alarmv2.ListAlarmStrategyWorkFlow},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPost, HandlerFunc: alarmv2.CreateAlarmStrategy},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateAlarmStrategy},
 		&handlerFuncObj{Url: "/alarm/strategy/:strategyGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy},
