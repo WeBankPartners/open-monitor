@@ -464,6 +464,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
 	var result sql.Result
 	var newDashboardId int64
+	var logMetricGroup = sql.NullString{String: param.LogMetricGroup, Valid: param.LogMetricGroup != ""}
 	now := time.Now().Format(models.DatetimeFormat)
 	importRes = &models.CustomDashboardImportRes{ChartMap: make(map[string][]string)}
 	if customDashboardList, err = QueryCustomDashboardListByName(param.Name); err != nil {
@@ -500,8 +501,8 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 			return
 		}
 	}
-	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
-		param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek)
+	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week,log_metric_group) values(?,?,?,?,?,?,?,?)",
+		param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek, logMetricGroup)
 	if err != nil {
 		return
 	}
@@ -526,10 +527,12 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId int64, operator, now, mgmtRole string, useRoles []string) (actions []*Action, importRes *models.CustomDashboardImportRes, err error) {
 	var permissionList []*models.CustomChartPermission
 	var list []*models.CustomChart
+	var logMetricGroup string
 	actions = []*Action{}
 	importRes = &models.CustomDashboardImportRes{ChartMap: make(map[string][]string)}
 	for _, chart := range param.Charts {
 		list = []*models.CustomChart{}
+		logMetricGroup = ""
 		permissionList = []*models.CustomChartPermission{}
 		newChartId := guid.CreateGuid()
 		// 如果图表公共,则去图表库中根据名称查询是否已有该图表,有的话添加看板的关联关系即可
@@ -545,10 +548,13 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 			}
 		}
 		// 新增图表和图表配置
+		if chart.LogMetricGroup != nil {
+			logMetricGroup = *chart.LogMetricGroup
+		}
 		actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
-			"create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			newChartId, newDashboardId, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
-			chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate, chart.PieType}})
+			chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate, chart.PieType, logMetricGroup}})
 		// 新增看板图表关系表
 		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now, chart.GroupDisplayConfig}})
