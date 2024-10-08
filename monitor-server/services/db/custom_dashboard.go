@@ -501,7 +501,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 			return
 		}
 	}
-	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week,log_metric_group) values(?,?,?,?,?,?,?,?)",
+	result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week,log_metric_group) values(?,?,?,?,?,?,?,?,?)",
 		param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek, logMetricGroup)
 	if err != nil {
 		return
