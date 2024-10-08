@@ -659,9 +659,7 @@ export default {
       this.viewCondition.dateRange = data
       this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
-        if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
-          this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
-        }
+        this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
