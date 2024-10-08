@@ -1497,3 +1497,8 @@ func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
 	}
 	return
 }
+
+func GetAlarmStrategyNotifyWorkflowList() (result []*models.WorkflowDto, err error) {
+	err = x.SQL("select distinct  proc_callback_name as name,proc_callback_key as 'key' from notify where  proc_callback_key!='' and proc_callback_key is not null").Find(&result)
+	return
+}
