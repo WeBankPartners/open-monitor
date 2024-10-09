@@ -220,7 +220,7 @@ func syncLogKeywordNodeExporterConfig(endpointList []string) error {
 	return err
 }
 
-func ExportLogKeyword(c *gin.Context) {
+func ExportLogAndDbKeyword(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	result, err := db.GetLogKeywordByServiceGroup(serviceGroup, "")
 	if err != nil {
@@ -240,7 +240,7 @@ func ExportLogKeyword(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
-func ImportLogKeyword(c *gin.Context) {
+func ImportLogAndDbKeyword(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -272,7 +272,7 @@ func ImportLogKeyword(c *gin.Context) {
 	for _, logKeyword := range paramObj.Config {
 		logKeyword.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
+	if err = db.ImportLogAndDbKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	} else {
 		middleware.ReturnSuccess(c)
