@@ -146,7 +146,7 @@ func getCreateDbKeywordConfigActions(input *models.DbKeywordConfigObj, operator 
 		input.Notify.ServiceGroup = ""
 		input.Notify.AlarmStrategy = ""
 		notifyList := []*models.NotifyObj{input.Notify}
-		actions = append(actions, getNotifyListUpdateAction(notifyList)...)
+		actions = append(actions, getNotifyListInsertAction(notifyList)...)
 		actions = append(actions, &Action{Sql: "insert into db_keyword_notify_rel(guid,db_keyword_monitor,notify) values (?,?,?)", Param: []interface{}{
 			"dkm_notify_" + guid.CreateGuid(), input.Guid, input.Notify.Guid,
 		}})
