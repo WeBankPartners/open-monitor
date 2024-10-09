@@ -571,12 +571,34 @@ func ImportLogAndDbKeyword(param *models.LogKeywordServiceGroupObj, operator str
 
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, inputKeywordConfig := range param.Config {
-		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime, operator}})
+		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time,update_user) value (?,?,?,?,?,?)",
+			Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime, operator}})
+		if inputKeywordConfig.Notify != nil {
+			inputKeywordConfig.Notify.EndpointGroup = ""
+			inputKeywordConfig.Notify.ServiceGroup = ""
+			inputKeywordConfig.Notify.AlarmStrategy = ""
+			notifyList := []*models.NotifyObj{inputKeywordConfig.Notify}
+			actions = append(actions, getNotifyListInsertAction(notifyList)...)
+			actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_monitor,notify) values (?,?,?)", Param: []interface{}{
+				"lk_notify_" + guid.CreateGuid(), inputKeywordConfig.Guid, inputKeywordConfig.Notify.Guid,
+			}})
+		}
 		for _, keywordObj := range inputKeywordConfig.KeywordList {
 			actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority," +
 				"update_time,name,content,active_window,create_time,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{keywordObj.Guid,
 				keywordObj.LogKeywordMonitor, keywordObj.Keyword, keywordObj.Regulative, keywordObj.NotifyEnable, keywordObj.Priority,
 				nowTime, keywordObj.Name, keywordObj.Content, keywordObj.ActiveWindow, nowTime, operator}})
+			if keywordObj.Notify != nil {
+				keywordObj.Notify.EndpointGroup = ""
+				keywordObj.Notify.ServiceGroup = ""
+				keywordObj.Notify.AlarmStrategy = ""
+				notifyList := []*models.NotifyObj{keywordObj.Notify}
+				actions = append(actions, getNotifyListInsertAction(notifyList)...)
+				actions = append(actions, &Action{Sql: "insert into log_keyword_notify_rel(guid,log_keyword_config,notify) values (?,?,?)", Param: []interface{}{
+					"lk_notify_" + guid.CreateGuid(), keywordObj.Guid, keywordObj.Notify.Guid,
+				}})
+			}
+
 		}
 	}
 	for _, inputDbKeywordConfig := range param.DbConfig {
