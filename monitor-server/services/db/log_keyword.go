@@ -1,14 +1,15 @@
 package db
 
 import (
-	"crypto/sha256"
-	"database/sql"
-	"encoding/json"
-	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+
+	"crypto/sha256"
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -38,7 +39,26 @@ func GetLogKeywordByServiceGroup(serviceGroupGuid, alarmName string) (result []*
 		}
 		configList = append(configList, &configObj)
 	}
-	result = append(result, &models.LogKeywordServiceGroupObj{ServiceGroupTable: serviceGroupObj, Config: configList})
+
+	// 导出Db keyword
+	var dbKeywordTable []*models.DbKeywordMonitor
+	var dbConfigList []*models.DbKeywordConfigObj
+	if err = x.SQL("select * from db_keyword_monitor where service_group=? order by  update_time desc", serviceGroupGuid).Find(&dbKeywordTable); err != nil {
+		return
+	}
+	for _, v := range dbKeywordTable {
+		configObj := models.DbKeywordConfigObj{DbKeywordMonitor: *v}
+		if configObj.EndpointRel, err = ListDbKeywordEndpointRel(v.Guid); err != nil {
+			return
+		}
+		if configObj.Notify, _, err = GetDbKeywordNotify(v.Guid); err != nil {
+			return
+		}
+		configObj.ActiveWindowList = strings.Split(configObj.ActiveWindow, ",")
+		dbConfigList = append(dbConfigList, &configObj)
+	}
+
+	result = append(result, &models.LogKeywordServiceGroupObj{ServiceGroupTable: serviceGroupObj, Config: configList, DbConfig: dbConfigList})
 	return
 }
 
@@ -160,6 +180,8 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from notify from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
 	return actions
 }
@@ -522,7 +544,7 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	return result
 }
 
-func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) (err error) {
+func ImportLogAndDbKeyword(param *models.LogKeywordServiceGroupObj, operator string) (err error) {
 	existSGs, getExistDataErr := GetLogKeywordByServiceGroup(param.Guid, "")
 	if getExistDataErr != nil {
 		return fmt.Errorf("get exist log keyword data fail,%s ", getExistDataErr.Error())
@@ -530,7 +552,7 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) 
 	if len(existSGs) == 0 {
 		return fmt.Errorf("get empty log keyword data,please check service group")
 	}
-	var actions []*Action
+	var actions, subDeleteDbKeywordConfigActions []*Action
 	var affectHostList []string
 	existSGConfig := existSGs[0]
 	for _, existKeywordConfig := range existSGConfig.Config {
@@ -539,6 +561,13 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) 
 			affectHostList = append(affectHostList, v.SourceEndpoint)
 		}
 	}
+	for _, existDbKeywordConfig := range existSGConfig.DbConfig {
+		if subDeleteDbKeywordConfigActions, err = getDeleteDbKeywordConfigActions(existDbKeywordConfig.Guid); err != nil {
+			return
+		}
+		actions = append(actions, subDeleteDbKeywordConfigActions...)
+	}
+
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, inputKeywordConfig := range param.Config {
 		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime, operator}})
@@ -549,10 +578,18 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj, operator string) 
 				nowTime, keywordObj.Name, keywordObj.Content, keywordObj.ActiveWindow, nowTime, operator}})
 		}
 	}
+	for _, inputDbKeywordConfig := range param.DbConfig {
+		actions = append(actions, getCreateDbKeywordConfigActions(inputDbKeywordConfig, operator, time.Now())...)
+	}
 	err = Transaction(actions)
 	if len(affectHostList) > 0 && err == nil {
 		if syncErr := SyncLogKeywordExporterConfig(affectHostList); syncErr != nil {
 			log.Logger.Error("import log keyword fail with sync host keyword config", log.Error(syncErr), log.StringList("hosts", affectHostList))
+		}
+	}
+	if len(param.DbConfig) > 0 {
+		if syncDbErr := SyncDbMetric(false); syncDbErr != nil {
+			log.Logger.Error("import db keyword fail with sync config", log.Error(syncDbErr))
 		}
 	}
 	return
