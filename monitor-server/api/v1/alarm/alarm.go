@@ -122,23 +122,38 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
 	alarm.Status = param.Status
 	operation := "add"
-	if existAlarm.Status != "" {
+	if alarm.Status == "firing" {
 		if existAlarm.Status == "firing" {
-			if alarm.Status == "firing" {
-				operation = "same"
-			} else {
-				operation = "resolve"
-			}
-		} else if existAlarm.Status == "ok" {
-			if alarm.Status == "resolved" {
-				operation = "same"
-			}
-		} else if existAlarm.Status == "closed" {
-			if alarm.Status == "resolved" {
-				operation = "same"
-			}
+			operation = "same"
+		} else {
+			operation = "add"
 		}
+	} else if alarm.Status == "resolved" {
+		if existAlarm.Status == "firing" {
+			operation = "resolve"
+		} else {
+			operation = "same"
+		}
+	} else {
+		return alarm, fmt.Errorf("Accept alert status:%s illegal! ", alarm.Status)
 	}
+	//if existAlarm.Status != "" {
+	//	if existAlarm.Status == "firing" {
+	//		if alarm.Status == "firing" {
+	//			operation = "same"
+	//		} else {
+	//			operation = "resolve"
+	//		}
+	//	} else if existAlarm.Status == "ok" {
+	//		if alarm.Status == "resolved" {
+	//			operation = "same"
+	//		}
+	//	} else if existAlarm.Status == "closed" {
+	//		if alarm.Status == "resolved" {
+	//			operation = "same"
+	//		}
+	//	}
+	//}
 	if operation == "same" {
 		return alarm, fmt.Errorf("Accept alert msg ,firing repeat,do nothing! ")
 	}
@@ -302,7 +317,7 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(alarm.Endpoint, strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
 		return
 	}
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
@@ -338,7 +353,7 @@ func getNewAlarmWithStrategyId(alarm *m.AlarmHandleObj, param *m.AMRespAlert, en
 			return
 		}
 	}
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, StrategyId: alarm.StrategyId, Tags: alarm.Tags}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, StrategyId: alarm.StrategyId, Tags: alarm.Tags, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
@@ -350,7 +365,7 @@ func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj, param *m.AMRespAlert) (exist
 	alarm.SLast = "30s"
 	alarm.SPriority = "high"
 	alarm.Content = param.Annotations["description"]
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, SMetric: alarm.SMetric}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, SMetric: alarm.SMetric, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
