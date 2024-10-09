@@ -181,7 +181,7 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
 	return actions
 }
