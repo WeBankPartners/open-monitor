@@ -165,6 +165,7 @@ export default {
         })
     },
     uploadSucess(res) {
+      console.error(res, 'uploadSucessRes')
       if (res.status === 'ERROR') {
         this.$Message.error(res.message)
         return
@@ -173,6 +174,7 @@ export default {
       this.search()
     },
     uploadFailed(file) {
+      console.error(file, 'uploadFailedFile')
       this.$Message.warning(file.message)
     }
   },
