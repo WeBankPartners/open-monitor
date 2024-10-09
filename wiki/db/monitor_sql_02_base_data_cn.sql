@@ -1228,3 +1228,7 @@ INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_
 #@v3.2.3-begin@;
 alter table alarm_strategy modify column active_window varchar(255) default null;
 #@v3.2.3-end@;
+
+#@v3.2.3.8-begin@;
+create index `alarm_strategy_status_idx` on alarm (`status`,`alarm_strategy`);
+#@v3.2.3.8-end@;
