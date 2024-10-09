@@ -822,6 +822,10 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 		baseSql += " and s_metric=? "
 		queryParams = append(queryParams, query.SMetric)
 	}
+	if query.Status != "" {
+		baseSql += " and status=? "
+		queryParams = append(queryParams, query.Status)
+	}
 	baseSql += " order by id asc"
 	err = x.SQL(baseSql, queryParams...).Find(&alarmList)
 	if len(alarmList) > 0 {
