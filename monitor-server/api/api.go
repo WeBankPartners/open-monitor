@@ -229,8 +229,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor/:logKeywordMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeywordMonitor},
-		&handlerFuncObj{Url: "/service/log_keyword/export", Method: http.MethodGet, HandlerFunc: service.ExportLogKeyword},
-		&handlerFuncObj{Url: "/service/log_keyword/import", Method: http.MethodPost, HandlerFunc: service.ImportLogKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/export", Method: http.MethodGet, HandlerFunc: service.ExportLogAndDbKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/import", Method: http.MethodPost, HandlerFunc: service.ImportLogAndDbKeyword},
 
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},

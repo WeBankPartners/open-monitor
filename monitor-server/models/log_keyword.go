@@ -35,7 +35,8 @@ type LogKeywordEndpointRelTable struct {
 
 type LogKeywordServiceGroupObj struct {
 	ServiceGroupTable
-	Config []*LogKeywordMonitorObj `json:"config"`
+	Config   []*LogKeywordMonitorObj `json:"config"`
+	DbConfig []*DbKeywordConfigObj   `json:"dbConfig"`
 }
 
 type LogKeywordMonitorObj struct {
