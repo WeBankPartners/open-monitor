@@ -10,7 +10,7 @@
           remote
           ref="select"
           :disabled="endpointExternal"
-          :placeholder="$t('requestMoreData')"
+          :placeholder="$t('m_requestMoreData')"
           :remote-method="getEndpointList"
           @on-change="updateData"
         >
@@ -48,18 +48,13 @@
         <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
       </li>
       <li class="search-li">
-        <button type="button" class="btn btn-sm btn-confirm-f"
-                @click="getChartsConfig()"
-        >
-          <i class="fa fa-search" ></i>
-          {{$t('m_button_search')}}
-        </button>
+        <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
+        <Button v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow && !endpointExternal" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
+        <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
       </li>
     </ul>
   </div>
@@ -98,8 +93,7 @@ export default {
     endpoint(val) {
       if (val) {
         this.endpointObject = this.endpointList.find(ep => ep.option_value === val)
-      }
-      else {
+      } else {
         this.endpointObject = {}
       }
     },
@@ -116,9 +110,9 @@ export default {
     localStorage.removeItem('jumpCallData')
     const outerData = jumpCallData || this.$route.params
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
-      const option_value = outerData.option_value
-      const option_value_split = option_value.split('_')
-      const option_text = option_value_split.slice(0, option_value_split.length - 1).join('_')
+      const option_value = outerData.option_value || ''
+      const option_value_split = option_value ? option_value.split('_') : ''
+      const option_text = option_value_split ? option_value_split.slice(0, option_value_split.length - 1).join('_') : ''
       this.endpointList = [{
         active: false,
         id: '',
@@ -127,11 +121,11 @@ export default {
         option_value,
         type: outerData.type
       }]
-      this.endpoint = option_value
+      this.endpoint = option_value || ''
       this.endpointObject = outerData
     }
     if (this.$root.$validate.isEmpty_reset(outerData) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
-      this.endpoint = this.$route.query.endpoint
+      this.endpoint = this.$route.query.endpoint || ''
       this.$root.$store.commit('storeip', {
         id: '',
         option_value: this.$route.query.endpoint,
@@ -256,8 +250,7 @@ export default {
         this.autoRefresh = 0
         this.$parent.showCharts = false
         this.$parent.showRecursive = false
-      }
-      else {
+      } else {
         this.disableTime = false
       }
     },
