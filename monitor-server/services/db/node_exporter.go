@@ -34,7 +34,7 @@ func SyncLogMetricExporterConfig(endpoints []string) error {
 }
 
 func updateEndpointLogMetric(endpointGuid string) error {
-	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid, true)
+	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid, "", true)
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
@@ -258,7 +258,7 @@ func updateEndpointLogKeyword(endpoint string) error {
 }
 
 func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHttpDto, err error) {
-	serviceGroupKeywordList, queryConfigErr := GetLogKeywordByEndpoint(endpoint, true)
+	serviceGroupKeywordList, queryConfigErr := GetLogKeywordByEndpoint(endpoint, "", true)
 	if queryConfigErr != nil {
 		return result, queryConfigErr
 	}
@@ -284,6 +284,8 @@ func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHt
 					if existTarget, sameFlag := existKeywordMap[logKeywordConfig.Keyword]; sameFlag {
 						if existTarget == targetEndpoint {
 							// path keyword target is same
+							//err = fmt.Errorf("Endpint:%s Path:%s keyword:%s duplicated ", endpoint, logKeywordMonitor.LogPath, logKeywordConfig.Keyword)
+							//return
 							continue
 						}
 					}

@@ -21,6 +21,68 @@ export const dataPick = [
   }
 ]
 
+export const layoutOptions = [
+  {
+    value: 'customize',
+    label: 'm_customize'
+  },
+  {
+    value: 'two',
+    label: 'm_two_columns'
+  },
+  {
+    value: 'three',
+    label: 'm_three_columns'
+  },
+  {
+    value: 'four',
+    label: 'm_four_columns'
+  },
+  {
+    value: 'five',
+    label: 'm_five_columns'
+  },
+  {
+    value: 'six',
+    label: 'm_six_columns'
+  },
+  {
+    value: 'seven',
+    label: 'm_seven_columns'
+  },
+  {
+    value: 'eight',
+    label: 'm_eight_columns'
+  }
+]
+
+export const layoutColumns = {
+  customize: {
+    w: 6
+  },
+  two: {
+    w: 6
+  },
+  three: {
+    w: 4
+  },
+  four: {
+    w: 3
+  },
+  five: {
+    w: 2.4
+  },
+  six: {
+    w: 2
+  },
+  seven: {
+    w: 1.7
+  },
+  eight: {
+    w: 1.5
+  }
+}
+
 export const autoRefreshConfig = [
   {
     value: -1,

@@ -1,10 +1,14 @@
 <template>
-  <div class="diy-tag"
-       :style="{color: getGroupColor(tagName) + ' !important',
-                borderColor: getGroupColor(tagName) + ' !important'}"
-  >
-    {{tagName}}
-  </div>
+  <Tooltip transfer :content="tagName" placement="top-start">
+    <div class="diy-tag"
+         :style="{
+           color: getGroupColor(tagName) + ' !important',
+           borderColor: getGroupColor(tagName) + ' !important'
+         }"
+    >
+      {{tagName}}
+    </div>
+  </Tooltip>
 </template>
 <script>
 import {endpointTag} from '@/assets/config/common-config'
@@ -72,7 +76,11 @@ export default {
 </script>
 <style lang="less">
   .diy-tag {
-    width: 80px;
+    width: fit-content;
+    max-width: 100px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
     text-align: center;
     display: inline-block;
     height: 24px;
@@ -85,6 +93,5 @@ export default {
     font-size: 12px;
     vertical-align: middle;
     opacity: 1;
-    overflow: hidden;
   }
 </style>

@@ -413,8 +413,7 @@ export default {
     operationsFormat(value, tableDataIndex) {
       if (this.$root.$validate.isEmpty_reset(this.table.filterMoreBtn)) {
         this.table.tableData[tableDataIndex]._operatons = this.table.btn
-      }
-      else {
+      } else {
         const moreBtnGroup_show = this.$parent.$parent.filterMoreBtn(value)
         const resBtns = []
         for (const btn of this.table.btn) {
@@ -448,8 +447,7 @@ export default {
         const moreBtnGroup_show = this.$parent.$parent.filterMoreBtn(value)
         if (moreBtnGroup_show.length > 0) {
           this.isNoActions = false
-        }
-        else {
+        } else {
           this.isNoActions = true
         }
         for (const show_btn of moreBtnGroup_show) {
@@ -501,8 +499,7 @@ export default {
       this.filterParam = ''
       if (this.pageConfig.table.tableEle[columnNo].filterable.remoteFilters) {
         this.getRemoteFilterOptions(columnNo)
-      }
-      else {
+      } else {
         this.filterLists = this.pageConfig.table.tableEle[columnNo].filterable.filterLists
         this.filterListsBySearch = this.pageConfig.table.tableEle[columnNo].filterable.filterLists
       }
@@ -559,8 +556,7 @@ export default {
           delete this.pageConfig.pagination[ele.value]
 
         }
-      }
-      else {
+      } else {
         this.pageConfig.table.tableEle[i]._isFilter = 'Y'
         this.pageConfig.pagination[ele.filterable.filterParam] = valx.value
       }
@@ -627,8 +623,7 @@ export default {
       this.confirmSelected(item)
       if (typeof item.checked === 'undefined') {
         this.$set(item, 'checked', true)
-      }
-      else {
+      } else {
         item.checked = !item.checked
       }
       // 全部选中则全选点亮，相反
@@ -645,8 +640,7 @@ export default {
         this.table.tableData.forEach(item => {
           this.confirmSelected(item)
         })
-      }
-      else {
+      } else {
         this.selectedData = []
       }
       this.allSelectBtn = this.allSelectflagActivate
@@ -654,8 +648,7 @@ export default {
       this.table.tableData.forEach(item => {
         if (typeof item.checked === 'undefined') {
           this.$set(item, 'checked', this.allSelectBtn)
-        }
-        else {
+        } else {
           item.checked = this.allSelectBtn
         }
       })
@@ -675,8 +668,7 @@ export default {
       const id = item[this.table.primaryKey]
       if (this.$root.JQ.inArray(id, this.selectedData) === -1) {
         this.selectedData.push(id)
-      }
-      else {
+      } else {
         this.removeByValue(this.selectedData, id)
       }
       this.$emit('sendIds', {
@@ -698,8 +690,7 @@ export default {
       for (n in attrs){
         if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
           item_tmp = item_tmp[attrs[n]]
-        }
-        else {
+        } else {
           return ''
         }
       }
