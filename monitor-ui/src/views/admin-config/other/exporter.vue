@@ -1,3 +1,4 @@
+<!--采集器-->
 <template>
   <div class=" ">
     <!-- <Divider plain orientation="left">K8s Com</Divider> -->
@@ -102,7 +103,7 @@ export default {
         isAdd: true,
         config: [
           {
-            label: 'clusterName',
+            label: 'm_clusterName',
             value: 'cluster_name',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
@@ -126,7 +127,7 @@ export default {
             type: 'text'
           },
           {
-            label: 'token',
+            label: 'm_token',
             value: 'token',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
@@ -159,7 +160,7 @@ export default {
           {
             label: 'm_field_address',
             value: 'address',
-            placeholder: 'exporter_address_placeholder',
+            placeholder: 'm_exporter_address_placeholder',
             v_validate: 'required:true',
             disabled: false,
             type: 'text'
@@ -238,8 +239,7 @@ export default {
           this.isShowWarning = false
           this.getClusterList()
         })
-      }
-      else if (this.selectedDataType === 'snmp') {
+      } else if (this.selectedDataType === 'snmp') {
         this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', '/monitor/api/v1/config/new/snmp', this.selectedData, () => {
           this.isShowWarning = false
           this.getSnmpList()
@@ -296,8 +296,7 @@ export default {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()
         })
-      }
-      else {
+      } else {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()

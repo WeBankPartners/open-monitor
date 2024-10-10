@@ -2,11 +2,11 @@ package db
 
 import (
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -88,27 +88,25 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 }
 
 func ListGrpEndpointOptions() (options *m.EndpointOptions, err error) {
-	var list []*m.EndpointRow
-	var endpointGroupMap = make(map[string]bool)
-	var basicTypeMap = make(map[string]bool)
-	if err = x.SQL("select t2.endpoint_group,t1.monitor_type from endpoint_new t1 LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint").Find(&list); err != nil {
+	var monitorTypeList []*m.MonitorTypeTable
+	var endpointGroupList []*m.EndpointGroupTable
+	if err = x.SQL("select display_name from monitor_type where display_name in (select monitor_type from endpoint_new) order by create_time desc ").Find(&monitorTypeList); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from endpoint_group where guid in (select endpoint_group from endpoint_group_rel) order by update_time desc").Find(&endpointGroupList); err != nil {
 		return
 	}
 	options = &m.EndpointOptions{EndpointGroup: []string{}, BasicType: []string{}}
-	if len(list) > 0 {
-		for _, endpoint := range list {
-			if strings.TrimSpace(endpoint.EndpointGroup) != "" {
-				endpointGroupMap[endpoint.EndpointGroup] = true
-			}
-			if strings.TrimSpace(endpoint.MonitorType) != "" {
-				basicTypeMap[endpoint.MonitorType] = true
-			}
+	if len(monitorTypeList) > 0 {
+		for _, monitorType := range monitorTypeList {
+			options.BasicType = append(options.BasicType, monitorType.DisplayName)
 		}
 	}
-	options.EndpointGroup = convertMap2string(endpointGroupMap)
-	options.BasicType = convertMap2string(basicTypeMap)
-	sort.Strings(options.EndpointGroup)
-	sort.Strings(options.BasicType)
+	if len(endpointGroupList) > 0 {
+		for _, endpointGroup := range endpointGroupList {
+			options.EndpointGroup = append(options.EndpointGroup, endpointGroup.Guid)
+		}
+	}
 	return
 }
 
@@ -432,78 +430,89 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterList, metricFilterList, alarmNameFilterList []string) (error, m.AlarmProblemList) {
+func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
-	if query.Id > 0 {
+	if cond.AlarmTable.Id > 0 {
 		whereSql += " and id=? "
-		params = append(params, query.Id)
+		params = append(params, cond.AlarmTable.Id)
 	}
-	if query.StrategyId > 0 {
+	if cond.AlarmTable.StrategyId > 0 {
 		whereSql += " and strategy_id=? "
-		params = append(params, query.StrategyId)
+		params = append(params, cond.AlarmTable.StrategyId)
 	}
-	if query.Endpoint != "" {
-		endpointFilterList = append(endpointFilterList, query.Endpoint)
+	if cond.AlarmTable.Endpoint != "" {
+		cond.EndpointFilterList = append(cond.EndpointFilterList, cond.AlarmTable.Endpoint)
 	}
-	if len(endpointFilterList) > 0 {
-		endpointFilterSql, endpointFilterParam := createListParams(endpointFilterList, "")
+	if len(cond.EndpointFilterList) > 0 {
+		endpointFilterSql, endpointFilterParam := createListParams(cond.EndpointFilterList, "")
 		whereSql += " and endpoint in (" + endpointFilterSql + ") "
 		params = append(params, endpointFilterParam...)
 	}
-	if query.SMetric != "" {
-		metricFilterList = append(metricFilterList, query.SMetric)
+	if cond.AlarmTable.SMetric != "" {
+		cond.MetricFilterList = append(cond.MetricFilterList, cond.AlarmTable.SMetric)
 	}
-	if len(metricFilterList) > 0 {
-		metricFilterSql, metricFilterParam := createListParams(metricFilterList, "")
+	if len(cond.MetricFilterList) > 0 {
+		metricFilterSql, metricFilterParam := createListParams(cond.MetricFilterList, "")
 		whereSql += " and s_metric in (" + metricFilterSql + ") "
 		params = append(params, metricFilterParam...)
 	}
-	if query.AlarmName != "" {
-		alarmNameFilterList = append(alarmNameFilterList, query.AlarmName)
+	if cond.AlarmTable.AlarmName != "" {
+		cond.AlarmNameFilterList = append(cond.AlarmNameFilterList, cond.AlarmTable.AlarmName)
 	}
-	if len(alarmNameFilterList) > 0 {
-		alarmNameFilterSql, alarmNameFilterParam := createListParams(alarmNameFilterList, "")
+	if len(cond.AlarmNameFilterList) > 0 {
+		alarmNameFilterSql, alarmNameFilterParam := createListParams(cond.AlarmNameFilterList, "")
 		whereSql += " and ( alarm_name in (" + alarmNameFilterSql + ")  or  content in (" + alarmNameFilterSql + "))"
 		params = append(append(params, alarmNameFilterParam...), alarmNameFilterParam...)
 	}
-	if query.SCond != "" {
+	if cond.AlarmTable.SCond != "" {
 		whereSql += " and s_cond=? "
-		params = append(params, query.SCond)
+		params = append(params, cond.AlarmTable.SCond)
 	}
-	if query.SLast != "" {
+	if cond.AlarmTable.SLast != "" {
 		whereSql += " and s_last=? "
-		params = append(params, query.SLast)
+		params = append(params, cond.AlarmTable.SLast)
 	}
-	if query.SPriority != "" {
-		whereSql += " and s_priority=? "
-		params = append(params, query.SPriority)
+	if cond.AlarmTable.SPriority != "" {
+		cond.PriorityList = append(cond.PriorityList, cond.AlarmTable.SPriority)
 	}
-	if query.Tags != "" {
+	if len(cond.PriorityList) > 0 {
+		priorityFilterSql, priorityFilterParam := createListParams(cond.PriorityList, "")
+		whereSql += " and s_priority in (" + priorityFilterSql + ") "
+		params = append(params, priorityFilterParam...)
+	}
+	if cond.AlarmTable.Tags != "" {
 		whereSql += " and tags=? "
-		params = append(params, query.Tags)
+		params = append(params, cond.AlarmTable.Tags)
 	}
-	if query.Status != "" {
+	if cond.AlarmTable.Status != "" {
 		whereSql += " and status=? "
-		params = append(params, query.Status)
+		params = append(params, cond.AlarmTable.Status)
 	}
-	if !query.Start.IsZero() {
-		whereSql += fmt.Sprintf(" and start>='%s' ", query.Start.Format(m.DatetimeFormat))
+	if !cond.AlarmTable.Start.IsZero() {
+		whereSql += fmt.Sprintf(" and start>='%s' ", cond.AlarmTable.Start.Format(m.DatetimeFormat))
 	}
-	if !query.End.IsZero() {
-		whereSql += fmt.Sprintf(" and end<='%s' ", query.End.Format(m.DatetimeFormat))
+	if !cond.AlarmTable.End.IsZero() {
+		whereSql += fmt.Sprintf(" and end<='%s' ", cond.AlarmTable.End.Format(m.DatetimeFormat))
 	}
+	//  支持 告警任意搜索,但是只能搜索不关闭的告警
+	if strings.TrimSpace(cond.Query) != "" {
+		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query),
+			fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query)}...)
+	}
+
 	sql := "SELECT * FROM alarm where 1=1 " + whereSql + " ORDER BY id DESC "
-	if limit > 0 {
-		sql += fmt.Sprintf(" LIMIT %d", limit)
+	if cond.Limit > 0 {
+		sql += fmt.Sprintf(" LIMIT %d", cond.Limit)
 	}
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
 		return err, result
 	}
-	var notifyIdList, alarmIdList, alarmStrategyList, endpointList []string
+	var notifyIdList, alarmIdList, alarmStrategyList, endpointList, logKeywordConfigList, dbKeywordMonitorList []string
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
@@ -512,39 +521,51 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
-		if v.SMetric == "log_monitor" {
+		if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+			if v.SMetric == "log_monitor" {
+				logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
+			} else {
+				dbKeywordMonitorList = append(dbKeywordMonitorList, v.AlarmStrategy)
+			}
 			v.IsLogMonitor = true
+			v.Log = v.Content
 			if v.EndValue > 0 {
-				v.Start, v.End = v.End, v.Start
+				//v.Start, v.End = v.End, v.Start
 				if v.EndValue < v.StartValue {
 					v.StartValue = v.EndValue
 				} else {
 					v.StartValue = v.EndValue - v.StartValue + 1
 				}
-				if strings.Contains(v.Content, "^^") {
-					if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-						v.StartString = v.Content[:brIndex+5] + v.StartString
-						v.Content = v.Content[brIndex+5:]
+				if strings.Contains(v.Log, "^^") {
+					if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+						v.Content = v.Log[:brIndex+5]
+						v.Log = v.Log[brIndex+5:]
+					} else {
+						v.Content = ""
 					}
-					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+					v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
 				}
-				v.StartString = v.EndString
+				//v.StartString = v.EndString
 			} else {
 				v.StartValue = 1
-				if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
-					v.StartString = v.Content[:brIndex+5] + v.StartString
-					v.Content = v.Content[brIndex+5:]
-				}
-				if strings.HasSuffix(v.Content, "^^") {
-					v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+				if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+					v.Content = v.Log[:brIndex+5]
+					v.Log = v.Log[brIndex+5:]
 				} else {
-					v.Content = v.StartString + ": " + v.Content
+					v.Content = ""
+				}
+				if strings.HasSuffix(v.Log, "^^") {
+					v.Log = v.StartString + ": " + v.Log[:len(v.Log)-2]
+				} else {
+					v.Log = v.StartString + ": " + v.Log
 				}
 			}
 		}
-		if strings.Contains(v.Content, "\n") {
-			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		if strings.Contains(v.Log, "\n") {
+			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 		}
+		// 显示 endpointGuid
+		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
 			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
@@ -560,7 +581,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		if v.Id > 0 {
 			alarmIdList = append(alarmIdList, fmt.Sprintf("%d", v.Id))
 		}
-		alarmDetailList := []*m.AlarmDetailData{}
+		var alarmDetailList []*m.AlarmDetailData
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
@@ -575,17 +596,30 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.AlarmName == "" && len(alarmNameFilterList) == 0 {
-		if query.Endpoint == "" && len(endpointFilterList) == 0 {
-			if (query.SMetric == "" && len(metricFilterList) == 0) || query.SMetric == "custom" {
-				if extOpenAlarm {
-					for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
-						result = append(result, v)
-					}
+	if !cond.ExtOpenAlarm {
+		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 && cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0 {
+			cond.ExtOpenAlarm = true
+		} else {
+			for _, v := range cond.EndpointFilterList {
+				if v == "custom_alarm" {
+					cond.ExtOpenAlarm = true
+					break
+				}
+			}
+			for _, v := range cond.MetricFilterList {
+				if v == "custom" {
+					cond.ExtOpenAlarm = true
+					break
 				}
 			}
 		}
 	}
+	if cond.ExtOpenAlarm {
+		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
+			result = append(result, v)
+		}
+	}
+	//}
 	var sortResult m.AlarmProblemList
 	sortResult = result
 	if len(result) > 1 {
@@ -594,6 +628,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 	if len(result) == 0 {
 		sortResult = []*m.AlarmProblemQuery{}
 	}
+
 	if len(notifyIdList) > 0 {
 		var notifyRows []*m.NotifyTable
 		filterSql, filterParams := createListParams(notifyIdList, "")
@@ -609,7 +644,7 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 		alarmNotifyMap := make(map[int]*m.AlarmNotifyTable)
 		if len(alarmIdList) > 0 {
 			var alarmNotifyRows []*m.AlarmNotifyTable
-			err = x.SQL("select id,alarm_id,status from alarm_notify where alarm_id in (" + strings.Join(alarmIdList, ",") + ")").Find(&alarmNotifyRows)
+			err = x.SQL("select id,alarm_id,status,proc_def_name from alarm_notify where alarm_id in (" + strings.Join(alarmIdList, ",") + ")").Find(&alarmNotifyRows)
 			if err != nil {
 				err = fmt.Errorf("query alarm_notify table fail,%s ", err.Error())
 				return err, result
@@ -622,32 +657,54 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 			if notifyRowObj, ok := notifyMsgMap[v.NotifyId]; ok {
 				v.NotifyMessage = notifyRowObj.Description
 				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
-				if _, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
+				if alarmNotify, alarmNotifyExists := alarmNotifyMap[v.Id]; alarmNotifyExists {
 					v.NotifyStatus = "started"
+					if checkHasProcDefUsePermission(alarmNotify, convertString2Map(cond.UserRoles), cond.Token) {
+						v.NotifyPermission = "yes"
+					}
 				} else {
+					if notifyRowObj.ProcCallbackName != "" && checkHasProcDefUsePermission(&m.AlarmNotifyTable{ProcDefName: notifyRowObj.ProcCallbackName}, convertString2Map(cond.UserRoles), cond.Token) {
+						v.NotifyPermission = "yes"
+					}
 					v.NotifyStatus = "notStart"
 				}
+			} else {
+				v.NotifyStatus = "notStart"
 			}
 			v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 		}
 	}
-	if len(alarmStrategyList) > 0 {
+	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
+		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
+		if matchKeywordStrategyErr != nil {
+			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
 			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
 		} else {
 			for _, v := range sortResult {
-				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
-				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
-					if strategyRow.ServiceGroup == "" {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
-						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
-							for _, endpointServiceRelRow := range endpointServiceList {
-								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+				var tmpStrategyGroups []*m.AlarmStrategyGroup
+				if v.SMetric == "log_monitor" {
+					if serviceGroup, ok := logKeywordConfigMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else if v.SMetric == "db_keyword_monitor" {
+					if serviceGroup, ok := dbKeywordMonitorMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else {
+					if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+						if strategyRow.ServiceGroup == "" {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+							if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+								for _, endpointServiceRelRow := range endpointServiceList {
+									tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+								}
 							}
+						} else {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 						}
-					} else {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 					}
 				}
 				v.StrategyGroups = tmpStrategyGroups
@@ -658,16 +715,16 @@ func GetAlarms(query m.AlarmTable, limit int, extOpenAlarm bool, endpointFilterL
 }
 
 func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
-	successAlarms := []*m.AlarmHandleObj{}
+	var successAlarms []*m.AlarmHandleObj
 	if len(alarms) == 0 {
 		return alarms
 	}
-	var rowAffected int64
+	//var rowAffected int64
 	for _, v := range alarms {
-		rowAffected = 0
-		var action Action
-		var cErr error
-		var execResult sql.Result
+		//rowAffected = 0
+		//var action Action
+		//var cErr error
+		//var execResult sql.Result
 		calcAlarmUniqueFlag(&v.AlarmTable)
 		if v.MultipleConditionFlag {
 			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
@@ -677,29 +734,34 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 				successAlarms = append(successAlarms, alarmObj)
 			}
 		} else {
-			if v.Id > 0 {
-				action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
-				execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+			if tmpErr := doInsertOrUpdateAlarm(v); tmpErr != nil {
+				log.Logger.Warn("doInsertOrUpdateAlarm fail", log.JsonObj("alarm", v), log.Error(tmpErr))
 			} else {
-				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-				execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
+				successAlarms = append(successAlarms, v)
 			}
-			if cErr != nil {
-				log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
-			} else {
-				rowAffected, _ = execResult.RowsAffected()
-				if rowAffected > 0 {
-					if v.Id <= 0 {
-						lastInsertId, _ := execResult.LastInsertId()
-						if lastInsertId > 0 {
-							v.Id = int(lastInsertId)
-						}
-					}
-					successAlarms = append(successAlarms, v)
-				} else {
-					log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
-				}
-			}
+			//if v.Id > 0 {
+			//	action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
+			//	execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+			//} else {
+			//	action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			//	execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
+			//}
+			//if cErr != nil {
+			//	log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
+			//} else {
+			//	rowAffected, _ = execResult.RowsAffected()
+			//	if rowAffected > 0 {
+			//		if v.Id <= 0 {
+			//			lastInsertId, _ := execResult.LastInsertId()
+			//			if lastInsertId > 0 {
+			//				v.Id = int(lastInsertId)
+			//			}
+			//		}
+			//		successAlarms = append(successAlarms, v)
+			//	} else {
+			//		log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
+			//	}
+			//}
 		}
 	}
 	return successAlarms
@@ -976,8 +1038,9 @@ func getLastFromExpr(expr string) string {
 
 func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
-	if param.Priority != "" {
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+	if len(param.Priority) > 0 {
+		filterSql, filterParam := createListParams(param.Priority, "")
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority in ("+filterSql+")", filterParam...).Find(&alarmRows)
 	} else if len(param.Metric) > 0 {
 		filterSql, filterParam := createListParams(param.Metric, "")
 		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
@@ -999,9 +1062,13 @@ func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
 		}
+		if v.SMetric == "db_keyword_monitor" {
+			actions = append(actions, &Action{Sql: "update db_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
+		actions = append(actions, &Action{Sql: "delete from alarm_firing where alarm_id=?", Param: []interface{}{v.Id}})
 	}
 	return
 }
@@ -1163,6 +1230,17 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			}
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
+			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {
+				log.Logger.Error("Build custom alarm mail fail", log.Int("Id", customAlarmId), log.Error(buildMailAlarmErr))
+			} else {
+				if mailSender, getMailSenderErr := GetMailSender(); getMailSenderErr != nil {
+					log.Logger.Error("Try to send custom alarm mail fail", log.Error(getMailSenderErr))
+				} else {
+					if sendErr := mailSender.Send(mailAlarmObj.Subject, mailAlarmObj.Content, strings.Split(mailAlarmObj.ToMail, ",")); sendErr != nil {
+						log.Logger.Error("Try to send custom alarm mail fail", log.Error(sendErr))
+					}
+				}
+			}
 			sendMailErr := NotifyCoreEvent("", 0, 0, customAlarmId)
 			if sendMailErr != nil {
 				log.Logger.Error("Send custom alarm mail event fail", log.Error(sendMailErr))
@@ -1178,22 +1256,25 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	result := []*m.AlarmProblemQuery{}
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
 	if param.Status == "problem" {
-		sql = "SELECT * FROM alarm_custom WHERE closed<>1 "
+		sql = "SELECT * FROM alarm_custom WHERE closed=0 "
 	} else {
 		if param.Start != "" && param.End != "" {
 			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
 		}
 	}
-	if param.Level != "" {
-		levelFilterSql := ""
-		if param.Level == "high" {
-			levelFilterSql = " AND alert_level in (1,2) "
-		} else if param.Level == "medium" {
-			levelFilterSql = " AND alert_level in (3,4) "
-		} else {
-			levelFilterSql = " AND alert_level>=5 "
-		}
+	levelFilterSql := getLevelSQL(convertString2Map(param.Level))
+	if len(levelFilterSql) > 0 {
 		sql += levelFilterSql
+	}
+	if len(param.AlterTitleList) > 0 {
+		var alterTitleFilterList []string
+		for _, v := range param.AlterTitleList {
+			alterTitleFilterList = append(alterTitleFilterList, fmt.Sprintf("alert_title like '%%%s%%'", v))
+		}
+		sql += " AND (" + strings.Join(alterTitleFilterList, " OR ") + ")"
+	}
+	if param.Query != "" {
+		sql += " AND (alert_info like '%" + param.Query + "%' OR alert_title like '%" + param.Query + "%')"
 	}
 	sql += " ORDER BY id DESC"
 	x.SQL(sql).Find(&query)
@@ -1246,18 +1327,20 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			break
 		}
 	}
+	priorityMap := make(map[string][]string)
+	priorityMap["high"] = []string{"1", "2"}
+	priorityMap["medium"] = []string{"3", "4"}
+	priorityMap["low"] = []string{"5"}
 	if containsCustomMetric && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
-	} else if param.Priority != "" {
-		var levelFilterSql string
-		if param.Priority == "high" {
-			levelFilterSql = " AND alert_level in (1,2) "
-		} else if param.Priority == "medium" {
-			levelFilterSql = " AND alert_level in (3,4) "
-		} else {
-			levelFilterSql = " AND alert_level>=5 "
+	} else if len(param.Priority) > 0 {
+		levelList := []string{}
+		for _, v := range param.Priority {
+			if levelValue, ok := priorityMap[v]; ok {
+				levelList = append(levelList, levelValue...)
+			}
 		}
-		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 " + levelFilterSql).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 AND alert_level in (" + strings.Join(levelList, ",") + ")").Find(&query)
 	} else {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
@@ -1358,31 +1441,75 @@ func getActionOptions(tplId int) []*m.OptionModel {
 func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
 	var alarmQuery []*m.AlarmProblemQuery
+	var logKeywordConfigList, dbKeywordMonitorList []string
 	err = x.SQL(sql, params...).Find(&alarmQuery)
 	if len(alarmQuery) > 0 {
 		//var logMonitorStrategyIds []string
 		for _, v := range alarmQuery {
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
-			if v.SMetric == "log_monitor" {
+			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+				if v.SMetric == "log_monitor" {
+					logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
+				} else {
+					dbKeywordMonitorList = append(dbKeywordMonitorList, v.AlarmStrategy)
+				}
 				v.IsLogMonitor = true
+				v.Log = v.Content
 				if v.EndValue > 0 {
-					v.Start, v.End = v.End, v.Start
-					v.StartValue = v.EndValue - v.StartValue + 1
-					if strings.Contains(v.Content, "^^") {
-						v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+					//v.Start, v.End = v.End, v.Start
+					if v.EndValue < v.StartValue {
+						v.StartValue = v.EndValue
+					} else {
+						v.StartValue = v.EndValue - v.StartValue + 1
 					}
-					v.StartString = v.EndString
+					if strings.Contains(v.Log, "^^") {
+						if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+							v.Content = v.Log[:brIndex+5]
+							v.Log = v.Log[brIndex+5:]
+						} else {
+							v.Content = ""
+						}
+						v.Log = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Log[:strings.Index(v.Log, "^^")], v.EndString, v.Log[strings.Index(v.Log, "^^")+2:])
+					}
+					//v.StartString = v.EndString
 				} else {
 					v.StartValue = 1
-					if strings.HasSuffix(v.Content, "^^") {
-						v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+					if brIndex := strings.Index(v.Log, "<br/>"); brIndex > 0 {
+						v.Content = v.Log[:brIndex+5]
+						v.Log = v.Log[brIndex+5:]
+					} else {
+						v.Content = ""
+					}
+					if strings.HasSuffix(v.Log, "^^") {
+						v.Log = v.StartString + ": " + v.Log[:len(v.Log)-2]
+					} else {
+						v.Log = v.StartString + ": " + v.Log
 					}
 				}
 			}
-			if strings.Contains(v.Content, "\n") {
-				v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			if strings.Contains(v.Log, "\n") {
+				v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 			}
+			//if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
+			//	v.IsLogMonitor = true
+			//	if v.EndValue > 0 {
+			//		v.Start, v.End = v.End, v.Start
+			//		v.StartValue = v.EndValue - v.StartValue + 1
+			//		if strings.Contains(v.Content, "^^") {
+			//			v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+			//		}
+			//		v.StartString = v.EndString
+			//	} else {
+			//		v.StartValue = 1
+			//		if strings.HasSuffix(v.Content, "^^") {
+			//			v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+			//		}
+			//	}
+			//}
+			//if strings.Contains(v.Content, "\n") {
+			//	v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			//}
 		}
 	}
 	if customQueryParam.Enable {
@@ -1390,6 +1517,10 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			alarmQuery = append(alarmQuery, v)
 		}
 	}
+	var alarmSortQuery m.AlarmProblemList
+	alarmSortQuery = alarmQuery
+	sort.Sort(alarmSortQuery)
+	alarmQuery = alarmSortQuery
 	metricMap := make(map[string]int)
 	for _, v := range alarmQuery {
 		if v.SPriority == "high" {
@@ -1450,24 +1581,45 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			v.AlarmMetricList = []string{v.SMetric}
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		v.EndpointGuid = v.Endpoint
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
 	}
-	if len(alarmStrategyList) > 0 {
+	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
+		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
+		if matchKeywordStrategyErr != nil {
+			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
 			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
 		} else {
 			for _, v := range result.Data {
-				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
-				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
-					if strategyRow.ServiceGroup == "" {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
-						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
-							for _, endpointServiceRelRow := range endpointServiceList {
-								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+				var tmpStrategyGroups []*m.AlarmStrategyGroup
+				if v.SMetric == "log_monitor" {
+					if serviceGroup, ok := logKeywordConfigMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else if v.SMetric == "db_keyword_monitor" {
+					if serviceGroup, ok := dbKeywordMonitorMap[v.AlarmStrategy]; ok {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: serviceGroup, Type: "serviceGroup"})
+					}
+				} else {
+					if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+						if strategyRow.ServiceGroup == "" {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+							if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+								for _, endpointServiceRelRow := range endpointServiceList {
+									tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+								}
 							}
+						} else {
+							tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 						}
-					} else {
-						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
 					}
 				}
 				v.StrategyGroups = tmpStrategyGroups
@@ -1485,17 +1637,26 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		return fmt.Errorf("param start or end format fail"), result
 	}
 	var sql, whereSql string
+	var params []interface{}
 	if len(param.Endpoint) > 0 {
 		whereSql += fmt.Sprintf(" AND endpoint in ('" + strings.Join(param.Endpoint, "','") + "') ")
 	}
-	if param.Priority != "" {
-		whereSql += fmt.Sprintf(" AND s_priority='%s' ", param.Priority)
+	if len(param.Priority) > 0 {
+		whereSql += fmt.Sprintf(" AND s_priority in ('" + strings.Join(param.Priority, "','") + "') ")
 	}
 	if len(param.Metric) > 0 {
 		whereSql += fmt.Sprintf(" AND s_metric in ('" + strings.Join(param.Metric, "','") + "') ")
 	}
 	if len(param.AlarmName) > 0 {
-		whereSql += fmt.Sprintf(" AND alarm_name in ('" + strings.Join(param.AlarmName, "','") + "') ")
+		alarmNameSql, alarmNameParam := createListParams(param.AlarmName, "")
+		whereSql += " AND alarm_name  in (" + alarmNameSql + ")"
+		params = append(params, alarmNameParam...)
+	}
+	//  支持 告警任意搜索,但是只能搜索不关闭的告警
+	if strings.TrimSpace(param.Query) != "" {
+		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query),
+			fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query)}...)
 	}
 	if param.Filter == "all" {
 		sql = "SELECT * FROM alarm WHERE (start<='" + endString + "' OR end>='" + startString + "') " + whereSql + " ORDER BY id DESC"
@@ -1510,6 +1671,10 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		param.Page = &m.PageInfo{}
 	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
+	if param.Query != "" {
+		customQueryParam.Enable = true
+		customQueryParam.Query = param.Query
+	}
 	if len(param.Metric) > 0 {
 		for _, s := range param.Metric {
 			if s != "custom" {
@@ -1520,7 +1685,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	} else {
 		customQueryParam.Enable = true
 	}
-	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam, param.Page)
+	err, result = QueryAlarmBySql(sql, params, customQueryParam, param.Page)
 	return err, result
 }
 
@@ -1832,12 +1997,14 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 }
 
 func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMap map[string]*m.StrategyGroupRow, endpointServiceMap map[string][]*m.EndpointServiceRelTable, err error) {
+	strategyGroupMap = make(map[string]*m.StrategyGroupRow)
+	endpointServiceMap = make(map[string][]*m.EndpointServiceRelTable)
 	if len(alarmStrategyList) == 0 {
 		return
 	}
 	var strategyGroupRows []*m.StrategyGroupRow
 	strategyFilter, strategyParams := createListParams(alarmStrategyList, "")
-	err = x.SQL("select t1.guid,t1.endpoint_group,t2.service_group from alarm_strategy t1 left join endpoint_group t2 on t1.endpoint_group=t2.guid where t1.guid in ("+strategyFilter+")", strategyParams...).Find(&strategyGroupRows)
+	err = x.SQL("select t1.guid,t1.endpoint_group,t3.display_name as service_group from alarm_strategy t1 left join endpoint_group t2 on t1.endpoint_group=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.guid in ("+strategyFilter+")", strategyParams...).Find(&strategyGroupRows)
 	if err != nil {
 		err = fmt.Errorf("matchAlarmGroups -> query alarm strategy table fail,%s ", err.Error())
 		return
@@ -1851,8 +2018,6 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 			return
 		}
 	}
-	strategyGroupMap = make(map[string]*m.StrategyGroupRow)
-	endpointServiceMap = make(map[string][]*m.EndpointServiceRelTable)
 	for _, row := range strategyGroupRows {
 		strategyGroupMap[row.Guid] = row
 	}
@@ -1866,18 +2031,158 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 	return
 }
 
-func GetAlarmStrategyNameList() (list []string, err error) {
-	err = x.SQL("select distinct name from alarm_strategy").Find(&list)
+func GetAlarmNameList(status, alarmName string) (list []string, err error) {
+	var newList []string
+	var closed = 1
+	if status == "firing" {
+		closed = 0
+	}
+	baseSQL := "select distinct alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
+	var params []interface{}
+	if status != "" {
+		baseSQL = baseSQL + " and status=?"
+		params = append(params, status)
+	}
+	if strings.TrimSpace(alarmName) != "" {
+		baseSQL = baseSQL + " and alarm_name like '%" + alarmName + "%'"
+	}
+	baseSQL = baseSQL + " union select distinct alert_title as alarm_name,update_at as start from alarm_custom where 1=1"
+	if status != "" {
+		baseSQL = baseSQL + " and closed=?"
+		params = append(params, closed)
+	}
+	if strings.TrimSpace(alarmName) != "" {
+		baseSQL = baseSQL + " and alert_title like '%" + alarmName + "%'"
+	}
+	baseSQL = baseSQL + " ) t order by t.start desc limit 20"
+
+	if err = x.SQL(baseSQL, params...).Find(&list); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		for _, s := range list {
+			if strings.TrimSpace(s) == "" {
+				continue
+			}
+			newList = append(newList, s)
+		}
+	}
 	return
 }
 
-func convertMap2string(hashMap map[string]bool) []string {
-	var arr []string
-	if len(hashMap) == 0 {
-		return arr
+func convertString2Map(list []string) map[string]bool {
+	var hashMap = make(map[string]bool)
+	if len(list) == 0 {
+		return hashMap
 	}
-	for key, _ := range hashMap {
-		arr = append(arr, key)
+	for _, s := range list {
+		hashMap[s] = true
 	}
-	return arr
+	return hashMap
+}
+
+func getLevelSQL(levelMap map[string]bool) string {
+	var levelFilterSql string
+	switch len(levelMap) {
+	case 1:
+		if levelMap["high"] {
+			levelFilterSql = " AND alert_level in (1,2) "
+		} else if levelMap["medium"] {
+			levelFilterSql = " AND alert_level in (3,4) "
+		} else {
+			levelFilterSql = " AND alert_level>=5 "
+		}
+	case 2:
+		if levelMap["high"] && levelMap["medium"] {
+			levelFilterSql = " AND alert_level<5 "
+		} else if levelMap["high"] && levelMap["low"] {
+			levelFilterSql = " ( AND alert_level in (1,2) or alert_level>=5) "
+		} else {
+			levelFilterSql = " AND alert_level>=3 "
+		}
+	default:
+	}
+	return levelFilterSql
+}
+
+// 校验是否有编排使用权限
+func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap map[string]bool, token string) (result bool) {
+	var name = alarmNotify.ProcDefName
+	var version string
+	var resByteArr []byte
+	var response m.QueryProcessDefinitionPublicResponse
+	var err error
+	if strings.TrimSpace(alarmNotify.ProcDefName) != "" {
+		index := strings.LastIndex(alarmNotify.ProcDefName, "[")
+		if index < 0 {
+			return
+		}
+		name = alarmNotify.ProcDefName[:index]
+		version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
+		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/public/process/definitions/detail?name="+name+"&version="+version, token); err != nil {
+			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
+			return
+		}
+		if err = json.Unmarshal(resByteArr, &response); err != nil {
+			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
+			return
+		}
+		if response.Status != "OK" {
+			err = fmt.Errorf(response.Message)
+			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
+			return
+		}
+		if response.Data != nil && len(response.Data.UseRoles) > 0 {
+			for _, role := range response.Data.UseRoles {
+				if hasRoleMap[role] {
+					return true
+				}
+			}
+		}
+	}
+	return
+}
+
+func getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList []string) (logKeywordConfigMap, dbKeywordMonitorMap map[string]string, err error) {
+	logKeywordConfigMap = make(map[string]string)
+	dbKeywordMonitorMap = make(map[string]string)
+	if len(logKeywordConfigList) > 0 {
+		var logKeywordRows []*m.DbKeywordMonitor
+		err = x.SQL("select t1.guid,t3.display_name as `service_group` from log_keyword_config t1 left join log_keyword_monitor t2 on t1.log_keyword_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.guid in ('" + strings.Join(logKeywordConfigList, "','") + "')").Find(&logKeywordRows)
+		if err != nil {
+			return
+		}
+		for _, row := range logKeywordRows {
+			logKeywordConfigMap[row.Guid] = row.ServiceGroup
+		}
+	}
+	if len(dbKeywordMonitorList) > 0 {
+		var dbKeywordRows []*m.DbKeywordMonitor
+		err = x.SQL("select t1.guid,t2.display_name as `service_group` from db_keyword_monitor t1 left join service_group t2 on t1.service_group=t2.guid where t1.guid in ('" + strings.Join(dbKeywordMonitorList, "','") + "')").Find(&dbKeywordRows)
+		if err != nil {
+			return
+		}
+		for _, row := range dbKeywordRows {
+			dbKeywordMonitorMap[row.Guid] = row.ServiceGroup
+		}
+	}
+	return
+}
+
+// HttpGet  Get请求
+func HttpGet(url, userToken string) (byteArr []byte, err error) {
+	req, newReqErr := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+	if newReqErr != nil {
+		err = fmt.Errorf("try to new http request fail,%s ", newReqErr.Error())
+		return
+	}
+	req.Header.Set("Authorization", userToken)
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = fmt.Errorf("try to do http request fail,%s ", respErr.Error())
+		return
+	}
+	byteArr, _ = io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return
 }

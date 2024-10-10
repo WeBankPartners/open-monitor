@@ -11,6 +11,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,17 +22,22 @@ func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
+	var param models.SharedChartListParam
+	var customDashboard *models.CustomDashboardObj
 	var err error
 	var exist bool
-	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
-	if chartList, err = db.QueryAllPublicCustomChartList(middleware.GetOperateUserRoles(c)); err != nil {
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chartList, err = db.QueryAllPublicCustomChartList(param.DashboardId, param.ChartName, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(chartList) > 0 {
 		// 去掉看板里面 已有重复的图表
-		if dashboardId != 0 {
-			if customChartList, err = db.QueryCustomChartListByDashboard(dashboardId); err != nil {
+		if param.CurDashboardId != 0 {
+			if customChartList, err = db.QueryCustomChartListByDashboard(param.CurDashboardId); err != nil {
 				middleware.ReturnServerHandleError(c, err)
 				return
 			}
@@ -60,6 +66,13 @@ func GetSharedChartList(c *gin.Context) {
 					Id:              chart.Guid,
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
+					UpdateTime:      chart.UpdateTime,
+				}
+				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
+					continue
+				}
+				if customDashboard != nil {
+					sharedDto.DashboardName = customDashboard.Name
 				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
@@ -71,9 +84,21 @@ func GetSharedChartList(c *gin.Context) {
 			}
 		}
 	}
+	// 每种类型中最多展示20条数据
+	for key, valueList := range sharedResultMap {
+		sort.Sort(models.ChartSharedDtoSort(valueList))
+		valueList = valueList[:min(20, len(valueList))]
+		sharedResultMap[key] = valueList
+	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
 }
 
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
 func AddCustomChart(c *gin.Context) {
 	var err error
 	var param models.AddCustomChartParam
@@ -443,6 +468,25 @@ func GetSharedChartPermission(c *gin.Context) {
 	middleware.ReturnSuccessData(c, result)
 }
 
+func GetSharedChartPermissionBatch(c *gin.Context) {
+	var err error
+	var param models.ChartPermissionBatchParam
+	var list []*models.CustomChartPermission
+	var roles []string
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if list, err = db.QueryChartPermissionByCustomChartList(param.Ids); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, permission := range list {
+		roles = append(roles, permission.RoleId)
+	}
+	middleware.ReturnSuccessData(c, roles)
+}
+
 // QueryCustomChart 查询图表管理列表
 func QueryCustomChart(c *gin.Context) {
 	var param models.QueryChartParam
@@ -465,7 +509,7 @@ func QueryCustomChart(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -520,7 +564,9 @@ func QueryCustomChart(c *gin.Context) {
 			}
 			if len(chartRelList) > 0 {
 				for _, rel := range chartRelList {
-					useDashboard = append(useDashboard, customDashboardMap[*rel.CustomDashboard])
+					if rel.CustomDashboard != nil {
+						useDashboard = append(useDashboard, customDashboardMap[*rel.CustomDashboard])
+					}
 				}
 			}
 			resultDto := &models.QueryChartResultDto{
@@ -537,6 +583,7 @@ func QueryCustomChart(c *gin.Context) {
 				CreatedTime:      chart.CreateTime,
 				UpdatedTime:      chart.UpdateTime,
 				Permission:       permission,
+				LogMetricGroup:   chart.LogMetricGroup,
 			}
 			dataList = append(dataList, resultDto)
 		}
@@ -605,9 +652,15 @@ func GetChartSeriesColor(c *gin.Context) {
 	}
 	if len(param.Tags) > 0 && len(querySeriesConfigList) > 0 {
 		var tagValue []string
+		var equal string
 		for _, tag := range param.Tags {
 			if tag.TagName == "calc_type" {
 				tagValue = tag.TagValue
+				if tag.Equal == db.ConstEqualIn {
+					equal = "="
+				} else {
+					equal = "!="
+				}
 				break
 			}
 		}
@@ -620,23 +673,24 @@ func GetChartSeriesColor(c *gin.Context) {
 				if strings.Contains(data.PromQ, "{") {
 					for i, tag := range tagValue {
 						if i == 0 {
-							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ[:len(data.PromQ)-1] + ",calc_type" + equal + "'" + tag + "'}"
 						} else {
-							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + " or " + promQ[:len(promQ)-1] + ",calc_type" + equal + "'" + tag + "'}"
 						}
 					}
 				} else {
 					for i, tag := range tagValue {
 						if i == 0 {
-							data.PromQ = data.PromQ + "{calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + "{calc_type" + equal + "'" + tag + "'}"
 						} else {
-							data.PromQ = data.PromQ + " or " + promQ + "{calc_type='" + tag + "'}"
+							data.PromQ = data.PromQ + " or " + promQ + "{calc_type" + equal + "'" + tag + "'}"
 						}
 					}
 				}
 			}
 		}
 	}
+	log.Logger.Debug("GetChartSeriesColor config", log.JsonObj("querySeriesConfigList", querySeriesConfigList))
 	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
 	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -645,6 +699,7 @@ func GetChartSeriesColor(c *gin.Context) {
 	for _, v := range querySeriesResult.Legend {
 		result = append(result, &models.ColorConfigDto{SeriesName: v, New: true})
 	}
+	log.Logger.Debug("GetChartSeriesColor result", log.JsonObj("result", result))
 	existSeriesMap := make(map[string]string)
 	// 查已保存的series颜色配置
 	if param.ChartSeriesGuid != "" {
