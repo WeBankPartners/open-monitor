@@ -33,6 +33,17 @@ func DeregisterAgent(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if endpointObj.ExportType == "host" {
+		processList, getErr := db.GetProcessByHostEndpoint(endpointObj.Ip)
+		if getErr != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if len(processList) > 0 {
+			mid.ReturnServerHandleError(c, fmt.Errorf(mid.GetMessageMap(c).EndpointHostDeleteError))
+			return
+		}
+	}
 	err = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)

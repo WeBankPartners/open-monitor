@@ -106,7 +106,7 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 		return
 	}
 	var tagValueRows []*models.CustomChartTagValueRow
-	err = x.SQL("select t2.dashboard_chart_config as `chart_guid`,t2.name,t1.value from custom_chart_series_tagvalue t1 left join custom_chart_series_tag t2 on t1.dashboard_chart_tag=t2.guid where t2.dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart=?)", customChartGuid).Find(&tagValueRows)
+	err = x.SQL("select t2.dashboard_chart_config as `chart_guid`,t2.name,t1.value,t2.equal from custom_chart_series_tagvalue t1 left join custom_chart_series_tag t2 on t1.dashboard_chart_tag=t2.guid where t2.dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart=?)", customChartGuid).Find(&tagValueRows)
 	if err != nil {
 		err = fmt.Errorf("query custom_chart_tag_value fail,%s ", err.Error())
 		return
@@ -132,10 +132,10 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 			Tags:          []*models.TagDto{},
 			ColorConfig:   nil,
 		}
-		tagNameList := []string{}
-		for _, tagName := range tagRows {
-			tagNameList = append(tagNameList, tagName.Name)
-		}
+		//tagNameList := []string{}
+		//for _, tagName := range tagRows {
+		//	tagNameList = append(tagNameList, tagName.Name)
+		//}
 		tagValueMap := make(map[string][]string)
 		for _, tvRow := range tagValueRows {
 			if tvRow.ChartGuid == row.Guid {
@@ -147,12 +147,15 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 				}
 			}
 		}
-		for _, tagName := range tagNameList {
+		for _, tagName := range tagRows {
+			if *tagName.DashboardChartConfig != row.Guid {
+				continue
+			}
 			tmpValueList := []string{}
-			if existTagList, ok := tagValueMap[tagName]; ok {
+			if existTagList, ok := tagValueMap[tagName.Name]; ok {
 				tmpValueList = existTagList
 			}
-			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tmpValueList})
+			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName.Name, TagValue: tmpValueList, Equal: tagName.Equal})
 		}
 		series = append(series, &tmpSerieObj)
 	}

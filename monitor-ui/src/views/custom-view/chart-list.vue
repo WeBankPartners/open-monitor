@@ -8,9 +8,12 @@
     </Row>
     <div class="chart-list-header mb-3">
       <div class="chart-search">
+        <div style="font-size: 14px;min-width: 110px">{{$t('m_show_user_created')}}</div>
+        <i-switch v-model="searchMap.show" style="width: 43px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.chartName"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_name')"
           clearable
           @on-change="onFilterConditionChange"
@@ -18,6 +21,7 @@
         <Input
           v-model="searchMap.chartId"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_id')"
           clearable
           @on-change="onFilterConditionChange"
@@ -26,6 +30,7 @@
         <Select
           v-model="searchMap.chartType"
           clearable
+          style="width: 10%"
           filterable
           :placeholder="$t('m_field_type')"
           @on-change="onFilterConditionChange"
@@ -35,6 +40,7 @@
         <Select
           v-model="searchMap.sourceDashboard"
           clearable
+          style="width: 10%"
           filterable
           :placeholder="$t('m_source_dashboard')"
           @on-change="onFilterConditionChange"
@@ -48,6 +54,7 @@
           multiple
           :placeholder="$t('m_use_dashboard')"
           :max-tag-count="1"
+          style="width: 10%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in dashboardOptions" :value="item.id" :key="item.id">{{item.name}}</Option>
@@ -58,6 +65,7 @@
           filterable
           :max-tag-count="1"
           multiple
+          style="width: 10%"
           :placeholder="$t('m_manage_role')"
           @on-change="onFilterConditionChange"
         >
@@ -69,6 +77,7 @@
           :max-tag-count="1"
           filterable
           multiple
+          style="width: 10%"
           :placeholder="$t('m_use_role')"
           @on-change="onFilterConditionChange"
         >
@@ -77,6 +86,7 @@
         <Input
           v-model="searchMap.updateUser"
           type="text"
+          style="width: 10%"
           :placeholder="$t('m_updatedBy')"
           clearable
           @on-change="onFilterConditionChange"
@@ -86,7 +96,9 @@
       <!-- <Button @click="getChartList" type="primary">{{ $t('m_search') }}</Button> -->
       <Button @click="resetSearchCondition">{{ $t('m_reset') }}</Button>
     </div>
+
     <Table
+      class='chart-list-talbe-content'
       size="small"
       :columns="chartListColumns"
       :data="tableData"
@@ -129,6 +141,7 @@ import AuthDialog from '@/components/auth.vue'
 import EditView from '@/views/custom-view/edit-view'
 
 const initSearchMap = {
+  show: false,
   chartName: '',
   chartId: '',
   chartType: '',
@@ -160,9 +173,14 @@ export default {
       chartListColumns: [
         {
           title: this.$t('m_graph_name'),
-
-          minWidth: 200,
-          key: 'chartName'
+          width: 250,
+          key: 'chartName',
+          render: (h, params) => params.row.chartName ? (<div style='display: flex; align-items:center'>
+            {params.row.logMetricGroup ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
+            <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.chartName}>
+              {params.row.chartName || '-'}
+            </Tooltip>
+          </div>) : (<div>-</div>)
         },
         {
           title: this.$t('m_id'),
@@ -248,19 +266,27 @@ export default {
           fixed: 'right',
           render: (h, params) => (params.row.permission === 'mgmt'
             ? (<div style="display:flex;justify-content: center;">
-              <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
-                <Icon type="md-create" size="16"></Icon>
-              </Button>
-              <Button class="ml-2 mr-2" size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
-                <Icon type="md-person" size="16"></Icon>
-              </Button>
-              <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
-                <Icon type="md-trash" size="16"></Icon>
-              </Button>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_edit')}>
+                <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
+                  <Icon type="md-create" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_permissions')}>
+                <Button class="ml-2 mr-2" size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
+                  <Icon type="md-person" size="16"></Icon>
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_remove')}>
+                <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
+                  <Icon type="md-trash" size="16"></Icon>
+                </Button>
+              </Tooltip>
             </div>) : (<div style="display:flex;justify-content: center;">
-              <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
-                <Icon type="md-eye" size="16"></Icon>
-              </Button>
+              <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_view')}>
+                <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
+                  <Icon type="md-eye" size="16"></Icon>
+                </Button>
+              </Tooltip>
             </div>)
           )
         }
@@ -332,10 +358,14 @@ export default {
       return resArr
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.currentPage = 1
+      this.pagination.pageSize = 10
       this.getChartList()
     }, 300),
     getChartList() {
-      const params = Object.assign(cloneDeep(this.searchMap), {
+      const cloneSearchMap = cloneDeep(this.searchMap)
+      cloneSearchMap.show = cloneSearchMap.show === true ? 'me' : ''
+      const params = Object.assign(cloneSearchMap, {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       })
@@ -416,19 +446,35 @@ export default {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
+        align-items: center;
         margin-right: 10px;
     }
-    .chart-search > div {
-        width: 8%;
-    }
-    .chart-search > div:nth-child(4),
-    .chart-search > div:nth-child(5),
-    .chart-search > div:nth-child(6),
-    .chart-search > div:nth-child(7) {
-        width: 15%
-    }
+}
+.chart-list-talbe-content {
+  max-height: ~'calc(100vh - 250px)';
+  overflow-y: auto;
 }
 .table-pagination {
-    float: right;
+  position: fixed;
+  bottom:20px;
+  right: 15px;
+  z-index: 10000;
+}
+</style>
+
+<style lang='less'>
+.auto-tag-style {
+  .ivu-tag-text.ivu-tag-color-white {
+    display: inline-block;
+    min-width: 24px;
+  }
+}
+.table-alarm-name {
+  .ivu-tooltip-rel {
+    width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>

@@ -2,10 +2,7 @@
   <div class=" ">
     <section>
       <div style="text-align: end;">
-        <button type="button" @click="addDbMonitor" class="btn btn-sm btn-confirm-f">
-          <i class="fa fa-plus"></i>
-          {{$t('m_button_add')}}
-        </button>
+        <Button type="primary" @click="addDbMonitor">{{$t('m_button_add')}}</Button>
       </div>
       <div style="height:500px;overflow-y:auto">
         <template v-for="(tableItem, tableIndex) in totalData">
