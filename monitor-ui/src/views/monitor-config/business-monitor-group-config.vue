@@ -27,7 +27,7 @@
             <FormItem :label="$t('m_metric_code') ">
               <Input
                 v-model.trim="businessConfig.metric_prefix_code"
-                maxlength="6"
+                maxlength="15"
                 :disabled="!isAdd || view"
                 show-word-limit
                 :placeholder="$t('m_metric_code_placeholder')"
@@ -45,31 +45,77 @@
                 <Col span="3" style="margin-top: 30px">
                 <span style="color:#5cadff">{{ $t('m_service_code') }}</span>
                 </Col>
-                <Col span="20">
+                <Col span="21">
                 <Row>
-                  <Col span="4">{{ $t('m_match_type') }}</Col>
-                  <Col span="6">
+                  <Col span="3">{{ $t('m_match_type') }}</Col>
+                  <Col span="3">
                   <span style="color:red">*</span>
                   {{ $t('m_source_value') }}</Col>
-                  <Col span="6">
+                  <Col span="4">
+                  {{ $t('m_matching_source_value') }}
+                  </Col>
+                  <Col span="4">
+                  {{ $t('m_matching_result_test') }}
+                  </Col>
+                  <Col span="4">
                   <span style="color:red">*</span>
-                  {{ $t('m_match_value') }}</Col>
+                  {{ $t('m_match_value') }}
+                  </Col>
                   <Col span="2">
                   {{ $t('m_field_type') }}</Col>
-                  <Col span="2"></Col>
+                  <Col span="1"></Col>
                 </Row>
-                <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
-                  <Col span="4">
-                  <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" class='action-row'>
+                  <Col span="3">
+                  <Select v-model="item.regulative"
+                          :disabled="view"
+                          style="width:90%"
+                          @on-change='onRegulativeChange(item)'
+                  >
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
-                  <Col span="6">
-                  <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                  <Col span="3">
+                  <Input v-model.trim="item.source_value"
+                         :disabled="view"
+                         @on-change="(e) => onSourceValueChange(e, item)"
+                         @on-blur="refreshPage"
+                         style="width:90%"
+                  >
+                  </Input>
                   </Col>
-                  <Col span="6">
-                  <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                  <Col span="4">
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || item.regulative === 0"
+                         style="width:90%"
+                         @on-change="debounceRefresh"
+                         @on-blur="refreshPage"
+                  >
+                  </Input>
+                  </Col>
+
+                  <Col span="4" :key='rowKey'>
+                  <span>{{ item.regulative === 0 ? '-' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
+                  <Button
+                    v-if="item.regulative === 1"
+                    type="info"
+                    ghost
+                    size="small"
+                    :disabled="view || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
+                    @click="onMatchButtonClick(item)"
+                  >
+                    {{$t('m_match')}}
+                  </Button>
+                  </Col>
+
+                  <Col span="4">
+                  <Input
+                    :disabled="view || (!item.matchingResult && item.regulative === 1)"
+                    v-model.trim="item.target_value"
+                    style="width:90%"
+                  >
+                  </Input>
                   </Col>
                   <Col span="2" offset="2">
                   <Button
@@ -86,9 +132,9 @@
                 </Col>
               </Row>
               <Row>
-                <Col span="20" offset="3">
+                <Col span="21" offset="3">
                 <Row>
-                  <Col span="2" offset="18">
+                  <Col span="2" offset="20">
                   <div style="cursor: pointer">
                     <Button type="success" :disabled="view" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
                   </div>
@@ -102,19 +148,53 @@
                 <Col span="3" style="margin-top: 12px">
                 <span style="color:#5cadff">{{ $t('m_return_code') }}</span>
                 </Col>
-                <Col span="20">
-                <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
-                  <Col span="4">
-                  <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                <Col span="21">
+                <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
+                  <Col span="3">
+                  <Select v-model="item.regulative"
+                          :disabled="view || retcodeItemDisabled(item)"
+                          style="width:90%"
+                          @on-change='onRegulativeChange(item)'
+                  >
                     <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                     <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                   </Select>
                   </Col>
-                  <Col span="6">
-                  <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                  <Col span="3">
+                  <Input v-model.trim="item.source_value"
+                         :disabled="view || retcodeItemDisabled(item)"
+                         @on-change="(e) => onSourceValueChange(e, item)"
+                         style="width:90%"
+                         @on-blur="refreshPage"
+                  >
+                  </Input>
                   </Col>
-                  <Col span="6">
-                  <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+
+                  <Col span="4">
+                  <Input v-model.trim="item.matchingSourceValue"
+                         :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
+                         style="width:90%"
+                         @on-change="debounceRefresh"
+                         @on-blur="refreshPage"
+                  >
+                  </Input>
+                  </Col>
+                  <Col span="4" :key='rowKey'>
+                  <span>{{item.regulative === 0 ? '-' : (item.matchingResult ? $t('m_matching_success') : $t('m_matching_failed'))}}</span>
+                  <Button
+                    v-if="item.regulative === 1"
+                    type="info"
+                    ghost
+                    size="small"
+                    :disabled="view || retcodeItemDisabled(item) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
+                    @click="onMatchButtonClick(item)"
+                  >
+                    {{$t('m_match')}}
+                  </Button>
+                  </Col>
+
+                  <Col span="4">
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
@@ -135,9 +215,9 @@
                 </Col>
               </Row>
               <Row>
-                <Col span="20" offset="3">
+                <Col span="21" offset="3">
                 <Row>
-                  <Col span="2" offset="18">
+                  <Col span="2" offset="20">
                   <div style="cursor: pointer">
                     <Button type="success" :disabled="view" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
                   </div>
@@ -170,7 +250,9 @@
           ></JsonRegexDisplay>
         </div>
       </div>
-      <template #footer>
+      <template slot='footer'>
+        <Checkbox v-if="actionType === 'add'" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="actionType === 'add'" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
@@ -179,8 +261,20 @@
 </template>
 
 <script>
+import {
+  cloneDeep, isEmpty, hasIn, debounce, countBy, some
+} from 'lodash'
+import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
 import JsonRegexDisplay from '@/views/monitor-config/log-template-config/json-regex-display.vue'
+
+const initRangeConfig = {
+  operator: '>',
+  threshold: 3,
+  time: 60,
+  time_unit: 's'
+}
+
 export default {
   name: '',
   data() {
@@ -194,7 +288,13 @@ export default {
         log_type: ''
       },
       businessConfig: {},
-      templeteStatus: false
+      templeteStatus: false,
+      rowKey: '',
+      template_version: '',
+      auto_create_warn: true,
+      auto_create_dashboard: true,
+      templateRetCode: {},
+      actionType: ''
     }
   },
   methods: {
@@ -206,12 +306,14 @@ export default {
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志
-      this.isAdd = actionType === 'add'
+      this.isAdd = ['add', 'copy'].includes(actionType)
+      this.actionType = actionType
       this.view = actionType === 'view'
+      this.businessConfig.log_monitor_template_guid = templateGuid
+      this.businessConfig.log_metric_monitor_guid = parentGuid
       if (configGuid) {
         this.getConfig(configGuid)
-      }
-      else {
+      } else {
         this.businessConfig = {
           name: '', // 名称
           metric_prefix_code: '', // 指标编码 1到6个字符的字母、数字、下划线或短横线
@@ -233,14 +335,12 @@ export default {
             }
           ]
         }
+        if (templateGuid) {
+          this.businessConfig.log_monitor_template_guid = templateGuid
+          this.businessConfig.log_metric_monitor_guid = parentGuid
+          this.getTemplateDetail(templateGuid)
+        }
       }
-
-      if (templateGuid) {
-        this.businessConfig.log_monitor_template_guid = templateGuid
-        this.businessConfig.log_metric_monitor_guid = parentGuid
-        this.getTemplateDetail(templateGuid)
-      }
-
       this.$refs.standardRegexDisplayRef && this.$refs.standardRegexDisplayRef.hideTemplate()
       this.$refs.jsonRegexDisplayRef && this.$refs.jsonRegexDisplayRef.hideTemplate()
       this.showModel = true
@@ -255,16 +355,41 @@ export default {
       const res = this.$refs[displayRef] && this.$refs[displayRef].returnCurrentStatus()
       return res
     },
+    processConfigInfo(res) {
+      this.configInfo = res
+      !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfig) : JSON.parse(item.range_config))
+      })
+      this.templateRetCode = isEmpty(res.success_code) ? {} : JSON.parse(res.success_code)
+    },
     getTemplateDetail(guid) {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
-        this.configInfo = resp
+        this.processConfigInfo(resp)
+        Object.assign(this.businessConfig.retcode_string_map[0], JSON.parse(resp.success_code))
       })
     },
     getConfig(guid) {
       const api = this.$root.apiCenter.getLogMetricConfig + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.businessConfig = resp
+        this.processConfigInfo(resp.log_monitor_template)
+        if (this.actionType === 'copy') {
+          this.businessConfig.name += '1'
+          this.businessConfig.metric_prefix_code += '1'
+        }
+        this.configInfo.log_monitor_template_version = resp.log_monitor_template_version
+
+        Array.isArray(this.businessConfig.code_string_map) && this.businessConfig.code_string_map.forEach((item, index) => {
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingSourceValue', '')
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingResult', false)
+          Vue.set(this.businessConfig.code_string_map[index], 'matchingResultText', this.businessConfig.code_string_map[index].source_value)
+        })
+        Array.isArray(this.businessConfig.retcode_string_map) && this.businessConfig.retcode_string_map.forEach((item, index) => {
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingSourceValue', '')
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingResult', false)
+          Vue.set(this.businessConfig.retcode_string_map[index], 'matchingResultText', this.businessConfig.retcode_string_map[index].source_value)
+        })
       })
     },
     paramsValidate(tmpData) {
@@ -278,7 +403,7 @@ export default {
       }
       // eslint-disable-next-line no-useless-escape
       // const regex = /^[a-zA-Z0-9_\-]{1,6}$/;
-      const regex = /^[A-Za-z][A-Za-z0-9]{0,5}$/
+      const regex = /^[A-Za-z][A-Za-z0-9]{0,14}$/
 
       if (!regex.test(tmpData.metric_prefix_code)) {
         this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_metric_prefix_code_validate')}`)
@@ -295,22 +420,88 @@ export default {
         this.$Message.warning(`${this.$t('m_return_code')}: ${this.$t('m_fields_cannot_be_empty')}`)
         return true
       }
+      if (!isEmpty(tmpData.code_string_map)) {
+        const targetValueCount = countBy(tmpData.code_string_map, 'target_value')
+        const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
+        if (targetValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
 
+        const sourceValueCount = countBy(tmpData.code_string_map, 'source_value')
+        const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
+        if (sourceValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+      }
+
+      if (!isEmpty(tmpData.retcode_string_map)) {
+        const targetValueCount = countBy(tmpData.retcode_string_map, 'target_value')
+        const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
+        if (targetValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+
+        const sourceValueCount = countBy(tmpData.retcode_string_map, 'source_value')
+        const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
+        if (sourceValueHasDuplicates) {
+          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          return true
+        }
+      }
       return false
     },
-
+    processUpdateData(data) {
+      !isEmpty(data.log_monitor_template) && !isEmpty(data.log_monitor_template.metric_list) && data.log_monitor_template.metric_list.forEach(item => {
+        item.range_config = JSON.stringify(item.range_config)
+      })
+      if (this.actionType === 'add') {
+        data.auto_create_warn = this.auto_create_warn
+        data.auto_create_dashboard = this.auto_create_dashboard
+      }
+    },
     saveConfig() {
-      const tmpData = JSON.parse(JSON.stringify(this.businessConfig))
+      const tmpData = cloneDeep(this.businessConfig)
+      this.processUpdateData(tmpData)
       if (this.paramsValidate(tmpData)) {
         return
       }
-      // delete tmpData.create_user
-      // delete tmpData.create_time
-      // delete tmpData.update_user
-      // delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, () => {
-        this.$Message.success(this.$t('m_tips_success'))
+      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
+        const messageTips = this.$t('m_tips_success')
+        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+          const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
+          const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
+          this.$Message.success({
+            render: h => h('div', { class: 'add-business-config' }, [
+              h('div', {class: 'add-business-config-item'}, [
+                h('div', this.$t('m_has_create_dashboard') + ':'),
+                h('div', {
+                  domProps: {
+                    innerHTML: tipTwo
+                  }
+                })
+              ]),
+              h('div', { class: 'add-business-config-item' }, [
+                h('div', this.$t('m_has_create_warn') + ':'),
+                h('div', {
+                  class: 'create_warn_text',
+                  domProps: {
+                    innerHTML: tipOne
+                  }
+                })
+              ])
+            ]),
+            duration: 5
+          })
+        } else {
+          this.$Message.success({
+            content: messageTips,
+            duration: 2
+          })
+        }
         this.showModel = false
         this.$emit('reloadMetricData', this.parentGuid)
       })
@@ -319,17 +510,56 @@ export default {
       const params = key === 'code_string_map' ? {
         regulative: 0,
         source_value: '',
-        target_value: ''
+        target_value: '',
+        matchingSourceValue: '',
+        matchingResultText: '',
+        matchingResult: false
       } : {
         regulative: 0,
         source_value: '',
         target_value: '',
-        value_type: 'fail'
+        value_type: 'fail',
+        matchingSourceValue: '',
+        matchingResultText: '',
+        matchingResult: false
       }
       this.businessConfig[key].push(params)
     },
     deleteItem(key, itemIndex) {
       this.businessConfig[key].splice(itemIndex, 1)
+    },
+    onMatchButtonClick(item) {
+      const api = '/monitor/api/v2/service/log_metric/data_map/regexp/match'
+      const params = {
+        content: item.matchingSourceValue,
+        regexp: item.source_value,
+        is_regexp: item.regulative === 1 ? true : false
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
+        Vue.set(item, 'matchingResult', res.match)
+        this.refreshPage()
+      })
+    },
+    onSourceValueChange(event, item) {
+      item.matchingResultText = event.target.value
+      item.matchingResult = false
+      this.debounceRefresh()
+    },
+    debounceRefresh: debounce(function (){
+      this.refreshPage()
+    }, 1000),
+    retcodeItemDisabled(item) {
+      return item.regulative === this.templateRetCode.regulative
+        && item.source_value === this.templateRetCode.source_value
+          && item.target_value === this.templateRetCode.target_value
+    },
+    onRegulativeChange(item) {
+      item.matchingSourceValue = ''
+      item.matchingResult = false
+      this.refreshPage()
+    },
+    refreshPage() {
+      this.rowKey = +new Date() + ''
     }
   },
   components: {
@@ -381,4 +611,35 @@ export default {
     }
   }
 }
+
+.action-row {
+  margin:6px 0;
+  display: flex;
+  align-items: center;
+}
+
+</style>
+
+<style lang="less">
+.add-business-config {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 900px;
+  max-height: 600px;
+  overflow-y: auto;
+  .add-business-config-item {
+    display: flex;
+    flex-direction: row;
+    .create_warn_text {
+      text-align: left
+    }
+  }
+}
+.add-business-config > div {
+  max-width: 850px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
 </style>

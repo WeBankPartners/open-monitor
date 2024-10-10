@@ -150,8 +150,8 @@ module.exports = {
         "no-else-return": 1,
         "brace-style": [
             1,
-            "stroustrup",
-            {}
+            "1tbs",
+            { "allowSingleLine": true }
         ],
         "newline-per-chained-call": [
             "error",

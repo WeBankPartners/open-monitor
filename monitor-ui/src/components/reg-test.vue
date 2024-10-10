@@ -46,8 +46,7 @@ export default {
           return this.textString.replace(execRes[0], '<span style=\'color:red\'>' + execRes[0] + '</span>')
         }
         return ''
-      }
-      catch (err) {
+      } catch (err) {
         return ''
       }
     }
