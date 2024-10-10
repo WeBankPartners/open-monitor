@@ -8,8 +8,8 @@
       <p>Will you delete it?</p>
     </div>
     <div slot="footer">
-      <button class="btn-cancel-f" @click="ModelDelConfig.deleteWarning = false">Cancel</button>
-      <button class="btn-delete-f" @click="deleteConfirm">Delete</button>
+      <Button @click="ModelDelConfig.deleteWarning = false">{{ $t('m_button_cancel') }}</Button>
+      <Button type="error" @click="deleteConfirm">{{ $t('m_delConfirm_button') }}</Button>
     </div>
   </Modal>
 </template>

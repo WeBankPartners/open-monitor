@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -47,7 +48,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 	if param.PageSize == 0 {
 		param.PageSize = 10
 	}
-	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUserRoles(c)); err != nil {
+	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -110,6 +111,9 @@ func QueryCustomDashboardList(c *gin.Context) {
 				UpdateTime:       dashboard.UpdateAt.Format(models.DatetimeFormat),
 				MainPage:         mainPages,
 			}
+			if dashboard.LogMetricGroup != nil {
+				result.LogMetricGroup = *dashboard.LogMetricGroup
+			}
 			rowsData = append(rowsData, result)
 		}
 	}
@@ -143,6 +147,9 @@ func GetCustomDashboard(c *gin.Context) {
 	customDashboardDto.Name = customDashboard.Name
 	customDashboardDto.TimeRange = customDashboard.TimeRange
 	customDashboardDto.RefreshWeek = customDashboard.RefreshWeek
+	if customDashboard.LogMetricGroup != nil {
+		customDashboardDto.LogMetricGroup = *customDashboard.LogMetricGroup
+	}
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -228,11 +235,13 @@ func AddCustomDashboard(c *gin.Context) {
 	now := time.Now()
 	user := middleware.GetOperateUser(c)
 	dashboard := &models.CustomDashboardTable{
-		Name:       param.Name,
-		CreateUser: user,
-		UpdateUser: user,
-		CreateAt:   now,
-		UpdateAt:   now,
+		Name:        param.Name,
+		CreateUser:  user,
+		UpdateUser:  user,
+		CreateAt:    now,
+		UpdateAt:    now,
+		RefreshWeek: 60,
+		TimeRange:   -1800,
 	}
 	if dashboardId, err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -260,6 +269,41 @@ func DeleteCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 	}
 	if err = db.DeleteCustomDashboardById(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+func CopyCustomDashboard(c *gin.Context) {
+	var customDashboard *models.CustomDashboardTable
+	var param models.CopyCustomDashboardParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if param.DashboardId == 0 {
+		middleware.ReturnParamEmptyError(c, "dashboardId")
+		return
+	}
+	if strings.TrimSpace(param.MgmtRole) == "" {
+		middleware.ReturnValidateError(c, "mgmtRoles empty!")
+		return
+	}
+	if len(param.UseRoles) == 0 {
+		middleware.ReturnParamEmptyError(c, "useRoles empty!")
+		return
+	}
+	if customDashboard, err = db.GetCustomDashboardById(param.DashboardId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard == nil {
+		middleware.ReturnValidateError(c, "invalid id")
+		return
+	}
+	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -335,14 +379,16 @@ func UpdateCustomDashboard(c *gin.Context) {
 	for _, chart := range param.Charts {
 		insert = true
 		for _, chartRel := range hasChartRelList {
-			if *chartRel.DashboardChart == chart.Id {
+			if chartRel.DashboardChart != nil && *chartRel.DashboardChart == chart.Id {
 				displayConfig, _ := json.Marshal(chart.DisplayConfig)
+				groupDisplayConfig, _ := json.Marshal(chart.GroupDisplayConfig)
 				updateChartRelList = append(updateChartRelList, &models.CustomDashboardChartRel{
-					Guid:          chartRel.Guid,
-					Group:         chart.Group,
-					DisplayConfig: string(displayConfig),
-					UpdateUser:    user,
-					UpdateTime:    now,
+					Guid:               chartRel.Guid,
+					Group:              chart.Group,
+					DisplayConfig:      string(displayConfig),
+					GroupDisplayConfig: string(groupDisplayConfig),
+					UpdateUser:         user,
+					UpdateTime:         now,
 				})
 				insert = false
 				break
@@ -350,16 +396,18 @@ func UpdateCustomDashboard(c *gin.Context) {
 		}
 		if insert {
 			displayConfig, _ := json.Marshal(chart.DisplayConfig)
+			groupDisplayConfig, _ := json.Marshal(chart.GroupDisplayConfig)
 			insertChartRelList = append(insertChartRelList, &models.CustomDashboardChartRel{
-				Guid:            guid.CreateGuid(),
-				CustomDashboard: &param.Id,
-				DashboardChart:  &chart.Id,
-				Group:           chart.Group,
-				DisplayConfig:   string(displayConfig),
-				CreateUser:      user,
-				UpdateUser:      user,
-				CreateTime:      now,
-				UpdateTime:      now,
+				Guid:               guid.CreateGuid(),
+				CustomDashboard:    &param.Id,
+				DashboardChart:     &chart.Id,
+				Group:              chart.Group,
+				DisplayConfig:      string(displayConfig),
+				GroupDisplayConfig: string(groupDisplayConfig),
+				CreateUser:         user,
+				UpdateUser:         user,
+				CreateTime:         now,
+				UpdateTime:         now,
 			})
 		}
 	}
@@ -489,6 +537,9 @@ func ExportCustomDashboard(c *gin.Context) {
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var exportChartIdMap = make(map[string]bool)
+	var dashboardPermissionList []*models.CustomDashBoardRoleRel
+	var useRoles []string
+	var mgmtRole string
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -511,6 +562,17 @@ func ExportCustomDashboard(c *gin.Context) {
 			exportChartIdMap[id] = true
 		}
 	}
+	if dashboardPermissionList, err = db.QueryCustomDashboardRoleRelByCustomDashboard(customDashboard.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, role := range dashboardPermissionList {
+		if role.Permission == string(models.PermissionMgmt) {
+			mgmtRole = role.RoleId
+		} else if role.Permission == string(models.PermissionUse) {
+			useRoles = append(useRoles, role.RoleId)
+		}
+	}
 	result = &models.CustomDashboardExportDto{
 		Id:          customDashboard.Id,
 		Name:        customDashboard.Name,
@@ -518,6 +580,11 @@ func ExportCustomDashboard(c *gin.Context) {
 		TimeRange:   customDashboard.TimeRange,
 		RefreshWeek: customDashboard.RefreshWeek,
 		Charts:      []*models.CustomChartDto{},
+		UseRoles:    useRoles,
+		MgmtRole:    mgmtRole,
+	}
+	if customDashboard.LogMetricGroup != nil {
+		result.LogMetricGroup = *customDashboard.LogMetricGroup
 	}
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -636,6 +703,41 @@ func ImportCustomDashboard(c *gin.Context) {
 	}
 	if importRes != nil && len(importRes.ChartMap) > 0 {
 		middleware.ReturnSuccessData(c, importRes.ChartMap)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+func TransImportCustomDashboard(c *gin.Context) {
+	var param *models.CustomDashboardExportDto
+	var customDashboard *models.CustomDashboardTable
+	file, err := c.FormFile("file")
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	b, err := io.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &param)
+	if param == nil || strings.TrimSpace(param.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "import data is empty")
+		return
+	}
+	if len(param.Charts) == 0 {
+		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
+		return
+	}
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "insert", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard != nil && customDashboard.Id != 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
 		return
 	}
 	middleware.ReturnSuccess(c)
