@@ -1,10 +1,16 @@
 <template>
-  <div class=" ">
+  <div class="threshold-management">
     <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
       <div>
-        <Select v-model="type" style="width:100px" @on-change="typeChange">
-          <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-        </Select>
+        <RadioGroup
+          v-model="type"
+          type="button"
+          button-style="solid"
+          @on-change="typeChange"
+          style="margin-right: 5px"
+        >
+          <Radio v-for="item in typeList" :label="item.value" :key="item.value">{{ $t(item.label) }}</Radio>
+        </RadioGroup>
         <Select
           style="width:300px;margin-left: 12px;"
           v-model="targetId"
@@ -241,6 +247,14 @@ export default {
   },
 }
 </script>
+<style lang="less">
+.threshold-management {
+  .ivu-radio-group-button .ivu-radio-wrapper-checked {
+    background: #2d8cf0;
+    color: #fff;
+  }
+}
+</style>
 <style scoped lang="less">
   .is-danger {
     color: red;
