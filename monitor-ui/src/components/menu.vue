@@ -4,23 +4,30 @@
       <img src="../assets/logo.png" />
       <span>{{$t('m_menu_systemName')}}</span>
     </div>
-    <Submenu name>
-      <template slot="title">
-        <i class="fa fa-line-chart" aria-hidden="true"></i>
-        {{$t("m_menu_view")}}
-      </template>
-      <MenuItem name="endpointView">{{$t("m_menu_endpointView")}}</MenuItem>
-      <!-- <MenuItem name="systemMonitoring">{{$t("m_menu_systemMonitoring")}}</MenuItem> -->
-      <MenuItem name="metricConfig">{{$t("m_menu_metricConfiguration")}}</MenuItem>
-      <MenuItem name="viewConfigIndex">{{$t("m_menu_screenConfiguration")}}</MenuItem>
-    </Submenu>
-    <MenuItem name="monitorConfigIndex">
+    <!--自定义看板-->
+    <MenuItem name="viewConfigIndex">
       <i class="fa fa-gears" aria-hidden="true"></i>
-      {{$t("m_menu_configuration")}}
+      {{$t("m_custom_dashboard")}}
     </MenuItem>
+    <!--对象看板-->
+    <MenuItem name="endpointView">
+      <Icon type="md-clipboard" :size="18" />
+      {{$t("m_group_board")}}
+    </MenuItem>
+    <!--告警列表-->
     <MenuItem name="alarmManagement">
       <i class="fa fa-bell" aria-hidden="true"></i>
-      {{$t("m_menu_alert")}}
+      {{$t("m_alarm_list")}}
+    </MenuItem>
+    <!--监控配置-->
+    <MenuItem name="monitorConfigIndex">
+      <Icon type="md-eye" :size="20"></Icon>
+      {{$t("m_monitor_config")}}
+    </MenuItem>
+    <!--管理员配置-->
+    <MenuItem name="adminConfig">
+      <Icon type="md-person" :size="18"></Icon>
+      {{$t("m_admin_config")}}
     </MenuItem>
     <div>
     </div>
@@ -106,8 +113,7 @@ export default {
     if (localStorage.getItem('theme')) {
       document.body.className = localStorage.getItem('theme')
       this.defaultTheme = false
-    }
-    else {
+    } else {
       document.body.className = ''
       this.defaultTheme = true
     }
@@ -123,8 +129,7 @@ export default {
           ? 'zh-CN'
           : 'en-US'
       )
-    }
-    else {
+    } else {
       this.activeLang = this.langConfig[localStorage.getItem('lang')]
     }
   },

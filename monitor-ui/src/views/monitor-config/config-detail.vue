@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class='config-detail-info'>
     <div v-for="(tableItem, tableIndex) in totalPageConfig" :key="tableIndex + 'f'">
       <Card style="margin-bottom: 16px;">
         <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
@@ -19,7 +19,6 @@
           size="small"
           :columns="alarmItemTableColumns"
           :data="tableItem.tableData"
-          :span-method="(e) => handleMergeSpan(e, tableIndex)"
         />
         <div class="alarm-tips" style="margin-top:16px">
           <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
@@ -35,15 +34,15 @@
             <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
               <Row>
                 <Col span="2">
-                <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                <span style="margin-right: 8px;line-height: 32px;">{{$t('m_' + item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.display_name }}</Option>
                 </Select>
                 </Col>
                 <Col span="5">
-                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('m_proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
                 </Col>
@@ -78,7 +77,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (isEditState ? $t('m_button_add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
+          {{ (modelConfig.isAdd ? $t('m_button_add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
         </span>
         <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
@@ -95,7 +94,7 @@
                 <span style="color:red">*</span>
                 {{ $t('m_alarmName') }}
               </span>
-              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20" show-word-limit></Input>
+              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit></Input>
             </FormItem>
             <FormItem>
               <span slot="label">
@@ -118,7 +117,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('m_tableKey_status') }}
+                {{ $t('m_notification') }}
               </span>
               <Select
                 :disabled="!isEditState"
@@ -136,7 +135,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('delay') }}
+                {{ $t('m_delay') }}
               </span>
               <Select
                 filterable
@@ -152,27 +151,20 @@
                 </Option>
               </Select>
             </FormItem>
-            <FormItem :label="$t('m_active_window')" prop="active_window">
-              <span slot="label">
-                <span style="color:red">*</span>
-                {{ $t('m_active_window') }}
-              </span>
-              <TimePicker
-                v-model="formData.active_window"
-                :clearable="false"
-                format="HH:mm"
-                :disabled="!isEditState"
-                type="timerange"
-                placement="bottom-end"
-                style="width: 168px"
+            <FormItem :label="$t('m_active_window')" prop="active_window_list">
+              <activeWindowTime
+                class='mb-3'
+                :activeWindowList='formData.active_window_list'
+                :isDisabled="!isEditState"
+                @timeChange="onActiveTimeChange"
               >
-              </TimePicker>
+              </activeWindowTime>
             </FormItem>
             <FormItem :label="$t('m_tableKey_content')" prop="content">
               <Input
                 type="textarea"
                 :disabled="!isEditState"
-                v-model="formData.content"
+                v-model.trim="formData.content"
                 :maxlength="200"
               >
               </Input>
@@ -195,15 +187,15 @@
             >
               <Row>
                 <Col span="3">
-                <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                <span style="margin-right: 8px;line-height: 32px;">{{$t('m_' + item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('m_field_role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.display_name }}</Option>
                 </Select>
                 </Col>
                 <Col span="5">
-                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width:97%;" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width:97%;" :placeholder="$t('m_proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
                 </Col>
@@ -214,7 +206,7 @@
                 </Col>
                 <Col span="5">
                 <Input
-                  v-model="item.description"
+                  v-model.trim="item.description"
                   clearable
                   :disabled="!isEditState"
                   style="width:97%"
@@ -233,6 +225,7 @@
             <span class="underline"></span>
           </div>
           <Table
+            class='metric-table'
             style="width:100%;"
             :border="false"
             size="small"
@@ -257,20 +250,6 @@
         <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
-
-    <Modal
-      v-model="isShowWarningDelete"
-      :title="$t('m_delConfirm_title')"
-      :ok-text="$t('m_confirm')"
-      @on-ok="okDelRow"
-      @on-cancel="cancleDelRow"
-    >
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -282,13 +261,14 @@ import isEmpty from 'lodash/isEmpty'
 import find from 'lodash/find'
 import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
+import activeWindowTime from '@/components/active-window-time.vue'
 
 const initFormData = {
   name: '', // 告警名
-  priority: 'low', // 级别
+  priority: 'medium', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
-  active_window: ['00:00','23:59'], // 告警时间段
+  active_window_list: ['00:00-23:59'], // 告警时间段
   content: '', // 通知内容
   notify: [
     {
@@ -314,7 +294,7 @@ const initFormData = {
       lastSymbol: null, // 时间单位
       lastValue: null, // 持续时间,
       tagOptions: [], // 标签值options
-      tags: {} // 有内容的标签值
+      tags: {}, // 有内容的标签值
     }
   ]
 }
@@ -339,15 +319,29 @@ const statusButtonLabelMap = {
   0: 'm_alarm_close'
 }
 
+const equalOptionList = [
+  {
+    name: 'm_include',
+    value: 'in'
+  },
+  {
+    name: 'm_not_include',
+    value: 'notin'
+  }
+]
+
 export default {
   name: '',
   props: {
-    type: String // 为枚举类型，gourp为组，service为层级对象，endpoint为对象
+    type: String, // 为枚举类型，gourp为组，service为层级对象，endpoint为对象
+    alarmName: String,
+    onlyShowCreated: String // me我创建的，all所有
   },
   data() {
     return {
       targetId: '', // 层级对象选中的
       totalPageConfig: [],
+      originTotalPageConfig: [], // 保存原始数据
       selectedTableData: null,
       modelConfig: {
         modalId: 'add_edit_Modal',
@@ -430,7 +424,6 @@ export default {
         key: '',
         value: ''
       },
-      isShowWarningDelete: false,
       selectedData: {},
       notify: [],
       callbackMode: [
@@ -535,7 +528,21 @@ export default {
                   <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                     <span>{i.tagName}</span>
                     <Select
-                      style="maxWidth: 200px"
+                      style="width: 70px"
+                      value={i.equal}
+                      disabled={!this.isEditState}
+                      on-on-change={v => {
+                        Vue.set(this.formData.conditions[params.index].tags[selectIndex], 'equal', v)
+                      }}
+                      filterable>
+                      {equalOptionList.map((item, index) => (
+                        <Option value={item.value} key={item.value + index}>
+                          {this.$t(item.name)}
+                        </Option>
+                      ))}
+                    </Select>
+                    <Select
+                      style="maxWidth: 130px"
                       value={i.tagValue}
                       disabled={!this.isEditState}
                       on-on-change={v => {
@@ -543,8 +550,7 @@ export default {
                       }}
                       filterable
                       multiple
-                      clearable
-                    >
+                      clearable>
                       {!isEmpty(this.formData.conditions[params.index].tagOptions)
                           && !isEmpty(this.formData.conditions[params.index].tagOptions[i.tagName])
                             && this.formData.conditions[params.index].tagOptions[i.tagName].map((item, index) => (
@@ -591,9 +597,7 @@ export default {
             <Input
               value={params.row.thresholdValue}
               disabled={!this.isEditState}
-              maxlength="10"
               on-on-change={v => {
-
                 this.formData.conditions[params.index].thresholdValue = v.target.value
               }}
               clearable
@@ -609,7 +613,6 @@ export default {
             <Input
               value={params.row.lastValue}
               disabled={!this.isEditState}
-              maxlength="10"
               on-on-change={v => {
                 this.formData.conditions[params.index].lastValue = v.target.value
               }}
@@ -667,16 +670,20 @@ export default {
         {
           title: this.$t('m_alarmName'),
           width: 250,
-          key: 'name'
+          key: 'name',
+          render: (h, params) => params.row.name ? (<div style='display: flex; align-items:center'>
+            {params.row.log_metric_group ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
+            <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.name}>
+              {params.row.name || '-'}
+            </Tooltip>
+          </div>) : (<div>-</div>)
         },
         {
           title: this.$t('m_alarmPriority'),
           key: 'priority',
           width: 100,
           render: (h, params) => (
-            <Tooltip placement="right" max-width="400">
-              <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
-            </Tooltip>
+            <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
           )
         },
         {
@@ -693,10 +700,16 @@ export default {
         {
           title: this.$t('m_field_relativeTime'),
           width: 130,
-          key: 'active_window'
+          key: 'active_window_list',
+          render: (h, params) => {
+            const text = !isEmpty(params.row.active_window_list) ? params.row.active_window_list.join(';') : '-'
+            return (<Tooltip class='table-active-time' placement="top" max-width="400" content={text}>
+              {text}
+            </Tooltip>)
+          }
         },
         {
-          title: this.$t('firing'),
+          title: this.$t('m_firing'),
           key: 'firing',
           width: 150,
           align: 'left',
@@ -718,7 +731,7 @@ export default {
           }
         },
         {
-          title: this.$t('ok'),
+          title: this.$t('m_ok'),
           key: 'ok',
           width: 150,
           align: 'left',
@@ -742,7 +755,6 @@ export default {
         {
           title: this.$t('m_tableKey_metricName'),
           key: 'metric_name',
-
           minWidth: 300
         },
         {
@@ -775,19 +787,46 @@ export default {
           fixed: 'right',
           width: 150,
           render: (h, params) => (
-            <div>
-              <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
-                {
-                  this.type==='endpoint'
-                    ? <Icon type="md-eye" size="16"></Icon>
-                    : <Icon type="md-create" size="16"></Icon>
-                }
-              </Button>
+            <div style='display: flex'>
+              {this.type==='endpoint'
+                ? (
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_preview')}>
+                    <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
+                      <Icon type="md-eye" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                )
+                : (<span style='display: flex'>
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                    <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                      <Icon type="md-document" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_edit')}>
+                    <Button size="small" class="mr-1" type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
+                      <Icon type="md-create" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                </span>
+                )
+              }
               {
                 this.isEditState ? (
-                  <Button size="small" type="error" on-click={() => this.deleteConfirmModal(params.row)}>
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
+
+                  <Tooltip max-width={400} placement="top" transfer content={this.$t('m_button_remove')}>
+                    <Poptip
+                      confirm
+                      transfer
+                      title={this.$t('m_delConfirm_tip')}
+                      placement="left-end"
+                      on-on-ok={() => {
+                        this.okDelRow(params.row)
+                      }}>
+                      <Button size="small" type="error">
+                        <Icon type="md-trash" size="16" />
+                      </Button>
+                    </Poptip>
+                  </Tooltip>
                 ) : null
               }
             </div>
@@ -806,6 +845,14 @@ export default {
     }
   },
   methods: {
+    // 根据告警名称模糊搜索
+    // filterData(alarmName) {
+    //   this.totalPageConfig = cloneDeep(this.originTotalPageConfig)
+    //   this.totalPageConfig = this.totalPageConfig.map(item => {
+    //     item.tableData = item.tableData.filter(row => row.name.toLowerCase().indexOf(alarmName.toLowerCase()) > -1)
+    //     return item
+    //   })
+    // },
     mgmtConfigDetail(val) {
       const res = {
         showBtn: true,
@@ -829,15 +876,14 @@ export default {
       const api = this.getUpdateNotifyApi(tableData)
       this.request('POST', api, tableData.notify, () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
     procCallbackKeyChange(proc_callback_key, tableIndex, index) {
       const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
-      }
-      else {
+      } else {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = ''
       }
     },
@@ -845,8 +891,7 @@ export default {
       const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         this.formData.notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
-      }
-      else {
+      } else {
         this.formData.notify[index].proc_callback_name = ''
       }
     },
@@ -854,18 +899,11 @@ export default {
       const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
       this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
-    deleteConfirmModal(rowData) {
-      this.selectedData = rowData
-      this.isShowWarningDelete = true
-    },
-    okDelRow() {
-      this.deleteAlarmItem(this.selectedData)
-    },
-    cancleDelRow() {
-      this.isShowWarningDelete = false
+    okDelRow(rowData) {
+      this.deleteAlarmItem(rowData)
     },
     manageEditParams(addParams, rowparams){
       for (const key in addParams) {
@@ -884,8 +922,8 @@ export default {
         return {}
       }
       return {
-        symbol: str.match(/[<>=smh]+/g)[0],
-        value: str.match(/[\d.]+/)[0]
+        symbol: str.match(/[!<>=smh]+/g)[0],
+        value: str.match(/[-+]?[\d.]+/)[0]
       }
     },
     getInitialTags() {
@@ -899,7 +937,8 @@ export default {
               this.initialTags.push(
                 {
                   tagName: key,
-                  tagValue: []
+                  tagValue: [],
+                  equal: 'in'
                 }
               )
             }
@@ -919,7 +958,6 @@ export default {
         this.modelConfig.modalTitle = 'm_button_edit',
         this.formData = cloneDeep(initFormData)
         this.manageEditParams(this.formData, rowData)
-        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
         const conditions = this.formData.conditions
         conditions.length && conditions.forEach(async item => {
           const thresholdsAndSymbols = this.getSymbolAndValue(item.condition)
@@ -931,7 +969,8 @@ export default {
               tags.push(
                 {
                   tagName: key,
-                  tagValue: []
+                  tagValue: [],
+                  equal: 'in'
                 }
               )
             }
@@ -942,6 +981,57 @@ export default {
           Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol)
           Vue.set(item, 'lastValue', lastValueAndSymbol.value)
           Vue.set(item, 'tagOptions', tagOptions)
+          !isEmpty(item.tags) && item.tags.forEach(single => {
+            if (!single.equal) {
+              single.equal = 'in'
+            }
+          })
+        })
+        this.showAddEditModal()
+      })
+    },
+    async copySingleItem(rowData) {
+      this.isfullscreen = true
+      this.currentAlarmListIndex = rowData.alarmListIndex
+      this.selectedData = rowData
+      delete this.selectedData.guid
+      this.selectedTableData = rowData
+      const api = this.getMetricListPath(rowData)
+      this.request('GET', api, '', responseData => {
+        this.modelConfig.metricList = responseData
+        this.modelConfig.isAdd = true
+        this.modelConfig.modalTitle = 'm_button_add',
+        this.formData = cloneDeep(initFormData)
+        this.manageEditParams(this.formData, rowData)
+        this.formData.name = this.formData.name + '1'
+        const conditions = this.formData.conditions
+        conditions.length && conditions.forEach(async item => {
+          const thresholdsAndSymbols = this.getSymbolAndValue(item.condition)
+          const lastValueAndSymbol = this.getSymbolAndValue(item.last)
+          const tagOptions = await this.findTagsByMetric(item.metric) // 指标下拉option获取
+          if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
+            const tags = []
+            for (const key in tagOptions) {
+              tags.push(
+                {
+                  tagName: key,
+                  tagValue: [],
+                  equal: 'in'
+                }
+              )
+            }
+            Vue.set(item, 'tags', tags)
+          }
+          Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
+          Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
+          Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol)
+          Vue.set(item, 'lastValue', lastValueAndSymbol.value)
+          Vue.set(item, 'tagOptions', tagOptions)
+          !isEmpty(item.tags) && item.tags.forEach(single => {
+            if (!single.equal) {
+              single.equal = 'in'
+            }
+          })
         })
         this.showAddEditModal()
       })
@@ -1001,9 +1091,21 @@ export default {
           if (!conditions[i][needValidateKey[k]]) {
             return false
           }
+          if (needValidateKey[k] === 'thresholdValue' && !this.isNumericString(conditions[i][needValidateKey[k]])) {
+            return false
+          }
+          if (needValidateKey[k] === 'lastValue' && !this.isPositiveNumericString(conditions[i][needValidateKey[k]])) {
+            return false
+          }
         }
       }
       return true
+    },
+    isNumericString(str) {
+      return !isNaN(str) && !isNaN(parseFloat(str))
+    },
+    isPositiveNumericString(str) {
+      return /^\d+$/.test(str) && parseFloat(str) >= 0
     },
     validateDuplicateName(alarmName, guid = '') {
       const currentTableList = this.totalPageConfig[this.currentAlarmListIndex].tableData
@@ -1023,7 +1125,7 @@ export default {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_tips_required'))
       }
       if (!this.validateConditions(this.formData.conditions)) {
-        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('m_tips_emptyToSave'))
+        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('m_tips_emptyToSave') + this.$t('m_threshold_tips')+ ';' + this.$t('m_time_tips'))
       }
       if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'))
@@ -1031,8 +1133,7 @@ export default {
       const params = cloneDeep(this.formData)
       const needMergeParams = {
         endpoint_group: this.modelConfig.isAdd ? this.selectedTableData.endpoint_group : this.selectedData.endpoint_group,
-        guid: this.selectedData.guid,
-        active_window: params.active_window.join('-')
+        guid: this.selectedData.guid
       }
       Object.assign(params, needMergeParams)
       this.processConditions(params.conditions)
@@ -1040,7 +1141,7 @@ export default {
       this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.closeAddEditModal()
-        this.getDetail(this.targetId, this.type)
+        this.getDetail(this.targetId)
       })
     },
     showAddEditModal() {
@@ -1076,13 +1177,20 @@ export default {
     },
     getDetail(targetId) {
       this.targetId = targetId
-      const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
+      const api = '/monitor/api/v2/alarm/strategy/query'
+      const params = {
+        queryType: this.type,
+        guid: this.targetId,
+        show: this.onlyShowCreated,
+        alarmName: this.alarmName
+      }
       this.totalPageConfig = []
-      this.request('GET', api, '', responseData => {
+      this.request('post', api, params, responseData => {
         this.$emit('feedbackInfo', responseData.length === 0)
         const allConfigDetail = responseData
         allConfigDetail.forEach((item, alarmIndex) => {
-          const tempTableData = item.strategy.map(s => {
+          const strategy = item.strategy || []
+          const tempTableData = strategy.map(s => {
             s.monitor_type = item.monitor_type
             return s
           })
@@ -1096,6 +1204,7 @@ export default {
             notify: item.notify,
             mergeSpanMap: this.mergeSpanMap
           })
+          this.originTotalPageConfig = cloneDeep(this.totalPageConfig)
         })
       }, {isNeedloading: true})
       this.getAllRole()
@@ -1115,19 +1224,19 @@ export default {
     cancelModal() {
       this.closeAddEditModal()
     },
-    handleMergeSpan({ row, rowIndex, columnIndex }, index) {
-      if ([6,7,8,11].includes(columnIndex)) {
-        return
-      }
-      const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
-      const spanMap = mergeSpanMap[row.guid]
-      if (rowIndex === spanMap.startRowIndex) {
-        return [spanMap.colSpan,1]
-      }
-      if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
-        return [0,0]
-      }
-    },
+    // handleMergeSpan({ row, rowIndex, columnIndex }, index) {
+    //   if ([6,7,8,11].includes(columnIndex)) {
+    //     return
+    //   }
+    //   const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
+    //   const spanMap = mergeSpanMap[row.guid]
+    //   if (rowIndex === spanMap.startRowIndex) {
+    //     return [spanMap.colSpan,1]
+    //   }
+    //   if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
+    //     return [0,0]
+    //   }
+    // },
     findTagsByMetric(metricId) {
       const api = '/monitor/api/v2/metric/tag/value-list'
       const params = {
@@ -1156,7 +1265,8 @@ export default {
           tags.push(
             {
               tagName: key,
-              tagValue: []
+              tagValue: [],
+              equal: 'in'
             }
           )
         }
@@ -1168,6 +1278,9 @@ export default {
       this.request('GET', api, '', res => {
         this.modelConfig.metricList = res
       })
+    },
+    onActiveTimeChange(time) {
+      this.formData.active_window_list = time
     }
   },
   computed: {
@@ -1176,16 +1289,20 @@ export default {
     }
   },
   components: {
-    // eslint-disable-next-line vue/no-unused-components
-    TagShow
+  // eslint-disable-next-line vue/no-unused-components
+    TagShow,
+    activeWindowTime
   }
 }
 </script>
 
 <style lang="less">
-.ivu-table-cell {
-  padding: 4px;
+.metric-table {
+  .ivu-table-cell {
+    padding: 4px;
+  }
 }
+
 .ivu-table-wrapper {
   overflow: inherit;
 }
@@ -1223,9 +1340,34 @@ export default {
 .modal-dialog[data-v-0eaeaf66] {
   top: 10%;
 }
-.ivu-select-dropdown {
-  max-height: 300px !important;
+// .ivu-select-dropdown {
+//   max-height: 300px !important;
+// }
+.table-alarm-name {
+  .ivu-tooltip-rel {
+    width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
+
+.table-active-time {
+  .ivu-tooltip-rel {
+    width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.auto-tag-style {
+  .ivu-tag-text.ivu-tag-color-white {
+    display: inline-block;
+    min-width: 40px;
+  }
+}
+
 </style>
 <style scoped lang="less">
   /deep/ .ivu-form-item {
@@ -1374,4 +1516,5 @@ export default {
 /deep/ .ivu-card-extra {
   top: 6px;
 }
+
 </style>

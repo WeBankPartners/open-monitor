@@ -53,7 +53,7 @@ export default {
   color: #fff;
 }
 .btn-group-custom {
-  margin-right: 16px;
+  margin-right: 2px;
 }
 .btn-group-custom .btn-group-item:first-child {
   border-radius: 4px 0 0 4px;
