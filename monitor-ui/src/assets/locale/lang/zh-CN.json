@@ -697,6 +697,7 @@
   "m_enter_name_tips": "请输入对象名",
   "m_creator": "创建人",
   "m_permissions": "权限",
-  "m_filter": "筛选"
+  "m_filter": "筛选",
+  "m_confirm_close_alarm": "确认关闭告警?"
 }
 
