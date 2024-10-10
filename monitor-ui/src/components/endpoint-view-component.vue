@@ -5,7 +5,7 @@
     <div v-if="recursiveViewConfig.length && showRecursive">
       <Recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></Recursive>
     </div>
-    <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
+    <Drawer :title="$t('m_view_details')" :width="zoneWidth" :closable="false" v-model="showMaxChart">
       <MaxChart ref="maxChart"></MaxChart>
     </Drawer>
     <Modal
@@ -18,7 +18,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('alarmHistory')}}
+          {{$t('m_alarmHistory')}}
         </span>
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
@@ -91,7 +91,7 @@ export default {
               key: 'endpoint'
             },
             {
-              title: this.$t('alarmContent'),
+              title: this.$t('m_alarmContent'),
               key: 'content'
             },
             {
@@ -246,8 +246,7 @@ export default {
       this.isfullscreen = !this.isfullscreen
       if (this.isfullscreen) {
         this.fullscreenTableHight = document.documentElement.clientHeight - 160
-      }
-      else {
+      } else {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },

@@ -1,7 +1,7 @@
 <template>
-  <div ref="maxheight" class="monitor-level-group">
+  <div class="monitor-level-group">
     <Row>
-      <Col :span="8">
+      <Col :span="16">
       <!--层级对象-->
       <span style="font-size: 14px;">
         {{$t('m_field_resourceLevel')}}:
@@ -10,15 +10,25 @@
         style="width:300px;"
         v-model="serviceGroup"
         filterable
-        @on-change="changeServiceGroup"
+        @on-change="() => {
+          metric = ''
+          onFilterChange()
+        }"
       >
         <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.display_name" :key="index">
           <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
       </Select>
+      <Input
+        v-model="metric"
+        clearable
+        style="width: 250px; margin-left: 10px"
+        :placeholder="$t('m_placeholder_input') + (metricType === 'comparisonMetrics' ? $t('m_button_MoM') : '' ) + $t('m_metric')"
+        @on-change='onFilterChange'
+      />
       </Col>
-      <Col :span="16">
+      <Col :span="8">
       <div class="btn-group">
         <Button
           type="info"
@@ -45,17 +55,14 @@
       </div>
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
-    <Modal
-      v-model="deleteVisible"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="submitDelete"
-      @on-cancel="deleteVisible = false"
-    >
-      <div class="modal-body" style="padding:10px 20px;">
-        <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
-      </div>
-    </Modal>
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="level-table"
+    />
     <AddGroupDrawer
       v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
@@ -83,6 +90,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import axios from 'axios'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
@@ -244,10 +252,15 @@ export default {
         {
           title: this.$t('m_table_action'),
           key: 'action',
-          width: 170,
+          width: 220,
           fixed: 'right',
           render: (h, params) => (
             <div style="display:flex;justify-content:center;">
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.handleCopyItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
               {
                 this.metricType === 'originalMetrics'
                   /* 新增同环比指标 */
@@ -296,17 +309,18 @@ export default {
               {
                 /* 删除 */
                 <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
-                  <Button
-                    size="small"
-                    type="error"
-                    disabled={this.metricType === 'originalMetrics' && params.row.metric_type !== 'custom'}
-                    onClick={() => {
-                      this.handleDelete(params.row)
-                    }}
-                    style="margin-right:5px;"
-                  >
-                    <Icon type="md-trash" size="16"></Icon>
-                  </Button>
+                  <Poptip
+                    confirm
+                    transfer
+                    title={this.$t('m_delConfirm_tip')}
+                    placement="left-end"
+                    on-on-ok={() => {
+                      this.submitDelete(params.row)
+                    }}>
+                    <Button size="small" type="error">
+                      <Icon type="md-trash" size="16" />
+                    </Button>
+                  </Poptip>
                 </Tooltip>
               }
             </div>
@@ -321,10 +335,10 @@ export default {
       row: {},
       type: '', // add、edit
       addVisible: false,
-      deleteVisible: false,
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
+      metric: ''
     }
   },
   computed: {
@@ -337,22 +351,22 @@ export default {
     this.serviceGroup = this.recursiveOptions[0].guid
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
   },
   methods: {
     reloadData(metricType) {
       this.metricType = metricType
       this.getList()
     },
-    changeServiceGroup() {
+    onFilterChange: debounce(function () {
       this.getList()
-    },
+    }, 500),
     getList() {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        metric: this.metric
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -370,7 +384,8 @@ export default {
       const params = {
         monitorType: this.monitorType,
         onlyService: 'Y',
-        serviceGroup: this.serviceGroup
+        serviceGroup: this.serviceGroup,
+        metric: this.metric
       }
       const api = '/monitor/api/v2/monitor/metric/list/count'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
@@ -405,8 +420,7 @@ export default {
           if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          }
-          else {
+          } else {
             if ('download' in document.createElement('a')) { // 非IE下载
               const elink = document.createElement('a')
               elink.download = fileName
@@ -416,8 +430,7 @@ export default {
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            }
-            else { // IE10+下载
+            } else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
@@ -438,8 +451,7 @@ export default {
                 <span style="color:red;"> {val.data.fail_list.join('、')}</span>
               </div>
             })
-          }
-          else {
+          } else {
             this.$Message.success(this.$t('m_tips_success'))
           }
         }
@@ -463,12 +475,15 @@ export default {
       this.row = row
       this.addVisible = true
     },
-    handleDelete(row) {
+    handleCopyItem(row) {
+      this.showDrawer = this.metricType
+      this.type = 'copy'
+      this.viewOnly = false
       this.row = row
-      this.deleteVisible = true
+      this.addVisible = true
     },
-    submitDelete() {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${this.row.guid}`
+    submitDelete(row) {
+      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'DELETE',
         api,
