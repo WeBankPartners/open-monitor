@@ -60,3 +60,20 @@ type EntityQueryObj struct {
 	Op        string `json:"op"`
 	Condition string `json:"condition"`
 }
+
+func (ep *EntityQueryParam) TransToQueryParam() (queryParam *QueryRequestParam) {
+	queryParam = &QueryRequestParam{}
+	if ep.Criteria.AttrName != "" {
+		if ep.Criteria.Op == "" {
+			ep.Criteria.Op = "eq"
+		}
+		queryParam.Filters = append(queryParam.Filters, &QueryRequestFilterObj{Name: ep.Criteria.AttrName, Operator: ep.Criteria.Op, Value: ep.Criteria.Condition})
+	}
+	for _, filter := range ep.AdditionalFilters {
+		if filter.Op == "" {
+			filter.Op = "eq"
+		}
+		queryParam.Filters = append(queryParam.Filters, &QueryRequestFilterObj{Name: filter.AttrName, Operator: filter.Op, Value: filter.Condition})
+	}
+	return
+}

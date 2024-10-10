@@ -1,5 +1,6 @@
 <template>
   <div class="all-content">
+    <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
@@ -7,21 +8,27 @@
             <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('alarmStatistics')}}：</span>
-            <i-switch size="large" v-model="showGraph">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <span class="label">{{$t('m_alarmStatistics')}}：</span>
+            <i-switch size="large" v-model="showGraph" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
           <li class="filter-li">
-            <span class="label">{{$t('classic_mode')}}：</span>
-            <i-switch size="large" v-model="isClassicModel">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
+            <span class="label">{{$t('m_classic_mode')}}：</span>
+            <i-switch size="large" v-model="isClassicModel" style="vertical-align: bottom;">
+              <span slot="open"></span>
+              <span slot="close"></span>
             </i-switch>
           </li>
-          <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          <li class="filter-li">
+            <span class="label">{{$t('m_audio_prompt')}}：</span>
+            <i-switch size="large" @on-change="alertSoundChange" style="vertical-align: bottom;">
+              <span slot="true"></span>
+              <span slot="false"></span>
+            </i-switch>
+            <!-- 新告警声音提示 -->
+            <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
           </li>
         </ul>
         <div class="top-right-search">
@@ -33,44 +40,35 @@
             @on-ok="deleteConfirmModal()"
           >
             <Button
-              :disabled="isEmpty(filters) || (isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
-              class="btn btn-sm btn-cancel-f"
+              :disabled="isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
             >
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+          <Button type="primary" @click="alarmHistory">{{$t('m_alarmHistory')}}</Button>
         </div>
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_todayAlarm')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{'cover': total === 0 || noData}" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
-
             <template v-if="!noData">
-              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" @onFilter="addParams" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
-
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
-            <!-- <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color"> -->
-            <!-- <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template> -->
-            <!-- <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button> -->
-            <!-- </section> -->
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
             </section>
-            <div style="margin: 4px 0; text-align:right">
-              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+            <div class="card-pagination">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-sizer show-total />
             </div>
           </div>
         </div>
@@ -78,7 +76,7 @@
     </div>
     <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
       <template v-slot:pagination>
-        <div class="page-left">
+        <div class="pagination-style">
           <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
         </div>
       </template>
@@ -100,7 +98,8 @@
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
+import Vue from 'vue'
+import {isEmpty, cloneDeep} from 'lodash'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -108,7 +107,9 @@ import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
 import AlarmCard from '@/components/alarm-card.vue'
+import AlertSoundTrigger from '@/components/alert-sound-trigger.vue'
 import SearchBadge from '../components/search-badge.vue'
+import GlobalLoading from '../components/globalLoading.vue'
 
 export default {
   name: '',
@@ -120,7 +121,9 @@ export default {
     AlarmAssetsBasic,
     ClassicAlarm,
     AlarmCard,
-    SearchBadge
+    SearchBadge,
+    GlobalLoading,
+    AlertSoundTrigger
   },
   data() {
     return {
@@ -162,7 +165,8 @@ export default {
       },
       isBatch: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      isEmpty
+      isEmpty,
+      isSpinShow: false
     }
   },
   computed: {
@@ -282,20 +286,27 @@ export default {
     this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(() => {
-      this.getAlarm('keep')
+      this.getAlarm('keep', false)
     }, 10000)
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
     })
   },
   methods: {
+    alertSoundChange(val) {
+      this.$refs.alertSoundTriggerRef.changeAudioPlay(val)
+    },
     getTodayAlarm() {
       const start = new Date(new Date().toLocaleDateString()).getTime()
       const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1
       const params = {
         start: parseInt(start / 1000, 10),
         end: parseInt(end / 1000, 10),
-        filter: 'all'
+        filter: 'all',
+        page: {
+          pageSize: 10,
+          startIndex: 1
+        }
       }
       this.request(
         'POST',
@@ -305,7 +316,8 @@ export default {
           this.tlow = responseData.low
           this.tmid = responseData.mid
           this.thigh = responseData.high
-        }
+        },
+        {isNeedloading: false}
       )
     },
     remarkModal(item) {
@@ -335,7 +347,7 @@ export default {
       this.paginationInfo.pageSize = pageSize
       this.getAlarm('keep')
     },
-    getAlarm(ifPageKeep) {
+    getAlarm(ifPageKeep, isLoadingShow = true) {
       if (ifPageKeep !== 'keep') {
         this.paginationInfo = {
           total: 0,
@@ -349,19 +361,31 @@ export default {
           pageSize: this.paginationInfo.pageSize
         }
       }
-      const keys = Object.keys(this.filters)
+      const filters = cloneDeep(this.filters)
+      const endpointList = []
+      !isEmpty(filters.endpoint) && filters.endpoint.forEach(val => {
+        if (val.indexOf('$*$') > -1) {
+          endpointList.push(val.split('$*$')[1])
+        } else {
+          endpointList.push(val)
+        }
+      })
+      filters.endpoint = endpointList
+      const keys = Object.keys(filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length; i++) {
-        params[keys[i]] = this.filters[keys[i]]
+        params[keys[i]] = filters[keys[i]]
         this.filtersForShow.push({
           key: keys[i],
-          value: this.filters[keys[i]]
+          value: filters[keys[i]]
         })
       }
-
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
+      if (this.isSpinShow === false && isLoadingShow) {
+        this.isSpinShow = true
+      }
       this.request(
         'POST',
         '/monitor/api/v1/alarm/problem/page',
@@ -377,11 +401,17 @@ export default {
           this.high = responseData.high
           this.alramEmpty = !!this.low || !!this.mid ||!!this.high
           this.showSunburst(responseData)
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
           this.$refs.classicAlarm.getAlarm(this.resultData)
         },
         {isNeedloading: false},
         () => {
           this.noData = true
+          if (this.isSpinShow) {
+            this.isSpinShow = false
+          }
         }
       )
     },
@@ -395,8 +425,7 @@ export default {
         }
         if (val1 < val2) {
           return -1
-        }
-        else if (val1 > val2) {
+        } else if (val1 > val2) {
           return 1
         }
         return 0
@@ -447,31 +476,37 @@ export default {
       let index = 0
       let pieOuter = []
       const itemStyleSet = {}
-      const metricInfo = originData.count
-      const set = new Set()
-      metricInfo.forEach(item => {
-        if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
-        }
-        else {
-          legendData.push(item.name)
-          index++
-          const itemStyle = {
-            color: colorX[index]
+      if (!isEmpty(originData.count)) {
+        const metricInfo = originData.count
+        const set = new Set()
+        metricInfo.forEach(item => {
+          if (set.has(item.name)) {
+            item.itemStyle = itemStyleSet[item.name]
+          } else {
+            legendData.push(item.name)
+            index++
+            const itemStyle = {
+              color: colorX[index]
+            }
+            itemStyleSet[item.name] = itemStyle
+            item.itemStyle = itemStyle
           }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
-        }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
+          set.add(item.name)
+        })
+        pieOuter = metricInfo.sort(this.compare('type'))
 
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+        this.outerMetrics = pieOuter
+        this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+      }
     },
     addParams({key, value}) {
-      this.filters[key] = value
-      this.getAlarm()
+      Vue.set(this.filters, key, this.filters[key] || [])
+      const singleArr = this.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      } else {
+        singleArr.push(value)
+      }
     },
     deleteConfirmModal() {
       this.isBatch = true
@@ -482,7 +517,7 @@ export default {
         id: 0,
         custom: true,
         metric: [],
-        priority: ''
+        priority: []
       }
       if (this.isBatch) {
         const find = this.filtersForShow.find(f => f.key === 'metric')
@@ -494,10 +529,18 @@ export default {
           params.priority = priority.value
         }
         params.alarmName = this.filters.alarm_name || []
-        params.endpoint = this.filters.endpoint || []
+
+        const endpointList = []
+        !isEmpty(this.filters.endpoint) && this.filters.endpoint.forEach(val => {
+          if (val.indexOf('$*$') > -1) {
+            endpointList.push(val.split('$*$')[1])
+          } else {
+            endpointList.push(val)
+          }
+        })
+        params.endpoint = endpointList
         params.metric = this.filters.metric || []
-      }
-      else {
+      } else {
         params.id = alarmItem.id
       }
       if (!alarmItem.is_custom) {
@@ -530,11 +573,6 @@ export default {
 .drop-down-content {
   .ivu-select-dropdown {
     overflow: scroll;
-  }
-}
-.all-content {
-  ::-webkit-scrollbar {
-    display: none;
   }
 }
 </style>
@@ -585,10 +623,6 @@ export default {
         font-size: 12px;
         margin-right: 28px;
       }
-    }
-
-    .btn-confirm-f {
-      background: #116EF9;
     }
   }
 }
@@ -650,12 +684,22 @@ export default {
       align-items: center;
     }
   }
+  .card-pagination {
+    max-width: 40%;
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+    opacity: 1;
+    padding-bottom:20px;
+    background: #fff;
+  }
 
   .content-stats-container {
+    // height: ~"calc(100vh - 180px)";
+    height: ~"calc(100vh - 250px)";
     width: 100%;
     display: flex;
     // margin: 12px 0;
-
     .left {
       position: relative;
       flex-basis: 60%;
@@ -675,7 +719,9 @@ export default {
 
       .alarm-card-container {
         // height: 740px;
+        // width: 38vw;
         height: ~"calc(100vh - 310px)";
+        padding-bottom: 20px;
         overflow-y: auto;
 
         &::-webkit-scrollbar {
@@ -757,11 +803,11 @@ label {
   cursor: pointer;
 }
 
-.page-left {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
-  margin-bottom: 10px;
+.pagination-style {
+  z-index: 1000;
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
 }
 
 /* 可以设置不同的进入和离开动画 */
