@@ -14,24 +14,27 @@ import (
 )
 
 func QueryAlarmStrategy(c *gin.Context) {
-	queryType := c.Param("queryType")
-	guid := c.Param("guid")
-	if queryType == "endpoint" {
-		result, err := db.QueryAlarmStrategyByEndpoint(guid)
+	var param models.AlarmStrategyQueryParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.QueryType == "endpoint" {
+		result, err := db.QueryAlarmStrategyByEndpoint(param.Guid, param.AlarmName, param.Show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
-	} else if queryType == "group" {
-		result, err := db.QueryAlarmStrategyByGroup(guid)
+	} else if param.QueryType == "group" {
+		result, err := db.QueryAlarmStrategyByGroup(param.Guid, param.AlarmName, param.Show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
-	} else if queryType == "service" {
-		result, err := db.QueryAlarmStrategyByServiceGroup(guid)
+	} else if param.QueryType == "service" {
+		result, err := db.QueryAlarmStrategyByServiceGroup(param.Guid, param.AlarmName, param.Show, middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -47,6 +50,10 @@ func CreateAlarmStrategy(c *gin.Context) {
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
+	}
+	param.Guid = ""
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
 	if param.ActiveWindow != "" {
 		if !middleware.ValidateActiveWindowString(param.ActiveWindow) {
@@ -83,6 +90,9 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
+	}
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
 	}
 	if param.ActiveWindow != "" {
 		if !middleware.ValidateActiveWindowString(param.ActiveWindow) {
@@ -145,13 +155,13 @@ func ExportAlarmStrategy(c *gin.Context) {
 	var result []*models.EndpointStrategyObj
 	var err error
 	if queryType == "group" {
-		result, err = db.QueryAlarmStrategyByGroup(guid)
+		result, err = db.QueryAlarmStrategyByGroup(guid, "", "", middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 	} else if queryType == "service" {
-		result, err = db.QueryAlarmStrategyByServiceGroup(guid)
+		result, err = db.QueryAlarmStrategyByServiceGroup(guid, "", "", middleware.GetOperateUser(c))
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
@@ -246,4 +256,22 @@ func ListCallbackEvent(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccessData(c, eventList.Data)
 	}
+}
+
+func ListAlarmStrategyWorkFlow(c *gin.Context) {
+	var result []*models.WorkflowDto
+	var err error
+	if result, err = db.GetAlarmStrategyNotifyWorkflowList(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, dto := range result {
+		index := strings.Index(dto.Name, "[")
+		name := dto.Name
+		if index >= 0 {
+			dto.Name = name[:index]
+			dto.Version = name[index+1 : len(name)-1]
+		}
+	}
+	middleware.ReturnSuccessData(c, result)
 }

@@ -35,7 +35,7 @@
           <Button type="success" ghost @click="addItem" size="small" icon="md-add"></Button>
         </div>
       </div>
-      <template #footer>
+      <template slot='footer'>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="okSelect" type="primary">{{ $t('m_button_confirm') }}</Button>
       </template>
@@ -63,8 +63,7 @@ export default {
       this.tagMap.forEach(item => {
         if (infoSet.has(item.label)) {
           res = false
-        }
-        else {
+        } else {
           infoSet.add(item.label)
         }
       })

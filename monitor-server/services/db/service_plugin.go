@@ -24,6 +24,13 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 		return
 	}
 	pathList := models.TransPluginMultiStringParam(input.LogPathList)
+	if input.DeployPath != "" {
+		var newPathList []string
+		for _, v := range pathList {
+			newPathList = append(newPathList, input.DeployPath+v)
+		}
+		pathList = newPathList
+	}
 	endpointTypeMap := getServiceGroupEndpointWithChild(input.SystemName)
 	sourceTargetMap := make(map[string]string)
 	var hostEndpoint, targetEndpoint []string
@@ -49,14 +56,17 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 			}
 		}
 	}
-	err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap)
-	if err != nil {
-		err = fmt.Errorf("Update logMetric config fail,%s ", err.Error())
-		return
-	}
-	err = updateServiceLogKeywordPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap)
-	if err != nil {
-		err = fmt.Errorf("Update logKeyword config fail,%s ", err.Error())
+	if input.PathType == "logKeyword" {
+		err = updateServiceLogKeywordPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap)
+		if err != nil {
+			err = fmt.Errorf("Update logKeyword config fail,%s ", err.Error())
+		}
+	} else {
+		err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap)
+		if err != nil {
+			err = fmt.Errorf("Update logMetric config fail,%s ", err.Error())
+			return
+		}
 	}
 	return
 }

@@ -110,12 +110,10 @@ export default {
       if (func === 'search') {
         if (this.pageConfig.researchConfig.superSearch) {
           this.$refs.superSearch.search()
-        }
-        else {
+        } else {
           this.$parent[func](filters)
         }
-      }
-      else {
+      } else {
         this.$parent.$parent[func](filters)
       }
     }

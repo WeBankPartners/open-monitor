@@ -15,6 +15,21 @@ import (
 	"time"
 )
 
+var defaultMonitorTypeMetricMap = map[string][]string{
+	"host": {"file_handler_free_percent", "mem_used", "disk_iops", "load_1min", "mem_total", "ping_loss", "ping_time",
+		"ping_alive", "telnet_alive", "disk_read_bytes", "net_if_in_bytes", "cpu_used_percent", "disk_write_bytes", "mem_used_percent",
+		"net_if_out_bytes", "process_mem_byte", "cpu_detail_percent", "process_alive_count", "volume_used_percent", "process_cpu_used_percent"},
+	"telnet":  {"telnet_alive"},
+	"redis":   {"redis_alive", "redis_cmd_num", "redis_db_keys", "redis_mem_used", "redis_expire_key", "redis_client_used_percent"},
+	"process": {"process_mem_byte", "process_alive_count", "process_cpu_used_percent"},
+	"pod":     {"pod_cpu_used_percent", "pod_mem_used_percent"},
+	"ping":    {"ping_loss", "ping_alive"},
+	"nginx":   {"nginx_connect_active", "nginx_handle_request"},
+	"mysql":   {"mysql_alive", "mysql_requests", "db_count_change", "db_monitor_count", "mysql_threads_max", "mysql_buffer_status", "mysql_threads_connected", "mysql_connect_used_percent"},
+	"jvm":     {"jvm_gc_time", "tomcat_request", "jvm_thread_count", "gc_marksweep_time", "tomcat_connection", "jvm_memory_heap_max", "jvm_memory_heap_used", "heap_mem_used_percent"},
+	"http":    {"http_status"},
+}
+
 func ListMetric(c *gin.Context) {
 	guid := c.Query("guid")
 	monitorType := c.Query("monitorType")
@@ -23,7 +38,8 @@ func ListMetric(c *gin.Context) {
 	endpointGroup := c.Query("endpointGroup")
 	endpoint := c.Query("endpoint")
 	query := c.Query("query")
-	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query)
+	metric := c.Query("metric")
+	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -41,10 +57,11 @@ func ListMetricCount(c *gin.Context) {
 	endpointGroup := c.Query("endpointGroup")
 	onlyService := c.Query("onlyService")
 	endpoint := c.Query("endpoint")
-	if metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, ""); err != nil {
+	metric := c.Query("metric")
+	if metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", metric); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
-	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint); err != nil {
+	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, ""); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
 	countRes.Count = len(metricList)
@@ -59,7 +76,8 @@ func ListMetricComparison(c *gin.Context) {
 	onlyService := c.Query("onlyService")
 	endpointGroup := c.Query("endpointGroup")
 	endpoint := c.Query("endpoint")
-	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint)
+	metric := c.Query("metric")
+	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -87,13 +105,13 @@ func ExportMetric(c *gin.Context) {
 	comparison := c.Query("comparison")
 	if comparison == "Y" {
 		fileNamePrefix = "metric_comparison_"
-		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "")
+		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "")
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 	} else {
-		result, err = db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "")
+		result, err = db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "", "")
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
@@ -145,8 +163,9 @@ func ImportMetric(c *gin.Context) {
 	}
 	serviceGroup := c.Query("serviceGroup")
 	endPointGroup := c.Query("endpointGroup")
-	if serviceGroup == "" && endPointGroup == "" {
-		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup can not empty")
+	monitorType := c.Query("monitorType")
+	if serviceGroup == "" && endPointGroup == "" && monitorType == "" {
+		middleware.ReturnValidateError(c, "serviceGroup or endpointGroup  or monitorType can not empty")
 		return
 	}
 	for i, obj := range paramObj {
@@ -173,7 +192,7 @@ func ImportMetric(c *gin.Context) {
 		}
 	} else {
 		// 走原始指标的导入逻辑
-		if subFaiList, err = db.MetricImport(serviceGroup, endPointGroup, middleware.GetOperateUser(c), ConvertMetricComparison2MetricList(newParamObj)); err != nil {
+		if subFaiList, err = db.MetricImport(monitorType, serviceGroup, endPointGroup, middleware.GetOperateUser(c), ConvertMetricComparison2MetricList(newParamObj)); err != nil {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
@@ -212,12 +231,13 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	tagConfigValueMap := make(map[string][]string)
 	if orginMetricRow != nil {
 		// 同环比指标 默认新增 calc_type标签
-		tagList, err = db.GetMetricTags(orginMetricRow)
+		tagList, tagConfigValueMap, err = db.GetMetricTags(orginMetricRow)
 		tagList = append(tagList, "calc_type")
 	} else {
-		tagList, err = db.GetMetricTags(metricRow)
+		tagList, tagConfigValueMap, err = db.GetMetricTags(metricRow)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -269,6 +289,14 @@ func QueryMetricTagValue(c *gin.Context) {
 				}
 			}
 		}
+		if configValueList, ok := tagConfigValueMap[v]; ok {
+			for _, configValue := range configValueList {
+				if _, existFlag := tmpValueDistinctMap[configValue]; !existFlag {
+					tmpValueList = append(tmpValueList, configValue)
+					tmpValueDistinctMap[configValue] = 1
+				}
+			}
+		}
 		valueObjList := []*models.MetricTagValueObj{}
 		for _, tmpValue := range tmpValueList {
 			valueObjList = append(valueObjList, &models.MetricTagValueObj{Key: tmpValue, Value: tmpValue})
@@ -282,6 +310,7 @@ func QueryMetricTagValue(c *gin.Context) {
 func AddOrUpdateComparisonMetric(c *gin.Context) {
 	var param models.MetricComparisonParam
 	var metric *models.MetricTable
+	var comparison models.MetricComparison
 	var err error
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -299,7 +328,7 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if metric == nil {
+	if metric == nil || metric.Guid == "" {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}
@@ -311,6 +340,16 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		return
 	}
 	if strings.TrimSpace(param.MetricComparisonId) == "" {
+		// 查询同环比数据
+		newMetricId := db.GetComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+		if comparison, err = db.GetComparisonMetricByMetricId(newMetricId); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		if comparison.Guid != "" {
+			middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AddComparisonMetricRepeatError))
+			return
+		}
 		// 新增同环比
 		if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
 			middleware.ReturnServerHandleError(c, err)
