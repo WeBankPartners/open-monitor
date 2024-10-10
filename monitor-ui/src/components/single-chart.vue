@@ -90,8 +90,7 @@ export default {
             })
           })
         })
-      }
-      else {
+      } else {
         params.compare = {
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
@@ -108,6 +107,7 @@ export default {
           title: this.chartInfo.title
         })
       }
+      window.intervalFrom = 'single-chart'
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {
           clear: false,

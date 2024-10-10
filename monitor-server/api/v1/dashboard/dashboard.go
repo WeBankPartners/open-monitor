@@ -304,35 +304,10 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	//pieMap := make(map[string]*m.EChartPieObj)
-	//var legendList, newLegendList []string
 	for _, v := range queryResultList {
-		//for i, tmpLegend := range v.PieData.Legend {
-		//	if existData, ok := pieMap[tmpLegend]; ok {
-		//		if v.PieAggType == "new" {
-		//			v.PieAggType = "avg"
-		//		}
-		//		existData.SourceValue = append(existData.SourceValue, v.PieData.Data[i].SourceValue...)
-		//		existData.Value = m.CalcData(existData.SourceValue, v.PieAggType)
-		//	} else {
-		//		pieMap[tmpLegend] = v.PieData.Data[i]
-		//		legendList = append(legendList, tmpLegend)
-		//	}
-		//}
 		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
 		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
 	}
-	//for _, legend := range legendList {
-	//	if v, b := pieMap[legend]; b {
-	//		if v.Value <= 0 {
-	//			continue
-	//		}
-	//		newLegendList = append(newLegendList, legend)
-	//		v.SourceValue = []float64{}
-	//		resultPieData.Data = append(resultPieData.Data, v)
-	//	}
-	//}
-	//resultPieData.Legend = newLegendList
 	mid.ReturnSuccessData(c, resultPieData)
 }
 
@@ -343,15 +318,9 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	if paramConfig.PieType != "" {
 		paramConfig.PieMetricType = paramConfig.PieType
 	}
-	//paramConfig.PieAggType = "new"
 	result = []*m.QueryMonitorData{}
 	var tagNameList []string
 	if paramConfig.CustomChartGuid != "" {
-		//chartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
-		//if getChartErr != nil {
-		//	err = fmt.Errorf("get custom chart with guid:%s fail,%s ", paramConfig.CustomChartGuid, getChartErr.Error())
-		//	return
-		//}
 		customChartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
 		if getChartErr != nil {
 			err = getChartErr

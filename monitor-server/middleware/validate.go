@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
@@ -21,7 +22,7 @@ var (
 	regName             = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
 	regMetric           = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	regDisplayName      = regexp.MustCompile(`.*`)
-	regMetricPrefixCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9]{0,5}$`)
+	regMetricPrefixCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9]{0,15}$`)
 	regLogParamName     = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$`)
 	roleEndpointMap     []map[string]int
 	roleEndpointLock    sync.RWMutex
@@ -153,17 +154,26 @@ func IsIllegalLogParamNameOrMetric(str string) bool {
 }
 
 func ValidateActiveWindowString(str string) bool {
-	return regActiveWindow.MatchString(str)
+	legal := true
+	for _, v := range strings.Split(str, ",") {
+		if !regActiveWindow.MatchString(v) {
+			legal = false
+			break
+		}
+	}
+	return legal
 }
 
-func InitRoleEndpointMap() {
-
-}
-
-func CheckRoleEndpointOwner(roles []string) {
-
-}
-
-func UpdateRoleEndpointMap() {
-
+func IsIllegalTargetValueCode(codeList []*models.LogMetricStringMapTable) bool {
+	var hashMap = make(map[string]bool)
+	if len(codeList) == 0 {
+		return false
+	}
+	for _, table := range codeList {
+		if hashMap[table.TargetValue] {
+			return true
+		}
+		hashMap[table.TargetValue] = true
+	}
+	return false
 }
