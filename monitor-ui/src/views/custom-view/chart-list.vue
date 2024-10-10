@@ -245,20 +245,19 @@ export default {
           title: this.$t('m_table_action'),
           key: 'index',
           width: 160,
-
           fixed: 'right',
           render: (h, params) => (params.row.permission === 'mgmt'
-            ? (<div style="display:flex;justify-content:flex-start;">
+            ? (<div style="display:flex;justify-content: center;">
               <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
                 <Icon type="md-create" size="16"></Icon>
               </Button>
-              <Button size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
+              <Button class="ml-2 mr-2" size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
                 <Icon type="md-person" size="16"></Icon>
               </Button>
               <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
                 <Icon type="md-trash" size="16"></Icon>
               </Button>
-            </div>) : (<div>
+            </div>) : (<div style="display:flex;justify-content: center;">
               <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
                 <Icon type="md-eye" size="16"></Icon>
               </Button>

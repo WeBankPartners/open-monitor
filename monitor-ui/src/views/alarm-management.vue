@@ -28,7 +28,7 @@
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
           <Poptip
             confirm
-            :title="$t('m_delConfirm_tip')"
+            :title="$t('m_confirm_close_alarm')"
             placement="left-end"
             @on-ok="deleteConfirmModal()"
           >
@@ -493,7 +493,7 @@ export default {
         if (priority) {
           params.priority = priority.value
         }
-        params.alarm_name = this.filters.alarm_name || []
+        params.alarmName = this.filters.alarm_name || []
         params.endpoint = this.filters.endpoint || []
         params.metric = this.filters.metric || []
       }
