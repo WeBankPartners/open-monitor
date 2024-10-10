@@ -11,3 +11,7 @@ type SharedChartPermissionDto struct {
 	UseRoles  []string `json:"useRoles"`
 	MgmtRoles []string `json:"mgmtRoles"`
 }
+
+type ChartPermissionBatchParam struct {
+	Ids []string `json:"ids"`
+}

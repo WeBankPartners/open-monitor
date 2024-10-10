@@ -83,15 +83,16 @@ type logKeywordObj struct {
 }
 
 type logKeywordCollector struct {
-	Path              string
-	Rule              []*logKeywordObj
-	TailSession       *tail.Tail
-	Lock              *sync.RWMutex
-	DataChan          chan string
-	ReOpenHandlerChan chan int      `json:"-"`
-	TailTimeLock      *sync.RWMutex `json:"-"`
-	TailLastUnixTime  int64         `json:"-"`
-	DestroyChan       chan int      `json:"-"`
+	Path               string
+	Rule               []*logKeywordObj
+	TailSession        *tail.Tail
+	Lock               *sync.RWMutex
+	DataChan           chan string
+	ReOpenHandlerChan  chan int      `json:"-"`
+	TailTimeLock       *sync.RWMutex `json:"-"`
+	TailLastUnixTime   int64         `json:"-"`
+	DestroyChan        chan int      `json:"-"`
+	TailDataCancelChan chan int      `json:"-"`
 }
 
 func (c *logKeywordCollector) update(rule []*logKeywordObj) {
@@ -111,7 +112,13 @@ func (c *logKeywordCollector) update(rule []*logKeywordObj) {
 
 func (c *logKeywordCollector) startHandleTailData() {
 	for {
-		lineText := <-c.DataChan
+		var lineText string
+		select {
+		case lineText = <-c.DataChan:
+		case <-c.TailDataCancelChan:
+			return
+		}
+		//lineText := <-c.DataChan
 		c.Lock.Lock()
 		for _, v := range c.Rule {
 			if v.RegExp != nil {
@@ -139,6 +146,7 @@ func (c *logKeywordCollector) init() {
 	c.ReOpenHandlerChan = make(chan int, 1)
 	c.TailLastUnixTime = 0
 	c.DestroyChan = make(chan int, 1)
+	c.TailDataCancelChan = make(chan int, 1)
 	go c.start()
 }
 
@@ -153,7 +161,7 @@ func (c *logKeywordCollector) start() {
 	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logKeywordChanLength)
 	go c.startHandleTailData()
-	go c.startFileHandlerCheck()
+	//go c.startFileHandlerCheck()
 	reopenFlag := false
 	destroyFlag := false
 	for {
@@ -170,26 +178,22 @@ func (c *logKeywordCollector) start() {
 		}
 		if reopenFlag || destroyFlag {
 			break
-		} else {
-			c.TailTimeLock.Lock()
-			c.TailLastUnixTime = time.Now().Unix()
-			c.TailTimeLock.Unlock()
 		}
+		//else {
+		//	c.TailTimeLock.Lock()
+		//	c.TailLastUnixTime = time.Now().Unix()
+		//	c.TailTimeLock.Unlock()
+		//}
 	}
 	c.TailSession.Stop()
-	c.TailSession.Cleanup()
+	//c.TailSession.Cleanup()
+	c.TailDataCancelChan <- 1
 	level.Info(monitorLogger).Log("log_keyword -> startLogMetricMonitorNeObj__end", c.Path)
 	if destroyFlag {
 		return
 	}
-	time.Sleep(10 * time.Second)
-	go c.start()
-	//for line := range c.TailSession.Lines {
-	//	if len(c.DataChan) == logMetricChanLength {
-	//		level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
-	//	}
-	//	c.DataChan <- line.Text
-	//}
+	//time.Sleep(60 * time.Second)
+	//go c.start()
 }
 
 func (c *logKeywordCollector) startFileHandlerCheck() {
@@ -209,6 +213,7 @@ func (c *logKeywordCollector) startFileHandlerCheck() {
 			if fileLastTime-tailLastTime > 60 {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				break
 			} else {
 				//level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}

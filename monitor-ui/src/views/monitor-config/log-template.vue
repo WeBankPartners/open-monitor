@@ -1,25 +1,30 @@
 <template>
   <div>
-    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
-      <div>
+    <div class='log-template-header'>
+      <div class='log-template-header-left'>
         <Input
-          v-model="searchParams.name"
+          v-model.trim="searchParams.name"
+          style='width: 450px; margin-right: 20px'
           :placeholder="$t('m_template_name')"
           class="search-item"
           clearable
-          @on-change="getTemplateList"
+          @on-change="onFilterChange"
         ></Input>
-        <Input
+        <Select
           v-model="searchParams.update_user"
-          :placeholder="$t('m_updatedBy')"
-          class="search-item"
+          filterable
           clearable
-          @on-change="getTemplateList"
-        ></Input>
-        <span style="margin-top: 8px;margin-left: 24px;">
+          :placeholder="$t('m_updatedBy')"
+          @on-change="onFilterChange"
+        >
+          <Option v-for="(user, index) in updateUserOptions" :value="user" :key="index">{{
+            user
+          }}</Option>
+        </Select>
+        <!-- <span style="margin-top: 8px;margin-left: 24px;">
           <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('m_button_search') }}</Button>
           <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
-        </span>
+        </span> -->
       </div>
       <div>
         <ExportImport
@@ -87,19 +92,7 @@
     </div>
     <JsonRegex ref="jsonRegexRef" @refreshData="getTemplateList"></JsonRegex>
     <StandardRegex ref="standardRegexRef" @refreshData="getTemplateList"></StandardRegex>
-    <!-- 删除组 -->
-    <Modal
-      v-model="isShowDeleteWarning"
-      :title="$t('m_delConfirm_title')"
-      @on-ok="confirmDeleteTemplate"
-      @on-cancel="isShowDeleteWarning = false"
-    >
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('m_delete_tip')}}: {{ toBeDeleted }}</p>
-        </div>
-      </div>
-    </Modal>
+    <CustomRegex ref="customRegexRef" @reloadMetricData="getTemplateList"></CustomRegex>
     <!-- 查看管理层级对象 -->
     <Modal
       v-model="showServiceGroup"
@@ -128,9 +121,12 @@
 </template>
 
 <script>
+import {debounce, isEmpty} from 'lodash'
 import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
+import {showPoptipOnTable} from '@/assets/js/utils.js'
+import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 
 export default {
   name: 'log-template',
@@ -152,6 +148,11 @@ export default {
         {
           name: this.$t('m_standard_regex'),
           log_type: 'regular',
+          tableData: []
+        },
+        {
+          name: this.$t('m_custom_templates'),
+          log_type: 'custom',
           tableData: []
         }
       ],
@@ -181,6 +182,11 @@ export default {
           fixed: 'right',
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Tooltip max-width={400} placement="top" transfer content={this.$t('m_copy')}>
+                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                  <Icon type="md-document" size="16"></Icon>
+                </Button>
+              </Tooltip>
               <Tooltip content={this.$t('m_button_edit')} placement="top" transfer={true}>
                 <Button
                   size="small"
@@ -202,26 +208,30 @@ export default {
                 </Button>
               </Tooltip>
               <Tooltip content={this.$t('m_button_remove')} placement="top" transfer={true}>
-                <Button
-                  size="small"
-                  type="error"
-                  onClick={() => this.removeAction(params.row)}
-                  style="margin-right:5px;"
-                >
-                  <Icon type="md-trash" size="16"></Icon>
-                </Button>
+                <Poptip
+                  confirm
+                  transfer
+                  title={this.$t('m_delConfirm_tip')}
+                  placement="left-end"
+                  on-on-ok={() => {
+                    this.confirmDeleteTemplate(params.row)
+                  }}>
+                  <Button size="small" type="error" class="mr-2" on-click={() => {
+                    showPoptipOnTable()
+                  }}>
+                    <Icon type="md-trash" size="16" />
+                  </Button>
+                </Poptip>
               </Tooltip>
             </div>
           )
         }
       ],
-      isShowDeleteWarning: false,
-      toBeDeleted: '', // 将被删除的模版名
-      toBeDeletedGuid: '', // 待删除数据
       showServiceGroup: false,
       filterServiceGroup: '',
       serviceGroup: [], // 层级对象
-      selectedParams: [] // 待导出数据
+      selectedParams: [], // 待导出数据
+      updateUserOptions: []
     }
   },
   computed: {
@@ -231,6 +241,7 @@ export default {
   },
   mounted() {
     this.getTemplateList()
+    this.getUpdateUserOptions()
   },
   methods: {
     getTemplateList() {
@@ -238,9 +249,13 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, resp => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
+        this.data[2].tableData = !isEmpty(resp.custom_list) ? resp.custom_list : []
       })
       this.spinShow = false
     },
+    onFilterChange: debounce(function () {
+      this.getTemplateList()
+    }, 300),
     handleReset() {
       this.searchParams = {
         name: '',
@@ -251,8 +266,7 @@ export default {
     changeRegexTableStatus(index, type) {
       if (type === 'in') {
         this.hideRegex.push(index)
-      }
-      else if (type === 'out') {
+      } else if (type === 'out') {
         const findIndex = this.hideRegex.findIndex(rIndex => rIndex === index)
         this.hideRegex.splice(findIndex, 1)
       }
@@ -261,18 +275,30 @@ export default {
     addTemplate(log_type) {
       if (log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage()
-      }
-      else {
+      } else if (log_type === 'regular') {
         this.$refs.standardRegexRef.loadPage()
+      } else {
+        this.$refs.customRegexRef.loadPage('add', '', '', '', true)
       }
     },
     // 编辑模版
     editAction(row) {
       if (row.log_type === 'json') {
         this.$refs.jsonRegexRef.loadPage(row.guid)
-      }
-      else {
+      } else if (row.log_type === 'regular') {
         this.$refs.standardRegexRef.loadPage(row.guid)
+      } else {
+        this.$refs.customRegexRef.loadPage('edit', '', '', row.guid, true)
+        // this.$refs.customRegexRef.loadPage('add', '', '', '', true)
+      }
+    },
+    copySingleItem(row) {
+      if (row.log_type === 'json') {
+        this.$refs.jsonRegexRef.loadPage(row.guid, 'copy')
+      } else if (row.log_type === 'regular') {
+        this.$refs.standardRegexRef.loadPage(row.guid, 'copy')
+      } else {
+        this.$refs.customRegexRef.loadPage('copy', '', '', row.guid, true)
       }
     },
     // 查看关联层级对象
@@ -284,14 +310,8 @@ export default {
         this.showServiceGroup = true
       })
     },
-    // 删除模版
-    removeAction(row) {
-      this.toBeDeleted = row.name
-      this.toBeDeletedGuid = row.guid
-      this.isShowDeleteWarning = true
-    },
-    confirmDeleteTemplate() {
-      const api = this.$root.apiCenter.deleteLogTemplate + this.toBeDeletedGuid
+    confirmDeleteTemplate(row) {
+      const api = this.$root.apiCenter.deleteLogTemplate + row.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, {}, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getTemplateList()
@@ -327,16 +347,32 @@ export default {
       )
       this.selectedParams.splice(findIndex, 1)
     },
-    // #endregion
+    getUpdateUserOptions() {
+      const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', res => {
+        this.updateUserOptions = res
+      })
+    }
   },
   components: {
     JsonRegex,
     ExportImport,
-    StandardRegex
+    StandardRegex,
+    CustomRegex
   }
 }
 </script>
 <style lang="less" scoped>
+.log-template-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  .log-template-header-left {
+    display: flex;
+    align-items: center;
+  }
+}
+
 .search-item {
   width: 200px;
   margin-right: 6px;
