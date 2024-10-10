@@ -7,14 +7,14 @@ clean:
 	rm -rf monitor-server/monitor-server
 	rm -rf monitor-agent/agent_manager/agent_manager
 	rm -rf monitor-agent/archive_mysql_tool/archive_mysql_tool
-	rm -rf monitor-agent/node_exporter/node_exporter_new
-	rm -rf build/conf/node_exporter/node_exporter_new
+	rm -rf monitor-agent/node_exporter/monitor_exporter
+	rm -rf build/conf/node_exporter/monitor_exporter
 	rm -rf build/conf/node_exporter/VERSION
 	rm -rf monitor-agent/ping_exporter/ping_exporter
 	rm -rf monitor-agent/db_data_exporter/db_data_exporter
 	rm -rf monitor-agent/transgateway/transgateway
-	rm -rf monitor-ui/dist
-	rm -rf monitor-ui/plugin
+	# rm -rf monitor-ui/dist
+	# rm -rf monitor-ui/plugin
 
 build: clean build_monitor_server
 	chmod +x ./build/*.sh

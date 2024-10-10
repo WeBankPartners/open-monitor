@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/WeBankPartners/go-common-lib/pcre"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,19 +22,20 @@ import (
 func ListLogMetricMonitor(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
+	metricKey := c.Query("metricKey")
 	if queryType == "endpoint" {
-		result, err := db.GetLogMetricByEndpoint(guid, false)
+		result, err := db.GetLogMetricByEndpoint(guid, metricKey, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.GetLogMetricByServiceGroup(guid)
+		result, err := db.GetLogMetricByServiceGroup(guid, metricKey)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
-			middleware.ReturnSuccessData(c, result)
+			middleware.ReturnSuccessData(c, []*models.LogMetricQueryObj{&result})
 		}
 	}
 }
@@ -48,6 +52,7 @@ func GetLogMetricMonitor(c *gin.Context) {
 
 func CreateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorCreateDto
+	var list []*models.LogMetricMonitorTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -66,6 +71,15 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	// 校验路径是否重复
+	if list, err = db.GetLogMetricMonitorByCond(param.LogPath, "", param.ServiceGroup); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnValidateError(c, fmt.Errorf("path:%s Already exists", list[0].LogPath).Error())
+		return
+	}
 	err = db.CreateLogMetricMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -76,6 +90,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 
 func UpdateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorObj
+	var list []*models.LogMetricMonitorTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -91,6 +106,15 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 	}
 	for _, v := range param.EndpointRel {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	}
+	// 校验路径是否重复
+	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.ServiceGroup); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		middleware.ReturnValidateError(c, fmt.Errorf("path:%s Already exists", list[0].LogPath).Error())
+		return
 	}
 	err = db.UpdateLogMetricMonitor(&param)
 	if err != nil {
@@ -340,7 +364,7 @@ func GetServiceGroupEndpointRel(c *gin.Context) {
 
 func ExportLogMetric(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
-	result, err := db.GetLogMetricByServiceGroup(serviceGroup)
+	result, err := db.GetLogMetricByServiceGroup(serviceGroup, "")
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -366,7 +390,7 @@ func ImportLogMetric(c *gin.Context) {
 		return
 	}
 	var paramObj models.LogMetricQueryObj
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	defer f.Close()
 	if err != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", err)
@@ -400,7 +424,7 @@ func ImportLogMetric(c *gin.Context) {
 	for _, dbMonitor := range paramObj.DBConfig {
 		dbMonitor.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
+	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
@@ -467,6 +491,16 @@ func ListLogMonitorTemplate(c *gin.Context) {
 	}
 }
 
+func ListLogMonitorTemplateOptions(c *gin.Context) {
+	var result []string
+	var err error
+	if result, err = db.ListLogMonitorTemplateOptions(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
+}
+
 func GetLogMonitorTemplate(c *gin.Context) {
 	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
 	result, err := db.GetLogMonitorTemplate(logMonitorTemplateGuid)
@@ -497,7 +531,7 @@ func CreateLogMonitorTemplate(c *gin.Context) {
 }
 
 func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err error) {
-	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType {
+	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType && param.LogType != models.LogMonitorCustomType {
 		err = fmt.Errorf("param json type illegal")
 		return
 	}
@@ -548,15 +582,42 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 			err = fmt.Errorf("metric: %s log param name can not empty", v.Metric)
 			return
 		}
-		//if v.AggType != "avg" && v.AggType != "max" && v.AggType != "min" && v.AggType != "sum" && v.AggType != "count" {
-		//	err = fmt.Errorf("metric: %s  aggType: %s illegal", v.Metric, v.AggType)
-		//	return
-		//}
+		if v.AutoAlarm {
+			if err = checkThresholdWarnConfigInvalid(v.Metric, v.RangeConfig); err != nil {
+				return
+			}
+		}
 		if v.Step == 0 {
 			v.Step = 10
 		}
 	}
 	return
+}
+
+func checkThresholdWarnConfigInvalid(metric, rangeConfig string) error {
+	temp := &models.ThresholdConfig{}
+	var intTime int
+	var err error
+	if err = json.Unmarshal([]byte(rangeConfig), temp); err != nil {
+		return getError(metric, rangeConfig)
+	}
+	if temp == nil {
+		return getError(metric, rangeConfig)
+	}
+	if temp.Operator == "" || temp.Time == "" || temp.TimeUnit == "" || temp.Threshold == "" {
+		return getError(metric, rangeConfig)
+	}
+	if _, err = strconv.ParseFloat(temp.Threshold, 64); err != nil {
+		return getError(metric, rangeConfig)
+	}
+	if intTime, err = strconv.Atoi(temp.Time); err != nil || intTime < 0 {
+		return getError(metric, rangeConfig)
+	}
+	return nil
+}
+
+func getError(metric, rangeConfig string) error {
+	return fmt.Errorf("metric: %s alarm config:%+v illegal", metric, rangeConfig)
 }
 
 func UpdateLogMonitorTemplate(c *gin.Context) {
@@ -586,7 +647,7 @@ func UpdateLogMonitorTemplate(c *gin.Context) {
 
 func DeleteLogMonitorTemplate(c *gin.Context) {
 	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
-	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid)
+	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid, middleware.GetMessageMap(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -620,7 +681,10 @@ func GetLogMetricGroup(c *gin.Context) {
 
 func CreateLogMetricGroup(c *gin.Context) {
 	var param models.LogMetricGroupWithTemplate
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var prefixMap map[string]int
+	var result *models.CreateLogMetricGroupDto
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -635,7 +699,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		return
 	}
 	param.Name = strings.TrimSpace(param.Name)
-	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+	if err = db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -645,9 +709,12 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	prefixMap, queryErr := db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid)
-	if queryErr != nil {
-		middleware.ReturnHandleError(c, queryErr.Error(), queryErr)
+	if middleware.IsIllegalTargetValueCode(param.CodeStringMap) {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
+		return
+	}
+	if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if _, ok := prefixMap[param.MetricPrefixCode]; ok {
@@ -655,17 +722,15 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
-	if err != nil {
+	if result, err = db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
-		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		return
 	}
+	if err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func UpdateLogMetricGroup(c *gin.Context) {
@@ -688,6 +753,10 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalTargetValueCode(param.CodeStringMap) {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
 		return
 	}
 	err := db.UpdateLogMetricGroup(&param, middleware.GetOperateUser(c))
@@ -734,14 +803,46 @@ func GetLogMetricCustomGroup(c *gin.Context) {
 
 func CreateLogMetricCustomGroup(c *gin.Context) {
 	var param models.LogMetricGroupObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var prefixMap map[string]int
+	var result *models.CreateLogMetricGroupDto
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
 	if param.LogMetricMonitor == "" {
-		err := fmt.Errorf("LogMetricMonitor can not empty")
+		err = fmt.Errorf("LogMetricMonitor can not empty")
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
+	}
+	if param.LogMetricMonitor != "" && param.MetricPrefixCode != "" {
+		if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricGroup.LogMetricMonitor); err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if _, ok := prefixMap[param.MetricPrefixCode]; ok {
+			err := fmt.Errorf("Prefix: %s duplidate ", param.MetricPrefixCode)
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	} else {
+		existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		for _, v := range param.MetricList {
+			if _, existFlag := existMetricMap[v.Metric]; existFlag {
+				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				break
+			} else {
+				existMetricMap[v.Metric] = param.MonitorType
+			}
+		}
+		if err != nil {
+			middleware.ReturnError(c, 200, err.Error(), err)
+			return
+		}
 	}
 	if len(param.MetricList) > 0 {
 		for _, metric := range param.MetricList {
@@ -762,34 +863,19 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
-	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	for _, v := range param.MetricList {
-		if _, existFlag := existMetricMap[v.Metric]; existFlag {
-			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
-			break
-		} else {
-			existMetricMap[v.Metric] = param.MonitorType
-		}
-	}
-	if err != nil {
-		middleware.ReturnError(c, 200, err.Error(), err)
+	if result, err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
-	if err != nil {
-		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
-		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+	if err = syncLogMetricMonitorConfig(param.LogMetricMonitor); err != nil {
+		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		return
 	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func UpdateLogMetricCustomGroup(c *gin.Context) {
@@ -933,4 +1019,28 @@ func LogMonitorTemplateImport(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccess(c)
 	}
+}
+
+func LogMonitorDataMapRegMatch(c *gin.Context) {
+	var param models.LogMetricDataMapMatchDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if !param.IsRegexp {
+		param.Match = true
+		middleware.ReturnSuccessData(c, param)
+		return
+	}
+	ce, err := pcre.Compile(param.Regexp, 0)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Message, fmt.Errorf(err.Message))
+		return
+	}
+	if mat := ce.MatcherString(param.Content, 0); mat != nil {
+		if mat.Matches() {
+			param.Match = true
+		}
+	}
+	middleware.ReturnSuccessData(c, param)
 }

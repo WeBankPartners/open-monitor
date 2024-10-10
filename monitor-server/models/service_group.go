@@ -15,6 +15,7 @@ type ServiceGroupTable struct {
 	Parent      string `json:"parent" xorm:"parent"`
 	ServiceType string `json:"service_type" xorm:"service_type"`
 	UpdateTime  string `json:"update_time" xorm:"update_time"`
+	UpdateUser  string `json:"update_user" xorm:"update_user"`
 }
 
 type EndpointServiceRelTable struct {
@@ -65,11 +66,14 @@ type PluginUpdateServicePathRequest struct {
 }
 
 type PluginUpdateServicePathRequestObj struct {
-	CallbackParameter string      `json:"callbackParameter"`
-	Guid              string      `json:"guid"`
-	SystemName        string      `json:"systemName"`
-	LogPathList       interface{} `json:"logPathList"`
-	MonitorType       string      `json:"monitorType"`
+	CallbackParameter  string      `json:"callbackParameter"`
+	Guid               string      `json:"guid"`
+	SystemName         string      `json:"systemName"`
+	LogPathList        interface{} `json:"logPathList"`
+	MonitorType        string      `json:"monitorType"`
+	LogMonitorTemplate string      `json:"logMonitorTemplate"`
+	DeployPath         string      `json:"deployPath"`
+	PathType           string      `json:"pathType"` // 日志类型-> logMonitor|logKeyword
 }
 
 type PluginUpdateServicePathResp struct {

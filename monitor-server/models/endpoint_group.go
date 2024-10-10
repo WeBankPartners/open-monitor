@@ -114,24 +114,26 @@ type AlarmStrategyTable struct {
 }
 
 type AlarmStrategyMetricObj struct {
-	Guid              string       `json:"guid" xorm:"guid"`
-	Name              string       `json:"name" xorm:"name"`
-	EndpointGroup     string       `json:"endpoint_group" xorm:"endpoint_group"`
-	Metric            string       `json:"metric" xorm:"metric"`
-	Condition         string       `json:"condition" xorm:"condition"`
-	Last              string       `json:"last" xorm:"last"`
-	Priority          string       `json:"priority" xorm:"priority"`
-	Content           string       `json:"content" xorm:"content"`
-	NotifyEnable      int          `json:"notify_enable" xorm:"notify_enable"`
-	NotifyDelaySecond int          `json:"notify_delay_second" xorm:"notify_delay_second"`
-	UpdateTime        string       `json:"update_time" xorm:"update_time"`
-	MetricName        string       `json:"metric_name" xorm:"metric_name"`
-	MetricExpr        string       `json:"metric_expr" xorm:"metric_expr"`
-	MetricType        string       `json:"metric_type" xorm:"metric_type"`
-	ActiveWindow      string       `json:"active_window" xorm:"active_window"`
-	ConditionCrc      string       `json:"condition_crc"`
-	Tags              []*MetricTag `json:"tags"`
-	UpdateUser        string       `json:"update_user" xorm:"update_user"`
+	Guid                    string       `json:"guid" xorm:"guid"`
+	Name                    string       `json:"name" xorm:"name"`
+	EndpointGroup           string       `json:"endpoint_group" xorm:"endpoint_group"`
+	Metric                  string       `json:"metric" xorm:"metric"`
+	Condition               string       `json:"condition" xorm:"condition"`
+	Last                    string       `json:"last" xorm:"last"`
+	Priority                string       `json:"priority" xorm:"priority"`
+	Content                 string       `json:"content" xorm:"content"`
+	NotifyEnable            int          `json:"notify_enable" xorm:"notify_enable"`
+	NotifyDelaySecond       int          `json:"notify_delay_second" xorm:"notify_delay_second"`
+	UpdateTime              string       `json:"update_time" xorm:"update_time"`
+	MetricName              string       `json:"metric_name" xorm:"metric_name"`
+	MetricExpr              string       `json:"metric_expr" xorm:"metric_expr"`
+	MetricType              string       `json:"metric_type" xorm:"metric_type"`
+	ActiveWindow            string       `json:"active_window" xorm:"active_window"`
+	ConditionCrc            string       `json:"condition_crc"`
+	Tags                    []*MetricTag `json:"tags"`
+	UpdateUser              string       `json:"update_user" xorm:"update_user"`
+	LogMetricGroup          string       `json:"log_metric_group" xorm:"log_metric_group"`
+	AlarmStrategyMetricGuid string       `json:"alarm_strategy_metric_guid" xorm:"-"`
 }
 
 type GroupStrategyObj struct {
@@ -151,6 +153,8 @@ type GroupStrategyObj struct {
 	Conditions        []*StrategyConditionObj `json:"conditions"`
 	UpdateTime        string                  `json:"update_time"`
 	UpdateUser        string                  `json:"update_user"`
+	LogMetricGroup    *string                 `json:"log_metric_group"`
+	ActiveWindowList  []string                `json:"active_window_list"`
 }
 
 type EndpointStrategyObj struct {
@@ -174,6 +178,7 @@ type SysAlertMailParameter struct {
 	AuthServer   string `json:"auth_server"`
 	AuthPassword string `json:"auth_password"`
 	SSL          string `json:"ssl"`
+	AuthUser     string `json:"auth_user"`
 }
 
 type SysMetricTemplateParameter struct {
@@ -208,18 +213,21 @@ type StrategyConditionObj struct {
 
 type MetricTag struct {
 	TagName  string   `json:"tagName"`
+	Equal    string   `json:"equal"` //  in/not in
 	TagValue []string `json:"tagValue"`
 }
 
 type AlarmStrategyMetric struct {
-	Guid          string    `json:"guid" xorm:"guid"`                    // 唯一标识
-	AlarmStrategy string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
-	Metric        string    `json:"metric" xorm:"metric"`                // 指标
-	Condition     string    `json:"condition" xorm:"condition"`          // 条件
-	Last          string    `json:"last" xorm:"last"`                    // 持续时间
-	CrcHash       string    `json:"crc_hash" xorm:"crc_hash"`            // hash
-	CreateTime    time.Time `json:"createTime" xorm:"create_time"`       // 创建时间
-	UpdateTime    time.Time `json:"updateTime" xorm:"update_time"`       // 更新时间
+	Guid              string    `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy     string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Metric            string    `json:"metric" xorm:"metric"`                // 指标
+	Condition         string    `json:"condition" xorm:"condition"`          // 条件
+	Last              string    `json:"last" xorm:"last"`                    // 持续时间
+	CrcHash           string    `json:"crc_hash" xorm:"crc_hash"`            // hash
+	CreateTime        time.Time `json:"createTime" xorm:"create_time"`       // 创建时间
+	UpdateTime        time.Time `json:"updateTime" xorm:"update_time"`       // 更新时间
+	MonitorEngine     int       `json:"monitor_engine" xorm:"monitor_engine"`
+	MonitorEngineExpr string    `json:"monitor_engine_expr" xorm:"monitor_engine_expr"`
 }
 
 type AlarmStrategyMetricQueryRow struct {
@@ -236,6 +244,7 @@ type AlarmStrategyTag struct {
 	Guid                string `json:"guid" xorm:"guid"`                                 // 唯一标识
 	AlarmStrategyMetric string `json:"alarmStrategyMetric" xorm:"alarm_strategy_metric"` // 告警配置指标
 	Name                string `json:"name" xorm:"name"`                                 // 标签名
+	Equal               string `json:"equal" xorm:"equal"`                               // 标签名
 }
 
 type AlarmStrategyTagValue struct {
@@ -254,4 +263,18 @@ type AlarmStrategyMetricWithExpr struct {
 	MetricName    string `json:"metric_name" xorm:"metric_name"`
 	MetricExpr    string `json:"metric_expr" xorm:"metric_expr"`
 	MetricType    string `json:"metric_type" xorm:"metric_type"`
+	MonitorEngine int    `json:"monitor_engine" xorm:"monitor_engine"`
+}
+
+type AlarmStrategyQueryParam struct {
+	QueryType string `json:"queryType"`
+	Guid      string `json:"guid"`
+	Show      string `json:"show"`
+	AlarmName string `json:"alarmName"`
+}
+
+type WorkflowDto struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Key     string `json:"key"`
 }
