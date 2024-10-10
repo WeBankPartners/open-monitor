@@ -9,6 +9,7 @@ type DbMetricMonitorTable struct {
 	Step         int64  `json:"step" xorm:"step"`
 	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
 	UpdateTime   string `json:"update_time" xorm:"update_time"`
+	UpdateUser   string `json:"update_user" xorm:"update_user"`
 }
 
 type DbMetricEndpointRelTable struct {
@@ -16,6 +17,11 @@ type DbMetricEndpointRelTable struct {
 	DbMetricMonitor string `json:"db_metric_monitor" xorm:"db_metric_monitor"`
 	SourceEndpoint  string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint  string `json:"target_endpoint" xorm:"target_endpoint"`
+}
+
+type DbMetricQueryObj struct {
+	ServiceGroupTable
+	Config []*DbMetricMonitorObj `json:"config"`
 }
 
 type DbMetricMonitorObj struct {
@@ -27,6 +33,8 @@ type DbMetricMonitorObj struct {
 	DisplayName      string                      `json:"display_name"`
 	Step             int64                       `json:"step"`
 	MonitorType      string                      `json:"monitor_type"`
+	UpdateTime       string                      `json:"update_time"`
+	UpdateUser       string                      `json:"update_user"`
 	EndpointRel      []*DbMetricEndpointRelTable `json:"endpoint_rel"`
 }
 
@@ -40,6 +48,21 @@ type DbMetricMonitorQueryObj struct {
 	MonitorType    string `json:"monitor_type" xorm:"monitor_type"`
 	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
 	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
+}
+
+type DbKeywordMonitorQueryObj struct {
+	Guid           string `json:"guid" xorm:"guid"`
+	ServiceGroup   string `json:"service_group" xorm:"service_group"`
+	QuerySql       string `json:"query_sql" xorm:"query_sql"`
+	Step           int64  `json:"step" xorm:"step"`
+	MonitorType    string `json:"monitor_type" xorm:"monitor_type"`
+	Content        string `json:"content" xorm:"content"`
+	Priority       string `json:"priority" xorm:"priority"`
+	Name           string `json:"name" xorm:"name"`
+	ActiveWindow   string `json:"active_window" xorm:"active_window"`
+	SourceEndpoint string `json:"source_endpoint" xorm:"source_endpoint"`
+	TargetEndpoint string `json:"target_endpoint" xorm:"target_endpoint"`
+	NotifyEnable   int8   `json:"notify_enable" xorm:"notify_enable"` // 是否通知
 }
 
 type MetricComparison struct {

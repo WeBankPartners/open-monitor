@@ -1128,3 +1128,108 @@ update metric set metric=replace(metric,'.','_'),guid=replace(guid,'.','_') wher
 update prom_metric set metric=replace(metric,'.','_') where metric like '%.%';
 SET FOREIGN_KEY_CHECKS=1;
 #@v3.0.4.1-end@;
+
+#@v3.1.4-begin@;
+alter table monitor_type add column system_type tinyint(1) default 0 COMMENT '系统类型,0为非系统类型,1为系统类型';
+alter table monitor_type add column create_user varchar(64) default null COMMENT '创建人';
+alter table monitor_type add column create_time varchar(32) default null COMMENT '创建时间';
+alter table custom_dashboard_chart_rel add column group_display_config text default null COMMENT '组里视图位置长与宽';
+alter table log_metric_string_map modify column target_value varchar(128) default null COMMENT '目标值';
+alter table db_metric_monitor add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table service_group add column update_user varchar(64) default null COMMENT '更新人';
+alter table log_keyword_config add column update_user varchar(64) default null COMMENT '更新人';
+
+alter table alarm add index alarm_name (alarm_name);
+
+update monitor_type set system_type = 1;
+CREATE TABLE `db_keyword_alarm` (
+    `id` int(11) unsigned NOT NULL auto_increment COMMENT '自增id',
+    `alarm_id` int(11) NOT null COMMENT '告警id',
+    `endpoint` varchar(255) NOT null COMMENT '告警对象',
+    `status` varchar(20) NOT null COMMENT '状态',
+    `db_keyword_monitor` varchar(64) NOT null COMMENT '数据库关键字配置',
+    `content` text COMMENT '告警内容',
+    `tags` varchar(1024) DEFAULT '' COMMENT '告警标签',
+    `start_value` double DEFAULT null COMMENT '开始值',
+    `end_value` double DEFAULT null COMMENT '结束值',
+    `updated_time` datetime DEFAULT null COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_log_keyword_alarm_id` (`alarm_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
+alter table custom_chart_series_config modify column series_name varchar(512) default null;
+alter table metric add column db_metric_monitor varchar(64) default null;
+alter table alarm_strategy_metric add column monitor_engine tinyint(4) default 0;
+create index idx_alarm_strategy_monitor_engine on alarm_strategy_metric(monitor_engine);
+alter table alarm_strategy_metric add column monitor_engine_expr text default null;
+
+CREATE TABLE `alarm_firing` (
+    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `endpoint` varchar(255) NOT null COMMENT '告警对象',
+    `metric` varchar(255) NOT NULL COMMENT '告警指标',
+    `tags` varchar(1024) DEFAULT '' COMMENT '告警标签',
+    `alarm_name` varchar(64) DEFAULT NULL COMMENT '告警名称',
+    `alarm_strategy` varchar(64) DEFAULT NULL COMMENT '告警策略配置',
+    `notify_id` varchar(64) DEFAULT NULL COMMENT '告警通知配置',
+    `expr` varchar(4096) DEFAULT NULL COMMENT '告警表达式',
+    `cond` varchar(50) NOT NULL COMMENT '告警条件',
+    `last` varchar(50) NOT NULL COMMENT '告警持续时间',
+    `priority` varchar(50) NOT NULL COMMENT '告警级别',
+    `content` text COMMENT '告警描述内容',
+    `start_value` double DEFAULT null COMMENT '告警发生值',
+    `start` datetime DEFAULT null COMMENT '告警发生时间',
+    `custom_message` varchar(500) DEFAULT NULL COMMENT '告警人工备注',
+    `unique_hash` varchar(64) DEFAULT NULL COMMENT '告警唯一标识(对象+指标+标签+配置)',
+    `alarm_id` int(11) DEFAULT NULL COMMENT '告警历史表id',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_alarm_firing_hash` (`unique_hash`),
+    KEY `alarm_firing_endpoint_idx` (`endpoint`),
+    KEY `alarm_firing_metric_idx` (`metric`),
+    KEY `alarm_firing_priority_idx` (`priority`),
+    KEY `alarm_firing_name` (`alarm_name`),
+    KEY `alarm_firing_alarm_id` (`alarm_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+alter table log_monitor_template add column success_code varchar(200) default null COMMENT '成功码';
+alter table log_metric_template add column color_group varchar(32) default null COMMENT '默认色系';
+alter table log_metric_template add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
+alter table log_metric_template add column range_config tinytext default null COMMENT '阈值配置json';
+alter table log_metric_group add column template_snapshot text default null COMMENT '模版快照';
+alter table log_metric_group add column ref_template_version varchar(32) default null COMMENT '引用模版版本';
+alter table alarm_strategy add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table custom_dashboard add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table custom_chart add column log_metric_group varchar(64) default null COMMENT '业务日志指标id';
+alter table alarm_strategy_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
+alter table custom_chart_series_tag add column equal varchar(32) default 'in' COMMENT 'in/not in';
+alter table alarm_strategy add column create_user varchar(64) default null COMMENT '创建人';
+
+-- 新增明细失败量
+insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) select concat(guid,'_1'),log_monitor_template,log_param_name,'req_fail_count_detail' as metric,'分类失败量' as display_name,step,agg_type,'["code","retcode"]' as tag_config,create_user,update_user,create_time,update_time from log_metric_template where metric='req_fail_count';
+insert into metric(guid,metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,log_metric_template,log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor) select replace(guid,'req_fail_count','req_fail_count_detail') as guid,replace(metric,'req_fail_count','req_fail_count_detail') as metric,monitor_type,prom_expr,update_time,service_group,workspace,log_metric_config,concat(log_metric_template,'_1'),log_metric_group,create_time,create_user,update_user,endpoint_group,db_metric_monitor from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count');
+-- 把失败量表达式改成汇总失败量
+update log_metric_template set tag_config='["code"]',agg_type='{req_count}-{req_suc_count}' where metric='req_fail_count';
+update metric t1,metric t2,metric t3 set t1.prom_expr=concat(replace(t2.prom_expr,'(key,agg,service_group,code)','(service_group,code)'),'-',replace(t3.prom_expr,'(key,agg,service_group,code,retcode)','(service_group,code)')) where t1.log_metric_group=t2.log_metric_group and t1.log_metric_group=t3.log_metric_group and t1.log_metric_template in (select guid from log_metric_template where metric='req_fail_count') and t2.metric like '%req_count' and t3.metric like '%req_suc_count';
+-- 去掉成功量返回码
+update log_metric_template set tag_config='["code"]' where metric='req_suc_count' and tag_config='["code","retcode"]';
+-- 把新视图和阈值配置中req_fail_count改成req_fail_count_detail
+update custom_chart_series set metric=replace(metric,'req_fail_count','req_fail_count_detail'),metric_guid=replace(metric_guid,'req_fail_count','req_fail_count_detail') where metric like '%req_fail_count';
+update alarm_strategy_metric set metric=replace(metric,'req_fail_count','req_fail_count_detail') where metric in (select guid from metric where log_metric_template in (select guid from log_metric_template where metric='req_fail_count'));
+update metric set prom_expr=replace(prom_expr,',code="$t_code"',',retcode="$t_retcode",code="$t_code"') where log_metric_template in (select guid from log_metric_template where metric='req_fail_count_detail');
+
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_13','service_metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_14','metric_template','{"name":"(a+b)/2","prom_expr":"(@a+@b)/2","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_15','service_metric_template','{"name":"a+b","prom_expr":"@a+@b","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_16','metric_template','{"name":"a+b","prom_expr":"@a+@b)","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_17','service_metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
+INSERT INTO sys_parameter (guid,param_key,param_value) VALUES ('metric_template_18','metric_template','{"name":"avg(a+b)","prom_expr":"avg(@a)+avg(@b)","param":"@a,@b"}');
+#@v3.1.4-end@;
+
+#@v3.2.3-begin@;
+alter table alarm_strategy modify column active_window varchar(255) default null;
+#@v3.2.3-end@;
+
+#@v3.2.3.8-begin@;
+create index `alarm_strategy_status_idx` on alarm (`status`,`alarm_strategy`);
+#@v3.2.3.8-end@;
