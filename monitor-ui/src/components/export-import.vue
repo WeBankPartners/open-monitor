@@ -9,8 +9,6 @@
       <img src="../assets/img/export.png" class="btn-img" alt="" />
       {{ $t('m_export') }}
     </Button>
-
-    <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
     <div style="display: inline-block;margin-bottom: 3px;" v-if="isShowImportBtn">
       <Upload
         :action="uploadUrl"
@@ -104,8 +102,7 @@ export default {
           if ('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
-          }
-          else {
+          } else {
             if ('download' in document.createElement('a')) { // 非IE下载
               const elink = document.createElement('a')
               elink.download = fileName
@@ -115,8 +112,7 @@ export default {
               elink.click()
               URL.revokeObjectURL(elink.href) // 释放URL 对象
               document.body.removeChild(elink)
-            }
-            else { // IE10+下载
+            } else { // IE10+下载
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
@@ -126,7 +122,11 @@ export default {
           this.$Message.warning(this.$t('m_tips_failed'))
         })
     },
-    uploadSucess() {
+    uploadSucess(res) {
+      if (res.status === 'ERROR') {
+        this.$Message.error(res.message)
+        return
+      }
       this.$Message.success(this.$t('m_tips_success'))
       this.$emit('successCallBack')
     },

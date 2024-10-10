@@ -20,7 +20,10 @@ type LogKeywordConfigTable struct {
 	UpdateTime        string     `json:"update_time" xorm:"update_time"`
 	Content           string     `json:"content" xorm:"content"`
 	Name              string     `json:"name" xorm:"name"`
+	ActiveWindow      string     `json:"active_window" xorm:"active_window"`
+	ActiveWindowList  []string   `json:"active_window_list" xorm:"-"`
 	Notify            *NotifyObj `json:"notify" xorm:"-"`
+	UpdateUser        string     `json:"update_user" xorm:"update_user"`
 }
 
 type LogKeywordEndpointRelTable struct {
@@ -32,7 +35,8 @@ type LogKeywordEndpointRelTable struct {
 
 type LogKeywordServiceGroupObj struct {
 	ServiceGroupTable
-	Config []*LogKeywordMonitorObj `json:"config"`
+	Config   []*LogKeywordMonitorObj `json:"config"`
+	DbConfig []*DbKeywordConfigObj   `json:"dbConfig"`
 }
 
 type LogKeywordMonitorObj struct {
@@ -78,18 +82,20 @@ type LogKeywordHttpResult struct {
 }
 
 type LogKeywordCronJobQuery struct {
-	Guid           string `xorm:"guid"`
-	ServiceGroup   string `xorm:"service_group"`
-	LogPath        string `xorm:"log_path"`
-	MonitorType    string `xorm:"monitor_type"`
-	Keyword        string `xorm:"keyword"`
-	NotifyEnable   int    `xorm:"notify_enable"`
-	Priority       string `xorm:"priority"`
-	SourceEndpoint string `xorm:"source_endpoint"`
-	TargetEndpoint string `xorm:"target_endpoint"`
-	AgentAddress   string `xorm:"agent_address"`
-	Content        string `xorm:"content"`
-	Name           string `xorm:"name"`
+	Guid                 string `xorm:"guid"`
+	ServiceGroup         string `xorm:"service_group"`
+	LogPath              string `xorm:"log_path"`
+	MonitorType          string `xorm:"monitor_type"`
+	Keyword              string `xorm:"keyword"`
+	NotifyEnable         int    `xorm:"notify_enable"`
+	Priority             string `xorm:"priority"`
+	SourceEndpoint       string `xorm:"source_endpoint"`
+	TargetEndpoint       string `xorm:"target_endpoint"`
+	AgentAddress         string `xorm:"agent_address"`
+	Content              string `xorm:"content"`
+	Name                 string `xorm:"name"`
+	LogKeywordConfigGuid string `xorm:"log_keyword_config_guid"`
+	ActiveWindow         string `xorm:"active_window"`
 }
 
 type LogKeywordRowsHttpDto struct {
@@ -104,13 +110,19 @@ type LogKeywordRowsHttpResult struct {
 }
 
 type LogKeywordAlarmTable struct {
-	Id          int       `json:"id" xorm:"id"`
-	AlarmId     int       `json:"alarmId" xorm:"alarm_id"`
-	Endpoint    string    `json:"endpoint" xorm:"endpoint"`
-	Status      string    `json:"status" xorm:"status"`
-	Content     string    `json:"content" xorm:"content"`
-	Tags        string    `json:"tags" xorm:"tags"`
-	StartValue  float64   `json:"startValue" xorm:"start_value"`
-	EndValue    float64   `json:"endValue" xorm:"end_value"`
-	UpdatedTime time.Time `json:"updatedTime" xorm:"updated_time"`
+	Id               int       `json:"id" xorm:"id"`
+	AlarmId          int       `json:"alarmId" xorm:"alarm_id"`
+	Endpoint         string    `json:"endpoint" xorm:"endpoint"`
+	Status           string    `json:"status" xorm:"status"`
+	Content          string    `json:"content" xorm:"content"`
+	Tags             string    `json:"tags" xorm:"tags"`
+	StartValue       float64   `json:"startValue" xorm:"start_value"`
+	EndValue         float64   `json:"endValue" xorm:"end_value"`
+	UpdatedTime      time.Time `json:"updatedTime" xorm:"updated_time"`
+	LogKeywordConfig string    `json:"logKeywordConfig" xorm:"log_keyword_config"`
+}
+
+type LogKeywordNotifyParam struct {
+	LogKeywordMonitor string     `json:"log_keyword_monitor"`
+	Notify            *NotifyObj `json:"notify"`
 }
