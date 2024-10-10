@@ -67,6 +67,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/recursive/endpoint_type/list", Method: http.MethodGet, HandlerFunc: agent.GetPanelRecursiveEndpointType},
 		// 指标配置
 		&handlerFuncObj{Url: "/dashboard/endpoint/type", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointTypeList},
+		&handlerFuncObj{Url: "/dashboard/endpoint/type_new", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointTypeNewList},
 		&handlerFuncObj{Url: "/dashboard/endpoint", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointList},
 		&handlerFuncObj{Url: "/dashboard/endpoint/metric/list", Method: http.MethodPost, HandlerFunc: dashboard.GetEndpointMetric},
 		&handlerFuncObj{Url: "/dashboard/new/metric", Method: http.MethodGet, HandlerFunc: dashboard_new.MetricList},
@@ -105,12 +106,12 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/window/get", Method: http.MethodGet, HandlerFunc: alarm.GetAlertWindowList},
 		&handlerFuncObj{Url: "/alarm/window/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateAlertWindow},
 		// db查询监控配置
-		&handlerFuncObj{Url: "/alarm/db/monitor/list", Method: http.MethodGet, HandlerFunc: alarm.GetDbMonitorList},
-		&handlerFuncObj{Url: "/alarm/db/monitor/add", Method: http.MethodPost, HandlerFunc: alarm.AddDbMonitor},
-		&handlerFuncObj{Url: "/alarm/db/monitor/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateDbMonitor},
-		&handlerFuncObj{Url: "/alarm/db/monitor/check", Method: http.MethodPost, HandlerFunc: alarm.CheckDbMonitor},
-		&handlerFuncObj{Url: "/alarm/db/monitor/delete", Method: http.MethodPost, HandlerFunc: alarm.DeleteDbMonitor},
-		&handlerFuncObj{Url: "/alarm/db/monitor/sys/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateDbMonitorSysName},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/list", Method: http.MethodGet, HandlerFunc: alarm.GetDbMonitorList},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/add", Method: http.MethodPost, HandlerFunc: alarm.AddDbMonitor},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateDbMonitor},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/check", Method: http.MethodPost, HandlerFunc: alarm.CheckDbMonitor},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/delete", Method: http.MethodPost, HandlerFunc: alarm.DeleteDbMonitor},
+		//&handlerFuncObj{Url: "/alarm/db/monitor/sys/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateDbMonitorSysName},
 		// 组配置
 		&handlerFuncObj{Url: "/alarm/grp/list", Method: http.MethodGet, HandlerFunc: alarm.ListGrp},
 		&handlerFuncObj{Url: "/alarm/grp/add", Method: http.MethodPost, HandlerFunc: alarm.AddGrp},
@@ -131,7 +132,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/action/update", Method: http.MethodPost, HandlerFunc: alarm.UpdateTplAction},
 		// 告警列表
 		&handlerFuncObj{Url: "/alarm/history", Method: http.MethodGet, HandlerFunc: alarm.GetHistoryAlarm},
-		&handlerFuncObj{Url: "/alarm/problem/options", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarmOptions},
+		&handlerFuncObj{Url: "/alarm/problem/options", Method: http.MethodPost, HandlerFunc: alarm.GetProblemAlarmOptions},
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
@@ -223,23 +224,31 @@ func init() {
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPut, HandlerFunc: service.UpdateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteDbMetricMonitor},
 		&handlerFuncObj{Url: "/regexp/test/match", Method: http.MethodPost, HandlerFunc: service.CheckRegExpMatch},
-
-		&handlerFuncObj{Url: "/service/log_keyword/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListLogKeywordMonitor},
+		// 关键字告警配置
+		&handlerFuncObj{Url: "/service/log_keyword/list", Method: http.MethodGet, HandlerFunc: service.ListLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor/:logKeywordMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeywordMonitor},
-		&handlerFuncObj{Url: "/service/log_keyword/export", Method: http.MethodGet, HandlerFunc: service.ExportLogKeyword},
-		&handlerFuncObj{Url: "/service/log_keyword/import", Method: http.MethodPost, HandlerFunc: service.ImportLogKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/export", Method: http.MethodGet, HandlerFunc: service.ExportLogAndDbKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/import", Method: http.MethodPost, HandlerFunc: service.ImportLogAndDbKeyword},
 
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},
-		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config/:logKeywordGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeyword},
+
+		&handlerFuncObj{Url: "/service/log_keyword/notify", Method: http.MethodPost, HandlerFunc: service.UpdateLogKeywordNotify},
+		// 数据库关键字配置
+		&handlerFuncObj{Url: "/service/db_keyword/list", Method: http.MethodGet, HandlerFunc: service.ListDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateDBKeywordConfig},
+		&handlerFuncObj{Url: "/service/db_keyword/db_keyword_config", Method: http.MethodDelete, HandlerFunc: service.DeleteDBKeywordConfig},
 		// service plugin
 		&handlerFuncObj{Url: "/service/plugin/update/path", Method: http.MethodPost, HandlerFunc: service.PluginUpdateServicePath},
 		// alarm
 		&handlerFuncObj{Url: "/alarm/endpoint_group/query", Method: http.MethodGet, HandlerFunc: alarmv2.ListEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/options", Method: http.MethodGet, HandlerFunc: alarmv2.EndpointGroupOptions},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPost, HandlerFunc: alarmv2.CreateEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/import", Method: http.MethodPost, HandlerFunc: alarmv2.ImportEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/endpoint/list", Method: http.MethodGet, HandlerFunc: alarmv2.GetGroupEndpointRel},
@@ -248,7 +257,8 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/notify/update", Method: http.MethodPost, HandlerFunc: alarmv2.UpdateGroupEndpointNotify},
 
 		&handlerFuncObj{Url: "/alarm/strategy/search", Method: http.MethodGet, HandlerFunc: alarmv2.ListStrategyQueryOptions},
-		&handlerFuncObj{Url: "/alarm/strategy/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: alarmv2.QueryAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy/query", Method: http.MethodPost, HandlerFunc: alarmv2.QueryAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy/workflow", Method: http.MethodGet, HandlerFunc: alarmv2.ListAlarmStrategyWorkFlow},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPost, HandlerFunc: alarmv2.CreateAlarmStrategy},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateAlarmStrategy},
 		&handlerFuncObj{Url: "/alarm/strategy/:strategyGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy},
@@ -266,6 +276,7 @@ func init() {
 		&handlerFuncObj{Url: "/monitor/metric/export", Method: http.MethodGet, HandlerFunc: monitor.ExportMetric},
 		&handlerFuncObj{Url: "/monitor/metric/import", Method: http.MethodPost, HandlerFunc: monitor.ImportMetric},
 		// log monitor template
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/options", Method: http.MethodGet, HandlerFunc: service.ListLogMonitorTemplateOptions},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/list", Method: http.MethodPost, HandlerFunc: service.ListLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPost, HandlerFunc: service.CreateLogMonitorTemplate},
@@ -283,6 +294,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricCustomGroup},
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricCustomGroup},
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/data_map/regexp/match", Method: http.MethodPost, HandlerFunc: service.LogMonitorDataMapRegMatch},
 		// 标签
 		&handlerFuncObj{Url: "/metric/tag/value-list", Method: http.MethodPost, HandlerFunc: monitor.QueryMetricTagValue},
 
@@ -292,11 +304,13 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
-		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
 		&handlerFuncObj{Url: "/dashboard/custom/export", Method: http.MethodPost, HandlerFunc: monitor.ExportCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom/import", Method: http.MethodPost, HandlerFunc: monitor.ImportCustomDashboard},
-		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
+		&handlerFuncObj{Url: "/dashboard/custom/trans_import", Method: http.MethodPost, HandlerFunc: monitor.TransImportCustomDashboard},
+		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodPost, HandlerFunc: monitor.GetSharedChartList},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChart},
@@ -306,6 +320,7 @@ func init() {
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartPermission},
+		&handlerFuncObj{Url: "/chart/custom/permission/batch", Method: http.MethodPost, HandlerFunc: monitor.GetSharedChartPermissionBatch},
 		&handlerFuncObj{Url: "/chart/manage/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomChart},
 		&handlerFuncObj{Url: "/dashboard/data/sync", Method: http.MethodPost, HandlerFunc: monitor.SyncData},
 		&handlerFuncObj{Url: "/chart/custom/series/config", Method: http.MethodPost, HandlerFunc: monitor.GetChartSeriesColor},
@@ -319,10 +334,14 @@ func init() {
 		// 类型配置
 		&handlerFuncObj{Url: "/config/type/query", Method: http.MethodGet, HandlerFunc: monitor.QueryTypeConfigList},
 		&handlerFuncObj{Url: "/config/type", Method: http.MethodPost, HandlerFunc: monitor.AddTypeConfig},
+		&handlerFuncObj{Url: "/config/type-batch", Method: http.MethodPost, HandlerFunc: monitor.BatchAddTypeConfig},
 		&handlerFuncObj{Url: "/config/type", Method: http.MethodDelete, HandlerFunc: monitor.DeleteTypeConfig},
 
 		// 获取seed
 		&handlerFuncObj{Url: "/seed", Method: http.MethodGet, HandlerFunc: monitor.GetEncryptSeed},
+
+		// 给平台分析迁移数据
+		&handlerFuncObj{Url: "/trans-export/analyze", Method: http.MethodPost, HandlerFunc: monitor.AnalyzeTransExportData},
 	)
 }
 
@@ -374,6 +393,11 @@ func InitHttpServer() {
 		entityApi.POST("/alarm/close", alarmv2.PluginCloseAlarm)
 		entityApi.POST("/alarm_event/query", alarm.QueryEntityAlarmEvent)
 		entityApi.POST("/alarm_event/update", alarm.UpdateEntityAlarm)
+		entityApi.POST("/endpoint/query", monitor.QueryEntityEndpoint)
+		entityApi.POST("/service_group/query", monitor.QueryEntityServiceGroup)
+		entityApi.POST("/endpoint_group/query", monitor.QueryEntityEndpointGroup)
+		entityApi.POST("/monitor_type/query", monitor.QueryEntityMonitorType)
+		entityApi.POST("/log_monitor_template/query", monitor.QueryEntityLogMonitorTemplate)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())

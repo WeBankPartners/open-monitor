@@ -15,6 +15,7 @@ type LogMonitorTemplate struct {
 	CreateTimeString string    `json:"create_time"`
 	UpdateTime       time.Time `json:"-" xorm:"update_time"`
 	UpdateTimeString string    `json:"update_time"`
+	SuccessCode      string    `json:"success_code" xorm:"success_code"`
 }
 
 type LogMonitorTemplateRole struct {
@@ -67,10 +68,20 @@ type LogMetricTemplate struct {
 	UpdateUser         string    `json:"update_user" xorm:"update_user"`
 	CreateTime         time.Time `json:"create_time" xorm:"create_time"`
 	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
+	ColorGroup         string    `json:"color_group" xorm:"color_group"`
+	AutoAlarm          bool      `json:"auto_alarm" xorm:"auto_alarm"`
+	RangeConfig        string    `json:"range_config" xorm:"range_config"`
 }
 
-func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigTable) {
-	output = &LogMetricConfigTable{
+type ThresholdConfig struct {
+	Operator  string `json:"operator"`  // 操作符号
+	Threshold string `json:"threshold"` // 阈值
+	Time      string `json:"time"`      // 持续时间
+	TimeUnit  string `json:"time_unit"` // 时间单位
+}
+
+func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigDto) {
+	output = &LogMetricConfigDto{
 		Guid:          l.Guid,
 		Metric:        l.Metric,
 		DisplayName:   l.DisplayName,
@@ -85,24 +96,12 @@ func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigTable) {
 
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
-	CalcResultObj *CheckRegExpResult            `json:"calc_result"`
-	ParamList     []*LogParamTemplate           `json:"param_list"`
-	MetricList    []*LogMetricTemplate          `json:"metric_list"`
-	Permission    *LogMonitorTemplatePermission `json:"permission"`
+	CalcResultObj             *CheckRegExpResult            `json:"calc_result"`
+	ParamList                 []*LogParamTemplate           `json:"param_list"`
+	MetricList                []*LogMetricTemplate          `json:"metric_list"`
+	Permission                *LogMonitorTemplatePermission `json:"permission"`
+	LogMonitorTemplateVersion string                        `json:"log_monitor_template_version"`
 }
-
-//func (l *LogMonitorTemplateDto) GetMetrics() (metricConfigList []*LogMetricConfigTable) {
-//	for _, metric := range l.MetricList {
-//		metricObj := LogMetricConfigTable{Metric: metric.Metric, DisplayName: metric.DisplayName, AggType: metric.AggType, TagConfigList: metric.TagConfigList}
-//		for _, param := range l.ParamList {
-//			if param.Name == metric.LogParamName {
-//				metricObj.JsonKey = param.JsonKey
-//				metricObj.Regular = param.Regular
-//			}
-//		}
-//	}
-//	return
-//}
 
 type LogMonitorTemplatePermission struct {
 	MgmtRoles []string `json:"mgmt_roles"`
@@ -117,6 +116,7 @@ type LogMonitorTemplateListParam struct {
 type LogMonitorTemplateListResp struct {
 	JsonList    []*LogMonitorTemplate `json:"json_list"`
 	RegularList []*LogMonitorTemplate `json:"regular_list"`
+	CustomList  []*LogMonitorTemplate `json:"custom_list"`
 }
 
 type LogMonitorRegMatchParam struct {
@@ -139,6 +139,8 @@ type LogMetricGroup struct {
 	CreateTimeString   string    `json:"create_time"`
 	UpdateTime         time.Time `json:"-" xorm:"update_time"`
 	UpdateTimeString   string    `json:"update_time"`
+	TemplateSnapshot   string    `json:"template_snapshot" xorm:"template_snapshot"`
+	RefTemplateVersion string    `json:"log_monitor_template_version" xorm:"ref_template_version"`
 }
 
 type LogMetricParam struct {
