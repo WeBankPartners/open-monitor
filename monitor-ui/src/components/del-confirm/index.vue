@@ -15,8 +15,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel-f" @click="cancel">取消</button>
-          <button class="btn-delete-f" @click="exect">确定</button>
+          <Button @click="cancel">{{ $t('m_button_cancel') }}</Button>
+          <Button type="error" @click="exect">{{ $t('m_button_confirm') }}</Button>
         </div>
       </div>
     </div>

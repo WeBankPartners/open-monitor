@@ -1,146 +1,215 @@
 <template>
-  <div class="all-content">
+  <div class="monitor-custom-view-config">
     <div>
-      <header>
-        <div class="header-name">
-          <div v-if="pageType !== 'dashboard'">
-            <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" ></Icon>
-            <template v-if="isEditPanal">
-              <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit/>
-              <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" ></Icon>
-              <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" ></Icon>
-            </template>
-            <template v-else>
-              <h5 class="d-inline-block"> {{panalName}}</h5>
-              <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
-            </template>
-          </div>
-        </div>
-        <div class="search-container">
-          <div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
-              <!-- <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
-                <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select> -->
-              <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
-                <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
-              </RadioGroup>
-            </div>
-            <div class="search-zone ml-2">
-              <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
-              <DatePicker
-                type="datetimerange"
-                :value="viewCondition.dateRange"
-                format="yyyy-MM-dd HH:mm:ss"
-                placement="bottom-start"
-                split-panels
-                @on-change="datePick"
-                :placeholder="$t('m_placeholder_datePicker')"
-                style="width: 320px"
-              ></DatePicker>
-            </div>
-            <div class="search-zone ml-2">
-              <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
-                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
+      <div class='view-config-top-content'>
+        <header>
+          <div class="header-name">
+            <div v-if="pageType !== 'dashboard'">
+              <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" ></Icon>
+              <Tag v-if='logMetricGroup' class='ml-2 mr-2' style="font-size: 14px; min-width: 46px" color='green'>auto</Tag>
+              <template v-if="isEditPanal">
+                <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit/>
+                <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" ></Icon>
+                <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" ></Icon>
+              </template>
+              <template v-else>
+                <h5 class="d-inline-block"> {{panalName}}</h5>
+                <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
+              </template>
             </div>
           </div>
+          <div class="search-container">
+            <div>
+              <div class="search-zone">
+                <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
+                <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                  <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
+                </RadioGroup>
+              </div>
+              <div class="search-zone ml-2">
+                <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
+                <DatePicker
+                  type="datetimerange"
+                  :value="viewCondition.dateRange"
+                  format="yyyy-MM-dd HH:mm:ss"
+                  placement="bottom-start"
+                  split-panels
+                  @on-change="datePick"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 250px"
+                ></DatePicker>
+              </div>
+              <div class="search-zone">
+                <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+                <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
+                  <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                </Select>
+              </div>
+            </div>
 
-          <div class="header-tools">
-            <template v-if="isEditStatus">
-              <Button type="info" @click.stop="exportPanel">
-                <Icon type="md-cloud-upload" size="20"></Icon>
-                {{$t('m_export')}}
+            <div class="header-tools">
+              <template v-if="isEditStatus">
+                <Button type="info" @click.stop="exportPanel">
+                  <Icon type="md-cloud-upload" size="20"></Icon>
+                  {{$t('m_export')}}
+                </Button>
+                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
+              </template>
+              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
+                {{$t('m_alert')}}
               </Button>
-              <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
-            </template>
-
-            <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
-              {{$t('m_alert')}}
-            </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <!-- 分组 -->
-      <div>
-        <div class="radio-group">
-          <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
-          <div
-            :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
-          >
-            <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
+        <!-- 分组 -->
+        <div>
+          <div class="radio-group">
+            <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
+            <div class='group-region'>
+              <div
+                :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
+              >
+                <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
+              </div>
+              <div
+                v-for="(item, index) in panel_group_list"
+                :key="index"
+                :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
+              >
+                <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" ></Icon>
+                <span @click="selectGroup(item)">
+                  {{ `${item}` }}
+                </span>
+                <Poptip
+                  confirm
+                  :title="$t('m_delConfirm_tip')"
+                  placement="left-end"
+                  @on-ok="confirmDeleteGroup(item, index)"
+                >
+                  <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" ></Icon>
+                </Poptip>
+              </div>
+              <span>
+                <Button
+                  v-if="isEditStatus"
+                  @click="addGroupItem"
+                  style="margin-top: -5px;"
+                  type="success"
+                  shape="circle"
+                  icon="md-add"
+                ></Button>
+              </span>
+            </div>
           </div>
-          <div
-            v-for="(item, index) in panel_group_list"
-            :key="index"
-            :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
-          >
-            <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" ></Icon>
-            <span @click="selectGroup(item)">
-              {{ `${item}` }}
-            </span>
+
+          <div class="ml-2 mt-3 mb-3">
+            <span class="params-title mr-3">{{$t('m_automatic_layout')}}：</span>
             <Poptip
               confirm
-              :title="$t('m_delConfirm_tip')"
-              placement="left-end"
-              @on-ok="confirmDeleteGroup(item, index)"
+              popper-class='chart-layout-poptip'
+              :title="$t('m_layout_change_tips')"
+              @on-ok="onLayoutPopTipConfirm"
             >
-              <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" ></Icon>
+              <Button id='chartLayoutPopTipButton' style="display: none"></Button>
             </Poptip>
+            <RadioGroup @on-change="onLayoutRadioChange" v-model="chartLayoutType" type="button" size="small">
+              <Radio v-for="(item, idx) in layoutOptions" :label="item.value" :key="idx" :disabled="disableTime">{{ $t(item.label) }}</Radio>
+            </RadioGroup>
           </div>
-          <span>
-            <Button
-              v-if="isEditStatus"
-              @click="addGroupItem"
-              style="margin-top: -5px;"
-              type="success"
-              shape="circle"
-              icon="md-add"
-            ></Button>
-          </span>
-        </div>
 
-        <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus" @mousemove="debounceGetAllChartOptionList" @click="getAllChartOptionList">
-          <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
-          <Dropdown
-            placement="bottom-start"
-            v-for="(item, index) in allAddChartOptions"
-            :key="index"
-            class="chart-option-menu"
-            @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
-          >
-            <Button :type="item.colorType">
-              {{$t(item.name)}}
-              <Icon type="ios-arrow-down"></Icon>
-            </Button>
-            <template #list>
-              <DropdownMenu v-if="item.options.length > 0">
-                <DropdownItem v-for="(option, key) in item.options"
-                              :name="JSON.stringify(option)"
-                              :key="key"
-                              :disabled="option.disabled"
-                >
-                  <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
-                  {{item.type === 'add' ? $t(option.name) : option.name}}
-                </DropdownItem>
-              </DropdownMenu>
-              <DropdownMenu v-else>
-                <DropdownItem>
-                  {{ $t('m_add_chart_library') }}
-                </DropdownItem>
-              </DropdownMenu>
-            </template>
-          </Dropdown>
+          <!-- 图表新增 -->
+          <div class="chart-config-info" v-if="isEditStatus">
+            <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
+            <Dropdown
+              placement="bottom-start"
+              trigger="click"
+              v-for="(item, index) in allAddChartOptions"
+              :key="index"
+              class="chart-option-menu"
+              transfer-class-name='filter-chart-layer'
+              @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
+            >
+              <Button :type="item.colorType" @click="onCopyButtonClick">
+                {{$t(item.name)}}
+                <Icon type="ios-arrow-down"></Icon>
+              </Button>
+              <template slot='list' >
+                <div>
+                  <div v-if="item.type === 'add'">
+                    <DropdownMenu v-if="item.options.length > 0">
+                      <DropdownItem v-for="(option, key) in item.options"
+                                    :name="JSON.stringify(option)"
+                                    :key="key"
+                                    :disabled="option.disabled"
+                      >
+                        <Icon v-if="option.iconType" :type="option.iconType" ></Icon>
+                        {{item.type === 'add' ? $t(option.name) : option.name}}
+                      </DropdownItem>
+                    </DropdownMenu>
+                    <DropdownMenu v-else>
+                      <DropdownItem>
+                        {{ $t('m_add_chart_library') }}
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </div>
+                  <div v-else class='copy-drowdown-slot'>
+                    <div class='copy-drowdown-slot-select'>
+                      <Input v-model.trim="filterChartName"
+                             clearable
+                             :placeholder="$t('m_placeholder_input') + $t('m_graph_name')"
+                             @on-change="(e) => {
+                               filterChartName = e.target.value
+                               debounceGetAllChartOptionList()
+                             }"
+                      />
+                      <Select v-model="selectedDashBoardId"
+                              clearable
+                              filterable
+                              :placeholder="$t('m_please_select') + $t('m_source_dashboard')"
+                              @on-change="(id) => {
+                                selectedDashBoardId = id
+                                debounceGetAllChartOptionList()
+                              }"
+                      >
+                        <Option v-for="single in allDashBoardList"
+                                :value="single.id"
+                                :key="single.id"
+                        >
+                          {{ single.name }}
+                        </Option>
+                      </Select>
+                    </div>
+                    <div class="copy-table-tips">{{$t('m_copy_table_tips')}}</div>
+                    <Table
+                      class="copy-detail-table"
+                      size="small"
+                      max-height="300"
+                      :border="false"
+                      :columns="copyTableColumns"
+                      :data="allChartFilteredList"
+                      @on-selection-change='onCopyTableSelected'
+                    />
+
+                    <Button
+                      type="primary"
+                      class='copy-drowdown-confirm-button'
+                      @click="onAddChart(selectedChartList, item.type)"
+                    >
+                      {{$t('m_confirm')}}
+                    </Button>
+                  </div>
+
+                </div>
+              </template>
+            </Dropdown>
+          </div>
         </div>
       </div>
 
       <!-- 图表展示区域 -->
-      <div v-if="tmpLayoutData.length > 0" style="display:flex">
-        <div class="grid-style">
+      <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
+        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''">
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -152,32 +221,56 @@
             :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
-                       style="cursor: auto;"
+                       style="cursor: auto; overflow-y: hidden;"
                        class="c-dark"
                        :x="item.x"
                        :y="item.y"
                        :w="item.w"
                        :h="item.h"
                        :i="item.i"
+                       :minW="1"
+                       :minH="5"
                        :key="index"
                        @resize="resizeEvent"
                        @resized="resizeEvent"
             >
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
+                  <Tag v-if="item.logMetricGroup" class='grid-auto-tag-style' color='green'>auto</Tag>
                   <div class="header-grid header-grid-name">
-                    <span @click="onChartBodyClick(item)" v-if="editChartId !== item.id">{{item.i}}</span>
-                    <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />
+                    <Tooltip v-if="editChartId !== item.id" :content="item.i" transfer :max-width='250' placement="bottom">
+                      <div v-html="processHtmlText(item.i)" class='header-grid-name-text'></div>
+                    </Tooltip>
+                    <span v-else @click.stop="">
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="100" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
-                    <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="top">
+                    <!-- <Poptip
+                      transfer
+                      placement="left-end"
+                      @on-ok="confirmDeleteGroup(item, index)"
+                    >
+                      <template slot='content'>
+                        <div>
+                          <Input :value="item.i"
+                            placeholder=""
+                            show-word-limit />
+                        </div>
+                      </template>
+                      <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
+                        <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)"
+                          class="fa fa-pencil-square"
+                          style="font-size: 16px;"
+                        aria-hidden="true"></i>
+                      </Tooltip>
+                    </Poptip> -->
+                    <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" ></Icon>
                       <Icon v-if="editChartId === item.id" size="20" type="md-close" @click.stop="cancelEditTitle(item)" ></Icon>
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Button v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Button>
+                    <Tag v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Tag>
                     <span @click.stop="">
                       <Select v-model="item.group"
                               style="width:100px;"
@@ -186,7 +279,8 @@
                               clearable
                               filterable
                               :placeholder="$t('m_group_name')"
-                              @on-change="onSingleChartGroupChange"
+                              @on-change="(e) => onSingleChartGroupChange(e, index, item)"
+                              @on-clear="() => onSingleChartGroupClear(item)"
                       >
                         <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                       </Select>
@@ -220,7 +314,7 @@
             </grid-item>
           </grid-layout>
         </div>
-        <div class="view-config-alarm" v-if="showAlarm">
+        <div class="view-config-alarm" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" v-if="showAlarm">
           <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
         </div>
       </div>
@@ -228,8 +322,8 @@
         {{ $t('m_noData') }}
       </div>
     </div>
-    <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
-      <ViewChart ref="viewChart"></ViewChart>
+    <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
+      <ViewChart v-if="showMaxChart" ref="viewChart"></ViewChart>
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
@@ -243,7 +337,7 @@
     </Drawer>
 
     <!-- 分组新增 -->
-    <Modal v-model="showGroupMgmt" :title="$t('m_edit_screen_group')" :mask-closable="false">
+    <Modal v-model="showGroupMgmt" :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')" :mask-closable="false">
       <div>
         <Form :label-width="90">
           <FormItem :label="$t('m_group_chart_name')">
@@ -253,7 +347,7 @@
             <Row v-if="panelGroupInfo.length > 0">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
               <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">
-                <Tooltip :content="panel.label">
+                <Tooltip :content="panel.label" transfer :max-width='200'>
                   <div class="ellipsis-text">{{ panel.label }}</div>
                 </Tooltip>
               </Checkbox>
@@ -265,7 +359,7 @@
           </FormItem>
         </Form>
       </div>
-      <template #footer>
+      <template slot='footer'>
         <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
@@ -281,12 +375,13 @@
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
-import remove from 'lodash/remove'
-import cloneDeep from 'lodash/cloneDeep'
-import debounce from 'lodash/debounce'
+import {
+  isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter, debounce
+} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
-import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
+import {
+  dataPick, autoRefreshConfig, layoutOptions, layoutColumns
+} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
@@ -296,6 +391,13 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+import { changeSeriesColor } from '@/assets/config/random-color'
+
+const lineTypeNameMap = {
+  line: 'm_line_chart_s',
+  pie: 'm_pie_chart',
+  bar: 'm_bar_chart'
+}
 
 export default {
   name: '',
@@ -327,7 +429,7 @@ export default {
       panalName: '',
       pannelId: this.boardId || this.$route.params.pannelId,
       viewCondition: {
-        timeTnterval: -3600,
+        timeTnterval: -1800,
         dateRange: ['', ''],
         autoRefresh: 10,
         agg: 'none' // 聚合类型
@@ -335,6 +437,7 @@ export default {
       disableTime: false,
       dataPick,
       autoRefreshConfig,
+      layoutOptions,
       viewData: [],
       activeGroup: 'ALL',
       showGroupMgmt: false,
@@ -374,13 +477,19 @@ export default {
           name: 'm_copy',
           type: 'copy',
           colorType: 'success',
-          options: []
+          options: {
+            chartOptions: [],
+            sourceBoardOptions: []
+          }
         },
         {
           name: 'm_shallow_copy',
           type: 'shallowCopy',
           colorType: 'success',
-          options: []
+          options: {
+            chartOptions: [],
+            sourceBoardOptions: []
+          }
         }
       ],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
@@ -398,16 +507,49 @@ export default {
       boardMgmtRoles: [],
       boardUseRoles: [],
       initTitle: '',
-      isModalShow: false
+      isModalShow: false,
+      chartLayoutType: 'customize',
+      previousChartLayoutType: 'customize', // 用于记录radio点击前的type
+      tempChartLayoutType: '', // 用于记录点击后的type,
+      allPageLayoutData: [],
+      selectedDashBoardId: 0,
+      selectedChartList: [],
+      logMetricGroup: '', // 该字段非空代表该看板为自动创建
+      allDashBoardList: [],
+      allChartFilteredList: [],
+      filterChartName: '',
+      copyTableColumns: [
+        {
+          type: 'selection',
+          width: 60,
+          align: 'center'
+        },
+        {
+          title: this.$t('m_graph_name'),
+          minWidth: 350,
+          key: 'name',
+        },
+        {
+          title: this.$t('m_screen_name'),
+          width: 200,
+          key: 'dashboardName',
+        },
+        {
+          title: this.$t('m_graph_type'),
+          minWidth: 220,
+          key: 'lineType',
+          render: (h, params) => (
+            <div>
+              {this.$t(lineTypeNameMap[params.row.lintType])}
+            </div>
+          )
+        }
+      ]
     }
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
-      if (this.activeGroup === 'ALL') {
-        return this.layoutData
-      }
-      return this.layoutData.filter(d => d.group === this.activeGroup)
-
+      return this.layoutData
     },
     isEditStatus() {
       return this.permission === 'edit'
@@ -422,94 +564,91 @@ export default {
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
+    setTimeout(() => {
+      const domArr = document.querySelectorAll('.copy-drowdown-slot')
+      !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
+    }, 100)
+
+    setTimeout(() => {
+      this.refreshNow = !this.refreshNow
+    }, 2000)
   },
   methods: {
-    getPannelList(activeGroup='ALL') {
+    getPannelList(activeGroup=this.activeGroup) {
       this.request('GET', '/monitor/api/v2/dashboard/custom', {
         id: this.pannelId
       }, res => {
         if (isEmpty(res)) {
           this.$router.push({path: 'viewConfigIndex'})
-        }
-        else {
-          this.viewCondition.timeTnterval = res.timeRange || -3600
-          this.viewCondition.autoRefresh = res.refreshWeek || 10
+        } else {
+          this.viewCondition.timeTnterval = res.timeRange || -1800
+          this.viewCondition.autoRefresh = res.refreshWeek || 60
           this.boardMgmtRoles = res.mgmtRoles
           this.boardUseRoles = res.useRoles
           this.panalName = res.name
+          this.logMetricGroup = res.logMetricGroup
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
-          this.initPanals()
+          this.initPanals('init')
           this.cutsomViewId = this.pannelId
         }
       })
     },
-    getAllChartOptionList() {
-      this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
-        this.allAddChartOptions[1].options = this.processChartOptions(res)
-      })
-      this.request('GET', '/monitor/api/v2/chart/shared/list', {
-        dashboard_id: this.pannelId
-      }, res => {
-        this.allAddChartOptions[2].options = this.processChartOptions(res)
-      })
+    onCopyButtonClick() {
+      this.filterChartName = ''
+      this.selectedDashBoardId = 0
+      this.selectedChartList = []
+      this.getAllChartOptionList()
     },
-    debounceGetAllChartOptionList: debounce(function () {
+    debounceGetAllChartOptionList: debounce(function (){
       this.getAllChartOptionList()
     }, 500),
+
+    getAllChartOptionList() {
+      this.selectedChartList = []
+      const dashboardParams = {
+        show: '',
+        permission: '',
+        name: '',
+        id: 0,
+        useRoles: [],
+        mgmtRoles: [],
+        updateUser: '',
+        pageSize: 10000,
+        startIndex: 0
+      }
+      this.request('POST', '/monitor/api/v2/dashboard/custom/list', dashboardParams, res => {
+        this.allDashBoardList = res.contents
+      }, {isNeedloading: false})
+
+      const params = {
+        curDashboardId: this.pannelId,
+        dashboardId: this.selectedDashBoardId,
+        chartName: this.filterChartName
+      }
+      this.request('POST', '/monitor/api/v2/chart/shared/list', params, res => {
+        this.allChartFilteredList = this.processChartOptions(res)
+      }, {isNeedloading: false})
+    },
     processChartOptions(rawData) {
       const options = []
-      const initialOption = {
-        line: {
-          name: '折线图',
-          id: 'line',
-          iconType: 'md-trending-up',
-          disabled: true
-        },
-        pie: {
-          name: '饼图',
-          id: 'pie',
-          iconType: 'md-pie',
-          disabled: true
-        },
-        bar: {
-          name: '柱状图',
-          id: 'bar',
-          iconType: 'ios-stats',
-          disabled: true
-        }
-      }
-
       for (const key in rawData) {
-        options.push(initialOption[key])
         if (!isEmpty(rawData[key])) {
           rawData[key].forEach(item => {
-            options.push(Object.assign({disabled: false}, item))
+            options.push(Object.assign({lintType: key}, item))
           })
         }
       }
       return options
     },
-    onChartBodyClick(item) {
-      if (this.isEditStatus && !this.noAllowChartChange(item)) {
-        this.setChartType(item)
-      }
-      else {
-        if (!this.isEditStatus) {
-          this.gridPlus(item)
-        }
-        else {
-          this.$Message.warning('暂无编辑权限！')
-        }
-      }
-    },
     openAlarmDisplay() {
       this.showAlarm = !this.showAlarm
+      this.$emit('alarmStatueChange', this.showAlarm)
       setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
         this.refreshNow = !this.refreshNow
-      }, 0)
+      }, 300)
     },
     closeAlarmDisplay() {
       this.showAlarm = !this.showAlarm
@@ -520,9 +659,7 @@ export default {
       this.viewCondition.dateRange = data
       this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
-        if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
-          this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
-        }
+        this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
@@ -536,10 +673,27 @@ export default {
       timestamp = timestamp / 1000
       return timestamp
     },
-    initPanals() {
+    async initPanals(type) {
       const tmpArr = []
-      this.viewData.forEach(item => {
-        const parsedDisplayConfig = JSON.parse(item.displayConfig)
+      for (let k=0; k<this.viewData.length; k++) {
+        const item = this.viewData[k]
+        // 先对groupDisplayConfig进行初始化，防止异常值
+        if (!this.isValidJson(item.groupDisplayConfig) || isEmpty(JSON.parse(item.groupDisplayConfig))) {
+          item.groupDisplayConfig = ''
+        }
+
+        let parsedDisplayConfig = {}
+        if (this.activeGroup === 'ALL') {
+          parsedDisplayConfig = JSON.parse(item.displayConfig)
+        } else {
+          // 在各个分组中的情况
+          if (this.isValidJson(item.groupDisplayConfig) && !isEmpty(JSON.parse(item.groupDisplayConfig))) {
+            parsedDisplayConfig = JSON.parse(item.groupDisplayConfig)
+          } else {
+            item.groupDisplayConfig = ''
+            parsedDisplayConfig = JSON.parse(item.displayConfig)
+          }
+        }
         const params = {
           aggregate: item.aggregate,
           agg_step: item.aggStep,
@@ -551,21 +705,28 @@ export default {
           unit: '',
           data: []
         }
-        item.chartSeries.forEach(item => {
-          item.defaultColor = item.colorGroup
-          if (item.series && !isEmpty(item.series)) {
-            item.metricToColor = cloneDeep(item.series).map(one => {
+        for (let i=0; i<item.chartSeries.length; i++) {
+          const single = item.chartSeries[i]
+          single.defaultColor = single.colorGroup
+          if (isEmpty(single.series) && item.chartType !== 'pie') {
+            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
+            const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            if (!isEmpty(series)) {
+              changeSeriesColor(series, single.colorGroup)
+            }
+            single.series = series
+          }
+          if (single.series && !isEmpty(single.series)) {
+            single.metricToColor = cloneDeep(single.series).map(one => {
               one.metric = one.seriesName
               delete one.seriesName
               return one
             })
+          } else {
+            single.metricToColor = []
           }
-          else {
-            item.metricToColor = []
-          }
-          params.data.push(item)
-        })
-
+          params.data.push(single)
+        }
         const height = (parsedDisplayConfig.h + 1) * 30-8
         const _activeCharts = []
         _activeCharts.push({
@@ -588,13 +749,44 @@ export default {
           id: item.id,
           group: item.group,
           public: item.public,
-          sourceDashboard: item.sourceDashboard
+          sourceDashboard: item.sourceDashboard,
+          allGroupDisplayConfig: JSON.parse(item.displayConfig),
+          partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
+          logMetricGroup: item.logMetricGroup
         })
-      })
-      this.layoutData = tmpArr
+      }
+      if (isEmpty(this.layoutData) || type === 'init') {
+        this.layoutData = tmpArr
+      } else {
+        tmpArr.forEach(tmpItem => {
+          const item = find(this.layoutData, {
+            id: tmpItem.id
+          })
+          if (!isEmpty(item)) {
+            item._activeCharts = tmpItem._activeCharts
+          }
+        })
+      }
+      this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+      this.allPageLayoutData = cloneDeep(this.layoutData)
+      this.filterLayoutData()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
-      }, 100)
+      }, 300)
+    },
+    processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
+      let tempTags = tags
+      if (allItem.comparison && !isEmpty(tags) && tags[0].tagName === 'calc_type' && isEmpty(tags[0].tagValue)) {
+        tempTags = []
+      }
+      return {
+        metric,
+        endpoint,
+        serviceGroup,
+        monitorType,
+        tags: tempTags,
+        chartSeriesGuid
+      }
     },
     isShowGridPlus(item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
@@ -625,8 +817,7 @@ export default {
       this.activeGridConfig = find
       if (!find._activeCharts) {
         // this.$root.JQ('#set_chart_type_Modal').modal('show')
-      }
-      else {
+      } else {
         this.activeChartType = find._activeCharts[0].chartType
         this.chartType = find._activeCharts[0].chartType
         this.showChartConfig = true
@@ -649,11 +840,10 @@ export default {
     },
     async confirmRemoveGrid(item) {
       this.deleteConfirm.id = item.id
+      remove(this.layoutData, {id: this.deleteConfirm.id})
+      remove(this.allPageLayoutData, {id: this.deleteConfirm.id})
+      this.filterLayoutData()
       const params = this.processPannelParams()
-      remove(params.charts, {id: this.deleteConfirm.id})
-      if (!isEmpty(params.charts)) {
-        params.charts[params.charts.length -1].displayConfig.x = 0
-      }
       await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params)
       this.getPannelList()
       this.getAllChartOptionList()
@@ -667,11 +857,13 @@ export default {
       const templateData = {
         cfg: JSON.stringify(resViewData)
       }
-      this.$refs.viewChart.initChart({
-        templateData,
-        panal: item,
-        viewCondition: this.viewCondition
-      })
+      setTimeout(() => {
+        this.$refs.viewChart.initChart({
+          templateData,
+          panal: item,
+          viewCondition: this.viewCondition
+        })
+      }, 50)
     },
     async modifyLayoutData() {
       const resViewData = []
@@ -705,9 +897,9 @@ export default {
         if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
           this.saveAuthType = 'board'
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions)
-        }
-        else {
+        } else {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+            this.refreshPannelNow()
             resolve()
           })
         }
@@ -716,10 +908,17 @@ export default {
 
     async savePanelInfo() {
       await this.submitPanelInfo()
-      this.$Message.success(this.$t('m_tips_success'))
+      this.$Message.success(this.$t('m_save_success'))
+      this.chartLayoutType = 'customize'
+      this.getPannelList(this.activeGroup)
     },
     returnPreviousPage() {
-      this.$router.push({name: 'viewConfigIndex'})
+      this.$router.push({
+        name: 'viewConfigIndex',
+        query: {
+          needCache: 'yes'
+        }
+      })
     },
     async savePanalEdit() {
       if (!this.panalName) {
@@ -727,16 +926,22 @@ export default {
         return
       }
       await this.submitPanelInfo()
-      this.$Message.success(this.$t('m_tips_success'))
+      this.$Message.success(this.$t('m_save_success'))
       this.isEditPanal = false
+      this.getPannelList(this.activeGroup)
     },
     canclePanalEdit() {
       this.isEditPanal = false
       this.panalName = this.editData.name
     },
     // #region 组管理
-    selectGroup(item) {
+    async selectGroup(item) {
+      if (this.isEditStatus) {
+        await this.submitPanelInfo() // 保存完毕后切换
+        this.$Message.success(this.$t('m_save_success'))
+      }
       this.activeGroup = item
+      this.chartLayoutType = 'customize'
       this.getPannelList(this.activeGroup)
     },
     addGroupItem() {
@@ -754,7 +959,7 @@ export default {
     },
     getPanelGroupInfo(groupName) {
       this.panelGroupInfo = []
-      this.layoutData.forEach((d, dIndex) => {
+      this.allPageLayoutData.forEach((d, dIndex) => {
         const group = {
           index: dIndex,
           label: d.i,
@@ -766,8 +971,7 @@ export default {
         if (!d.group) {
           group.hasGroup = false
           group.setGroup = false
-        }
-        else { // 已绑定
+        } else { // 已绑定
           group.hasGroup = d.group === groupName ? false : true
           group.setGroup = d.group === groupName ? true : false
         }
@@ -777,6 +981,11 @@ export default {
     confirmDeleteGroup(group, index) {
       this.panel_group_list.splice(index, 1)
       this.layoutData.forEach(d => {
+        if (d.group === group) {
+          d.group = ''
+        }
+      })
+      this.allPageLayoutData.forEach(d => {
         if (d.group === group) {
           d.group = ''
         }
@@ -793,13 +1002,12 @@ export default {
         this.panel_group_list.push(this.groupName)
         this.panelGroupInfo.forEach(p => {
           if (p.setGroup) {
-            this.layoutData[p.index].group = this.groupName
+            this.allPageLayoutData[p.index].group = this.groupName
           }
         })
-      }
-      else {
+      } else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
-        this.layoutData.forEach(d => {
+        this.allPageLayoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
             d.group = this.groupName
           }
@@ -807,35 +1015,53 @@ export default {
         this.panelGroupInfo.forEach(p => {
           if (p.hasGroup === false) {
             if (p.setGroup && p.group === '') {
-              this.layoutData[p.index].group = this.groupName
-            }
-            else if (!p.setGroup) {
-              this.layoutData[p.index].group = ''
+              this.allPageLayoutData[p.index].group = this.groupName
+            } else if (!p.setGroup) {
+              this.allPageLayoutData[p.index].group = ''
             }
           }
         })
       }
       this.showGroupMgmt = false
-      this.savePanalEdit()
       this.activeGroup = this.groupName
+      this.savePanalEdit()
     },
 
     processInitialChartName() {
       let allName = []
-      if (!isEmpty(this.layoutData)) {
-        allName = this.layoutData.map(item => {
+      const initialList = this.layoutData.length > this.allPageLayoutData.length ? this.layoutData : this.allPageLayoutData
+      if (!isEmpty(initialList)) {
+        allName = initialList.map(item => {
           if (!isNaN(Number(item.i))) {
             return Number(item.i)
           }
-          return 10000
-
+          return '10000'
         })
         return Math.max(...allName) + 1 + ''
       }
       return '10000'
     },
+    processSingleItem(lastItem, needSetItem) {
+      if (lastItem.x + lastItem.w + needSetItem.w > 12) {
+        needSetItem.x = 0
+        needSetItem.y = lastItem.y + 7
+      } else {
+        needSetItem.x = lastItem.x + lastItem.w
+        needSetItem.y = lastItem.y
+      }
+    },
+    closeDropDownView(){
+      const elements = document.querySelectorAll('.ivu-select-dropdown')
+      elements.forEach(el => {
+        if (getComputedStyle(el).display !== 'none') {
+          el.style.display = 'none'
+        }
+      })
+    },
     async onAddChart(copyInfo, type) {
+      this.closeDropDownView()
       if (type === 'add') {
+        // type为add的时候为新增，默认copyInfo只有一个
         const name = this.processInitialChartName()
         const addChartParams = {
           dashboardId: this.pannelId,
@@ -848,6 +1074,7 @@ export default {
           aggStep: 60,
           unit: '',
           group: this.activeGroup === 'ALL' ? '' : this.activeGroup,
+          groupDisplayConfig: '',
           displayConfig: {
             x: 0,
             y: 0,
@@ -859,71 +1086,106 @@ export default {
         const item = {
           x: 0,
           y: 0,
-          w: 6,
+          w: layoutColumns[this.chartLayoutType].w,
           h: 7,
           i: `${name}`,
-          id: `${this.setChartConfigId}`
+          moved: false,
+          id: `${this.setChartConfigId}`,
+          group: this.activeGroup === 'ALL' ? '' : this.activeGroup,
+          partGroupDisplayConfig: '',
+          allGroupDisplayConfig: this.calculateDisplayConfig(),
+          sourceDashboard: this.pannelId
         }
         if (this.layoutData.length) {
-          const lastItem = this.layoutData[this.layoutData.length - 1]
-          if (lastItem.x <= 6 && lastItem.w <= 6) {
-            const popItem = this.layoutData.pop()
-            popItem.x = 6
-            this.layoutData.push(popItem)
-          }
+          const lastOne = this.layoutData[this.layoutData.length - 1]
+          this.processSingleItem(lastOne, item)
         }
-        this.layoutData.push(item)
+        this.layoutData.unshift(item)
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
-            this.getPannelList()
+            this.getPannelList(this.activeGroup)
             this.showChartConfig = true
           })
         }, 0)
-      }
-      else {
-        const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? '' : this.activeGroup)
-        const copyParams = {
-          dashboardId: this.pannelId,
-          ref: type === 'copy' ? false : true,
-          originChartId: copyInfo.id,
-          group,
-          displayConfig: {
+      } else {
+        // type不为add的时候，copyInfo为id的数组
+        if (isEmpty(copyInfo)) {return}
+        let chartId = ''
+        for (let i=0; i<copyInfo.length; i++) {
+          const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? '' : this.activeGroup)
+          const copyParams = {
+            dashboardId: this.pannelId,
+            ref: type === 'copy' ? false : true,
+            originChartId: copyInfo[i].id,
+            group,
+            groupDisplayConfig: '',
+            displayConfig: {
+              x: 0,
+              y: 0,
+              w: 6,
+              h: 7,
+            }
+          }
+          chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
+          const item = {
             x: 0,
             y: 0,
-            w: 6,
+            w: layoutColumns[this.chartLayoutType].w,
             h: 7,
+            i: this.processInitialChartName(),
+            id: `${chartId}`,
+            group,
+            partGroupDisplayConfig: '',
+            allGroupDisplayConfig: this.calculateDisplayConfig(),
+            sourceDashboard: this.pannelId
           }
+          if (this.layoutData.length) {
+            const lastOne = this.layoutData[this.layoutData.length - 1]
+            this.processSingleItem(lastOne, item)
+          }
+          this.layoutData.unshift(item)
         }
-        const chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
-        const item = {
-          x: 0,
-          y: 0,
-          w: 6,
-          h: 7,
-          i: '',
-          id: `${chartId}`,
-          group
+        if (copyInfo.length > 1) {
+          this.initLayoutTypeByWidth(this.layoutData)
         }
-        this.layoutData.push(item)
         setTimeout(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
-          this.getPannelList()
+          this.getPannelList(this.activeGroup)
           this.setChartConfigId = chartId
           if (type === 'copy') {
             this.showChartConfig = true
           }
           this.getAllChartOptionList()
-        }, 0)
+        }, 50)
       }
+      setTimeout(() => {
+        document.querySelector('.vue-grid-layout').scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
+        })
+      }, 500)
+    },
+    extendTime() {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve()
+        }, 50)
+      })
     },
     processPannelParams() {
-      const charts = []
+      const finalCharts = []
       this.layoutData.forEach(item => {
-        charts.push({
+        finalCharts.push({
           id: item.id,
           group: item.group,
           name: item.i,
-          displayConfig: {
+          displayConfig: this.activeGroup === 'ALL' ? {
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h
+          } : item.allGroupDisplayConfig,
+          groupDisplayConfig: this.activeGroup === 'ALL' ? item.partGroupDisplayConfig : {
             x: item.x,
             y: item.y,
             w: item.w,
@@ -931,10 +1193,31 @@ export default {
           }
         })
       })
+
+      this.allPageLayoutData.forEach(item => {
+        const single = find(this.layoutData, {id: item.id})
+        if (isEmpty(single)) {
+          finalCharts.push(
+            {
+              id: item.id,
+              group: item.group,
+              name: item.i,
+              displayConfig: item.allGroupDisplayConfig,
+              groupDisplayConfig: item.partGroupDisplayConfig
+            }
+          )
+        } else {
+          // 解决分组修改后保存失效问题
+          const singleChart = find(finalCharts, {id: item.id})
+          if (!isEmpty(singleChart)) {
+            singleChart.group = item.group
+          }
+        }
+      })
       return {
         id: this.pannelId,
         name: this.panalName,
-        charts,
+        charts: finalCharts,
         panelGroups: this.panel_group_list,
         timeRange: this.viewCondition.timeTnterval,
         refreshWeek: this.viewCondition.autoRefresh
@@ -967,7 +1250,8 @@ export default {
         name: item.i
       })
       this.editChartId = null
-      this.$Message.success(this.$t('m_tips_success'))
+      this.getPannelList(this.activeGroup)
+      this.$Message.success(this.$t('m_save_success'))
     },
     chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
       return new Promise(resolve => {
@@ -1048,8 +1332,7 @@ export default {
         this.useRoles = useRoles
         path = '/monitor/api/v2/chart/custom/permission'
         params.chartId = this.setChartConfigId
-      }
-      else {
+      } else {
         this.boardMgmtRoles = mgmtRoles
         this.boardUseRoles = useRoles
         path = '/monitor/api/v2/dashboard/custom/permission'
@@ -1060,11 +1343,66 @@ export default {
         this.getPannelList()
       })
     },
-    onSingleChartGroupChange() {
+    onSingleChartGroupClear(item) {
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = ''
+      }
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
-        // this.activeGroup = 'ALL';
+      })
+    },
+    onSingleChartGroupChange(group, index, item) {
+      if (isEmpty(group)) {
+        return
+      }
+      const singleChart = find(this.allPageLayoutData, {id: item.id})
+      if (!isEmpty(singleChart)) {
+        singleChart.group = group
+      }
+      if (group !== 'ALL') {
+        // 切换分组时，默认填充到最后一个，并保证w=6, h=7
+        const layoutDataByGroup = this.layoutData.filter((d, m) => m !== index && d.group === group)
+        const layoutByGroupNeedReset = layoutDataByGroup.some((item, i) => i !== index && item.partGroupDisplayConfig === '')
+        this.layoutData[index].partGroupDisplayConfig = this.layoutData[index].partGroupDisplayConfig || {}
+        const needChangeItem = this.layoutData[index].partGroupDisplayConfig
+        if (isEmpty(layoutDataByGroup) || layoutByGroupNeedReset) {
+          needChangeItem.w = 6
+          needChangeItem.h = 7
+          needChangeItem.x = 0
+          needChangeItem.y = 0
+        } else {
+          // 先筛选出最下面的元素，再给这个元素填充
+          const maxY = maxBy(layoutDataByGroup, item => item.partGroupDisplayConfig.y).partGroupDisplayConfig.y
+          const sameMaxYData = filter(layoutDataByGroup, item => item.partGroupDisplayConfig.y === maxY)
+          const maxX = maxBy(sameMaxYData, item => item.partGroupDisplayConfig.x).partGroupDisplayConfig.x
+          const lastOneArr = filter(sameMaxYData, item => item.partGroupDisplayConfig.x === maxX)
+          // 用于获取更改目标组的排列
+          const isStandardArrangement = layoutDataByGroup.every((item, i) => i !== index && item.partGroupDisplayConfig.w === lastOneArr[0].partGroupDisplayConfig.w && item.partGroupDisplayConfig.h === lastOneArr[0].partGroupDisplayConfig.h)
+          if (isStandardArrangement) {
+            needChangeItem.w = lastOneArr[0].partGroupDisplayConfig.w
+            needChangeItem.h = lastOneArr[0].partGroupDisplayConfig.h
+          } else {
+            needChangeItem.w = 6
+            needChangeItem.h = 7
+          }
+
+          if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
+            const lastOne = lastOneArr[0].partGroupDisplayConfig
+            if (lastOne.x + lastOne.w + needChangeItem.w > 12) {
+              needChangeItem.y = lastOne.y + 7
+              needChangeItem.x = 0
+            } else {
+              needChangeItem.y = lastOne.y
+              needChangeItem.x = lastOne.x + lastOne.w
+            }
+          }
+        }
+      }
+      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+        this.$Message.success(this.$t('m_success'))
+        this.getPannelList(this.activeGroup)
       })
     },
     closeChartInfoDrawer() {
@@ -1075,6 +1413,204 @@ export default {
     },
     exportPanel() {
       this.isModalShow = true
+    },
+    onLayoutRadioChange(type) {
+      if (this.isEditStatus) {
+        document.querySelector('#chartLayoutPopTipButton').click()
+        this.tempChartLayoutType = type
+        this.$nextTick(() => {
+          this.chartLayoutType = this.previousChartLayoutType
+        })
+      } else {
+        this.setChartLayoutType(type)
+      }
+    },
+
+    onLayoutPopTipConfirm() {
+      this.setChartLayoutType(this.tempChartLayoutType)
+    },
+    calculateLayout(data, type='customize') {
+      if (isEmpty(data) || type==='customize') {
+        return data
+      }
+      data.forEach((item, index) => {
+        item.h = 7
+        if (type === 'two') {
+          item.w = 6
+          item.x = (index % 2) * 6
+          item.y = Math.floor(index / 2) * 7
+        } else if (type === 'three') {
+          item.w = 4
+          item.x = (index % 3) * 4
+          item.y = Math.floor(index / 3) * 7
+        } else if (type === 'four') {
+          item.w = 3
+          item.x = (index % 4) * 3
+          item.y = Math.floor(index / 4) * 7
+        } else if (type === 'five') {
+          item.w = 2.4
+          item.x = (index % 5) * 2.4
+          item.y = Math.floor(index / 5) * 7
+        } else if (type === 'six') {
+          item.w = 2
+          item.x = (index % 6) * 2
+          item.y = Math.floor(index / 6) * 7
+        } else if (type === 'seven') {
+          item.w = 1.7
+          item.x = (index % 7) * 1.7
+          item.y = Math.floor(index / 7) * 7
+        } else if (type === 'eight') {
+          item.w = 1.5
+          item.x = (index % 8) * 1.5
+          item.y = Math.floor(index / 8) * 7
+        }
+      })
+      return data
+    },
+    setChartLayoutType(val = 'customize') {
+      this.chartLayoutType = val
+      this.previousChartLayoutType = val
+      if (isEmpty(this.layoutData) || val === 'customize') {
+        return
+      }
+      this.filterLayoutData()
+    },
+    filterLayoutData() {
+      if (this.activeGroup === 'ALL') {
+        this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
+      } else {
+        this.layoutData = this.layoutData.filter(d => d.group === this.activeGroup)
+        if (isEmpty(this.layoutData)) {
+          return []
+        }
+        const layoutNeedReset = this.layoutData.some(item => item.partGroupDisplayConfig === '')
+        // 假如其中有partGroupDisplayConfig为空，基于两列进行打平，假如没有为空，则基于partGroupDisplayConfig排列
+        this.initLayoutTypeByWidth(this.layoutData)
+        if (layoutNeedReset || ['two', 'three', 'four', 'five', 'six', 'seven', 'eight'].includes(this.chartLayoutType)) {
+          this.sortLayoutData(this.layoutData)
+          this.calculateLayout(this.layoutData, this.chartLayoutType)
+        } else {
+          this.layoutData.forEach(item => {
+            Object.assign(item, item.partGroupDisplayConfig)
+          })
+          this.sortLayoutData(this.layoutData)
+        }
+      }
+      this.chartLayoutType = this.confirmLayoutType(this.layoutData)
+      this.previousChartLayoutType = this.chartLayoutType
+      this.refreshPannelNow()
+      return this.layoutData
+    },
+    refreshPannelNow() {
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow
+      }, 300)
+    },
+    isValidJson(str) {
+      try {
+        JSON.parse(str)
+        return true
+      } catch (e) {
+        return false
+      }
+    },
+    sortLayoutData(data) {
+      const sortedArr = orderBy(data, ['y', 'x'], ['asc', 'asc'])
+      return sortedArr
+    },
+    initLayoutTypeByWidth(data) {
+      if (isEmpty(data) || this.chartLayoutType !== 'customize') {
+        return
+      }
+      const isTwo = data.every(item => item.h === 7 && item.w === 6)
+      const isThree = data.every(item => item.h === 7 && item.w === 4)
+      const isFour = data.every(item => item.h === 7 && item.w === 3)
+      const isFive = data.every(item => item.h === 7 && item.w === 2.4)
+      const isSix = data.every(item => item.h === 7 && item.w === 2)
+      const isSeven = data.every(item => item.h === 7 && item.w === 1.7)
+      const isEight = data.every(item => item.h === 7 && item.w === 1.5)
+
+      isTwo ? this.chartLayoutType = 'two'
+        : isThree ? this.chartLayoutType = 'three'
+          : isFour ? this.chartLayoutType = 'four'
+            : isFive ? this.chartLayoutType = 'five'
+              : isSix ? this.chartLayoutType = 'six'
+                : isSeven ? this.chartLayoutType = 'seven'
+                  : isEight ? this.chartLayoutType = 'eight' : 'customize'
+    },
+    confirmLayoutType(data) {
+      if (isEmpty(data)) {
+        return 'customize'
+      }
+      let res = ''
+      const isTwo = data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6)
+      const isThree = data.every((item, i) => (item.x === (i % 3) * 4) && item.y === Math.floor(i / 3) * 7 && item.h === 7 && item.w === 4)
+      const isFour = data.every((item, i) => (item.x === (i % 4) * 3) && item.y === Math.floor(i / 4) * 7 && item.h === 7 && item.w === 3)
+      const isFive = data.every((item, i) => (item.x === (i % 5) * 2.4) && item.y === Math.floor(i / 5) * 7 && item.h === 7 && item.w === 2.4)
+      const isSix = data.every((item, i) => (item.x === (i % 6) * 2) && item.y === Math.floor(i / 6) * 7 && item.h === 7 && item.w === 2)
+      const isSeven = data.every((item, i) => (item.x === (i % 7) * 1.7) && item.y === Math.floor(i / 7) * 7 && item.h === 7 && item.w === 1.7)
+      const isEight = data.every((item, i) => (item.x === (i % 8) * 1.5) && item.y === Math.floor(i / 8) * 7 && item.h === 7 && item.w === 1.5)
+
+      isTwo ? res = 'two'
+        : isThree ? res = 'three'
+          : isFour ? res = 'four'
+            : isFive ? res = 'five'
+              : isSix ? res = 'six'
+                : isSeven ? res = 'seven'
+                  : isEight ? res = 'eight' : res = 'customize'
+      return res
+    },
+    // 在新增时计算DisplayConfig的值
+    calculateDisplayConfig() {
+      let finalItem = {}
+      if (!isEmpty(this.allPageLayoutData)) {
+        // 先筛选出最下面的元素，再给这个元素填充
+        const maxY = maxBy(this.allPageLayoutData, item => item.allGroupDisplayConfig.y).allGroupDisplayConfig.y
+        const sameMaxYData = filter(this.allPageLayoutData, item => item.allGroupDisplayConfig.y === maxY)
+        const maxX = maxBy(sameMaxYData, item => item.allGroupDisplayConfig.x).allGroupDisplayConfig.x
+        const lastOneArr = filter(sameMaxYData, item => item.allGroupDisplayConfig.x === maxX)
+        // 用于获取更改目标组的排列
+        const isStandardArrangement = this.allPageLayoutData.every(item => item.allGroupDisplayConfig.w === lastOneArr[0].allGroupDisplayConfig.w && item.allGroupDisplayConfig.h === lastOneArr[0].allGroupDisplayConfig.h)
+        if (isStandardArrangement) {
+          finalItem.w = lastOneArr[0].allGroupDisplayConfig.w
+          finalItem.h = lastOneArr[0].allGroupDisplayConfig.h
+        } else {
+          finalItem.w = 6
+          finalItem.h = 7
+        }
+
+        if (!isEmpty(lastOneArr) && lastOneArr.length === 1) {
+          const lastOne = lastOneArr[0].allGroupDisplayConfig
+          if (lastOne.x + lastOne.w + finalItem.w > 12) {
+            finalItem.y = lastOne.y + 7
+            finalItem.x = 0
+          } else {
+            finalItem.y = lastOne.y
+            finalItem.x = lastOne.x + lastOne.w
+          }
+        } else {
+          finalItem.x = 0
+          finalItem.y = 0
+        }
+      } else {
+        finalItem = {
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 7
+        }
+      }
+      return finalItem
+    },
+    processHtmlText(name = '') {
+      if (name.split('/').length > 1) {
+        return '<span style=\'font-size: 14px; line-height: 16px; display: inline-block\'>' + name.split('/').join('<br>') + '</span>'
+      }
+      return name
+
+    },
+    onCopyTableSelected(chartList) {
+      this.selectedChartList = chartList
     }
   },
   components: {
@@ -1092,8 +1628,10 @@ export default {
 </script>
 
 <style lang="less">
-.ivu-poptip-popper {
-  color: #515a6e
+.chart-layout-poptip {
+  max-width: 350px !important;
+  top: 75px !important;
+  left: 230px !important
 }
 
 .chart-config-info {
@@ -1102,48 +1640,105 @@ export default {
   }
 }
 
-.chart-option-menu {
-  .ivu-dropdown-menu {
-    max-height: 600px;
-    overflow: scroll;
-  }
+.filter-chart-layer {
+  max-height: 520px !important;
+}
+
+.filter-chart-layer::-webkit-scrollbar {
+  display: none;
 }
 
 .references-button {
-  background-color: #edf4fe;
-  border-color: #b5d0fb;
-}
-
-.chart-option-menu {
-  .ivu-select-dropdown {
-    max-height: 100vh !important;
-  }
+  font-size: 14px;
+  min-width: 47px;
+  background-color: #edf4fe !important;
+  border-color: #b5d0fb !important;
 }
 
 .grid-content {
   display: flex;
-  padding: 0 32px;
+  padding: 0 5px;
   font-size: 16px;
+  align-items: flex-start;
+  .grid-auto-tag-style {
+    margin-top: 4px;
+    font-size: 14px;
+    min-width: 45px;
+  }
 }
 
 .header-grid-tools {
   display: flex;
   align-items: center;
+  flex-grow: 1;
   i {
     font-size: 18px !important
   }
-}
-.header-tools {
-  .ivu-btn-info {
-    background-color: #aa8aea;
-    border-color: #aa8aea;
+
+  .grid-content {
+    display: flex;
+    padding: 0 5px;
+    font-size: 16px;
+    align-items: center;
+    margin-top: 3px;
+  }
+
+  .header-grid-tools {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    i {
+      font-size: 18px !important
+    }
+  }
+  .header-tools {
+    .ivu-btn-info {
+      background-color: #aa8aea;
+      border-color: #aa8aea;
+    }
+  }
+
+  .header-grid-name {
+    .ivu-tooltip-rel {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      i {
+        font-size: 18px !important
+      }
+    }
+    .header-tools {
+      .ivu-btn-info {
+        background-color: #aa8aea;
+        border-color: #aa8aea;
+      }
+    }
   }
 }
+
+.copy-drowdown-slot-select > :nth-child(2) {
+  .ivu-select-dropdown {
+    max-height: 400px !important;
+    overflow: auto !important;
+  }
+}
+// 33
+// .vue-grid-item::-webkit-scrollbar {
+//   display: none;
+// }
 </style>
 
 <style scoped lang="less">
 /deep/ .ivu-form-item {
   margin-bottom: 0;
+}
+
+.view-config-top-content {
+  max-height: 230px;
+  overflow: scroll;
+}
+.view-config-top-content::-webkit-scrollbar {
+  display: none;
 }
 
 .arrow-back {
@@ -1175,14 +1770,14 @@ export default {
   display: inline-block;
 }
 .params-title {
-  margin-left: 4px;
+  margin-left: 7px;
   font-size: 13px;
 }
 .header-grid {
   display: flex;
-  flex-grow: 1;
+  // flex-grow: 1;
   justify-content: flex-end;
-  line-height: 32px;
+  // line-height: 32px;
   i {
     margin: 0 4px;
     cursor: pointer;
@@ -1200,11 +1795,19 @@ export default {
 }
 
 .radio-group {
+  display: flex;
+  align-items: center;
   font-size: 14px;
-  margin-bottom: 15px;
+  .group-region {
+    display: inline-block;
+    white-space: nowrap;
+    max-width: ~'calc(100vw - 300px)';
+    overflow: auto;
+  }
 }
 .chart-config-info {
   font-size: 14px;
+  padding-bottom: 10px;
 }
 
 .radio-group-radio {
@@ -1229,57 +1832,102 @@ export default {
   background: #fff
 }
 
-.grid-style {
-    width: 100%;
-    display: inline-block;
-  }
-  .alarm-style {
-    width: 800px;
-    display: inline-block;
-  }
-  .fa-line-chart, .fa-pie-chart {
-    cursor: pointer;
-    font-size: 36px;
-    padding: 24px 48px;
-    border: 1px solid @gray-d;
-    margin: 8px;
-    border-radius: 4px;
-  }
-  .fa-line-chart:hover, .fa-pie-chart:hover {
-    box-shadow: 0 1px 8px @gray-d;
-    border-color: @blue-2;
-  }
-  .active-tag {
-    color: @blue-2;
-    border-color: @blue-2;
-  }
-  .i-icon-menu-fold:before {
-    content: "\E600";
-  }
+.grid-window {
+  height: ~"calc(100vh - 330px)";
+  overflow: auto;
+  width: 100%;
+  display: inline-block;
+}
+.alarm-style {
+  width: 800px;
+  display: inline-block;
+}
+.fa-line-chart, .fa-pie-chart {
+  cursor: pointer;
+  font-size: 36px;
+  padding: 24px 48px;
+  border: 1px solid @gray-d;
+  margin: 8px;
+  border-radius: 4px;
+}
+.fa-line-chart:hover, .fa-pie-chart:hover {
+  box-shadow: 0 1px 8px @gray-d;
+  border-color: @blue-2;
+}
+.active-tag {
+  color: @blue-2;
+  border-color: @blue-2;
+}
+.i-icon-menu-fold:before {
+  content: "\E600";
+}
+.view-config-alarm {
+  min-width: 700px;
+  height: ~"calc(100vh - 330px)";
+  overflow: auto;
+}
+.view-config-alarm::-webkit-scrollbar {
+  display: none;
+}
+.no-data {
+  text-align: center;
+  margin: 32px;
+  font-size: 14px;
+  color: gray;
+}
 
-  .view-config-alarm {
-    // width: 700px
-  }
+.ellipsis-text {
+  width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: bottom;
+}
 
-  .no-data {
-    text-align: center;
-    margin: 32px;
-    font-size: 14px;
-    color: gray;
-  }
+.header-grid-name-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 3px
+}
 
-  .ellipsis-text {
-    width: 170px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: bottom;
-  }
+.copy-drowdown-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 840px;
 
-.all-content {
-  ::-webkit-scrollbar {
-    display: none;
+  .copy-drowdown-slot-select {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 5px;
+    width: 100%
+  }
+  .copy-drowdown-slot-select > :nth-child(1) {
+    margin-left: 20px;
+    width: 35%;
+  }
+  .copy-drowdown-slot-select > :nth-child(2) {
+    margin-left: 20px;
+    width: 35%;
+  }
+  .copy-drowdown-confirm-button {
+    width: 100px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    align-self: flex-end;
+  }
+  .copy-detail-table {
+    margin-bottom: 10px;
+    max-width: 850px;
+  }
+  .copy-table-tips {
+    margin-left: 20px;
+    margin-bottom: 5px;
+    color: #535a6c
   }
 }
 </style>
