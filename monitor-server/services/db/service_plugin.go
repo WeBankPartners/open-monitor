@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj) (result *models.PluginUpdateServicePathOutputObj, err error) {
-	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input))
+func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.PluginUpdateServicePathOutputObj, err error) {
+	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input), log.String("operator", operator), log.StringList("roles", roles))
 	result = &models.PluginUpdateServicePathOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid}
 	input.SystemName = input.Guid
 	monitorTypeQuery, _ := x.QueryString("select guid from monitor_type where guid=?", input.MonitorType)
@@ -62,7 +62,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 			err = fmt.Errorf("Update logKeyword config fail,%s ", err.Error())
 		}
 	} else {
-		err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap)
+		err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap, input.LogMonitorTemplate, input.LogMonitorPrefixCode, input.LogMonitorName, operator, roles, errMsgObj)
 		if err != nil {
 			err = fmt.Errorf("Update logMetric config fail,%s ", err.Error())
 			return
@@ -71,7 +71,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	return
 }
 
-func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string) (err error) {
+func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string, logMonitorTemplateGuid, logMonitorPrefixCode, logMonitorName, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var logMetricTable []*models.LogMetricMonitorTable
 	err = x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
 	if err != nil {
@@ -80,6 +80,7 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
 	var affectHostList, affectEndpointGroup []string
+	var newCustomDashboardIdList []int64
 	existPathTypeMap := make(map[string]string)
 	existPathGuidMap := make(map[string]string)
 	for _, v := range logMetricTable {
@@ -111,34 +112,66 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 			continue
 		}
 		// add path
-		tmpAffectList, tmpActions := getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime, sourceTargetMap)
+		tmpAffectList, tmpActions, newLogMetricMonitorGuid := getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime, sourceTargetMap)
 		affectHostList = append(affectHostList, tmpAffectList...)
 		actions = append(actions, tmpActions...)
+		if logMonitorTemplateGuid != "" {
+			autoCreateLogMetricGroupParam := models.LogMetricGroupWithTemplate{
+				AutoCreateDashboard:    true,
+				AutoCreateWarn:         true,
+				LogMetricMonitorGuid:   newLogMetricMonitorGuid,
+				LogMonitorTemplateGuid: logMonitorTemplateGuid,
+				MetricPrefixCode:       logMonitorPrefixCode,
+				Name:                   logMonitorName,
+				ServiceGroup:           serviceGroup,
+				MonitorType:            monitorType,
+			}
+			createLogMetricGroupActions, _, newDashboardId, createLogMetricGroupErr := getCreateLogMetricGroupActions(&autoCreateLogMetricGroupParam, operator, roles, make(map[string]string), errMsgObj)
+			if createLogMetricGroupErr != nil {
+				err = fmt.Errorf("try to create logMetricGroup with template fail,%s ", createLogMetricGroupErr.Error())
+				break
+			}
+			if newDashboardId > 0 {
+				newCustomDashboardIdList = append(newCustomDashboardIdList, newDashboardId)
+			}
+			actions = append(actions, createLogMetricGroupActions...)
+		}
 	}
+	if err != nil {
+		return
+	}
+
 	if len(actions) > 0 {
 		err = Transaction(actions)
 		if err != nil {
+			for _, newDashboardId := range newCustomDashboardIdList {
+				x.Exec("delete from custom_dashboard where id=?", newDashboardId)
+			}
 			return err
 		}
 	}
 	if len(affectHostList) > 0 {
-		err = SyncLogMetricExporterConfig(affectHostList)
+		if syncErr := SyncLogMetricExporterConfig(affectHostList); syncErr != nil {
+			log.Logger.Error("updateServiceLogMetricPath sync log metric exporter config fail", log.StringList("hostList", affectHostList), log.Error(syncErr))
+		}
 	}
 	if len(affectEndpointGroup) > 0 {
 		for _, v := range affectEndpointGroup {
-			SyncPrometheusRuleFile(v, false)
+			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
+				log.Logger.Error("updateServiceLogMetricPath sync endpointGroup prometheus rule file fail", log.String("endpointGroup", v), log.Error(tmpErr))
+			}
 		}
 	}
 	return err
 }
 
-func getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action) {
-	newLogMetricGuid := guid.CreateGuid()
+func getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action, newLogMetricMonitorGuid string) {
+	newLogMetricMonitorGuid = "lmm_" + guid.CreateGuid()
 	path = strings.TrimSpace(path)
-	actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{newLogMetricGuid, serviceGroup, path, monitorType, nowTime}})
+	actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{newLogMetricMonitorGuid, serviceGroup, path, monitorType, nowTime}})
 	for k, v := range sourceTargetMap {
 		hostList = append(hostList, k)
-		actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), newLogMetricGuid, k, v}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), newLogMetricMonitorGuid, k, v}})
 	}
 	return
 }
