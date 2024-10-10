@@ -294,7 +294,7 @@ func StartCronJob() {
 
 func StartSyncCoreJob(interval int) {
 	// Sync core role
-	t := time.NewTicker(time.Second * time.Duration(interval*5)).C
+	t := time.NewTicker(time.Minute * 1).C
 	for {
 		//go SyncCoreRole()
 		go SyncCoreSystemVariable()
@@ -416,7 +416,7 @@ func SyncCoreSystemVariable() {
 		log.Logger.Error("Get core system variable json unmarshal result", log.Error(err))
 		return
 	}
-	if result.Message != "Success" {
+	if result.Status != "OK" {
 		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
 	} else {
 		if len(result.Data.Contents) > 0 {

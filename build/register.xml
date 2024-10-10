@@ -3,9 +3,8 @@
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies>
-        <packageDependency name="wecmdb" version="v1.5.0"/>
-        <packageDependency name="saltstack" version="v1.9.0"/>
-        <packageDependency name="platform" version="v2.9.0"/>
+        <packageDependency name="wecmdb" version="v2.0.0"/>
+        <packageDependency name="platform" version="v4.2.0"/>
     </packageDependencies>
 
     <!-- 2.菜单注入 - 描述运行本插件包需要注入的菜单 -->
@@ -14,6 +13,7 @@
         <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard" localDisplayName="对象看板">/endpointView</menu>
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm List" localDisplayName="告警列表">/alarmManagement</menu>
         <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex</menu>
+        <menu code='MONITOR_ADMINISTRATOR_CONFIG' cat='MONITORING' displayName="Administrator Config" localDisplayName="管理员配置">/adminConfig</menu>
     </menus>
 
     <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
@@ -39,6 +39,36 @@
             <attribute name="startTime" datatype="str" description="告警时间"/>
             <attribute name="detail" datatype="str" description="告警详情"/>
             <attribute name="notifyEventId" datatype="str" description="告警"/>
+        </entity>
+        <entity name="endpoint" displayName="监控对象" description="监控对象模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="name" datatype="str" description="对象名"/>
+            <attribute name="ip" datatype="str" description="对象IP"/>
+            <attribute name="monitorType" datatype="str" description="监控类型"/>
+        </entity>
+        <entity name="endpoint_group" displayName="监控组" description="监控组模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="description" datatype="str" description="描述"/>
+            <attribute name="monitorType" datatype="str" description="监控类型"/>
+        </entity>
+        <entity name="service_group" displayName="层级对象" description="层级对象模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="description" datatype="str" description="描述"/>
+            <attribute name="parent" datatype="str" description="父层级对象"/>
+            <attribute name="serviceType" datatype="str" description="层级类型"/>
+        </entity>
+        <entity name="monitor_type" displayName="监控类型" description="监控类型模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="description" datatype="str" description="描述"/>
+        </entity>
+        <entity name="log_monitor_template" displayName="日志监控模版" description="日志监控模版模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="displayName" datatype="str" description="显示名"/>
+            <attribute name="logType" datatype="str" description="json或正则"/>
         </entity>
     </dataModel>
 
@@ -102,6 +132,8 @@
         <systemParameter name="MONITOR_AGENT_MANAGER_REMOTE_MODE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_NOTIFY_TREEVENT_ENABLE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue=""/>
+        <systemParameter name="MONITOR_HOST_PORT" scopeType="global" defaultValue="9100"/>
+        <systemParameter name="MONITOR_MAIL_AUTH_USER" scopeType="global" defaultValue=""/>
     </systemParameters>
 
 
@@ -113,12 +145,13 @@
             <menu code="MONITOR_CUSTOM_DASHBOARD" />
             <menu code="MONITOR_ALARM_CONFIG" />
             <menu code="MONITOR_ALARM_MANAGEMENT" />
+            <menu code="MONITOR_ADMINISTRATOR_CONFIG" />
         </authority >
     </authorities>
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="open-monitor:{{PLUGIN_VERSION}}" containerName="open-monitor-{{PLUGIN_VERSION}}" portBindings="19091:19091,14241:14241,{{ALLOCATE_PORT}}:8080,{{MONITOR_PROMETHEUS_PORT_BIND}}" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data,{{BASE_MOUNT_PATH}}/archive_mysql_tool/logs:/app/monitor/archive_mysql_tool/logs,/etc/localtime:/etc/localtime,{{BASE_MOUNT_PATH}}/certs:/data/certs,{{BASE_MOUNT_PATH}}/archive_mysql_tool/keytab:/app/monitor/archive_mysql_tool/keytab,{{BASE_MOUNT_PATH}}/metric_comparison_exporter/config:/app/monitor/metric_comparison_exporter/config" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}},CORE_ADDR={{CORE_ADDR}},GATEWAY_URL={{GATEWAY_URL}},MONITOR_HOST_IP={{ALLOCATE_HOST}},MONITOR_CHECK_EVENT_KEY={{MONITOR_CHECK_EVENT_KEY}},MONITOR_CHECK_EVENT_TO_MAIL={{MONITOR_CHECK_EVENT_TO_MAIL}},MONITOR_CHECK_EVENT_INTERVAL_MIN={{MONITOR_CHECK_EVENT_INTERVAL_MIN}},MONITOR_ARCHIVE_ENABLE={{MONITOR_ARCHIVE_ENABLE}},MONITOR_ARCHIVE_MYSQL_HOST={{MONITOR_ARCHIVE_MYSQL_HOST}},MONITOR_ARCHIVE_MYSQL_PORT={{MONITOR_ARCHIVE_MYSQL_PORT}},MONITOR_ARCHIVE_MYSQL_USER={{MONITOR_ARCHIVE_MYSQL_USER}},MONITOR_ARCHIVE_MYSQL_PWD={{MONITOR_ARCHIVE_MYSQL_PWD}},MONITOR_LOG_LEVEL={{MONITOR_LOG_LEVEL}},JWT_SIGNING_KEY={{JWT_SIGNING_KEY}},ALARM_FIRING_CALLBACK={{MONITOR_ALARM_FIRING_CALLBACK}},ALARM_RECOVER_CALLBACK={{MONITOR_ALARM_RECOVER_CALLBACK}},SUB_SYSTEM_CODE={{SUB_SYSTEM_CODE}},SUB_SYSTEM_KEY={{SUB_SYSTEM_KEY}},MONITOR_ALARM_ALIVE_MAX_DAY={{MONITOR_ALARM_ALIVE_MAX_DAY}},PLUGIN_MODE=yes,MONITOR_SMS_PARAM_LENGTH={{MONITOR_SMS_PARAM_LENGTH}},MONITOR_MAIL_SENDER_USER={{MONITOR_MAIL_SENDER_USER}},MONITOR_MAIL_SENDER_SERVER={{MONITOR_MAIL_SENDER_SERVER}},MONITOR_MAIL_SENDER_PASSWORD={{MONITOR_MAIL_SENDER_PASSWORD}},MONITOR_MAIL_SENDER_SSL={{MONITOR_MAIL_SENDER_SSL}},MONITOR_LOCAL_DNS_MAP={{MONITOR_LOCAL_DNS_MAP}},MONITOR_ALARM_MAIL_ENABLE={{MONITOR_ALARM_MAIL_ENABLE}},MONITOR_ALARM_CALLBACK_LEVEL_MIN={{MONITOR_ALARM_CALLBACK_LEVEL_MIN}},MONITOR_ARCHIVE_UNIT_SPEED={{MONITOR_ARCHIVE_UNIT_SPEED}},MONITOR_ARCHIVE_CONCURRENT_NUM={{MONITOR_ARCHIVE_CONCURRENT_NUM}},MONITOR_ARCHIVE_MAX_HTTP_OPEN={{MONITOR_ARCHIVE_MAX_HTTP_OPEN}},MONITOR_PROMETHEUS_ARCHIVE_DAY={{MONITOR_PROMETHEUS_ARCHIVE_DAY}},MONITOR_AGENT_MANAGER_REMOTE_MODE={{MONITOR_AGENT_MANAGER_REMOTE_MODE}},MONITOR_NOTIFY_TREEVENT_ENABLE={{MONITOR_NOTIFY_TREEVENT_ENABLE}},ENCRYPT_SEED={{ENCRYPT_SEED}}"/>
+        <docker imageName="open-monitor:{{PLUGIN_VERSION}}" containerName="open-monitor-{{PLUGIN_VERSION}}" portBindings="19091:19091,14241:14241,{{ALLOCATE_PORT}}:8080,{{MONITOR_PROMETHEUS_PORT_BIND}}" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data,{{BASE_MOUNT_PATH}}/archive_mysql_tool/logs:/app/monitor/archive_mysql_tool/logs,/etc/localtime:/etc/localtime,{{BASE_MOUNT_PATH}}/certs:/data/certs,{{BASE_MOUNT_PATH}}/archive_mysql_tool/keytab:/app/monitor/archive_mysql_tool/keytab,{{BASE_MOUNT_PATH}}/metric_comparison_exporter/config:/app/monitor/metric_comparison_exporter/config" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}},CORE_ADDR={{CORE_ADDR}},GATEWAY_URL={{GATEWAY_URL}},MONITOR_HOST_IP={{ALLOCATE_HOST}},MONITOR_CHECK_EVENT_KEY={{MONITOR_CHECK_EVENT_KEY}},MONITOR_CHECK_EVENT_TO_MAIL={{MONITOR_CHECK_EVENT_TO_MAIL}},MONITOR_CHECK_EVENT_INTERVAL_MIN={{MONITOR_CHECK_EVENT_INTERVAL_MIN}},MONITOR_ARCHIVE_ENABLE={{MONITOR_ARCHIVE_ENABLE}},MONITOR_ARCHIVE_MYSQL_HOST={{MONITOR_ARCHIVE_MYSQL_HOST}},MONITOR_ARCHIVE_MYSQL_PORT={{MONITOR_ARCHIVE_MYSQL_PORT}},MONITOR_ARCHIVE_MYSQL_USER={{MONITOR_ARCHIVE_MYSQL_USER}},MONITOR_ARCHIVE_MYSQL_PWD={{MONITOR_ARCHIVE_MYSQL_PWD}},MONITOR_LOG_LEVEL={{MONITOR_LOG_LEVEL}},JWT_SIGNING_KEY={{JWT_SIGNING_KEY}},ALARM_FIRING_CALLBACK={{MONITOR_ALARM_FIRING_CALLBACK}},ALARM_RECOVER_CALLBACK={{MONITOR_ALARM_RECOVER_CALLBACK}},SUB_SYSTEM_CODE={{SUB_SYSTEM_CODE}},SUB_SYSTEM_KEY={{SUB_SYSTEM_KEY}},MONITOR_ALARM_ALIVE_MAX_DAY={{MONITOR_ALARM_ALIVE_MAX_DAY}},PLUGIN_MODE=yes,MONITOR_SMS_PARAM_LENGTH={{MONITOR_SMS_PARAM_LENGTH}},MONITOR_MAIL_SENDER_USER={{MONITOR_MAIL_SENDER_USER}},MONITOR_MAIL_SENDER_SERVER={{MONITOR_MAIL_SENDER_SERVER}},MONITOR_MAIL_SENDER_PASSWORD={{MONITOR_MAIL_SENDER_PASSWORD}},MONITOR_MAIL_SENDER_SSL={{MONITOR_MAIL_SENDER_SSL}},MONITOR_LOCAL_DNS_MAP={{MONITOR_LOCAL_DNS_MAP}},MONITOR_ALARM_MAIL_ENABLE={{MONITOR_ALARM_MAIL_ENABLE}},MONITOR_ALARM_CALLBACK_LEVEL_MIN={{MONITOR_ALARM_CALLBACK_LEVEL_MIN}},MONITOR_ARCHIVE_UNIT_SPEED={{MONITOR_ARCHIVE_UNIT_SPEED}},MONITOR_ARCHIVE_CONCURRENT_NUM={{MONITOR_ARCHIVE_CONCURRENT_NUM}},MONITOR_ARCHIVE_MAX_HTTP_OPEN={{MONITOR_ARCHIVE_MAX_HTTP_OPEN}},MONITOR_PROMETHEUS_ARCHIVE_DAY={{MONITOR_PROMETHEUS_ARCHIVE_DAY}},MONITOR_AGENT_MANAGER_REMOTE_MODE={{MONITOR_AGENT_MANAGER_REMOTE_MODE}},MONITOR_NOTIFY_TREEVENT_ENABLE={{MONITOR_NOTIFY_TREEVENT_ENABLE}},ENCRYPT_SEED={{ENCRYPT_SEED}},MONITOR_MAIL_AUTH_USER={{MONITOR_MAIL_AUTH_USER}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
         <s3 bucketName="wecube-agent"/>
     </resourceDependencies>
@@ -130,6 +163,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_PORT">port</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP">group</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>

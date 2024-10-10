@@ -70,8 +70,7 @@ export default {
         if (this.dataHome.length === 0) {
           if (window.request) {
             this.isPlugin = true
-          }
-          else {
+          } else {
             this.$router.push({path: 'portal'})
           }
         }

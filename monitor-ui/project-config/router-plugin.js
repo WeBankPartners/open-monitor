@@ -9,20 +9,21 @@ import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
-import exporter from "@/views/monitor-config/exporter";
-import remoteSync from "@/views/monitor-config/remote-sync";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config/index";
-import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import chartList from "@/views/custom-view/chart-list";
 import boardIndex from "@/views/custom-view/index";
 import viewConfig from "@/views/custom-view/view-config";
-import editLineView from "@/views/custom-view/edit-line-view";
-import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
+import adminConfigIndex from '@/views/admin-config/index';
+import typeConfig from "@/views/admin-config/basic/type-config";
+import groupBoard from "@/views/admin-config/basic/board-config";
+import adminMetric from '@/views/admin-config/basic/metric-config';
+import exporter from "@/views/admin-config/other/exporter";
+import remoteSync from "@/views/admin-config/other/remote-sync";
 import index from "@/views/index";
 
 const router = [
@@ -99,20 +100,6 @@ const router = [
         component: resourceLevel
       },
       {
-        path: "exporter",
-        name: "exporter",
-        title: "exporter",
-        meta: {},
-        component: exporter
-      },
-      {
-        path: "remoteSync",
-        name: "remoteSync",
-        title: "remoteSync",
-        meta: {},
-        component: remoteSync
-      },
-      {
         path: "businessMonitor",
         name: "businessMonitor",
         title: "businessMonitor",
@@ -132,13 +119,6 @@ const router = [
         title: "metricConfig",
         meta: {},
         component: metricConfig
-      },
-      {
-        path: "groupBoard",
-        name: "groupBoard",
-        title: "对象看板",
-        meta: {},
-        component: groupBoard
       }
     ]
   },
@@ -181,20 +161,6 @@ const router = [
     ]
   },
   {
-    path: "/editLineView",
-    name: "editLineView",
-    title: "自定义视图编辑",
-    meta: {},
-    component: editLineView
-  },
-  {
-    path: "/editPieView",
-    name: "editPieView",
-    title: "自定义视图编辑",
-    meta: {},
-    component: editPieView
-  },
-  {
     path: "/viewChart",
     name: "viewChart",
     title: "自定义视图放大",
@@ -207,6 +173,51 @@ const router = [
     title: "搜索主页",
     meta: {},
     component: portal
+  },
+  {
+    path: "/adminConfig",
+    name: "adminConfig",
+    title: "管理员配置",
+    meta: {},
+    redirect: '/adminConfig/groupBoard',
+    component: adminConfigIndex,
+    children: [
+      {
+        path: "typeConfig",
+        name: "typeConfig",
+        title: "类型配置",
+        meta: {},
+        component: typeConfig
+      },
+      {
+        path: "groupBoard",
+        name: "groupBoard",
+        title: "看板配置",
+        meta: {},
+        component: groupBoard
+      },
+      {
+        path: "adminMetric",
+        name: "adminMetric",
+        title: "指标配置",
+        meta: {},
+        component: adminMetric
+      },
+      {
+        path: "exporter",
+        name: "exporter",
+        title: "exporter",
+        meta: {},
+        component: exporter
+      },
+      {
+        path: "remoteSync",
+        name: "remoteSync",
+        title: "remoteSync",
+        meta: {},
+        component: remoteSync
+      }
+    ]
   }
 ];
 
