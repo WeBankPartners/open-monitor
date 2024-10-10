@@ -4,19 +4,15 @@
       <transition name="fade" mode="out-in">
         <router-view :key="$route.fullPath"></router-view>
       </transition>
-      <BenchMenu :menuList="menuList"></BenchMenu>
+      <BaseMenu :menuList="menuList"></BaseMenu>
     </div>
   </div>
 </template>
 
 <script>
-import BenchMenu from '@/components/bench-menu'
 import Vue from 'vue'
 Vue.prototype.$bus = new Vue()
 export default {
-  components: {
-    BenchMenu
-  },
   data() {
     return {
       expand: true,
@@ -65,8 +61,7 @@ export default {
       this.$eventBusP.$on('expand-menu', val => {
         this.expand = val
       })
-    }
-    else {
+    } else {
       this.$bus.$on('expand-menu', val => {
         this.expand = val
       })

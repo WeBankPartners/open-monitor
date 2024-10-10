@@ -79,9 +79,7 @@ func ExportPanelAdd(c *gin.Context) {
 				} else {
 					var tmpAddress string
 					tmpList := strings.Split(vv, ":")
-					if len(tmpList) == 1 {
-						tmpAddress = fmt.Sprintf("%s:9100", tmpList[0])
-					} else if len(tmpList) == 2 {
+					if len(tmpList) == 2 {
 						tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
 					} else {
 						tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).ParamTypeError, "endpoint", "[guid] or [ip:port]")
@@ -206,9 +204,7 @@ func ExportPanelDelete(c *gin.Context) {
 					} else {
 						var tmpAddress string
 						tmpList := strings.Split(vv, ":")
-						if len(tmpList) == 1 {
-							tmpAddress = fmt.Sprintf("%s:9100", tmpList[0])
-						} else if len(tmpList) == 2 {
+						if len(tmpList) == 2 {
 							tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
 						} else {
 							tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).ParamTypeError, "endpoint", "[guid] or [ip:port]")
