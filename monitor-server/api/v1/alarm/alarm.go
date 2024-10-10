@@ -93,7 +93,11 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		return
 	}
 	alarm.Endpoint = endpointObj.Guid
-	alarm.AlarmName = strategyObj.Name
+	if len(param.Labels) > 0 {
+		alarm.AlarmName = strings.ReplaceAll(strategyObj.Name, "{code}", param.Labels["code"])
+	} else {
+		alarm.AlarmName = strategyObj.Name
+	}
 	var alertValue float64
 	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
@@ -118,23 +122,38 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
 	alarm.Status = param.Status
 	operation := "add"
-	if existAlarm.Status != "" {
+	if alarm.Status == "firing" {
 		if existAlarm.Status == "firing" {
-			if alarm.Status == "firing" {
-				operation = "same"
-			} else {
-				operation = "resolve"
-			}
-		} else if existAlarm.Status == "ok" {
-			if alarm.Status == "resolved" {
-				operation = "same"
-			}
-		} else if existAlarm.Status == "closed" {
-			if alarm.Status == "resolved" {
-				operation = "same"
-			}
+			operation = "same"
+		} else {
+			operation = "add"
 		}
+	} else if alarm.Status == "resolved" {
+		if existAlarm.Status == "firing" {
+			operation = "resolve"
+		} else {
+			operation = "same"
+		}
+	} else {
+		return alarm, fmt.Errorf("Accept alert status:%s illegal! ", alarm.Status)
 	}
+	//if existAlarm.Status != "" {
+	//	if existAlarm.Status == "firing" {
+	//		if alarm.Status == "firing" {
+	//			operation = "same"
+	//		} else {
+	//			operation = "resolve"
+	//		}
+	//	} else if existAlarm.Status == "ok" {
+	//		if alarm.Status == "resolved" {
+	//			operation = "same"
+	//		}
+	//	} else if existAlarm.Status == "closed" {
+	//		if alarm.Status == "resolved" {
+	//			operation = "same"
+	//		}
+	//	}
+	//}
 	if operation == "same" {
 		return alarm, fmt.Errorf("Accept alert msg ,firing repeat,do nothing! ")
 	}
@@ -150,7 +169,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.End = nowTime
 		alarm.AlarmConditionGuid = alarmConditionGuid
 	} else if operation == "add" {
-		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
+		if !db.InActiveWindowList(strategyObj.ActiveWindow) {
 			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
 		}
 		alarm.StartValue = alertValue
@@ -208,9 +227,9 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		//		return
 		//	}
 		//}
-		if strings.Contains(result.AgentAddress, "9100") {
-			result.MonitorType = "host"
-		}
+		//if strings.Contains(result.AgentAddress, "9100") {
+		//	result.MonitorType = "host"
+		//}
 	} else if param.Labels["strategy_guid"] != "" {
 		endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
 		if tmpErr != nil {
@@ -281,7 +300,11 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 	alarm.SCond = strategyObj.Condition
 	alarm.SLast = strategyObj.Last
 	alarm.SPriority = strategyObj.Priority
-	alarm.Content = param.Annotations["description"]
+	if len(param.Labels) > 0 {
+		alarm.Content = strings.ReplaceAll(param.Annotations["description"], "{code}", param.Labels["code"])
+	} else {
+		alarm.Content = param.Annotations["description"]
+	}
 	alarm.NotifyEnable = strategyObj.NotifyEnable
 	alarm.NotifyDelay = strategyObj.NotifyDelaySecond
 	if strings.Contains(alarm.SMetric, "ping_alive") || strings.Contains(alarm.SMetric, "telnet_alive") || strings.Contains(alarm.SMetric, "http_alive") {
@@ -294,7 +317,7 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(alarm.Endpoint, strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
 		return
 	}
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
@@ -330,7 +353,7 @@ func getNewAlarmWithStrategyId(alarm *m.AlarmHandleObj, param *m.AMRespAlert, en
 			return
 		}
 	}
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, StrategyId: alarm.StrategyId, Tags: alarm.Tags}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, StrategyId: alarm.StrategyId, Tags: alarm.Tags, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
@@ -342,7 +365,7 @@ func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj, param *m.AMRespAlert) (exist
 	alarm.SLast = "30s"
 	alarm.SPriority = "high"
 	alarm.Content = param.Annotations["description"]
-	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, SMetric: alarm.SMetric}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, SMetric: alarm.SMetric, Status: "firing"}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
 	return
 }
@@ -404,7 +427,7 @@ func GetHistoryAlarm(c *gin.Context) {
 	}
 	returnData := []*m.AlarmHistoryReturnData{}
 	for _, endpointGuid := range ids {
-		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime)
+		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime, mid.GetOperateUserRoles(c))
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -418,14 +441,14 @@ func GetHistoryAlarm(c *gin.Context) {
 	mid.ReturnSuccessData(c, returnData)
 }
 
-func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) (err error, data m.AlarmProblemList) {
+func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time, useRoles []string) (err error, data m.AlarmProblemList) {
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	err = db.GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, false, []string{}, []string{}, []string{})
+	err, data = db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query})
 	return err, data
 }
 
@@ -466,22 +489,49 @@ func recursiveHistoryEndpoint(input *m.RecursivePanelObj) []string {
 
 func GetProblemAlarmOptions(c *gin.Context) {
 	var err error
+	var param m.AlarmOptionsParam
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
 	var data = &m.ProblemAlarmOptions{
-		EndpointList:  []string{},
+		EndpointList:  []m.AlarmEndpoint{},
 		MetricList:    []string{},
 		AlarmNameList: []string{},
 	}
-	if data.AlarmNameList, err = db.GetAlarmStrategyNameList(); err != nil {
-		mid.ReturnServerHandleError(c, err)
+	// 查询全量
+	if strings.TrimSpace(param.AlarmName) != "" {
+		if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, param.AlarmName); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
 		return
 	}
-	if data.EndpointList, err = db.GetAllEndpointIdList(); err != nil {
-		mid.ReturnServerHandleError(c, err)
+	if strings.TrimSpace(param.Endpoint) != "" {
+		if data.EndpointList, err = db.QueryEndpointList(param.Endpoint); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
 		return
 	}
-	if data.MetricList, err = db.GetAllMetricNameList(); err != nil {
-		mid.ReturnServerHandleError(c, err)
+	if strings.TrimSpace(param.Metric) != "" {
+		if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
+			mid.ReturnServerHandleError(c, err)
+			return
+		}
+		mid.ReturnSuccessData(c, data)
 		return
+	}
+	if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, param.AlarmName); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
+	if data.EndpointList, err = db.QueryEndpointList(param.Endpoint); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
+	if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
+		mid.ReturnServerHandleError(c, err)
 	}
 	mid.ReturnSuccessData(c, data)
 }
@@ -503,7 +553,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
+	err, data := db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query, ExtOpenAlarm: true, UserRoles: mid.GetOperateUserRoles(c)})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -515,7 +565,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, []string{}, []string{}, []string{})
+		err, data := db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query, ExtOpenAlarm: true, UserRoles: mid.GetOperateUserRoles(c)})
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -568,7 +618,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		mid.ReturnValidateError(c, "query data too large")
 		return
 	}
-	query := m.AlarmTable{Status: "firing", Endpoint: "", SMetric: "", SPriority: param.Priority, AlarmName: ""}
+	query := m.AlarmTable{Status: "firing", Endpoint: "", SMetric: "", SPriority: "", AlarmName: ""}
 	var endpointList []string
 	var err error
 	if param.CustomDashboardId > 0 {
@@ -577,11 +627,25 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
+		if len(endpointList) == 0 {
+			mid.ReturnSuccessData(c, m.AlarmProblemQueryResult{Data: []*m.AlarmProblemQuery{}, Count: []*m.AlarmProblemCountObj{}, Page: &m.PageInfo{}})
+			return
+		}
 	}
 	if len(param.Endpoint) > 0 {
 		endpointList = append(endpointList, param.Endpoint...)
 	}
-	err, data := db.GetAlarms(query, 0, true, endpointList, param.Metric, param.AlarmName)
+	err, data := db.GetAlarms(m.QueryAlarmCondition{
+		AlarmTable:          query,
+		ExtOpenAlarm:        true,
+		EndpointFilterList:  endpointList,
+		MetricFilterList:    param.Metric,
+		AlarmNameFilterList: param.AlarmName,
+		PriorityList:        param.Priority,
+		UserRoles:           mid.GetOperateUserRoles(c),
+		Token:               c.GetHeader("Authorization"),
+		Query:               param.Query,
+	})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -615,6 +679,12 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 			} else {
 				metricMap[tmpMetricLevel] = 1
 			}
+		}
+		if v.AlarmName == "" && v.Title != "" {
+			v.AlarmName = v.Title
+		}
+		if v.Endpoint == "custom_alarm" {
+			v.EndpointGuid = "custom_alarm"
 		}
 	}
 	if len(data) == 0 {
@@ -654,7 +724,7 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if len(param.Metric) == 0 && param.Id == 0 && param.Priority == "" && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
+	if len(param.Metric) == 0 && param.Id == 0 && len(param.Priority) == 0 && len(param.Endpoint) == 0 && len(param.AlarmName) == 0 {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}

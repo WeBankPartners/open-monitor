@@ -7,7 +7,7 @@ export const getToken = () => {
   return cookie
 }
 const key = 'accessToken'
-export const getPlatFormToken = () =>  {
+export const getPlatFormToken = () => {
   // eslint-disable-next-line no-useless-escape
   const reg = new RegExp('(?:(?:^|.*;\\s*)' + key + '\\s*\\=\\s*([^;]*).*$)|^.*$')
   return document.cookie.replace(reg, '$1')

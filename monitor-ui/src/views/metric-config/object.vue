@@ -1,7 +1,7 @@
 <template>
-  <div ref="maxheight" class="monitor-level-group">
+  <div class="monitor-level-group">
     <Row>
-      <Col :span="8">
+      <Col :span="16">
       <!--对象-->
       <span style="font-size: 14px;">
         {{$t('m_endpoint')}}:
@@ -10,18 +10,35 @@
         style="width:300px;"
         v-model="endpoint"
         filterable
-        @on-change="changeEndpointGroup"
+        @on-change="() => {
+          metric = ''
+          changeEndpointGroup()
+        }"
       >
         <Option v-for="(option, index) in endpointOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.guid" :key="index">
           <TagShow :list="endpointOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.guid}}
         </Option>
       </Select>
+      <Input
+        v-model="metric"
+        clearable
+        style="width: 250px; margin-left: 10px"
+        :placeholder="$t('m_placeholder_input') + (metricType === 'comparisonMetrics' ? $t('m_button_MoM') : '' ) + $t('m_metric')"
+        @on-change='onFilterChange'
+      />
       </Col>
-      <Col :span="16">
+      <Col :span="8">
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns.filter(col=>col.showType.includes(metricType))" :data="tableData" class="level-table" />
+    <Table
+      ref="maxHeight"
+      size="small"
+      :columns="tableColumns.filter(col=>col.showType.includes(metricType))"
+      :data="tableData"
+      :max-height="maxHeight"
+      class="level-table"
+    />
     <AddGroupDrawer
       ref="addGroupRef"
       v-if="addVisible && showDrawer === 'originalMetrics'"
@@ -51,6 +68,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
 import AddGroupDrawer from './components/add-group.vue'
@@ -281,6 +299,7 @@ export default {
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
+      metric: ''
     }
   },
   async mounted() {
@@ -289,8 +308,7 @@ export default {
     this.previewObject = this.endpointOptions[0]
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
   },
   methods: {
     reloadData(metricType) {
@@ -301,9 +319,13 @@ export default {
       this.previewObject = this.endpointOptions.find(item => item.guid === val)
       this.getList()
     },
+    onFilterChange: debounce(function () {
+      this.getList()
+    }, 500),
     getList() {
       const params = {
-        endpoint: this.endpoint
+        endpoint: this.endpoint,
+        metric: this.metric
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -319,7 +341,8 @@ export default {
     },
     getMetricTotalNumber() {
       const params = {
-        endpoint: this.endpoint
+        endpoint: this.endpoint,
+        metric: this.metric
       }
       const api = '/monitor/api/v2/monitor/metric/list/count'
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
