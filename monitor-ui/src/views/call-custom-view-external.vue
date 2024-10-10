@@ -5,6 +5,7 @@
       permissionType='view'
       :boardId="viewId"
       pageType="link"
+      @alarmStatueChange='onAlarmListChange'
     />
   </div>
 </template>
@@ -23,12 +24,18 @@ export default {
   mounted() {
     const query = this.$route.query
     this.paramsCheck(query)
-    // this.refreshToken()
   },
   methods: {
+    onAlarmListChange(status) {
+      if (status) {
+        this.$nextTick(() => {
+          const alarmList = document.querySelector('.alarm-list')
+          alarmList.style.height = 'calc(100vh - 365px)'
+        })
+      }
+    },
     paramsCheck(query) {
       this.viewId = Number(query.viewId)
-      // this.token = query.token
     },
     refreshToken() {
       fetch('/auth/v1/api/token', {

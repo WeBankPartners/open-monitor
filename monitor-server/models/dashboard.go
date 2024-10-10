@@ -2,6 +2,27 @@ package models
 
 import "time"
 
+type AutoCreateDashboardParam struct {
+	*LogMetricGroupWithTemplate
+	MetricList         []*LogMetricTemplate
+	ServiceGroupsRoles []string
+	ServiceGroup       string
+	Operator           string
+	ErrMsgObj          *ErrorMessageObj
+}
+
+type AutoSimpleCreateDashboardParam struct {
+	MetricList          []*LogMetricConfigDto
+	ServiceGroupsRoles  []string
+	ServiceGroup        string
+	Operator            string
+	ErrMsgObj           *ErrorMessageObj
+	AutoCreateDashboard bool
+	LogMetricGroupGuid  string
+	MetricPrefixCode    string
+	MonitorType         string
+}
+
 type SearchModel struct {
 	Id             int    `json:"id"`
 	Enable         bool   `json:"enable"`
@@ -29,6 +50,7 @@ func (e OptionModelSortList) Less(i, j int) bool {
 type OptionModel struct {
 	Id             int    `json:"id"`
 	OptionValue    string `json:"option_value"`
+	OptionName     string `json:"option_name"`
 	OptionText     string `json:"option_text"`
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
@@ -238,19 +260,20 @@ type PieChartConfigObj struct {
 }
 
 type ChartQueryParam struct {
-	ChartId         int                     `json:"chart_id"`
-	Title           string                  `json:"title"`
-	Unit            string                  `json:"unit"`
-	Start           int64                   `json:"start"`
-	End             int64                   `json:"end"`
-	TimeSecond      int64                   `json:"time_second"`
-	Aggregate       string                  `json:"aggregate"`
-	AggStep         int64                   `json:"agg_step"`
-	Step            int                     `json:"step"`
-	Data            []*ChartQueryConfigObj  `json:"data"`
-	Compare         *ChartQueryCompareParam `json:"compare"`
-	CustomChartGuid string                  `json:"custom_chart_guid"`
-	LineType        int                     `json:"lineType"` // lineType=2 表示同环比数据
+	ChartId                int                     `json:"chart_id"`
+	Title                  string                  `json:"title"`
+	Unit                   string                  `json:"unit"`
+	Start                  int64                   `json:"start"`
+	End                    int64                   `json:"end"`
+	TimeSecond             int64                   `json:"time_second"`
+	Aggregate              string                  `json:"aggregate"`
+	AggStep                int64                   `json:"agg_step"`
+	Step                   int                     `json:"step"`
+	Data                   []*ChartQueryConfigObj  `json:"data"`
+	Compare                *ChartQueryCompareParam `json:"compare"`
+	CustomChartGuid        string                  `json:"custom_chart_guid"`
+	LineType               int                     `json:"lineType"` // lineType=2 表示同环比数据
+	CalcServiceGroupEnable bool                    `json:"calc_service_group_enable"`
 }
 
 type ChartQueryConfigObj struct {
@@ -352,18 +375,19 @@ type MaintainDto struct {
 }
 
 type CustomDashboardTable struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	PanelsGroup int       `json:"panels_group"`
-	Cfg         string    `json:"cfg"`
-	Main        int       `json:"main"`
-	CreateUser  string    `json:"create_user"`
-	UpdateUser  string    `json:"update_user"`
-	CreateAt    time.Time `json:"create_at"`
-	UpdateAt    time.Time `json:"update_at"`
-	PanelGroups string    `json:"panel_groups"`
-	TimeRange   int       `json:"time_range"`   //时间范围
-	RefreshWeek int       `json:"refresh_week"` // 刷新周期
+	Id             int       `json:"id"`
+	Name           string    `json:"name"`
+	PanelsGroup    int       `json:"panels_group"`
+	Cfg            string    `json:"cfg"`
+	Main           int       `json:"main"`
+	CreateUser     string    `json:"create_user"`
+	UpdateUser     string    `json:"update_user"`
+	CreateAt       time.Time `json:"create_at"`
+	UpdateAt       time.Time `json:"update_at"`
+	PanelGroups    string    `json:"panel_groups"`
+	TimeRange      int       `json:"time_range"`   //时间范围
+	RefreshWeek    int       `json:"refresh_week"` // 刷新周期
+	LogMetricGroup *string   `json:"log_metric_group"`
 }
 
 type CustomDashboardObj struct {
@@ -478,6 +502,7 @@ type CustomDashboardQueryParam struct {
 	MgmtRoles  []string `json:"mgmtRoles"`
 	UseRoles   []string `json:"useRoles"`
 	UpdateUser string   `json:"updateUser"`
+	Show       string   `json:"show"`       // me 表示仅展示人工创建创建
 	Permission string   `json:"permission"` //  MGMT 表示管理权限
 	StartIndex int      `json:"startIndex"`
 	PageSize   int      `json:"pageSize"`
@@ -495,6 +520,7 @@ type CustomDashboardResultDto struct {
 	UpdateUser       string   `json:"updateUser"`
 	MainPage         []string `json:"mainPage"`
 	UpdateTime       string   `json:"updateTime"`
+	LogMetricGroup   string   `json:"logMetricGroup"`
 }
 
 type CustomDashboardDto struct {
@@ -505,6 +531,7 @@ type CustomDashboardDto struct {
 	UseRoles       []string          `json:"useRoles"`
 	TimeRange      int               `json:"timeRange"`   //时间范围
 	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
+	LogMetricGroup string            `json:"logMetricGroup"`
 }
 
 type AddCustomDashboardParam struct {
@@ -539,12 +566,15 @@ type CustomDashboardExportParam struct {
 }
 
 type CustomDashboardExportDto struct {
-	Id          int               `json:"id"`
-	Name        string            `json:"name"`
-	PanelGroups string            `json:"panelGroups"`
-	TimeRange   int               `json:"timeRange"`   //时间范围
-	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
-	Charts      []*CustomChartDto `json:"charts"`      // 图表
+	Id             int               `json:"id"`
+	Name           string            `json:"name"`
+	PanelGroups    string            `json:"panelGroups"`
+	TimeRange      int               `json:"timeRange"`      //时间范围
+	RefreshWeek    int               `json:"refreshWeek"`    // 刷新周期
+	Charts         []*CustomChartDto `json:"charts"`         // 图表
+	MgmtRole       string            `json:"mgmtRole"`       // 管理角色
+	UseRoles       []string          `json:"useRoles"`       // 使用角色
+	LogMetricGroup string            `json:"logMetricGroup"` // 关联业务配置
 }
 
 type CustomDashboardImportRes struct {
@@ -559,4 +589,10 @@ type ComparisonChartQueryParam struct {
 	ComparisonType string   `json:"comparisonType"` // 对比类型: day 日环比, week 周, 月周比 month
 	CalcType       []string `json:"calcType"`       // 计算数值: diff 差值,diff_percent 差值百分比
 	TimeSecond     int64    `json:"timeSecond"`     // 时间范围
+}
+
+type CopyCustomDashboardParam struct {
+	MgmtRole    string   `json:"mgmtRole"`
+	UseRoles    []string `json:"useRoles"`
+	DashboardId int      `json:"dashboardId"`
 }
