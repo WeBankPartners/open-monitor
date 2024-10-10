@@ -1,12 +1,28 @@
 <template>
-  <div>
-    <div class="content-seatch ml-1">
+  <div class="monitor-resource-level">
+    <div class="content-seatch">
       <!-- <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i> -->
-      <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('m_resourceLevel_level_search_name')" style="width: 300px;margin-right:8px" />
-      <span> OR</span>
+      <RadioGroup
+        v-model="searchParams.type"
+        @on-change="handleTypeChange"
+        type="button"
+        button-style="solid"
+        style="margin-right: 5px"
+      >
+        <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
+        <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
+      </RadioGroup>
+      <Input
+        v-if="searchParams.type === 'group'"
+        v-model="searchParams.name"
+        @on-change="getAllResource(true)"
+        :placeholder="$t('m_resourceLevel_level_search_name')"
+        style="width: 300px;margin-right:8px"
+      />
       <Select
+        v-if="searchParams.type === 'endpoint'"
         v-model="searchParams.endpoint"
-        class="col-md-2"
+        style="width: 300px;margin-right:8px"
         filterable
         clearable
         ref="selectObject"
@@ -16,10 +32,10 @@
       >
         <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
       </Select>
-      <Button type="success" class='add-content-item mr-2' @click="addPanel">{{ $t('m_add') }}</Button>
+      <Button type="success" class='add-content-item' @click="addPanel">{{ $t('m_add') }}</Button>
     </div>
-
-    <template v-if="extend">
+    <recursive class='recursive-content' :recursiveViewConfig="resourceRecursive"></recursive>
+    <!-- <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
     </template>
     <template v-else>
@@ -30,14 +46,13 @@
             <i v-else class="fa fa-angle-double-up" aria-hidden="true"></i>
             {{rr.display_name}}
             <TagShow :tagName='rr.type' />
-            <!-- <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}} 22</Tag>     -->
           </div>
           <div v-if="inShowLevel(rr.guid)">
             <recursive :recursiveViewConfig="[rr]"></recursive>
           </div>
         </div>
       </template>
-    </template>
+    </template> -->
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
@@ -49,6 +64,7 @@ export default {
   data() {
     return {
       searchParams: {
+        type: 'group',
         name: '',
         endpoint: ''
       },
@@ -109,6 +125,11 @@ export default {
     this.getAllObject()
   },
   methods: {
+    handleTypeChange() {
+      this.searchParams.name = ''
+      this.searchParams.endpoint = ''
+      this.getAllResource()
+    },
     clearObject() {
       this.getAllObject()
       this.getAllResource(true)
@@ -134,8 +155,7 @@ export default {
       if (this.activedLevel.includes(guid)) {
         const index = this.activedLevel.findIndex(item => item === guid)
         this.activedLevel.splice(index, 1)
-      }
-      else {
+      } else {
         this.activedLevel.push(guid)
       }
     },
@@ -168,6 +188,10 @@ export default {
 </script>
 
 <style scoped lang="less">
+.recursive-content {
+  max-height: ~'calc(100vh - 200px)';
+  overflow-y: auto;
+}
 .content-seatch {
   display: flex;
   flex-direction: row;
@@ -190,4 +214,13 @@ export default {
     border-radius: 4px;
     margin: 6px;
  }
+</style>
+<style lang="less">
+.monitor-resource-level {
+  .ivu-radio-group-button .ivu-radio-wrapper-checked {
+    background: #2d8cf0;
+    color: #fff;
+  }
+}
+
 </style>

@@ -1,3 +1,4 @@
+<!--看板配置-->
 <template>
   <div class="monitor-group-board">
     <div style="margin-right:16px;display:inline-block;">
@@ -67,8 +68,8 @@
         </div>
       </div>
       <div style="width:900px;text-align:center;margin-top:24px">
-        <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</button>
+        <Button :disabled="graphConfig.metric.length === 0" @click="preview('displayGroup')">{{$t('m_preview')}}</Button>
+        <Button type="primary" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</Button>
       </div>
     </div>
     <Modal
@@ -236,8 +237,7 @@ export default {
     changeGraph(val) {
       if (val) {
         this.editGraph(val)
-      }
-      else {
+      } else {
         this.showGraphConfig = false
       }
     },
@@ -316,8 +316,7 @@ export default {
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
             this.$Message.success(this.$t('m_tips_success'))
           })
-        }
-        else {
+        } else {
           const params = {
             id: this.titleManagement.id,
             title: this.titleManagement.title,
@@ -343,8 +342,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
-      }
-      else {
+      } else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))

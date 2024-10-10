@@ -120,8 +120,7 @@ export default {
         this.interval = setInterval(() => {
           this.initPanal()
         },this.viewCondition.autoRefresh*1000)
-      }
-      else {
+      } else {
         clearInterval(this.interval)
       }
     },
@@ -165,6 +164,7 @@ export default {
         params.data.push(item)
       })
       if (params !== []) {
+        window.intervalFrom = 'view-chart'
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',
           this.$root.apiCenter.metricConfigView.api,
@@ -196,7 +196,10 @@ export default {
   border-radius: 4px;
 }
 .zone-chart-title {
-  padding: 20px 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
   font-size: 14px;
 }
 

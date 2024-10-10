@@ -13,6 +13,7 @@ type MonitorTypeTable struct {
 	Guid        string `json:"guid" xorm:"guid" binding:"required"`
 	DisplayName string `json:"display_name" xorm:"display_name"`
 	Description string `json:"description" xorm:"description"`
+	SystemType  string `json:"system_type" xorm:"system_type"`
 }
 
 type EndpointNewTable struct {
@@ -69,6 +70,7 @@ type MetricTable struct {
 	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
 	GroupType          string `json:"group_type" xorm:"-"`            // 组类型
 	GroupName          string `json:"group_name" xorm:"-"`            // 组名
+	DbMetricMonitor    string `json:"db_metric_monitor" xorm:"db_metric_monitor"`
 }
 
 type MetricImportResultDto struct {

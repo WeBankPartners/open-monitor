@@ -79,19 +79,20 @@ type logMetricNodeExporterResponse struct {
 }
 
 type logMetricMonitorNeObj struct {
-	TailSession       *tail.Tail             `json:"-"`
-	Lock              *sync.RWMutex          `json:"-"`
-	Path              string                 `json:"path"`
-	TargetEndpoint    string                 `json:"target_endpoint"`
-	ServiceGroup      string                 `json:"service_group"`
-	JsonConfig        []*logMetricJsonNeObj  `json:"config"`
-	MetricConfig      []*logMetricNeObj      `json:"custom"`
-	MetricGroupConfig []*logMetricGroupNeObj `json:"metric_group_config"`
-	DataChan          chan string            `json:"-"`
-	ReOpenHandlerChan chan int               `json:"-"`
-	TailTimeLock      *sync.RWMutex          `json:"-"`
-	TailLastUnixTime  int64                  `json:"-"`
-	DestroyChan       chan int               `json:"-"`
+	TailSession        *tail.Tail             `json:"-"`
+	Lock               *sync.RWMutex          `json:"-"`
+	Path               string                 `json:"path"`
+	TargetEndpoint     string                 `json:"target_endpoint"`
+	ServiceGroup       string                 `json:"service_group"`
+	JsonConfig         []*logMetricJsonNeObj  `json:"config"`
+	MetricConfig       []*logMetricNeObj      `json:"custom"`
+	MetricGroupConfig  []*logMetricGroupNeObj `json:"metric_group_config"`
+	DataChan           chan string            `json:"-"`
+	ReOpenHandlerChan  chan int               `json:"-"`
+	TailTimeLock       *sync.RWMutex          `json:"-"`
+	TailLastUnixTime   int64                  `json:"-"`
+	DestroyChan        chan int               `json:"-"`
+	TailDataCancelChan chan int               `json:"-"`
 }
 
 type logMetricGroupNeObj struct {
@@ -179,7 +180,14 @@ type logMetricValueObj struct {
 
 func (c *logMetricMonitorNeObj) startHandleTailData() {
 	for {
-		lineText := <-c.DataChan
+		var lineText string
+		select {
+		case lineText = <-c.DataChan:
+		case <-c.TailDataCancelChan:
+			level.Info(monitorLogger).Log("log_metric -> logMetricMonitorNeObj_tail_data_cancel", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+			return
+		}
+		//lineText := <-c.DataChan
 		//level.Info(monitorLogger).Log("log_metric_get_new_line ->", lineText)
 		//lineText = strings.ReplaceAll(lineText, "\\t", "    ")
 		c.Lock.RLock()
@@ -234,7 +242,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 					for _, metricParam := range metricGroup.ParamList {
 						if fetchValue, ok := fetchJsonDataMap[metricParam.JsonKey]; !ok {
 							allMatchFlag = false
-							level.Info(monitorLogger).Log("log_json_group -> check key fail", metricParam.JsonKey)
+							//level.Info(monitorLogger).Log("log_json_group -> check key fail", metricParam.JsonKey)
 							break
 						} else {
 							fetchParamValueMap[metricParam.Name] = transMetricGroupData(fetchValue, metricParam.StringMap)
@@ -305,7 +313,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 }
 
 func (c *logMetricMonitorNeObj) start() {
-	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", c.Path)
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -315,7 +323,7 @@ func (c *logMetricMonitorNeObj) start() {
 	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	go c.startFileHandlerCheck()
+	//go c.startFileHandlerCheck()
 	reopenFlag := false
 	destroyFlag := false
 	for {
@@ -328,24 +336,31 @@ func (c *logMetricMonitorNeObj) start() {
 			if line == nil {
 				continue
 			}
+			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
 			c.DataChan <- line.Text
 		}
 		if reopenFlag || destroyFlag {
 			break
-		} else {
-			c.TailTimeLock.Lock()
-			c.TailLastUnixTime = time.Now().Unix()
-			c.TailTimeLock.Unlock()
 		}
+		//else {
+		//	c.TailTimeLock.Lock()
+		//	c.TailLastUnixTime = time.Now().Unix()
+		//	c.TailTimeLock.Unlock()
+		//}
 	}
 	c.TailSession.Stop()
-	c.TailSession.Cleanup()
-	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
+	//c.TailSession.Cleanup()
+	c.TailDataCancelChan <- 1
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	if destroyFlag {
+		level.Info(monitorLogger).Log("log_metric -> destroy", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		return
 	}
-	time.Sleep(10 * time.Second)
-	go c.start()
+	if reopenFlag {
+		level.Info(monitorLogger).Log("log_metric -> reopen", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+		time.Sleep(2 * time.Second)
+		go c.start()
+	}
 }
 
 func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
@@ -365,6 +380,7 @@ func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
 			if fileLastTime-tailLastTime > 60 {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				break
 			} else {
 				//level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
@@ -382,6 +398,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.TailTimeLock = new(sync.RWMutex)
 	c.ReOpenHandlerChan = make(chan int, 1)
 	c.DestroyChan = make(chan int, 1)
+	c.TailDataCancelChan = make(chan int, 1)
 	var err error
 	for _, jsonObj := range input.JsonConfig {
 		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
@@ -580,6 +597,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		return err
 	}
 	var tmpLogMetricObjJobs []*logMetricMonitorNeObj
+	deletePathMap := make(map[string]int)
 	for _, logMetricMonitorJob := range logMetricMonitorJobs {
 		delFlag := true
 		for _, paramObj := range param {
@@ -593,8 +611,16 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		if delFlag {
 			// delete config
 			logMetricMonitorJob.destroy()
+			deletePathMap[logMetricMonitorJob.Path] = 1
 		} else {
 			tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, logMetricMonitorJob)
+		}
+	}
+	if len(deletePathMap) > 0 && len(tmpLogMetricObjJobs) > 0 {
+		for _, existJob := range tmpLogMetricObjJobs {
+			if _, ok := deletePathMap[existJob.Path]; ok {
+				existJob.ReOpenHandlerChan <- 1
+			}
 		}
 	}
 	for _, paramObj := range param {
