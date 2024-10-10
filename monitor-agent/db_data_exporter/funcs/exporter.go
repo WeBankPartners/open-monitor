@@ -5,12 +5,23 @@ import (
 	"fmt"
 )
 
-func GetExportMetric() []byte {
+func GetExportMetric(step int64) []byte {
 	var buff bytes.Buffer
 	buff.WriteString("# HELP ping check 0 -> alive, 1 -> dead, 2 -> problem. \n")
 	resultLock.RLock()
 	for _, v := range resultList {
-		buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", metricString, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, transFloatValueToString(v.Value)))
+		//if v.Step != step {
+		//	continue
+		//}
+		if v.KeywordGuid != "" {
+			tmpMetricDisplay := dbKeywordMetric
+			valueString := fmt.Sprintf("%d", v.KeywordCount)
+			buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\",db_keyword_guid=\"%s\"} %s \n", tmpMetricDisplay, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, v.KeywordGuid, valueString))
+		} else {
+			tmpMetricDisplay := metricString
+			valueString := transFloatValueToString(v.Value)
+			buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", tmpMetricDisplay, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, valueString))
+		}
 	}
 	resultLock.RUnlock()
 	return buff.Bytes()

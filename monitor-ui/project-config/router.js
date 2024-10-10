@@ -108,22 +108,6 @@ const router = new Router({
                 import("@/views/monitor-config/resource-level")
             },
             {
-              path: "exporter",
-              name: "exporter",
-              title: "exporter",
-              meta: {},
-              component: () =>
-                import("@/views/monitor-config/exporter")
-            },
-            {
-              path: "remoteSync",
-              name: "remoteSync",
-              title: "remoteSync",
-              meta: {},
-              component: () =>
-                import("@/views/monitor-config/remote-sync")
-            },
-            {
               path: "businessMonitor",
               name: "businessMonitor",
               title: "businessMonitor",
@@ -144,13 +128,6 @@ const router = new Router({
               title: "metricConfig",
               meta: {},
               component: () => import("@/views/metric-config/index")
-            },
-            {
-              path: "groupBoard",
-              name: "groupBoard",
-              title: "对象看板",
-              meta: {},
-              component: () => import("@/views/metric-config/group-board")
             }
           ]
         },
@@ -190,13 +167,6 @@ const router = new Router({
           ]
         },
         {
-          path: "metricConfig",
-          name: "metricConfig",
-          title: "视图配置",
-          meta: {},
-          component: () => import("@/views/metric-config")
-        },
-        {
           path: "viewConfigIndex",
           name: "viewConfigIndex",
           title: "自定义视图主页",
@@ -230,20 +200,6 @@ const router = new Router({
           ]
         },
         {
-          path: "editLineView",
-          name: "editLineView",
-          title: "自定义视图编辑",
-          meta: {},
-          component: () => import("@/views/custom-view/edit-line-view")
-        },
-        {
-          path: "editPieView",
-          name: "editPieView",
-          title: "自定义视图编辑",
-          meta: {},
-          component: () => import("@/views/custom-view/edit-pie-view")
-        },
-        {
           path: "viewChart",
           name: "viewChart",
           title: "视图查看",
@@ -256,6 +212,53 @@ const router = new Router({
           title: "搜索主页",
           meta: {},
           component: () => import("@/views/portal")
+        },
+        {
+          path: "adminConfig",
+          name: "adminConfig",
+          title: "管理员配置",
+          meta: {},
+          redirect: '/adminConfig/groupBoard',
+          component: () => import("@/views/admin-config/index"),
+          children: [
+            {
+              path: "typeConfig",
+              name: "typeConfig",
+              title: "类型配置",
+              meta: {},
+              component: () => import("@/views/admin-config/basic/type-config")
+            },
+            {
+              path: "groupBoard",
+              name: "groupBoard",
+              title: "看板配置",
+              meta: {},
+              component: () => import("@/views/admin-config/basic/board-config")
+            },
+            {
+              path: "adminMetric",
+              name: "adminMetric",
+              title: "指标配置",
+              meta: {},
+              component: () => import("@/views/admin-config/basic/metric-config")
+            },
+            {
+              path: "exporter",
+              name: "exporter",
+              title: "exporter",
+              meta: {},
+              component: () =>
+                import("@/views/admin-config/other/exporter")
+            },
+            {
+              path: "remoteSync",
+              name: "remoteSync",
+              title: "remoteSync",
+              meta: {},
+              component: () =>
+                import("@/views/admin-config/other/remote-sync")
+            }
+          ]
         }
       ]
     },
@@ -294,8 +297,12 @@ const router = new Router({
   ]
 });
 
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location) {
+ return originalPush.call(this, location).catch(err => err)
+}
+
 router.beforeEach((to, from, next) => {
-  next()
   // if (['login', 'callCustomViewExternal'].includes(to.name)) {
   // next()
   //   return
@@ -305,5 +312,6 @@ router.beforeEach((to, from, next) => {
   // } else {
   //   next()
   // }
+  next()
 })
 export default router;
