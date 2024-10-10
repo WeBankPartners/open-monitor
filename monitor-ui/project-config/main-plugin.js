@@ -2,7 +2,6 @@ import Vue from 'vue'
 import store from '@/store.js'
 import router from './router-plugin'
 import routerP from './router-plugin-p'
-import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
 import '@/plugins/iview.js'
@@ -48,14 +47,6 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
     childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
   },
-  'monitorConfigIndex/exporter': {
-    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
-  },
-  'monitorConfigIndex/remoteSync': {
-    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: { 'zh-CN': '远程同步', 'en-US': 'Remote Sync'}
-  },
   'monitorConfigIndex/businessMonitor': {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
     childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
@@ -68,21 +59,9 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
     childBreadcrumb: { 'zh-CN': '指标列表', 'en-US': 'Metric List' }
   },
-  'monitorConfigIndex/groupBoard': {
-    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
-    childBreadcrumb: { 'zh-CN': '对象看板', 'en-US': 'Object Board' }
-  },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }
-  },
-  'editLineView': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
-  },
-  'editPieView': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
   },
   'viewChart': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
@@ -99,7 +78,27 @@ const implicitRoute = {
   'viewConfigIndex/allChartList': {
     parentBreadcrumb: {'zh-CN': '图表库', 'en-US': 'Chart Library'},
     childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
-  }
+  },
+  'adminConfig/typeConfig': {
+    parentBreadcrumb: {'zh-CN': '基础类型', 'en-US': 'Basic Type'},
+    childBreadcrumb: { 'zh-CN': '类型配置', 'en-US': 'Type Config' }
+  },
+  'adminConfig/adminMetric': {
+    parentBreadcrumb: {'zh-CN': '基础类型', 'en-US': 'Basic Type'},
+    childBreadcrumb: { 'zh-CN': '指标配置', 'en-US': 'Metric Config' }
+  },
+  'adminConfig/groupBoard': {
+    parentBreadcrumb: {'zh-CN': '基础类型', 'en-US': 'Basic Type'},
+    childBreadcrumb: { 'zh-CN': '看板配置', 'en-US': 'Board Config' }
+  },
+  'adminConfig/exporter': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
+  },
+  'adminConfig/remoteSync': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': '远程同步', 'en-US': 'Remote Sync'}
+  },
 }
 window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
