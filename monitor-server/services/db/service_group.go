@@ -160,11 +160,11 @@ func CreateServiceGroup(param *models.ServiceGroupTable) {
 
 }
 
-func getCreateServiceGroupAction(param *models.ServiceGroupTable) (actions []*Action) {
+func getCreateServiceGroupAction(param *models.ServiceGroupTable, operator string) (actions []*Action) {
 	if param.Parent == "" {
-		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime}})
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime, operator}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime}})
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time,update_user) value (?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime, operator}})
 	}
 	return actions
 }
@@ -183,7 +183,7 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime, operator string, 
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
 		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, operator, endpoint)...)
-		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v}})
+		actions = append(actions, &Action{Sql: "update service_group set update_time=?,update_user=? where guid=?", Param: []interface{}{nowTime, operator, v}})
 	}
 	return actions
 }
@@ -214,7 +214,7 @@ func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime, operator s
 func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err error) {
 	guidList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	for _, sg := range guidList {
-		logMetricConfig, tmpErr := GetLogMetricByServiceGroup(sg)
+		logMetricConfig, tmpErr := GetLogMetricByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -228,8 +228,17 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 			for _, logMetricConfig := range logMetricMonitor.MetricConfigList {
 				result = append(result, fmt.Sprintf("logMetric  path:%s metric:%s", logMetricMonitor.LogPath, logMetricConfig.Metric))
 			}
+			for _, metricList := range logMetricMonitor.MetricGroups {
+				var metricArr []string
+				for _, metric := range metricList.MetricList {
+					metricArr = append(metricArr, metric.FullMetric)
+				}
+				if len(metricArr) > 0 {
+					result = append(result, fmt.Sprintf("businessConfig metirc:%s", strings.Join(metricArr, ",")))
+				}
+			}
 		}
-		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg)
+		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -237,7 +246,7 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 		for _, dbMetric := range dbMetricConfig {
 			result = append(result, fmt.Sprintf("dbMetric metric:%s", dbMetric.Metric))
 		}
-		keyWordConfigList, tmpErr := GetLogKeywordByServiceGroup(sg)
+		keyWordConfigList, tmpErr := GetLogKeywordByServiceGroup(sg, "")
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -249,6 +258,11 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 			for _, keyword := range keywordConfig.KeywordList {
 				result = append(result, fmt.Sprintf("logKeywrod path:%s keyword:%s", keywordConfig.LogPath, keyword.Keyword))
 			}
+		}
+		var tempMetricNames []string
+		x.SQL("select metric from metric where service_group=?", serviceGroup).Find(&tempMetricNames)
+		if len(tempMetricNames) > 0 {
+			result = append(result, fmt.Sprintf("metricList metric:%s", strings.Join(tempMetricNames, ",")))
 		}
 	}
 	return
@@ -626,7 +640,7 @@ func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map
 	if err != nil {
 		return err
 	}
-	err = SyncDbMetric()
+	err = SyncDbMetric(false)
 	if err != nil {
 		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.String("serviceGroup", serviceGroup))
 	}
@@ -679,7 +693,7 @@ func DeleteServiceConfig(serviceGroup string) {
 		}
 	}
 	if len(dbMetricTable) > 0 {
-		err := SyncDbMetric()
+		err := SyncDbMetric(false)
 		if err != nil {
 			log.Logger.Error("Try to SyncDbMetric fail", log.Error(err))
 		}
@@ -740,7 +754,7 @@ func CheckMetricIsServiceMetric(metric, serviceGroup string) (ok bool, tags []st
 		return
 	}
 	if len(metricRows) > 0 {
-		tags, err = GetMetricTags(metricRows[0])
+		tags, _, err = GetMetricTags(metricRows[0])
 		if err != nil {
 			return
 		}
