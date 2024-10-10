@@ -49,12 +49,12 @@
           </div>
 
           <div class="header-tools">
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
+            <Button v-if="!showAlarm" @click="openAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
+            </Button>
+            <Button v-else @click="closeAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -129,12 +129,12 @@
         </div>
       </div>
     </div>
-    <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
+    <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
     <Drawer :title="$t('m_placeholder_chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
-      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
+      <!-- <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
+      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView> -->
     </Drawer>
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
@@ -172,7 +172,7 @@
           </Col>
         </Row>
       </div>
-      <template #footer>
+      <template slot="footer">
         <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('m_button_save') }}</Button>
       </template>
@@ -218,8 +218,6 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
-import editLineView from '@/views/custom-view/edit-line-view'
-import editPieView from '@/views/custom-view/edit-pie-view'
 export default {
   name: '',
   data() {
@@ -410,8 +408,7 @@ export default {
       this.activeGridConfig = find
       if (!find._activeCharts) {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
-      }
-      else {
+      } else {
         this.activeChartType = find._activeCharts[0].chartType
         this.chartType = find._activeCharts[0].chartType
         this.editGrid(item)
@@ -451,8 +448,7 @@ export default {
           const findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
           findEditData.aggregate = aggregate
           findEditData.agg_step = agg_step
-        }
-        else {
+        } else {
           parentRouteData.cfg = resViewData
         }
         parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
@@ -460,8 +456,7 @@ export default {
         if (['line','bar'].includes(this.activeChartType)) {
           this.chartType = 'line'
           // this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
-        }
-        else {
+        } else {
           this.chartType = 'pie'
           // this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         }
@@ -629,8 +624,7 @@ export default {
             this.layoutData[p.index].group = this.groupName
           }
         })
-      }
-      else {
+      } else {
         this.panel_group_list[this.groupNameIndex] = this.groupName
         this.layoutData.forEach(d => {
           if (d.group === this.oriGroupName) {
@@ -655,8 +649,8 @@ export default {
     CustomPieChart,
     ViewConfigAlarm,
     ViewChart,
-    editPieView,
-    editLineView
+    // editPieView,
+    // editLineView
   },
 }
 </script>
