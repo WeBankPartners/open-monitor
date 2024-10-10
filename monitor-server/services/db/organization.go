@@ -120,7 +120,10 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
 	log.Logger.Info("start UpdateOrganization", log.String("operation", operation), log.String("guid", param.Guid))
 	var tableData []*m.PanelRecursiveTable
-	var actions []*Action
+	var dbMetricMonitorList []*m.DbMetricMonitorObj
+	var actions, delLogMetricMonitorActions []*Action
+	var endpointGroup, affectHost, subHost, affectEndpointGroup []string
+	var logMetricMonitorList []*m.LogMetricMonitorTable
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	if operation == "add" {
 		if param.Guid == "" || param.DisplayName == "" {
@@ -132,7 +135,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		}
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
-		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime})...)
+		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime}, operation)...)
 		err = Transaction(actions)
 		if err == nil {
 			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent, DisplayName: param.DisplayName})
@@ -146,7 +149,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			return fmt.Errorf("guid: %s can not find any record", param.Guid)
 		}
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_user=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, operation, param.Guid}})
 		err = Transaction(actions)
 		if err == nil {
 			m.GlobalSGDisplayNameMap[param.Guid] = param.DisplayName
@@ -171,11 +174,76 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			}
 		}
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
+		// 删除业务配置列表-数据库
+		if dbMetricMonitorList, err = GetDbMetricByServiceGroup(param.Guid, ""); err != nil {
+			return err
+		}
+		if len(dbMetricMonitorList) > 0 {
+			for _, obj := range dbMetricMonitorList {
+				if subDbMetricList, subEndpointGroup := GetDeleteDbMetricActions(obj.Guid); len(subDbMetricList) > 0 {
+					actions = append(actions, subDbMetricList...)
+					if len(subEndpointGroup) > 0 {
+						endpointGroup = append(endpointGroup, subEndpointGroup...)
+					}
+				}
+			}
+		}
+		// 删除业务配置列表-日志文件
+		if err = x.SQL("select * from log_metric_monitor where service_group=?", param.Guid).Find(&logMetricMonitorList); err != nil {
+			return
+		}
+		if len(logMetricMonitorList) > 0 {
+			for _, logMetricMonitor := range logMetricMonitorList {
+				delLogMetricMonitorActions, subHost, affectEndpointGroup = getDeleteLogMetricMonitor(logMetricMonitor.Guid)
+				if len(delLogMetricMonitorActions) > 0 {
+					actions = append(actions, delLogMetricMonitorActions...)
+				}
+				if len(affectEndpointGroup) > 0 {
+					endpointGroup = append(endpointGroup, affectEndpointGroup...)
+				}
+				if len(subHost) > 0 {
+					affectHost = append(affectHost, subHost...)
+				}
+			}
+		}
+
+		// 删除 层级对象下面的指标列表
+		var metricList []*m.MetricTable
+		if err = x.SQL("select * from metric  where service_group = ?", param.Guid).Find(&metricList); err != nil {
+			return
+		}
+		if len(metricList) > 0 {
+			// 删除同环比 指标
+			for _, metric := range metricList {
+				tmpActions, tmpEndpointGroup := getMetricComparisonDeleteAction(metric.Guid)
+				actions = append(actions, tmpActions...)
+				affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+				tmpActions, tmpEndpointGroup = getDeleteMetricActions(metric.Guid)
+				actions = append(actions, tmpActions...)
+				affectEndpointGroup = append(tmpEndpointGroup, tmpEndpointGroup...)
+				tmpActions = getDeleteEndpointDashboardChartMetricAction(metric.Metric, metric.MetricType)
+				actions = append(actions, tmpActions...)
+				if len(affectEndpointGroup) > 0 {
+					endpointGroup = append(endpointGroup, affectEndpointGroup...)
+				}
+			}
+		}
 		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
 		err = Transaction(actions)
 		if err == nil {
 			DeleteServiceWithChildConfig(param.Guid)
 			deleteGlobalServiceGroupNode(param.Guid)
+			if len(affectHost) > 0 {
+				err = SyncLogMetricExporterConfig(affectHost)
+				if err != nil {
+					log.Logger.Error("SyncLogMetricExporterConfig fail", log.Error(err))
+				}
+			}
+			if len(endpointGroup) > 0 {
+				for _, v := range endpointGroup {
+					SyncPrometheusRuleFile(v, false)
+				}
+			}
 		}
 	}
 	return err
@@ -230,7 +298,7 @@ func GetOrgRole(guid string) (result []*m.OptionModel, err error) {
 				if tmpName == "" {
 					tmpName = vv.Name
 				}
-				result = append(result, &m.OptionModel{OptionText: tmpName, OptionValue: fmt.Sprintf("%d", vv.Id), Id: vv.Id})
+				result = append(result, &m.OptionModel{OptionText: tmpName, OptionValue: fmt.Sprintf("%d", vv.Id), Id: vv.Id, OptionName: vv.Name})
 				break
 			}
 		}

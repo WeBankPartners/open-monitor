@@ -150,14 +150,14 @@
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('m_button_cancel')}}</button>
-              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('m_button_save')}}</button>
-              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('m_button_save')}}</button>
+              <Button data-dismiss="modal">{{$t('m_button_cancel')}}</Button>
+              <Button type="primary" v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)">{{$t('m_button_save')}}</Button>
+              <Button type="primary" v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)">{{$t('m_button_save')}}</Button>
             </div>
             <div class="model-footer-f c-dark" v-if="modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('m_button_cancel')}}</button>
+              <Button data-dismiss="modal">{{$t('m_button_cancel')}}</Button>
               <template v-for="(item, index) in modelConfig.modalFooter">
-                <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
+                <Button type="primary" @click="customFunc(item.Func)" v-if='item.name' :key="index">{{item.name}}</Button>
               </template>
             </div>
           </template>
@@ -241,8 +241,7 @@ export default {
             if (!this.modelConfig.addRow[obj.value]){
               obj.isError = true
               flag = false
-            }
-            else {
+            } else {
               obj.isError = false
             }
           }
@@ -254,8 +253,7 @@ export default {
             if (!this.modelConfig.addRow[obj.value]){
               this.modelConfig.config[i].isError = true
               flag = false
-            }
-            else {
+            } else {
               this.modelConfig.config[i].isError = false
             }
           }
@@ -264,8 +262,7 @@ export default {
             if (this.modelConfig.addRow[obj.value] && this.modelConfig.addRow[obj.value].length === 0){
               this.modelConfig.config[i].isError = true
               flag = false
-            }
-            else {
+            } else {
               this.modelConfig.config[i].isError = false
             }
           }
@@ -300,8 +297,7 @@ export default {
         if (result){
           if (val) {
             this.$parent.addPost()
-          }
-          else {
+          } else {
             this.$parent.editPost()
           }
         }
