@@ -88,8 +88,7 @@ export default {
           recursice.charts.forEach(chart => {
             if (chart.monitor_type in types) {
               types[chart.monitor_type] = types[chart.monitor_type] + 1
-            }
-            else {
+            } else {
               types[chart.monitor_type] = 1
             }
           })

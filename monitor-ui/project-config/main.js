@@ -3,7 +3,6 @@ import Vue from 'vue'
 import App from '@/App.vue'
 import router from './router'
 import store from '@/store.js'
-import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
 import '@/plugins/iview.js'
@@ -13,6 +12,11 @@ import { tableUtil } from '@/assets/js/tableUtil.js'
 import { validate } from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
+// 引用wecube公共组件和样式
+import commonUI from 'wecube-common-ui'
+import 'wecube-common-ui/lib/wecube-common-ui.css'
+Vue.use(commonUI)
+
 const eventBus = new Vue()
 Vue.prototype.$eventBus = eventBus
 Vue.prototype.$httpRequestEntrance = httpRequestEntrance
