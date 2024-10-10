@@ -1,6 +1,6 @@
 <template>
-  <Card style="margin-bottom: 8px;" class="xxx">
-    <template #title>
+  <Card style="margin-bottom: 8px;">
+    <template slot="title">
       <div
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
@@ -28,7 +28,7 @@
         <template v-if="data.alarm_name">
           <Tooltip :content=data.alarm_name max-width="300" >
             <div class="custom-title">
-              {{data.alarm_name}}
+              <span class="custom-title-text">{{data.alarm_name}}</span>
               <img
                 v-if="!$attrs.hideFilter"
                 class="filter-icon-flex"
@@ -110,11 +110,26 @@
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
-              <Tooltip :content="data.content" :max-width="300">
+              <Tooltip :content="data.content" :max-width="300" placement="bottom-start">
                 <div slot="content">
                   <div v-html="data.content || '-'"></div>
                 </div>
                 <div v-html="data.content || '-'" class="ellipsis-text" style="width: 450px;"></div>
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li>
+        <label class="card-label" v-html="$t('m_log')"></label>
+        <div class="card-content">
+          <div style="display:flex;align-items:center;width:100%;">
+            <div class="ellipsis">
+              <Tooltip :content="data.log" :max-width="300" placement="bottom-start">
+                <div slot="content">
+                  <div v-html="data.log || '-'"></div>
+                </div>
+                <div v-html="data.log || '-'" class="ellipsis-text" style="width: 300px"></div>
               </Tooltip>
             </div>
           </div>
@@ -138,7 +153,7 @@
             <img
               v-if="!$attrs.hideFilter"
               class="filter-icon-flex"
-              @click="addParams('endpoint', data.endpoint)"
+              @click="addParams('endpoint', data.endpoint + '$*$' + data.endpoint_guid)"
               src="../assets/img/icon_filter.png"
             />
           </div>
@@ -197,12 +212,13 @@
       :fullscreen="true"
       :title="$t('m_menu_endpointView')"
     >
-      <EndpointViewComponent ref="endpointViewComponentRef"></EndpointViewComponent>
+      <EndpointViewComponent v-if='showEndpointView' ref="endpointViewComponentRef"></EndpointViewComponent>
     </Modal>
   </Card>
 </template>
 
 <script>
+import Vue from 'vue'
 import EndpointViewComponent from '@/components/endpoint-view-component'
 export default {
   props: {
@@ -236,10 +252,11 @@ export default {
       this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
     },
     goToNotify(item) {
-      if (item.notify_status === 'notStart') {
+      if (item.notify_permission === 'no' || !item.notify_permission) {
+        return this.$Message.error(this.$t('m_noProcessPermission'))
+      } else if (item.notify_status === 'notStart') {
         this.startFlowTip = `${this.$t('m_button_confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
-      }
-      else if (item.notify_status === 'started') {
+      } else if (item.notify_status === 'started') {
         this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('m_button_confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
       }
       this.alertId = item.id
@@ -267,11 +284,13 @@ export default {
       // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
-      this.$parent.filters[key] = this.$parent.filters[key] || []
-      if (!this.$parent.filters[key].includes(value)) {
-        this.$parent.filters[key].push(value)
+      Vue.set(this.$parent.filters, key, this.$parent.filters[key] || [])
+      const singleArr = this.$parent.filters[key]
+      if (singleArr.includes(value)) {
+        singleArr.splice(singleArr.indexOf(value), 1)
+      } else {
+        singleArr.push(value)
       }
-      this.$parent.getAlarm()
     },
     copyEndpoint(data) {
       const inputElement = document.createElement('input')
@@ -329,7 +348,7 @@ li {
 }
 
 .filter-icon-flex {
-  margin-left: 6px;
+  margin-left: 15px;
   cursor: pointer;
 }
 
@@ -353,7 +372,15 @@ li {
   cursor: pointer
 }
 .custom-title {
-  &:extend(.ellipsis-text);
-  max-width: 400px;
+  display: flex;
+  align-items: center;
+  .custom-title-text {
+    display: inline-block;
+    max-width: ~"calc(40vw - 285px)";
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+  }
 }
 </style>

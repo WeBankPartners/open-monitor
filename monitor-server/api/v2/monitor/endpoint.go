@@ -143,7 +143,7 @@ func UpdateEndpoint(c *gin.Context) {
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
-	err = db.UpdateEndpointData(&newEndpoint, middleware.GetOperateUser(c))
+	err = db.UpdateEndpointData(&endpointObj, &newEndpoint, middleware.GetOperateUser(c))
 	if err != nil {
 		return
 	}

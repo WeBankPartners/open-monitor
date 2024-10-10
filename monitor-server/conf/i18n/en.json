@@ -22,8 +22,15 @@
   "dashboard_name_repeat_error": "Save failed: A dashboard with the same name already exists",
   "dashboard_id_exist_error": "Import failed:dashboard ID already exists",
   "import_dashboard_name_exist_error": "Import failed:dashboard Name %s already exists",
+  "create_dashboard_name_exist_error": "Save Failed:dashboard Name %s already exists",
   "metric_not_support_preview": "The object group currently does not support the current type. Please switch to a single object to preview",
   "type_config_name_repeat_error": "Save failed: The same type configuration already exists",
-  "type_config_association_obj_error": "Failed to delete: An associated object cannot be deleted",
-  "type_config_association_obj_group_error": "Failed to be deleted: The type configuration cannot be deleted if an associated object group exists"
+  "type_config_association_obj_error": "Delete failed: An associated object cannot be deleted",
+  "type_config_association_obj_group_error": "Delete failed: The type configuration cannot be deleted if an associated object group exists",
+  "alert_name_repeat_error": "Save failed: The alarm with the same name already exists",
+  "alert_keyword_repeat_error": "Save failed: The alarm with the same keyword already exists",
+  "endpoint_host_delete_error": "Delete failed: Host endpoint have some relative process endpoint",
+  "log_monitor_template_delete_error": "Deleting Failed: The current template cannot be deleted because it has been referenced by the %s service configuration",
+  "add_comparison_metric_repeat_error": "Save Failed: The current Year-over-Year Metric already exists. Please modify the configuration and try again.",
+  "add_metric_repeat_error": "Save Failed: The current  Metric already exists. Please modify the configuration and try again."
 }
