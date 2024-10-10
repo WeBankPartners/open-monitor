@@ -146,6 +146,9 @@ func GetSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable, err
 func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) {
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from  alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)))", Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))", Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy where endpoint_group=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})

@@ -20,7 +20,7 @@
             <FormItem :label="$t('m_template_name')">
               <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
                 <Input
-                  v-model="configInfo.name"
+                  v-model.trim="configInfo.name"
                   maxlength="30"
                   show-word-limit
                   style="width: 96%"
@@ -42,7 +42,7 @@
                   <div v-html="regRes" style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
                 </div>
                 <Input
-                  v-model="configInfo.json_regular"
+                  v-model.trim="configInfo.json_regular"
                   type="textarea"
                   style="width: 96%"
                 />
@@ -51,7 +51,7 @@
             </FormItem>
             <FormItem :label="$t('m_log_example')">
               <Input
-                v-model="configInfo.demo_log"
+                v-model.trim="configInfo.demo_log"
                 type="textarea"
                 :rows="12"
                 style="width: 96%"
@@ -66,7 +66,7 @@
             <FormItem :label="$t('m_matching_result')">
               <Input
                 disabled
-                v-model="configInfo.calc_result.match_text"
+                v-model.trim="configInfo.calc_result.match_text"
                 type="textarea"
                 :rows="12"
                 style="width: 96%"
@@ -88,16 +88,56 @@
               ></Table>
             </div>
             <!-- 计算指标 -->
-            <div>
-              <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
+            <div class='calculation-indicators'>
+              <Divider orientation="left" size="small">
+                {{ $t('m_compute_metrics') }}
+                <Tooltip content="" placement="top" :max-width="500" transfer>
+                  <div slot="content" style="white-space: normal;">
+                    <div>{{ $t('m_calculation_title') }}</div>
+                    <div>{{ $t('m_calculation_tip1') }}</div>
+                    <div>{{ $t('m_calculation_tip2') }}</div>
+                    <div>{{ $t('m_calculation_tip3') }}</div>
+                    <div>{{ $t('m_calculation_tip4') }}</div>
+                    <div>{{ $t('m_calculation_tip5') }}</div>
+                    <div>{{ $t('m_calculation_tip6') }}</div>
+                    <div>{{ $t('m_calculation_tip7') }}</div>
+                    <div>{{ $t('m_calculation_tip8') }}</div>
+                  </div>
+                  <Icon style="cursor: pointer;" type="ios-alert-outline" :size="18" />
+                </Tooltip>
+              </Divider>
               <Table
                 size="small"
                 :columns="columnsForComputeMetrics"
                 :data="configInfo.metric_list"
                 width="100%"
               ></Table>
-
             </div>
+            <Divider orientation="left" size="small">{{ $t('m_success_code') }}</Divider>
+            <Row class="mb-2">
+              <Col offset="3"  span="5">{{$t('m_match_type')}}</Col>
+              <Col span="5">{{$t('m_source_value')}}</Col>
+              <Col span="5">{{$t('m_match_value')}}</Col>
+              <Col span="4">{{$t('m_type')}}</Col>
+            </Row>
+            <Row class="mb-3">
+              <Col span="3">{{$t('m_return_code')}}</Col>
+              <Col span="5">
+              <Select style="width:90%" v-model="successCode.regulative">
+                <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
+                <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
+              </Select>
+              </Col>
+              <Col span="5">
+              <Input style="width:90%" v-model.trim="successCode.source_value" />
+              </Col>
+              <Col span="5">
+              <Input style="width:90%" v-model.trim="successCode.target_value" />
+              </Col>
+              <Col span="4">
+              <div>{{$t('m_success')}}</div>
+              </Col>
+            </Row>
           </div>
           </Col>
         </Row>
@@ -123,6 +163,37 @@
 </template>
 
 <script>
+import {isEmpty, cloneDeep, hasIn} from 'lodash'
+import Vue from 'vue'
+import {thresholdList, lastList} from '@/assets/config/common-config.js'
+
+const initRangeConfigMap = {
+  req_suc_rate: {
+    operator: '<',
+    threshold: '90',
+    time: '60',
+    time_unit: 's'
+  },
+  req_costtime_avg: {
+    operator: '>',
+    threshold: '500',
+    time: '60',
+    time_unit: 's'
+  },
+  other: {
+    operator: '',
+    threshold: '',
+    time: '',
+    time_unit: ''
+  }
+}
+
+const initSuccessCode = {
+  regulative: 0,
+  source_value: '200',
+  target_value: 'success'
+}
+
 export default {
   name: 'json-regex',
   data() {
@@ -190,15 +261,30 @@ export default {
           key: 'demo_match_value',
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
+            const notEmpty = !['', undefined].includes(demo_match_value)
             return (
               <Tooltip content={demo_match_value} max-width="300" >
-                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+                <span style={notEmpty?'':'color:#c5c8ce'}>{notEmpty ? demo_match_value : this.$t('m_no_matching')}</span>
               </Tooltip>
             )
           }
         }
       ],
       columnsForComputeMetrics: [
+        {
+          title: this.$t('m_color_system'),
+          key: 'color_group',
+          width: 100,
+          render: (h, params) => (
+            <div class="color_system">
+              <ColorPicker value={params.row.color_group || ''}
+                on-on-open-change={
+                  isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
+                }
+              />
+            </div>
+          )
+        },
         {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
@@ -212,10 +298,12 @@ export default {
         {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
+          width: 150
         },
         {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
+          width: 150,
           render: (h, params) => (
             <span>
               {params.row.tag_config.join(',')}
@@ -225,6 +313,7 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          width: 200,
           render: (h, params) => {
             const agg_type = params.row.agg_type
             return (
@@ -233,9 +322,103 @@ export default {
               </Tooltip>
             )
           }
+        },
+        {
+          title: this.$t('m_automatic_alert'),
+          key: 'auto_alarm',
+          width: 80,
+          render: (h, params) =>
+            (
+              <i-switch value={params.row.auto_alarm}
+                on-on-change={val => {
+                  if (!val) {
+                    const key = ['req_suc_rate', 'req_costtime_avg'].includes(params.row.metric) ? params.row.metric : 'other'
+                    Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap[key]))
+                  }
+                  this.configInfo.metric_list[params.index].auto_alarm = val
+                }} />
+            )
+        },
+        {
+          title: this.$t('m_symbol'),
+          key: 'operator',
+          align: 'left',
+          minWidth: 100,
+          render: (h, params) => params.row.auto_alarm
+            ? (
+              <Select
+                value={params.row.range_config.operator}
+                on-on-change={v => {
+                  this.configInfo.metric_list[params.index].range_config.operator = v
+                }}
+                filterable
+                clearable
+              >
+                {thresholdList.map((i, index) => (
+                  <Option value={i.value} key={index}>
+                    {i.label}
+                  </Option>
+                ))}
+              </Select>
+            ) : <div></div>
+        },
+        {
+          title: this.$t('m_field_threshold'),
+          key: 'threshold',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.threshold}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
+              }}
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_tableKey_s_last'),
+          key: 'time',
+          align: 'left',
+          width: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Input
+              value={params.row.range_config.time}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time = v.target.value
+              }}
+              clearable
+            />
+          ) : <div/>
+        },
+        {
+          title: this.$t('m_time_unit'),
+          key: 'time_unit',
+          align: 'left',
+          minWidth: 70,
+          render: (h, params) => params.row.auto_alarm ? (
+            <Select
+              value={params.row.range_config.time_unit}
+              on-on-change={v => {
+                this.configInfo.metric_list[params.index].range_config.time_unit = v
+              }}
+              filterable
+              clearable
+            >
+              {lastList.map(i => (
+                <Option value={i.value} key={i.value}>
+                  {i.label}
+                </Option>
+              ))}
+            </Select>
+          ) : <div/>
         }
       ],
-      generateBackstageTrialWarning: false
+      generateBackstageTrialWarning: false,
+      successCode: cloneDeep(initSuccessCode),
+      cloneDeep,
+      actionType: ''
     }
   },
   computed: {
@@ -247,20 +430,25 @@ export default {
           return this.configInfo.demo_log.replace(match[1], '<span style=\'color:red\'>' + match[1] + '</span>')
         }
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
-      }
-      catch (err) {
+      } catch (err) {
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       }
     }
   },
   methods: {
-    loadPage(guid) {
+    loadPage(guid, actionType) {
+      this.successCode = cloneDeep(initSuccessCode)
       this.isfullscreen = true
       if (guid) {
-        this.isAdd = false
+        if (actionType === 'copy') {
+          this.actionType = actionType
+          this.isAdd = true
+        } else {
+          this.isAdd = false
+          this.actionType = ''
+        }
         this.getConfigDetail(guid)
-      }
-      else {
+      } else {
         this.configInfo = {
           guid: '',
           name: '',
@@ -306,7 +494,10 @@ export default {
               agg_type: 'count',
               tag_config: [
                 'code'
-              ]
+              ],
+              color_group: '#1a94bc',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -314,9 +505,11 @@ export default {
               display_name: this.$t('m_success_volume'),
               agg_type: 'count',
               tag_config: [
-                'code',
-                'retcode'
-              ]
+                'code'
+              ],
+              color_group: '#bec936',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -325,17 +518,22 @@ export default {
               agg_type: '100*{req_suc_count}/{req_count}',
               tag_config: [
                 'code'
-              ]
+              ],
+              color_group: '#20a162',
+              auto_alarm: true,
+              range_config: cloneDeep(initRangeConfigMap.req_suc_rate)
             },
             {
               log_param_name: 'code',
               metric: 'req_fail_count',
               display_name: this.$t('m_failure_volume'),
-              agg_type: 'count',
+              agg_type: '{req_count}-{req_suc_count}',
               tag_config: [
-                'code',
-                'retcode'
-              ]
+                'code'
+              ],
+              color_group: '#ee3f4d',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -344,7 +542,23 @@ export default {
               agg_type: '100-100*{req_suc_count}/{req_count}',
               tag_config: [
                 'code'
-              ]
+              ],
+              color_group: '#7c1823',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
+            },
+            {
+              log_param_name: 'code',
+              metric: 'req_fail_count_detail',
+              display_name: this.$t('m_categorized_failure_count'),
+              agg_type: 'count',
+              tag_config: [
+                'code',
+                'retcode'
+              ],
+              color_group: '#ee3f4d',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'costtime',
@@ -354,7 +568,10 @@ export default {
               tag_config: [
                 'code',
                 'retcode'
-              ]
+              ],
+              color_group: '#d6a01d',
+              auto_alarm: true,
+              range_config: cloneDeep(initRangeConfigMap.req_costtime_avg)
             },
             {
               log_param_name: 'costtime',
@@ -364,7 +581,10 @@ export default {
               tag_config: [
                 'code',
                 'retcode'
-              ]
+              ],
+              color_group: '#815c94',
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             }
           ]
         }
@@ -397,38 +617,91 @@ export default {
         this.$Message.warning(`${this.$t('m_json_key')}${this.$t('m_cannot_be_repeated')}`)
         return true
       }
+      if (!isEmpty(tmpData.metric_list)) {
+        const list = tmpData.metric_list
+        for (let i=0; i<list.length; i++) {
+          const item = list[i]
+          if (item.auto_alarm === true) {
+            if (!item.range_config.operator || !item.range_config.threshold || !item.range_config.time || !item.range_config.time_unit) {
+              this.$Message.warning(`${this.$t('m_threshold_property')}${this.$t('m_cannot_be_empty')}`)
+              return true
+            }
+            if (!this.isNumericString(item.range_config.threshold + '')) {
+              this.$Message.warning(`${this.$t('m_threshold_tips')}`)
+              return true
+            }
+            if (!this.isPositiveNumericString(item.range_config.time + '')) {
+              this.$Message.warning(`${this.$t('m_time_tips')}`)
+              return true
+            }
+          }
+        }
+      }
+      if (!isEmpty(this.successCode) && (isEmpty(this.successCode.regulative + '') || isEmpty(this.successCode.source_value + '') || isEmpty(this.successCode.target_value))) {
+        this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      if (!hasIn(tmpData, 'calc_result.match_text') || isEmpty(tmpData.calc_result.match_text)) {
+        this.$Message.warning(`${this.$t('m_matching_result')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
       return false
     },
 
     saveConfig() {
-      const tmpData = JSON.parse(JSON.stringify(this.configInfo))
+      const tmpData = cloneDeep(this.configInfo)
       if (this.paramsValidate(tmpData)) {
         return
       }
+      this.processSaveData(tmpData)
       delete tmpData.create_user
       delete tmpData.create_time
       delete tmpData.update_user
       delete tmpData.update_time
       const methodType = this.isAdd ? 'POST' : 'PUT'
+      if (this.actionType === 'copy') {
+        delete tmpData.guid
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logTemplateConfig, tmpData, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.showModal = false
         this.$emit('refreshData')
       })
     },
+    processSaveData(data){
+      if (isEmpty(data)) {return}
+      this.successCode.source_value = this.successCode.source_value + ''
+      data.success_code = JSON.stringify(this.successCode)
+      !isEmpty(data.metric_list) && data.metric_list.forEach(item => {
+        item.range_config.threshold += ''
+        item.range_config.time += ''
+        item.range_config = JSON.stringify(item.range_config)
+      })
+    },
     getConfigDetail(guid) {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
         this.configInfo = resp
+        this.processConfigInfo()
+        if (this.actionType === 'copy') {
+          this.configInfo.name += '(1)'
+        }
         this.showModal = true
       })
+    },
+    processConfigInfo() {
+      !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfigMap.other) : JSON.parse(item.range_config))
+        Vue.set(item, 'auto_alarm', hasIn(item, 'auto_alarm') ? item.auto_alarm : false)
+        Vue.set(item, 'color_group', isEmpty(item.color_group) ? '' : item.color_group)
+      })
+      this.successCode = !isEmpty(this.configInfo.success_code) ? JSON.parse(this.configInfo.success_code) : cloneDeep(initSuccessCode)
     },
     // 后台试算
     confirmGenerateBackstageTrial() {
       if (this.isAdd) {
         this.generateBackstageTrial()
-      }
-      else {
+      } else {
         this.generateBackstageTrialWarning = true
       }
     },
@@ -453,11 +726,59 @@ export default {
     },
     changeJSONKey(index, val) {
       this.configInfo.param_list[index].json_key = val
-      this.configInfo.param_list[index].demo_match_value = ((this.configInfo.calc_result.json_obj[val] || '') + '')
+      const valTmp = this.configInfo.calc_result.json_obj[val]
+      const notEmpty = !['', undefined].includes(valTmp)
+      this.configInfo.param_list[index].demo_match_value = ((notEmpty ? valTmp : '') + '')
+    },
+    changeColorGroup(isShow = true, data, key) {
+      if (isShow) {
+        this.$nextTick(() => {
+          const confirmButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-primary')
+          const resetButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-default')
+          if (isEmpty(confirmButtonList)) {
+            return
+          }
+          confirmButtonList[0].addEventListener('click', () => {
+            const inputList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-input')
+            if (isEmpty(inputList)) {
+              return
+            }
+            const color = inputList[0].value
+            Vue.set(data, key, color)
+          })
+          if (isEmpty(resetButtonList)) {
+            return
+          }
+          resetButtonList[0].addEventListener('click', () => {
+            Vue.set(data, key, '')
+          })
+        })
+      }
+    },
+    isNumericString(str) {
+      return !isNaN(str) && !isNaN(parseFloat(str))
+    },
+    isPositiveNumericString(str) {
+      return /^\d+$/.test(str) && parseFloat(str) >= 0
     }
   }
 }
 </script>
+
+<style lang="less">
+.calculation-indicators {
+  .ivu-table-cell {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+.color_system {
+  width: 40px
+}
+.ivu-table-wrapper {
+  overflow: inherit;
+}
+</style>
 
 <style lang="less" scoped>
 .custom-modal-header {
@@ -474,5 +795,14 @@ export default {
 }
 .ivu-form-item {
   margin-bottom: 0px;
+}
+.success-code {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start
+}
+.success-code > div {
+  margin-right: 10px;
+  margin-bottom: 20px
 }
 </style>

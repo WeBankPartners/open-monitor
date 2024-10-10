@@ -1,22 +1,22 @@
 <template>
   <div class=" ">
-    <section v-if="showManagement" style="margin-top: 16px;">
-      <div v-for="item in allPageContentData" :key="item.guid">
+    <section v-if='!isEmpty(logAndDataBaseAllDetail)' style="margin-top: 16px;">
+      <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div class="content-header">
           <div class="use-underline-title mr-4">
-            {{item.display_name}}
+            {{ !isEmpty(single.logFile) ? single.logFile.display_name : (!isEmpty(single.database) ? single.database.display_name : '')}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
         </div>
-        <div class="database-title">
-          <div class="use-underline-title">
+        <div class="content-header">
+          <div class="use-underline-title mr-4">
             {{$t('m_log_file')}}
             <span class="underline"></span>
           </div>
         </div>
-        <Collapse v-model="item.logFileCollapseValue">
-          <Panel v-for="(item, index) in item.config"
+        <Collapse v-model="single.logFile.logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
+          <Panel v-for="(item, index) in single.logFile.config"
                  :key="index"
                  :name="index + ''"
           >
@@ -35,7 +35,7 @@
               </div>
 
             </div>
-            <template #content>
+            <template slot='content'>
               <Table
                 class="log-file-table"
                 size="small"
@@ -45,20 +45,22 @@
             </template>
           </Panel>
         </Collapse>
-      </div>
+        <div v-else class='no-logfile-data'>{{$t('m_table_noDataTip')}}</div>
 
-      <div class="database-title">
-        <div class="use-underline-title">
-          {{$t('m_db')}}
-          <span class="underline"></span>
+        <div class="database-title">
+          <div class="use-underline-title">
+            {{$t('m_db')}}
+            <span class="underline"></span>
+          </div>
         </div>
+        <Table
+          size="small"
+          :columns="dataBaseTableColumns"
+          :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+        />
       </div>
-      <Table
-        size="small"
-        :columns="dataBaseTableColumns"
-        :data="dataBaseTableData"
-      />
     </section>
+    <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
@@ -68,20 +70,20 @@
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_tableKey_regular')">
-            <Input disabled v-model="ruleModelConfig.addRow.json_regular" style="width:100%"/>
+            <Input disabled v-model.trim="ruleModelConfig.addRow.json_regular" style="width:100%"/>
           </FormItem>
           <FormItem :label="$t('m_tableKey_tags')">
-            <Input disabled v-model="ruleModelConfig.addRow.tags" style="width:100%" />
+            <Input disabled v-model.trim="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
         </Form>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_key')" :delay="1000">
-                <Input disabled v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+                <Input disabled v-model.trim="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_metric')" :delay="1000">
-                <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
+                <Input disabled v-model.trim="item.metric" style="width: 190px" :placeholder="$t('m_field_metric') + ' , e.g:code'" />
               </Tooltip>
               <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select disabled v-model="item.agg_type" filterable clearable style="width:190px">
@@ -91,7 +93,7 @@
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
-                <Input disabled v-model="item.display_name" style="width: 160px" :placeholder="$t('m_tableKey_description')" />
+                <Input disabled v-model.trim="item.display_name" style="width: 160px" :placeholder="$t('m_tableKey_description')" />
               </Tooltip>
             </p>
             <div v-if="item.string_map.length > 0" :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
@@ -105,10 +107,10 @@
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('m_business_object')" :delay="1000">
-                    <Input disabled v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
+                    <Input disabled v-model.trim="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
                   </Tooltip>
                   <Tooltip :content="$t('m_log_server')" :delay="1000">
-                    <Input disabled v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
+                    <Input disabled v-model.trim="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
                   </Tooltip>
                 </p>
               </template>
@@ -143,10 +145,10 @@
                   </Select>
                 </Tooltip>
                 <Tooltip :content="$t('m_business_object')" :delay="1000">
-                  <Input disabled v-model="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
+                  <Input disabled v-model.trim="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
                 </Tooltip>
                 <Tooltip :content="$t('m_log_server')" :delay="1000">
-                  <Input disabled v-model="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
+                  <Input disabled v-model.trim="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
                 </Tooltip>
               </p>
             </template>
@@ -165,16 +167,16 @@
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <Form :label-width="100">
           <FormItem :label="$t('m_field_displayName')">
-            <Input disabled v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
+            <Input disabled v-model.trim="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
           <FormItem :label="$t('m_field_metric')">
-            <Input disabled v-model="dbModelConfig.addRow.metric" style="width:520px" />
+            <Input disabled v-model.trim="dbModelConfig.addRow.metric" style="width:520px" />
           </FormItem>
           <FormItem label="SQL">
             <Input disabled v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
           <FormItem :label="$t('m_field_type')">
-            <Select disabled v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
+            <Select disabled v-model.trim="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
             </Select>
           </FormItem>
@@ -183,10 +185,10 @@
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_db')" :delay="1000">
-                <Input disabled v-model="item.target_endpoint" style="width:290px" />
+                <Input disabled v-model.trim="item.target_endpoint" style="width:290px" />
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:290px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:290px" />
               </Tooltip>
             </p>
           </template>
@@ -208,16 +210,16 @@
         </div>
         <div style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 640px" disabled v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align:center">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:315px" />
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <Input disabled v-model.trim="item.source_endpoint" style="width:315px" />
               </Tooltip>
             </p>
           </template>
@@ -233,7 +235,9 @@
 </template>
 
 <script>
-import map from 'lodash/map'
+import {
+  map, isEmpty, uniq, cloneDeep, filter
+} from 'lodash'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 export default {
@@ -241,7 +245,7 @@ export default {
   data() {
     return {
       MODALHEIGHT: 300,
-      showManagement: false,
+      // showManagement: false,
       regulationOption: [
         {
           label: this.$t('m_regular_match'),
@@ -324,7 +328,7 @@ export default {
         value: 'metric'
       },
       // DB config
-      showDbManagement: false,
+      // showDbManagement: false,
       dbModelConfig: {
         isShow: false,
         isAdd: true,
@@ -453,12 +457,8 @@ export default {
         regular: this.$t('m_standard_regex'),
         json: this.$t('m_standard_json'),
       },
+
       dataBaseTableColumns: [
-        {
-          title: this.$t('m_metric_name'),
-          width: 250,
-          key: 'display_name'
-        },
         {
           title: this.$t('m_metric_key'),
           width: 350,
@@ -466,11 +466,22 @@ export default {
         },
         {
           title: this.$t('m_field_type'),
-          key: 'monitor_type'
+          key: 'monitor_type',
+          minWidth: 100,
+        },
+        {
+          title: this.$t('m_updatedBy'),
+          key: 'update_user',
+          width: 100,
+        },
+        {
+          title: this.$t('m_title_updateTime'),
+          minWidth: 100,
+          key: 'update_time'
         },
         {
           title: this.$t('m_table_action'),
-          width: 250,
+          width: 100,
           key: 'index',
           render: (h, params) => (
             <div>
@@ -483,32 +494,25 @@ export default {
           )
         }
       ],
-      dataBaseTableData: []
+      dataBaseTableData: [],
+      isEmpty,
+      logAndDataBaseAllDetail: [],
+      metricKey: ''
     }
   },
   methods: {
-    // DB config
-    getDbDetail(targetId) {
-      const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + targetId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-        this.dataBaseTableData = responseData
-        this.showDbManagement = true
-      }, {isNeedloading: false})
-    },
     editDbItem(rowData) {
       this.getEndpoint(rowData.monitor_type, 'mysql', rowData.service_group)
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.dbModelConfig.isAdd = false
       this.dbModelConfig.isShow = true
     },
-    async getEndpoint(val, type, targrtId) {
-      // await this.getDefaultConfig(val, type)
-      // get source Endpoint
-      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + type
+    async getEndpoint(val, type, targetId) {
+      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
-      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + val
+      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + val
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
       }, {isNeedloading: false})
@@ -527,7 +531,7 @@ export default {
       this.addAndEditModal.isShow = true
     },
     getDefaultConfig(val, type) {
-      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         const tmp = responseData.map(r => ({
           source_endpoint: r.source_endpoint,
@@ -540,8 +544,7 @@ export default {
               this.addAndEditModal.dataConfig.endpoint_rel.push(t)
             }
           })
-        }
-        else {
+        } else {
           tmp.forEach(t => {
             const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
             if (find === undefined) {
@@ -561,41 +564,70 @@ export default {
       this.$root.JQ('#custom_metrics').modal('show')
     },
     editRuleItem(rowData) {
-      // this.ruleModelConfig.isAdd = false
-      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      // this.ruleModelConfig.isShow = true
       if (rowData.log_type === 'custom') {
         this.$refs.customRegexRef.loadPage('view', '', rowData.log_metric_monitor, rowData.guid)
-      }
-      else {
+      } else {
         this.$refs.businessMonitorGroupConfigRef.loadPage('view', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
       }
     },
-    getDetail(targrtId) {
-      this.showManagement = false
-      this.showDbManagement = false
-      this.targrtId = targrtId
-      this.getDbDetail(targrtId)
-      const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
-
-        this.allPageContentData = responseData.map((res, index) => {
-          if (index === 0) {
-            res.logFileCollapseValue = ['0']
-          }
-          else {
-            res.logFileCollapseValue = []
-          }
-          res.config.forEach(item => {
-            item.metric_groups.forEach(group => {
-              group.log_type_display = this.typeToName[group.log_type]
+    async getLogKeyWordDetail() {
+      return new Promise(resolve => {
+        let api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.allPageContentData = responseData.map((res, index) => {
+            if (index === 0) {
+              res.logFileCollapseValue = ['0']
+            } else {
+              res.logFileCollapseValue = []
+            }
+            res.config.forEach(item => {
+              item.metric_groups.forEach(group => {
+                group.log_type_display = this.typeToName[group.log_type]
+              })
             })
+            return res
           })
-          return res
-        })
-        this.showManagement = true
-        this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading: true})
+          this.$root.$store.commit('changeTableExtendActive', -1)
+          resolve(this.allPageContentData)
+        }, {isNeedloading: true})
+      })
+    },
+    async getDetail(targetId, metricKey = this.metricKey) {
+      if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
+        this.metricKey = metricKey
+      }
+      this.targetId = targetId
+      await this.getDbDetail()
+      await this.getLogKeyWordDetail()
+      this.processAllInfo()
+    },
+    processAllInfo() {
+      this.logAndDataBaseAllDetail = []
+      const allDetail = [...cloneDeep(this.allPageContentData), ...cloneDeep(this.dataBaseTableData)]
+      const allGuid = uniq(map(allDetail, 'guid')) || []
+
+      allGuid.forEach(guid => {
+        const tempInfo = {
+          logFile: filter(this.allPageContentData, item => item.guid === guid)[0],
+          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
+        }
+        this.logAndDataBaseAllDetail.push(tempInfo)
+      })
+    },
+    getDbDetail() {
+      return new Promise(resolve => {
+        let api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
+        if (this.metricKey) {
+          api += `?metricKey=${this.metricKey}`
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+          this.dataBaseTableData = responseData
+          resolve(this.dataBaseTableData)
+        }, {isNeedloading: false})
+      })
     }
   },
   mounted() {
@@ -653,5 +685,19 @@ export default {
   .underline {
     margin-top: -10px
   }
+}
+.no-logfile-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.no-data-class {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 80px;
+  font-size: 16px;
 }
 </style>
