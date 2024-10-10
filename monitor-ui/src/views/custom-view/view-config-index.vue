@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="custom-view-index">
     <div>
       <Row>
         <Tabs v-model="searchMap.permission" @on-click="onFilterConditionChange()">
@@ -8,10 +8,13 @@
         </Tabs>
       </Row>
       <div class="table-data-search">
+        <div style="font-size: 14px;min-width: 110px">{{$t('m_show_user_created')}}</div>
+        <i-switch v-model="searchMap.show" class='mr-3' style="width: 60px" @on-change="onFilterConditionChange" />
         <Input
           v-model="searchMap.name"
           class="mr-3"
           type="text"
+          style="width: 15%"
           :placeholder="$t('m_name')"
           clearable
           @on-change="onFilterConditionChange"
@@ -20,6 +23,7 @@
           v-model="searchMap.id"
           class="mr-3"
           type="text"
+          style="width: 15%"
           :placeholder="$t('m_id')"
           clearable
           @on-change="onFilterConditionChange"
@@ -28,12 +32,12 @@
         <Select
           v-model="searchMap.useRoles"
           class="mr-3"
+          style="width: 15%"
           clearable
           :max-tag-count="1"
           filterable
           multiple
           :placeholder="$t('m_use_role')"
-          style="width: 90%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
@@ -41,12 +45,12 @@
         <Select
           v-model="searchMap.mgmtRoles"
           class="mr-3"
+          style="width: 15%"
           clearable
           filterable
           :max-tag-count="1"
           multiple
           :placeholder="$t('m_manage_role')"
-          style="width: 90%"
           @on-change="onFilterConditionChange"
         >
           <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
@@ -54,7 +58,7 @@
         <Input
           v-model="searchMap.updateUser"
           class="mr-3"
-          style="width: 90%"
+          style="width: 15%"
           type="text"
           :placeholder="$t('m_updatedBy')"
           clearable
@@ -83,7 +87,7 @@
           <Button type="primary">
             {{$t('m_import')}}
           </Button>
-          <template #list>
+          <template  slot='list'>
             <DropdownMenu>
               <DropdownItem v-for="(item, index) in importTypeOptions"
                             :name="item.value"
@@ -94,18 +98,21 @@
             </DropdownMenu>
           </template>
         </Dropdown>
-        <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
-          {{$t('m_button_setDashboard')}}
-        </button>
+        <Button @click="setDashboard">{{$t('m_button_setDashboard')}}</Button>
       </div>
     </div>
-    <div class="mt-3">
+    <div class="mt-3 all-card-content">
       <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
       <Row class="all-card-item" :gutter="15" v-else>
         <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
         <Card>
           <div slot="title" class="panal-title">
-            <span class="panal-title-name">{{ item.name }}</span>
+            <div class='panal-title-name'>
+              <Tag v-if='item.logMetricGroup' style="width: 40px" color='green'>auto</Tag>
+              <Tooltip :content="item.name" :max-width='400' theme="dark" transfer placement="top">
+                <span class='panal-title-name-text'>{{ item.name }}</span>
+              </Tooltip>
+            </div>
             <span class="panal-title-update">
               <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
               <span class="mt-1">{{item.updateTime}}</span>
@@ -119,7 +126,7 @@
               </div>
               <div v-if="keyItem.type === 'array'">
                 <div v-if="item[keyItem.key].length" class="card-content-array">
-                  <ScrollTag :list="item[keyItem.key]"></ScrollTag>
+                  <BaseScrollTag :list="item[keyItem.key]"></BaseScrollTag>
                 </div>
                 <div v-else>-</div>
               </div>
@@ -127,19 +134,32 @@
           </div>
           <div class="card-divider"></div>
           <div class="card-content-footer">
-            <Button size="small" type="info" @click="goToPanal(item, 'view')">
-              <Icon type="md-eye" />
-            </Button>
-            <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
-              <Icon type="md-cloud-upload" />
-            </Button>
+            <Tooltip placement="top" transfer :content="$t('m_copy')">
+              <Button size="small" class="mr-1" type="success" @click="onDashboardItemCopy(item)">
+                <Icon type="md-document" size="16"></Icon>
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" transfer :content="$t('m_preview')">
+              <Button size="small" type="info" @click="goToPanal(item, 'view')">
+                <Icon type="md-eye" />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" transfer :content="$t('m_export')">
+              <Button size="small" type="info" class="export-button" @click.stop="exportPanel(item)">
+                <Icon type="md-cloud-upload" />
+              </Button>
+            </Tooltip>
             <template v-if="item.permission === 'mgmt'">
-              <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
-                <Icon type="md-create" />
-              </Button>
-              <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
-                <Icon type="md-person" />
-              </Button>
+              <Tooltip placement="top" transfer :content="$t('m_button_edit')">
+                <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
+                  <Icon type="md-create" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" transfer :content="$t('m_role_drawer_title')">
+                <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
+                  <Icon type="md-person" />
+                </Button>
+              </Tooltip>
               <Poptip
                 confirm
                 :title="$t('m_delConfirm_tip')"
@@ -164,7 +184,7 @@
         show-total
       />
       <ModalComponent :modelConfig="authorizationModel">
-        <template #authorization>
+        <template slot='authorization'>
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in authorizationModel.result">
               <p :key="index" style="margin:6px 0">
@@ -195,7 +215,7 @@
         </template>
       </ModalComponent>
       <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveTemplate">
-        <template #content-top>
+        <template slot='content-top'>
           <div v-if="isAuthModalNameShow" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
             <Input style="width:calc(100% - 60px);" :maxlength="30" show-word-limit v-model.trim="addViewName"></Input>
@@ -238,13 +258,11 @@
     </div>
   </div>
 </template>
-
 <script>
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
-import ScrollTag from '@/components/scroll-tag.vue'
 import ExportChartModal from './export-chart-modal.vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 export default {
@@ -291,6 +309,7 @@ export default {
       dashboard_id: '',
       pathMap: {},
       searchMap: {
+        show: false,
         permission: '',
         name: '',
         id: '',
@@ -323,7 +342,7 @@ export default {
       ],
       pagination: {
         totalRows: 100,
-        currentPage: 2,
+        currentPage: 1,
         pageSize: 18
       },
       mgmtRoles: [],
@@ -354,26 +373,45 @@ export default {
       panalName: ''
     }
   },
-  mounted(){
-    this.pathMap = this.$root.apiCenter.template
-    this.pagination.pageSize = 18
-    this.pagination.currentPage = 1
-    this.getViewList()
-    this.getAllRoles()
-    if (this.$route.query.isCreate) {
-      setTimeout(() => {
-        this.addBoardItem()
-      }, 500)
+  mounted() {
+    if (this.$route.query.needCache === 'yes') {
+      // 读取列表搜索参数
+      const storage = window.sessionStorage.getItem('search_custom_view') || ''
+      if (storage) {
+        const { searchParams } = JSON.parse(storage)
+        this.searchMap = searchParams
+      }
     }
+    this.initData()
+  },
+  beforeDestroy() {
+    // 缓存列表搜索条件
+    const storage = {
+      searchParams: this.searchMap
+    }
+    window.sessionStorage.setItem('search_custom_view', JSON.stringify(storage))
   },
   methods: {
+    initData() {
+      this.pathMap = this.$root.apiCenter.template
+      this.pagination.pageSize = 18
+      this.pagination.currentPage = 1
+      this.getViewList()
+      this.getAllRoles()
+      if (this.$route.query.isCreate) {
+        setTimeout(() => {
+          this.addBoardItem()
+        }, 500)
+      }
+    },
     handleReset() {
       const resetObj = {
         name: '',
         id: '',
         useRoles: [],
         mgmtRoles: [],
-        updateUser: ''
+        updateUser: '',
+        show: false
       }
       this.searchMap = Object.assign({}, this.searchMap, resetObj)
       this.pagination.currentPage = 1
@@ -473,14 +511,15 @@ export default {
       })
     },
     getViewList() {
-      const params = Object.assign(cloneDeep(this.searchMap), {
+      const cloneSearchMap = cloneDeep(this.searchMap)
+      cloneSearchMap.show = cloneSearchMap.show === true ? 'me' : ''
+      const params = Object.assign(cloneSearchMap, {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       })
       if (!params.id || isNaN(Number(params.id))) {
         params.id = 0
-      }
-      else {
+      } else {
         params.id = Number(params.id)
       }
       if (params.permission === 'all') {
@@ -509,6 +548,7 @@ export default {
       })
     },
     onFilterConditionChange: debounce(function () {
+      this.pagination.currentPage = 1
       this.getViewList()
     }, 300),
     saveTemplate(mgmtRoles, useRoles) {
@@ -546,11 +586,14 @@ export default {
       if (this.authViewType === 'add') {
         params.name = this.addViewName
         path = '/monitor/api/v2/dashboard/custom'
-      }
-      else if (this.authViewType === 'edit') {
+      } else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
         params.id = this.boardId
         path = '/monitor/api/v2/dashboard/custom/permission'
+      } else if (this.authViewType === 'copyDashboard') {
+        params.dashboardId = this.pannelId
+        path = '/monitor/api/v2/dashboard/custom/copy'
+        params.mgmtRole = params.mgmtRoles[0]
       }
       this.request('POST', path, params, val => {
         this.getViewList()
@@ -574,8 +617,7 @@ export default {
           content,
           duration: 5
         })
-      }
-      else {
+      } else {
         this.$Message.success(this.$t('m_tips_success'))
       }
       this.$refs.authDialog.flowRoleManageModal = false
@@ -588,11 +630,15 @@ export default {
       this.panalName = item.name
       this.pannelId = item.id
       this.isModalShow = true
+    },
+    onDashboardItemCopy(item) {
+      this.pannelId = item.id
+      this.authViewType = 'copyDashboard'
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     }
   },
   components: {
     AuthDialog,
-    ScrollTag,
     ExportChartModal
   }
 }
@@ -617,9 +663,18 @@ export default {
   border-color: #aa8aea;
 }
 
+body::-webkit-scrollbar {
+    display: none; /* 隐藏滚动条 */
+}
+
 </style>
 
 <style scoped lang="less">
+.all-card-content {
+  max-height: ~'calc(100vh - 190px)';
+  overflow-x: hidden;
+  overflow-y: auto;
+}
 .screen-config-menu {
   width: 150px;
 }
@@ -665,15 +720,19 @@ li {
     color: @blue-2;
     height: 30px;
     &-name {
+      display: flex;
       font-size: 15px;
-      flex: 1;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-break: break-all;
-      padding-right: 5px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      .panal-title-name-text {
+        line-height: 18px;
+        display: inline-block;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
     &-update {
       display: flex;
@@ -681,10 +740,6 @@ li {
       width: 130px;
       font-size: 13px;
     }
-  }
-  .panal-title > div {
-    display: flex;
-    flex-direction: column;
   }
   .card-divider {
     height: 1px;
@@ -720,6 +775,7 @@ li {
 
 .card-content {
   display: flex;
+  align-items: center;
 }
 
 .auth-dialog-content {
@@ -754,5 +810,6 @@ li {
 .table-data-search {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 </style>
