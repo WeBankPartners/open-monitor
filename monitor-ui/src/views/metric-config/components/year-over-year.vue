@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (operator === 'add' ? $t('m_button_add') : $t('m_button_edit')) + $t('m_year_over_year_metrics') }}<span class="underline"></span></div>
+        <div class="title">{{ (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit')) + $t('m_year_over_year_metrics') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">
@@ -96,6 +96,7 @@
 
 <script>
 import { debounce} from '@/assets/js/utils'
+import {cloneDeep} from 'lodash'
 // import { readyToDraw } from '@/assets/config/chart-rely-yoy'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
@@ -213,7 +214,7 @@ export default {
     this.metricConfigData.metricId = this.originalMetricsId || ''
     await this.getMetricList()
     this.initDrawerHeight()
-    if (this.operator === 'edit') {
+    if (['edit', 'copy'].includes(this.operator)) {
       this.getConfigData()
     }
     await this.getEndpoint()
@@ -372,6 +373,14 @@ export default {
         return this.$Message.error(this.$t('m_original_metric_key') + this.$t('m_tips_required'))
       }
       const type = 'POST'
+      if (this.operator === 'copy') {
+        const keys = ['calcMethod', 'calcPeriod', 'calcType', 'comparisonType', 'endpoint', 'metricId']
+        const params = {}
+        keys.forEach(key => {
+          params[key] = this.metricConfigData[key]
+        })
+        this.metricConfigData = cloneDeep(params)
+      }
       this.metricConfigData.endpoint_group = this.endpointGroup
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         type,
