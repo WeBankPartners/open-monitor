@@ -1,3 +1,4 @@
+const lodash = require('lodash')
 const hexToHSL = H => {
   const r = parseInt(H.substring(1, 3), 16) / 255
   const g = parseInt(H.substring(3, 5), 16) / 255
@@ -29,20 +30,15 @@ const hslToHex = (h, s, l) => {
   let b = 0
   if (0 <= h && h < 60) {
     r = c; g = x; b = 0
-  }
-  else if (60 <= h && h < 120) {
+  } else if (60 <= h && h < 120) {
     r = x; g = c; b = 0
-  }
-  else if (120 <= h && h < 180) {
+  } else if (120 <= h && h < 180) {
     r = 0; g = c; b = x
-  }
-  else if (180 <= h && h < 240) {
+  } else if (180 <= h && h < 240) {
     r = 0; g = x; b = c
-  }
-  else if (240 <= h && h < 300) {
+  } else if (240 <= h && h < 300) {
     r = x; g = 0; b = c
-  }
-  else if (300 <= h && h < 360) {
+  } else if (300 <= h && h < 360) {
     r = c; g = 0; b = x
   }
   r = Math.round((r + m) * 255).toString(16)
@@ -70,10 +66,37 @@ const generateAdjacentColors = (hexColor, count, degree) => {
   }
   return adjacentColors
 }
+const stringToNumber = (str, min = 1, max = 99) => {
+  if (!str) {return Math.floor(Math.random() * (max - min + 1)) + min}
+  const hash = Array.from(str).reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const reversed = parseInt((((hash % (max - min + 1)) + min) + '').split('').reverse()
+    .join(''), 10)
+  const minOutput = 10
+  const maxOutput = 90
+  return ((reversed - min) / (reversed - max)) * (maxOutput - minOutput) + minOutput
+}
+
+const changeSeriesColor = (series = [], color = '') => {
+  if (series.length === 0 || !color) {return}
+  if (series.length === 1) {
+    series[0].color = color
+  } else {
+    const len = series.length
+    const colorArr = generateAdjacentColors(color, len, 10)
+    const seriesNameList = series.map(item => item.seriesName)
+    seriesNameList.sort()
+    for (let i=0; i<seriesNameList.length; i++) {
+      const item = lodash.find(series, {
+        seriesName: seriesNameList[i]
+      })
+      item.color = colorArr[i]
+    }
+  }
+  return series
+}
 
 export {
-  generateAdjacentColors
+  generateAdjacentColors,
+  stringToNumber,
+  changeSeriesColor
 }
-// 示例
-// let colors = generateAdjacentColors("#ff5733", 3, 10);
-// console.log(colors);

@@ -7,7 +7,7 @@
             {{this.$t('m_preview')}}
             <span class="underline"></span>
           </div>
-          <div v-if="isChartDataError" class="echart error-chart">
+          <div v-if="isChartDataError || isChartSeriesEmpty" class="echart error-chart">
             {{this.$t('m_noData')}}
           </div>
           <div v-else>
@@ -22,7 +22,7 @@
 
           <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
             <FormItem :label="$t('m_graph_name')" prop="name">
-              <Input v-model.trim="chartConfigForm.name" :maxlength="30" show-word-limit/>
+              <Input v-model.trim="chartConfigForm.name" :maxlength="100" show-word-limit/>
             </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
@@ -117,7 +117,7 @@
       <div class="data-config">
         <div class="w-header" slot="title">
           <div class="title">
-            {{this.$t('m_menu_metricConfiguration')}}
+            {{this.$t('m_menu_metricConfiguration') }}
             <span class="underline"></span>
           </div>
         </div>
@@ -221,9 +221,8 @@ import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
-import { generateUuid } from '@/assets/js/utils'
-import { generateAdjacentColors } from '@/assets/config/random-color'
-
+import { generateUuid, getRandomColor } from '@/assets/js/utils'
+import { changeSeriesColor } from '@/assets/config/random-color'
 const initTableData = [
   {
     endpoint: '',
@@ -238,6 +237,17 @@ const initTableData = [
     metric: '',
     tags: [],
     series: []
+  }
+]
+
+const equalOptionList = [
+  {
+    name: 'm_include',
+    value: 'in'
+  },
+  {
+    name: 'm_not_include',
+    value: 'notin'
   }
 ]
 
@@ -332,7 +342,7 @@ export default {
           width: 150,
           key: 'monitorType',
           render: (h, params) => params.row.monitorType ? (
-            <Button size="small">{params.row.monitorType}</Button>
+            <Button size="small" style="font-size: 12px">{params.row.monitorType}</Button>
           ) : <span>-</span>
         },
         {
@@ -343,16 +353,18 @@ export default {
             <div class="indicator_color_system">
               {params.row.metricType ? <Tag class="indicator_system_tag" type="border" color={this.metricTypeMap[params.row.metricType].color}>{this.metricTypeMap[params.row.metricType].label}</Tag> : <span/>}
               <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
-              <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
-                this.tableData[params.index].colorGroup = e
-              }} />
+              <ColorPicker value={params.row.colorGroup}
+                on-on-open-change={
+                  isShow => this.changeColorGroup(isShow, this.tableData[params.index], 'colorGroup')
+                }
+              />
             </div>
           )
         },
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          width: 320,
+          width: 340,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index)
             return (
@@ -362,7 +374,21 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
-                        style="maxWidth: 200px"
+                        style="width: 80px"
+                        value={i.equal}
+                        on-on-change={v => {
+                          Vue.set(this.tableData[params.index].tags[selectIndex], 'equal', v)
+                        }}
+                        filterable>
+                        {equalOptionList.map((item, index) => (
+                          <Option value={item.value} key={item.value + index}>
+                            {this.$t(item.name)}
+                          </Option>
+                        ))}
+                      </Select>
+
+                      <Select
+                        style="maxWidth: 180px"
                         value={i.tagValue}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
@@ -397,9 +423,11 @@ export default {
                   <div class="generate-lines">
                     {item.new ? <Tag class="new-line-tag" color="error">{this.$t('m_new')}</Tag> : <span/>}
                     <div class="series-name mr-2">{item.seriesName}</div>
-                    <ColorPicker v-model={item.color} on-on-change={e => {
-                      this.tableData[params.index].series[selectIndex].color = e
-                    }} />
+                    <ColorPicker v-model={item.color}
+                      on-on-open-change={
+                        isShow => this.changeColorGroup(isShow, this.tableData[params.index].series[selectIndex], 'color')
+                      }
+                    />
                   </div>
                 ))) : '-' }
             </div>
@@ -505,6 +533,20 @@ export default {
                   ? (params.row.tags.map((i, selectIndex) => (
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
+
+                      <Select
+                        style="width: 80px"
+                        value={i.equal}
+                        on-on-change={v => {
+                          Vue.set(this.tableData[params.index].tags[selectIndex], 'equal', v)
+                        }}>
+                        {equalOptionList.map((item, index) => (
+                          <Option value={item.value} key={item.value + index}>
+                            {this.$t(item.name)}
+                          </Option>
+                        ))}
+                      </Select>
+
                       <Select
                         value={i.tagValue}
                         on-on-change={v => {
@@ -572,7 +614,7 @@ export default {
       metricOptions: [],
       chartTemplateOptions: [
         {
-          label: this.$t('m_metric_list'),
+          label: this.$t('m_customize'),
           key: 'one',
           value: {
             aggregate: 'none',
@@ -582,7 +624,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
+          label: `${this.$t('m_volume')}: sum-60s-${this.$t('m_bar_chart')}`,
           key: 'two',
           value: {
             aggregate: 'sum',
@@ -592,7 +634,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'three',
           value: {
             aggregate: 'avg',
@@ -602,7 +644,7 @@ export default {
           }
         },
         {
-          label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          label: `${this.$t('m_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
           key: 'four',
           value: {
             aggregate: 'max',
@@ -691,7 +733,8 @@ export default {
       chartAddTagOptions: {},
       chartAddTags: [],
       getEndpointSearch: '',
-      selectedEndpointOptionItem: {}
+      selectedEndpointOptionItem: {},
+      isChartSeriesEmpty: false
     }
   },
   computed: {
@@ -741,7 +784,7 @@ export default {
       await this.getEndpointList()
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
-      }, res => {
+      }, async res => {
         // public是true的时候，是引用态， public为false的时候，为非引用态
         this.chartPublic = res.public
         for (const key in this.chartConfigForm) {
@@ -751,46 +794,51 @@ export default {
           this.chartConfigForm.chartTemplate = 'one'
         }
         this.tableData = cloneDeep(res.chartSeries)
-
         if (res.chartType === 'pie' && isEmpty(this.tableData)) {
           this.tableData = cloneDeep(initTableData)
         }
-        this.processRawTableData(this.tableData)
+        await this.processRawTableData(this.tableData)
         this.drawChartContent()
       })
     },
     async processRawTableData(initialData) {
-      if (isEmpty(initialData)) {
-        return []
-      }
-      for (let i=0; i < initialData.length; i++) {
-        const item = initialData[i]
-        item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
-        Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
-
-        // 同环比修改
-        if (item.comparison) {
-          const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-          item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+      return new Promise(async resolve => {
+        if (isEmpty(initialData)) {
+          return []
         }
-      }
-      if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
-        const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
-          option_value: initialData[0].endpoint
-        })
-        this.endpointValue = initialData[0].endpoint
-        this.serviceGroup = selectedEndpointItem.app_object
-
-        this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
-          guid: selectedEndpointItem.option_value
-        }, res => {
-          if (!isEmpty(res)) {
-            this.monitorType = initialData[0].monitorType
-            this.monitorTypeOptions = res
-            this.searchMetricByType()
+        for (let i=0; i < initialData.length; i++) {
+          const item = initialData[i]
+          item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
+          Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
+          // 同环比修改
+          if (item.comparison) {
+            const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
+            item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+          } else {
+            if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
+              this.updateAllColorLine(i)
+            }
           }
-        })
-      }
+        }
+        if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
+          const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+            option_value: initialData[0].endpoint
+          })
+          this.endpointValue = initialData[0].endpoint
+          this.serviceGroup = selectedEndpointItem.app_object
+
+          this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
+            guid: selectedEndpointItem.option_value
+          }, res => {
+            if (!isEmpty(res)) {
+              this.monitorType = initialData[0].monitorType
+              this.monitorTypeOptions = res
+              this.searchMetricByType()
+            }
+          })
+        }
+        resolve(initialData)
+      })
     },
     getAllRolesOptions() {
       const params = {
@@ -858,7 +906,8 @@ export default {
         tags.push(
           {
             tagName: key,
-            tagValue
+            tagValue,
+            equal: isEmpty(rawTagItem) || isEmpty(rawTagItem.equal) ? 'in' : rawTagItem.equal
           }
         )
       }
@@ -1042,14 +1091,6 @@ export default {
         item.endpointType = this.endpointType
       }
     },
-    getRandomColor() {
-      const letters = '0123456789ABCDEF'
-      let color = '#'
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)]
-      }
-      return color
-    },
     async addConfiguration() {
       if (this.endpointValue && this.metricGuid) {
         const metricItem = find(this.metricOptions, {
@@ -1057,7 +1098,7 @@ export default {
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
         const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-        const colorGroup = this.getRandomColor()
+        const colorGroup = getRandomColor()
         const item = {
           endpoint: this.endpointValue,
           serviceGroup: this.serviceGroup,
@@ -1072,11 +1113,7 @@ export default {
           tags: this.chartAddTags,
           tagOptions: this.chartAddTagOptions
         }
-
-        item.series = series.map((line, index) => {
-          line.color = generateAdjacentColors(colorGroup, 1, 35 * (index - 0.3))[0]
-          return line
-        })
+        item.series = changeSeriesColor(series, colorGroup)
         this.tableData.push(item)
         this.metricGuid = ''
         this.endpointValue = ''
@@ -1179,13 +1216,11 @@ export default {
     onLineTypeChange(lineType) {
       if (lineType === 'bar') {
         this.chartConfigForm.chartType = 'bar'
-      }
-      else if (lineType === 'twoYaxes') {
+      } else if (lineType === 'twoYaxes') {
         this.chartConfigForm.aggStep = 60
         this.chartConfigForm.aggregate = 'none'
         this.chartConfigForm.unit = ''
-      }
-      else {
+      } else {
         this.chartConfigForm.chartType = 'line'
       }
       this.resetChartTemplate()
@@ -1229,9 +1264,7 @@ export default {
             drawPieChart(this, res)
           }
         )
-      }
-      else {
-
+      } else {
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
           agg_step: this.chartConfigForm.aggStep || 60,
@@ -1247,18 +1280,29 @@ export default {
         if (isEmpty(params.data)) {
           return
         }
+        if (!isEmpty(params.data) && params.data.every(item => isEmpty(item.series))) {
+          this.isChartSeriesEmpty = true
+          return
+        }
         this.request(
           'POST',
           '/monitor/api/v1/dashboard/chart',
           params,
           responseData => {
+            if (isEmpty(responseData.series)) {
+              this.isChartSeriesEmpty = true
+              return
+            }
             responseData.yaxis.unit = this.chartConfigForm.unit
-            readyToDraw(this, responseData, 1, {
-              eye: false,
-              lineBarSwitch: true,
-              chartType: this.chartConfigForm.chartType,
-              params
-            })
+            this.isChartSeriesEmpty = false
+            setTimeout(() => {
+              readyToDraw(this, responseData, 1, {
+                eye: false,
+                lineBarSwitch: true,
+                chartType: this.chartConfigForm.chartType,
+                params
+              })
+            }, 100)
           }
         )
       }
@@ -1266,7 +1310,7 @@ export default {
 
     debounceDrawChart: debounce(function () {
       this.drawChartContent()
-    }, 500),
+    }, 300),
 
     generateLineParamsData() {
       if (isEmpty(this.tableData)) {
@@ -1282,8 +1326,7 @@ export default {
             delete one.seriesName
             return one
           })
-        }
-        else {
+        } else {
           item.metricToColor = []
         }
         delete item.colorGroup
@@ -1297,10 +1340,37 @@ export default {
       const item = this.tableData[index]
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-      this.tableData[index].series = series.map(item => {
-        item.color = item.color || this.getRandomColor()
-        return item
-      })
+      this.tableData[index].series = changeSeriesColor(series, this.tableData[index].colorGroup)
+    },
+    changeColorGroup(isShow = true, data, key) {
+      if (isShow) {
+        this.$nextTick(() => {
+          const confirmButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-primary')
+          const resetButtonList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-btn-default')
+          if (isEmpty(confirmButtonList)) {
+            return
+          }
+          confirmButtonList[0].addEventListener('click', () => {
+            const inputList = document.querySelectorAll('.ivu-color-picker-confirm .ivu-input')
+            if (isEmpty(inputList)) {
+              return
+            }
+            const color = inputList[0].value
+            data[key] = color
+            if (key === 'colorGroup') {
+              if (Array.isArray(data.series) && !isEmpty(data.series)) {
+                changeSeriesColor(data.series, color)
+              }
+            }
+          })
+          if (isEmpty(resetButtonList)) {
+            return
+          }
+          resetButtonList[0].addEventListener('click', () => {
+            data[key] = ''
+          })
+        })
+      }
     }
   },
   components: {
@@ -1377,7 +1447,7 @@ export default {
 
   }
   .new-line-tag {
-    width: fit-content
+    min-width: 28px;
   }
 }
 
