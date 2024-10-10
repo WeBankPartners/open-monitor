@@ -66,14 +66,16 @@ type PluginUpdateServicePathRequest struct {
 }
 
 type PluginUpdateServicePathRequestObj struct {
-	CallbackParameter  string      `json:"callbackParameter"`
-	Guid               string      `json:"guid"`
-	SystemName         string      `json:"systemName"`
-	LogPathList        interface{} `json:"logPathList"`
-	MonitorType        string      `json:"monitorType"`
-	LogMonitorTemplate string      `json:"logMonitorTemplate"`
-	DeployPath         string      `json:"deployPath"`
-	PathType           string      `json:"pathType"` // 日志类型-> logMonitor|logKeyword
+	CallbackParameter    string      `json:"callbackParameter"`
+	Guid                 string      `json:"guid"`
+	SystemName           string      `json:"systemName"`
+	LogPathList          interface{} `json:"logPathList"`
+	MonitorType          string      `json:"monitorType"`
+	LogMonitorTemplate   string      `json:"logMonitorTemplate"`   // 日志监控模版id，单值
+	LogMonitorPrefixCode string      `json:"logMonitorPrefixCode"` // 日志监控指标前缀
+	LogMonitorName       string      `json:"logMonitorName"`       // 日志监控配置名
+	DeployPath           string      `json:"deployPath"`
+	PathType             string      `json:"pathType"` // 日志类型-> logMonitor|logKeyword
 }
 
 type PluginUpdateServicePathResp struct {

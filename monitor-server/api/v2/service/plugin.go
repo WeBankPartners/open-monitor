@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -9,7 +10,7 @@ import (
 	"net/http"
 )
 
-func PluginUpdateServicePath(c *gin.Context)  {
+func PluginUpdateServicePath(c *gin.Context) {
 	response := models.PluginUpdateServicePathResp{ResultCode: "0", ResultMessage: "success", Results: models.PluginUpdateServicePathOutput{}}
 	var err error
 	defer func() {
@@ -28,7 +29,7 @@ func PluginUpdateServicePath(c *gin.Context)  {
 		return
 	}
 	for _, input := range param.Inputs {
-		output, tmpErr := db.PluginUpdateServicePathAction(input)
+		output, tmpErr := db.PluginUpdateServicePathAction(input, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c))
 		if tmpErr != nil {
 			output.ErrorCode = "1"
 			output.ErrorMessage = tmpErr.Error()

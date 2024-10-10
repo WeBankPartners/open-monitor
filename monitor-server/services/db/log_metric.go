@@ -1033,7 +1033,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap, errMsgObj)
+		tmpActions, _, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1233,15 +1233,19 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj)
+	var newDashboardId int64
+	actions, result, newDashboardId, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj)
 	if err != nil {
 		return
 	}
 	err = Transaction(actions)
+	if err != nil && newDashboardId > 0 {
+		x.Exec("delete from custom_dashboard where id=?", newDashboardId)
+	}
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
 	var templateSnapshot []byte
 	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
@@ -1275,6 +1279,18 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	if param.Name == "" {
 		param.Name = logMonitorTemplateObj.Name
 	}
+	// 如果输入的映射为空，尝试拿模版的成功映射，为了插件服务自动化生成配置
+	if len(param.RetCodeStringMap) == 0 && logMonitorTemplateObj.SuccessCode != "" {
+		var templateRetCodeMap []*models.LogMetricStringMapTable
+		if unmarshalErr := json.Unmarshal([]byte(logMonitorTemplateObj.SuccessCode), &templateRetCodeMap); unmarshalErr == nil {
+			for _, v := range templateRetCodeMap {
+				v.ValueType = "success"
+			}
+			param.RetCodeStringMap = templateRetCodeMap
+		} else {
+			log.Logger.Warn("json unmarshal log template success code fail", log.String("successCode", logMonitorTemplateObj.SuccessCode), log.Error(unmarshalErr))
+		}
+	}
 	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime, templateSnapshot, refTemplateVersion,
 	}})
@@ -1306,22 +1322,32 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
 	}
-	if param.LogMetricMonitorGuid != "" {
-		var logMetricMonitor = &models.LogMetricMonitorTable{}
+	if serviceGroup != "" && monitorType != "" {
 		var endpointGroupIds []string
-		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+		serviceGroupsRoles = getServiceGroupRoles(serviceGroup)
+		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
 			return
 		}
-		if logMetricMonitor != nil {
-			serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
-			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
-				return
-			}
-			if len(endpointGroupIds) > 0 {
-				endpointGroup = endpointGroupIds[0]
-			}
+		if len(endpointGroupIds) > 0 {
+			endpointGroup = endpointGroupIds[0]
 		}
 	}
+	//if param.LogMetricMonitorGuid != "" {
+	//	var logMetricMonitor = &models.LogMetricMonitorTable{}
+	//	var endpointGroupIds []string
+	//	if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+	//		return
+	//	}
+	//	if logMetricMonitor != nil {
+	//		serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+	//		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+	//			return
+	//		}
+	//		if len(endpointGroupIds) > 0 {
+	//			endpointGroup = endpointGroupIds[0]
+	//		}
+	//	}
+	//}
 	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
 		serviceGroupsRoles = roles[:1]
 	}
@@ -1336,7 +1362,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	}
 	var dashboardParam = models.AutoCreateDashboardParam{LogMetricGroupWithTemplate: param, MetricList: logMonitorTemplateObj.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
 		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj}
-	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(dashboardParam); err != nil {
+	if subCreateDashboardActions, result.CustomDashboard, newDashboardId, err = autoGenerateCustomDashboard(dashboardParam); err != nil {
 		return
 	}
 	if len(subCreateDashboardActions) > 0 {
