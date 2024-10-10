@@ -12,36 +12,52 @@ import (
 	"time"
 )
 
-func GetDbMetricByServiceGroup(serviceGroup string) (result []*models.DbMetricMonitorObj, err error) {
+func GetDbMetricByServiceGroup(serviceGroup, metricKey string) (result []*models.DbMetricMonitorObj, err error) {
 	result = []*models.DbMetricMonitorObj{}
 	var dbMetricTable []*models.DbMetricMonitorTable
-	err = x.SQL("select * from db_metric_monitor where service_group=?", serviceGroup).Find(&dbMetricTable)
+	if metricKey != "" {
+		err = x.SQL("select * from db_metric_monitor where service_group=? and metric like '%"+metricKey+"%' order by update_time desc", serviceGroup).Find(&dbMetricTable)
+	} else {
+		err = x.SQL("select * from db_metric_monitor where service_group=? order by update_time desc", serviceGroup).Find(&dbMetricTable)
+	}
 	if err != nil {
 		return result, fmt.Errorf("Query db_metric_monitor table fail,%s ", err.Error())
 	}
 	for _, v := range dbMetricTable {
-		result = append(result, &models.DbMetricMonitorObj{Guid: v.Guid, ServiceGroup: v.ServiceGroup, MetricSql: v.MetricSql, Metric: v.Metric, DisplayName: v.DisplayName, Step: v.Step, MonitorType: v.MonitorType, EndpointRel: getDbMetricEndpointRel(v.Guid)})
+		result = append(result, &models.DbMetricMonitorObj{Guid: v.Guid, ServiceGroup: v.ServiceGroup, MetricSql: v.MetricSql,
+			Metric: v.Metric, DisplayName: v.DisplayName, Step: v.Step, MonitorType: v.MonitorType,
+			EndpointRel: getDbMetricEndpointRel(v.Guid), UpdateUser: v.UpdateUser, UpdateTime: v.UpdateTime,
+		})
 	}
 	return
 }
 
-func GetDbMetricByEndpoint(endpointGuid string) (result []*models.DbMetricMonitorObj, err error) {
-	result = []*models.DbMetricMonitorObj{}
+func QueryDbMetricWithServiceGroup(serviceGroup, metricKey string) (result *models.DbMetricQueryObj, err error) {
+	serviceGroupObj, getServiceGroupErr := getSimpleServiceGroup(serviceGroup)
+	if getServiceGroupErr != nil {
+		err = getServiceGroupErr
+		return
+	}
+	result = &models.DbMetricQueryObj{ServiceGroupTable: serviceGroupObj}
+	result.Config, err = GetDbMetricByServiceGroup(serviceGroup, metricKey)
+	return
+}
+
+func GetDbMetricByEndpoint(endpointGuid, metricKey string) (result []*models.DbMetricQueryObj, err error) {
+	result = []*models.DbMetricQueryObj{}
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select distinct t3.* from db_metric_endpoint_rel t1 left join db_metric_monitor t2 on t1.db_metric_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.source_endpoint=?", endpointGuid).Find(&serviceGroupTable)
+	err = x.SQL("select distinct t3.* from db_metric_endpoint_rel t1 left join db_metric_monitor t2 on t1.db_metric_monitor=t2.guid left join service_group t3 on t2.service_group=t3.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpointGuid, endpointGuid).Find(&serviceGroupTable)
 	if err != nil {
 		return result, fmt.Errorf("Query database fail,%s ", err.Error())
 	}
 	for _, v := range serviceGroupTable {
-		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid)
+		tmpResult, tmpErr := GetDbMetricByServiceGroup(v.Guid, metricKey)
 		if tmpErr != nil {
 			err = tmpErr
 			break
 		}
-		for _, vv := range tmpResult {
-			vv.ServiceGroupName = v.DisplayName
-		}
-		result = append(result, tmpResult...)
+		resultObj := models.DbMetricQueryObj{ServiceGroupTable: *v, Config: tmpResult}
+		result = append(result, &resultObj)
 	}
 	return
 }
@@ -61,7 +77,7 @@ func GetDbMetric(dbMetricGuid string) (result models.DbMetricMonitorObj, err err
 }
 
 func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	if param.Step < 10 || param.Step > 600 {
+	if param.Step < 10 {
 		param.Step = 10
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
@@ -70,13 +86,13 @@ func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 }
 
 func getCreateDBMetricActions(param *models.DbMetricMonitorObj, operator, nowTime string) (actions []*Action) {
-	param.Guid = guid.CreateGuid()
-	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time) value (?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime}
+	param.Guid = "dbm_" + guid.CreateGuid()
+	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time,update_user) value (?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime, operator}
 	actions = append(actions, &insertAction)
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user,db_metric_monitor) value (?,?,?,?,?,?,?,?,?,?,?)",
 		Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getDbMetricExpr(param.Metric, param.ServiceGroup), param.ServiceGroup,
-			models.MetricWorkspaceService, nowTime, nowTime, operator, operator}})
+			models.MetricWorkspaceService, nowTime, nowTime, operator, operator, param.Guid}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
 	for i, v := range param.EndpointRel {
 		if v.TargetEndpoint == "" {
@@ -93,7 +109,7 @@ func getDbMetricExpr(metric, serviceGroup string) (result string) {
 }
 
 func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	if param.Step < 10 || param.Step > 600 {
+	if param.Step < 10 {
 		param.Step = 10
 	}
 	var dbMetricTable []*models.DbMetricMonitorTable
@@ -103,8 +119,8 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 	}
 	var affectEndpointGroup []string
 	var actions []*Action
-	updateAction := Action{Sql: "update db_metric_monitor set metric_sql=?,metric=?,display_name=?,step=?,monitor_type=?,update_time=? where guid=?"}
-	updateAction.Param = []interface{}{param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, time.Now().Format(models.DatetimeFormat), param.Guid}
+	updateAction := Action{Sql: "update db_metric_monitor set metric_sql=?,metric=?,display_name=?,step=?,monitor_type=?,update_time=?,update_user=? where guid=?"}
+	updateAction.Param = []interface{}{param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, time.Now().Format(models.DatetimeFormat), operator, param.Guid}
 	actions = append(actions, &updateAction)
 	if dbMetricTable[0].Metric != param.Metric {
 		oldMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
@@ -137,31 +153,36 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
 	return err
 }
 
-func DeleteDbMetric(dbMetricGuid string) error {
-	var dbMetricTable []*models.DbMetricMonitorTable
-	x.SQL("select * from db_metric_monitor where guid=?", dbMetricGuid).Find(&dbMetricTable)
-	if len(dbMetricTable) == 0 {
-		return nil
+func DeleteDbMetric(dbMetricGuid string) (err error) {
+	var actions, endpointGroup = GetDeleteDbMetricActions(dbMetricGuid)
+	if err = Transaction(actions); err != nil {
+		return
 	}
-	var actions []*Action
-	var endpointGroup []string
-	var alarmStrategyTable []*models.AlarmStrategyTable
-	alarmMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
-	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
-	for _, v := range alarmStrategyTable {
-		endpointGroup = append(endpointGroup, v.EndpointGroup)
-	}
-	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
-	err := Transaction(actions)
-	if err == nil && len(endpointGroup) > 0 {
+	if len(endpointGroup) > 0 {
 		for _, v := range endpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
-	return err
+	return
+}
+
+func GetDeleteDbMetricActions(dbMetricGuid string) (actions []*Action, endpointGroup []string) {
+	actions = []*Action{}
+	endpointGroup = []string{}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	var alarmStrategyTable []*models.AlarmStrategyTable
+	x.SQL("select * from db_metric_monitor where guid=?", dbMetricGuid).Find(&dbMetricTable)
+	if len(dbMetricTable) == 0 {
+		return
+	}
+	alarmMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
+
+	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
+	return
 }
 
 func getDbMetricEndpointRel(dbMetricMonitorGuid string) (result []*models.DbMetricEndpointRelTable) {
@@ -170,7 +191,7 @@ func getDbMetricEndpointRel(dbMetricMonitorGuid string) (result []*models.DbMetr
 	return result
 }
 
-func SyncDbMetric() error {
+func SyncDbMetric(initFlag bool) error {
 	var dbExportAddress string
 	for _, v := range models.Config().Dependence {
 		if v.Name == "db_data_exporter" {
@@ -186,11 +207,20 @@ func SyncDbMetric() error {
 	if err != nil {
 		return fmt.Errorf("Query db_metric_monitor fail,%s ", err.Error())
 	}
+	var dbKeywordQuery []*models.DbKeywordMonitorQueryObj
+	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor").Find(&dbKeywordQuery)
+	if err != nil {
+		return fmt.Errorf("Query db_keyword_monitor fail,%s ", err.Error())
+	}
 	endpointGuidList := []string{}
 	endpointExtMap := make(map[string]*models.EndpointExtendParamObj)
 	for _, v := range dbMonitorQuery {
 		endpointGuidList = append(endpointGuidList, v.SourceEndpoint)
 		endpointExtMap[v.SourceEndpoint] = &models.EndpointExtendParamObj{}
+	}
+	for _, row := range dbKeywordQuery {
+		endpointGuidList = append(endpointGuidList, row.SourceEndpoint)
+		endpointExtMap[row.SourceEndpoint] = &models.EndpointExtendParamObj{}
 	}
 	var endpointTable []*models.EndpointNewTable
 	x.SQL("select guid,endpoint_address,extend_param from endpoint_new where monitor_type='mysql' and guid in ('" + strings.Join(endpointGuidList, "','") + "')").Find(&endpointTable)
@@ -213,6 +243,39 @@ func SyncDbMetric() error {
 				taskObj.Endpoint = v.TargetEndpoint
 			}
 			postData = append(postData, &taskObj)
+		}
+	}
+	for _, v := range dbKeywordQuery {
+		if extConfig, b := endpointExtMap[v.SourceEndpoint]; b {
+			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: "db_keyword_value", Step: v.Step, Sql: v.QuerySql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup, KeywordGuid: v.Guid}
+			if v.TargetEndpoint != "" {
+				taskObj.Endpoint = v.TargetEndpoint
+			}
+			postData = append(postData, &taskObj)
+		}
+	}
+	if initFlag {
+		var alarmTable []*models.DbKeywordAlarm
+		err = x.SQL("select * from db_keyword_alarm").Find(&alarmTable)
+		if err != nil {
+			log.Logger.Error("init db keyword warning with query exist alarm fail", log.Error(err))
+		} else {
+			keywordCountMap := make(map[string]float64)
+			for _, row := range alarmTable {
+				keywordCountKey := fmt.Sprintf("%s^^^%s", row.DbKeywordMonitor, row.Endpoint)
+				if existCount, ok := keywordCountMap[keywordCountKey]; ok {
+					if existCount < row.EndValue {
+						keywordCountMap[keywordCountKey] = row.EndValue
+					}
+				} else {
+					keywordCountMap[keywordCountKey] = row.EndValue
+				}
+			}
+			for _, v := range postData {
+				if findCount, ok := keywordCountMap[fmt.Sprintf("%s^^^%s", v.KeywordGuid, v.Endpoint)]; ok {
+					v.KeywordCount = int64(findCount)
+				}
+			}
 		}
 	}
 	postDataByte, _ := json.Marshal(postData)

@@ -100,6 +100,7 @@ type AlarmProblemQuery struct {
 	Id                 int                   `json:"id"`
 	StrategyId         int                   `json:"strategy_id"`
 	Endpoint           string                `json:"endpoint"`
+	EndpointGuid       string                `json:"endpoint_guid"`
 	Status             string                `json:"status"`
 	SMetric            string                `json:"s_metric"`
 	SExpr              string                `json:"s_expr"`
@@ -130,11 +131,13 @@ type AlarmProblemQuery struct {
 	NotifyMessage      string                `json:"notify_message"`
 	NotifyCallbackName string                `json:"notify_callback_name"`
 	NotifyStatus       string                `json:"notify_status"`
+	NotifyPermission   string                `json:"notify_permission"` // yes表示有权限
 	AlarmObjName       string                `json:"alarm_obj_name"`
 	AlarmName          string                `json:"alarm_name"`
 	AlarmDetail        string                `json:"alarm_detail"`
 	AlarmMetricList    []string              `json:"alarm_metric_list"`
 	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
+	Log                string                `json:"log"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -481,10 +484,11 @@ type QueryProblemAlarmDto struct {
 type QueryProblemAlarmPageDto struct {
 	Endpoint          []string  `json:"endpoint"`
 	Metric            []string  `json:"metric"`
-	Priority          string    `json:"priority"`
+	Priority          []string  `json:"priority"`
 	Page              *PageInfo `json:"page"`
 	AlarmName         []string  `json:"alarm_name"`
 	CustomDashboardId int       `json:"custom_dashboard_id"`
+	Query             string    `json:"query"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -494,8 +498,9 @@ type QueryHistoryAlarmParam struct {
 	Endpoint  []string  `json:"endpoint"`
 	Metric    []string  `json:"metric"`
 	AlarmName []string  `json:"alarm_name"`
-	Priority  string    `json:"priority"`
+	Priority  []string  `json:"priority"`
 	Page      *PageInfo `json:"page"`
+	Query     string    `json:"query"`
 }
 
 type AlertWindowTable struct {
@@ -520,11 +525,13 @@ type AlertWindowParam struct {
 }
 
 type CustomAlarmQueryParam struct {
-	Enable bool
-	Level  string
-	Start  string
-	End    string
-	Status string
+	Enable         bool
+	Level          []string
+	Start          string
+	End            string
+	Status         string
+	AlterTitleList []string
+	Query          string
 }
 
 type EventTreeventNotifyDto struct {
@@ -585,7 +592,7 @@ type AlarmCloseParam struct {
 	Metric    []string `json:"metric"`
 	Endpoint  []string `json:"endpoint"`
 	AlarmName []string `json:"alarmName"`
-	Priority  string   `json:"priority"`
+	Priority  []string `json:"priority"`
 }
 
 type AlarmCondition struct {
@@ -657,7 +664,119 @@ type EndpointListParam struct {
 }
 
 type ProblemAlarmOptions struct {
-	EndpointList  []string `json:"endpointList"`
-	MetricList    []string `json:"metricList"`
-	AlarmNameList []string `json:"alarmNameList"`
+	EndpointList  []AlarmEndpoint `json:"endpointList"`
+	MetricList    []string        `json:"metricList"`
+	AlarmNameList []string        `json:"alarmNameList"`
+}
+
+type AlarmEndpoint struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+}
+
+type QueryProcessDefinitionPublicResponse struct {
+	Code    int         `json:"code"`
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    *ProcDefDto `json:"data"`
+}
+
+type ProcDefDto struct {
+	Id               string   `json:"id"`               // 唯一标识
+	Key              string   `json:"key"`              // 编排key
+	Name             string   `json:"name"`             // 编排名称
+	Version          string   `json:"version"`          // 版本
+	RootEntity       string   `json:"rootEntity"`       // 根节点
+	Status           string   `json:"status"`           // 状态
+	Tags             string   `json:"tags"`             // 标签
+	AuthPlugins      []string `json:"authPlugins"`      // 授权插件
+	Scene            string   `json:"scene"`            // 使用场景
+	ConflictCheck    bool     `json:"conflictCheck"`    // 冲突检测
+	CreatedBy        string   `json:"createdBy"`        // 创建人
+	CreatedTime      string   `json:"createdTime"`      // 创建时间
+	UpdatedBy        string   `json:"updatedBy"`        // 更新人
+	UpdatedTime      string   `json:"updatedTime"`      // 更新时间
+	EnableCreated    bool     `json:"enableCreated"`    // 能否创建新版本
+	EnableModifyName bool     `json:"enableModifyName"` // 能否修改名称
+	UseRoles         []string `json:"userRoles"`        // 使用角色
+	UseRolesDisplay  []string `json:"userRolesDisplay"` // 使用角色-显示名
+	MgmtRoles        []string `json:"mgmtRoles"`        // 管理角色
+	MgmtRolesDisplay []string `json:"mgmtRolesDisplay"` // 管理角色-显示名
+}
+
+type AlarmEngineConfigRow struct {
+	Guid          string `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy string `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Metric        string `json:"metric" xorm:"metric"`                // 指标
+	Condition     string `json:"condition" xorm:"condition"`          // 条件
+	Last          string `json:"last" xorm:"last"`                    // 持续时间
+	CrcHash       string `json:"crc_hash" xorm:"crc_hash"`            // hash
+	Priority      string `json:"priority" xorm:"priority"`
+	Content       string `json:"content" xorm:"content"`
+	NotifyEnable  int    `json:"notify_enable" xorm:"notify_enable"`
+	NotifyDelay   int    `json:"notify_delay" xorm:"notify_delay"`
+	AlarmName     string `json:"alarm_name" xorm:"alarm_name"`
+	ActiveWindow  string `json:"active_window" xorm:"active_window"`
+}
+
+type AutoAlarmStrategyParam struct {
+	*LogMetricGroupWithTemplate
+	MetricList         []*LogMetricTemplate
+	ServiceGroupsRoles []string
+	ServiceGroup       string
+	EndpointGroup      string
+	Operator           string
+	ErrMsgObj          *ErrorMessageObj
+}
+
+type AutoSimpleAlarmStrategyParam struct {
+	MetricList         []*LogMetricConfigDto
+	ServiceGroupsRoles []string
+	ServiceGroup       string
+	EndpointGroup      string
+	Operator           string
+	ErrMsgObj          *ErrorMessageObj
+	AutoCreateWarn     bool
+	LogMetricGroupGuid string
+	MetricPrefixCode   string
+}
+
+type AlarmOptionsParam struct {
+	Status    string `json:"status"`
+	AlarmName string `json:"alarmName"`
+	Endpoint  string `json:"endpoint"`
+	Metric    string `json:"metric"`
+}
+
+type QueryAlarmCondition struct {
+	AlarmTable          AlarmTable
+	Limit               int
+	ExtOpenAlarm        bool
+	EndpointFilterList  []string
+	MetricFilterList    []string
+	AlarmNameFilterList []string
+	PriorityList        []string
+	UserRoles           []string
+	Token               string
+	Query               string // 支持告警任意搜索
+}
+
+type AlarmFiring struct {
+	Id            int       `json:"id" xorm:"id"`
+	Endpoint      string    `json:"endpoint" xorm:"endpoint"`            // 告警对象
+	Metric        string    `json:"metric" xorm:"metric"`                // 告警指标
+	Tags          string    `json:"tags" xorm:"tags"`                    // 告警标签
+	AlarmName     string    `json:"alarmName" xorm:"alarm_name"`         // 告警名称
+	AlarmStrategy string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警策略配置
+	NotifyId      string    `json:"notifyId" xorm:"notify_id"`           // 告警通知配置
+	Expr          string    `json:"expr" xorm:"expr"`                    // 告警表达式
+	Cond          string    `json:"cond" xorm:"cond"`                    // 告警条件
+	Last          string    `json:"last" xorm:"last"`                    // 告警持续时间
+	Priority      string    `json:"priority" xorm:"priority"`            // 告警级别
+	Content       string    `json:"content" xorm:"content"`              // 告警描述内容
+	StartValue    float64   `json:"startValue" xorm:"start_value"`       // 告警发生值
+	Start         time.Time `json:"start" xorm:"start"`                  // 告警发生时间
+	CustomMessage string    `json:"customMessage" xorm:"custom_message"` // 告警人工备注
+	UniqueHash    string    `json:"uniqueHash" xorm:"unique_hash"`       // 告警唯一标识(对象+指标+标签+配置)
+	AlarmId       int       `json:"alarmId" xorm:"alarm_id"`             // 告警历史表id
 }

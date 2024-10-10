@@ -9,7 +9,7 @@ require('echarts/lib/component/legend')
 require('echarts/lib/component/toolbox')
 require('echarts/lib/component/legendScroll')
 
-import { generateAdjacentColors } from './random-color'
+import { generateAdjacentColors, stringToNumber } from './random-color'
 const echarts = require('echarts/lib/echarts')
 
 export const readyToDraw = function (that, responseData, viewIndex, chartConfig, elId) {
@@ -53,13 +53,13 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     })
     // 处理在最初没数据，后面来数据 metricToColor 为空时的指标颜色处理
     if (isHostOrSys) {
-      responseData.series.forEach((item, itemIndex) => {
+      responseData.series.forEach(item => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
           const keys = Object.keys(metricEndpointColorInChartConfig)
           keys.forEach(key => {
             if (item.name.startsWith(key)) {
-              const color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, 20 * (itemIndex - 0.3))
+              const color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, stringToNumber(item.name))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -68,15 +68,15 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
           })
         }
       })
-    }
-    else {
-      responseData.series.forEach((item, itemIndex) => {
+    } else {
+      window.metricToColor = metricToColor
+      responseData.series.forEach(item => {
         const findIndex = metricToColor.findIndex(m => m.metric === item.name)
         if (findIndex === -1) {
           const keys = Object.keys(metricSysColorInChartConfig)
           keys.forEach(key => {
             if (item.name.includes(key)) {
-              const color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1))
+              const color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, stringToNumber(item.name))
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -105,8 +105,7 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     const find = metricToColor.find(m => m.metric === item.name)
     if (find && find.color !== '') {
       color = find.color
-    }
-    else {
+    } else {
       color = colorSet[index] ? colorSet[index] : '#666699'
     }
     // 堆叠区域图开启
@@ -177,6 +176,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       top: '10px'
     },
     tooltip: {
+      appendToBody: true,
       trigger: 'axis',
       backgroundColor: 'rgba(245, 245, 245, 0.8)',
       borderWidth: 1,
@@ -295,20 +295,16 @@ export const drawChart = function (that,config,userConfig, elId) {
             if (val > 1024*1024*1024*1024) {
               val = val / (1024*1024*1024*1024)
               unit = 'T'
-            }
-            else if (val > 1024*1024*1024) {
+            } else if (val > 1024*1024*1024) {
               val = val / (1024*1024*1024)
               unit = 'G'
-            }
-            else if (val > 1024*1024) {
+            } else if (val > 1024*1024) {
               val = val / (1024*1024)
               unit = 'M'
-            }
-            else if (val > 1024) {
+            } else if (val > 1024) {
               val = val / 1024
               unit = 'K'
-            }
-            else {
+            } else {
               return val + ' ' + config.yaxis.unit
             }
             const newValue = Number.isInteger(val) ? val : val.toFixed(3)
@@ -440,6 +436,7 @@ export const drawPieChart = function (that, responseData) {
       left: 'center'
     },
     tooltip: {
+      appendToBody: true,
       confine: true, // tip控制在图像区内
       trigger: 'item',
       formatter: '{b} : {c} ({d}%)'
@@ -485,16 +482,14 @@ const mgmtYAxesMinMax = function (series) {
   if (max1 < max2 * ratio) {
     minMax.y1Max = max2 * ratio
     minMax.y2Max = max2
-  }
-  else {
+  } else {
     minMax.y1Max = max1
     minMax.y2Max = max1 / ratio
   }
   if (min1 < min2 * ratio) {
     minMax.y1Min = min1
     minMax.y2Min = min1 / ratio
-  }
-  else {
+  } else {
     minMax.y1Min = min2 * ratio
     minMax.y2Min = min2
   }

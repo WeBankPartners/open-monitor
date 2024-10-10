@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQueryObj, err error) {
+func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.LogMetricQueryObj, err error) {
 	serviceGroupObj, getErr := getSimpleServiceGroup(serviceGroup)
 	if getErr != nil {
 		return result, getErr
@@ -27,9 +27,9 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 	for _, logMetricMonitor := range logMetricMonitorTable {
 		tmpConfig := models.LogMetricMonitorObj{Guid: logMetricMonitor.Guid, ServiceGroup: logMetricMonitor.ServiceGroup, LogPath: logMetricMonitor.LogPath, MetricType: logMetricMonitor.MetricType, MonitorType: logMetricMonitor.MonitorType}
 		tmpConfig.EndpointRel = ListLogMetricEndpointRel(logMetricMonitor.Guid)
-		//tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
+		tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
 		tmpConfig.MetricConfigList = ListLogMetricConfig("", logMetricMonitor.Guid)
-		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid)
+		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid, metricKey)
 		for _, logJsonObj := range tmpConfig.JsonConfigList {
 			for _, logMetricObj := range logJsonObj.MetricList {
 				logMetricObj.ServiceGroup = serviceGroup
@@ -41,19 +41,26 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 			logMetricObj.MonitorType = logMetricMonitor.MonitorType
 		}
 		for _, logMetricGroupObj := range tmpConfig.MetricGroups {
+			var logMonitorTemplateDto *models.LogMonitorTemplateDto
 			logMetricGroupObj.ServiceGroup = serviceGroup
 			logMetricGroupObj.MonitorType = logMetricMonitor.MonitorType
+			if strings.TrimSpace(logMetricGroupObj.LogMonitorTemplate) != "" {
+				if logMonitorTemplateDto, err = GetLogMonitorTemplate(logMetricGroupObj.LogMonitorTemplate); err != nil {
+					return
+				}
+				logMetricGroupObj.LogMonitorTemplateDto = logMonitorTemplateDto
+			}
 		}
 		result.Config = append(result.Config, &tmpConfig)
 	}
-	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup)
+	result.DBConfig, err = GetDbMetricByServiceGroup(serviceGroup, metricKey)
 	if err != nil {
 		err = fmt.Errorf("query db metric config fail,%s ", err.Error())
 	}
 	return
 }
 
-func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.LogMetricQueryObj, err error) {
+func GetLogMetricByEndpoint(endpoint, metricKey string, onlySource bool) (result []*models.LogMetricQueryObj, err error) {
 	result = []*models.LogMetricQueryObj{}
 	var endpointServiceRelTable []*models.EndpointServiceRelTable
 	if onlySource {
@@ -62,10 +69,21 @@ func GetLogMetricByEndpoint(endpoint string, onlySource bool) (result []*models.
 		err = x.SQL("select distinct t2.service_group from log_metric_endpoint_rel t1 left join log_metric_monitor t2 on t1.log_metric_monitor=t2.guid where t1.source_endpoint=? or t1.target_endpoint=?", endpoint, endpoint).Find(&endpointServiceRelTable)
 	}
 	for _, v := range endpointServiceRelTable {
-		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup)
+		tmpObj, tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup, metricKey)
 		if tmpErr != nil {
 			err = tmpErr
 			break
+		}
+		for _, logMetricConfig := range tmpObj.Config {
+			for _, logMetricGroup := range logMetricConfig.MetricGroups {
+				for _, tmpLogMetric := range logMetricGroup.MetricList {
+					if tmpLogMetric.Metric == "req_suc_count" {
+						if len(tmpLogMetric.TagConfigList) == 1 {
+							tmpLogMetric.TagConfigList = append(tmpLogMetric.TagConfigList, "retcode")
+						}
+					}
+				}
+			}
 		}
 		result = append(result, &tmpObj)
 	}
@@ -179,6 +197,22 @@ func ListLogMetricStringMap(logMetricConfig string) (result []*models.LogMetricS
 	return result
 }
 
+func GetLogMetricMonitorByCond(logPath []string, guid, serviceGroup string) (list []*models.LogMetricMonitorTable, err error) {
+	list = []*models.LogMetricMonitorTable{}
+	for _, path := range logPath {
+		var subList []*models.LogMetricMonitorTable
+		if guid == "" {
+			err = x.SQL("select * from log_metric_monitor where log_path=? and service_group=?", path, serviceGroup).Find(&subList)
+		} else {
+			err = x.SQL("select * from log_metric_monitor where log_path=? and service_group=? and guid <>?", path, serviceGroup, guid).Find(&subList)
+		}
+		if len(subList) > 0 {
+			list = append(list, subList...)
+		}
+	}
+	return
+}
+
 func CreateLogMetricMonitor(param *models.LogMetricMonitorCreateDto) error {
 	if len(param.LogPath) == 0 {
 		return nil
@@ -213,7 +247,7 @@ func GetLogMetricMonitor(logMetricMonitorGuid string) (result models.LogMetricMo
 	result.EndpointRel = ListLogMetricEndpointRel(logMetricMonitorTable[0].Guid)
 	result.JsonConfigList = ListLogMetricJson(logMetricMonitorTable[0].Guid)
 	result.MetricConfigList = ListLogMetricConfig("", logMetricMonitorTable[0].Guid)
-	result.MetricGroups = ListLogMetricGroups(logMetricMonitorTable[0].Guid)
+	result.MetricGroups = ListLogMetricGroups(logMetricMonitorTable[0].Guid, "")
 	return result, nil
 }
 
@@ -264,6 +298,7 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 	endpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
 	jsonConfigList := ListLogMetricJson(logMetricMonitorGuid)
 	metricConfigList := ListLogMetricConfig("", logMetricMonitorGuid)
+	logMetricGroupList := ListLogMetricGroups(logMetricMonitorGuid, "")
 	for _, v := range endpointRel {
 		affectHost = append(affectHost, v.SourceEndpoint)
 	}
@@ -280,6 +315,16 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 		deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, logMetricMonitorGuid)
 		actions = append(actions, deleteActions...)
 		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
+	for _, v := range logMetricGroupList {
+		deleteActions, tmpEndpointGroup, _, tmpErr := getDeleteLogMetricGroupActions(v.Guid)
+		if tmpErr != nil {
+			log.Logger.Error("try to get delete logMetricGroupAction fail", log.String("logMetricGroupGuid", v.Guid), log.Error(tmpErr))
+			continue
+		} else {
+			actions = append(actions, deleteActions...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+		}
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
 	return
@@ -528,8 +573,12 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
+	if metric == "req_fail_count_detail" {
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",retcode=\"$t_retcode\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		return
+	}
 	if metric == "req_fail_count" {
-		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		result = fmt.Sprintf("(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) - (sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))", models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
@@ -719,9 +768,9 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 	return
 }
 
-func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err error) {
+func ImportLogMetric(param *models.LogMetricQueryObj, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
-	existData, queryErr := GetLogMetricByServiceGroup(param.Guid)
+	existData, queryErr := GetLogMetricByServiceGroup(param.Guid, "")
 	if queryErr != nil {
 		return fmt.Errorf("get exist log metric data fail,%s ", queryErr.Error())
 	}
@@ -733,15 +782,8 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 		err = getErr
 		return
 	}
-	//logMonitorMap := make(map[string]int)
 	for _, inputLogMonitor := range param.Config {
 		existObj := &models.LogMetricMonitorObj{}
-		//for _, existLogMonitor := range existData.Config {
-		//	if existLogMonitor.Guid == inputLogMonitor.Guid {
-		//		existObj = existLogMonitor
-		//		break
-		//	}
-		//}
 		if existObj.Guid != "" {
 			if existObj.LogPath != inputLogMonitor.LogPath || existObj.MonitorType != inputLogMonitor.MonitorType {
 				actions = append(actions, &Action{Sql: "update log_metric_monitor set log_path=?,monitor_type=? where guid=?", Param: []interface{}{inputLogMonitor.LogPath, inputLogMonitor.MonitorType, inputLogMonitor.Guid}})
@@ -750,7 +792,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 			inputLogMonitor.Guid = "lmm_" + guid.CreateGuid()
 			actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{inputLogMonitor.Guid, param.Guid, inputLogMonitor.LogPath, inputLogMonitor.MetricType, inputLogMonitor.MonitorType, nowTime}})
 		}
-		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap)
+		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -829,7 +871,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string) (err erro
 	return
 }
 
-func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
+func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
 	if existObj.Guid != "" {
 		// compare log json monitor
 		for _, inputJsonObj := range inputObj.JsonConfigList {
@@ -892,7 +934,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 				actions = append(actions, tmpMetricGroupActions...)
 				affectEndpointGroup = append(affectEndpointGroup, tmpAffect...)
 			} else {
-				tmpMetricGroupActions, tmpErr := getCreateLogMetricGroupByImport(inputMetricGroup, operator, existMetricMap)
+				tmpMetricGroupActions, tmpErr := getCreateLogMetricGroupByImport(inputMetricGroup, operator, existMetricMap, errMsgObj)
 				if tmpErr != nil {
 					err = tmpErr
 					return
@@ -937,11 +979,22 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			actions = append(actions, tmpActions...)
 		}
 		for _, metricGroup := range inputObj.MetricGroups {
-			metricGroup.Guid = "lmg_" + guid.CreateGuid()
+			var tempLogMetricGroup *models.LogMetricGroup
+			// log_metric_group guid 先查询存在则新增
+			if metricGroup.Guid == "" {
+				metricGroup.Guid = "lmg_" + guid.CreateGuid()
+			} else {
+				if tempLogMetricGroup, err = GetLogMetricGroupById(metricGroup.Guid); err != nil {
+					return
+				}
+				if tempLogMetricGroup != nil {
+					metricGroup.Guid = "lmg_" + guid.CreateGuid()
+				}
+			}
 			metricGroup.LogMetricMonitor = inputObj.Guid
 			metricGroup.ServiceGroup = inputObj.ServiceGroup
 			metricGroup.MonitorType = inputObj.MonitorType
-			tmpActions, tmpErr := getCreateLogMetricGroupByImport(metricGroup, operator, existMetricMap)
+			tmpActions, tmpErr := getCreateLogMetricGroupByImport(metricGroup, operator, existMetricMap, errMsgObj)
 			if tmpErr != nil {
 				err = tmpErr
 				return
@@ -957,8 +1010,8 @@ func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTi
 	return
 }
 
-func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
-	if metricGroup.LogMonitorTemplate != "" {
+func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, err error) {
+	if metricGroup.LogMonitorTemplate != "" && (metricGroup.LogType == models.LogMonitorRegularType || metricGroup.LogType == models.LogMonitorJsonType) {
 		metricGroup.LogMonitorTemplate, err = GetLogTemplateGuidByName(metricGroup.LogMonitorTemplateName)
 		if err != nil {
 			return
@@ -971,6 +1024,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 			MetricPrefixCode:       metricGroup.MetricPrefixCode,
 			ServiceGroup:           metricGroup.ServiceGroup,
 			MonitorType:            metricGroup.MonitorType,
+			LogMonitorTemplate:     metricGroup.LogMonitorTemplateDto,
 		}
 		for _, mgParamObj := range metricGroup.ParamList {
 			if mgParamObj.Name == "code" {
@@ -979,14 +1033,14 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, existMetricMap)
+		tmpActions, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, []string{}, existMetricMap, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
 		}
 		actions = append(actions, tmpActions...)
 	} else {
-		tmpActions, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap)
+		tmpActions, _, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, []string{}, errMsgObj)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1124,11 +1178,6 @@ func ImportLogMetricExcel(logMonitorGuid, operator string, param []*models.LogMe
 	return
 }
 
-func GetLogMetricByServiceGroupNew(serviceGroup string) (result models.LogMetricQueryObj, err error) {
-
-	return
-}
-
 func GetSimpleLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup, err error) {
 	var logMetricGroupRows []*models.LogMetricGroup
 	err = x.SQL("select * from log_metric_group where guid=?", logMetricGroupGuid).Find(&logMetricGroupRows)
@@ -1143,17 +1192,34 @@ func GetSimpleLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetri
 }
 
 func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroupWithTemplate, err error) {
+	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
+	}
+	if metricGroupObj.TemplateSnapshot != "" {
+		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
+			return
+		}
+	} else {
+		// 历史数据 模版查询兜底
+		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
+			return
+		}
+		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
 	if err != nil {
 		return result, fmt.Errorf("Query table log_metric_string_map fail,%s ", err.Error())
 	}
-	result = &models.LogMetricGroupWithTemplate{Name: metricGroupObj.Name, MetricPrefixCode: metricGroupObj.MetricPrefixCode, LogMetricGroupGuid: logMetricGroupGuid, LogMetricMonitorGuid: metricGroupObj.LogMetricMonitor, LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{}, RetCodeStringMap: []*models.LogMetricStringMapTable{}}
+	result = &models.LogMetricGroupWithTemplate{Name: metricGroupObj.Name, MetricPrefixCode: metricGroupObj.MetricPrefixCode,
+		LogMetricGroupGuid: logMetricGroupGuid, LogMetricMonitorGuid: metricGroupObj.LogMetricMonitor,
+		LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{},
+		LogMonitorTemplateVersion: metricGroupObj.RefTemplateVersion,
+		LogMonitorTemplate:        logMonitorTemplate,
+		RetCodeStringMap:          []*models.LogMetricStringMapTable{}}
 	for _, row := range logMetricStringMapRows {
 		if row.LogParamName == "code" {
 			result.CodeStringMap = append(result.CodeStringMap, row)
@@ -1164,10 +1230,10 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
-	actions, err = getCreateLogMetricGroupActions(param, operator, make(map[string]string))
+	actions, result, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj)
 	if err != nil {
 		return
 	}
@@ -1175,21 +1241,42 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
+	var templateSnapshot []byte
+	var refTemplateVersion, endpointGroup string
+	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
+	var serviceGroupsRoles, alarmStrategyList []string
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	}
+	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
 		return
 	}
+	if logMonitorTemplateObj == nil {
+		// 业务配置导入会带业务日志模版,如果模版未提前创建好,需要自动支持先导入模版
+		if param.LogMonitorTemplate != nil {
+			if tmpActions := getCreateLogMonitorTemplateActions(param.LogMonitorTemplate, operator); len(tmpActions) > 0 {
+				actions = append(actions, tmpActions...)
+			}
+		} else {
+			err = fmt.Errorf("LogMonitorTemplateGuid is valid")
+			return
+		}
+	}
+	refTemplateVersion = logMonitorTemplateObj.UpdateTime.Format(models.DatetimeDigitFormat)
+	if templateSnapshot, err = json.Marshal(logMonitorTemplateObj); err != nil {
+		return
+	}
+
 	nowTime := time.Now()
 	if param.Name == "" {
 		param.Name = logMonitorTemplateObj.Name
 	}
-	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime,
+	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime, templateSnapshot, refTemplateVersion,
 	}})
 	sucRetCode, createMapActions := getCreateLogMetricGroupMapAction(param, nowTime)
 	actions = append(actions, createMapActions...)
@@ -1197,6 +1284,8 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	serviceGroup, monitorType := param.ServiceGroup, param.MonitorType
 	if serviceGroup == "" {
 		serviceGroup, monitorType = GetLogMetricServiceGroup(param.LogMetricMonitorGuid)
+		param.ServiceGroup = serviceGroup
+		param.MonitorType = monitorType
 	}
 	for _, v := range logMonitorTemplateObj.MetricList {
 		promExpr := ""
@@ -1204,18 +1293,54 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		if param.MetricPrefixCode != "" {
 			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
 		}
-		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 			promExpr = getLogMetricRatePromExpr(v.Metric, param.MetricPrefixCode, v.AggType, serviceGroup, sucRetCode)
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
 		}
-		tmpMetricGuid := fmt.Sprintf("%s__%s", tmpMetricWithPrefix, serviceGroup)
+		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
 		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
+	}
+	if param.LogMetricMonitorGuid != "" {
+		var logMetricMonitor = &models.LogMetricMonitorTable{}
+		var endpointGroupIds []string
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitorGuid).Get(logMetricMonitor); err != nil {
+			return
+		}
+		if logMetricMonitor != nil {
+			serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+				return
+			}
+			if len(endpointGroupIds) > 0 {
+				endpointGroup = endpointGroupIds[0]
+			}
+		}
+	}
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+	alarmStrategyParam := models.AutoAlarmStrategyParam{LogMetricGroupWithTemplate: param, MetricList: logMonitorTemplateObj.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
+		ServiceGroup: serviceGroup, EndpointGroup: endpointGroup, Operator: operator, ErrMsgObj: errMsgObj}
+	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateAlarmStrategy(alarmStrategyParam); err != nil {
+		return
+	}
+	if len(subCreateAlarmStrategyActions) > 0 {
+		actions = append(actions, subCreateAlarmStrategyActions...)
+		result.AlarmList = alarmStrategyList
+	}
+	var dashboardParam = models.AutoCreateDashboardParam{LogMetricGroupWithTemplate: param, MetricList: logMonitorTemplateObj.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
+		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj}
+	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateCustomDashboard(dashboardParam); err != nil {
+		return
+	}
+	if len(subCreateDashboardActions) > 0 {
+		actions = append(actions, subCreateDashboardActions...)
 	}
 	return
 }
@@ -1288,7 +1413,7 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 				tmpMetricWithPrefix = logMetricGroupObj.MetricPrefixCode + "_" + v.Metric
 			}
 			promExpr := ""
-			if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+			if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 				promExpr = getLogMetricRatePromExpr(v.Metric, logMetricGroupObj.MetricPrefixCode, v.AggType, serviceGroup, newSucRetCode)
 			} else {
 				promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
@@ -1314,6 +1439,7 @@ func DeleteLogMetricGroup(logMetricGroupGuid string) (logMetricMonitorGuid strin
 }
 
 func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
+	var delAlarmStrategyActions, delDashboardActions, delChartActions []*Action
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
@@ -1323,10 +1449,53 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+
+	// 删除阈值
+	var strategyGuids []string
+	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
+		return
+	}
+	if len(strategyGuids) > 0 {
+		for _, strategyGuid := range strategyGuids {
+			if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+				return
+			}
+			if len(delAlarmStrategyActions) > 0 {
+				actions = append(actions, delAlarmStrategyActions...)
+			}
+		}
+	}
+	// 删除看板&图表
+	var dashboardIds []int
+	var chartIds []string
+	if err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&dashboardIds); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartIds); err != nil {
+		return
+	}
+	if len(dashboardIds) > 0 {
+		for _, boardId := range dashboardIds {
+			if delDashboardActions = GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
+				actions = append(actions, delDashboardActions...)
+			}
+		}
+	}
+	if len(chartIds) > 0 {
+		for _, chartId := range chartIds {
+			if delChartActions, err = GetDeleteCustomDashboardChart(chartId); err != nil {
+				return
+			}
+			if len(delChartActions) > 0 {
+				actions = append(actions, delChartActions...)
+			}
+		}
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
+
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
-	var existMetricRows []*models.LogMetricConfigTable
+	var existMetricRows []*models.LogMetricConfigDto
 	if metricGroupObj.LogMonitorTemplate != "" {
 		logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
 		if getTemplateErr != nil {
@@ -1389,7 +1558,7 @@ func getDeleteMetricActions(metricGuid string) (actions []*Action, affectEndpoin
 	return
 }
 
-func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGroupObj) {
+func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.LogMetricGroupObj) {
 	result = []*models.LogMetricGroupObj{}
 	var logMetricGroupTable []*models.LogMetricGroup
 	x.SQL("select * from log_metric_group where log_metric_monitor=? order by update_time desc", logMetricMonitor).Find(&logMetricGroupTable)
@@ -1431,7 +1600,16 @@ func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGro
 				logMetricGroupData = customGroupData
 			}
 		}
-		result = append(result, logMetricGroupData)
+		if metricKey != "" && len(logMetricGroupData.MetricList) > 0 {
+			for _, metric := range logMetricGroupData.MetricList {
+				if strings.Contains(metric.FullMetric, metricKey) {
+					result = append(result, logMetricGroupData)
+					break
+				}
+			}
+		} else {
+			result = append(result, logMetricGroupData)
+		}
 	}
 	return result
 }
@@ -1442,7 +1620,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		err = getGroupErr
 		return
 	}
-	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigTable{}}
+	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
 	result.UpdateTimeString = result.UpdateTime.Format(models.DatetimeFormat)
 	logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(logMetricGroupGuid)
@@ -1474,7 +1652,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		} else {
 			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
 		}
-		result.MetricList = append(result.MetricList, row)
+		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
 	}
 	return
 }
@@ -1505,31 +1683,46 @@ func getLogMetricGroupMapData(logMetricGroupGuid string) (result map[string][]*m
 	return
 }
 
-func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string) (err error) {
+func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.Guid = ""
 	var actions []*Action
-	actions, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string))
-	if err != nil {
+	if actions, result, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string), roles, errMsgObj); err != nil {
 		return
 	}
 	err = Transaction(actions)
 	return
 }
 
-func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string) (actions []*Action, err error) {
+func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
+	var endpointGroup string
+	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
+	var serviceGroupsRoles, alarmStrategyList []string
 	param.LogType = "custom"
 	if param.Guid == "" {
 		param.Guid = "lmg_" + guid.CreateGuid()
 	}
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime,
-	}})
+	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
+	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
+		}})
+	} else {
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
+		}})
+	}
 	paramGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, v := range param.ParamList {
 		actions = append(actions, &Action{Sql: "insert into log_metric_param(guid,name,display_name,log_metric_group,regular,demo_match_value,create_user,create_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
 			"lmp_" + paramGuidList[i], v.Name, v.DisplayName, param.Guid, v.Regular, v.DemoMatchValue, operator, nowTime,
 		}})
+		tmpStringMapGuidList := guid.CreateGuidList(len(v.StringMap))
+		for stringMapIndex, stringMapObj := range v.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, v.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
+			}})
+		}
 	}
 	metricGuidList := guid.CreateGuidList(len(param.MetricList))
 	serviceGroup, monitorType := param.ServiceGroup, param.MonitorType
@@ -1540,21 +1733,65 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		v.Step = 10
 		tmpTagListBytes, _ := json.Marshal(v.TagConfigList)
 		tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, v.Metric, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes), operator, nowTime,
+		rangeConf, _ := json.Marshal(v.RangeConfig)
+		tmpMetricWithPrefix := v.Metric
+		if param.MetricPrefixCode != "" {
+			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
+		}
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name," +
+			"regular,step,agg_type,tag_config,create_user,create_time,auto_alarm,range_config,color_group) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			tmpMetricConfigGuid, param.LogMetricMonitor, param.Guid, v.LogParamName, tmpMetricWithPrefix, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes),
+			operator, nowTime, v.AutoAlarm, string(rangeConf), v.ColorGroup,
 		}})
 		// 自动添加增加 metric
-		tmpMetricTags := []string{}
+		var tmpMetricTags []string
 		if len(v.TagConfigList) > 0 {
 			tmpMetricTags = []string{"tags"}
 		}
-		tmpMetricGuid := fmt.Sprintf("%s__%s", v.Metric, serviceGroup)
+		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
 		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
 		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
+			Param: []interface{}{tmpMetricGuid, tmpMetricWithPrefix, monitorType, getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, tmpMetricTags), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
+	}
+	if param.LogMetricMonitor != "" {
+		var logMetricMonitor = &models.LogMetricMonitorTable{}
+		var endpointGroupIds []string
+		if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
+			return
+		}
+		if logMetricMonitor != nil {
+			serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+				return
+			}
+			if len(endpointGroupIds) > 0 {
+				endpointGroup = endpointGroupIds[0]
+			}
+		}
+	}
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+	alarmStrategyParam := models.AutoSimpleAlarmStrategyParam{MetricList: param.MetricList, ServiceGroupsRoles: serviceGroupsRoles, LogMetricGroupGuid: param.LogMetricGroup.Guid,
+		ServiceGroup: serviceGroup, EndpointGroup: endpointGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateWarn: param.AutoCreateWarn, MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode}
+	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateSimpleAlarmStrategy(alarmStrategyParam); err != nil {
+		return
+	}
+	if len(subCreateAlarmStrategyActions) > 0 {
+		actions = append(actions, subCreateAlarmStrategyActions...)
+		result.AlarmList = alarmStrategyList
+	}
+	var dashboardParam = models.AutoSimpleCreateDashboardParam{MetricList: param.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
+		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateDashboard: param.AutoCreateDashboard,
+		LogMetricGroupGuid: param.LogMetricGroup.Guid, MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode, MonitorType: param.MonitorType}
+	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateSimpleCustomDashboard(dashboardParam); err != nil {
+		return
+	}
+	if len(subCreateDashboardActions) > 0 {
+		actions = append(actions, subCreateDashboardActions...)
 	}
 	return
 }
@@ -1597,6 +1834,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,demo_log=?,calc_result=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 		param.Name, param.DemoLog, param.CalcResult, operator, nowTime, param.Guid,
 	}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{param.Guid}})
 	paramGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, inputParamObj := range param.ParamList {
 		if inputParamObj.Guid == "" {
@@ -1606,6 +1844,12 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		} else {
 			actions = append(actions, &Action{Sql: "update log_metric_param set name=?,display_name=?,regular=?,demo_match_value=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputParamObj.Name, inputParamObj.DisplayName, inputParamObj.Regular, inputParamObj.DemoMatchValue, operator, nowTime, inputParamObj.Guid,
+			}})
+		}
+		tmpStringMapGuidList := guid.CreateGuidList(len(inputParamObj.StringMap))
+		for stringMapIndex, stringMapObj := range inputParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, inputParamObj.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
 			}})
 		}
 	}
@@ -1623,7 +1867,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	}
 	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
 	metricGuidList := guid.CreateGuidList(len(param.MetricList))
-	existMetricDataMap := make(map[string]*models.LogMetricConfigTable)
+	existMetricDataMap := make(map[string]*models.LogMetricConfigDto)
 	for _, existMetricObj := range existLogGroupData.MetricList {
 		existMetricDataMap[existMetricObj.Guid] = existMetricObj
 		deleteFlag := true
@@ -1747,6 +1991,44 @@ func getServiceGroupMetricMap(serviceGroup string) (metricGuidMap map[string]str
 	metricGuidMap = make(map[string]string)
 	for _, row := range metricRows {
 		metricGuidMap[row.Guid] = row.Metric
+	}
+	return
+}
+
+func convertLogMetricConfigTable2DtoList(logMetricConfigList []*models.LogMetricConfigTable) (list []*models.LogMetricConfigDto) {
+	list = []*models.LogMetricConfigDto{}
+	for _, config := range logMetricConfigList {
+		list = append(list, convertLogMetricConfigTable2Dto(config))
+	}
+	return list
+}
+
+func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *models.LogMetricConfigDto) {
+	if config.TagConfig != "" && len(config.TagConfigList) == 0 {
+		config.TagConfigList = strings.Split(config.TagConfig, ",")
+	}
+	dto = &models.LogMetricConfigDto{
+		Guid:             config.Guid,
+		LogMetricMonitor: config.LogMetricMonitor,
+		LogMetricGroup:   config.LogMetricGroup,
+		LogParamName:     config.LogParamName,
+		LogMetricJson:    config.LogMetricJson,
+		Metric:           config.Metric,
+		DisplayName:      config.DisplayName,
+		JsonKey:          config.JsonKey,
+		TagConfig:        config.TagConfig,
+		Regular:          config.Regular,
+		AggType:          config.AggType,
+		Step:             config.Step,
+		TagConfigList:    config.TagConfigList,
+		CreateUser:       config.CreateUser,
+		UpdateUser:       config.UpdateUser,
+		CreateTime:       config.CreateTime.Format(models.DatetimeFormat),
+		UpdateTime:       config.UpdateTime.Format(models.DatetimeFormat),
+		AutoAlarm:        config.AutoAlarm,
+		RangeConfig:      config.RangeConfig,
+		ColorGroup:       config.ColorGroup,
+		FullMetric:       config.FullMetric,
 	}
 	return
 }
