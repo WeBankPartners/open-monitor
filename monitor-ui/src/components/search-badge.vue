@@ -132,6 +132,7 @@ export default ({
   background-color: #f8f8f8;
   padding: 6px;
   border-radius: 10%;
+  cursor: pointer;
 }
 .drop-down-content {
   display: flex;

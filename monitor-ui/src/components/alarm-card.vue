@@ -82,15 +82,17 @@
       </Tooltip>
       <Poptip
         confirm
-        :title="$t('m_delConfirm_tip')"
+        :title="$t('m_confirm_close_alarm')"
         placement="left"
         @on-ok="deleteConfirmModal(data, false)"
       >
-        <Icon
-          type="ios-eye-off"
-          size="18"
-          class="fa-operate"
-        />
+        <Tooltip :content="$t('m_alarm_close')">
+          <Icon
+            type="ios-eye-off"
+            size="18"
+            class="fa-operate"
+          />
+        </Tooltip>
       </Poptip>
       <Tooltip :content="$t('m_remark')">
         <Icon
