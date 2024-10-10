@@ -215,6 +215,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 	queryList = []*models.QueryMonitorData{}
 	legend := "$custom"
 	for _, dataConfig := range chartSeries {
+		legend = "$custom"
 		log.Logger.Debug("chart series display config", log.JsonObj("dataConfig", dataConfig))
 		tmpPromQl := ""
 		tmpPromQl, err = db.GetPromQLByMetric(dataConfig.Metric, dataConfig.MonitorType, dataConfig.ServiceGroup)
@@ -296,6 +297,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 }
 
 func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
+	log.Logger.Debug("GetChartConfigByCustom param --> ", log.JsonObj("param", param))
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
@@ -334,13 +336,15 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				metricLegend = "$app_metric"
 			}
 			if dataConfig.Endpoint != "" {
-				if dataConfig.Endpoint == dataConfig.AppObject {
-					endpointList = endpointList[:1]
-					calcServiceGroupAll = true
-				} else {
-					endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
-					if endpointObj.MonitorType != "" {
-						endpointList = []*models.EndpointNewTable{&endpointObj}
+				if param.CalcServiceGroupEnable {
+					if dataConfig.Endpoint == dataConfig.AppObject {
+						endpointList = endpointList[:1]
+						calcServiceGroupAll = true
+					} else {
+						endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+						if endpointObj.MonitorType != "" {
+							endpointList = []*models.EndpointNewTable{&endpointObj}
+						}
 					}
 				}
 			}
@@ -689,7 +693,7 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if metric == nil {
+	if metric == nil || metric.Guid == "" {
 		middleware.ReturnValidateError(c, "metricId is invalid")
 		return
 	}

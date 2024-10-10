@@ -7,23 +7,25 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
 func ListLogKeywordMonitor(c *gin.Context) {
-	queryType := c.Param("queryType")
-	guid := c.Param("guid")
+	queryType := c.Query("type")
+	guid := c.Query("guid")
+	alarmName := c.Query("alarmName")
 	if queryType == "endpoint" {
-		result, err := db.GetLogKeywordByEndpoint(guid, false)
+		result, err := db.GetLogKeywordByEndpoint(guid, alarmName, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
 	} else {
-		result, err := db.GetLogKeywordByServiceGroup(guid)
+		result, err := db.GetLogKeywordByServiceGroup(guid, alarmName)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -38,7 +40,23 @@ func CreateLogKeywordMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogKeywordMonitor(&param)
+	var err error
+	if len(param.LogPath) == 0 {
+		err = fmt.Errorf("Param log_path is empty ")
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	for _, v := range param.LogPath {
+		if !strings.HasPrefix(v, "/") {
+			err = fmt.Errorf("Path:%s illegal ", v)
+			break
+		}
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.CreateLogKeywordMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -50,6 +68,10 @@ func UpdateLogKeywordMonitor(c *gin.Context) {
 	var param models.LogKeywordMonitorObj
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if !strings.HasPrefix(param.LogPath, "/") {
+		middleware.ReturnValidateError(c, fmt.Sprintf("Path:%s illegal ", param.LogPath))
 		return
 	}
 	var endpointList []string
@@ -84,11 +106,29 @@ func DeleteLogKeywordMonitor(c *gin.Context) {
 
 func CreateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogKeyword(&param)
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
+	}
+	var sameNameList, sameKeywordList []*models.LogKeywordConfigTable
+	sameNameList, sameKeywordList, err = db.GetLogKeywordConfigUniqueData(param.Guid, param.Name, param.Keyword, param.LogKeywordMonitor)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(sameNameList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if len(sameKeywordList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
+		return
+	}
+	err = db.CreateLogKeyword(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -103,30 +143,58 @@ func CreateLogKeyword(c *gin.Context) {
 
 func UpdateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateLogKeyword(&param)
+	if len(param.ActiveWindowList) > 0 {
+		param.ActiveWindow = strings.Join(param.ActiveWindowList, ",")
+	}
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(param.Guid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	param.LogKeywordMonitor = logKeywordConfig.LogKeywordMonitor
+	var sameNameList, sameKeywordList []*models.LogKeywordConfigTable
+	sameNameList, sameKeywordList, err = db.GetLogKeywordConfigUniqueData(param.Guid, param.Name, param.Keyword, param.LogKeywordMonitor)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(sameNameList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		return
+	}
+	if len(sameKeywordList) > 0 {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
+		return
+	}
+	if err = db.UpdateLogKeyword(&param, logKeywordConfig, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
 func DeleteLogKeyword(c *gin.Context) {
-	logKeywordGuid := c.Param("logKeywordGuid")
-	err := db.DeleteLogKeyword(logKeywordGuid)
+	logKeywordConfigGuid := c.Query("guid")
+	logKeywordConfig, getExistErr := db.GetSimpleLogKeywordConfig(logKeywordConfigGuid)
+	if getExistErr != nil {
+		middleware.ReturnValidateError(c, getExistErr.Error())
+		return
+	}
+	err := db.DeleteLogKeyword(logKeywordConfigGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordMonitorConfig(logKeywordGuid)
+		err = syncLogKeywordMonitorConfig(logKeywordConfig.LogKeywordMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -152,9 +220,9 @@ func syncLogKeywordNodeExporterConfig(endpointList []string) error {
 	return err
 }
 
-func ExportLogKeyword(c *gin.Context) {
+func ExportLogAndDbKeyword(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
-	result, err := db.GetLogKeywordByServiceGroup(serviceGroup)
+	result, err := db.GetLogKeywordByServiceGroup(serviceGroup, "")
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -172,7 +240,7 @@ func ExportLogKeyword(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
-func ImportLogKeyword(c *gin.Context) {
+func ImportLogAndDbKeyword(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -184,7 +252,7 @@ func ImportLogKeyword(c *gin.Context) {
 		return
 	}
 	var paramObj models.LogKeywordServiceGroupObj
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	defer f.Close()
 	if err != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", err)
@@ -204,8 +272,26 @@ func ImportLogKeyword(c *gin.Context) {
 	for _, logKeyword := range paramObj.Config {
 		logKeyword.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogKeyword(&paramObj); err != nil {
-		middleware.ReturnHandleError(c, "import log keyword fail", err)
+	if err = db.ImportLogAndDbKeyword(&paramObj, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func UpdateLogKeywordNotify(c *gin.Context) {
+	var param models.LogKeywordNotifyParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogKeywordMonitor == "" {
+		middleware.ReturnValidateError(c, "param log_keyword_monitor illegal")
+		return
+	}
+	err := db.UpdateLogKeywordNotify(&param)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}

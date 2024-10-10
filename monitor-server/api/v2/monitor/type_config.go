@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// systemMonitorTypeMap 系统类型配置
+var systemMonitorTypeList = []string{"host", "mysql", "redis", "java", "tomcat", "nginx", "ping", "pingext",
+	"telnet", "telnetext", "http", "httpext", "windows", "snmp", "process", "pod"}
+
 func QueryTypeConfigList(c *gin.Context) {
 	var err error
 	var list []*models.TypeConfig
@@ -41,6 +45,46 @@ func AddTypeConfig(c *gin.Context) {
 	if err = db.AddTypeConfig(param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+func BatchAddTypeConfig(c *gin.Context) {
+	var err error
+	var param models.BatchAddTypeConfigParam
+	var typeConfigList []*models.TypeConfig
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	var newMonitorTypeList []string
+	systemMonitorTypeMap := ConvertArr2Map(systemMonitorTypeList)
+	for _, s := range param.DisplayNameList {
+		// 过滤掉系统默认类型配置
+		if systemMonitorTypeMap[s] {
+			continue
+		}
+		newMonitorTypeList = append(newMonitorTypeList, s)
+	}
+	// 如果 role_new表还未初始化,需要先同步数据
+	if !db.ExistRoles() {
+		db.SyncCoreRoleList()
+	}
+	for _, monitorType := range newMonitorTypeList {
+		typeConfig := models.TypeConfig{Guid: monitorType, DisplayName: monitorType, CreateUser: middleware.GetOperateUser(c)}
+		if typeConfigList, err = db.QueryTypeConfigByName(monitorType); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		if len(typeConfigList) > 0 {
+			middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameRepeatError))
+			return
+		}
+		if err = db.AddTypeConfig(typeConfig); err != nil {
+			err = fmt.Errorf("monitorType:%s,fail:%v", monitorType, err.Error())
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
 	}
 	middleware.ReturnSuccess(c)
 }
@@ -88,4 +132,12 @@ func DeleteTypeConfig(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccess(c)
+}
+
+func ConvertArr2Map(list []string) map[string]bool {
+	var hashMap = make(map[string]bool)
+	for _, s := range list {
+		hashMap[s] = true
+	}
+	return hashMap
 }
