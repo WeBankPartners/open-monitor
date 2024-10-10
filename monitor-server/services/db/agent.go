@@ -19,7 +19,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam, operator string) (st
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	var actions []*Action
 	if host.Id == 0 {
-		existMonitorTypeList, _ := GetEndpointTypeList()
+		existMonitorTypeList, _ := GetSimpleEndpointTypeList()
 		addMonitorTypeFlag := true
 		for _, v := range existMonitorTypeList {
 			if endpoint.ExportType == v {
@@ -169,11 +169,16 @@ func DeleteEndpoint(guid, operator string) error {
 	}
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
 	for _, v := range serviceGroup {
-		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v.ServiceGroup}})
+		actions = append(actions, &Action{Sql: "update service_group set update_time=?,update_user=? where guid=?", Param: []interface{}{nowTime, operator, v.ServiceGroup}})
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from db_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?))", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?)", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where endpoint=?)", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where endpoint=?", Param: []interface{}{guid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
@@ -235,7 +240,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable, operator string) error {
 		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
 		//_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, nowTime, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_time=?,update_user=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, nowTime, operator, param.Guid}})
 		endpointList := strings.Split(tmpEndpoint, "^")
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, operator, endpointList)...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
@@ -257,7 +262,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable, operator string) error {
 	} else {
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType)
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType}})
-		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.ObjType, UpdateTime: nowTime})...)
+		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.ObjType, UpdateTime: nowTime}, operator)...)
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, operator, strings.Split(param.Endpoint, "^"))...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)

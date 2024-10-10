@@ -217,7 +217,11 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 				if len(tagObj.TagValue) == 0 {
 					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
 				} else {
-					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+					tmpEqual := "=~"
+					if tagObj.Equal == "notin" {
+						tmpEqual = "!~"
+					}
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}
@@ -544,10 +548,18 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 }
 
 func GetServiceGroupPromMetric(serviceGroup, workspace, monitorType string) (err error, result []*m.OptionModel) {
+	fetchServiceGroupList, fetchErr := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	if fetchErr != nil {
+		err = fetchErr
+		return
+	}
 	result = []*m.OptionModel{}
 	var metricList []string
 	nowTime := time.Now().Unix()
 	queryPromQl := fmt.Sprintf("{service_group=\"%s\"}", serviceGroup)
+	if len(fetchServiceGroupList) > 0 {
+		queryPromQl = fmt.Sprintf("{service_group=~\"%s\"}", strings.Join(fetchServiceGroupList, "|"))
+	}
 	metricList, err = datasource.QueryPromQLMetric(queryPromQl, GetClusterAddress(""), nowTime-120, nowTime)
 	if err != nil {
 		return
