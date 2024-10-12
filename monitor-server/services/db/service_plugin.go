@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -30,6 +31,15 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 			newPathList = append(newPathList, input.DeployPath+v)
 		}
 		pathList = newPathList
+	}
+	var logServiceCodeList []*models.PluginUpdateServiceCodeObj
+	if input.LogServiceCodeList != nil {
+		if codeBytes, codeMarshalErr := json.Marshal(input.LogServiceCodeList); codeMarshalErr == nil {
+			if codeUnmarshalErr := json.Unmarshal(codeBytes, &logServiceCodeList); codeUnmarshalErr != nil {
+				err = fmt.Errorf("param logServiceCode illegal,fail to parse json struct,%s ", codeUnmarshalErr.Error())
+				return
+			}
+		}
 	}
 	endpointTypeMap := getServiceGroupEndpointWithChild(input.SystemName)
 	sourceTargetMap := make(map[string]string)
@@ -62,7 +72,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 			err = fmt.Errorf("Update logKeyword config fail,%s ", err.Error())
 		}
 	} else {
-		err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap, input.LogMonitorTemplate, input.LogMonitorPrefixCode, input.LogMonitorName, operator, roles, errMsgObj)
+		err = updateServiceLogMetricPath(pathList, serviceGroupObj.Guid, input.MonitorType, sourceTargetMap, input.LogMonitorTemplate, input.LogMonitorPrefixCode, input.LogMonitorName, operator, roles, errMsgObj, logServiceCodeList)
 		if err != nil {
 			err = fmt.Errorf("Update logMetric config fail,%s ", err.Error())
 			return
@@ -71,7 +81,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	return
 }
 
-func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string, logMonitorTemplateGuid, logMonitorPrefixCode, logMonitorName, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
+func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string, logMonitorTemplateGuid, logMonitorPrefixCode, logMonitorName, operator string, roles []string, errMsgObj *models.ErrorMessageObj, logServiceCodeList []*models.PluginUpdateServiceCodeObj) (err error) {
 	var logMetricTable []*models.LogMetricMonitorTable
 	err = x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
 	if err != nil {
@@ -101,7 +111,7 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 			actions = append(actions, tmpActions...)
 		}
 	}
-	for _, path := range pathList {
+	for i, path := range pathList {
 		if existMonitorType, b := existPathTypeMap[path]; b {
 			if existMonitorType != monitorType {
 				// change monitor type
@@ -125,6 +135,18 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 				Name:                   logMonitorName,
 				ServiceGroup:           serviceGroup,
 				MonitorType:            monitorType,
+				CodeStringMap:          []*models.LogMetricStringMapTable{},
+			}
+			if len(pathList) > 1 {
+				autoCreateLogMetricGroupParam.MetricPrefixCode += fmt.Sprintf("%d", i+1)
+				autoCreateLogMetricGroupParam.Name += fmt.Sprintf("_%d", i+1)
+			}
+			for _, codeRow := range logServiceCodeList {
+				autoCreateLogMetricGroupParam.CodeStringMap = append(autoCreateLogMetricGroupParam.CodeStringMap, &models.LogMetricStringMapTable{
+					Regulative:  codeRow.Regulative,
+					SourceValue: codeRow.SourceValue,
+					TargetValue: codeRow.TargetValue,
+				})
 			}
 			createLogMetricGroupActions, _, newDashboardId, createLogMetricGroupErr := getCreateLogMetricGroupActions(&autoCreateLogMetricGroupParam, operator, roles, make(map[string]string), errMsgObj)
 			if createLogMetricGroupErr != nil {
