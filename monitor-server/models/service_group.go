@@ -75,7 +75,14 @@ type PluginUpdateServicePathRequestObj struct {
 	LogMonitorPrefixCode string      `json:"logMonitorPrefixCode"` // 日志监控指标前缀
 	LogMonitorName       string      `json:"logMonitorName"`       // 日志监控配置名
 	DeployPath           string      `json:"deployPath"`
-	PathType             string      `json:"pathType"` // 日志类型-> logMonitor|logKeyword
+	PathType             string      `json:"pathType"`           // 日志类型-> logMonitor|logKeyword
+	LogServiceCodeList   interface{} `json:"logServiceCodeList"` // 业务服务码列表
+}
+
+type PluginUpdateServiceCodeObj struct {
+	Regulative  int    `json:"regulative"`
+	SourceValue string `json:"source_value"`
+	TargetValue string `json:"target_value"`
 }
 
 type PluginUpdateServicePathResp struct {
