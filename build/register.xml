@@ -903,7 +903,7 @@
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">logMonitorName</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">deployPath</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_LOG_MONITOR_TYPE">pathType</parameter>
-                    <parameter datatype="object" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="" multiple="Y">logServiceCodeList</parameter>
+                    <parameter datatype="object" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="" multiple="N">logServiceCodeList</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
