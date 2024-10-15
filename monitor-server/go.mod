@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
-	github.com/WeBankPartners/go-common-lib v1.1.5
+	github.com/WeBankPartners/go-common-lib v1.1.6
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/gin-gonic/gin v1.8.1
