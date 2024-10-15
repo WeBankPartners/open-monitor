@@ -41,3 +41,6 @@ Update control shell to support custom exporter port
 
 v3.2.0
 Fix log tail chanel closed when handler check active && modify tail reopen
+
+v3.2.5
+Fix pcre match panic error
