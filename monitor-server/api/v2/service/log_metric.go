@@ -852,6 +852,15 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 			}
 		}
 	}
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
+		err = getErr
+		middleware.ReturnServerHandleError(c, err)
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -880,7 +889,8 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 
 func UpdateLogMetricCustomGroup(c *gin.Context) {
 	var param models.LogMetricGroupObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -889,8 +899,21 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
+		err = getErr
+		middleware.ReturnServerHandleError(c, err)
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if len(param.MetricList) > 0 {
 		for _, metric := range param.MetricList {
+			// 拼接指标
+			if param.MetricPrefixCode != "" {
+				metric.Metric = param.MetricPrefixCode + metric.Metric
+			}
 			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
 				middleware.ReturnValidateError(c, "log_param_name or metric param invalid")
 				return
