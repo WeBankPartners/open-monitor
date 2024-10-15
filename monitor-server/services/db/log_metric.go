@@ -1647,10 +1647,9 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
-		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) == "" {
-			row.FullMetric = row.Metric
-		} else {
-			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
+		row.FullMetric = row.Metric
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" && len(row.Metric) > len(metricGroupObj.MetricPrefixCode) {
+			row.Metric = row.Metric[len(metricGroupObj.MetricPrefixCode)+1:]
 		}
 		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
 	}
