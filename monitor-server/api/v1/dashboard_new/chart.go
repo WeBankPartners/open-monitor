@@ -568,7 +568,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if len(query.Metric) > 0 {
 			// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags
-			if logType, err = db.GetLogType(query.Metric[0]); err != nil {
+			if logType, err = db.GetLogTypeByMetric(query.Metric[0]); err != nil {
 				log.Logger.Error("GetLogType err", log.Error(err))
 			}
 			query.ServiceConfiguration = logType
