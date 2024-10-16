@@ -80,6 +80,7 @@
             <div>
               <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
               <Table
+                :key="tableKey"
                 class='compute-metrics-style'
                 size="small"
                 :columns="columnsForComputeMetrics"
@@ -107,7 +108,7 @@
 
 <script>
 import {
-  isEmpty, hasIn, cloneDeep
+  isEmpty, hasIn, cloneDeep, remove
 } from 'lodash'
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
@@ -315,7 +316,7 @@ export default {
         },
         {
           title: this.$t('m_metric_key'),
-          key: 'index',
+          key: 'resultMetricKey',
           width: 120,
           renderHeader: () => (
             <span>
@@ -560,7 +561,8 @@ export default {
       isEmpty,
       auto_create_warn: true,
       auto_create_dashboard: true,
-      metricPrefixCode: ''
+      metricPrefixCode: '',
+      tableKey: ''
     }
   },
   computed: {
@@ -618,6 +620,10 @@ export default {
           metric_list: [cloneDeep(initMetricItem)]
         }
         this.configInfo.log_metric_monitor = parentGuid
+      }
+      if (this.isInTemplatePage) {
+        remove(this.columnsForComputeMetrics, item => item.key === 'resultMetricKey')
+        this.tableKey = +new Date() + ''
       }
       this.showModal = true
     },
