@@ -1176,39 +1176,43 @@ export default {
       return resData
     },
     getDetail(targetId) {
-      this.targetId = targetId
-      const api = '/monitor/api/v2/alarm/strategy/query'
-      const params = {
-        queryType: this.type,
-        guid: this.targetId,
-        show: this.onlyShowCreated,
-        alarmName: this.alarmName
+      if (targetId) {
+        this.targetId = targetId
+        const api = '/monitor/api/v2/alarm/strategy/query'
+        const params = {
+          queryType: this.type,
+          guid: this.targetId,
+          show: this.onlyShowCreated,
+          alarmName: this.alarmName
+        }
+        this.totalPageConfig = []
+        this.request('post', api, params, responseData => {
+          this.$emit('feedbackInfo', responseData.length === 0)
+          const allConfigDetail = responseData
+          allConfigDetail.forEach((item, alarmIndex) => {
+            const strategy = item.strategy || []
+            const tempTableData = strategy.map(s => {
+              s.monitor_type = item.monitor_type
+              return s
+            })
+            const tableData = this.handleTableData(tempTableData, alarmIndex)
+            this.totalPageConfig.push({
+              tableData,
+              endpoint_group: item.endpoint_group,
+              display_name: item.display_name,
+              service_group: item.service_group,
+              monitor_type: item.monitor_type,
+              notify: item.notify,
+              mergeSpanMap: this.mergeSpanMap
+            })
+            this.originTotalPageConfig = cloneDeep(this.totalPageConfig)
+          })
+        }, {isNeedloading: true})
+        this.getAllRole()
+        this.getWorkFlow()
+      } else {
+        this.totalPageConfig = []
       }
-      this.totalPageConfig = []
-      this.request('post', api, params, responseData => {
-        this.$emit('feedbackInfo', responseData.length === 0)
-        const allConfigDetail = responseData
-        allConfigDetail.forEach((item, alarmIndex) => {
-          const strategy = item.strategy || []
-          const tempTableData = strategy.map(s => {
-            s.monitor_type = item.monitor_type
-            return s
-          })
-          const tableData = this.handleTableData(tempTableData, alarmIndex)
-          this.totalPageConfig.push({
-            tableData,
-            endpoint_group: item.endpoint_group,
-            display_name: item.display_name,
-            service_group: item.service_group,
-            monitor_type: item.monitor_type,
-            notify: item.notify,
-            mergeSpanMap: this.mergeSpanMap
-          })
-          this.originTotalPageConfig = cloneDeep(this.totalPageConfig)
-        })
-      }, {isNeedloading: true})
-      this.getAllRole()
-      this.getWorkFlow()
     },
     onAddIconClick() {
       const metricItem = Object.assign({}, cloneDeep(initFormData.conditions[0]), {
