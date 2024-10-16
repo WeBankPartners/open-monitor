@@ -270,7 +270,7 @@
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Tag v-if="item.public" size="small" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Tag>
+                    <Tag v-if="item.public" class="mr-1 mt-1 references-button">{{$t('m_shallow_copy')}}</Tag>
                     <span @click.stop="">
                       <Select v-model="item.group"
                               style="width:100px;"
@@ -768,7 +768,9 @@ export default {
         })
       }
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
-      this.allPageLayoutData = cloneDeep(this.layoutData)
+      if (type === 'init') {
+        this.allPageLayoutData = cloneDeep(this.layoutData)
+      }
       this.filterLayoutData()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
