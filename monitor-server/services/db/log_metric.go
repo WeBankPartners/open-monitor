@@ -1281,12 +1281,10 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	}
 	// 如果输入的映射为空，尝试拿模版的成功映射，为了插件服务自动化生成配置
 	if len(param.RetCodeStringMap) == 0 && logMonitorTemplateObj.SuccessCode != "" {
-		var templateRetCodeMap []*models.LogMetricStringMapTable
+		var templateRetCodeMap models.LogMetricStringMapTable
 		if unmarshalErr := json.Unmarshal([]byte(logMonitorTemplateObj.SuccessCode), &templateRetCodeMap); unmarshalErr == nil {
-			for _, v := range templateRetCodeMap {
-				v.ValueType = "success"
-			}
-			param.RetCodeStringMap = templateRetCodeMap
+			templateRetCodeMap.ValueType = "success"
+			param.RetCodeStringMap = append(param.RetCodeStringMap, &templateRetCodeMap)
 		} else {
 			log.Logger.Warn("json unmarshal log template success code fail", log.String("successCode", logMonitorTemplateObj.SuccessCode), log.Error(unmarshalErr))
 		}
