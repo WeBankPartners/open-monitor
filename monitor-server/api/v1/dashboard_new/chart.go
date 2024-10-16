@@ -540,6 +540,7 @@ func convertArray2Map(arr []string) map[string]bool {
 func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
 	serials := []*models.SerialModel{}
 	var err error
+	var logType string
 	archiveQueryFlag := false
 	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
 		archiveQueryFlag = true
@@ -564,6 +565,13 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if param.LineType == 2 {
 			query.ComparisonFlag = "Y"
+		}
+		if len(query.Metric) > 0 {
+			// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags
+			if logType, err = db.GetLogType(query.Metric[0]); err != nil {
+				log.Logger.Error("GetLogType err", log.Error(err))
+			}
+			query.ServiceConfiguration = logType
 		}
 		tmpSerials := ds.PrometheusData(query)
 		// 如果归档数据可用，尝试从归档数据中补全数据
