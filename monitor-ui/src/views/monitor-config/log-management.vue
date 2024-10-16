@@ -12,6 +12,7 @@
         <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
       </RadioGroup>
       <Select
+        :key='selectKey'
         style="width:300px;"
         v-model="targetId"
         filterable
@@ -105,7 +106,8 @@ export default {
       },
       alarmName: '',
       token: '',
-      isDataEmpty: false
+      isDataEmpty: false,
+      selectKey: ''
     }
   },
   async mounted() {
@@ -123,6 +125,7 @@ export default {
   methods: {
     typeChange() {
       this.getTargrtList()
+      this.selectKey = +new Date() + ''
     },
     getTargrtList(type = 'init') {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
