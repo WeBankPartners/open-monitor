@@ -17,6 +17,7 @@
           filterable
           clearable
           ref="select"
+          @on-clear="onTargetIdClear"
           @on-query-change="e => {
             getTargetOptionsSearch = e;
             debounceGetTargetOptions()
@@ -266,12 +267,12 @@ export default {
       }
       await this.getTargetOptions()
     }, 400),
-    // filterDataByAlarmName() {
-    //   this.$refs.thresholdDetail.filterData(this.alarmName)
-    // },
     fetchDetailData: debounce(function () {
       this.$refs.thresholdDetail.getDetail(this.targetId)
-    }, 300)
+    }, 300),
+    onTargetIdClear() {
+      this.$refs.thresholdDetail.getDetail('')
+    }
   },
   components: {
     TagShow,
