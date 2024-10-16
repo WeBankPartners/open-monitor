@@ -268,10 +268,15 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 	return
 }
 
-func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
-	guidList := []string{serviceGroupGuid}
-	if sNode, b := globalServiceGroupMap[serviceGroupGuid]; b {
-		guidList = sNode.FetchChildGuid()
+func getDeleteServiceGroupAction(serviceGroupGuid string, subNodeList []string) (actions []*Action) {
+	var guidList []string
+	if len(subNodeList) > 0 {
+		guidList = subNodeList
+	} else {
+		guidList = []string{serviceGroupGuid}
+		if sNode, b := globalServiceGroupMap[serviceGroupGuid]; b {
+			guidList = sNode.FetchChildGuid()
+		}
 	}
 	guidFilterString := strings.Join(guidList, "','")
 	var endpointGroup []*models.EndpointGroupTable
