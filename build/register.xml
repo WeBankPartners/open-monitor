@@ -514,6 +514,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="" type="EXECUTION">
