@@ -18,10 +18,6 @@
           clearable
           ref="select"
           @on-clear="onTargetIdClear"
-          @on-query-change="e => {
-            getTargetOptionsSearch = e;
-            debounceGetTargetOptions()
-          }"
           @on-change="searchTableDetail"
         >
           <Option v-for="(option, index) in targetOptions"
@@ -113,7 +109,6 @@
 <script>
 import isEmpty from 'lodash/isEmpty'
 import debounce from 'lodash/debounce'
-import find from 'lodash/find'
 import cloneDeep from 'lodash/cloneDeep'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import thresholdDetail from './config-detail.vue'
@@ -258,15 +253,15 @@ export default {
         }, 500)
       }
     },
-    debounceGetTargetOptions: debounce(async function () {
-      const targetItem = find(this.targetOptions, {
-        option_value: this.targetId
-      })
-      if (targetItem && this.getTargetOptionsSearch !== targetItem.option_text) {
-        return
-      }
-      await this.getTargetOptions()
-    }, 400),
+    // debounceGetTargetOptions: debounce(async function () {
+    //   const targetItem = find(this.targetOptions, {
+    //     option_value: this.targetId
+    //   })
+    //   if (targetItem && this.getTargetOptionsSearch !== targetItem.option_text) {
+    //     return
+    //   }
+    //   await this.getTargetOptions()
+    // }, 400),
     fetchDetailData: debounce(function () {
       this.$refs.thresholdDetail.getDetail(this.targetId)
     }, 300),
