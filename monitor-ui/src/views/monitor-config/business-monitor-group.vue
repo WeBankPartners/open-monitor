@@ -1365,16 +1365,20 @@ export default {
       })
     },
     async getDetail(targetId, metricKey) {
-      if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
-        this.metricKey = metricKey
-        this.logFileCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+      if (targetId) {
+        if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
+          this.metricKey = metricKey
+          this.logFileCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+        } else {
+          this.logFileCollapseValue = ['0']
+        }
+        this.targetId = targetId
+        await this.getLogKeyWordDetail()
+        await this.getDbDetail()
+        this.processAllInfo()
       } else {
-        this.logFileCollapseValue = ['0']
+        this.logAndDataBaseAllDetail = []
       }
-      this.targetId = targetId
-      await this.getLogKeyWordDetail()
-      await this.getDbDetail()
-      this.processAllInfo()
     },
     processAllInfo() {
       this.logAndDataBaseAllDetail = []
@@ -1388,6 +1392,7 @@ export default {
         }
         this.logAndDataBaseAllDetail.push(tempInfo)
       })
+      this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
     },
     getDbDetail() {
       return new Promise(resolve => {
