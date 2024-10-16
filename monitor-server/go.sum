@@ -11,6 +11,8 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/WeBankPartners/go-common-lib v1.1.5 h1:hrFieMX0ptqYRgPv7WM+G5do5x9W9Mp1qI5Kxyi9OVo=
 github.com/WeBankPartners/go-common-lib v1.1.5/go.mod h1:s6S7m/RloGFfY+Twq0hurp8kNZz9GtlbmKMRYWYdFaI=
+github.com/WeBankPartners/go-common-lib v1.1.6 h1:OGja6eqLgVVMLvwMsy94TkWrmfg9flrqMhJyHCNCDKg=
+github.com/WeBankPartners/go-common-lib v1.1.6/go.mod h1:s6S7m/RloGFfY+Twq0hurp8kNZz9GtlbmKMRYWYdFaI=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
