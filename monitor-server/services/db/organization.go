@@ -228,7 +228,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				}
 			}
 		}
-		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
+		actions = append(actions, getDeleteServiceGroupAction(param.Guid, guidList)...)
 		err = Transaction(actions)
 		if err == nil {
 			DeleteServiceWithChildConfig(param.Guid)
