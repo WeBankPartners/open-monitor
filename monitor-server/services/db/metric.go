@@ -935,3 +935,12 @@ func getMetricComparisonDeleteAction(sourceMetricGuid string) (actions []*Action
 	}
 	return
 }
+
+func GetLogType(metric string) (logType string, err error) {
+	var result []string
+	err = x.SQL("select log_type from log_metric_group where id in (select log_metric_group from metric where metric = ?)", metric).Find(&result)
+	if len(result) > 0 {
+		logType = result[0]
+	}
+	return
+}
