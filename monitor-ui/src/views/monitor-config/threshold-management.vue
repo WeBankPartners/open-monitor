@@ -12,6 +12,7 @@
           <Radio v-for="item in typeList" :label="item.value" :key="item.value">{{ $t(item.label) }}</Radio>
         </RadioGroup>
         <Select
+          :key='selectKey'
           style="width:250px;margin-left:12px;"
           v-model="targetId"
           filterable
@@ -142,7 +143,8 @@ export default {
       dataEmptyTip: false,
       getTargetOptionsSearch: '',
       alarmName: '', // 告警名称
-      onlyShowCreated: 'all' // me用户创建 all所有
+      onlyShowCreated: 'all', // me用户创建 all所有
+      selectKey: ''
     }
   },
   computed: {
@@ -221,8 +223,9 @@ export default {
     },
     typeChange() {
       this.alarmName = ''
-      this.clearTargrt()
+      // this.clearTargrt()
       this.initTargetByType()
+      this.selectKey = +new Date() + ''
     },
     getTargetOptions() {
       return new Promise(resolve => {
@@ -235,10 +238,10 @@ export default {
       })
     },
     clearTargrt() {
-      this.targetOptions = []
-      this.targetId = ''
-      this.showTargetManagement = false
-      this.getTargetOptionsSearch = ''
+      // this.targetOptions = []
+      // this.targetId = ''
+      // this.showTargetManagement = false
+      // this.getTargetOptionsSearch = ''
     },
     searchTableDetail() {
       if (this.targetId) {
@@ -247,10 +250,6 @@ export default {
         const find = this.targetOptions.find(item => item.option_value === this.targetId)
         this.$refs.thresholdDetail.setMonitorType(find.type)
         this.$refs.thresholdDetail.getDetail(this.targetId)
-        setTimeout(async () => {
-          this.getTargetOptionsSearch = ''
-          await this.getTargetOptions()
-        }, 500)
       }
     },
     // debounceGetTargetOptions: debounce(async function () {
