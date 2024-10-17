@@ -1503,6 +1503,14 @@ func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
 }
 
 func GetAlarmStrategyNotifyWorkflowList() (result []*models.WorkflowDto, err error) {
-	err = x.SQL("select distinct  proc_callback_name as name,proc_callback_key as 'key' from notify where  proc_callback_key!='' and proc_callback_key is not null").Find(&result)
+	result = []*models.WorkflowDto{}
+	var tempList []*models.WorkflowDto
+	err = x.SQL("select distinct  proc_callback_name as name,proc_callback_key as 'key' from notify where  proc_callback_key!='' and proc_callback_name!=''").Find(&tempList)
+	for _, dto := range tempList {
+		if strings.TrimSpace(dto.Name) == "" || strings.TrimSpace(dto.Key) == "" {
+			continue
+		}
+		result = append(result, &models.WorkflowDto{Key: dto.Key, Name: dto.Name})
+	}
 	return
 }
