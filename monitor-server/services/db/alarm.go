@@ -2063,7 +2063,7 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	if strings.TrimSpace(alarmName) != "" {
 		alarmSQL = alarmSQL + " and alarm_name like '%" + alarmName + "%'"
 	}
-	alarmSQL = alarmSQL + " group by alarm_name "
+	alarmSQL = alarmSQL + " order by start desc limit 100"
 	if err = x.SQL(alarmSQL, params...).Find(&alarmList); err != nil {
 		return
 	}
