@@ -219,7 +219,6 @@ type LogMetricGroupObj struct {
 	AutoCreateWarn         bool                   `json:"auto_create_warn"`      //自动创建告警
 	AutoCreateDashboard    bool                   `json:"auto_create_dashboard"` //自动创建自定义看板
 	LogMonitorTemplateDto  *LogMonitorTemplateDto `json:"log_monitor_template_data"`
-	MetricPrefixCode       string                 `json:"metric_prefix_code"`
 }
 
 type LogMetricGroupWithTemplate struct {
