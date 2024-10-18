@@ -1615,10 +1615,22 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 }
 
 func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetricGroupObj, err error) {
+	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
+	}
+	if metricGroupObj.TemplateSnapshot != "" {
+		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
+			return
+		}
+	} else {
+		// 历史数据 模版查询兜底
+		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
+			return
+		}
+		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
@@ -1693,7 +1705,9 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 }
 
 func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
-	var endpointGroup string
+	var endpointGroup, refTemplateVersion string
+	var templateSnapshot []byte
+	var logMonitorTemplate *models.LogMonitorTemplateDto
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles, alarmStrategyList []string
 	param.LogType = "custom"
@@ -1703,8 +1717,21 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	nowTime := time.Now()
 	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
 	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
-		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
+		if logMonitorTemplate, err = GetLogMonitorTemplate(param.LogMonitorTemplateGuid); err != nil {
+			return
+		}
+		if logMonitorTemplate == nil {
+			err = fmt.Errorf("logMonitorTemplate id:%s is valid", param.LogMonitorTemplateGuid)
+			return
+		}
+		if templateSnapshot, err = json.Marshal(logMonitorTemplate); err != nil {
+			return
+		}
+		refTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user," +
+			"create_time,update_user,update_time,metric_prefix_code,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator,
+			nowTime, param.MetricPrefixCode, templateSnapshot, refTemplateVersion,
 		}})
 	} else {
 		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
