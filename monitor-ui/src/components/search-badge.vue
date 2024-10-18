@@ -193,7 +193,7 @@ export default ({
   methods: {
     onFilterOptions: debounce(function () {
       this.getFilterAllOptions()
-    }, 400),
+    }, 800),
     getFilterAllOptions() {
       const api = '/monitor/api/v1/alarm/problem/options'
       this.request('POST', api, this.filterParams, res => {
