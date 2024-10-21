@@ -1033,7 +1033,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 		}
 		actions = append(actions, tmpActions...)
 	} else {
-		tmpActions, _, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, roles, errMsgObj)
+		tmpActions, _, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, roles, errMsgObj, true)
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -1687,14 +1687,14 @@ func getLogMetricGroupMapData(logMetricGroupGuid string) (result map[string][]*m
 func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.Guid = ""
 	var actions []*Action
-	if actions, result, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string), roles, errMsgObj); err != nil {
+	if actions, result, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string), roles, errMsgObj, false); err != nil {
 		return
 	}
 	err = Transaction(actions)
 	return
 }
 
-func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
+func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, err error) {
 	var endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles, alarmStrategyList []string
@@ -1750,7 +1750,7 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			tmpMetricTags = []string{"tags"}
 		}
 		tmpMetricGuid := generateMetricGuid(tmpMetricWithPrefix, serviceGroup)
-		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok {
+		if duplicateMetric, ok := existMetricMap[tmpMetricGuid]; ok && !doImport {
 			err = fmt.Errorf("Metric: %s duplicate ", duplicateMetric)
 			return
 		}
