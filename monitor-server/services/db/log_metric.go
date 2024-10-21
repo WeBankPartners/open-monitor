@@ -1575,13 +1575,12 @@ func getDeleteMetricActions(metricGuid string) (actions []*Action, affectEndpoin
 func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.LogMetricGroupObj) {
 	result = []*models.LogMetricGroupObj{}
 	var logMetricGroupTable []*models.LogMetricGroup
-	var err error
 	x.SQL("select * from log_metric_group where log_metric_monitor=? order by update_time desc", logMetricMonitor).Find(&logMetricGroupTable)
 	for _, v := range logMetricGroupTable {
 		v.CreateTimeString = v.CreateTime.Format(models.DatetimeFormat)
 		v.UpdateTimeString = v.UpdateTime.Format(models.DatetimeFormat)
 		logMetricGroupData := &models.LogMetricGroupObj{LogMetricGroup: *v}
-		if v.LogMonitorTemplate != "" {
+		if v.LogMonitorTemplate != "" && v.LogType != "custom" {
 			tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
 			if tmpGetTemplateErr != nil {
 				log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
@@ -1592,26 +1591,11 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 					log.Logger.Error("ListLogMetricGroups getLogMetricGroupMapData fail ", log.String("logMetricGroupGuid", v.Guid), log.Error(getStringMapErr))
 				}
 				logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
-				// 业务配置引用自定义模版,可能会修改 ParamList参数,需要特殊处理,不走通用模版读取逻辑
-				if v.LogType == "custom" {
-					var logMetricParamRows []*models.LogMetricParam
-					if err = x.SQL("select * from log_metric_param where log_metric_group=?", v.Guid).Find(&logMetricParamRows); err != nil {
-						log.Logger.Error("Query table log_metric_param fail", log.Error(err))
-					}
-					for _, row := range logMetricParamRows {
-						tmpParamObj := models.LogMetricParamObj{LogMetricParam: *row, StringMap: []*models.LogMetricStringMapTable{}}
-						if stringMapData, ok := logMetricStringMapData[row.Name]; ok {
-							tmpParamObj.StringMap = stringMapData
-						}
-						logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, &tmpParamObj)
-					}
-				} else {
-					// 读取 模版的 ParamList
-					for _, tplParam := range tmpTemplateObj.ParamList {
-						tmpLogMetricParamObj := tplParam.TransToLogParam()
-						tmpLogMetricParamObj.StringMap = logMetricStringMapData[tmpLogMetricParamObj.Name]
-						logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, tmpLogMetricParamObj)
-					}
+				// 读取 模版的 ParamList
+				for _, tplParam := range tmpTemplateObj.ParamList {
+					tmpLogMetricParamObj := tplParam.TransToLogParam()
+					tmpLogMetricParamObj.StringMap = logMetricStringMapData[tmpLogMetricParamObj.Name]
+					logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, tmpLogMetricParamObj)
 				}
 				for _, tplMetric := range tmpTemplateObj.MetricList {
 					output := tplMetric.TransToLogMetric()
