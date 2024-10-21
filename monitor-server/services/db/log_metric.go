@@ -1744,7 +1744,7 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 }
 
 func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
-	var endpointGroup string
+	var endpointGroup, refTemplateVersion string
 	var templateSnapshot []byte
 	var logMonitorTemplate *models.LogMonitorTemplateDto
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
@@ -1852,7 +1852,7 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	var dashboardParam = models.AutoSimpleCreateDashboardParam{MetricList: param.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
 		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateDashboard: param.AutoCreateDashboard,
 		LogMetricGroupGuid: param.LogMetricGroup.Guid, MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode, MonitorType: param.MonitorType}
-	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateSimpleCustomDashboard(dashboardParam); err != nil {
+	if subCreateDashboardActions, result.CustomDashboard, newDashboardId, err = autoGenerateSimpleCustomDashboard(dashboardParam); err != nil {
 		return
 	}
 	if len(subCreateDashboardActions) > 0 {
