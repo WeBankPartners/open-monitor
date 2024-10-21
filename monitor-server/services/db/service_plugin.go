@@ -148,7 +148,7 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 					TargetValue: codeRow.TargetValue,
 				})
 			}
-			createLogMetricGroupActions, _, newDashboardId, createLogMetricGroupErr := getCreateLogMetricGroupActions(&autoCreateLogMetricGroupParam, operator, roles, make(map[string]string), errMsgObj)
+			createLogMetricGroupActions, _, newDashboardId, createLogMetricGroupErr := getCreateLogMetricGroupActions(&autoCreateLogMetricGroupParam, operator, roles, make(map[string]string), errMsgObj, false)
 			if createLogMetricGroupErr != nil {
 				err = fmt.Errorf("try to create logMetricGroup with template fail,%s ", createLogMetricGroupErr.Error())
 				break
