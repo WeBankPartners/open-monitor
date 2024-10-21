@@ -75,7 +75,12 @@
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + ' ' + $t('m_endpoint')">
-            <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
+            <Select
+              filterable
+              clearable
+              v-model="metricConfigData.endpoint"
+              @on-change="handleEndPointChange"
+            >
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.name || item.guid }}</Option>
             </Select>
           </FormItem>
@@ -92,6 +97,7 @@
 </template>
 
 <script>
+import {isEmpty} from 'lodash'
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
@@ -307,7 +313,9 @@ export default {
         this.$root.apiCenter.getEndpoint,
         params,
         responseData => {
-          this.endpointOptions = responseData
+          if (Array.isArray(responseData) && !isEmpty(responseData)) {
+            this.endpointOptions = [...this.endpointOptions, ...responseData]
+          }
           if (this.endpointOptions.length > 0) {
             this.metricConfigData.endpoint = this.endpointOptions[0].guid
             this.getChartData()
