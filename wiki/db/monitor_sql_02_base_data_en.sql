@@ -1233,3 +1233,8 @@ alter table alarm_strategy modify column active_window varchar(255) default null
 #@v3.2.3.8-begin@;
 create index `alarm_strategy_status_idx` on alarm (`status`,`alarm_strategy`);
 #@v3.2.3.8-end@;
+
+#@v3.2.7-begin@;
+alter table log_metric_string_map add column log_monitor_template varchar(64) default null COMMENT '业务日志模版';
+alter table log_metric_string_map add index log_metric_string_map_template (log_monitor_template);
+#@v3.2.7-end@;
