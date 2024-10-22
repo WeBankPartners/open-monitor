@@ -77,15 +77,16 @@ type LogMetricConfigDto struct {
 }
 
 type LogMetricStringMapTable struct {
-	Guid            string `json:"guid" xorm:"guid"`
-	LogMetricConfig string `json:"log_metric_config" xorm:"log_metric_config"`
-	LogMetricGroup  string `json:"log_metric_group" xorm:"log_metric_group"`
-	LogParamName    string `json:"log_param_name" xorm:"log_param_name"`
-	ValueType       string `json:"value_type" xorm:"value_type"`
-	SourceValue     string `json:"source_value" xorm:"source_value"`
-	Regulative      int    `json:"regulative" xorm:"regulative"`
-	TargetValue     string `json:"target_value" xorm:"target_value"`
-	UpdateTime      string `json:"update_time" xorm:"update_time"`
+	Guid               string `json:"guid" xorm:"guid"`
+	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
+	LogMonitorTemplate string `json:"log_monitor_template" xorm:"log_monitor_template"`
+	LogParamName       string `json:"log_param_name" xorm:"log_param_name"`
+	ValueType          string `json:"value_type" xorm:"value_type"`
+	SourceValue        string `json:"source_value" xorm:"source_value"`
+	Regulative         int    `json:"regulative" xorm:"regulative"`
+	TargetValue        string `json:"target_value" xorm:"target_value"`
+	UpdateTime         string `json:"update_time" xorm:"update_time"`
 }
 
 type LogMetricEndpointRelTable struct {

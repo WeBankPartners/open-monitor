@@ -661,7 +661,7 @@ func CheckLogMonitorRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := []*models.LogParamTemplateObj{}
+	var result []*models.LogParamTemplateObj
 	for _, v := range param.ParamList {
 		_, v.DemoMatchValue = db.CheckRegExpMatchPCRE(models.CheckRegExpParam{RegString: v.Regular, TestContext: param.DemoLog})
 		result = append(result, v)
@@ -985,7 +985,7 @@ func LogMonitorTemplateExport(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	resultData := []*models.LogMonitorTemplateDto{}
+	var resultData []*models.LogMonitorTemplateDto
 	for _, v := range param.GuidList {
 		templateObj, tmpErr := db.GetLogMonitorTemplate(v)
 		if tmpErr != nil {
