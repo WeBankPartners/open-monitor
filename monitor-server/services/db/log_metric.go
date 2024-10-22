@@ -1739,6 +1739,9 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	}
 	nowTime := time.Now()
 	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
+	if param.LogMonitorTemplateGuid == "" && param.LogMonitorTemplate != "" {
+		param.LogMonitorTemplateGuid = param.LogMonitorTemplate
+	}
 	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
 		if logMonitorTemplate, err = GetLogMonitorTemplate(param.LogMonitorTemplateGuid); err != nil {
 			return
