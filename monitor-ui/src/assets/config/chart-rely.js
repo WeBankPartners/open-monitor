@@ -176,6 +176,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       top: '10px'
     },
     tooltip: {
+      enterable: false,
       appendToBody: true,
       trigger: 'axis',
       backgroundColor: 'rgba(245, 245, 245, 0.8)',
@@ -262,6 +263,14 @@ export const drawChart = function (that,config,userConfig, elId) {
         }
       },
       boundaryGap: false,
+      max(value) {
+        window.xAxisMaxValue = value.max
+        return value.max
+      },
+      min(value) {
+        window.xAxisMinValue = value.min
+        return value.min
+      },
       axisLine: {
         lineStyle: {
           color: '#a1a1a2'
