@@ -1,6 +1,6 @@
 <template>
-  <div class="single-chart">
-    <div v-show="noDataType === 'normal'">
+  <div id='custome-chart-view' class="single-chart">
+    <div id='text' v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
       </div>
     </div>
@@ -87,6 +87,10 @@ export default {
     },
     isAutoRefresh() {
       clearInterval(this.interval)
+      const element = document.querySelector('#custome-chart-view')
+      if (!element) {
+        return
+      }
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
         this.interval = setInterval(() => {
           this.getchartdata()
@@ -104,13 +108,13 @@ export default {
         ...this.chartInfo.chartParams,
         custom_chart_guid: this.chartInfo.elId
       }
-      window.intervalFrom = 'custom-chart'
+      this.elId = this.chartInfo.elId
+      window.intervalFrom = 'custom-chartddd'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
         } else {
           responseData.yaxis.unit = this.chartInfo.panalUnit
-          this.elId = this.chartInfo.elId
           this.noDataType = 'normal'
           const chartConfig = {
             title: false,
@@ -151,4 +155,14 @@ export default {
       transform: translate(-50%, -50%);
     }
   }
+</style>
+
+<style lang="less">
+.echart> div[style]:nth-child(2){
+  pointer-events: all !important; /*强制tooltip响应事件*/
+}
+.echart > div[style]:nth-child(2):hover {
+  display: block !important; /*强制鼠标在时tooltip不消失*/
+}
+
 </style>
