@@ -97,7 +97,7 @@ func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigDto) {
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
 	CalcResultObj             *CheckRegExpResult            `json:"calc_result"`
-	ParamList                 []*LogParamTemplate           `json:"param_list"`
+	ParamList                 []*LogParamTemplateObj        `json:"param_list"`
 	MetricList                []*LogMetricTemplate          `json:"metric_list"`
 	Permission                *LogMonitorTemplatePermission `json:"permission"`
 	LogMonitorTemplateVersion string                        `json:"log_monitor_template_version"`
