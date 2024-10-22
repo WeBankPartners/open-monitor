@@ -210,6 +210,12 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 				logParamObj.Name, logParamObj.DisplayName, logParamObj.JsonKey, logParamObj.Regular, logParamObj.DemoMatchValue, operator, nowTime, logParamObj.Guid,
 			}})
 		}
+		tmpStringMapGuidList := guid.CreateGuidList(len(logParamObj.StringMap))
+		for stringMapIndex, stringMapObj := range logParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_monitor_template,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, logParamObj.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
+			}})
+		}
 	}
 	for _, existParamObj := range existLogMonitorObj.ParamList {
 		deleteFlag := true
@@ -221,6 +227,9 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 		}
 		if deleteFlag {
 			actions = append(actions, &Action{Sql: "delete from log_param_template where guid=?", Param: []interface{}{existParamObj.Guid}})
+		}
+		for _, stringMapObj := range existParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "delete from log_metric_string_map where guid=?", Param: []interface{}{stringMapObj.Guid}})
 		}
 	}
 	logMetricGuidList := guid.CreateGuidList(len(param.MetricList))
