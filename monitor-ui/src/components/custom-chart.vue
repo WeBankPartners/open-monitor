@@ -1,6 +1,6 @@
 <template>
   <div id='custome-chart-view' class="single-chart">
-    <div id='text' v-show="noDataType === 'normal'">
+    <div v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
       </div>
     </div>
@@ -109,7 +109,7 @@ export default {
         custom_chart_guid: this.chartInfo.elId
       }
       this.elId = this.chartInfo.elId
-      window.intervalFrom = 'custom-chartddd'
+      window.intervalFrom = 'custom-chart'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
@@ -158,11 +158,11 @@ export default {
 </style>
 
 <style lang="less">
-.echart> div[style]:nth-child(2){
-  pointer-events: all !important; /*强制tooltip响应事件*/
-}
-.echart > div[style]:nth-child(2):hover {
-  display: block !important; /*强制鼠标在时tooltip不消失*/
-}
+// .echart> div[style]:nth-child(2){
+//   pointer-events: all !important; /*强制tooltip响应事件*/
+// }
+// .echart > div[style]:nth-child(2):hover {
+//   display: block !important; /*强制鼠标在时tooltip不消失*/
+// }
 
 </style>
