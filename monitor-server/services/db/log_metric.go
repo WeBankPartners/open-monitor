@@ -1041,6 +1041,9 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 		tmpActions, _, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, roles, existMetricMap, errMsgObj, true)
 		if tmpErr != nil {
 			err = tmpErr
+			if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 			return
 		}
 		actions = append(actions, tmpActions...)
@@ -1048,6 +1051,9 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 		tmpActions, _, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, roles, errMsgObj, true)
 		if tmpErr != nil {
 			err = tmpErr
+			if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 			return
 		}
 		actions = append(actions, tmpActions...)
@@ -1239,13 +1245,17 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
 	var newDashboardId int64
-	actions, result, newDashboardId, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj, false)
+	actions, result, newDashboardId, err = getCreateLogMetricGroupActions(param, operator, roles, make(map[string]string), errMsgObj)
 	if err != nil {
+		if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+		}
 		return
 	}
-	err = Transaction(actions)
-	if err != nil && newDashboardId > 0 {
-		x.Exec("delete from custom_dashboard where id=?", newDashboardId)
+	if err = Transaction(actions); err != nil {
+		if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+		}
 	}
 	return
 }
@@ -1699,10 +1709,18 @@ func getLogMetricGroupMapData(logMetricGroupGuid string) (result map[string][]*m
 func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
 	param.Guid = ""
 	var actions []*Action
-	if actions, result, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string), roles, errMsgObj, false); err != nil {
+	var newDashboardId int64
+	if actions, result, newDashboardId, err = getCreateLogMetricCustomGroupActions(param, operator, make(map[string]string), roles, errMsgObj); err != nil {
+		if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+		}
 		return
 	}
-	err = Transaction(actions)
+	if err = Transaction(actions); err != nil {
+		if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+		}
+	}
 	return
 }
 
@@ -1803,7 +1821,7 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	var dashboardParam = models.AutoSimpleCreateDashboardParam{MetricList: param.MetricList, ServiceGroupsRoles: serviceGroupsRoles,
 		ServiceGroup: serviceGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateDashboard: param.AutoCreateDashboard,
 		LogMetricGroupGuid: param.LogMetricGroup.Guid, MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode, MonitorType: param.MonitorType}
-	if subCreateDashboardActions, result.CustomDashboard, err = autoGenerateSimpleCustomDashboard(dashboardParam); err != nil {
+	if subCreateDashboardActions, result.CustomDashboard, newDashboardId, err = autoGenerateSimpleCustomDashboard(dashboardParam); err != nil {
 		return
 	}
 	if len(subCreateDashboardActions) > 0 {
