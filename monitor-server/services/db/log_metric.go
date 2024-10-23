@@ -786,6 +786,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	// delete action
 	if len(param.Config) > 0 {
 		for _, existLogMonitor := range existData.Config {
+			existLogMetricMonitorMap[existLogMonitor.LogPath] = existLogMonitor
 			for _, v := range existLogMonitor.EndpointRel {
 				affectHostMap[v.SourceEndpoint] = 1
 			}
