@@ -145,7 +145,6 @@ export default {
         this.chartInstance.dispatchAction({
           type: 'hideTip'
         })
-        console.error('mouseLeave')
       }
     }
   },
