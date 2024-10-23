@@ -771,7 +771,6 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
 	var existLogMetricMonitorMap = make(map[string]*models.LogMetricMonitorObj)
-	var deleteLogMetricMonitorMap = make(map[string]bool)
 	existData, queryErr := GetLogMetricByServiceGroup(param.Guid, "")
 	if queryErr != nil {
 		return fmt.Errorf("get exist log metric data fail,%s ", queryErr.Error())
@@ -787,15 +786,24 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	// delete action
 	if len(param.Config) > 0 {
 		for _, existLogMonitor := range existData.Config {
-			existLogMetricMonitorMap[existLogMonitor.LogPath] = existLogMonitor
+			for _, v := range existLogMonitor.EndpointRel {
+				affectHostMap[v.SourceEndpoint] = 1
+			}
+			tmpDeleteActions, affectHost, affectEndpointGroup := getDeleteLogMetricMonitor(existLogMonitor.Guid)
+			actions = append(actions, tmpDeleteActions...)
+			for _, v := range affectHost {
+				affectHostMap[v] = 1
+			}
+			for _, v := range affectEndpointGroup {
+				affectEndpointGroupMap[v] = 1
+			}
 		}
 	}
 	for _, inputLogMonitor := range param.Config {
 		existObj := &models.LogMetricMonitorObj{}
+		// 业务配置映射关系需要保留
 		if v, ok := existLogMetricMonitorMap[inputLogMonitor.LogPath]; ok {
-			existObj = v
-		} else {
-			deleteLogMetricMonitorMap[inputLogMonitor.LogPath] = true
+			existObj.EndpointRel = v.EndpointRel
 		}
 		if existObj.Guid != "" {
 			if existObj.LogPath != inputLogMonitor.LogPath || existObj.MonitorType != inputLogMonitor.MonitorType {
@@ -804,6 +812,12 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		} else {
 			inputLogMonitor.Guid = "lmm_" + guid.CreateGuid()
 			actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{inputLogMonitor.Guid, param.Guid, inputLogMonitor.LogPath, inputLogMonitor.MetricType, inputLogMonitor.MonitorType, nowTime}})
+			if len(existObj.EndpointRel) > 0 {
+				for _, endpointRel := range existObj.EndpointRel {
+					endpointRel.LogMetricMonitor = inputLogMonitor.Guid
+					endpointRel.Guid = guid.CreateGuid()
+				}
+			}
 		}
 		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj, roles)
 		if tmpErr != nil {
@@ -818,24 +832,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 			affectEndpointGroupMap[v] = 1
 		}
 	}
-	// delete action
-	if len(param.Config) > 0 {
-		for _, existLogMonitor := range existData.Config {
-			for _, v := range existLogMonitor.EndpointRel {
-				affectHostMap[v.SourceEndpoint] = 1
-			}
-			if deleteLogMetricMonitorMap[existLogMonitor.LogPath] {
-				tmpDeleteActions, affectHost, affectEndpointGroup := getDeleteLogMetricMonitor(existLogMonitor.Guid)
-				actions = append(actions, tmpDeleteActions...)
-				for _, v := range affectHost {
-					affectHostMap[v] = 1
-				}
-				for _, v := range affectEndpointGroup {
-					affectEndpointGroupMap[v] = 1
-				}
-			}
-		}
-	}
+
 	for _, dbConfig := range param.DBConfig {
 		tmpDBMetricGuid := fmt.Sprintf("%s__%s", dbConfig.Metric, dbConfig.ServiceGroup)
 		if tmpMetric, existFlag := serviceGroupMetricMap[tmpDBMetricGuid]; existFlag {
