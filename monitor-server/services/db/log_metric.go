@@ -770,6 +770,8 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 
 func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
+	var existLogMetricMonitorMap = make(map[string]*models.LogMetricMonitorObj)
+	var deleteLogMetricMonitorMap = make(map[string]bool)
 	existData, queryErr := GetLogMetricByServiceGroup(param.Guid, "")
 	if queryErr != nil {
 		return fmt.Errorf("get exist log metric data fail,%s ", queryErr.Error())
@@ -785,21 +787,16 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	// delete action
 	if len(param.Config) > 0 {
 		for _, existLogMonitor := range existData.Config {
-			for _, v := range existLogMonitor.EndpointRel {
-				affectHostMap[v.SourceEndpoint] = 1
-			}
-			tmpDeleteActions, affectHost, affectEndpointGroup := getDeleteLogMetricMonitor(existLogMonitor.Guid)
-			actions = append(actions, tmpDeleteActions...)
-			for _, v := range affectHost {
-				affectHostMap[v] = 1
-			}
-			for _, v := range affectEndpointGroup {
-				affectEndpointGroupMap[v] = 1
-			}
+			existLogMetricMonitorMap[existLogMonitor.LogPath] = existLogMonitor
 		}
 	}
 	for _, inputLogMonitor := range param.Config {
 		existObj := &models.LogMetricMonitorObj{}
+		if v, ok := existLogMetricMonitorMap[inputLogMonitor.LogPath]; ok {
+			existObj = v
+		} else {
+			deleteLogMetricMonitorMap[inputLogMonitor.LogPath] = true
+		}
 		if existObj.Guid != "" {
 			if existObj.LogPath != inputLogMonitor.LogPath || existObj.MonitorType != inputLogMonitor.MonitorType {
 				actions = append(actions, &Action{Sql: "update log_metric_monitor set log_path=?,monitor_type=? where guid=?", Param: []interface{}{inputLogMonitor.LogPath, inputLogMonitor.MonitorType, inputLogMonitor.Guid}})
@@ -819,6 +816,24 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		}
 		for _, v := range tmpAffectEndpointGroup {
 			affectEndpointGroupMap[v] = 1
+		}
+	}
+	// delete action
+	if len(param.Config) > 0 {
+		for _, existLogMonitor := range existData.Config {
+			for _, v := range existLogMonitor.EndpointRel {
+				affectHostMap[v.SourceEndpoint] = 1
+			}
+			if deleteLogMetricMonitorMap[existLogMonitor.LogPath] {
+				tmpDeleteActions, affectHost, affectEndpointGroup := getDeleteLogMetricMonitor(existLogMonitor.Guid)
+				actions = append(actions, tmpDeleteActions...)
+				for _, v := range affectHost {
+					affectHostMap[v] = 1
+				}
+				for _, v := range affectEndpointGroup {
+					affectEndpointGroupMap[v] = 1
+				}
+			}
 		}
 	}
 	for _, dbConfig := range param.DBConfig {
