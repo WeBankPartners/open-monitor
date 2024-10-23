@@ -63,7 +63,6 @@ export default {
         this.chartInstance.dispatchAction({
           type: 'hideTip'
         })
-        console.error('11')
       }, 500)
     }
   },
@@ -146,6 +145,7 @@ export default {
         this.chartInstance.dispatchAction({
           type: 'hideTip'
         })
+        console.error('mouseLeave')
       }
     }
   },
