@@ -715,16 +715,16 @@ func DeleteServiceConfig(serviceGroup string) {
 }
 
 func getUpdateServiceGroupNotifyActions(serviceGroup, firingCallback, recoverCallback string, roleList []string) (actions []*Action) {
-	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where service_group=?)", Param: []interface{}{serviceGroup}})
-	actions = append(actions, &Action{Sql: "delete from notify where service_group=?", Param: []interface{}{serviceGroup}})
-	if firingCallback != "" {
-		firingActionGuid := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{firingActionGuid, serviceGroup, "firing", firingCallback}})
-	}
-	if recoverCallback != "" {
-		recoverActionGuid := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{recoverActionGuid, serviceGroup, "ok", recoverCallback}})
-	}
+	//actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where service_group=?)", Param: []interface{}{serviceGroup}})
+	//actions = append(actions, &Action{Sql: "delete from notify where service_group=?", Param: []interface{}{serviceGroup}})
+	//if firingCallback != "" {
+	//	firingActionGuid := guid.CreateGuid()
+	//	actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{firingActionGuid, serviceGroup, "firing", firingCallback}})
+	//}
+	//if recoverCallback != "" {
+	//	recoverActionGuid := guid.CreateGuid()
+	//	actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{recoverActionGuid, serviceGroup, "ok", recoverCallback}})
+	//}
 	actions = append(actions, &Action{Sql: "delete from service_group_role_rel where service_group=?", Param: []interface{}{serviceGroup}})
 	for _, role := range roleList {
 		if role == "" {
