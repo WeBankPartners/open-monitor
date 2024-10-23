@@ -1,6 +1,7 @@
 package http_check
 
 import (
+	"crypto/tls"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 	"log"
 	"net/http"
@@ -11,13 +12,13 @@ import (
 )
 
 var (
-	httpCheckResultList  []*funcs.HttpCheckObj
-	resultLock = new(sync.RWMutex)
-	httpMethodList = []string{"POST","GET","OPTIONS","HEAD","PUT","DELETE","TRACE","CONNECT"}
-	httpCheckTimeOut = 10
+	httpCheckResultList []*funcs.HttpCheckObj
+	resultLock          = new(sync.RWMutex)
+	httpMethodList      = []string{"POST", "GET", "OPTIONS", "HEAD", "PUT", "DELETE", "TRACE", "CONNECT"}
+	httpCheckTimeOut    = 10
 )
 
-func StartHttpCheckTask()  {
+func StartHttpCheckTask() {
 	interval := funcs.Config().Interval
 	if interval < 30 {
 		log.Println("http_check interval refresh to 30s")
@@ -26,10 +27,10 @@ func StartHttpCheckTask()  {
 	if funcs.Config().HttpCheckTimeout > 0 {
 		httpCheckTimeOut = funcs.Config().HttpCheckTimeout
 	}
-	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	t := time.NewTicker(time.Second * time.Duration(interval)).C
 	for {
 		go httpCheckTask()
-		<- t
+		<-t
 	}
 }
 
@@ -41,14 +42,14 @@ func buildHttpClient() *http.Client {
 		}
 	}
 	transport := &http.Transport{
-		Proxy: proxy,
-		//TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           proxy,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: transport, Timeout:time.Duration(httpCheckTimeOut)*time.Second}
+	client := &http.Client{Transport: transport, Timeout: time.Duration(httpCheckTimeOut) * time.Second}
 	return client
 }
 
-func httpCheckTask()  {
+func httpCheckTask() {
 	startTime := time.Now()
 	httpCheckList := funcs.GetHttpCheckList()
 	clearHttpCheckResult(httpCheckList)
@@ -57,35 +58,35 @@ func httpCheckTask()  {
 	httpClient.CloseIdleConnections()
 	wg := sync.WaitGroup{}
 	//var successCounter int
-	for _,v := range httpCheckList {
+	for _, v := range httpCheckList {
 		wg.Add(1)
-		go func(method string,url string) {
+		go func(method string, url string) {
 			//b := doHttpCheck(method, url)
 			b := doHttpCheckNew(method, url, httpClient)
 			writeHttpCheckResult(method, url, b)
 			funcs.DebugLog("http check %s:%s result %d ", method, url, b)
 			wg.Done()
-		}(v.Method,v.Url)
+		}(v.Method, v.Url)
 	}
 	wg.Wait()
 	endTime := time.Now()
 	useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
-	resultList,successCount := getHttpCheckResult()
+	resultList, successCount := getHttpCheckResult()
 	log.Printf("end http check, success num %d, fail num %d, use time %.3f ms \n", successCount, len(resultList)-successCount, useTime)
 	funcs.UpdateHttpCheckExportMetric(resultList, successCount)
 }
 
-func doHttpCheck(method,url string) int  {
+func doHttpCheck(method, url string) int {
 	reqHttpMethod := http.MethodGet
 	if method == "post" {
 		reqHttpMethod = http.MethodPost
 	}
-	req,err := http.NewRequest(reqHttpMethod, url, strings.NewReader(""))
+	req, err := http.NewRequest(reqHttpMethod, url, strings.NewReader(""))
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s new request error: %v \n", method, url, err)
 		return 1
 	}
-	resp,err := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
 		return 2
@@ -93,12 +94,12 @@ func doHttpCheck(method,url string) int  {
 	return resp.StatusCode
 }
 
-func doHttpCheckNew(method,url string,httpClient *http.Client) int {
+func doHttpCheckNew(method, url string, httpClient *http.Client) int {
 	var resp *http.Response
 	var err error
-	body:=strings.NewReader("")
+	body := strings.NewReader("")
 	methodIllegal := true
-	for _,v := range httpMethodList {
+	for _, v := range httpMethodList {
 		if v == method {
 			methodIllegal = false
 			break
@@ -108,14 +109,14 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 		log.Printf("do http check -> Not support method:%s \n", method)
 		return 2
 	}
-	
+
 	req, err := http.NewRequest(strings.ToUpper(method), url, body)
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s new request error: %v \n", method, url, err)
 		return 2
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp , err = httpClient.Do(req)
+	resp, err = httpClient.Do(req)
 
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
@@ -127,9 +128,9 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 	return resp.StatusCode
 }
 
-func writeHttpCheckResult(method,url string,statusCode int)  {
+func writeHttpCheckResult(method, url string, statusCode int) {
 	resultLock.Lock()
-	for _,v := range httpCheckResultList {
+	for _, v := range httpCheckResultList {
 		if v.Method == method && v.Url == url {
 			v.StatusCode = statusCode
 			break
@@ -138,23 +139,23 @@ func writeHttpCheckResult(method,url string,statusCode int)  {
 	resultLock.Unlock()
 }
 
-func clearHttpCheckResult(param []*funcs.HttpCheckObj)  {
+func clearHttpCheckResult(param []*funcs.HttpCheckObj) {
 	resultLock.Lock()
 	httpCheckResultList = []*funcs.HttpCheckObj{}
-	for _,v := range param {
+	for _, v := range param {
 		httpCheckResultList = append(httpCheckResultList, &funcs.HttpCheckObj{Method: v.Method, Url: v.Url, StatusCode: 2})
 	}
 	resultLock.Unlock()
 }
 
-func getHttpCheckResult() (result []*funcs.HttpCheckObj,successCount int) {
+func getHttpCheckResult() (result []*funcs.HttpCheckObj, successCount int) {
 	resultLock.RLock()
-	for _,v := range httpCheckResultList {
+	for _, v := range httpCheckResultList {
 		if v.StatusCode >= 200 && v.StatusCode < 300 {
 			successCount += 1
 		}
-		result = append(result, &funcs.HttpCheckObj{Method:v.Method, Url:v.Url, StatusCode:v.StatusCode})
+		result = append(result, &funcs.HttpCheckObj{Method: v.Method, Url: v.Url, StatusCode: v.StatusCode})
 	}
 	resultLock.RUnlock()
-	return result,successCount
+	return result, successCount
 }
