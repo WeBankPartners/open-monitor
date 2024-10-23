@@ -664,7 +664,7 @@ export default {
 }
 
 body::-webkit-scrollbar {
-    display: none; /* 隐藏滚动条 */
+    // display: none;
 }
 
 </style>
