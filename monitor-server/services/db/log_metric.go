@@ -815,8 +815,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 			actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{inputLogMonitor.Guid, param.Guid, inputLogMonitor.LogPath, inputLogMonitor.MetricType, inputLogMonitor.MonitorType, nowTime}})
 			if len(existObj.EndpointRel) > 0 {
 				for _, endpointRel := range existObj.EndpointRel {
-					endpointRel.LogMetricMonitor = inputLogMonitor.Guid
-					endpointRel.Guid = guid.CreateGuid()
+					actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), inputLogMonitor.Guid, endpointRel.SourceEndpoint, endpointRel.TargetEndpoint}})
 				}
 			}
 		}
