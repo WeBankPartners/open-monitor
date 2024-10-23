@@ -1038,21 +1038,38 @@ func getLastFromExpr(expr string) string {
 
 func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
-	if len(param.Priority) > 0 {
-		filterSql, filterParam := createListParams(param.Priority, "")
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority in ("+filterSql+")", filterParam...).Find(&alarmRows)
-	} else if len(param.Metric) > 0 {
-		filterSql, filterParam := createListParams(param.Metric, "")
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric in ("+filterSql+")", filterParam...).Find(&alarmRows)
-	} else if len(param.Endpoint) > 0 {
-		filterSql, filterParam := createListParams(param.Endpoint, "")
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and endpoint in ("+filterSql+")", filterParam...).Find(&alarmRows)
-	} else if len(param.AlarmName) > 0 {
-		filterSql, filterParam := createListParams(param.AlarmName, "")
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and alarm_name in ("+filterSql+")", filterParam...).Find(&alarmRows)
+	var queryFilterList []string
+	var queryFilterParam []interface{}
+	if param.Id > 0 {
+		queryFilterList = append(queryFilterList, "id=?")
+		queryFilterParam = append(queryFilterParam, param.Id)
 	} else {
-		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
+		if len(param.Priority) > 0 {
+			filterSql, filterParam := createListParams(param.Priority, "")
+			queryFilterList = append(queryFilterList, "s_priority in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.Metric) > 0 {
+			filterSql, filterParam := createListParams(param.Metric, "")
+			queryFilterList = append(queryFilterList, "s_metric in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.Endpoint) > 0 {
+			filterSql, filterParam := createListParams(param.Endpoint, "")
+			queryFilterList = append(queryFilterList, "endpoint in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.AlarmName) > 0 {
+			filterSql, filterParam := createListParams(param.AlarmName, "")
+			queryFilterList = append(queryFilterList, "alarm_name in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
 	}
+	if len(queryFilterList) == 0 {
+		err = fmt.Errorf("close filter can not empty")
+		return
+	}
+	err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and "+strings.Join(queryFilterList, " and "), queryFilterParam...).Find(&alarmRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
 		return
