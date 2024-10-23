@@ -266,11 +266,11 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
       boundaryGap: false,
       max(value) {
-        window.xAxisMaxValue = value.max
+        window.xAxisMaxValue = new Date(value.max)
         return value.max
       },
       min(value) {
-        window.xAxisMinValue = value.min
+        window.xAxisMinValue = new Date(value.min)
         return value.min
       },
       axisLine: {
