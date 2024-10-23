@@ -1022,6 +1022,7 @@ func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTi
 }
 
 func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, roles []string) (actions []*Action, newDashboardId int64, err error) {
+	var tmpActions []*Action
 	if metricGroup.LogMonitorTemplate != "" && (metricGroup.LogType == models.LogMonitorRegularType || metricGroup.LogType == models.LogMonitorJsonType) {
 		metricGroup.LogMonitorTemplate, err = GetLogTemplateGuidByName(metricGroup.LogMonitorTemplateName)
 		if err != nil {
@@ -1044,9 +1045,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		tmpActions, _, _, tmpErr := getCreateLogMetricGroupActions(&tmpCreateParam, operator, roles, existMetricMap, errMsgObj, true)
-		if tmpErr != nil {
-			err = tmpErr
+		if tmpActions, _, newDashboardId, err = getCreateLogMetricGroupActions(&tmpCreateParam, operator, roles, existMetricMap, errMsgObj, true); err != nil {
 			if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
 				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
 			}
@@ -1054,9 +1053,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 		}
 		actions = append(actions, tmpActions...)
 	} else {
-		tmpActions, _, newDashboardId, tmpErr := getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, roles, errMsgObj, true)
-		if tmpErr != nil {
-			err = tmpErr
+		if tmpActions, _, newDashboardId, err = getCreateLogMetricCustomGroupActions(metricGroup, operator, existMetricMap, roles, errMsgObj, true); err != nil {
 			if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
 				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
 			}
