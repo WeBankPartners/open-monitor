@@ -1,5 +1,5 @@
 <template>
-  <div id='custome-chart-view' class="single-chart">
+  <div id='custome-chart-view' class="single-chart" @mouseleave="onMouseLeaveContent">
     <div v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
       </div>
@@ -24,7 +24,8 @@ export default {
       config: '',
       myChart: '',
       interval: '',
-      noDataType: 'normal' // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      chartInstance: null
     }
   },
   props: {
@@ -57,6 +58,11 @@ export default {
     this.clearInterval()
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
+    if (this.chartInstance) {
+      this.chartInstance.dispatchAction({
+        type: 'hideTip'
+      })
+    }
   },
   methods: {
     isTabActive() {
@@ -126,11 +132,18 @@ export default {
             params: this.chartInfo.chartParams
           }
           this.$nextTick(() => {
-            readyToDraw(this, responseData, this.chartIndex, chartConfig)
+            this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
             this.scrollHandle()
           })
         }
       }, { isNeedloading: false })
+    },
+    onMouseLeaveContent() {
+      if (this.chartInstance) {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
     }
   },
   components: {},
