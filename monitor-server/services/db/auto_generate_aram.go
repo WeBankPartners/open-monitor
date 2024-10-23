@@ -199,7 +199,6 @@ func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
 
 func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam) (actions []*Action, customDashboard string, newDashboardId int64, err error) {
 	var subDashboardActions, subChart1Actions, subChart2Actions, subChart3Actions []*Action
-	//var newDashboardId int64
 	var metricMap = getMetricMap(dashboardParam.MetricList, dashboardParam.MetricPrefixCode, dashboardParam.ServiceGroup)
 	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
 	var sucCode = getRetCodeSuccessCode(dashboardParam.RetCodeStringMap)
@@ -367,9 +366,8 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	return
 }
 
-func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDashboardParam) (actions []*Action, customDashboard string, err error) {
+func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDashboardParam) (actions []*Action, customDashboard string, newDashboardId int64, err error) {
 	var subDashboardActions, subChartActions []*Action
-	var newDashboardId int64
 	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
 	var customDashboardList []*models.CustomDashboardTable
