@@ -20,12 +20,9 @@
 中文 / [English](README_EN.md)
 
 ## 在线体验环境
-[点此试用Open-Monitor](http://119.91.78.168:8080/monitor)  
+
 <img src="./wiki/images/wecube-monitor01.gif" />  
-> 注意：
->
-> 1. 体验环境每天凌晨2:00-4:00进行重建，重建时间段内环境将不可用，且所有用户修改内容将被丢弃
-> 2. 多人同时使用admin用户，可能会相互影响，若希望更好的体验可参照：[Open-Monitor部署文档](wiki/install_guide.md) 搭建私有环境
+若希望更好的体验可参照：[Open-Monitor部署文档](wiki/install_guide.md) 搭建私有环境
 
 ## 引言  
 Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。
