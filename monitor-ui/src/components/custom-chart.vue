@@ -59,9 +59,11 @@ export default {
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
     if (this.chartInstance) {
-      this.chartInstance.dispatchAction({
-        type: 'hideTip'
-      })
+      setTimeout(() => {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }, 100)
     }
   },
   methods: {
