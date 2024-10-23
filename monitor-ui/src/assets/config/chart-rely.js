@@ -266,7 +266,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
       boundaryGap: false,
       max(value) {
-        window.xAxisMaxValue = new Date(value.max)
+        window.xAxisMaxValue = new Date(value.max) + '【' + value.max + '】'
         return value.max
       },
       min(value) {
