@@ -671,7 +671,7 @@ body::-webkit-scrollbar {
 
 <style scoped lang="less">
 .all-card-content {
-  max-height: ~'calc(100vh - 190px)';
+  max-height: ~'calc(100vh - 210px)';
   overflow-x: hidden;
   overflow-y: auto;
 }
