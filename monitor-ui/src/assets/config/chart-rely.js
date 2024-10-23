@@ -14,10 +14,11 @@ const echarts = require('echarts/lib/echarts')
 
 export const readyToDraw = function (that, responseData, viewIndex, chartConfig, elId) {
   const legend = []
+  let myChart = null
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
-    const myChart = elId && echarts.init(document.getElementById(elId))
+    myChart = elId && echarts.init(document.getElementById(elId))
     myChart && myChart.clear()
     return
   }
@@ -136,7 +137,8 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     ...responseData,
     legend
   }
-  drawChart(that, config, chartConfig, elId)
+  myChart = drawChart(that, config, chartConfig, elId)
+  return myChart
 }
 
 export const drawChart = function (that,config,userConfig, elId) {
@@ -436,6 +438,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       that.getChartData(null,startValue, endValue)
     })
   }
+  return myChart
 }
 
 export const drawPieChart = function (that, responseData) {
