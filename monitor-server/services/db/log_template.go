@@ -307,19 +307,26 @@ func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator s
 			inputParam.Guid = ""
 		}
 		// 看下ID 能否复用
-		if existLogMonitorTemplate, err = GetLogMonitorTemplateByName("", inputParam.Name); err != nil {
+		if existLogMonitorTemplate, err = GetLogMonitorTemplateById(inputParam.Guid); err != nil {
 			return
+		}
+		if existLogMonitorTemplate != nil {
+			inputParam.Guid = ""
 		}
 		// 看下名称能否复用
-		if existLogMonitorTemplate != nil {
-			inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
-		}
 		if existLogMonitorTemplate, err = GetLogMonitorTemplateByName("", inputParam.Name); err != nil {
 			return
 		}
 		if existLogMonitorTemplate != nil {
-			err = fmt.Errorf("log monitor template name:%s duplicate", inputParam.Name)
-			return
+			// 名称已有,追加名称
+			inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
+			if existLogMonitorTemplate, err = GetLogMonitorTemplateByName("", inputParam.Name); err != nil {
+				return
+			}
+			if existLogMonitorTemplate != nil {
+				err = fmt.Errorf("log monitor template name:%s duplicate", inputParam.Name)
+				return
+			}
 		}
 		calcResultBytes, _ := json.Marshal(inputParam.CalcResultObj)
 		inputParam.CalcResult = string(calcResultBytes)
