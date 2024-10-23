@@ -63,7 +63,8 @@ export default {
         this.chartInstance.dispatchAction({
           type: 'hideTip'
         })
-      }, 100)
+        console.error('11')
+      }, 500)
     }
   },
   methods: {
