@@ -113,11 +113,7 @@ func ReturnPasswordError(c *gin.Context) {
 }
 
 func ReturnTokenError(c *gin.Context) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).TokenError, nil)
-}
-
-func ReturnTokenAuthorityError(c *gin.Context) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).TokenAuthorityError, nil)
+	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
 }
 
 func ReturnDashboardNameRepeatError(c *gin.Context) {
