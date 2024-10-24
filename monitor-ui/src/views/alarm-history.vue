@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class='all-content'>
     <global-loading :isSpinShow='isSpinShow' :showText="$t('m_is_requesting')" />
     <div class="title-wrapper">
       <Title :title="$t('m_alarmHistory')"> </Title>
@@ -508,6 +508,13 @@ export default {
 </script>
 
 <style scoped lang="less">
+.all-content {
+  max-height: ~"calc(100vh - 110px)";
+  overflow: auto;
+}
+.all-content::-webkit-scrollbar {
+    display: none;
+}
 .filter-li {
   display: inline-block;
   margin-left: 8px;
