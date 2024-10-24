@@ -81,8 +81,8 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 		return
 	}
 	for _, logMetricString := range logMetricStringMaps {
-		if arr, ok := stringCodeMap[logMetricString.LogParamName]; ok {
-			arr = append(arr, logMetricString)
+		if _, ok := stringCodeMap[logMetricString.LogParamName]; ok {
+			stringCodeMap[logMetricString.LogParamName] = append(stringCodeMap[logMetricString.LogParamName], logMetricString)
 		} else {
 			stringCodeMap[logMetricString.LogParamName] = []*models.LogMetricStringMapTable{logMetricString}
 		}
