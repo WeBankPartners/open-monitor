@@ -661,6 +661,11 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 	return
 }
 
+func deleteCustomDashboard(customDashboardId int64) (err error) {
+	_, err = x.Exec("delete from custom_dashboard where id=?", customDashboardId)
+	return
+}
+
 func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, useRoles []string, mgmtRole, operator string) (actions []*Action) {
 	var permissionList []*models.CustomChartPermission
 	var displayConfig, groupDisplayConfig []byte
