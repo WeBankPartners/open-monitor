@@ -1614,6 +1614,15 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 			} else {
 				logMetricGroupData = customGroupData
 			}
+			if v.LogMonitorTemplate != "" {
+				tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
+				if tmpGetTemplateErr != nil {
+					log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
+				} else {
+					logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
+					logMetricGroupData.LogMonitorTemplateGuid = v.LogMonitorTemplate
+				}
+			}
 		}
 		if metricKey != "" && len(logMetricGroupData.MetricList) > 0 {
 			for _, metric := range logMetricGroupData.MetricList {
