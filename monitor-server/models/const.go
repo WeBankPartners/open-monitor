@@ -22,7 +22,9 @@ const (
 	AlarmNotifyAutoMode   = "auto"
 	AlarmNotifyManualMode = "manual"
 
-	AuthTokenHeader = "Authorization"
+	AuthTokenHeader     = "Authorization"
+	TransactionIdHeader = "transactionId"
+	RequestIdHeader     = "requestId"
 )
 
 var (

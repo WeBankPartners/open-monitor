@@ -1,4 +1,4 @@
-package user
+package standalone
 
 import (
 	"encoding/base64"

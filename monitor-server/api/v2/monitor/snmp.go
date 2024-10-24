@@ -1,4 +1,4 @@
-package config_new
+package monitor
 
 import (
 	"fmt"
@@ -11,16 +11,16 @@ import (
 	"strconv"
 )
 
-func SnmpExporterList(c *gin.Context)  {
-	result,err := db.SnmpExporterList()
+func SnmpExporterList(c *gin.Context) {
+	result, err := db.SnmpExporterList()
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
 
-func SnmpExporterCreate(c *gin.Context)  {
+func SnmpExporterCreate(c *gin.Context) {
 	var param models.SnmpExporterTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -33,12 +33,12 @@ func SnmpExporterCreate(c *gin.Context)  {
 	err := db.SnmpExporterCreate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
 
-func SnmpExporterUpdate(c *gin.Context)  {
+func SnmpExporterUpdate(c *gin.Context) {
 	var param models.SnmpExporterTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -47,12 +47,12 @@ func SnmpExporterUpdate(c *gin.Context)  {
 	err := db.SnmpExporterUpdate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
 
-func SnmpExporterDelete(c *gin.Context)  {
+func SnmpExporterDelete(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
 		middleware.ReturnParamEmptyError(c, "id")
@@ -61,7 +61,7 @@ func SnmpExporterDelete(c *gin.Context)  {
 	err := db.SnmpExporterDelete(id)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
@@ -87,13 +87,13 @@ func PluginSnmpExporterHandle(c *gin.Context) {
 		err = fmt.Errorf("Url action is illegal ")
 		return
 	}
-	nowSnmpList,queryErr := db.SnmpExporterList()
+	nowSnmpList, queryErr := db.SnmpExporterList()
 	if queryErr != nil {
 		err = fmt.Errorf("Try to query snmp list fail,%s ", queryErr.Error())
 		return
 	}
 	for _, input := range param.Inputs {
-		output, tmpErr := PluginSnmpExporter(input,action,nowSnmpList)
+		output, tmpErr := PluginSnmpExporter(input, action, nowSnmpList)
 		if tmpErr != nil {
 			output.ErrorCode = "1"
 			output.ErrorMessage = tmpErr.Error()
@@ -103,7 +103,7 @@ func PluginSnmpExporterHandle(c *gin.Context) {
 	}
 }
 
-func PluginSnmpExporter(input *models.PluginSnmpExporterRequestObj,action string,nowSnmpList []*models.SnmpExporterTable) (result *models.PluginSnmpExporterOutputObj, err error) {
+func PluginSnmpExporter(input *models.PluginSnmpExporterRequestObj, action string, nowSnmpList []*models.SnmpExporterTable) (result *models.PluginSnmpExporterOutputObj, err error) {
 	result = &models.PluginSnmpExporterOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Id: input.Id}
 	if input.Id == "" {
 		err = fmt.Errorf("Param id can not empty ")
@@ -116,7 +116,7 @@ func PluginSnmpExporter(input *models.PluginSnmpExporterRequestObj,action string
 		}
 		defaultInterval := 10
 		if input.ScrapeInterval != "" {
-			defaultInterval,err = strconv.Atoi(input.ScrapeInterval)
+			defaultInterval, err = strconv.Atoi(input.ScrapeInterval)
 			if err != nil {
 				err = fmt.Errorf("Param scrapeInterval can not parse to int ")
 				return
@@ -124,7 +124,7 @@ func PluginSnmpExporter(input *models.PluginSnmpExporterRequestObj,action string
 		}
 		param := models.SnmpExporterTable{Id: input.Id, Address: input.Address, ScrapeInterval: defaultInterval}
 		existFlag := 0
-		for _,nowData := range nowSnmpList {
+		for _, nowData := range nowSnmpList {
 			if nowData.Id == input.Id {
 				existFlag = 1
 				if nowData.Address == input.Address && nowData.ScrapeInterval == defaultInterval {
@@ -138,12 +138,12 @@ func PluginSnmpExporter(input *models.PluginSnmpExporterRequestObj,action string
 		}
 		if existFlag == 1 {
 			err = db.SnmpExporterUpdate(param)
-		}else{
+		} else {
 			err = db.SnmpExporterCreate(param)
 		}
-	}else{
+	} else {
 		existFlag := false
-		for _,nowData := range nowSnmpList {
+		for _, nowData := range nowSnmpList {
 			if nowData.Id == input.Id {
 				existFlag = true
 				break

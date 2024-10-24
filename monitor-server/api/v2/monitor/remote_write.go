@@ -1,4 +1,4 @@
-package config_new
+package monitor
 
 import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"

@@ -1,4 +1,4 @@
-package monitor
+package dashboard
 
 import (
 	"encoding/json"
