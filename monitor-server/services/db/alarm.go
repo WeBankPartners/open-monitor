@@ -1832,7 +1832,7 @@ func ManualNotifyAlarm(alarmId int, operator string) (err error) {
 		return
 	}
 	notifyObj := notifyRows[0]
-	if err = notifyEventAction(notifyObj, &alarmObj, false, operator); err != nil {
+	if _, err = notifyEventAction(notifyObj, &alarmObj, false, operator); err != nil {
 		err = fmt.Errorf("notify event action fail:%s ", err.Error())
 	} else {
 		_, err = x.Exec("insert into alarm_notify(alarm_id,notify_id,endpoint,metric,status,proc_def_key,proc_def_name,notify_description,created_user,created_time) values (?,?,?,?,?,?,?,?,?,?)",
