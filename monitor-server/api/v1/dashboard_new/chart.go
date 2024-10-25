@@ -657,11 +657,18 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if param.Aggregate != "none" && param.AggStep > 10 {
 			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
+			tempData := s.Data
 			s.Data = models.Aggregate(s.Data, param.AggStep, param.Aggregate)
+
+			// 此处做一些数据日志分析统计,如果计算时间大于原始数据时间太多,日志打印
+			if len(s.Data) > 0 && len(s.Data[len(s.Data)-1]) > 0 && len(tempData) > 0 && len(tempData[len(tempData)-1]) > 0 {
+				// 只看最后一条最新时间,大于5分钟
+				if s.Data[len(s.Data)-1][0]-tempData[len(tempData)-1][0] > 300*1000 {
+					log.Logger.Warn("chart aggregate more than 5min", log.String("chartId", param.CustomChartGuid), log.String("serialName", s.Name),
+						log.Int64("step", param.AggStep), log.String("aggregate", param.Aggregate))
+				}
+			}
 		}
-		//if agg > 1 && len(s.Data) > 300 {
-		//	s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
-		//}
 		if param.Compare.CompareSubTime > 0 {
 			if strings.Contains(s.Name, param.Compare.CompareSecondLegend) {
 				s.Data = db.CompareSubData(s.Data, float64(param.Compare.CompareSubTime)*1000)
