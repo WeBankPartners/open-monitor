@@ -218,7 +218,7 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 				if i == 0 {
 					promQl = getTagPromQl(tagObj, originPromQl)
 				} else {
-					promQl = promQl + " and " + getTagPromQl(tagObj, originPromQl)
+					promQl = "(" + promQl + ") and (" + getTagPromQl(tagObj, originPromQl) + ")"
 				}
 			}
 		} else {
