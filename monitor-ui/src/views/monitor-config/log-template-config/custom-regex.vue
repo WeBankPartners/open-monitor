@@ -108,7 +108,7 @@
 
 <script>
 import {
-  isEmpty, hasIn, cloneDeep, remove
+  isEmpty, hasIn, cloneDeep, remove, intersection
 } from 'lodash'
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
@@ -340,6 +340,9 @@ export default {
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
+            if (!selectOptions.includes(params.row.log_param_name)) {
+              this.changeVal('metric_list', params.index, 'log_param_name', '')
+            }
             return (
               <Select
                 filterable
@@ -366,6 +369,10 @@ export default {
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
+            const newArray = intersection(params.row.tag_config, selectOptions)
+            if (JSON.stringify(newArray) !== JSON.stringify(params.row.tag_config)) {
+              this.changeVal('metric_list', params.index, 'tag_config', newArray)
+            }
             return (
               <Select
                 filterable
@@ -782,6 +789,9 @@ export default {
       if (this.isInBusinessConfigAdd) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
+      }
+      if (this.actionType === 'copy') {
+        delete tmpData.guid
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, tmpData, res => {
         const messageTips = this.$t('m_tips_success')

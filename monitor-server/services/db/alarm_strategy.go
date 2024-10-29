@@ -834,20 +834,6 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 	return
 }
 
-func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
-	var notifyList []*models.NotifyTable
-	err := x.SQL("select * from notify where service_group=?", serviceGroup).Find(&notifyList)
-	if err != nil {
-		log.Logger.Warn("Notify serviceGroup fail,query notify data error", log.Error(err))
-	}
-	if len(notifyList) == 0 {
-		notifyList = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
-	}
-	for _, v := range notifyList {
-		notifyAction(v, alarmObj)
-	}
-}
-
 func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if alarmObj.AlarmStrategy == "" {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
@@ -877,73 +863,59 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	// 1.先去单条阈值配置里找通知配置(单条阈值配置里的通知配置)，优先找这颗粒度最小的配置
-	var notifyTable, activeNotifyRows []*models.NotifyTable
-	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
+	notifyObject := &models.NotifyTable{}
+	var notifyQueryRows []*models.NotifyTable
+	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyQueryRows)
 	if err != nil {
 		log.Logger.Error("Query notify table fail", log.Error(err))
 		return
 	}
-	for _, v := range notifyTable {
+	for _, v := range notifyQueryRows {
 		notifyRoles := getNotifyRoles(v.Guid)
 		if len(notifyRoles) == 0 && v.ProcCallbackKey == "" {
 			continue
 		}
-		activeNotifyRows = append(activeNotifyRows, v)
+		notifyObject = v
+		break
 	}
-	notifyTable = activeNotifyRows
 	// 2.如果没有再去找策略所属endpoint_group组的策略(就是界面上阈值配置给某类对象组某种对象配的接收人设置)
-	if len(notifyTable) == 0 {
+	if notifyObject.Guid == "" {
 		var affectServiceGroupList []string
 		var serviceGroup []*models.EndpointServiceRelTable
-		x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", alarmObj.Endpoint).Find(&serviceGroup)
+		queryErr := x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", alarmObj.Endpoint).Find(&serviceGroup)
+		if queryErr != nil {
+			log.Logger.Error("NotifyStrategyAlarm query endpoint service rel fail", log.Int("alarmId", alarmObj.Id), log.Error(queryErr))
+		}
 		for _, v := range serviceGroup {
 			tmpGuidList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
 			for _, vv := range tmpGuidList {
 				affectServiceGroupList = append(affectServiceGroupList, vv)
 			}
 		}
-		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList, "','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
-	}
-	// 3.如果都没有，则构造一条通知配置defaultNotify，尝试使用全局接收人接收通知
-	if len(notifyTable) == 0 {
-		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
-		notifyTable = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
-	} else if len(notifyTable) > 1 {
-		// 按触发的编排信息去重
-		//var newNotifyTable []*models.NotifyTable
-		//existMap := make(map[string]int)
-		//for _, v := range notifyTable {
-		//	tmpKey := fmt.Sprintf("%s_%s_%s_%s", v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam)
-		//	if _, b := existMap[tmpKey]; b {
-		//		continue
-		//	}
-		//	newNotifyTable = append(newNotifyTable, v)
-		//	existMap[tmpKey] = 1
-		//}
-		//if len(newNotifyTable) > 0 {
-		//	notifyTable = newNotifyTable
-		//}
-	}
-	if alarmObj.Status == "firing" {
-		notifyObj := &models.NotifyTable{}
-		for _, v := range notifyTable {
-			if v.EndpointGroup != "" {
-				notifyObj = v
-				break
+		var tmpNotifyQueryRows []*models.NotifyTable
+		queryErr = x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?)", alarmObj.Status, alarmObj.AlarmStrategy).Find(&tmpNotifyQueryRows)
+		if queryErr != nil {
+			log.Logger.Error("NotifyStrategyAlarm query alarm notify fail", log.Int("alarmId", alarmObj.Id), log.String("alarmStrategy", alarmObj.AlarmStrategy), log.Error(queryErr))
+		} else {
+			if len(tmpNotifyQueryRows) > 0 {
+				notifyObject = tmpNotifyQueryRows[0]
+				notifyObject.AffectServiceGroup = affectServiceGroupList
 			}
 		}
-		if notifyObj.Guid == "" {
-			notifyObj = notifyTable[0]
-		}
-		if notifyObj.ProcCallbackMode == models.AlarmNotifyManualMode && notifyObj.ProcCallbackKey != "" {
-			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyObj.Guid, alarmObj.Id); execErr != nil {
+	}
+	// 3.如果都没有，则构造一条通知配置defaultNotify，尝试使用全局接收人接收通知
+	if notifyObject.Guid == "" {
+		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
+		notifyObject = &models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}
+	}
+	if alarmObj.Status == "firing" {
+		if notifyObject.ProcCallbackMode == models.AlarmNotifyManualMode && notifyObject.ProcCallbackKey != "" {
+			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyObject.Guid, alarmObj.Id); execErr != nil {
 				log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", alarmObj.Id), log.Error(execErr))
 			}
 		}
 	}
-	for _, v := range notifyTable {
-		notifyAction(v, alarmObj)
-	}
+	notifyAction(notifyObject, alarmObj)
 }
 
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
@@ -966,25 +938,16 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 			alarmObj.SPriority = tmpAlarmRows[0]["s_priority"]
 		}
 	}
+	withoutRetry := false
 	for i := 0; i < 3; i++ {
-		err = notifyEventAction(notify, alarmObj, true, "system")
+		withoutRetry, err = notifyEventAction(notify, alarmObj, true, "system")
 		if err == nil {
 			break
 		} else {
 			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
 		}
-	}
-	if err != nil {
-		if models.AlarmMailEnable && mailErr == nil {
-			log.Logger.Info("Event three times fail,but already send mail success ")
-			return
-		}
-		// 如果上面编排触发失败又没发自身通知邮件，尝试发邮件通知
-		err = notifyMailAction(notify, alarmObj)
-		if err != nil {
-			log.Logger.Error("Event three times fail,and notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(err))
-		} else {
-			log.Logger.Info("Event three times fail,send mail success ")
+		if withoutRetry {
+			break
 		}
 	}
 }
@@ -1003,24 +966,26 @@ func compareNotifyEventLevel(level string) bool {
 	return result
 }
 
-func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) error {
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) (withoutRetry bool, err error) {
 	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
-		err := notifyMailAction(notify, alarmObj)
-		return err
+		err = notifyMailAction(notify, alarmObj)
+		return
 	}
 	if notify.ProcCallbackKey == "" {
 		if alarmObj.Status == "firing" {
-			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
+			if models.FiringCallback != "" && models.FiringCallback != models.DefaultFiringCallback {
 				notify.ProcCallbackKey = models.FiringCallback
 			}
 		} else {
-			if models.RecoverCallback != "" && models.RecoverCallback != "default_recover_callback" {
+			if models.RecoverCallback != "" && models.RecoverCallback != models.DefaultRecoverCallback {
 				notify.ProcCallbackKey = models.RecoverCallback
 			}
 		}
 		if notify.ProcCallbackKey == "" {
-			return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
+			err = fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
+			withoutRetry = true
+			return
 		}
 	}
 	var requestParam models.CoreNotifyRequest
@@ -1032,28 +997,28 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 	requestParam.OperationUser = operator
 	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
-	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", models.CoreUrl), strings.NewReader(string(b)))
+	request, reqErr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", models.CoreUrl), strings.NewReader(string(b)))
 	request.Header.Set("Authorization", models.GetCoreToken())
 	request.Header.Set("Content-Type", "application/json")
-	if err != nil {
-		log.Logger.Error("Notify core event new request fail", log.Error(err))
-		return err
+	if reqErr != nil {
+		err = fmt.Errorf("Notify core event new request fail, %s ", reqErr.Error())
+		return
 	}
-	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
-	if err != nil {
-		log.Logger.Error("Notify core event ctxhttp request fail", log.Error(err))
-		return err
+	res, doHttpErr := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if doHttpErr != nil {
+		err = fmt.Errorf("Notify core event ctxhttp request fail,%s ", doHttpErr.Error())
+		return
 	}
 	resultBody, _ := ioutil.ReadAll(res.Body)
 	var resultObj models.CoreNotifyResult
 	err = json.Unmarshal(resultBody, &resultObj)
 	res.Body.Close()
 	if err != nil {
-		log.Logger.Error("Notify core event unmarshal json body fail", log.Error(err))
-		return err
+		err = fmt.Errorf("Notify core event unmarshal json body fail,%s ", err.Error())
+		return
 	}
 	log.Logger.Info("Notify core result", log.String("body", string(resultBody)))
-	return nil
+	return
 }
 
 func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
@@ -1118,10 +1083,18 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	var roles []*models.RoleNewTable
 	var toAddress, roleList, tmpToAddress []string
+	var queryRoleErr error
 	if notify.ServiceGroup != "" {
-		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
+		queryRoleErr = x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
 	} else {
-		x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+		if len(notify.AffectServiceGroup) > 0 {
+			queryRoleErr = x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=? union select `role` from service_group_role_rel where service_group in ('"+strings.Join(notify.AffectServiceGroup, "','")+"'))", notify.Guid).Find(&roles)
+		} else {
+			queryRoleErr = x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+		}
+	}
+	if queryRoleErr != nil {
+		log.Logger.Error("notifyMailAction query role fail", log.Int("alarmId", alarmObj.Id), log.Error(queryRoleErr))
 	}
 	// 先拿自己角色表的邮箱，独立运行的情况下有用
 	for _, v := range roles {

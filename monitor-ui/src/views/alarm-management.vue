@@ -578,6 +578,13 @@ export default {
 </style>
 
 <style scoped lang="less">
+.all-content {
+  max-height: ~"calc(100vh - 110px)";
+  overflow: auto;
+}
+.all-content::-webkit-scrollbar {
+    display: none;
+}
 .echart {
   height: ~"calc(100vh - 200px)";
   width: ~"calc(100vw * 0.4)";
