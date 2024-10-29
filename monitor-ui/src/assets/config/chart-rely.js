@@ -14,10 +14,11 @@ const echarts = require('echarts/lib/echarts')
 
 export const readyToDraw = function (that, responseData, viewIndex, chartConfig, elId) {
   const legend = []
+  let myChart = null
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
-    const myChart = elId && echarts.init(document.getElementById(elId))
+    myChart = elId && echarts.init(document.getElementById(elId))
     myChart && myChart.clear()
     return
   }
@@ -136,7 +137,8 @@ export const readyToDraw = function (that, responseData, viewIndex, chartConfig,
     ...responseData,
     legend
   }
-  drawChart(that, config, chartConfig, elId)
+  myChart = drawChart(that, config, chartConfig, elId)
+  return myChart
 }
 
 export const drawChart = function (that,config,userConfig, elId) {
@@ -176,6 +178,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       top: '10px'
     },
     tooltip: {
+      enterable: false,
       appendToBody: true,
       trigger: 'axis',
       backgroundColor: 'rgba(245, 245, 245, 0.8)',
@@ -262,6 +265,14 @@ export const drawChart = function (that,config,userConfig, elId) {
         }
       },
       boundaryGap: false,
+      max(value) {
+        window.xAxisMaxValue = new Date(value.max) + '【' + value.max + '】'
+        return value.max
+      },
+      min(value) {
+        window.xAxisMinValue = new Date(value.min)
+        return value.min
+      },
       axisLine: {
         lineStyle: {
           color: '#a1a1a2'
@@ -427,6 +438,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       that.getChartData(null,startValue, endValue)
     })
   }
+  return myChart
 }
 
 export const drawPieChart = function (that, responseData) {
