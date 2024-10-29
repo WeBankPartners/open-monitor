@@ -56,3 +56,8 @@ const (
 const (
 	PreviewPointCount int = 6 // 预览默认给6个点
 )
+
+const (
+	DefaultFiringCallback  = "default_firing_callback"
+	DefaultRecoverCallback = "default_recover_callback"
+)
