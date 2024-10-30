@@ -214,3 +214,17 @@ func SearchSysPanelData(c *gin.Context) {
 	result := db.SearchPanelByName(search, endpoint)
 	mid.ReturnSuccessData(c, result)
 }
+
+func BatchGetServiceGroup(c *gin.Context) {
+	var param m.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.BatchGetServiceGroupNameByIds(param.Ids)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+	} else {
+		mid.ReturnSuccessData(c, result)
+	}
+}
