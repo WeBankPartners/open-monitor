@@ -273,3 +273,7 @@ type CreateLogMetricGroupDto struct {
 	AlarmList       []string `json:"alarm_list"`
 	CustomDashboard string   `json:"custom_dashboard"`
 }
+
+type IdsParam struct {
+	Ids []string `json:"ids"`
+}
