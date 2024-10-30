@@ -473,3 +473,8 @@ func GetPanelRecursiveEndpoints(guid, endpointType string) (result []*m.Endpoint
 	err = x.SQL("select * from endpoint where guid in ('" + strings.ReplaceAll(panelRecursiveTable[0].Endpoint, "^", "','") + "')").Find(&result)
 	return
 }
+
+func BatchGetServiceGroupNameByIds(ids []string) (list []string, err error) {
+	err = x.SQL(fmt.Sprintf("select display_name from service_group where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
+	return
+}
