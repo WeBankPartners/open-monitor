@@ -742,3 +742,17 @@ func TransImportCustomDashboard(c *gin.Context) {
 	}
 	middleware.ReturnSuccess(c)
 }
+
+func BatchGetDashboard(c *gin.Context) {
+	var param models.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.BatchGetCustomDashboardNameByIds(param.Ids)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
