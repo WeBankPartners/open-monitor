@@ -406,3 +406,8 @@ func GetLogMetricGroupById(id string) (result *models.LogMetricGroup, err error)
 	}
 	return
 }
+
+func BatchGetLogTemplateNameByGuid(ids []string) (list []string, err error) {
+	err = x.SQL(fmt.Sprintf("select name from log_monitor_template where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
+	return
+}
