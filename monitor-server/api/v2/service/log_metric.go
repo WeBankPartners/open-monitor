@@ -1067,3 +1067,17 @@ func LogMonitorDataMapRegMatch(c *gin.Context) {
 	}
 	middleware.ReturnSuccessData(c, param)
 }
+
+func BatchGetLogMonitorTemplate(c *gin.Context) {
+	var param models.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.BatchGetLogTemplateNameByGuid(param.Ids)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
