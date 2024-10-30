@@ -96,8 +96,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -796,7 +796,7 @@ export default {
           tmpData.metric_prefix_code = this.metricPrefixCode
         }
       }
-      if (this.isInBusinessConfigAdd) {
+      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
       }
