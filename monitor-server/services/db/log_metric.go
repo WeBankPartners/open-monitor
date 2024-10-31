@@ -1748,11 +1748,12 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	return
 }
 
-
 func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
-	var endpointGroup string
+	var endpointGroup, refTemplateVersion string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles, alarmStrategyList []string
+	var logMonitorTemplate *models.LogMonitorTemplateDto
+	var templateSnapshot []byte
 	param.LogType = "custom"
 	if param.Guid == "" {
 		param.Guid = "lmg_" + guid.CreateGuid()
