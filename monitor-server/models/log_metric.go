@@ -77,15 +77,16 @@ type LogMetricConfigDto struct {
 }
 
 type LogMetricStringMapTable struct {
-	Guid            string `json:"guid" xorm:"guid"`
-	LogMetricConfig string `json:"log_metric_config" xorm:"log_metric_config"`
-	LogMetricGroup  string `json:"log_metric_group" xorm:"log_metric_group"`
-	LogParamName    string `json:"log_param_name" xorm:"log_param_name"`
-	ValueType       string `json:"value_type" xorm:"value_type"`
-	SourceValue     string `json:"source_value" xorm:"source_value"`
-	Regulative      int    `json:"regulative" xorm:"regulative"`
-	TargetValue     string `json:"target_value" xorm:"target_value"`
-	UpdateTime      string `json:"update_time" xorm:"update_time"`
+	Guid               string `json:"guid" xorm:"guid"`
+	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
+	LogMonitorTemplate string `json:"log_monitor_template" xorm:"log_monitor_template"`
+	LogParamName       string `json:"log_param_name" xorm:"log_param_name"`
+	ValueType          string `json:"value_type" xorm:"value_type"`
+	SourceValue        string `json:"source_value" xorm:"source_value"`
+	Regulative         int    `json:"regulative" xorm:"regulative"`
+	TargetValue        string `json:"target_value" xorm:"target_value"`
+	UpdateTime         string `json:"update_time" xorm:"update_time"`
 }
 
 type LogMetricEndpointRelTable struct {
@@ -210,15 +211,16 @@ type CheckRegExpResult struct {
 type LogMetricGroupObj struct {
 	LogMonitorTemplateGuid string `json:"log_monitor_template_guid"`
 	LogMetricGroup
-	LogMonitorTemplateName string                 `json:"log_monitor_template_name"`
-	ServiceGroup           string                 `json:"service_group"`
-	MonitorType            string                 `json:"monitor_type"`
-	JsonRegular            string                 `json:"json_regular"`
-	ParamList              []*LogMetricParamObj   `json:"param_list"`
-	MetricList             []*LogMetricConfigDto  `json:"metric_list"`
-	AutoCreateWarn         bool                   `json:"auto_create_warn"`      //自动创建告警
-	AutoCreateDashboard    bool                   `json:"auto_create_dashboard"` //自动创建自定义看板
-	LogMonitorTemplateDto  *LogMonitorTemplateDto `json:"log_monitor_template_data"`
+	LogMonitorTemplateName    string                 `json:"log_monitor_template_name"`
+	ServiceGroup              string                 `json:"service_group"`
+	MonitorType               string                 `json:"monitor_type"`
+	JsonRegular               string                 `json:"json_regular"`
+	ParamList                 []*LogMetricParamObj   `json:"param_list"`
+	MetricList                []*LogMetricConfigDto  `json:"metric_list"`
+	AutoCreateWarn            bool                   `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard       bool                   `json:"auto_create_dashboard"` //自动创建自定义看板
+	LogMonitorTemplateDto     *LogMonitorTemplateDto `json:"log_monitor_template_data"`
+	LogMonitorTemplateVersion string                 `json:"log_monitor_template_version"`
 }
 
 type LogMetricGroupWithTemplate struct {
@@ -270,4 +272,8 @@ type LogMetricDataMapMatchDto struct {
 type CreateLogMetricGroupDto struct {
 	AlarmList       []string `json:"alarm_list"`
 	CustomDashboard string   `json:"custom_dashboard"`
+}
+
+type IdsParam struct {
+	Ids []string `json:"ids"`
 }
