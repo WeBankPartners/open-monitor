@@ -51,7 +51,7 @@
                 type="textarea"
                 :rows="15"
                 style="width: 96%"
-                :disabled="view"
+                :disabled="isOperationBoxDisabled()"
               />
               <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
                 {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
@@ -80,6 +80,7 @@
             <div>
               <Divider orientation="left" size="small">{{ $t('m_compute_metrics') }}</Divider>
               <Table
+                :key="tableKey"
                 class='compute-metrics-style'
                 size="small"
                 :columns="columnsForComputeMetrics"
@@ -95,8 +96,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="isInBusinessConfigAdd" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -107,7 +108,7 @@
 
 <script>
 import {
-  isEmpty, hasIn, cloneDeep
+  isEmpty, hasIn, cloneDeep, remove, intersection, find
 } from 'lodash'
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
@@ -158,7 +159,7 @@ export default {
           render: (h, params) => (
             <Input
               value={params.row.name}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row)}
               placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('param_list', params.index, 'name', v)
@@ -183,7 +184,7 @@ export default {
               </div>
               <Input
                 value={params.row.regular}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row)}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'regular', v)
                 }}
@@ -225,7 +226,7 @@ export default {
                 <Button
                   size="small"
                   type="primary"
-                  disabled={this.view}
+                  disabled={this.isOperationBoxDisabled(params.row)}
                   icon="md-create"
                   onClick={() => this.editTagMapping(params.index)}
                 >
@@ -245,7 +246,7 @@ export default {
                 size="small"
                 type="error"
                 style="margin-right:5px;"
-                disabled={this.configInfo.param_list.length === 1}
+                disabled={this.isOperationBoxDisabled(params.row) || this.configInfo.param_list.length === 1}
                 onClick={() => this.deleteAction('param_list', params.index)}
               >
                 <Icon type="md-trash" size="16"></Icon>
@@ -262,7 +263,7 @@ export default {
           render: (h, params) => (
             <div class="color_system">
               <ColorPicker value={params.row.color_group || ''}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
                 on-on-open-change={
                   isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
                 }
@@ -284,7 +285,7 @@ export default {
             <Input
               clearable
               value={params.row.display_name}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'display_name', v)
               }}
@@ -305,7 +306,7 @@ export default {
             <Input
               clearable
               value={params.row.metric}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
               placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'metric', v)
@@ -315,7 +316,7 @@ export default {
         },
         {
           title: this.$t('m_metric_key'),
-          key: 'index',
+          key: 'resultMetricKey',
           width: 120,
           renderHeader: () => (
             <span>
@@ -339,12 +340,15 @@ export default {
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
+            if (!selectOptions.includes(params.row.log_param_name)) {
+              this.changeVal('metric_list', params.index, 'log_param_name', '')
+            }
             return (
               <Select
                 filterable
                 clearable
                 value={params.row.log_param_name}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'log_param_name', v)
                 }}
@@ -365,11 +369,15 @@ export default {
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => p.name)
             const selectOptions = [...new Set(keys)]
+            const newArray = intersection(params.row.tag_config, selectOptions)
+            if (JSON.stringify(newArray) !== JSON.stringify(params.row.tag_config)) {
+              this.changeVal('metric_list', params.index, 'tag_config', newArray)
+            }
             return (
               <Select
                 filterable
                 value={params.row.tag_config}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
                 multiple
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'tag_config', v)
@@ -422,7 +430,7 @@ export default {
               <Select
                 filterable
                 clearable
-                disabled={params.row.log_param_name==='' || this.view}
+                disabled={params.row.log_param_name==='' || this.isOperationBoxDisabled(params.row, 'metricList')}
                 value={params.row.agg_type}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
@@ -444,7 +452,7 @@ export default {
           render: (h, params) =>
             (
               <i-switch value={params.row.auto_alarm}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
                 on-on-change={val => {
                   if (!val) {
                     Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap))
@@ -463,7 +471,7 @@ export default {
             ? (
               <Select
                 value={params.row.range_config.operator}
-                disabled={this.view}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
                 on-on-change={v => {
                   this.configInfo.metric_list[params.index].range_config.operator = v
                 }}
@@ -486,7 +494,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.threshold}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
               }}
@@ -502,7 +510,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.time}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time = v.target.value
               }}
@@ -518,7 +526,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Select
               value={params.row.range_config.time_unit}
-              disabled={this.view}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time_unit = v
               }}
@@ -541,7 +549,7 @@ export default {
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
               <Button
-                disabled={this.configInfo.metric_list.length === 1 || this.view}
+                disabled={this.configInfo.metric_list.length === 1 || this.isOperationBoxDisabled(params.row, 'metricList')}
                 size="small"
                 type="error"
                 style="margin-right:5px;"
@@ -560,19 +568,30 @@ export default {
       isEmpty,
       auto_create_warn: true,
       auto_create_dashboard: true,
-      metricPrefixCode: ''
+      metricPrefixCode: '',
+      tableKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      templateGuid: '',
+      templateMetricList: [],
+      templateParamList: []
     }
   },
   computed: {
-    isInBusinessConfigAdd() {
+    isInBusinessConfigAdd() { // 在业务配置页面新增，包含直接新增和下拉模板新增
       return this.actionType === 'add' && !isEmpty(this.parentGuid)
     },
-    isBaseCustomeTemplateAdd() { // 在业务配置页面新增
+    isBaseCustomeTemplateAdd() { // 在业务配置页面基于下拉模板新增配置
       return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
     },
     isInTemplatePage() { // 在模板配置也新增or修改
       return this.isLogTemplate && isEmpty(this.parentGuid)
-    }
+    },
+    isBaseCustomeTemplateEdit() { // 在业务配置页面编辑
+      return this.actionType === 'edit' && !this.isLogTemplate && !isEmpty(this.parentGuid)
+    },
+    isBaseCustomeTemplateCopy() { // 在业务配置页面复制
+      return this.actionType === 'copy' && !this.isLogTemplate && !isEmpty(this.parentGuid)
+    },
   },
   methods: {
     loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
@@ -618,6 +637,10 @@ export default {
           metric_list: [cloneDeep(initMetricItem)]
         }
         this.configInfo.log_metric_monitor = parentGuid
+      }
+      if (this.isInTemplatePage) {
+        remove(this.columnsForComputeMetrics, item => item.key === 'resultMetricKey')
+        this.tableKey = +new Date() + ''
       }
       this.showModal = true
     },
@@ -773,11 +796,14 @@ export default {
           tmpData.metric_prefix_code = this.metricPrefixCode
         }
       }
-      if (this.isInBusinessConfigAdd) {
+      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, tmpData, res => {
+      if (this.actionType === 'copy') {
+        delete tmpData.guid
+      }
+      this.request(methodType, api, tmpData, res => {
         const messageTips = this.$t('m_tips_success')
         if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard') && (!isEmpty(res.alarm_list) || !isEmpty(res.custom_dashboard))) {
           const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
@@ -834,8 +860,11 @@ export default {
     },
     getConfig(guid) {
       const api = this.isLogTemplate ? this.$root.apiCenter.getConfigDetailByGuid + guid : this.$root.apiCenter.customLogMetricConfig + '/' + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      this.request('GET', api, {}, resp => {
         this.configInfo = resp
+        this.templateGuid = resp.log_monitor_template
+        this.templateMetricList = cloneDeep(resp.metric_list) || []
+        this.templateParamList = cloneDeep(resp.param_list) || []
         this.processConfigInfo()
         if (this.actionType === 'copy') {
           this.configInfo.name = this.configInfo.name + '1'
@@ -852,6 +881,13 @@ export default {
         this.configInfo.param_list.forEach(r => {
           r.regular_font_result = this.regRes(r.regular)
         })
+        if (!this.isLogTemplate && this.templateGuid) {
+          const templateApi = this.$root.apiCenter.getConfigDetailByGuid + this.templateGuid
+          this.request('GET', templateApi, {}, resp => {
+            this.templateMetricList = cloneDeep(resp.metric_list) || []
+            this.templateParamList = cloneDeep(resp.param_list) || []
+          })
+        }
         this.showModal = true
       })
     },
@@ -892,15 +928,15 @@ export default {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
+      this.request('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
         })
-        this.configInfo.metric_list.forEach(item => {
-          item.agg_type = ''
-        })
+        // this.configInfo.metric_list.forEach(item => {
+        //   item.agg_type = ''
+        // })
       }, {isNeedloading: false})
     },
     isNumericString(str) {
@@ -969,6 +1005,38 @@ export default {
           })
         })
       }
+    },
+    isOperationBoxDisabled(item, type = 'paramList') {
+      if (this.view) {
+        return true
+      }
+      if (this.isInTemplatePage) {
+        return false
+      }
+      if (!isEmpty(item) && type) {
+        return type === 'paramList' ? this.isParamsListItemDisabled(this.templateParamList, item) : this.isMetricItemDisabled(this.templateMetricList, item)
+      }
+      return this.isBaseCustomeTemplateEdit || this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateAdd
+
+    },
+    isParamsListItemDisabled(list, item) {
+      const findItem = find(list, {
+        name: item.name,
+        regular: item.regular,
+        demo_match_value: item.demo_match_value
+      })
+      return !isEmpty(findItem)
+    },
+    isMetricItemDisabled(list, item) {
+      const findItem = find(list, {
+        color_group: item.color_group,
+        display_name: item.display_name,
+        metric: item.metric,
+        log_param_name: item.log_param_name,
+        agg_type: item.agg_type,
+        auto_alarm: item.auto_alarm
+      })
+      return !isEmpty(findItem)
     }
   },
   components: {

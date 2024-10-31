@@ -373,6 +373,7 @@ export default {
       this.row = row
       this.addVisible = true
       this.$nextTick(() => {
+        this.previewObject = this.endpointOptions.find(item => item.guid === this.endpoint)
         const refsItem = this.metricType === 'originalMetrics' ? 'addGroupRef' : 'yearOverYearRef'
         this.$refs[refsItem]&&this.$refs[refsItem].setPreviewObject(this.previewObject)
       })
