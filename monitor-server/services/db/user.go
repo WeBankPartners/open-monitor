@@ -600,6 +600,7 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 }
 
 func GetRoleMap() (roleMap map[string]string) {
+	SyncCoreRole()
 	SyncCoreRoleList()
 	roleMap = make(map[string]string)
 	var roleTable []*m.RoleNewTable
