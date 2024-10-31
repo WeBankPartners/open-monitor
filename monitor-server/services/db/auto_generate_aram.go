@@ -452,7 +452,7 @@ func generateMetricGuidDisplayName(metricPrefixCode, metric, displayServiceGroup
 func getServiceGroupRoles(serviceGroup string) []string {
 	var optionModels []*models.OptionModel
 	var roles []string
-	optionModels, _ = GetOrgRole(serviceGroup)
+	optionModels, _ = GetOrgRoleNew(serviceGroup)
 	if len(optionModels) == 0 {
 		return roles
 	}
