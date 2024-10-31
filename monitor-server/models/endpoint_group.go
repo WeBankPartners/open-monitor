@@ -21,19 +21,20 @@ type EndpointGroupRelTable struct {
 }
 
 type NotifyTable struct {
-	Guid             string `json:"guid" xorm:"guid"`
-	EndpointGroup    string `json:"endpoint_group" xorm:"endpoint_group"`
-	ServiceGroup     string `json:"service_group" xorm:"service_group"`
-	AlarmStrategy    string `json:"alarm_strategy" xorm:"alarm_strategy"`
-	AlarmAction      string `json:"alarm_action" xorm:"alarm_action"`
-	AlarmPriority    string `json:"alarm_priority" xorm:"alarm_priority"`
-	NotifyNum        int    `json:"notify_num" xorm:"notify_num"`
-	ProcCallbackName string `json:"proc_callback_name" xorm:"proc_callback_name"`
-	ProcCallbackKey  string `json:"proc_callback_key" xorm:"proc_callback_key"`
-	CallbackUrl      string `json:"callback_url" xorm:"callback_url"`
-	CallbackParam    string `json:"callback_param" xorm:"callback_param"`
-	ProcCallbackMode string `json:"proc_callback_mode" xorm:"proc_callback_mode"` // 回调模式 -> manual(手动) | auto(自动)
-	Description      string `json:"description" xorm:"description"`
+	Guid               string   `json:"guid" xorm:"guid"`
+	EndpointGroup      string   `json:"endpoint_group" xorm:"endpoint_group"`
+	ServiceGroup       string   `json:"service_group" xorm:"service_group"`
+	AlarmStrategy      string   `json:"alarm_strategy" xorm:"alarm_strategy"`
+	AlarmAction        string   `json:"alarm_action" xorm:"alarm_action"`
+	AlarmPriority      string   `json:"alarm_priority" xorm:"alarm_priority"`
+	NotifyNum          int      `json:"notify_num" xorm:"notify_num"`
+	ProcCallbackName   string   `json:"proc_callback_name" xorm:"proc_callback_name"`
+	ProcCallbackKey    string   `json:"proc_callback_key" xorm:"proc_callback_key"`
+	CallbackUrl        string   `json:"callback_url" xorm:"callback_url"`
+	CallbackParam      string   `json:"callback_param" xorm:"callback_param"`
+	ProcCallbackMode   string   `json:"proc_callback_mode" xorm:"proc_callback_mode"` // 回调模式 -> manual(手动) | auto(自动)
+	Description        string   `json:"description" xorm:"description"`
+	AffectServiceGroup []string `json:"-" xorm:"-"`
 }
 
 type NotifyRoleRelTable struct {
