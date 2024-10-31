@@ -721,7 +721,7 @@ export default {
           render: (h, params) => {
             let metricStr = ''
             let metricHtml = ''
-            if (params.row.metric_list.length) {
+            if (params.row.metric_list && params.row.metric_list.length) {
               const metricArr = map(params.row.metric_list, 'full_metric')
               metricStr = metricArr.join(',')
               metricHtml = '<p>' + metricArr.join('<br>') + '</p>'
