@@ -251,8 +251,8 @@
         </div>
       </div>
       <template slot='footer'>
-        <Checkbox v-if="actionType === 'add'" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="actionType === 'add'" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="['add', 'copy'].includes(actionType)" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="['add', 'copy'].includes(actionType)" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
@@ -311,6 +311,8 @@ export default {
       this.view = actionType === 'view'
       this.businessConfig.log_monitor_template_guid = templateGuid
       this.businessConfig.log_metric_monitor_guid = parentGuid
+      this.auto_create_warn = true
+      this.auto_create_dashboard = true
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -457,7 +459,7 @@ export default {
       !isEmpty(data.log_monitor_template) && !isEmpty(data.log_monitor_template.metric_list) && data.log_monitor_template.metric_list.forEach(item => {
         item.range_config = JSON.stringify(item.range_config)
       })
-      if (this.actionType === 'add') {
+      if (['add', 'copy'].includes(this.actionType)) {
         data.auto_create_warn = this.auto_create_warn
         data.auto_create_dashboard = this.auto_create_dashboard
       }
