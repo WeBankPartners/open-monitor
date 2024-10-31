@@ -912,7 +912,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		for _, metric := range param.MetricList {
 			// 拼接指标
 			if param.MetricPrefixCode != "" {
-				metric.Metric = param.MetricPrefixCode + metric.Metric
+				metric.Metric = fmt.Sprintf("%s_%s", param.MetricPrefixCode, metric.Metric)
 			}
 			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
 				middleware.ReturnValidateError(c, "log_param_name or metric param invalid")
