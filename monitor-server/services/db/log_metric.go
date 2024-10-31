@@ -1592,7 +1592,7 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 		v.CreateTimeString = v.CreateTime.Format(models.DatetimeFormat)
 		v.UpdateTimeString = v.UpdateTime.Format(models.DatetimeFormat)
 		logMetricGroupData := &models.LogMetricGroupObj{LogMetricGroup: *v}
-		if v.LogMonitorTemplate != "" {
+		if v.LogMonitorTemplate != "" && v.LogType != "custom" {
 			tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
 			if tmpGetTemplateErr != nil {
 				log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
@@ -1603,6 +1603,7 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 					log.Logger.Error("ListLogMetricGroups getLogMetricGroupMapData fail ", log.String("logMetricGroupGuid", v.Guid), log.Error(getStringMapErr))
 				}
 				logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
+				// 读取 模版的 ParamList
 				for _, tplParam := range tmpTemplateObj.ParamList {
 					tmpLogMetricParamObj := tplParam.TransToLogParam()
 					tmpLogMetricParamObj.StringMap = logMetricStringMapData[tmpLogMetricParamObj.Name]
@@ -1625,6 +1626,15 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 			} else {
 				logMetricGroupData = customGroupData
 			}
+			if v.LogMonitorTemplate != "" {
+				tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
+				if tmpGetTemplateErr != nil {
+					log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
+				} else {
+					logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
+					logMetricGroupData.LogMonitorTemplateGuid = v.LogMonitorTemplate
+				}
+			}
 		}
 		if metricKey != "" && len(logMetricGroupData.MetricList) > 0 {
 			for _, metric := range logMetricGroupData.MetricList {
@@ -1641,10 +1651,22 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 }
 
 func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetricGroupObj, err error) {
+	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
+	}
+	if metricGroupObj.TemplateSnapshot != "" {
+		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
+			return
+		}
+	} else {
+		// 历史数据 模版查询兜底
+		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
+			return
+		}
+		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
@@ -1673,10 +1695,9 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
-		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) == "" {
-			row.FullMetric = row.Metric
-		} else {
-			row.FullMetric = fmt.Sprintf("%s_%s", metricGroupObj.MetricPrefixCode, row.Metric)
+		row.FullMetric = row.Metric
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" && len(row.Metric) > len(metricGroupObj.MetricPrefixCode) {
+			row.Metric = row.Metric[len(metricGroupObj.MetricPrefixCode)+1:]
 		}
 		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
 	}
@@ -1727,6 +1748,7 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	return
 }
 
+
 func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
 	var endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
@@ -1741,8 +1763,21 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		param.LogMonitorTemplateGuid = param.LogMonitorTemplate
 	}
 	if strings.TrimSpace(param.LogMonitorTemplateGuid) != "" {
-		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
+		if logMonitorTemplate, err = GetLogMonitorTemplate(param.LogMonitorTemplateGuid); err != nil {
+			return
+		}
+		if logMonitorTemplate == nil {
+			err = fmt.Errorf("logMonitorTemplate id:%s is valid", param.LogMonitorTemplateGuid)
+			return
+		}
+		if templateSnapshot, err = json.Marshal(logMonitorTemplate); err != nil {
+			return
+		}
+		refTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user," +
+			"create_time,update_user,update_time,metric_prefix_code,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator,
+			nowTime, param.MetricPrefixCode, templateSnapshot, refTemplateVersion,
 		}})
 	} else {
 		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{

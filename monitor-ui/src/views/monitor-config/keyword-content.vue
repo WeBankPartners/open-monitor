@@ -1207,16 +1207,20 @@ export default {
       })
     },
     async getDetail(targetId, alarmName = this.alarmName) {
-      if (this.alarmName !== alarmName) {
-        this.keywordCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-        this.alarmName = alarmName
+      if (targetId) {
+        if (this.alarmName !== alarmName) {
+          this.keywordCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+          this.alarmName = alarmName
+        } else {
+          this.keywordCollapseValue = ['0']
+        }
+        this.targetId = targetId
+        await this.getLogKeyWordDetail()
+        await this.getDataBaseDetail()
+        this.processAllInfo()
       } else {
-        this.keywordCollapseValue = ['0']
+        this.logAndDataBaseAllDetail = []
       }
-      this.targetId = targetId
-      await this.getLogKeyWordDetail()
-      await this.getDataBaseDetail()
-      this.processAllInfo()
     },
     processAllInfo() {
       this.logAndDataBaseAllDetail = []
@@ -1230,6 +1234,7 @@ export default {
         }
         this.logAndDataBaseAllDetail.push(tempInfo)
       })
+      this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
     },
     getLogKeyWordDetail() {
       return new Promise(resolve => {

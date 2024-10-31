@@ -736,6 +736,11 @@ func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, u
 	return
 }
 
+func BatchGetCustomDashboardNameByIds(ids []string) (list []string, err error) {
+	err = x.SQL(fmt.Sprintf("select name from custom_dashboard where  id in (%s)", strings.Join(ids, ","))).Find(&list)
+	return
+}
+
 func convertLineTypeIntToString(lineType int) string {
 	switch lineType {
 	case 1:
