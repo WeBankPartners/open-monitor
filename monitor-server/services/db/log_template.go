@@ -59,7 +59,7 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 	}
 	logMonitorTemplateRow.CreateTimeString = logMonitorTemplateRow.CreateTime.Format(models.DatetimeFormat)
 	logMonitorTemplateRow.UpdateTimeString = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeFormat)
-	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplate{}, MetricList: []*models.LogMetricTemplate{}}
+	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{}}
 	result.LogMonitorTemplateVersion = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeDigitFormat)
 	if result.CalcResult != "" {
 		if err = json.Unmarshal([]byte(result.CalcResult), result.CalcResultObj); err != nil {
@@ -73,8 +73,31 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 		err = fmt.Errorf("query log_param_template table fail,%s ", err.Error())
 		return
 	}
+	var logMetricStringMaps []*models.LogMetricStringMapTable
+	var stringCodeMap = make(map[string][]*models.LogMetricStringMapTable)
+	err = x.SQL("select * from log_metric_string_map where log_monitor_template=?", logMonitorTemplateGuid).Find(&logMetricStringMaps)
+	if err != nil {
+		err = fmt.Errorf("query log_metric_string_map table fail,%s ", err.Error())
+		return
+	}
+	for _, logMetricString := range logMetricStringMaps {
+		if _, ok := stringCodeMap[logMetricString.LogParamName]; ok {
+			stringCodeMap[logMetricString.LogParamName] = append(stringCodeMap[logMetricString.LogParamName], logMetricString)
+		} else {
+			stringCodeMap[logMetricString.LogParamName] = []*models.LogMetricStringMapTable{logMetricString}
+		}
+	}
 	for _, row := range logParamRows {
-		result.ParamList = append(result.ParamList, row)
+		if row == nil {
+			continue
+		}
+		logParamTemplateObj := &models.LogParamTemplateObj{
+			LogParamTemplate: *row,
+		}
+		if v, ok := stringCodeMap[row.Name]; ok {
+			logParamTemplateObj.StringMap = v
+		}
+		result.ParamList = append(result.ParamList, logParamTemplateObj)
 	}
 	var logMetricRows []*models.LogMetricTemplate
 	if logMetricRows, err = getLogMetricTemplateWithMonitor(logMonitorTemplateGuid); err != nil {
@@ -136,6 +159,12 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 		actions = append(actions, &Action{Sql: "insert into log_param_template(guid,log_monitor_template,name,display_name,json_key,regular,demo_match_value,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			"lpt_" + logParamGuidList[i], param.Guid, logParamObj.Name, logParamObj.DisplayName, logParamObj.JsonKey, logParamObj.Regular, logParamObj.DemoMatchValue, operator, operator, nowTime, nowTime,
 		}})
+		tmpStringMapGuidList := guid.CreateGuidList(len(logParamObj.StringMap))
+		for stringMapIndex, stringMapObj := range logParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_monitor_template,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, logParamObj.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
+			}})
+		}
 	}
 	logMetricGuidList := guid.CreateGuidList(len(param.MetricList))
 	for i, logMetricObj := range param.MetricList {
@@ -181,6 +210,12 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 				logParamObj.Name, logParamObj.DisplayName, logParamObj.JsonKey, logParamObj.Regular, logParamObj.DemoMatchValue, operator, nowTime, logParamObj.Guid,
 			}})
 		}
+		tmpStringMapGuidList := guid.CreateGuidList(len(logParamObj.StringMap))
+		for stringMapIndex, stringMapObj := range logParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_monitor_template,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmsm_" + tmpStringMapGuidList[stringMapIndex], param.Guid, logParamObj.Name, stringMapObj.ValueType, stringMapObj.SourceValue, stringMapObj.Regulative, stringMapObj.TargetValue, nowTime.Format(models.DatetimeFormat),
+			}})
+		}
 	}
 	for _, existParamObj := range existLogMonitorObj.ParamList {
 		deleteFlag := true
@@ -192,6 +227,9 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 		}
 		if deleteFlag {
 			actions = append(actions, &Action{Sql: "delete from log_param_template where guid=?", Param: []interface{}{existParamObj.Guid}})
+		}
+		for _, stringMapObj := range existParamObj.StringMap {
+			actions = append(actions, &Action{Sql: "delete from log_metric_string_map where guid=?", Param: []interface{}{stringMapObj.Guid}})
 		}
 	}
 	logMetricGuidList := guid.CreateGuidList(len(param.MetricList))
@@ -373,5 +411,10 @@ func GetLogMetricGroupById(id string) (result *models.LogMetricGroup, err error)
 	if len(list) > 0 {
 		result = list[0]
 	}
+	return
+}
+
+func BatchGetLogTemplateNameByGuid(ids []string) (list []string, err error) {
+	err = x.SQL(fmt.Sprintf("select name from log_monitor_template where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
 	return
 }

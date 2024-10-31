@@ -172,7 +172,8 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 }
 
 func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagList []*m.TagDto) string {
-	var tmpTag string
+	var tmpTag, logType string
+	var err error
 	if strings.Contains(metric, "/") {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
@@ -204,24 +205,35 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 	if strings.Contains(promQl, "$pod") {
 		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
 	}
-	//if strings.Contains(promQl, "$k8s_namespace") {
-	//	promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
-	//}
-	//if strings.Contains(promQl, "$k8s_cluster") {
-	//	promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
-	//}
+	// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags,tags="test_service_code=deleteUser,test_retcode=304"
+	if logType, err = GetLogTypeByMetric(metric); err != nil {
+		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
+	}
 	if len(tagList) > 0 {
-		for _, tagObj := range tagList {
-			tagSourceString := "$t_" + tagObj.TagName
-			if strings.Contains(promQl, tagSourceString) {
-				if len(tagObj.TagValue) == 0 {
-					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+		if logType == "custom" {
+			originPromQl := promQl
+			// 原表达式: node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags="$t_tags"}
+			// 正则字符串匹配 替换成 node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags!~".*test_service_code=addUser.*"}
+			for i, tagObj := range tagList {
+				if i == 0 {
+					promQl = getTagPromQl(tagObj, originPromQl)
 				} else {
-					tmpEqual := "=~"
-					if tagObj.Equal == "notin" {
-						tmpEqual = "!~"
+					promQl = "(" + promQl + ") and (" + getTagPromQl(tagObj, originPromQl) + ")"
+				}
+			}
+		} else {
+			for _, tagObj := range tagList {
+				tagSourceString := "$t_" + tagObj.TagName
+				if strings.Contains(promQl, tagSourceString) {
+					if len(tagObj.TagValue) == 0 {
+						promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+					} else {
+						tmpEqual := "=~"
+						if tagObj.Equal == "notin" {
+							tmpEqual = "!~"
+						}
+						promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 					}
-					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}
@@ -234,6 +246,22 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 		}
 	}
 	return promQl
+}
+
+func getTagPromQl(tagObj *m.TagDto, originPromQl string) (promQl string) {
+	if len(tagObj.TagValue) == 0 {
+		promQl = strings.Replace(originPromQl, "=\"$t_tags\"", "=~\".*"+tagObj.TagName+".*\"", -1)
+	} else {
+		tmpEqual := "=~"
+		if tagObj.Equal == "notin" {
+			tmpEqual = "!~"
+		}
+		for i, tagValue := range tagObj.TagValue {
+			tagObj.TagValue[i] = fmt.Sprintf(".*%s=%s.*", tagObj.TagName, tagValue)
+		}
+		promQl = strings.Replace(originPromQl, "=\"$t_tags\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+	}
+	return
 }
 
 func GetDbPromMetric(endpoint, metric, legend string) (error, string) {
