@@ -13,6 +13,7 @@
         <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
       </RadioGroup>
       <Select
+        :key='selectKey'
         style="width:250px;"
         v-model="targrtId"
         filterable
@@ -24,6 +25,7 @@
           search()
         }"
         @on-clear="typeChange(false)"
+        @on-open-change="onSelectOpenChange"
       >
         <Option v-for="(option, index) in targetOptions"
                 :value="option.guid"
@@ -50,12 +52,25 @@
         {{$t('m_operationDoc')}}
       </span>
     </div>
+    <div v-if="!targrtId" style="margin: 10px 0">
+      <Alert type="error">
+        <span>{{ $t('m_empty_tip_1') }}</span>
+        <span v-if="type === 'group'">{{ $t('m_field_resourceLevel') }}</span>
+        <span v-if="type === 'endpoint'">{{ $t('m_field_endpoint') }}</span>
+      </Alert>
+    </div>
+    <div v-if="targrtId && isDataEmpty" style="margin: 10px 0">
+      <Alert type="error">
+        <span>{{ $t('m_noData') }}</span>
+      </Alert>
+    </div>
+
     <section v-show="showTargetManagement" class='business-monitor-content' style="margin-top: 16px;">
       <template v-if="type === 'group'">
-        <groupManagement ref="group"></groupManagement>
+        <groupManagement ref="group" @feedbackInfo="onFeedbackInfo"></groupManagement>
       </template>
       <template v-if="type === 'endpoint'">
-        <endpointManagement ref="endpoint"></endpointManagement>
+        <endpointManagement @feedbackInfo="onFeedbackInfo" ref="endpoint"></endpointManagement>
       </template>
     </section>
   </div>
@@ -74,7 +89,9 @@ export default {
       targrtId: '',
       targetOptions: [],
       showTargetManagement: false,
-      metricKey: ''
+      metricKey: '',
+      isDataEmpty: false,
+      selectKey: ''
     }
   },
 
@@ -87,8 +104,9 @@ export default {
   methods: {
     typeChange(needDefaultTarget) {
       this.metricKey = ''
-      this.clearTargrt()
+      // this.clearTargrt()
       this.getTargrtList(needDefaultTarget)
+      this.selectKey = +new Date() + ''
     },
     getTargrtList(needDefaultTarget = true) {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
@@ -114,6 +132,14 @@ export default {
     }, 300),
     openDoc() {
       window.open('https://webankpartners.github.io/wecube-docs/manual-open-monitor-config-metrics/')
+    },
+    onFeedbackInfo(allData) {
+      this.isDataEmpty = allData.length === 0
+    },
+    onSelectOpenChange(open) {
+      if (open) {
+        this.getTargrtList(false)
+      }
     }
   },
   components: {
