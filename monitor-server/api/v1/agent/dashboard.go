@@ -63,7 +63,7 @@ func ExportPanelAdd(c *gin.Context) {
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage})
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, Guid: v.Guid, MonitorKey: v.Guid})
 				successFlag = "1"
 				continue
 			}
@@ -96,7 +96,7 @@ func ExportPanelAdd(c *gin.Context) {
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
-				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage})
+				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, MonitorKey: v.Guid})
 				successFlag = "1"
 				continue
 			}
@@ -104,10 +104,10 @@ func ExportPanelAdd(c *gin.Context) {
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
-				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, ErrorDetail: err.Error()})
+				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, ErrorDetail: err.Error(), MonitorKey: v.Guid})
 				successFlag = "1"
 			} else {
-				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "0", ErrorMessage: ""})
+				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "0", ErrorMessage: "", MonitorKey: v.Guid})
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
