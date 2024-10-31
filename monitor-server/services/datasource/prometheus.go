@@ -385,6 +385,9 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 			}
 			tmpTagList := query.Tags
 			tmpTagList = append(tmpTagList, "t_endpoint", "instance", "calc_type")
+			if query.ServiceConfiguration == "custom" {
+				tagMap = ResetPrometheusMetricMap(tagMap)
+			}
 			tmpName = appendTagString(tmpName, tagMap, tmpTagList)
 		} else {
 			tmpName = metric
@@ -576,4 +579,18 @@ func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.Prom
 	}
 	result = &data.Data
 	return
+}
+
+// ResetPrometheusMetricMap 重置 Prometheus返回的metric
+func ResetPrometheusMetricMap(tagMap map[string]string) map[string]string {
+	// 此处查询指标 对应的业务配置,如果是自定义业务配置, tags内容: tags="test_service_code=addUser,test_retcode=200",需要做特殊解析处理
+	if tagMap["tags"] != "" {
+		strArr := strings.Split(tagMap["tags"], ",")
+		for _, str := range strArr {
+			if index := strings.Index(str, "="); index > 0 {
+				tagMap[str[:index]] = str[index+1:]
+			}
+		}
+	}
+	return tagMap
 }
