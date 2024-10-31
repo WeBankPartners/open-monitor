@@ -801,6 +801,7 @@ export default {
         tmpData.auto_create_warn = this.auto_create_warn
       }
       if (this.actionType === 'copy') {
+        tmpData.log_monitor_template_guid = tmpData.log_monitor_template
         delete tmpData.guid
       }
       this.request(methodType, api, tmpData, res => {
