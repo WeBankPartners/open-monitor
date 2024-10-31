@@ -134,6 +134,8 @@
         <systemParameter name="MONITOR_PROMETHEUS_PORT_BIND" scopeType="global" defaultValue=""/>
         <systemParameter name="MONITOR_HOST_PORT" scopeType="global" defaultValue="9100"/>
         <systemParameter name="MONITOR_MAIL_AUTH_USER" scopeType="global" defaultValue=""/>
+        <systemParameter name="MONITOR_LOG_MONITOR_TYPE" scopeType="global" defaultValue="logMonitor"/>
+        <systemParameter name="MONITOR_LOG_KEYWORD_TYPE" scopeType="global" defaultValue="logKeyword"/>
     </systemParameters>
 
 
@@ -512,6 +514,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="" type="EXECUTION">
@@ -896,6 +899,12 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">monitorType</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="" multiple="Y">logPathList</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">logMonitorTemplate</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">logMonitorPrefixCode</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">logMonitorName</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">deployPath</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_LOG_MONITOR_TYPE">pathType</parameter>
+                    <parameter datatype="object" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="" multiple="N">logServiceCodeList</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
