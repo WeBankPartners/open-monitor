@@ -58,7 +58,7 @@ func GetOrgPanelRole(c *gin.Context) {
 		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
-	data, err := db.GetOrgRole(guid)
+	data, err := db.GetOrgRoleNew(guid)
 	if err != nil {
 		mid.ReturnFetchDataError(c, "panel_recursive", "guid", guid)
 		return
