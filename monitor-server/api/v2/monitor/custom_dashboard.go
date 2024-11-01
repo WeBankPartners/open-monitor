@@ -749,7 +749,7 @@ func BatchGetDashboard(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result, err := db.BatchGetCustomDashboardNameByIds(param.Ids)
+	result, err := db.BatchGetCustomDashboardByIds(param.Ids)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
