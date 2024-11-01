@@ -278,6 +278,10 @@ func ListManageRole(roles []string) (result []*m.RoleTable, err error) {
 }
 
 func StartCronJob() {
+	go func() {
+		SyncCoreRole()
+		SyncCoreRoleList()
+	}()
 	if !m.Config().CronJob.Enable {
 		return
 	}
