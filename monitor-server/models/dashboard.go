@@ -388,6 +388,7 @@ type CustomDashboardTable struct {
 	TimeRange      int       `json:"time_range"`   //时间范围
 	RefreshWeek    int       `json:"refresh_week"` // 刷新周期
 	LogMetricGroup *string   `json:"log_metric_group"`
+	UpdateAtStr    string    `json:"update_at_str"`
 }
 
 type CustomDashboardObj struct {

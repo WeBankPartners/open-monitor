@@ -414,7 +414,10 @@ func GetLogMetricGroupById(id string) (result *models.LogMetricGroup, err error)
 	return
 }
 
-func BatchGetLogTemplateNameByGuid(ids []string) (list []string, err error) {
-	err = x.SQL(fmt.Sprintf("select name from log_monitor_template where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
+func BatchGetLogTemplateByGuid(ids []string) (list []*models.LogMonitorTemplate, err error) {
+	err = x.SQL(fmt.Sprintf("select name,log_type,update_user,update_time from log_monitor_template where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
+	for _, logMonitorTemplate := range list {
+		logMonitorTemplate.UpdateTimeString = logMonitorTemplate.UpdateTime.Format(models.DatetimeFormat)
+	}
 	return
 }
