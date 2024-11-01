@@ -496,7 +496,7 @@ func GetPanelRecursiveEndpoints(guid, endpointType string) (result []*m.Endpoint
 	return
 }
 
-func BatchGetServiceGroupNameByIds(ids []string) (list []string, err error) {
-	err = x.SQL(fmt.Sprintf("select display_name from service_group where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
+func BatchGetServiceGroupByIds(ids []string) (list []*m.ServiceGroupTable, err error) {
+	err = x.SQL(fmt.Sprintf("select * from service_group where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
 	return
 }
