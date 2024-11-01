@@ -68,6 +68,7 @@ func BatchAddTypeConfig(c *gin.Context) {
 	}
 	// 如果 role_new表还未初始化,需要先同步数据
 	if !db.ExistRoles() {
+		db.SyncCoreRole()
 		db.SyncCoreRoleList()
 	}
 	for _, monitorType := range newMonitorTypeList {
