@@ -484,10 +484,12 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			if metricRow != nil && metricRow.Guid != "" && (metricRow.LogMetricGroup != "" || metricRow.DbMetricMonitor != "") {
 				continue
 			}
-		} else {
+		} else if endPointGroup != "" {
 			var originMonitorType string
 			x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
+		} else {
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
 		}
 		matchMetric := &models.MetricTable{}
 		for _, existMetric := range existMetrics {
@@ -501,10 +503,12 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			inputMetric.Metric = inputMetric.Metric + "_1"
 			if serviceGroup != "" {
 				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
-			} else {
+			} else if endPointGroup != "" {
 				var originMonitorType string
 				x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
 				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
+			} else {
+				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
 			}
 			matchMetric = &models.MetricTable{}
 			for _, existMetric := range existMetrics {
