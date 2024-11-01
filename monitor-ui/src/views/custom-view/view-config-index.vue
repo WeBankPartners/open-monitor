@@ -223,7 +223,7 @@
         </template>
       </AuthDialog>
       <ModalComponent :modelConfig="processConfigModel">
-        <div slot="processConfig" style="max-height: 500px;overflow-y: scroll;padding: 0 12px;">
+        <div slot="processConfig" style="padding: 0 12px;">
           <section>
             <div style="display: flex;">
               <div class="port-title">
