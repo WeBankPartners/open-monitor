@@ -736,8 +736,11 @@ func handleAutoCreateChart(chart *models.CustomChartDto, newDashboardId int64, u
 	return
 }
 
-func BatchGetCustomDashboardNameByIds(ids []string) (list []string, err error) {
-	err = x.SQL(fmt.Sprintf("select name from custom_dashboard where  id in (%s)", strings.Join(ids, ","))).Find(&list)
+func BatchGetCustomDashboardByIds(ids []string) (list []*models.CustomDashboardTable, err error) {
+	err = x.SQL(fmt.Sprintf("select id,name,update_user,update_at from custom_dashboard where  id in (%s)", strings.Join(ids, ","))).Find(&list)
+	for _, dashboard := range list {
+		dashboard.UpdateAtStr = dashboard.UpdateAt.Format(models.DatetimeFormat)
+	}
 	return
 }
 
