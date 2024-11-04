@@ -346,6 +346,7 @@ func init() {
 		&handlerFuncObj{Url: "/trans-export/log_monitor_template/batch", Method: http.MethodPost, HandlerFunc: service.BatchGetLogMonitorTemplate},
 		&handlerFuncObj{Url: "/trans-export/dashboard/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetDashboard},
 		&handlerFuncObj{Url: "/trans-export/service_group/batch", Method: http.MethodPost, HandlerFunc: alarm.BatchGetServiceGroup},
+		&handlerFuncObj{Url: "/trans-export/config/type/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetTypeConfigList},
 	)
 }
 
