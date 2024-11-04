@@ -36,7 +36,7 @@ func GetTypeConfigList(name string) (list []*models.TypeConfig, err error) {
 
 func GetTypeConfigListByNames(names []string) (list []*models.TypeConfig, err error) {
 	var endpointList []*models.EndpointNewTable
-	err = x.SQL("select * from monitor_type where display_name in ('%s') order by create_time desc", strings.Join(names, "','")).Find(&list)
+	err = x.SQL(fmt.Sprintf("select * from monitor_type where display_name in ('%s') order by create_time desc", strings.Join(names, "','"))).Find(&list)
 	if err != nil {
 		return
 	}
