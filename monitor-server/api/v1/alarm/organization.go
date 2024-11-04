@@ -221,6 +221,10 @@ func BatchGetServiceGroup(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
+	if len(param.Ids) == 0 {
+		mid.ReturnSuccess(c)
+		return
+	}
 	result, err := db.BatchGetServiceGroupByIds(param.Ids)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)

@@ -1074,6 +1074,10 @@ func BatchGetLogMonitorTemplate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if len(param.Ids) == 0 {
+		middleware.ReturnSuccess(c)
+		return
+	}
 	result, err := db.BatchGetLogTemplateByGuid(param.Ids)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
