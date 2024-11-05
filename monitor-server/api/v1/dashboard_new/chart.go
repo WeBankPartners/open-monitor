@@ -202,7 +202,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 		return
 	}
 	if len(chartSeries) == 0 {
-		err = fmt.Errorf("Can not find chart serie with guid:%d ", param.CustomChartGuid)
+		log.Logger.Warn("Can not find chart series", log.String("guid", param.CustomChartGuid))
 		return
 	}
 	err = chartCompare(param)
