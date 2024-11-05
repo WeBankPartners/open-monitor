@@ -108,7 +108,7 @@
 
 <script>
 import {
-  isEmpty, hasIn, cloneDeep, remove, intersection, find
+  isEmpty, hasIn, cloneDeep, remove, intersection, find, findIndex
 } from 'lodash'
 import Vue from 'vue'
 import TagMapConfig from './tag-map-config.vue'
@@ -159,7 +159,7 @@ export default {
           render: (h, params) => (
             <Input
               value={params.row.name}
-              disabled={this.isOperationBoxDisabled(params.row)}
+              disabled={this.isOperationBoxDisabled(params.row, 'paramList', params.index)}
               placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('param_list', params.index, 'name', v)
@@ -184,7 +184,7 @@ export default {
               </div>
               <Input
                 value={params.row.regular}
-                disabled={this.isOperationBoxDisabled(params.row)}
+                disabled={this.isOperationBoxDisabled(params.row, 'paramList', params.index)}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'regular', v)
                 }}
@@ -226,7 +226,7 @@ export default {
                 <Button
                   size="small"
                   type="primary"
-                  disabled={this.isOperationBoxDisabled(params.row)}
+                  disabled={this.isOperationBoxDisabled(params.row, 'paramList', params.index)}
                   icon="md-create"
                   onClick={() => this.editTagMapping(params.index)}
                 >
@@ -246,7 +246,7 @@ export default {
                 size="small"
                 type="error"
                 style="margin-right:5px;"
-                disabled={this.isOperationBoxDisabled(params.row) || this.configInfo.param_list.length === 1}
+                disabled={this.isOperationBoxDisabled(params.row, 'paramList', params.index) || this.configInfo.param_list.length === 1}
                 onClick={() => this.deleteAction('param_list', params.index)}
               >
                 <Icon type="md-trash" size="16"></Icon>
@@ -263,7 +263,7 @@ export default {
           render: (h, params) => (
             <div class="color_system">
               <ColorPicker value={params.row.color_group || ''}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 on-on-open-change={
                   isShow => this.changeColorGroup(isShow, this.configInfo.metric_list[params.index], 'color_group')
                 }
@@ -285,7 +285,7 @@ export default {
             <Input
               clearable
               value={params.row.display_name}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'display_name', v)
               }}
@@ -306,7 +306,7 @@ export default {
             <Input
               clearable
               value={params.row.metric}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
               placeholder={this.$t('m_metric_key_placeholder')}
               onInput={v => {
                 this.changeVal('metric_list', params.index, 'metric', v)
@@ -328,7 +328,7 @@ export default {
           )
         },
         {
-          title: this.$t('m_statistical_parameters'),
+          title: this.$t('m_statistical_parameters'), // 统计参数
           key: 'log_param_name',
           width: 130,
           renderHeader: () => (
@@ -348,7 +348,7 @@ export default {
                 filterable
                 clearable
                 value={params.row.log_param_name}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'log_param_name', v)
                 }}
@@ -377,7 +377,7 @@ export default {
               <Select
                 filterable
                 value={params.row.tag_config}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 multiple
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'tag_config', v)
@@ -430,7 +430,7 @@ export default {
               <Select
                 filterable
                 clearable
-                disabled={params.row.log_param_name==='' || this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={params.row.log_param_name==='' || this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 value={params.row.agg_type}
                 on-on-change={v => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
@@ -452,7 +452,7 @@ export default {
           render: (h, params) =>
             (
               <i-switch value={params.row.auto_alarm}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 on-on-change={val => {
                   if (!val) {
                     Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap))
@@ -471,7 +471,7 @@ export default {
             ? (
               <Select
                 value={params.row.range_config.operator}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 on-on-change={v => {
                   this.configInfo.metric_list[params.index].range_config.operator = v
                 }}
@@ -494,7 +494,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.threshold}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
               }}
@@ -510,7 +510,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.time}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time = v.target.value
               }}
@@ -526,7 +526,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Select
               value={params.row.range_config.time_unit}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList')}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time_unit = v
               }}
@@ -549,7 +549,7 @@ export default {
           render: (h, params) => (
             <div style="text-align: left; cursor: pointer;display: inline-flex;">
               <Button
-                disabled={this.configInfo.metric_list.length === 1 || this.isOperationBoxDisabled(params.row, 'metricList')}
+                disabled={this.configInfo.metric_list.length === 1 || this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
                 size="small"
                 type="error"
                 style="margin-right:5px;"
@@ -935,9 +935,11 @@ export default {
         responseData.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
         })
-        // this.configInfo.metric_list.forEach(item => {
-        //   item.agg_type = ''
-        // })
+        this.configInfo.metric_list.forEach((item, index) => {
+          if (!this.isOperationBoxDisabled(item, 'metricList', index)) {
+            item.agg_type = ''
+          }
+        })
       }, {isNeedloading: false})
     },
     isNumericString(str) {
@@ -1007,7 +1009,7 @@ export default {
         })
       }
     },
-    isOperationBoxDisabled(item, type = 'paramList') {
+    isOperationBoxDisabled(item, type = 'paramList', index=-2) {
       if (this.view) {
         return true
       }
@@ -1015,29 +1017,32 @@ export default {
         return false
       }
       if (!isEmpty(item) && type) {
-        return type === 'paramList' ? this.isParamsListItemDisabled(this.templateParamList, item) : this.isMetricItemDisabled(this.templateMetricList, item)
+        return type === 'paramList' ? this.isParamsListItemDisabled(this.templateParamList, item, index) : this.isMetricItemDisabled(this.templateMetricList, item, index)
       }
       return this.isBaseCustomeTemplateEdit || this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateAdd
 
     },
-    isParamsListItemDisabled(list, item) {
-      const findItem = find(list, {
+    isParamsListItemDisabled(list, item, index=-2) {
+      const compareObj = {
         name: item.name,
         regular: item.regular,
         demo_match_value: item.demo_match_value
-      })
-      return !isEmpty(findItem)
+      }
+      const findItem = find(list, compareObj)
+
+      return !isEmpty(findItem) && index === findIndex(list, compareObj)
     },
-    isMetricItemDisabled(list, item) {
-      const findItem = find(list, {
+    isMetricItemDisabled(list, item, index=-2) {
+      const compareObj = {
         color_group: item.color_group,
         display_name: item.display_name,
         metric: item.metric,
         log_param_name: item.log_param_name,
         agg_type: item.agg_type,
         auto_alarm: item.auto_alarm
-      })
-      return !isEmpty(findItem)
+      }
+      const findItem = find(list, compareObj)
+      return !isEmpty(findItem) && index === findIndex(list, compareObj)
     }
   },
   components: {
