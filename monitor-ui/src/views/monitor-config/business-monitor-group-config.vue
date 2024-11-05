@@ -152,7 +152,7 @@
                 <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
                   <Col span="3">
                   <Select v-model="item.regulative"
-                          :disabled="view || retcodeItemDisabled(item)"
+                          :disabled="view || retcodeItemDisabled(item, itemIndex)"
                           style="width:90%"
                           @on-change='onRegulativeChange(item)'
                   >
@@ -162,7 +162,7 @@
                   </Col>
                   <Col span="3">
                   <Input v-model.trim="item.source_value"
-                         :disabled="view || retcodeItemDisabled(item)"
+                         :disabled="view || retcodeItemDisabled(item, itemIndex)"
                          @on-change="(e) => onSourceValueChange(e, item)"
                          style="width:90%"
                          @on-blur="refreshPage"
@@ -172,7 +172,7 @@
 
                   <Col span="4">
                   <Input v-model.trim="item.matchingSourceValue"
-                         :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
+                         :disabled="view || retcodeItemDisabled(item, itemIndex) || item.regulative === 0"
                          style="width:90%"
                          @on-change="debounceRefresh"
                          @on-blur="refreshPage"
@@ -186,7 +186,7 @@
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view || retcodeItemDisabled(item) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
+                    :disabled="view || retcodeItemDisabled(item, itemIndex) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -194,7 +194,7 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item, itemIndex) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
@@ -550,10 +550,11 @@ export default {
     debounceRefresh: debounce(function (){
       this.refreshPage()
     }, 1000),
-    retcodeItemDisabled(item) {
+    retcodeItemDisabled(item, index = -1) {
       return item.regulative === this.templateRetCode.regulative
         && item.source_value === this.templateRetCode.source_value
           && item.target_value === this.templateRetCode.target_value
+            && index === 0
     },
     onRegulativeChange(item) {
       item.matchingSourceValue = ''
