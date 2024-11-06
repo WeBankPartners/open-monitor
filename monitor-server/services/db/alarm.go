@@ -614,7 +614,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 			}
 		}
 	}
-	if cond.ExtOpenAlarm {
+	if cond.ExtOpenAlarm && len(cond.MetricFilterList) == 0 && len(cond.EndpointFilterList) == 0 {
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
 			result = append(result, v)
 		}
