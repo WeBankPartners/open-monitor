@@ -736,6 +736,8 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 }
 
 func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *models.AlarmStrategyMetricObj) {
+	var logType string
+	var err error
 	if strings.Contains(strategy.MetricExpr, "$address") {
 		if strings.Contains(addressExpr, "|") {
 			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
@@ -763,24 +765,52 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 		}
 	}
+	// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags,tags="test_service_code=deleteUser,test_retcode=304"
+	if logType, err = GetLogTypeByMetric(strategy.Metric); err != nil {
+		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
+	}
 	if len(strategy.Tags) > 0 {
-		for _, tagObj := range strategy.Tags {
-			tagSourceString := "$t_" + tagObj.TagName
-			if strings.Contains(strategy.MetricExpr, tagSourceString) {
-				if len(tagObj.TagValue) == 0 {
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+		if logType == models.LogMonitorCustomType {
+			originPromQl := strategy.MetricExpr
+			// 原表达式: node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags="$t_tags"}
+			// 正则字符串匹配 替换成 node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags!~".*test_service_code=addUser.*"}
+			for i, tagObj := range strategy.Tags {
+				if i == 0 {
+					strategy.MetricExpr = getTagPromQl(convertMetricTag2Dto(tagObj), originPromQl)
 				} else {
-					tmpEqual := "=~"
-					if tagObj.Equal == "notin" {
-						tmpEqual = "!~"
+					strategy.MetricExpr = "(" + strategy.MetricExpr + ") and (" + getTagPromQl(convertMetricTag2Dto(tagObj), originPromQl) + ")"
+				}
+			}
+		} else {
+			for _, tagObj := range strategy.Tags {
+				tagSourceString := "$t_" + tagObj.TagName
+				if strings.Contains(strategy.MetricExpr, tagSourceString) {
+					if len(tagObj.TagValue) == 0 {
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+					} else {
+						tmpEqual := "=~"
+						if tagObj.Equal == "notin" {
+							tmpEqual = "!~"
+						}
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 					}
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}
 	}
 	if strings.Contains(strategy.MetricExpr, "@") {
 		strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
+	}
+}
+
+func convertMetricTag2Dto(tag *models.MetricTag) *models.TagDto {
+	if tag == nil {
+		return &models.TagDto{}
+	}
+	return &models.TagDto{
+		TagName:  tag.TagName,
+		Equal:    tag.Equal,
+		TagValue: tag.TagValue,
 	}
 }
 
