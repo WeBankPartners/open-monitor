@@ -210,7 +210,7 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
 	}
 	if len(tagList) > 0 {
-		if logType == "custom" {
+		if logType == m.LogMonitorCustomType {
 			originPromQl := promQl
 			// 原表达式: node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags="$t_tags"}
 			// 正则字符串匹配 替换成 node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags!~".*test_service_code=addUser.*"}
