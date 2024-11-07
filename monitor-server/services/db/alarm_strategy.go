@@ -477,7 +477,7 @@ func getStrategyConditionInsertAction(alarmStrategyGuid, logType string, conditi
 		if _, ok := monitorEngineMetricMap[metricRow.Metric]; ok {
 			monitorEngineFlag = 1
 		}
-		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine,logType) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine,log_type) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag, logType,
 		}})
 		if len(metricRow.Tags) > 0 {
