@@ -174,6 +174,7 @@ func autoGenerateSimpleAlarmStrategy(alarmStrategyParam models.AutoSimpleAlarmSt
 			})
 			alarmStrategy.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
 			alarmStrategy.Last = fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit)
+			alarmStrategy.LogType = alarmStrategyParam.LogType
 			if subActions, err = getCreateAlarmStrategyActions(alarmStrategy, time.Now().Format(models.DatetimeFormat), alarmStrategyParam.Operator); err != nil {
 				return
 			}
