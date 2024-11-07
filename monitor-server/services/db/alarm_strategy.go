@@ -161,9 +161,6 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 	var err error
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
-	if param.LogType, err = GetLogTypeByMetric(param.MetricName); err != nil {
-		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
-	}
 	if actions, err = getCreateAlarmStrategyActions(param, nowTime, operator); err != nil {
 		return err
 	}
@@ -182,7 +179,14 @@ func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, oper
 		actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	}
 	if len(param.Conditions) > 0 {
-		insertConditionActions, buildActionErr := getStrategyConditionInsertAction(param.Guid, param.LogType, param.Conditions)
+		for _, condition := range param.Conditions {
+			if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
+				log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+			} else {
+				condition.LogType = logType
+			}
+		}
+		insertConditionActions, buildActionErr := getStrategyConditionInsertAction(param.Guid, param.Conditions)
 		if buildActionErr != nil {
 			err = buildActionErr
 			return
@@ -207,7 +211,6 @@ func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
 func UpdateAlarmStrategy(param *models.GroupStrategyObj, operator string) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var updateConditionActions, actions []*Action
-	var logType string
 	var err error
 	updateAction := Action{Sql: "update alarm_strategy set name=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=?,update_user=? where guid=?"}
 	updateAction.Param = []interface{}{param.Name, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, param.Guid}
@@ -216,10 +219,7 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 		v.AlarmStrategy = param.Guid
 	}
 	actions = append(actions, getNotifyListUpdateAction(param.NotifyList)...)
-	if logType, err = GetLogTypeByMetric(param.MetricName); err != nil {
-		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
-	}
-	updateConditionActions, err = getStrategyConditionUpdateAction(param.Guid, logType, param.Conditions)
+	updateConditionActions, err = getStrategyConditionUpdateAction(param.Guid, param.Conditions)
 	if err != nil {
 		return err
 	}
@@ -457,7 +457,7 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 	return
 }
 
-func getStrategyConditionInsertAction(alarmStrategyGuid, logType string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
+func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
 	existCrcMap := make(map[string]int)
@@ -478,7 +478,7 @@ func getStrategyConditionInsertAction(alarmStrategyGuid, logType string, conditi
 			monitorEngineFlag = 1
 		}
 		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine,log_type) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag, logType,
+			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag, metricRow.LogType,
 		}})
 		if len(metricRow.Tags) > 0 {
 			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
@@ -493,9 +493,9 @@ func getStrategyConditionInsertAction(alarmStrategyGuid, logType string, conditi
 	return
 }
 
-func getStrategyConditionUpdateAction(alarmStrategyGuid, logType string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
+func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	actions = append(actions, getStrategyConditionDeleteAction(alarmStrategyGuid)...)
-	insertConditionActions, getErr := getStrategyConditionInsertAction(alarmStrategyGuid, logType, conditions)
+	insertConditionActions, getErr := getStrategyConditionInsertAction(alarmStrategyGuid, conditions)
 	if getErr != nil {
 		err = getErr
 		return
@@ -1384,6 +1384,11 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 					err = fmt.Errorf("Metric:%s not found ", tmpMetricName)
 					break
 				}
+				if logType, err2 := GetLogTypeByMetric(tmpMetricName); err2 != nil {
+					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+				} else {
+					v.LogType = logType
+				}
 			}
 		} else {
 			tmpMetricName := strategy.MetricName
@@ -1402,9 +1407,7 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 		if err != nil {
 			return
 		}
-		if strategy.LogType, err = GetLogTypeByMetric(strategy.MetricName); err != nil {
-			log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
-		}
+
 		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime, operator)
 		if buildErr != nil {
 			err = buildErr
