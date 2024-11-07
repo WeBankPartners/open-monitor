@@ -1849,7 +1849,8 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		serviceGroupsRoles = roles[:1]
 	}
 	alarmStrategyParam := models.AutoSimpleAlarmStrategyParam{MetricList: param.MetricList, ServiceGroupsRoles: serviceGroupsRoles, LogMetricGroupGuid: param.LogMetricGroup.Guid,
-		ServiceGroup: serviceGroup, EndpointGroup: endpointGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateWarn: param.AutoCreateWarn, MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode}
+		ServiceGroup: serviceGroup, EndpointGroup: endpointGroup, Operator: operator, ErrMsgObj: errMsgObj, AutoCreateWarn: param.AutoCreateWarn,
+		MetricPrefixCode: param.LogMetricGroup.MetricPrefixCode, LogType: models.LogMonitorCustomType}
 	if subCreateAlarmStrategyActions, alarmStrategyList, err = autoGenerateSimpleAlarmStrategy(alarmStrategyParam); err != nil {
 		return
 	}
