@@ -1237,7 +1237,7 @@ create index `alarm_strategy_status_idx` on alarm (`status`,`alarm_strategy`);
 alter table log_metric_string_map add column log_monitor_template varchar(64) default null COMMENT '业务日志模版';
 #@v3.2.7-end@;
 
-#@v3.2.9-begin@;
+#@v3.2.8.18-begin@;
 alter table alarm_strategy_metric add column log_type varchar(32) default null COMMENT '日志类型,custom自定义';
 alter table log_metric_config add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
 alter table log_metric_config add column range_config tinytext default null COMMENT '阈值配置json';
@@ -1246,4 +1246,4 @@ alter table alarm add index start_time(start);
 alter table alarm_custom add index alarm_custom_update_at(update_at);
 alter table endpoint_new add index endpoint_new_update_time(update_time);
 alter table metric add index metric_update_time(update_time);
-#@v3.2.9-end@;
+#@v3.2.8.18-end@;
