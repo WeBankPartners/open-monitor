@@ -1236,3 +1236,7 @@ create index `alarm_strategy_status_idx` on alarm (`status`,`alarm_strategy`);
 #@v3.2.7-begin@;
 alter table log_metric_string_map add column log_monitor_template varchar(64) default null COMMENT '业务日志模版';
 #@v3.2.7-end@;
+
+#@v3.2.9-begin@;
+alter table alarm_strategy_metric add column log_type varchar(32) default null COMMENT '日志类型,custom自定义';
+#@v3.2.9-end@;
