@@ -739,6 +739,7 @@ type AutoSimpleAlarmStrategyParam struct {
 	AutoCreateWarn     bool
 	LogMetricGroupGuid string
 	MetricPrefixCode   string
+	LogType            string
 }
 
 type AlarmOptionsParam struct {
