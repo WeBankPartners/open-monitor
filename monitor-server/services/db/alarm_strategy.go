@@ -180,10 +180,12 @@ func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, oper
 	}
 	if len(param.Conditions) > 0 {
 		for _, condition := range param.Conditions {
-			if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
-				log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
-			} else {
-				condition.LogType = logType
+			if condition.LogType == "" {
+				if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
+					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+				} else {
+					condition.LogType = logType
+				}
 			}
 		}
 		insertConditionActions, buildActionErr := getStrategyConditionInsertAction(param.Guid, param.Conditions)
