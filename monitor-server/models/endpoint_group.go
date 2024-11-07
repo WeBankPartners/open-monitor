@@ -157,7 +157,6 @@ type GroupStrategyObj struct {
 	UpdateUser        string                  `json:"update_user"`
 	LogMetricGroup    *string                 `json:"log_metric_group"`
 	ActiveWindowList  []string                `json:"active_window_list"`
-	LogType           string                  `json:"log_type"`
 }
 
 type EndpointStrategyObj struct {
@@ -212,6 +211,7 @@ type StrategyConditionObj struct {
 	Condition  string       `json:"condition"`
 	Last       string       `json:"last"`
 	Tags       []*MetricTag `json:"tags"`
+	LogType    string       `json:"logType"`
 }
 
 type MetricTag struct {
