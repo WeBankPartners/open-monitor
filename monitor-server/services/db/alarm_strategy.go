@@ -180,6 +180,10 @@ func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, oper
 	}
 	if len(param.Conditions) > 0 {
 		for _, condition := range param.Conditions {
+			// 创建时候 metric_name web传递可能为空,从metric截取下
+			if strings.TrimSpace(condition.MetricName) == "" && len(condition.Metric) > 0 {
+				condition.MetricName = strings.Split(condition.Metric, "__")[0]
+			}
 			if condition.LogType == "" {
 				if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
 					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
@@ -497,6 +501,15 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 
 func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	actions = append(actions, getStrategyConditionDeleteAction(alarmStrategyGuid)...)
+	for _, condition := range conditions {
+		if condition.LogType == "" {
+			if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
+				log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+			} else {
+				condition.LogType = logType
+			}
+		}
+	}
 	insertConditionActions, getErr := getStrategyConditionInsertAction(alarmStrategyGuid, conditions)
 	if getErr != nil {
 		err = getErr
