@@ -135,6 +135,7 @@ type AlarmStrategyMetricObj struct {
 	UpdateUser              string       `json:"update_user" xorm:"update_user"`
 	LogMetricGroup          string       `json:"log_metric_group" xorm:"log_metric_group"`
 	AlarmStrategyMetricGuid string       `json:"alarm_strategy_metric_guid" xorm:"-"`
+	LogType                 string       `json:"log_type" xorm:"log_type"`
 }
 
 type GroupStrategyObj struct {
@@ -156,6 +157,7 @@ type GroupStrategyObj struct {
 	UpdateUser        string                  `json:"update_user"`
 	LogMetricGroup    *string                 `json:"log_metric_group"`
 	ActiveWindowList  []string                `json:"active_window_list"`
+	LogType           string                  `json:"log_type"`
 }
 
 type EndpointStrategyObj struct {
@@ -265,6 +267,7 @@ type AlarmStrategyMetricWithExpr struct {
 	MetricExpr    string `json:"metric_expr" xorm:"metric_expr"`
 	MetricType    string `json:"metric_type" xorm:"metric_type"`
 	MonitorEngine int    `json:"monitor_engine" xorm:"monitor_engine"`
+	LogType       string `json:"log_type" xorm:"log_type"`
 }
 
 type AlarmStrategyQueryParam struct {
