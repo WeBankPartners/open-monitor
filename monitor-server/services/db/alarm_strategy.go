@@ -1258,7 +1258,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error, metricNotFound, nameDuplicate []string) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator, importRule string) (err error, metricNotFound, nameDuplicate []string) {
 	if len(param) == 0 {
 		err = fmt.Errorf("import content empty ")
 		return
@@ -1289,7 +1289,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
+		tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(inputGuid, nowTime, operator, importRule, param[0], metricMap)
 		if tmpErr != nil {
 			metricNotFound = tmpMetricNotFound
 			nameDuplicate = tmpNameDuplicate
@@ -1318,7 +1318,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 				return
 			}
 			endpointGroupList = append(endpointGroupList, tmpMatchEndpointGroup)
-			tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(tmpMatchEndpointGroup, inputGuid, v.MonitorType, nowTime, operator, v, metricMap)
+			tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(tmpMatchEndpointGroup, nowTime, operator, importRule, v, metricMap)
 			if tmpErr != nil {
 				metricNotFound = tmpMetricNotFound
 				nameDuplicate = tmpNameDuplicate
@@ -1348,7 +1348,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	return
 }
 
-func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
+func getAlarmStrategyImportActions(endpointGroup, nowTime, operator, importRule string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
 	var existStrategyTable []*models.AlarmStrategyTable
 	var systemAlarmStrategyMap = convertString2Map(systemAlarmStrategyIds)
 	var list []*models.GroupStrategyObj
@@ -1375,12 +1375,21 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	}
 	for _, strategy := range param.Strategy {
 		strategy.EndpointGroup = endpointGroup
-		if _, ok := existNameMap[strategy.Name]; ok {
-			strategy.Name = strategy.Name + "_1"
-			if _, doubleCheck := existNameMap[strategy.Name]; doubleCheck {
-				err = fmt.Errorf("name: %s duplicate", strategy.Name)
-				nameDuplicate = append(nameDuplicate, strategy.Name)
-				return
+		if guid, ok := existNameMap[strategy.Name]; ok {
+			// 覆盖模式
+			if importRule == string(models.ImportRuleCover) {
+				var delAlarmStrategyActions []*Action
+				if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(guid); err != nil {
+					return
+				}
+				actions = append(actions, delAlarmStrategyActions...)
+			} else {
+				strategy.Name = strategy.Name + "_1"
+				if _, doubleCheck := existNameMap[strategy.Name]; doubleCheck {
+					err = fmt.Errorf("name: %s duplicate", strategy.Name)
+					nameDuplicate = append(nameDuplicate, strategy.Name)
+					return
+				}
 			}
 		}
 		// 检测策略上的指标在不在
