@@ -141,6 +141,8 @@ type LogMetricGroup struct {
 	UpdateTimeString   string    `json:"update_time"`
 	TemplateSnapshot   string    `json:"template_snapshot" xorm:"template_snapshot"`
 	RefTemplateVersion string    `json:"log_monitor_template_version" xorm:"ref_template_version"`
+	AutoAlarm          int       `json:"auto_alarm" xorm:"auto_alarm"`
+	AutoDashboard      int       `json:"auto_dashboard" xorm:"auto_dashboard"`
 }
 
 type LogMetricParam struct {
