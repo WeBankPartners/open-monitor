@@ -721,7 +721,7 @@ export default {
             return true
           }
           if (!item.agg_type) {
-            this.$Message.warning(`${this.$t('m_filter_label')}${this.$t('m_cannot_be_empty')}`)
+            this.$Message.warning(`${this.$t('m_computed_type')}${this.$t('m_cannot_be_empty')}`)
             return true
           }
           if (!item.display_name) {
@@ -933,7 +933,8 @@ export default {
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {
-          this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
+          Vue.set(this.isNumericValue, item.name, !this.isNumericString(item.demo_match_value))
+          this.isNumericValue = cloneDeep(this.isNumericValue)
         })
         this.configInfo.metric_list.forEach((item, index) => {
           if (!this.isOperationBoxDisabled(item, 'metricList', index)) {
