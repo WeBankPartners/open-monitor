@@ -1037,6 +1037,8 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 			ServiceGroup:           metricGroup.ServiceGroup,
 			MonitorType:            metricGroup.MonitorType,
 			LogMonitorTemplate:     metricGroup.LogMonitorTemplateDto,
+			AutoCreateWarn:         metricGroup.AutoCreateWarn,
+			AutoCreateDashboard:    metricGroup.AutoCreateDashboard,
 		}
 		for _, mgParamObj := range metricGroup.ParamList {
 			if mgParamObj.Name == "code" {
@@ -1072,6 +1074,8 @@ func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 			LogMetricMonitorGuid:   metricGroup.LogMetricMonitor,
 			LogMonitorTemplateGuid: metricGroup.LogMonitorTemplate,
 			MetricPrefixCode:       metricGroup.MetricPrefixCode,
+			AutoCreateDashboard:    metricGroup.AutoCreateDashboard,
+			AutoCreateWarn:         metricGroup.AutoCreateWarn,
 		}
 		for _, mgParamObj := range metricGroup.ParamList {
 			if mgParamObj.Name == "code" {
@@ -1268,8 +1272,15 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles, alarmStrategyList []string
+	var autoAlarm, autoDashboard int
 	if param.LogMetricGroupGuid == "" {
 		param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
+	}
+	if param.AutoCreateWarn {
+		autoAlarm = 1
+	}
+	if param.AutoCreateDashboard {
+		autoDashboard = 1
 	}
 	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
@@ -1307,8 +1318,10 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 			log.Logger.Warn("json unmarshal log template success code fail", log.String("successCode", logMonitorTemplateObj.SuccessCode), log.Error(unmarshalErr))
 		}
 	}
-	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime, templateSnapshot, refTemplateVersion,
+	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user," +
+		"create_time,update_user,update_time,template_snapshot,ref_template_version,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator,
+		nowTime, operator, nowTime, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard,
 	}})
 	sucRetCode, createMapActions := getCreateLogMetricGroupMapAction(param, nowTime)
 	actions = append(actions, createMapActions...)
@@ -1591,7 +1604,7 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 	for _, v := range logMetricGroupTable {
 		v.CreateTimeString = v.CreateTime.Format(models.DatetimeFormat)
 		v.UpdateTimeString = v.UpdateTime.Format(models.DatetimeFormat)
-		logMetricGroupData := &models.LogMetricGroupObj{LogMetricGroup: *v}
+		logMetricGroupData := &models.LogMetricGroupObj{LogMetricGroup: *v, AutoCreateDashboard: v.AutoDashboard == 1, AutoCreateWarn: v.AutoAlarm == 1}
 		if v.LogMonitorTemplate != "" && v.LogType != "custom" {
 			tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
 			if tmpGetTemplateErr != nil {
@@ -1754,9 +1767,16 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	var serviceGroupsRoles, alarmStrategyList []string
 	var logMonitorTemplate *models.LogMonitorTemplateDto
 	var templateSnapshot []byte
+	var autoAlarm, autoDashboard int
 	param.LogType = "custom"
 	if param.Guid == "" {
 		param.Guid = "lmg_" + guid.CreateGuid()
+	}
+	if param.AutoCreateWarn {
+		autoAlarm = 1
+	}
+	if param.AutoCreateDashboard {
+		autoDashboard = 1
 	}
 	nowTime := time.Now()
 	result = &models.CreateLogMetricGroupDto{AlarmList: []string{}}
@@ -1776,13 +1796,14 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		}
 		refTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,demo_log,calc_result,create_user," +
-			"create_time,update_user,update_time,metric_prefix_code,template_snapshot,ref_template_version) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"create_time,update_user,update_time,metric_prefix_code,template_snapshot,ref_template_version,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.LogMonitorTemplateGuid, param.DemoLog, param.CalcResult, operator, nowTime, operator,
-			nowTime, param.MetricPrefixCode, templateSnapshot, refTemplateVersion,
+			nowTime, param.MetricPrefixCode, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard,
 		}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time,metric_prefix_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode,
+		actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user," +
+			"update_time,metric_prefix_code,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime, param.MetricPrefixCode, autoAlarm, autoDashboard,
 		}})
 	}
 	paramGuidList := guid.CreateGuidList(len(param.ParamList))

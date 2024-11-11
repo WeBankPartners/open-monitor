@@ -732,7 +732,7 @@ func TransImportCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
 		return
 	}
-	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "insert", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
