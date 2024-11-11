@@ -675,13 +675,30 @@ export default {
     },
     async initPanals(type) {
       const tmpArr = []
+
+      const promisSeriesArr = []
+      const promisSeriesObj = {}
+      let finalSeriesArr = []
+      for (let k=0; k<this.viewData.length; k++) { // 解决线条请求阻塞页面选择问题
+        const item = this.viewData[k]
+        for (let i=0; i<item.chartSeries.length; i++) {
+          const single = item.chartSeries[i]
+          single.defaultColor = single.colorGroup
+          if (isEmpty(single.series) && item.chartType !== 'pie') {
+            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
+            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams))
+            promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
+          }
+        }
+      }
+      finalSeriesArr = await Promise.all(promisSeriesArr)
+
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
         // 先对groupDisplayConfig进行初始化，防止异常值
         if (!this.isValidJson(item.groupDisplayConfig) || isEmpty(JSON.parse(item.groupDisplayConfig))) {
           item.groupDisplayConfig = ''
         }
-
         let parsedDisplayConfig = {}
         if (this.activeGroup === 'ALL') {
           parsedDisplayConfig = JSON.parse(item.displayConfig)
@@ -709,8 +726,9 @@ export default {
           const single = item.chartSeries[i]
           single.defaultColor = single.colorGroup
           if (isEmpty(single.series) && item.chartType !== 'pie') {
-            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            // const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
+            // const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            const series = finalSeriesArr[promisSeriesObj[single.chartSeriesGuid]] || []
             if (!isEmpty(series)) {
               changeSeriesColor(series, single.colorGroup)
             }
