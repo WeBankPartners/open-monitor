@@ -1247,3 +1247,7 @@ alter table alarm_custom add index alarm_custom_update_at(update_at);
 alter table endpoint_new add index endpoint_new_update_time(update_time);
 alter table metric add index metric_update_time(update_time);
 #@v3.2.8.18-end@;
+#@v3.2.8.23-begin@;
+alter table log_metric_group add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
+alter table log_metric_group add column auto_dashboard tinyint(1) default 0 COMMENT '自动生成自定义看板,1表示自动生成';
+#@v3.2.8.23-end@;
