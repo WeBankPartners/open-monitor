@@ -416,8 +416,16 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 			return
 		}
 		if targetMetric == nil || targetMetric.Metric == "" {
-			failList = append(failList, metric.Metric)
-			continue
+			// 同环比导入,使用指标名称兼容一下,存在 metricId 对应不上的情况
+			if _, err = x.SQL("select * from metric where metric =? limit 1", metric.Metric).Get(targetMetric); err != nil {
+				return
+			}
+			if targetMetric == nil || targetMetric.Metric == "" {
+				failList = append(failList, metric.Metric)
+				continue
+			} else {
+				metric.MetricId = targetMetric.Guid
+			}
 		}
 		// 2. 查询同环比指标是否存在
 		guid := ""
