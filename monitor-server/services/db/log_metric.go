@@ -850,7 +850,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		}
 		// 查询所有可以添加的映射关系,重写导入EndpointRel关系
 		var endpointRelList []*models.LogMetricEndpointRelTable
-		if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "host", dbConfig.MonitorType); err != nil {
+		if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "mysql", dbConfig.MonitorType); err != nil {
 			log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
 		}
 		dbConfig.EndpointRel = []*models.DbMetricEndpointRelTable{}
