@@ -817,6 +817,15 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 				for _, endpointRel := range existObj.EndpointRel {
 					actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), inputLogMonitor.Guid, endpointRel.SourceEndpoint, endpointRel.TargetEndpoint}})
 				}
+			} else {
+				// 如果 不存在对象映射关系,查询所有可以添加的映射关系
+				var endpointRelList []*models.LogMetricEndpointRelTable
+				if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "host", inputLogMonitor.MonitorType); err != nil {
+					log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
+				}
+				for _, endpointRel := range endpointRelList {
+					actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), inputLogMonitor.Guid, endpointRel.SourceEndpoint, endpointRel.TargetEndpoint}})
+				}
 			}
 		}
 		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj, roles)
@@ -838,6 +847,15 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		if tmpMetric, existFlag := serviceGroupMetricMap[tmpDBMetricGuid]; existFlag {
 			err = fmt.Errorf("Metric: %s duplicate ", tmpMetric)
 			return
+		}
+		// 查询所有可以添加的映射关系,重写导入EndpointRel关系
+		var endpointRelList []*models.LogMetricEndpointRelTable
+		if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "host", dbConfig.MonitorType); err != nil {
+			log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
+		}
+		dbConfig.EndpointRel = []*models.DbMetricEndpointRelTable{}
+		for _, endpointRel := range endpointRelList {
+			dbConfig.EndpointRel = append(dbConfig.EndpointRel, &models.DbMetricEndpointRelTable{SourceEndpoint: endpointRel.SourceEndpoint, TargetEndpoint: endpointRel.TargetEndpoint})
 		}
 		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getCreateDBMetricMonitorByImport(dbConfig, nowTime, operator)
 		if tmpErr != nil {
