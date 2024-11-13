@@ -47,6 +47,9 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 		codeList = append(codeList, constOtherCode)
 		for _, code := range codeList {
 			for _, alarmMetric := range autoAlarmMetricList {
+				if !alarmMetric.AutoWarn {
+					continue
+				}
 				// 添加告警配置基础信息
 				alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
@@ -139,6 +142,9 @@ func autoGenerateSimpleAlarmStrategy(alarmStrategyParam models.AutoSimpleAlarmSt
 		}
 		autoAlarmMetricList := getAutoSimpleAlarmMetricList(alarmStrategyParam.MetricList, alarmStrategyParam.ServiceGroup, alarmStrategyParam.MetricPrefixCode)
 		for _, alarmMetric := range autoAlarmMetricList {
+			if !alarmMetric.AutoWarn {
+				continue
+			}
 			// 添加告警配置基础信息
 			alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 			metricTags := make([]*models.MetricTag, 0)
@@ -520,6 +526,7 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 				DisplayName:     logMetricTemplate.DisplayName,
 				ThresholdConfig: temp,
 				TagConfig:       logMetricTemplate.TagConfigList,
+				AutoWarn:        logMetricTemplate.AutoAlarm,
 			})
 		}
 	}
@@ -547,6 +554,7 @@ func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigDto, serviceGrou
 				DisplayName:     logMetricTemplate.DisplayName,
 				ThresholdConfig: temp,
 				TagConfig:       logMetricTemplate.TagConfigList,
+				AutoWarn:        logMetricTemplate.AutoAlarm,
 			})
 		}
 	}
