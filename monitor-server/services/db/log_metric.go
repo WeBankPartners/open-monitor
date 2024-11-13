@@ -2125,6 +2125,10 @@ func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *
 	if config.TagConfig != "" && len(config.TagConfigList) == 0 {
 		config.TagConfigList = strings.Split(config.TagConfig, ",")
 	}
+	var rangeConfig interface{}
+	if config.RangeConfig != "" {
+		json.Unmarshal([]byte(config.RangeConfig), &rangeConfig)
+	}
 	dto = &models.LogMetricConfigDto{
 		Guid:             config.Guid,
 		LogMetricMonitor: config.LogMetricMonitor,
@@ -2144,7 +2148,7 @@ func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *
 		CreateTime:       config.CreateTime.Format(models.DatetimeFormat),
 		UpdateTime:       config.UpdateTime.Format(models.DatetimeFormat),
 		AutoAlarm:        config.AutoAlarm,
-		RangeConfig:      config.RangeConfig,
+		RangeConfig:      rangeConfig,
 		ColorGroup:       config.ColorGroup,
 		FullMetric:       config.FullMetric,
 	}
