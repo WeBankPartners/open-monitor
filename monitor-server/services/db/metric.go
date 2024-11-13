@@ -417,7 +417,7 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 		}
 		if targetMetric == nil || targetMetric.Metric == "" {
 			// 同环比导入,使用指标名称兼容一下,存在 metricId 对应不上的情况
-			if _, err = x.SQL("select * from metric where metric =? limit 1", metric.Metric).Get(targetMetric); err != nil {
+			if _, err = x.SQL("select * from metric where metric =? limit 1", metric.OriginMetric).Get(targetMetric); err != nil {
 				return
 			}
 			if targetMetric == nil || targetMetric.Metric == "" {
