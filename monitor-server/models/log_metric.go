@@ -244,6 +244,7 @@ type LogMetricThreshold struct {
 	Metric      string
 	DisplayName string
 	TagConfig   []string
+	AutoWarn    bool
 	*ThresholdConfig
 }
 
