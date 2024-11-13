@@ -333,7 +333,7 @@
             v-model="showChartConfig"
             @on-close="closeChartInfoDrawer"
     >
-      <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
+      <editView id='edit-view' :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
 
     <!-- 分组新增 -->
