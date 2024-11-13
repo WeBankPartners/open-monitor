@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"sort"
 	"strconv"
@@ -661,8 +662,21 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 	return
 }
 
-func deleteCustomDashboard(customDashboardId int64) (err error) {
-	_, err = x.Exec("delete from custom_dashboard where id=?", customDashboardId)
+func deleteCustomDashboard(customDashboardId int64) {
+	var err error
+	if _, err = x.Exec("delete from custom_dashboard where id=?", customDashboardId); err != nil {
+		log.Logger.Error("deleteCustomDashboard fail", log.Error(err))
+	}
+	return
+}
+
+func deleteCustomDashboardList(customDashboardIdList []int64) {
+	var err error
+	for _, id := range customDashboardIdList {
+		if _, err = x.Exec("delete from custom_dashboard where id=?", id); err != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err))
+		}
+	}
 	return
 }
 
