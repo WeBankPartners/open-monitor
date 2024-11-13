@@ -169,6 +169,10 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error 
 
 func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, operator string) (actions []*Action, err error) {
 	param.Guid = "strategy_" + guid.CreateGuid()
+	if strings.TrimSpace(param.Condition) == "" || strings.TrimSpace(param.Last) == "" {
+		err = fmt.Errorf("alarm_strategy condidtion or last is empty")
+		return
+	}
 	var insertAction = Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,create_user,update_user,log_metric_group) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, operator, param.LogMetricGroup}
 	actions = append(actions, &insertAction)
