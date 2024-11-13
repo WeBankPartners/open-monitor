@@ -1656,6 +1656,8 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 				log.Logger.Error("ListLogMetricGroups fail get custom metric group data ", log.String("logMetricGroupGuid", v.Guid), log.Error(getCustomErr))
 			} else {
 				logMetricGroupData = customGroupData
+				logMetricGroupData.AutoCreateDashboard = v.AutoDashboard == 1
+				logMetricGroupData.AutoCreateWarn = v.AutoAlarm == 1
 			}
 			if v.LogMonitorTemplate != "" {
 				tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
