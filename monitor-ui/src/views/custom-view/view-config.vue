@@ -686,7 +686,7 @@ export default {
           single.defaultColor = single.colorGroup
           if (isEmpty(single.series) && item.chartType !== 'pie') {
             const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams))
+            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, false))
             promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
           }
         }
@@ -1243,11 +1243,11 @@ export default {
         refreshWeek: this.viewCondition.autoRefresh
       }
     },
-    requestReturnPromise(method, api, params) {
+    requestReturnPromise(method, api, params, isNeedloading = true) {
       return new Promise(resolve => {
         this.request(method, api, params, res => {
           resolve(res)
-        })
+        }, { isNeedloading })
       })
     },
     startEditTitle(item) {
