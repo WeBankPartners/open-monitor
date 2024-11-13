@@ -16,7 +16,7 @@
       "attributes": ["name", "mail", "telephoneNumber"]
     },
     "session": {
-      "enable": "true",
+      "enable": "false",
       "expire": 3600,
       "server_enable": true,
       "server_token": "default-token-used-in-server-side",
@@ -42,10 +42,10 @@
   "store": {
     "name": "default",
     "type": "mysql",
-    "server": "127.0.0.1",
-    "port": "3306",
+    "server": "106.52.160.142",
+    "port": "13307",
     "user": "root",
-    "pwd": "wecube",
+    "pwd": "mF8PnUQ6dK3ppmrKPmGa",
     "database": "monitor",
     "maxOpen": 20,
     "maxIdle": 10,
@@ -58,7 +58,7 @@
         "id": 1,
         "type": "prometheus",
         "env": "dev",
-        "host": "127.0.0.1:9090",
+        "host": "106.52.160.142:9090",
         "token": ""
       }
     ],

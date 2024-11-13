@@ -770,6 +770,7 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 
 func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
 	var actions []*Action
+	var dashboardId int64
 	var existLogMetricMonitorMap = make(map[string]*models.LogMetricMonitorObj)
 	existData, queryErr := GetLogMetricByServiceGroup(param.Guid, "")
 	if queryErr != nil {
@@ -828,9 +829,13 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 				}
 			}
 		}
-		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj, roles)
+		tmpActions, tempDashboardId, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getUpdateLogMetricMonitorByImport(existObj, inputLogMonitor, nowTime, operator, serviceGroupMetricMap, errMsgObj, roles)
+		dashboardId = tempDashboardId
 		if tmpErr != nil {
 			err = tmpErr
+			if err2 := deleteCustomDashboard(dashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 			return
 		}
 		actions = append(actions, tmpActions...)
@@ -846,12 +851,18 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		tmpDBMetricGuid := fmt.Sprintf("%s__%s", dbConfig.Metric, dbConfig.ServiceGroup)
 		if tmpMetric, existFlag := serviceGroupMetricMap[tmpDBMetricGuid]; existFlag {
 			err = fmt.Errorf("Metric: %s duplicate ", tmpMetric)
+			if err2 := deleteCustomDashboard(dashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 			return
 		}
 		// 查询所有可以添加的映射关系,重写导入EndpointRel关系
 		var endpointRelList []*models.LogMetricEndpointRelTable
 		if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "mysql", dbConfig.MonitorType); err != nil {
 			log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
+			if err2 := deleteCustomDashboard(dashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 		}
 		dbConfig.EndpointRel = []*models.DbMetricEndpointRelTable{}
 		for _, endpointRel := range endpointRelList {
@@ -860,6 +871,9 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		tmpActions, tmpAffectHosts, tmpAffectEndpointGroup, tmpErr := getCreateDBMetricMonitorByImport(dbConfig, nowTime, operator)
 		if tmpErr != nil {
 			err = tmpErr
+			if err2 := deleteCustomDashboard(dashboardId); err2 != nil {
+				log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+			}
 			return
 		}
 		actions = append(actions, tmpActions...)
@@ -881,6 +895,9 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	err = Transaction(actions)
 	if err != nil {
 		log.Logger.Error("import log monitor exec database fail", log.Error(err))
+		if err2 := deleteCustomDashboard(dashboardId); err2 != nil {
+			log.Logger.Error("deleteCustomDashboard fail", log.Error(err2))
+		}
 		return
 	}
 	if tmpErr := SyncLogMetricExporterConfig(affectHostList); tmpErr != nil {
@@ -894,7 +911,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	return
 }
 
-func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, roles []string) (actions []*Action, affectHost []string, affectEndpointGroup []string, err error) {
+func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, roles []string) (actions []*Action, dashboardId int64, affectHost []string, affectEndpointGroup []string, err error) {
 	if existObj.Guid != "" {
 		// compare log json monitor
 		for _, inputJsonObj := range inputObj.JsonConfigList {
@@ -958,6 +975,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 				affectEndpointGroup = append(affectEndpointGroup, tmpAffect...)
 			} else {
 				tmpMetricGroupActions, newDashboardId, tmpErr := getCreateLogMetricGroupByImport(inputMetricGroup, operator, existMetricMap, errMsgObj, roles)
+				dashboardId = newDashboardId
 				if tmpErr != nil {
 					err = tmpErr
 					if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
@@ -1021,6 +1039,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 			metricGroup.ServiceGroup = inputObj.ServiceGroup
 			metricGroup.MonitorType = inputObj.MonitorType
 			tmpActions, newDashboardId, tmpErr := getCreateLogMetricGroupByImport(metricGroup, operator, existMetricMap, errMsgObj, roles)
+			dashboardId = newDashboardId
 			if tmpErr != nil {
 				err = tmpErr
 				if err2 := deleteCustomDashboard(newDashboardId); err2 != nil {
