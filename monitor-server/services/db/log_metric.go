@@ -1878,6 +1878,17 @@ func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			}
 		}
 	}
+	// endpointGroup为空
+	if strings.TrimSpace(endpointGroup) == "" {
+		var endpointGroupIds []string
+		serviceGroupsRoles = getServiceGroupRoles(param.ServiceGroup)
+		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", param.ServiceGroup, param.MonitorType).Find(&endpointGroupIds); err != nil {
+			return
+		}
+		if len(endpointGroupIds) > 0 {
+			endpointGroup = endpointGroupIds[0]
+		}
+	}
 	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
 		serviceGroupsRoles = roles[:1]
 	}
