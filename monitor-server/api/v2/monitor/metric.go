@@ -292,7 +292,7 @@ func QueryMetricTagValue(c *gin.Context) {
 				continue
 			}
 			// 如果该指标为自定义类型的业务配置创建,tags内容: tags="test_service_code=addUser,test_retcode=200",需要做特殊解析处理
-			if logType == models.LogMonitorJsonType && seriesMap["tags"] != "" {
+			if logType == models.LogMonitorCustomType && seriesMap["tags"] != "" {
 				seriesMap = datasource.ResetPrometheusMetricMap(seriesMap)
 			}
 			if tmpTagValue, ok := seriesMap[v]; ok {
