@@ -509,6 +509,11 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 		if logMetricTemplate.AutoAlarm && logMetricTemplate.RangeConfig != "" {
 			temp := &models.ThresholdConfig{}
 			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
+			// 此处添加数据校验,强制校验阈值数据,防止Prometheus解析数据失败挂掉
+			if strings.TrimSpace(temp.Operator) == "" || strings.TrimSpace(temp.Threshold) == "" || strings.TrimSpace(temp.Time) == "" || strings.TrimSpace(temp.TimeUnit) == "" {
+				log.Logger.Warn("getAutoAlarmMetricList strategy format invalid", log.JsonObj("strategy", temp))
+				continue
+			}
 			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{
 				MetricId:        generateMetricGuid(metric, serviceGroup),
 				Metric:          logMetricTemplate.Metric,
