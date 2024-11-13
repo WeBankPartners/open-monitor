@@ -333,7 +333,7 @@
             v-model="showChartConfig"
             @on-close="closeChartInfoDrawer"
     >
-      <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
+      <editView id='edit-view' :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
 
     <!-- 分组新增 -->
@@ -544,7 +544,8 @@ export default {
             </div>
           )
         }
-      ]
+      ],
+      isCloseDrawerStatus: false
     }
   },
   computed: {
@@ -686,12 +687,13 @@ export default {
           single.defaultColor = single.colorGroup
           if (isEmpty(single.series) && item.chartType !== 'pie') {
             const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams))
+            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, !this.isCloseDrawerStatus))
             promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
           }
         }
       }
       finalSeriesArr = await Promise.all(promisSeriesArr)
+      this.isCloseDrawerStatus = false
 
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
@@ -1243,11 +1245,11 @@ export default {
         refreshWeek: this.viewCondition.autoRefresh
       }
     },
-    requestReturnPromise(method, api, params) {
+    requestReturnPromise(method, api, params, isNeedloading = true) {
       return new Promise(resolve => {
         this.request(method, api, params, res => {
           resolve(res)
-        })
+        }, { isNeedloading })
       })
     },
     startEditTitle(item) {
@@ -1426,6 +1428,7 @@ export default {
       })
     },
     closeChartInfoDrawer() {
+      this.isCloseDrawerStatus = true
       this.getPannelList()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
