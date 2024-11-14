@@ -671,7 +671,7 @@ body::-webkit-scrollbar {
 .dashboard-config-selection {
   width:200px;
   .ivu-select-selection {
-    height: 34px;
+    height: 34px !important;
   }
 }
 
