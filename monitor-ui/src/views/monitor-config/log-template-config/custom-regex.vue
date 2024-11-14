@@ -852,12 +852,12 @@ export default {
       })
     },
     processConfigInfo() {
+      this.metricPrefixCode = this.configInfo.metric_prefix_code
       !isEmpty(this.configInfo.metric_list) && this.configInfo.metric_list.forEach(item => {
-        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfigMap.other) : JSON.parse(item.range_config))
+        Vue.set(item, 'range_config', isEmpty(item.range_config) ? cloneDeep(initRangeConfigMap) : (typeof item.range_config === 'string' ? JSON.parse(item.range_config) : cloneDeep(item.range_config)))
         Vue.set(item, 'auto_alarm', hasIn(item, 'auto_alarm') ? item.auto_alarm : false)
         Vue.set(item, 'color_group', isEmpty(item.color_group) ? '' : item.color_group)
       })
-      this.metricPrefixCode = this.configInfo.metric_prefix_code
     },
     getConfig(guid) {
       const api = this.isLogTemplate ? this.$root.apiCenter.getConfigDetailByGuid + guid : this.$root.apiCenter.customLogMetricConfig + '/' + guid
