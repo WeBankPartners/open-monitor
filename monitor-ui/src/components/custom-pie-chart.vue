@@ -44,7 +44,7 @@ export default {
     }
   },
   mounted() {
-    this.getchartdata()
+    this.getchartdata('mounted')
   },
   destroyed() {
     clearInterval(this.interval)
@@ -58,7 +58,7 @@ export default {
         },this.params.autoRefresh*1000)
       }
     },
-    getchartdata() {
+    getchartdata(type = '') {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -73,20 +73,27 @@ export default {
         p.custom_chart_guid = this.chartInfo.elId
       })
       this.elId = this.chartInfo.elId
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST',
-        this.$root.apiCenter.metricConfigPieView.api,
-        params,
-        responseData => {
-          if (responseData.legend && responseData.legend.length === 0) {
-            this.noDataType = 'noData'
-          } else {
-            this.noDataType = 'normal'
-            drawPieChart(this, responseData)
-          }
-        },
-        { isNeedloading: false }
-      )
+
+      const modalElement = document.querySelector('#edit-view')
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
+          'POST',
+          this.$root.apiCenter.metricConfigPieView.api,
+          params,
+          responseData => {
+            if (responseData.legend && responseData.legend.length === 0) {
+              this.noDataType = 'noData'
+            } else {
+              this.noDataType = 'normal'
+              drawPieChart(this, responseData)
+            }
+          },
+          { isNeedloading: false }
+        )
+      }
     }
   },
   components: {},
