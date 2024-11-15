@@ -202,7 +202,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 		return
 	}
 	if len(chartSeries) == 0 {
-		err = fmt.Errorf("Can not find chart serie with guid:%d ", param.CustomChartGuid)
+		log.Logger.Warn("Can not find chart series", log.String("guid", param.CustomChartGuid))
 		return
 	}
 	err = chartCompare(param)
@@ -540,6 +540,7 @@ func convertArray2Map(arr []string) map[string]bool {
 func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
 	serials := []*models.SerialModel{}
 	var err error
+	var logType string
 	archiveQueryFlag := false
 	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
 		archiveQueryFlag = true
@@ -564,6 +565,13 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if param.LineType == 2 {
 			query.ComparisonFlag = "Y"
+		}
+		if len(query.Metric) > 0 {
+			// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags
+			if logType, err = db.GetLogTypeByMetric(query.Metric[0]); err != nil {
+				log.Logger.Error("GetLogType err", log.Error(err))
+			}
+			query.ServiceConfiguration = logType
 		}
 		tmpSerials := ds.PrometheusData(query)
 		// 如果归档数据可用，尝试从归档数据中补全数据
@@ -649,11 +657,18 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if param.Aggregate != "none" && param.AggStep > 10 {
 			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
+			tempData := s.Data
 			s.Data = models.Aggregate(s.Data, param.AggStep, param.Aggregate)
+
+			// 此处做一些数据日志分析统计,如果计算时间大于原始数据时间太多,日志打印
+			if len(s.Data) > 0 && len(s.Data[len(s.Data)-1]) > 0 && len(tempData) > 0 && len(tempData[len(tempData)-1]) > 0 {
+				// 只看最后一条最新时间,大于5分钟
+				if s.Data[len(s.Data)-1][0]-tempData[len(tempData)-1][0] > 300*1000 {
+					log.Logger.Warn("chart aggregate more than 5min", log.String("chartId", param.CustomChartGuid), log.String("serialName", s.Name),
+						log.Int64("step", param.AggStep), log.String("aggregate", param.Aggregate))
+				}
+			}
 		}
-		//if agg > 1 && len(s.Data) > 300 {
-		//	s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
-		//}
 		if param.Compare.CompareSubTime > 0 {
 			if strings.Contains(s.Name, param.Compare.CompareSecondLegend) {
 				s.Data = db.CompareSubData(s.Data, float64(param.Compare.CompareSubTime)*1000)

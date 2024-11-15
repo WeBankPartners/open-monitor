@@ -210,11 +210,12 @@ func ImportMetric(c *gin.Context) {
 func QueryMetricTagValue(c *gin.Context) {
 	var param models.QueryMetricTagParam
 	var orginMetricRow *models.MetricTable
+	var logType string
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	result := []*models.QueryMetricTagResultObj{}
+	var result []*models.QueryMetricTagResultObj
 	if param.MetricId == "" {
 		middleware.ReturnSuccessData(c, result)
 		return
@@ -223,6 +224,14 @@ func QueryMetricTagValue(c *gin.Context) {
 	metricRow, err := db.GetSimpleMetric(param.MetricId)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if metricRow == nil {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("metricId %s is invalid", param.MetricId))
+		return
+	}
+	if logType, err = db.GetLogTypeByLogMetricGroup(metricRow.LogMetricGroup); err != nil {
+		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	var tagList []string
@@ -281,6 +290,10 @@ func QueryMetricTagValue(c *gin.Context) {
 		for _, seriesMap := range seriesMapList {
 			if seriesMap == nil {
 				continue
+			}
+			// 如果该指标为自定义类型的业务配置创建,tags内容: tags="test_service_code=addUser,test_retcode=200",需要做特殊解析处理
+			if logType == models.LogMonitorCustomType && seriesMap["tags"] != "" {
+				seriesMap = datasource.ResetPrometheusMetricMap(seriesMap)
 			}
 			if tmpTagValue, ok := seriesMap[v]; ok {
 				if _, existFlag := tmpValueDistinctMap[tmpTagValue]; !existFlag {
