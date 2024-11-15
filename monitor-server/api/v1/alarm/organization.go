@@ -58,7 +58,7 @@ func GetOrgPanelRole(c *gin.Context) {
 		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
-	data, err := db.GetOrgRole(guid)
+	data, err := db.GetOrgRoleNew(guid)
 	if err != nil {
 		mid.ReturnFetchDataError(c, "panel_recursive", "guid", guid)
 		return
@@ -213,4 +213,22 @@ func SearchSysPanelData(c *gin.Context) {
 	}
 	result := db.SearchPanelByName(search, endpoint)
 	mid.ReturnSuccessData(c, result)
+}
+
+func BatchGetServiceGroup(c *gin.Context) {
+	var param m.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if len(param.Ids) == 0 {
+		mid.ReturnSuccess(c)
+		return
+	}
+	result, err := db.BatchGetServiceGroupByIds(param.Ids)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+	} else {
+		mid.ReturnSuccessData(c, result)
+	}
 }

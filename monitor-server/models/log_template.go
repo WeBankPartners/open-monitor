@@ -97,7 +97,7 @@ func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigDto) {
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
 	CalcResultObj             *CheckRegExpResult            `json:"calc_result"`
-	ParamList                 []*LogParamTemplate           `json:"param_list"`
+	ParamList                 []*LogParamTemplateObj        `json:"param_list"`
 	MetricList                []*LogMetricTemplate          `json:"metric_list"`
 	Permission                *LogMonitorTemplatePermission `json:"permission"`
 	LogMonitorTemplateVersion string                        `json:"log_monitor_template_version"`
@@ -141,6 +141,8 @@ type LogMetricGroup struct {
 	UpdateTimeString   string    `json:"update_time"`
 	TemplateSnapshot   string    `json:"template_snapshot" xorm:"template_snapshot"`
 	RefTemplateVersion string    `json:"log_monitor_template_version" xorm:"ref_template_version"`
+	AutoAlarm          int       `json:"auto_alarm" xorm:"auto_alarm"`
+	AutoDashboard      int       `json:"auto_dashboard" xorm:"auto_dashboard"`
 }
 
 type LogMetricParam struct {

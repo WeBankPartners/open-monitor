@@ -309,8 +309,24 @@ func UpdateRecursiveEndpoint(guid, operator string, endpoint []string) error {
 
 func DeleteRecursivePanel(guid string) (err error) {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "DELETE FROM panel_recursive WHERE guid=?", Param: []interface{}{guid}})
-	actions = append(actions, getDeleteServiceGroupAction(guid)...)
+	var tableData []*m.PanelRecursiveTable
+	x.SQL("SELECT guid,display_name,parent FROM panel_recursive").Find(&tableData)
+	if len(tableData) == 0 {
+		return nil
+	}
+	guidList := getNodeFromParent(tableData, []string{guid}, guid)
+	tmpMap := make(map[string]bool)
+	for _, v := range guidList {
+		tmpMap[v] = true
+	}
+	guidList = []string{}
+	for k, _ := range tmpMap {
+		if k != "" {
+			guidList = append(guidList, k)
+		}
+	}
+	actions = append(actions, &Action{Sql: "DELETE FROM panel_recursive WHERE guid in ('" + strings.Join(guidList, "','") + "')", Param: []interface{}{}})
+	actions = append(actions, getDeleteServiceGroupAction(guid, guidList)...)
 	err = Transaction(actions)
 	if err == nil {
 		DeleteServiceWithChildConfig(guid)
