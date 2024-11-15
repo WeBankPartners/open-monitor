@@ -335,7 +335,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			return
 		}
 		if len(chartSeries) == 0 {
-			err = fmt.Errorf("Can not find chart serie with guid:%d ", paramConfig.CustomChartGuid)
+			log.Logger.Warn("Can not find chart series", log.String("guid", paramConfig.CustomChartGuid))
 			return
 		}
 		seriesObj := chartSeries[0]
