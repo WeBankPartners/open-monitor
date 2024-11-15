@@ -545,7 +545,7 @@ export default {
           )
         }
       ],
-      isCloseDrawerStatus: false
+      isShowLoading: false
     }
   },
   computed: {
@@ -561,6 +561,7 @@ export default {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
+    this.isShowLoading = true
     this.getAllChartOptionList()
     this.getPannelList()
     this.activeGroup = 'ALL'
@@ -687,13 +688,13 @@ export default {
           single.defaultColor = single.colorGroup
           if (isEmpty(single.series) && item.chartType !== 'pie') {
             const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, !this.isCloseDrawerStatus))
+            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, this.isShowLoading))
             promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
           }
         }
       }
       finalSeriesArr = await Promise.all(promisSeriesArr)
-      this.isCloseDrawerStatus = false
+      this.isShowLoading = false
 
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
@@ -1428,7 +1429,6 @@ export default {
       })
     },
     closeChartInfoDrawer() {
-      this.isCloseDrawerStatus = true
       this.getPannelList()
       setTimeout(() => {
         this.refreshNow = !this.refreshNow
