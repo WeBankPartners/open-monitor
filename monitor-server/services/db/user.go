@@ -278,6 +278,10 @@ func ListManageRole(roles []string) (result []*m.RoleTable, err error) {
 }
 
 func StartCronJob() {
+	go func() {
+		SyncCoreRole()
+		SyncCoreRoleList()
+	}()
 	if !m.Config().CronJob.Enable {
 		return
 	}
@@ -600,6 +604,7 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 }
 
 func GetRoleMap() (roleMap map[string]string) {
+	SyncCoreRole()
 	SyncCoreRoleList()
 	roleMap = make(map[string]string)
 	var roleTable []*m.RoleNewTable

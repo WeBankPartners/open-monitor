@@ -158,9 +158,10 @@ func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStr
 }
 
 func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error {
+	var err error
+	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
-	actions, err := getCreateAlarmStrategyActions(param, nowTime, operator)
-	if err != nil {
+	if actions, err = getCreateAlarmStrategyActions(param, nowTime, operator); err != nil {
 		return err
 	}
 	return Transaction(actions)
@@ -178,6 +179,19 @@ func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, oper
 		actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	}
 	if len(param.Conditions) > 0 {
+		for _, condition := range param.Conditions {
+			// 创建时候 metric_name web传递可能为空,从metric截取下
+			if strings.TrimSpace(condition.MetricName) == "" && len(condition.Metric) > 0 {
+				condition.MetricName = strings.Split(condition.Metric, "__")[0]
+			}
+			if condition.LogType == "" {
+				if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
+					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+				} else {
+					condition.LogType = logType
+				}
+			}
+		}
 		insertConditionActions, buildActionErr := getStrategyConditionInsertAction(param.Guid, param.Conditions)
 		if buildActionErr != nil {
 			err = buildActionErr
@@ -202,17 +216,16 @@ func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
 
 func UpdateAlarmStrategy(param *models.GroupStrategyObj, operator string) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
-	var actions []*Action
+	var updateConditionActions, actions []*Action
+	var err error
 	updateAction := Action{Sql: "update alarm_strategy set name=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=?,update_user=? where guid=?"}
 	updateAction.Param = []interface{}{param.Name, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, param.Guid}
 	actions = append(actions, &updateAction)
 	for _, v := range param.NotifyList {
 		v.AlarmStrategy = param.Guid
 	}
-	//actions = append(actions, getNotifyListDeleteAction(param.Guid, "", "")...)
-	//actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	actions = append(actions, getNotifyListUpdateAction(param.NotifyList)...)
-	updateConditionActions, err := getStrategyConditionUpdateAction(param.Guid, param.Conditions)
+	updateConditionActions, err = getStrategyConditionUpdateAction(param.Guid, param.Conditions)
 	if err != nil {
 		return err
 	}
@@ -470,8 +483,8 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 		if _, ok := monitorEngineMetricMap[metricRow.Metric]; ok {
 			monitorEngineFlag = 1
 		}
-		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
-			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag,
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash,monitor_engine,log_type) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash, monitorEngineFlag, metricRow.LogType,
 		}})
 		if len(metricRow.Tags) > 0 {
 			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
@@ -488,6 +501,15 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 
 func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	actions = append(actions, getStrategyConditionDeleteAction(alarmStrategyGuid)...)
+	for _, condition := range conditions {
+		if condition.LogType == "" {
+			if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
+				log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+			} else {
+				condition.LogType = logType
+			}
+		}
+	}
 	insertConditionActions, getErr := getStrategyConditionInsertAction(alarmStrategyGuid, conditions)
 	if getErr != nil {
 		err = getErr
@@ -600,7 +622,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 		return
 	}
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
-	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type',t1.monitor_engine from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
+	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t1.log_type,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type',t1.monitor_engine from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm strategy metric with endpointGroup:%s fail,%s ", endpointGroup, err.Error())
 		return
@@ -660,6 +682,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 			tmpStrategyObj.MetricExpr = metricRow.MetricExpr
 			tmpStrategyObj.MetricType = metricRow.MetricType
 			tmpStrategyObj.ConditionCrc = metricRow.CrcHash
+			tmpStrategyObj.LogType = metricRow.LogType
 			tmpStrategyObj.Tags = []*models.MetricTag{}
 			for _, tagRow := range tagRows {
 				if tagRow.AlarmStrategyMetric == metricRow.Guid {
@@ -764,17 +787,30 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 		}
 	}
 	if len(strategy.Tags) > 0 {
-		for _, tagObj := range strategy.Tags {
-			tagSourceString := "$t_" + tagObj.TagName
-			if strings.Contains(strategy.MetricExpr, tagSourceString) {
-				if len(tagObj.TagValue) == 0 {
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+		if strategy.LogType == models.LogMonitorCustomType {
+			originPromQl := strategy.MetricExpr
+			// 原表达式: node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags="$t_tags"}
+			// 正则字符串匹配 替换成 node_log_metric_monitor_value{key="key",agg="max",service_group="log_sys",tags!~".*test_service_code=addUser.*"}
+			for i, tagObj := range strategy.Tags {
+				if i == 0 {
+					strategy.MetricExpr = getTagPromQl(convertMetricTag2Dto(tagObj), originPromQl)
 				} else {
-					tmpEqual := "=~"
-					if tagObj.Equal == "notin" {
-						tmpEqual = "!~"
+					strategy.MetricExpr = "(" + strategy.MetricExpr + ") and (" + getTagPromQl(convertMetricTag2Dto(tagObj), originPromQl) + ")"
+				}
+			}
+		} else {
+			for _, tagObj := range strategy.Tags {
+				tagSourceString := "$t_" + tagObj.TagName
+				if strings.Contains(strategy.MetricExpr, tagSourceString) {
+					if len(tagObj.TagValue) == 0 {
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+					} else {
+						tmpEqual := "=~"
+						if tagObj.Equal == "notin" {
+							tmpEqual = "!~"
+						}
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 					}
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 				}
 			}
 		}
@@ -784,10 +820,24 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 	}
 }
 
+func convertMetricTag2Dto(tag *models.MetricTag) *models.TagDto {
+	if tag == nil {
+		return &models.TagDto{}
+	}
+	return &models.TagDto{
+		TagName:  tag.TagName,
+		Equal:    tag.Equal,
+		TagValue: tag.TagValue,
+	}
+}
+
 func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*models.AlarmStrategyMetricObj) {
 	result = []*models.AlarmStrategyMetricObj{}
 	for _, strategy := range inputs {
-		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid, Metric: strategy.Metric, Condition: strategy.Condition, Last: strategy.Last, Priority: strategy.Priority, Content: strategy.Content, NotifyEnable: strategy.NotifyEnable, NotifyDelaySecond: strategy.NotifyDelaySecond, MetricName: strategy.MetricName, MetricExpr: strategy.MetricExpr, MetricType: strategy.MetricType, ConditionCrc: strategy.ConditionCrc, Tags: strategy.Tags}
+		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid, Metric: strategy.Metric, Condition: strategy.Condition,
+			Last: strategy.Last, Priority: strategy.Priority, Content: strategy.Content, NotifyEnable: strategy.NotifyEnable,
+			NotifyDelaySecond: strategy.NotifyDelaySecond, MetricName: strategy.MetricName, MetricExpr: strategy.MetricExpr,
+			MetricType: strategy.MetricType, ConditionCrc: strategy.ConditionCrc, Tags: strategy.Tags, LogType: strategy.LogType}
 		result = append(result, &tmpStrategy)
 	}
 	return result
@@ -1208,7 +1258,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error, metricNotFound, nameDuplicate []string) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator, importRule string) (err error, metricNotFound, nameDuplicate []string) {
 	if len(param) == 0 {
 		err = fmt.Errorf("import content empty ")
 		return
@@ -1239,7 +1289,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
+		tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(inputGuid, nowTime, operator, importRule, param[0], metricMap)
 		if tmpErr != nil {
 			metricNotFound = tmpMetricNotFound
 			nameDuplicate = tmpNameDuplicate
@@ -1268,7 +1318,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 				return
 			}
 			endpointGroupList = append(endpointGroupList, tmpMatchEndpointGroup)
-			tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(tmpMatchEndpointGroup, inputGuid, v.MonitorType, nowTime, operator, v, metricMap)
+			tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(tmpMatchEndpointGroup, nowTime, operator, importRule, v, metricMap)
 			if tmpErr != nil {
 				metricNotFound = tmpMetricNotFound
 				nameDuplicate = tmpNameDuplicate
@@ -1298,7 +1348,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	return
 }
 
-func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
+func getAlarmStrategyImportActions(endpointGroup, nowTime, operator, importRule string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
 	var existStrategyTable []*models.AlarmStrategyTable
 	var systemAlarmStrategyMap = convertString2Map(systemAlarmStrategyIds)
 	var list []*models.GroupStrategyObj
@@ -1325,12 +1375,21 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	}
 	for _, strategy := range param.Strategy {
 		strategy.EndpointGroup = endpointGroup
-		if _, ok := existNameMap[strategy.Name]; ok {
-			strategy.Name = strategy.Name + "_1"
-			if _, doubleCheck := existNameMap[strategy.Name]; doubleCheck {
-				err = fmt.Errorf("name: %s duplicate", strategy.Name)
-				nameDuplicate = append(nameDuplicate, strategy.Name)
-				return
+		if guid, ok := existNameMap[strategy.Name]; ok {
+			// 覆盖模式
+			if importRule == string(models.ImportRuleCover) {
+				var delAlarmStrategyActions []*Action
+				if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(guid); err != nil {
+					return
+				}
+				actions = append(actions, delAlarmStrategyActions...)
+			} else {
+				strategy.Name = strategy.Name + "_1"
+				if _, doubleCheck := existNameMap[strategy.Name]; doubleCheck {
+					err = fmt.Errorf("name: %s duplicate", strategy.Name)
+					nameDuplicate = append(nameDuplicate, strategy.Name)
+					return
+				}
 			}
 		}
 		// 检测策略上的指标在不在
@@ -1348,6 +1407,11 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 					metricNotFound = append(metricNotFound, tmpMetricName)
 					err = fmt.Errorf("Metric:%s not found ", tmpMetricName)
 					break
+				}
+				if logType, err2 := GetLogTypeByMetric(tmpMetricName); err2 != nil {
+					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+				} else {
+					v.LogType = logType
 				}
 			}
 		} else {
@@ -1367,6 +1431,7 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 		if err != nil {
 			return
 		}
+
 		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime, operator)
 		if buildErr != nil {
 			err = buildErr
@@ -1476,6 +1541,14 @@ func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
 }
 
 func GetAlarmStrategyNotifyWorkflowList() (result []*models.WorkflowDto, err error) {
-	err = x.SQL("select distinct  proc_callback_name as name,proc_callback_key as 'key' from notify where  proc_callback_key!='' and proc_callback_key is not null").Find(&result)
+	result = []*models.WorkflowDto{}
+	var tempList []*models.WorkflowDto
+	err = x.SQL("select distinct  proc_callback_name as name,proc_callback_key as 'key' from notify where  proc_callback_key!='' and proc_callback_name!=''").Find(&tempList)
+	for _, dto := range tempList {
+		if strings.TrimSpace(dto.Name) == "" || strings.TrimSpace(dto.Key) == "" {
+			continue
+		}
+		result = append(result, &models.WorkflowDto{Key: dto.Key, Name: dto.Name})
+	}
 	return
 }
