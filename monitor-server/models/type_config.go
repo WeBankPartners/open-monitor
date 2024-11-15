@@ -13,3 +13,7 @@ type TypeConfig struct {
 type BatchAddTypeConfigParam struct {
 	DisplayNameList []string `json:"displayNameList"`
 }
+
+type CommonNameParam struct {
+	Names []string `json:"names"`
+}
