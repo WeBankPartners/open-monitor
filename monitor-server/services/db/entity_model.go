@@ -134,15 +134,13 @@ func AnalyzeTransExportData(param *models.AnalyzeTransParam) (result *models.Ana
 		for _, row := range logMetricMonitorRows {
 			result.LogMonitorServiceGroup = append(result.LogMonitorServiceGroup, row.ServiceGroup)
 		}
-		var logMetricGroupRows []*models.LogMetricGroup
-		err = x.SQL("select distinct log_monitor_template from log_metric_group where log_monitor_template<>'' and log_metric_monitor in (select guid from log_metric_monitor where service_group in ("+serviceGroupFilterSql+"))", serviceGroupFilterParams...).Find(&logMetricGroupRows)
+		var logMonitorTemplates []string
+		err = x.SQL("select guid from log_monitor_template").Find(&logMonitorTemplates)
 		if err != nil {
 			err = fmt.Errorf("query log metric group table fail,%s ", err.Error())
 			return
 		}
-		for _, row := range logMetricGroupRows {
-			result.LogMonitorTemplate = append(result.LogMonitorTemplate, row.LogMonitorTemplate)
-		}
+		result.LogMonitorTemplate = logMonitorTemplates
 		var logKeywordMonitorRows []*models.LogKeywordMonitorTable
 		err = x.SQL("select t1.service_group from (select service_group from log_keyword_monitor union select service_group from db_keyword_monitor) t1 where t1.service_group in ("+serviceGroupFilterSql+")", serviceGroupFilterParams...).Find(&logKeywordMonitorRows)
 		if err != nil {
