@@ -614,7 +614,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 			}
 		}
 	}
-	if cond.ExtOpenAlarm {
+	if cond.ExtOpenAlarm && len(cond.MetricFilterList) == 0 && len(cond.EndpointFilterList) == 0 {
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
 			result = append(result, v)
 		}
@@ -1832,7 +1832,7 @@ func ManualNotifyAlarm(alarmId int, operator string) (err error) {
 		return
 	}
 	notifyObj := notifyRows[0]
-	if err = notifyEventAction(notifyObj, &alarmObj, false, operator); err != nil {
+	if _, err = notifyEventAction(notifyObj, &alarmObj, false, operator); err != nil {
 		err = fmt.Errorf("notify event action fail:%s ", err.Error())
 	} else {
 		_, err = x.Exec("insert into alarm_notify(alarm_id,notify_id,endpoint,metric,status,proc_def_key,proc_def_name,notify_description,created_user,created_time) values (?,?,?,?,?,?,?,?,?,?)",
@@ -2049,39 +2049,54 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 }
 
 func GetAlarmNameList(status, alarmName string) (list []string, err error) {
-	var newList []string
+	var alarmList, customAlarmList []*m.SimpleAlarm
 	var closed = 1
 	if status == "firing" {
 		closed = 0
 	}
-	baseSQL := "select distinct alarm_name from (select distinct alarm_name,start from alarm  where 1=1"
+	alarmSQL := "select alarm_name as alarm_name,start as update_at from alarm  where 1=1"
 	var params []interface{}
 	if status != "" {
-		baseSQL = baseSQL + " and status=?"
+		alarmSQL = alarmSQL + " and status=?"
 		params = append(params, status)
 	}
 	if strings.TrimSpace(alarmName) != "" {
-		baseSQL = baseSQL + " and alarm_name like '%" + alarmName + "%'"
+		alarmSQL = alarmSQL + " and alarm_name like '%" + alarmName + "%'"
 	}
-	baseSQL = baseSQL + " union select distinct alert_title as alarm_name,update_at as start from alarm_custom where 1=1"
-	if status != "" {
-		baseSQL = baseSQL + " and closed=?"
-		params = append(params, closed)
-	}
-	if strings.TrimSpace(alarmName) != "" {
-		baseSQL = baseSQL + " and alert_title like '%" + alarmName + "%'"
-	}
-	baseSQL = baseSQL + " ) t order by t.start desc limit 20"
-
-	if err = x.SQL(baseSQL, params...).Find(&list); err != nil {
+	alarmSQL = alarmSQL + " order by start desc limit 100"
+	if err = x.SQL(alarmSQL, params...).Find(&alarmList); err != nil {
 		return
 	}
-	if len(list) > 0 {
-		for _, s := range list {
-			if strings.TrimSpace(s) == "" {
-				continue
-			}
-			newList = append(newList, s)
+
+	var customAlarmParams []interface{}
+	customAlarmSQL := "select alert_title as alarm_name,update_at from alarm_custom where 1=1"
+	if status != "" {
+		customAlarmSQL = customAlarmSQL + " and closed=?"
+		customAlarmParams = append(customAlarmParams, closed)
+	}
+	if strings.TrimSpace(alarmName) != "" {
+		customAlarmSQL = customAlarmSQL + " and alert_title like '%" + alarmName + "%'"
+	}
+	customAlarmSQL = customAlarmSQL + "  order by update_at desc limit 100"
+
+	if err = x.SQL(customAlarmSQL, customAlarmParams...).Find(&customAlarmList); err != nil {
+		return
+	}
+
+	alarmList = append(alarmList, customAlarmList...)
+	// 数据去重复
+	alarmList = filterRepeatAndEmptyNameAlarm(alarmList)
+	// 按最新时间在前面
+	sort.Sort(m.SimpleAlarmSort(alarmList))
+
+	for _, alarm := range alarmList {
+		if strings.TrimSpace(alarm.AlarmName) == "" {
+			continue
+		}
+		list = append(list, alarm.AlarmName)
+		// 最长20条数据
+		if len(list) >= 20 {
+			break
 		}
 	}
 	return
@@ -2096,6 +2111,24 @@ func convertString2Map(list []string) map[string]bool {
 		hashMap[s] = true
 	}
 	return hashMap
+}
+
+func filterRepeatAndEmptyNameAlarm(list []*m.SimpleAlarm) []*m.SimpleAlarm {
+	var newList []*m.SimpleAlarm
+	hashMap := make(map[string]*m.SimpleAlarm)
+	for _, alarm := range list {
+		if alarm.AlarmName == "" {
+			continue
+		}
+		if _, ok := hashMap[alarm.AlarmName]; ok {
+			continue
+		}
+		hashMap[alarm.AlarmName] = alarm
+	}
+	for _, value := range hashMap {
+		newList = append(newList, value)
+	}
+	return newList
 }
 
 func getLevelSQL(levelMap map[string]bool) string {
