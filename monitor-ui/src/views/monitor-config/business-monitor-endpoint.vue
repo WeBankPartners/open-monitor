@@ -60,7 +60,7 @@
         />
       </div>
     </section>
-    <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
+    <!-- <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div> -->
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
@@ -616,6 +616,7 @@ export default {
         }
         this.logAndDataBaseAllDetail.push(tempInfo)
       })
+      this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
     },
     getDbDetail() {
       return new Promise(resolve => {

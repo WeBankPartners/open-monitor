@@ -49,7 +49,7 @@ export default {
     }
   },
   mounted() {
-    this.getchartdata()
+    this.getchartdata('mounted')
     this.isAutoRefresh()
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
@@ -106,7 +106,7 @@ export default {
         },this.params.autoRefresh * 1000)
       }
     },
-    getchartdata() {
+    getchartdata(type = '') {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -118,27 +118,34 @@ export default {
       }
       this.elId = this.chartInfo.elId
       window.intervalFrom = 'custom-chart'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        if (responseData.legend.length === 0) {
-          this.noDataType = 'noData'
-        } else {
-          responseData.yaxis.unit = this.chartInfo.panalUnit
-          this.noDataType = 'normal'
-          const chartConfig = {
-            title: false,
-            eye: false,
-            clear: true,
-            dataZoom: false,
-            lineBarSwitch: true,
-            chartType: this.chartInfo.chartType,
-            params: this.chartInfo.chartParams
+      const modalElement = document.querySelector('#edit-view')
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      // 进入可视区域
+      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+          if (responseData.legend.length === 0) {
+            this.noDataType = 'noData'
+          } else {
+            responseData.yaxis.unit = this.chartInfo.panalUnit
+            this.noDataType = 'normal'
+            const chartConfig = {
+              title: false,
+              eye: false,
+              clear: true,
+              dataZoom: false,
+              lineBarSwitch: true,
+              chartType: this.chartInfo.chartType,
+              params: this.chartInfo.chartParams
+            }
+            this.$nextTick(() => {
+              this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
+              this.scrollHandle()
+            })
           }
-          this.$nextTick(() => {
-            this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
-            this.scrollHandle()
-          })
-        }
-      }, { isNeedloading: false })
+        }, { isNeedloading: false })
+      }
     },
     onMouseLeaveContent() {
       if (this.chartInstance) {
