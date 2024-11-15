@@ -24,6 +24,25 @@ func QueryTypeConfigList(c *gin.Context) {
 	middleware.ReturnSuccessData(c, list)
 }
 
+func BatchGetTypeConfigList(c *gin.Context) {
+	var param models.CommonNameParam
+	var err error
+	var list []*models.TypeConfig
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(param.Names) == 0 {
+		middleware.ReturnSuccess(c)
+		return
+	}
+	if list, err = db.GetTypeConfigListByNames(param.Names); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccessData(c, list)
+}
+
 func AddTypeConfig(c *gin.Context) {
 	var param models.TypeConfig
 	var typeConfigList []*models.TypeConfig
@@ -68,6 +87,7 @@ func BatchAddTypeConfig(c *gin.Context) {
 	}
 	// 如果 role_new表还未初始化,需要先同步数据
 	if !db.ExistRoles() {
+		db.SyncCoreRole()
 		db.SyncCoreRoleList()
 	}
 	for _, monitorType := range newMonitorTypeList {
