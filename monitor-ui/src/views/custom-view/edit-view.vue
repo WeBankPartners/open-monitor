@@ -781,7 +781,7 @@ export default {
   },
   methods: {
     async getTableData() {
-      await this.getEndpointList()
+      this.getEndpointList()
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, async res => {
@@ -916,7 +916,7 @@ export default {
 
     debounceGetEndpointList: debounce(async function () {
       await this.getEndpointList()
-    }, 300),
+    }, 200),
 
     getEndpointList() {
       return new Promise(resolve => {
@@ -1310,7 +1310,7 @@ export default {
 
     debounceDrawChart: debounce(function () {
       this.drawChartContent()
-    }, 300),
+    }, 50),
 
     generateLineParamsData() {
       if (isEmpty(this.tableData)) {

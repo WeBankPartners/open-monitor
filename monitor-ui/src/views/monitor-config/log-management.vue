@@ -12,13 +12,16 @@
         <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
       </RadioGroup>
       <Select
+        :key='selectKey'
         style="width:300px;"
         v-model="targetId"
         filterable
         clearable
         remote
         ref="select"
+        @on-clear="onTargetIdClear"
         @on-change="onFilterChange"
+        @on-open-change="onSelectOpenChange"
       >
         <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
           <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
@@ -59,8 +62,25 @@
         </Upload>
       </div>
     </div>
+    <div v-if="!targetId" style="margin: 10px 0">
+      <Alert type="error">
+        <span>{{ $t('m_empty_tip_1') }}</span>
+        <span v-if="type === 'group'">{{ $t('m_field_resourceLevel') }}</span>
+        <span v-if="type === 'endpoint'">{{ $t('m_field_endpoint') }}</span>
+      </Alert>
+    </div>
+    <div v-if="targetId && isDataEmpty" style="margin: 10px 0">
+      <Alert type="error">
+        <span>{{ $t('m_noData') }}</span>
+      </Alert>
+    </div>
     <section v-show="showTargetManagement" class='key-word-content'>
-      <keywordContent ref='keywordContent' :keywordType="typeMap[type]"></keywordContent>
+      <keywordContent
+        ref='keywordContent'
+        :keywordType="typeMap[type]"
+        @feedbackInfo="onFeedbackInfo"
+      >
+      </keywordContent>
     </section>
   </div>
 </template>
@@ -85,7 +105,9 @@ export default {
         endpoint: 'endpoint'
       },
       alarmName: '',
-      token: ''
+      token: '',
+      isDataEmpty: false,
+      selectKey: ''
     }
   },
   async mounted() {
@@ -102,28 +124,27 @@ export default {
   },
   methods: {
     typeChange() {
-      this.clearTargrt()
       this.getTargrtList()
+      this.selectKey = +new Date() + ''
     },
-    getTargrtList() {
+    getTargrtList(type = 'init') {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
         this.targetOptions = responseData
-        this.targetId = this.targetOptions[0].guid
-        this.search()
+        if (type === 'init') {
+          this.targetId = this.targetOptions[0].guid
+          this.search()
+        }
       }, {isNeedloading: false})
-    },
-    clearTargrt() {
-      this.targetOptions = []
-      this.targetId = ''
-      this.showTargetManagement = false
-      this.$refs.select.query = ''
     },
     search() {
       if (this.targetId) {
         this.showTargetManagement = true
         this.$refs.keywordContent.getDetail(this.targetId, this.alarmName)
       }
+    },
+    onTargetIdClear() {
+      this.$refs.keywordContent.getDetail('', this.alarmName)
     },
     onFilterChange: debounce(function () {
       this.search()
@@ -174,6 +195,14 @@ export default {
     },
     uploadFailed(file) {
       this.$Message.warning(file.message)
+    },
+    onSelectOpenChange(open) {
+      if (open) {
+        this.getTargrtList('')
+      }
+    },
+    onFeedbackInfo(allData) {
+      this.isDataEmpty = allData.length === 0
     }
   },
   components: {
