@@ -152,7 +152,7 @@
                 <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" class='action-row'>
                   <Col span="3">
                   <Select v-model="item.regulative"
-                          :disabled="view || retcodeItemDisabled(item)"
+                          :disabled="view || retcodeItemDisabled(item, itemIndex)"
                           style="width:90%"
                           @on-change='onRegulativeChange(item)'
                   >
@@ -162,7 +162,7 @@
                   </Col>
                   <Col span="3">
                   <Input v-model.trim="item.source_value"
-                         :disabled="view || retcodeItemDisabled(item)"
+                         :disabled="view || retcodeItemDisabled(item, itemIndex)"
                          @on-change="(e) => onSourceValueChange(e, item)"
                          style="width:90%"
                          @on-blur="refreshPage"
@@ -172,7 +172,7 @@
 
                   <Col span="4">
                   <Input v-model.trim="item.matchingSourceValue"
-                         :disabled="view || retcodeItemDisabled(item) || item.regulative === 0"
+                         :disabled="view || retcodeItemDisabled(item, itemIndex) || item.regulative === 0"
                          style="width:90%"
                          @on-change="debounceRefresh"
                          @on-blur="refreshPage"
@@ -186,7 +186,7 @@
                     type="info"
                     ghost
                     size="small"
-                    :disabled="view || retcodeItemDisabled(item) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
+                    :disabled="view || retcodeItemDisabled(item, itemIndex) || !item.source_value || !item.matchingSourceValue || item.regulative === 0"
                     @click="onMatchButtonClick(item)"
                   >
                     {{$t('m_match')}}
@@ -194,7 +194,7 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item, itemIndex) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
@@ -251,8 +251,8 @@
         </div>
       </div>
       <template slot='footer'>
-        <Checkbox v-if="actionType === 'add'" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="actionType === 'add'" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="['add', 'copy'].includes(actionType)" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="['add', 'copy'].includes(actionType)" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
@@ -311,6 +311,8 @@ export default {
       this.view = actionType === 'view'
       this.businessConfig.log_monitor_template_guid = templateGuid
       this.businessConfig.log_metric_monitor_guid = parentGuid
+      this.auto_create_warn = true
+      this.auto_create_dashboard = true
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -457,7 +459,7 @@ export default {
       !isEmpty(data.log_monitor_template) && !isEmpty(data.log_monitor_template.metric_list) && data.log_monitor_template.metric_list.forEach(item => {
         item.range_config = JSON.stringify(item.range_config)
       })
-      if (this.actionType === 'add') {
+      if (['add', 'copy'].includes(this.actionType)) {
         data.auto_create_warn = this.auto_create_warn
         data.auto_create_dashboard = this.auto_create_dashboard
       }
@@ -548,10 +550,11 @@ export default {
     debounceRefresh: debounce(function (){
       this.refreshPage()
     }, 1000),
-    retcodeItemDisabled(item) {
+    retcodeItemDisabled(item, index = -1) {
       return item.regulative === this.templateRetCode.regulative
         && item.source_value === this.templateRetCode.source_value
           && item.target_value === this.templateRetCode.target_value
+            && index === 0
     },
     onRegulativeChange(item) {
       item.matchingSourceValue = ''

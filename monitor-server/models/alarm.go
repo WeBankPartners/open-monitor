@@ -739,6 +739,7 @@ type AutoSimpleAlarmStrategyParam struct {
 	AutoCreateWarn     bool
 	LogMetricGroupGuid string
 	MetricPrefixCode   string
+	LogType            string
 }
 
 type AlarmOptionsParam struct {
@@ -779,4 +780,28 @@ type AlarmFiring struct {
 	CustomMessage string    `json:"customMessage" xorm:"custom_message"` // 告警人工备注
 	UniqueHash    string    `json:"uniqueHash" xorm:"unique_hash"`       // 告警唯一标识(对象+指标+标签+配置)
 	AlarmId       int       `json:"alarmId" xorm:"alarm_id"`             // 告警历史表id
+}
+
+type SimpleAlarm struct {
+	AlarmName string `json:"alarmName" xorm:"alarm_name"`
+	UpdateAt  string `json:"updateAt" xorm:"update_at"`
+}
+
+type SimpleAlarmSort []*SimpleAlarm
+
+func (s SimpleAlarmSort) Len() int {
+	return len(s)
+}
+
+func (s SimpleAlarmSort) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s SimpleAlarmSort) Less(i, j int) bool {
+	if s[i].UpdateAt != "" && s[j].UpdateAt != "" {
+		updateTime1, _ := time.Parse(DatetimeFormat, s[i].UpdateAt)
+		updateTime2, _ := time.Parse(DatetimeFormat, s[j].UpdateAt)
+		return updateTime1.After(updateTime2)
+	}
+	return true
 }

@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
 	"time"
 )
 
@@ -13,6 +14,29 @@ func GetTypeConfigList(name string) (list []*models.TypeConfig, err error) {
 	} else {
 		err = x.SQL("select * from monitor_type where display_name like ? order by create_time desc", fmt.Sprintf("%%%s%%", name)).Find(&list)
 	}
+	if err != nil {
+		return
+	}
+	if len(list) > 0 {
+		if err = x.SQL("select * from endpoint_new ").Find(&endpointList); err != nil {
+			return
+		}
+		if len(endpointList) > 0 {
+			for _, typeConf := range list {
+				for _, endpoint := range endpointList {
+					if endpoint.MonitorType == typeConf.DisplayName && endpoint.MonitorType != "" {
+						typeConf.ObjectCount++
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+func GetTypeConfigListByNames(names []string) (list []*models.TypeConfig, err error) {
+	var endpointList []*models.EndpointNewTable
+	err = x.SQL(fmt.Sprintf("select * from monitor_type where display_name in ('%s') order by create_time desc", strings.Join(names, "','"))).Find(&list)
 	if err != nil {
 		return
 	}

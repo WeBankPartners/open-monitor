@@ -241,6 +241,7 @@ export default {
       isAssociatedObject: false,
       selectedObject: [],
       allObject: [],
+      initAllObject: [],
 
       isAlarmCallback: false,
       selectedFiring: '',
@@ -384,7 +385,7 @@ export default {
       this.addObject.forEach(obj => {
         const isExist = this.selectedObject.find(s => s.option_value === obj)
         if (!isExist) {
-          const find = this.allObject.find(a => a.option_value === obj)
+          const find = this.initAllObject.find(a => a.option_value === obj)
           this.selectedObject.push(find)
         }
       })
@@ -650,7 +651,13 @@ export default {
             })
           }
         })
-        this.addObject = []
+        if (query === '.') {
+          this.addObject = []
+          this.initAllObject = cloneDeep(this.allObject)
+        } else {
+          this.initAllObject = [...cloneDeep(this.initAllObject), ...cloneDeep(this.allObject)]
+        }
+
         this.isAssociatedObject = true
       })
     },
