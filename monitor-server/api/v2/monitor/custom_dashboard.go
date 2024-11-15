@@ -732,7 +732,7 @@ func TransImportCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
 		return
 	}
-	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "insert", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -741,4 +741,18 @@ func TransImportCustomDashboard(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccess(c)
+}
+
+func BatchGetDashboard(c *gin.Context) {
+	var param models.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.BatchGetCustomDashboardByIds(param.Ids)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
 }
