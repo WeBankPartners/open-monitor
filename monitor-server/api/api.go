@@ -342,6 +342,11 @@ func init() {
 
 		// 给平台分析迁移数据
 		&handlerFuncObj{Url: "/trans-export/analyze", Method: http.MethodPost, HandlerFunc: monitor.AnalyzeTransExportData},
+		// 平台迁移 根据id读取监控名称数据
+		&handlerFuncObj{Url: "/trans-export/log_monitor_template/batch", Method: http.MethodPost, HandlerFunc: service.BatchGetLogMonitorTemplate},
+		&handlerFuncObj{Url: "/trans-export/dashboard/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetDashboard},
+		&handlerFuncObj{Url: "/trans-export/service_group/batch", Method: http.MethodPost, HandlerFunc: alarm.BatchGetServiceGroup},
+		&handlerFuncObj{Url: "/trans-export/config/type/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetTypeConfigList},
 	)
 }
 

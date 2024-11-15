@@ -416,8 +416,16 @@ func MetricComparisonImport(operator string, inputMetrics []*models.MetricCompar
 			return
 		}
 		if targetMetric == nil || targetMetric.Metric == "" {
-			failList = append(failList, metric.Metric)
-			continue
+			// 同环比导入,使用指标名称兼容一下,存在 metricId 对应不上的情况
+			if _, err = x.SQL("select * from metric where metric =? limit 1", metric.OriginMetric).Get(targetMetric); err != nil {
+				return
+			}
+			if targetMetric == nil || targetMetric.Metric == "" {
+				failList = append(failList, metric.Metric)
+				continue
+			} else {
+				metric.MetricId = targetMetric.Guid
+			}
 		}
 		// 2. 查询同环比指标是否存在
 		guid := ""
@@ -484,10 +492,12 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			if metricRow != nil && metricRow.Guid != "" && (metricRow.LogMetricGroup != "" || metricRow.DbMetricMonitor != "") {
 				continue
 			}
-		} else {
+		} else if endPointGroup != "" {
 			var originMonitorType string
 			x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
 			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
+		} else {
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
 		}
 		matchMetric := &models.MetricTable{}
 		for _, existMetric := range existMetrics {
@@ -501,10 +511,12 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			inputMetric.Metric = inputMetric.Metric + "_1"
 			if serviceGroup != "" {
 				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
-			} else {
+			} else if endPointGroup != "" {
 				var originMonitorType string
 				x.SQL("select monitor_type from endpoint_group where guid=?", endPointGroup).Get(&originMonitorType)
 				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, originMonitorType)
+			} else {
+				inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, monitorType)
 			}
 			matchMetric = &models.MetricTable{}
 			for _, existMetric := range existMetrics {
@@ -932,6 +944,24 @@ func getMetricComparisonDeleteAction(sourceMetricGuid string) (actions []*Action
 		tmpActions, tmpEndpointGroup := getDeleteMetricActions(row.MetricId)
 		actions = append(actions, tmpActions...)
 		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
+	return
+}
+
+func GetLogTypeByMetric(metric string) (logType string, err error) {
+	var result []string
+	err = x.SQL("select log_type from log_metric_group where guid in (select log_metric_group from metric where metric = ?)", metric).Find(&result)
+	if len(result) > 0 {
+		logType = result[0]
+	}
+	return
+}
+
+func GetLogTypeByLogMetricGroup(id string) (logType string, err error) {
+	var result []string
+	err = x.SQL("select log_type from log_metric_group where guid =?", id).Find(&result)
+	if len(result) > 0 {
+		logType = result[0]
 	}
 	return
 }
