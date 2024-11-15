@@ -228,7 +228,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				}
 			}
 		}
-		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
+		actions = append(actions, getDeleteServiceGroupAction(param.Guid, guidList)...)
 		err = Transaction(actions)
 		if err == nil {
 			DeleteServiceWithChildConfig(param.Guid)
@@ -268,6 +268,28 @@ func getNodeFromParent(data []*m.PanelRecursiveTable, input []string, guid strin
 		}
 	}
 	return tmpInput
+}
+
+func GetOrgRoleNew(guid string) (result []*m.OptionModel, err error) {
+	var serviceGroupRoleRows []*m.ServiceGroupRoleRelTable
+	err = x.SQL("select * from service_group_role_rel where service_group=?", guid).Find(&serviceGroupRoleRows)
+	if err != nil {
+		err = fmt.Errorf("query service group role rel table fail,%s ", err.Error())
+		return
+	}
+	var roleData []*m.RoleTable
+	x.SQL("SELECT id,name,display_name FROM role").Find(&roleData)
+	if len(roleData) == 0 {
+		return result, nil
+	}
+	roleIdMap := make(map[string]int)
+	for _, row := range roleData {
+		roleIdMap[row.Name] = row.Id
+	}
+	for _, row := range serviceGroupRoleRows {
+		result = append(result, &m.OptionModel{OptionText: row.Role, OptionValue: fmt.Sprintf("%d", roleIdMap[row.Role]), Id: roleIdMap[row.Role], OptionName: row.Role})
+	}
+	return
 }
 
 func GetOrgRole(guid string) (result []*m.OptionModel, err error) {
@@ -471,5 +493,10 @@ func GetPanelRecursiveEndpoints(guid, endpointType string) (result []*m.Endpoint
 	}
 	result = []*m.EndpointTable{}
 	err = x.SQL("select * from endpoint where guid in ('" + strings.ReplaceAll(panelRecursiveTable[0].Endpoint, "^", "','") + "')").Find(&result)
+	return
+}
+
+func BatchGetServiceGroupByIds(ids []string) (list []*m.ServiceGroupTable, err error) {
+	err = x.SQL(fmt.Sprintf("select * from service_group where  guid in ('%s')", strings.Join(ids, "','"))).Find(&list)
 	return
 }

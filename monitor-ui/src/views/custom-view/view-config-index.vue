@@ -222,32 +222,31 @@
           </div>
         </template>
       </AuthDialog>
-      <ModalComponent :modelConfig="processConfigModel">
-        <div slot="processConfig" style="max-height: 500px;overflow-y: scroll;padding: 0 12px;">
-          <section>
-            <div style="display: flex;">
-              <div class="port-title">
-                <span>{{$t('m_tableKey_role')}}:</span>
-              </div>
-              <div class="port-title">
-                <span>{{$t('m_custom_dashboard')}}:</span>
-              </div>
+
+      <Modal v-model="isShowProcessConfigModel" :title="$t(processConfigModel.modalTitle)" :mask-closable="false">
+        <div style="padding: 0 12px; max-height: 500px; overflow-y: auto">
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('m_tableKey_role')}}:</span>
             </div>
-          </section>
-          <section v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
+            <div class="port-title">
+              <span>{{$t('m_custom_dashboard')}}:</span>
+            </div>
+          </div>
+          <div v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
             <div class="port-config">
               <div style="width: 40%">
                 <label>{{pl.display_role_name}}：</label>
               </div>
               <div style="width: 55%">
-                <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('m_please_select') + $t('m_dashboard_for_role')">
+                <Select filterable clearable v-model="pl.main_page_id" class='dashboard-config-selection' :placeholder="$t('m_please_select') + $t('m_dashboard_for_role')">
                   <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
                 </Select>
               </div>
             </div>
-          </section>
+          </div>
         </div>
-      </ModalComponent>
+      </Modal>
       <ExportChartModal
         :isModalShow="isModalShow"
         :pannelId="pannelId"
@@ -370,7 +369,8 @@ export default {
       },
       isModalShow: false,
       pannelId: null,
-      panalName: ''
+      panalName: '',
+      isShowProcessConfigModel: false
     }
   },
   mounted() {
@@ -443,7 +443,8 @@ export default {
       })
       this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
-        this.$root.JQ('#set_dashboard_modal').modal('hide')
+        this.isShowProcessConfigModel = false
+        // this.$root.JQ('#set_dashboard_modal').modal('hide')
         this.getViewList()
       })
     },
@@ -533,7 +534,7 @@ export default {
     setDashboard() {
       this.request('GET',this.pathMap.portalConfig, '', responseData => {
         this.processConfigModel.dashboardConfig = responseData
-        this.$root.JQ('#set_dashboard_modal').modal('show')
+        this.isShowProcessConfigModel = true
       })
     },
     goToPanal(panalItem, type) {
@@ -664,14 +665,21 @@ export default {
 }
 
 body::-webkit-scrollbar {
-    display: none; /* 隐藏滚动条 */
+    // display: none;
+}
+
+.dashboard-config-selection {
+  width:200px;
+  .ivu-select-selection {
+    height: 34px !important;
+  }
 }
 
 </style>
 
 <style scoped lang="less">
 .all-card-content {
-  max-height: ~'calc(100vh - 190px)';
+  max-height: ~'calc(100vh - 210px)';
   overflow-x: hidden;
   overflow-y: auto;
 }

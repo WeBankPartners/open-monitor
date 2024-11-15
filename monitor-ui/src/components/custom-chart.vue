@@ -1,5 +1,5 @@
 <template>
-  <div class="single-chart">
+  <div id='custome-chart-view' class="single-chart" @mouseleave="onMouseLeaveContent">
     <div v-show="noDataType === 'normal'">
       <div :id="elId" class="echart" :style="chartInfo.style">
       </div>
@@ -24,7 +24,8 @@ export default {
       config: '',
       myChart: '',
       interval: '',
-      noDataType: 'normal' // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      chartInstance: null
     }
   },
   props: {
@@ -48,7 +49,7 @@ export default {
     }
   },
   mounted() {
-    this.getchartdata()
+    this.getchartdata('mounted')
     this.isAutoRefresh()
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
@@ -57,6 +58,13 @@ export default {
     this.clearInterval()
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
+    if (this.chartInstance) {
+      setTimeout(() => {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }, 500)
+    }
   },
   methods: {
     isTabActive() {
@@ -87,6 +95,10 @@ export default {
     },
     isAutoRefresh() {
       clearInterval(this.interval)
+      const element = document.querySelector('#custome-chart-view')
+      if (!element) {
+        return
+      }
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
         this.interval = setInterval(() => {
           this.getchartdata()
@@ -94,7 +106,7 @@ export default {
         },this.params.autoRefresh * 1000)
       }
     },
-    getchartdata() {
+    getchartdata(type = '') {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -104,29 +116,43 @@ export default {
         ...this.chartInfo.chartParams,
         custom_chart_guid: this.chartInfo.elId
       }
+      this.elId = this.chartInfo.elId
       window.intervalFrom = 'custom-chart'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        if (responseData.legend.length === 0) {
-          this.noDataType = 'noData'
-        } else {
-          responseData.yaxis.unit = this.chartInfo.panalUnit
-          this.elId = this.chartInfo.elId
-          this.noDataType = 'normal'
-          const chartConfig = {
-            title: false,
-            eye: false,
-            clear: true,
-            dataZoom: false,
-            lineBarSwitch: true,
-            chartType: this.chartInfo.chartType,
-            params: this.chartInfo.chartParams
+      const modalElement = document.querySelector('#edit-view')
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      // 进入可视区域
+      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+          if (responseData.legend.length === 0) {
+            this.noDataType = 'noData'
+          } else {
+            responseData.yaxis.unit = this.chartInfo.panalUnit
+            this.noDataType = 'normal'
+            const chartConfig = {
+              title: false,
+              eye: false,
+              clear: true,
+              dataZoom: false,
+              lineBarSwitch: true,
+              chartType: this.chartInfo.chartType,
+              params: this.chartInfo.chartParams
+            }
+            this.$nextTick(() => {
+              this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
+              this.scrollHandle()
+            })
           }
-          this.$nextTick(() => {
-            readyToDraw(this, responseData, this.chartIndex, chartConfig)
-            this.scrollHandle()
-          })
-        }
-      }, { isNeedloading: false })
+        }, { isNeedloading: false })
+      }
+    },
+    onMouseLeaveContent() {
+      if (this.chartInstance) {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
     }
   },
   components: {},
@@ -151,4 +177,14 @@ export default {
       transform: translate(-50%, -50%);
     }
   }
+</style>
+
+<style lang="less">
+// .echart> div[style]:nth-child(2){
+//   pointer-events: all !important; /*强制tooltip响应事件*/
+// }
+// .echart > div[style]:nth-child(2):hover {
+//   display: block !important; /*强制鼠标在时tooltip不消失*/
+// }
+
 </style>
