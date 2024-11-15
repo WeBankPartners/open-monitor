@@ -424,7 +424,7 @@ func ImportLogMetric(c *gin.Context) {
 	for _, dbMonitor := range paramObj.DBConfig {
 		dbMonitor.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
+	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
@@ -661,7 +661,7 @@ func CheckLogMonitorRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := []*models.LogParamTemplateObj{}
+	var result []*models.LogParamTemplateObj
 	for _, v := range param.ParamList {
 		_, v.DemoMatchValue = db.CheckRegExpMatchPCRE(models.CheckRegExpParam{RegString: v.Regular, TestContext: param.DemoLog})
 		result = append(result, v)
@@ -852,6 +852,15 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 			}
 		}
 	}
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
+		err = getErr
+		middleware.ReturnServerHandleError(c, err)
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
 		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -880,7 +889,8 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 
 func UpdateLogMetricCustomGroup(c *gin.Context) {
 	var param models.LogMetricGroupObj
-	if err := c.ShouldBindJSON(&param); err != nil {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -889,8 +899,21 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
+		err = getErr
+		middleware.ReturnServerHandleError(c, err)
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if len(param.MetricList) > 0 {
 		for _, metric := range param.MetricList {
+			// 拼接指标
+			if param.MetricPrefixCode != "" {
+				metric.Metric = fmt.Sprintf("%s_%s", param.MetricPrefixCode, metric.Metric)
+			}
 			if middleware.IsIllegalLogParamNameOrMetric(metric.LogParamName) || middleware.IsIllegalLogParamNameOrMetric(metric.Metric) {
 				middleware.ReturnValidateError(c, "log_param_name or metric param invalid")
 				return
@@ -962,7 +985,7 @@ func LogMonitorTemplateExport(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	resultData := []*models.LogMonitorTemplateDto{}
+	var resultData []*models.LogMonitorTemplateDto
 	for _, v := range param.GuidList {
 		templateObj, tmpErr := db.GetLogMonitorTemplate(v)
 		if tmpErr != nil {
@@ -1043,4 +1066,22 @@ func LogMonitorDataMapRegMatch(c *gin.Context) {
 		}
 	}
 	middleware.ReturnSuccessData(c, param)
+}
+
+func BatchGetLogMonitorTemplate(c *gin.Context) {
+	var param models.IdsParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if len(param.Ids) == 0 {
+		middleware.ReturnSuccess(c)
+		return
+	}
+	result, err := db.BatchGetLogTemplateByGuid(param.Ids)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
 }
