@@ -47,6 +47,9 @@ func autoGenerateAlarmStrategy(alarmStrategyParam models.AutoAlarmStrategyParam)
 		codeList = append(codeList, constOtherCode)
 		for _, code := range codeList {
 			for _, alarmMetric := range autoAlarmMetricList {
+				if !alarmMetric.AutoWarn {
+					continue
+				}
 				// 添加告警配置基础信息
 				alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 				metricTags := make([]*models.MetricTag, 0)
@@ -139,6 +142,9 @@ func autoGenerateSimpleAlarmStrategy(alarmStrategyParam models.AutoSimpleAlarmSt
 		}
 		autoAlarmMetricList := getAutoSimpleAlarmMetricList(alarmStrategyParam.MetricList, alarmStrategyParam.ServiceGroup, alarmStrategyParam.MetricPrefixCode)
 		for _, alarmMetric := range autoAlarmMetricList {
+			if !alarmMetric.AutoWarn {
+				continue
+			}
 			// 添加告警配置基础信息
 			alarmStrategy := &models.GroupStrategyObj{NotifyList: make([]*models.NotifyObj, 0), Conditions: make([]*models.StrategyConditionObj, 0)}
 			metricTags := make([]*models.MetricTag, 0)
@@ -171,6 +177,7 @@ func autoGenerateSimpleAlarmStrategy(alarmStrategyParam models.AutoSimpleAlarmSt
 				Condition:  fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold),
 				Last:       fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit),
 				Tags:       metricTags,
+				LogType:    alarmStrategyParam.LogType,
 			})
 			alarmStrategy.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
 			alarmStrategy.Last = fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit)
@@ -197,9 +204,8 @@ func getRetCodeSuccessCode(stringMap []*models.LogMetricStringMapTable) string {
 	return ""
 }
 
-func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam) (actions []*Action, customDashboard string, err error) {
+func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam) (actions []*Action, customDashboard string, newDashboardId int64, err error) {
 	var subDashboardActions, subChart1Actions, subChart2Actions, subChart3Actions []*Action
-	var newDashboardId int64
 	var metricMap = getMetricMap(dashboardParam.MetricList, dashboardParam.MetricPrefixCode, dashboardParam.ServiceGroup)
 	var reqCountMetric, failCountMetric, sucRateMetric, costTimeAvgMetric *models.LogMetricTemplate
 	var sucCode = getRetCodeSuccessCode(dashboardParam.RetCodeStringMap)
@@ -367,9 +373,8 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	return
 }
 
-func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDashboardParam) (actions []*Action, customDashboard string, err error) {
+func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDashboardParam) (actions []*Action, customDashboard string, newDashboardId int64, err error) {
 	var subDashboardActions, subChartActions []*Action
-	var newDashboardId int64
 	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
 	var customDashboardList []*models.CustomDashboardTable
@@ -454,7 +459,7 @@ func generateMetricGuidDisplayName(metricPrefixCode, metric, displayServiceGroup
 func getServiceGroupRoles(serviceGroup string) []string {
 	var optionModels []*models.OptionModel
 	var roles []string
-	optionModels, _ = GetOrgRole(serviceGroup)
+	optionModels, _ = GetOrgRoleNew(serviceGroup)
 	if len(optionModels) == 0 {
 		return roles
 	}
@@ -510,12 +515,18 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 		if logMetricTemplate.AutoAlarm && logMetricTemplate.RangeConfig != "" {
 			temp := &models.ThresholdConfig{}
 			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
+			// 此处添加数据校验,强制校验阈值数据,防止Prometheus解析数据失败挂掉
+			if strings.TrimSpace(temp.Operator) == "" || strings.TrimSpace(temp.Threshold) == "" || strings.TrimSpace(temp.Time) == "" || strings.TrimSpace(temp.TimeUnit) == "" {
+				log.Logger.Warn("getAutoAlarmMetricList strategy format invalid", log.JsonObj("strategy", temp))
+				continue
+			}
 			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{
 				MetricId:        generateMetricGuid(metric, serviceGroup),
 				Metric:          logMetricTemplate.Metric,
 				DisplayName:     logMetricTemplate.DisplayName,
 				ThresholdConfig: temp,
 				TagConfig:       logMetricTemplate.TagConfigList,
+				AutoWarn:        logMetricTemplate.AutoAlarm,
 			})
 		}
 	}
@@ -543,6 +554,7 @@ func getAutoSimpleAlarmMetricList(list []*models.LogMetricConfigDto, serviceGrou
 				DisplayName:     logMetricTemplate.DisplayName,
 				ThresholdConfig: temp,
 				TagConfig:       logMetricTemplate.TagConfigList,
+				AutoWarn:        logMetricTemplate.AutoAlarm,
 			})
 		}
 	}

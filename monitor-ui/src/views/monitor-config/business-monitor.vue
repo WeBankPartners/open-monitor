@@ -13,6 +13,7 @@
         <Radio label="endpoint">{{ $t('m_tableKey_endpoint') }}</Radio>
       </RadioGroup>
       <Select
+        :key='selectKey'
         style="width:250px;"
         v-model="targrtId"
         filterable
@@ -89,7 +90,8 @@ export default {
       targetOptions: [],
       showTargetManagement: false,
       metricKey: '',
-      isDataEmpty: false
+      isDataEmpty: false,
+      selectKey: ''
     }
   },
 
@@ -102,8 +104,9 @@ export default {
   methods: {
     typeChange(needDefaultTarget) {
       this.metricKey = ''
-      this.clearTargrt()
+      // this.clearTargrt()
       this.getTargrtList(needDefaultTarget)
+      this.selectKey = +new Date() + ''
     },
     getTargrtList(needDefaultTarget = true) {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
