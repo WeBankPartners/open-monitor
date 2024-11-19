@@ -1273,6 +1273,19 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 		deleteCustomDashboard(newDashboardId)
 		return
 	}
+	// 看板名称重复校验(业务配置导入时候不需要校验,导入重复数据会先删除)
+	if param.AutoCreateDashboard && result != nil {
+		var customDashboardList []*models.CustomDashboardTable
+		customDashboardName := result.CustomDashboard
+		// 查询看板 名称是否已存在,去掉看板名称校验
+		if customDashboardList, err = QueryCustomDashboardListByName(customDashboardName); err != nil {
+			return
+		}
+		if len(customDashboardList) > 0 {
+			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, customDashboardName)
+			return
+		}
+	}
 	if err = Transaction(actions); err != nil {
 		deleteCustomDashboard(newDashboardId)
 	}
