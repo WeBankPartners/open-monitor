@@ -1281,7 +1281,8 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 		if customDashboardList, err = QueryCustomDashboardListByName(customDashboardName); err != nil {
 			return
 		}
-		if len(customDashboardList) > 0 {
+		// 新增看板已经入库,这里数量大于1表示有重复名称
+		if len(customDashboardList) > 1 {
 			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, customDashboardName)
 			return
 		}
