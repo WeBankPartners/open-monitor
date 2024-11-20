@@ -389,6 +389,8 @@ func ImportLogMetric(c *gin.Context) {
 		middleware.ReturnHandleError(c, "file open error ", err)
 		return
 	}
+	// autoCreate 是否自动创建告警和看板,yes表示自动,no表示不自动,不传递就根据导出数据判断
+	autoCreate := c.Query("autoCreate")
 	var paramObj models.LogMetricQueryObj
 	b, err := io.ReadAll(f)
 	defer f.Close()
@@ -419,6 +421,17 @@ func ImportLogMetric(c *gin.Context) {
 		}
 		for _, metricGroup := range logMonitor.MetricGroups {
 			metricGroup.ServiceGroup = serviceGroup
+			if autoCreate == "yes" {
+				metricGroup.AutoDashboard = 1
+				metricGroup.AutoCreateDashboard = true
+				metricGroup.AutoAlarm = 1
+				metricGroup.AutoCreateWarn = true
+			} else if autoCreate == "no" {
+				metricGroup.AutoDashboard = 0
+				metricGroup.AutoCreateDashboard = false
+				metricGroup.AutoAlarm = 0
+				metricGroup.AutoCreateWarn = false
+			}
 		}
 	}
 	for _, dbMonitor := range paramObj.DBConfig {
