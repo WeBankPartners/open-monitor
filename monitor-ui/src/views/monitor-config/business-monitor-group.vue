@@ -11,30 +11,47 @@
           {{ $t('m_export') }}
         </Button>
         <div style="display: inline-block;margin-bottom: 3px;">
-          <Upload
-            :action="uploadUrl"
-            :show-upload-list="false"
-            :max-size="1000"
-            with-credentials
-            :headers="{'Authorization': token}"
-            :on-success="uploadSucess"
-            :on-error="uploadFailed"
+          <Dropdown
+            placement="bottom-start"
+            @on-click="onImportButtonClick"
           >
             <Button type="primary" class="btn-left">
               <img src="../../assets/img/export.png" class="btn-img" alt="" />
               {{ $t('m_import') }}
             </Button>
-          </Upload>
+            <template  slot='list'>
+              <DropdownMenu>
+                <DropdownItem v-for="(item, index) in importTypeOptions"
+                              :name="item.value"
+                              :key="index"
+                >
+                  {{ $t(item.name) }}
+                </DropdownItem>
+              </DropdownMenu>
+            </template>
+          </Dropdown>
         </div>
+        <Upload
+          class='log-file-upload'
+          style="display: none"
+          :action="uploadUrl"
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed"
+        >
+          <Button />
+        </Upload>
       </div>
-
       <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div class='w-header'>
           <div class="title">
             {{$t('m_log_file')}}
             <span class="underline"></span>
           </div>
-          <Button type="success" class="btn-right mr-4" @click="addLogFile">
+          <Button type="success" class="add-button" @click="addLogFile">
             {{ $t('m_button_add') }}
           </Button>
         </div>
@@ -123,7 +140,7 @@
               {{$t('m_db')}}
               <span class="underline"></span>
             </div>
-            <Button type="success" class="btn-right mr-4" @click="addDb">
+            <Button type="success" class="add-button" @click="addDb">
               {{ $t('m_button_add') }}
             </Button>
           </div>
@@ -847,12 +864,23 @@ export default {
       logAndDataBaseAllDetail: [],
       isEmpty,
       metricKey: '',
-      addConfigType: ''
+      addConfigType: '',
+      importTypeOptions: [
+        {
+          name: 'm_auto_generate_alarm_dashboard',
+          value: 'yes'
+        },
+        {
+          name: 'm_not_auto_generate_alarm_dashboard',
+          value: 'no'
+        }
+      ],
+      importType: 'yes',
     }
   },
   computed: {
     uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targetId}`
+      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targetId}&autoCreate=${this.importType}`
     },
     uploadGroupMetricUrl() {
       return baseURL_config + `/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}`
@@ -1430,7 +1458,10 @@ export default {
     clearQuery() {
       this.$refs.selectRef.query = ''
     },
-    // 新增指标配置--结束
+    onImportButtonClick(type = 'yes') {
+      this.importType = type
+      document.querySelector('.log-file-upload .ivu-upload-input').click()
+    }
   },
   components: {
     RegTest,
@@ -1488,6 +1519,9 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin: 10px 0;
+  .add-button {
+    margin-right: 70px
+  }
   .title {
     font-size: 16px;
     font-weight: bold;
@@ -1544,7 +1578,7 @@ export default {
     display: flex;
     position: absolute;
     top: 70px;
-    right: 26px;
+    right: 76px;
     .btn-img {
       width: 16px;
       vertical-align: middle;
