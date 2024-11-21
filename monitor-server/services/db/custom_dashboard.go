@@ -310,9 +310,9 @@ func mergeArray(ids ...[]int) []int {
 
 	// 创建一个切片来存储重复的元素
 	var duplicates []int
-	// 遍历map，找到出现次数大于1的元素
+	// 遍历map，找到出现次数大于len(ids)的元素
 	for id, count := range countMap {
-		if count > 1 {
+		if count >= len(ids) {
 			duplicates = append(duplicates, id)
 		}
 	}
