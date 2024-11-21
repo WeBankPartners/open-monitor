@@ -51,7 +51,5 @@ COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARIS
 RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
 WORKDIR $BASE_HOME
-RUN addgroup -S apps -g 6000 && adduser -S app -u 6001 -G apps
-RUN chown -R app:apps $BASE_HOME && chmod -R 755 $BASE_HOME
-USER app
+
 ENTRYPOINT ["/bin/sh", "start.sh"]
