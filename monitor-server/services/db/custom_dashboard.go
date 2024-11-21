@@ -244,19 +244,20 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 		var useIds, mgmtIds []int
 		originSql := sql
 		if len(condition.UseRoles) > 0 {
+			var tempParams []interface{}
 			useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
 			sql = originSql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
-			params = append(append(params, useRoleFilterParam...), models.PermissionUse)
-			if err = x.SQL(sql, params...).Find(&useIds); err != nil {
+			tempParams = append(append(tempParams, useRoleFilterParam...), models.PermissionUse)
+			if err = x.SQL(sql, tempParams...).Find(&useIds); err != nil {
 				return
 			}
 		}
 		if len(condition.MgmtRoles) > 0 {
-			params = []interface{}{}
+			var tempParams []interface{}
 			mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
 			sql = originSql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
-			params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
-			if err = x.SQL(sql, params...).Find(&mgmtIds); err != nil {
+			tempParams = append(append(tempParams, mgmtRoleFilterParam...), models.PermissionMgmt)
+			if err = x.SQL(sql, tempParams...).Find(&mgmtIds); err != nil {
 				return
 			}
 		}
