@@ -225,6 +225,7 @@
             <span class="underline"></span>
           </div>
           <Table
+            :key="refreshKey"
             class='metric-table'
             style="width:100%;"
             :border="false"
@@ -842,6 +843,7 @@ export default {
 
       isShowAddEditModal: false, // 告警配置弹窗
       isfullscreen: true,
+      refreshKey: ''
     }
   },
   methods: {
@@ -1277,6 +1279,7 @@ export default {
         }
         Vue.set(item, 'tags', tags)
       }
+      this.refreshKey = +new Date()
     },
     getMetricList() {
       const api = this.getMetricListPath(this.selectedData)
