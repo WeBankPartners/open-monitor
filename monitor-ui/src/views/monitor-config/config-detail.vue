@@ -1261,7 +1261,8 @@ export default {
     },
     async getTagList(metricId, tableIndex) {
       const item = this.formData.conditions[tableIndex]
-      item.tagOptions = await this.findTagsByMetric(metricId)
+      Vue.set(item, 'tagOptions', await this.findTagsByMetric(metricId))
+      // item.tagOptions = await this.findTagsByMetric(metricId)
 
       if (!isEmpty(item.tagOptions)) {
         const tags = []
