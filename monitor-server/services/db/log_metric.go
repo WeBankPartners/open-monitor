@@ -1692,22 +1692,10 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 }
 
 func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetricGroupObj, err error) {
-	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
-	}
-	if metricGroupObj.TemplateSnapshot != "" {
-		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
-			return
-		}
-	} else {
-		// 历史数据 模版查询兜底
-		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
-			return
-		}
-		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)

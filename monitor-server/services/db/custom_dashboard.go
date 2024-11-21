@@ -237,29 +237,47 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 			sql = sql + " and permission = ? "
 			params = append(params, models.PermissionMgmt)
 		}
+		if err = x.SQL(sql, params...).Find(&ids); err != nil {
+			return
+		}
 	} else {
+		var useIds, mgmtIds []int
+		originSql := sql
 		if len(condition.UseRoles) > 0 {
 			useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
-			sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
+			sql = originSql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
 			params = append(append(params, useRoleFilterParam...), models.PermissionUse)
+			if err = x.SQL(sql, params...).Find(&useIds); err != nil {
+				return
+			}
 		}
-
 		if len(condition.MgmtRoles) > 0 {
+			params = []interface{}{}
 			mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
-			sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
+			sql = originSql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
 			params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
+			if err = x.SQL(sql, params...).Find(&mgmtIds); err != nil {
+				return
+			}
 		}
 		roleFilterSql, roleFilterParam := createListParams(roles, "")
 		if condition.Permission == string(models.PermissionMgmt) {
-			sql = sql + " and custom_dashboard_id in (select custom_dashboard_id from custom_dashboard_role_rel where role_id in (" + roleFilterSql + ") and  and permission = ?)"
+			sql = originSql + " and custom_dashboard_id in (select custom_dashboard_id from custom_dashboard_role_rel where role_id in (" + roleFilterSql + ") and permission = ?)"
 			params = append(append(params, roleFilterParam...), models.PermissionMgmt)
 		} else {
-			sql = sql + " and custom_dashboard_id in (select custom_dashboard_id from custom_dashboard_role_rel where role_id in (" + roleFilterSql + "))"
+			sql = originSql + " and custom_dashboard_id in (select custom_dashboard_id from custom_dashboard_role_rel where role_id in (" + roleFilterSql + "))"
 			params = append(params, roleFilterParam...)
 		}
-	}
-	if err = x.SQL(sql, params...).Find(&ids); err != nil {
-		return
+		if err = x.SQL(sql, params...).Find(&ids); err != nil {
+			return
+		}
+		if len(condition.UseRoles) == 0 {
+			ids = mergeArray(mgmtIds, ids)
+		} else if len(condition.MgmtRoles) == 0 {
+			ids = mergeArray(useIds, ids)
+		} else {
+			ids = mergeArray(useIds, mgmtIds, ids)
+		}
 	}
 	if len(ids) > 0 {
 		strArr = TransformInToStrArray(ids)
@@ -277,6 +295,28 @@ func TransformInToStrArray(ids []int) []string {
 		stringArray = append(stringArray, key)
 	}
 	return stringArray
+}
+
+func mergeArray(ids ...[]int) []int {
+	// 创建一个map来记录每个元素出现的次数
+	countMap := make(map[int]int)
+	// 遍历所有输入的切片
+	for _, idList := range ids {
+		for _, id := range idList {
+			countMap[id]++
+		}
+	}
+
+	// 创建一个切片来存储重复的元素
+	var duplicates []int
+	// 遍历map，找到出现次数大于1的元素
+	for id, count := range countMap {
+		if count > 1 {
+			duplicates = append(duplicates, id)
+		}
+	}
+
+	return duplicates
 }
 
 func TransformArrayToMap(strArr []string) map[string]bool {
