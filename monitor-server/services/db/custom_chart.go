@@ -774,6 +774,21 @@ func filterRepeatIds(ids []string) []string {
 	return newIds
 }
 
+func filterRepeatIntIds(ids []int) []int {
+	var newIds []int
+	if len(ids) == 0 {
+		return newIds
+	}
+	var hashMap = make(map[int]bool)
+	for _, id := range ids {
+		hashMap[id] = true
+	}
+	for key, _ := range hashMap {
+		newIds = append(newIds, key)
+	}
+	return newIds
+}
+
 func convertIntArrToStr(ids []int) []string {
 	var arr []string
 	if len(ids) == 0 {
