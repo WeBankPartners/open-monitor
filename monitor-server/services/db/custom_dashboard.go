@@ -303,6 +303,8 @@ func mergeArray(ids ...[]int) []int {
 	countMap := make(map[int]int)
 	// 遍历所有输入的切片
 	for _, idList := range ids {
+		// 去重复
+		idList = filterRepeatIntIds(idList)
 		for _, id := range idList {
 			countMap[id]++
 		}
