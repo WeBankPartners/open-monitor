@@ -211,7 +211,6 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 	var sucCode = getRetCodeSuccessCode(dashboardParam.RetCodeStringMap)
 	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
-	var customDashboardList []*models.CustomDashboardTable
 	var serviceGroupName string
 	actions = []*Action{}
 	now := time.Now()
@@ -246,14 +245,6 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 			dashboard.Name = fmt.Sprintf("%s_%s", displayServiceGroup, dashboardParam.MetricPrefixCode)
 		}
 		customDashboard = dashboard.Name
-		// 查询看板 名称是否已存在
-		if customDashboardList, err = QueryCustomDashboardListByName(customDashboard); err != nil {
-			return
-		}
-		if len(customDashboardList) > 0 {
-			err = fmt.Errorf(dashboardParam.ErrMsgObj.ImportDashboardNameExistError, customDashboardList[0].Name)
-			return
-		}
 		if len(dashboardParam.ServiceGroupsRoles) == 0 {
 			err = fmt.Errorf("config role empty")
 			return
@@ -377,7 +368,6 @@ func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDas
 	var subDashboardActions, subChartActions []*Action
 	var serviceGroupTable = models.ServiceGroupTable{}
 	var displayServiceGroup = dashboardParam.ServiceGroup
-	var customDashboardList []*models.CustomDashboardTable
 	actions = []*Action{}
 	now := time.Now()
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", dashboardParam.ServiceGroup).Get(&serviceGroupTable)
@@ -399,15 +389,6 @@ func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDas
 		// 看板名称使用显示名
 		if displayServiceGroup != "" {
 			dashboard.Name = fmt.Sprintf("%s_%s", displayServiceGroup, dashboardParam.MetricPrefixCode)
-		}
-		customDashboard = dashboard.Name
-		// 查询看板 名称是否已存在
-		if customDashboardList, err = QueryCustomDashboardListByName(customDashboard); err != nil {
-			return
-		}
-		if len(customDashboardList) > 0 {
-			err = fmt.Errorf(dashboardParam.ErrMsgObj.ImportDashboardNameExistError, customDashboardList[0].Name)
-			return
 		}
 		if len(dashboardParam.ServiceGroupsRoles) == 0 {
 			err = fmt.Errorf("config role empty")
