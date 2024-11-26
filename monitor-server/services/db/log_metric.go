@@ -1273,6 +1273,20 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 		deleteCustomDashboard(newDashboardId)
 		return
 	}
+	// 看板名称重复校验(业务配置导入时候不需要校验,导入重复数据会先删除)
+	if param.AutoCreateDashboard && result != nil {
+		var customDashboardList []*models.CustomDashboardTable
+		customDashboardName := result.CustomDashboard
+		// 查询看板 名称是否已存在,去掉看板名称校验
+		if customDashboardList, err = QueryCustomDashboardListByName(customDashboardName); err != nil {
+			return
+		}
+		// 新增看板已经入库,这里数量大于1表示有重复名称
+		if len(customDashboardList) > 1 {
+			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, customDashboardName)
+			return
+		}
+	}
 	if err = Transaction(actions); err != nil {
 		deleteCustomDashboard(newDashboardId)
 	}
@@ -1678,22 +1692,10 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 }
 
 func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetricGroupObj, err error) {
-	var logMonitorTemplate = &models.LogMonitorTemplateDto{}
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
-	}
-	if metricGroupObj.TemplateSnapshot != "" {
-		if err = json.Unmarshal([]byte(metricGroupObj.TemplateSnapshot), logMonitorTemplate); err != nil {
-			return
-		}
-	} else {
-		// 历史数据 模版查询兜底
-		if logMonitorTemplate, err = GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate); err != nil {
-			return
-		}
-		metricGroupObj.RefTemplateVersion = logMonitorTemplate.UpdateTime.Format(models.DatetimeDigitFormat)
 	}
 	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigDto{}}
 	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
