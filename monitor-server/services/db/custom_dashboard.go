@@ -240,6 +240,9 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 		if err = x.SQL(sql, params...).Find(&ids); err != nil {
 			return
 		}
+		if len(ids) > 0 {
+			strArr = TransformInToStrArray(ids)
+		}
 	} else {
 		var useIds, mgmtIds []int
 		originSql := sql
@@ -272,16 +275,16 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 		if err = x.SQL(sql, params...).Find(&ids); err != nil {
 			return
 		}
+		useIdsStr := convertIntArrToStr(useIds)
+		mgmtIdsStr := convertIntArrToStr(mgmtIds)
+		idsStr := convertIntArrToStr(ids)
 		if len(condition.UseRoles) == 0 {
-			ids = mergeArray(mgmtIds, ids)
+			strArr = mergeArray(mgmtIdsStr, idsStr)
 		} else if len(condition.MgmtRoles) == 0 {
-			ids = mergeArray(useIds, ids)
+			strArr = mergeArray(useIdsStr, idsStr)
 		} else {
-			ids = mergeArray(useIds, mgmtIds, ids)
+			strArr = mergeArray(useIdsStr, mgmtIdsStr, idsStr)
 		}
-	}
-	if len(ids) > 0 {
-		strArr = TransformInToStrArray(ids)
 	}
 	return
 }
@@ -298,23 +301,38 @@ func TransformInToStrArray(ids []int) []string {
 	return stringArray
 }
 
-func mergeArray(ids ...[]int) []int {
+// filterRepeatStringIds 去重函数
+func filterRepeatStringIds(ids []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, id := range ids {
+		if !seen[id] {
+			seen[id] = true
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
+// mergeArray 泛型函数，合并多个切片，并返回在所有输入切片中都出现的元素
+func mergeArray(ids ...[]string) []string {
 	// 创建一个map来记录每个元素出现的次数
-	countMap := make(map[int]int)
+	countMap := make(map[string]int)
+
 	// 遍历所有输入的切片
 	for _, idList := range ids {
-		// 去重复
-		idList = filterRepeatIntIds(idList)
+		idList = filterRepeatStringIds(idList)
 		for _, id := range idList {
 			countMap[id]++
 		}
 	}
 
 	// 创建一个切片来存储重复的元素
-	var duplicates []int
-	// 遍历map，找到出现次数大于len(ids)的元素
+	var duplicates []string
+
+	// 遍历map，找到出现次数等于 len(ids) 的元素
 	for id, count := range countMap {
-		if count >= len(ids) {
+		if count == len(ids) {
 			duplicates = append(duplicates, id)
 		}
 	}
