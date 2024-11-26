@@ -246,6 +246,7 @@ export default {
   methods: {
     getTemplateList() {
       this.spinShow = true
+      this.selectedParams = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, resp => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
