@@ -712,16 +712,29 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 			sql = sql + " and permission = ? "
 			params = append(params, models.PermissionMgmt)
 		}
+		if err = x.SQL(sql, params...).Find(&ids); err != nil {
+			return
+		}
 	} else {
+		var useIds, mgmtIds []string
+		originSql := sql
 		if len(condition.UseRoles) > 0 {
+			var tempParams []interface{}
 			useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
-			sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
-			params = append(append(params, useRoleFilterParam...), models.PermissionUse)
+			sql = originSql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
+			tempParams = append(append(tempParams, useRoleFilterParam...), models.PermissionUse)
+			if err = x.SQL(sql, tempParams...).Find(&useIds); err != nil {
+				return
+			}
 		}
 		if len(condition.MgmtRoles) > 0 {
+			var tempParams []interface{}
 			mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
 			sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
-			params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
+			tempParams = append(append(tempParams, mgmtRoleFilterParam...), models.PermissionMgmt)
+			if err = x.SQL(sql, tempParams...).Find(&mgmtIds); err != nil {
+				return
+			}
 		}
 		roleFilterSql, roleFilterParam := createListParams(roles, "")
 		if condition.Permission == string(models.PermissionMgmt) {
@@ -731,9 +744,16 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 			sql = sql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + "))"
 			params = append(params, roleFilterParam...)
 		}
-	}
-	if err = x.SQL(sql, params...).Find(&ids); err != nil {
-		return
+		if err = x.SQL(sql, params...).Find(&ids); err != nil {
+			return
+		}
+		if len(condition.UseRoles) == 0 {
+			ids = mergeArray(mgmtIds, ids)
+		} else if len(condition.MgmtRoles) == 0 {
+			ids = mergeArray(useIds, ids)
+		} else {
+			ids = mergeArray(useIds, mgmtIds, ids)
+		}
 	}
 	// 应用看板,需要做ID交集
 	if len(condition.UseDashboard) > 0 {
