@@ -730,7 +730,7 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 		if len(condition.MgmtRoles) > 0 {
 			var tempParams []interface{}
 			mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
-			sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
+			sql = originSql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
 			tempParams = append(append(tempParams, mgmtRoleFilterParam...), models.PermissionMgmt)
 			if err = x.SQL(sql, tempParams...).Find(&mgmtIds); err != nil {
 				return
@@ -738,10 +738,10 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 		}
 		roleFilterSql, roleFilterParam := createListParams(roles, "")
 		if condition.Permission == string(models.PermissionMgmt) {
-			sql = sql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + ") and  and permission = ?)"
+			sql = originSql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + ") and  and permission = ?)"
 			params = append(append(params, roleFilterParam...), models.PermissionMgmt)
 		} else {
-			sql = sql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + "))"
+			sql = originSql + " and dashboard_chart in (select dashboard_chart from custom_chart_permission where role_id in (" + roleFilterSql + "))"
 			params = append(params, roleFilterParam...)
 		}
 		if err = x.SQL(sql, params...).Find(&ids); err != nil {
