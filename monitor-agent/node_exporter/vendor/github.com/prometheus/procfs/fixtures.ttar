@@ -1958,7 +1958,7 @@ Path: fixtures/proc/schedstat
 Lines: 6
 version 15
 <<<<<<< HEAD
-timestamp ***REMOVED***
+timestamp 15819019232
 =======
 timestamp 00000000000
 >>>>>>> origin/hotfix_v3.3.1
