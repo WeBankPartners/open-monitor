@@ -19,7 +19,8 @@ module.exports = {
   },
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
-	productionSourceMap: process.env.PLUGIN === 'plugin',
+	productionSourceMap: false,
+	// productionSourceMap: process.env.PLUGIN === 'plugin',
 	chainWebpack: config => {
 		config.when(process.env.PLUGIN === "plugin", config => {
       config
@@ -46,6 +47,28 @@ module.exports = {
 			}
 		}
 	},
+	configureWebpack: {
+    optimization: {
+      runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all',
+        minSize: 20000, // 允许新拆出 chunk 的最小体积
+        maxSize: 500000, // 设置chunk的最大体积为500KB
+        automaticNameDelimiter: '-',
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true
+          }
+        }
+      }
+    }
+  },
 	// configureWebpack: {
 	// 	plugins: [
 	// 		new webpack.ProvidePlugin({
@@ -55,13 +78,12 @@ module.exports = {
 	// 		})
 	// 	]
 	// },
-	configureWebpack: config => {
-    if (process.env.PLUGIN === "plugin") {	
-      config.optimization.splitChunks = {}
-			// config.optimization.minimize = false
-		}
-		
-  },
+	// configureWebpack: config => {
+  //   if (process.env.PLUGIN === "plugin") {	
+  //     config.optimization.splitChunks = {}
+	// 		// config.optimization.minimize = false
+	// 	}
+  // },
 	pluginOptions: {
     pwa: {
       iconPaths: {
