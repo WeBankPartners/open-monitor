@@ -51,7 +51,7 @@
         <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
       </li>
       <li class="search-li">
-        <Button v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
+        <Button v-if="isShow && endpointObject && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
       </li>
       <li class="search-li">
         <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
