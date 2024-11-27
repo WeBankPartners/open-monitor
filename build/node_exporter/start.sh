@@ -58,6 +58,6 @@ fi
 
 if [[ $result -eq 0 ]];
 then
-    sudo echo "#Ansible: monitor-agent-host ${deploy_path}
-* * * * * cd $deploy_path/$exporter_type;./control start > /dev/null 2>&1" >> /var/spool/cron/root;
+    sudo bash -c "echo \"#Ansible: monitor-agent-host ${deploy_path}
+* * * * * cd $deploy_path/$exporter_type;./control start > /dev/null 2>&1\" >> /var/spool/cron/root;"
 fi
