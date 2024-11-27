@@ -239,17 +239,21 @@ export default {
   },
   watch: {
     showEndpointView(val) {
-      this.$refs.endpointViewComponentRef.disabledEndpoint(val)
+      setTimeout(() => {
+        this.$refs.endpointViewComponentRef.disabledEndpoint(val)
+      }, 100)
     }
   },
   methods: {
     goToEndpointView(alarmItem) {
       const endpointObject = {
-        option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split('_').slice(-1)[0],
+        option_value: alarmItem.endpoint_guid,
+        type: alarmItem.endpoint_guid.split('_').slice(-1)[0],
       }
       this.showEndpointView = true
-      this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
+      setTimeout(() => {
+        this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
+      }, 100)
     },
     goToNotify(item) {
       if (item.notify_permission === 'no' || !item.notify_permission) {
