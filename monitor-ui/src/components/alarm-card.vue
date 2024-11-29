@@ -239,14 +239,17 @@ export default {
   },
   watch: {
     showEndpointView(val) {
-      setTimeout(() => {
-        this.$refs.endpointViewComponentRef.disabledEndpoint(val)
-      }, 100)
+      if (val) {
+        setTimeout(() => {
+          this.$refs.endpointViewComponentRef.disabledEndpoint(val)
+        }, 100)
+      }
     }
   },
   methods: {
     goToEndpointView(alarmItem) {
       const endpointObject = {
+        option_name: alarmItem.endpoint,
         option_value: alarmItem.endpoint_guid,
         type: alarmItem.endpoint_guid.split('_').slice(-1)[0],
       }
