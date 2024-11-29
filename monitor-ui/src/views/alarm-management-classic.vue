@@ -190,6 +190,7 @@ export default {
     },
     goToEndpointView(alarmItem) {
       const endpointObject = {
+        option_name: alarmItem.endpoint,
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
