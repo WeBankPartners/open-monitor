@@ -208,3 +208,12 @@ func cleanAlarmTableJob() {
 	rowAffected, _ := execResult.RowsAffected()
 	log.Logger.Info("Clean alarm table job done", log.String("last day", lastDayString), log.Int64("delete row num", rowAffected))
 }
+
+func StartSyncServiceGroup() {
+	t := time.NewTicker(time.Minute * 60).C
+	for {
+		log.Logger.Info("start sync db serviceGroup to local cache!")
+		go InitServiceGroup()
+		<-t
+	}
+}

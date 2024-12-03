@@ -6,10 +6,12 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
+	"sync"
 )
 
 var (
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
+	serviceGroupRWMutex   sync.RWMutex
 )
 
 func InitServiceGroup() {
@@ -26,6 +28,8 @@ func InitServiceGroup() {
 }
 
 func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) {
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
 	for _, v := range serviceGroupTable {
 		models.GlobalSGDisplayNameMap[v.Guid] = v.DisplayName
@@ -43,6 +47,8 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 }
 
 func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
+	serviceGroupRWMutex.RLock()
+	defer serviceGroupRWMutex.RUnlock()
 	if v, b := globalServiceGroupMap[rootKey]; b {
 		result = v.FetchChildGuid()
 	} else {
@@ -52,6 +58,8 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 }
 
 func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, err error) {
+	serviceGroupRWMutex.RLock()
+	defer serviceGroupRWMutex.RUnlock()
 	if v, b := globalServiceGroupMap[childKey]; b {
 		result = v.FetchParentGuid()
 	} else {
@@ -61,6 +69,8 @@ func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, er
 }
 
 func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
 	displayGlobalServiceGroup()
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
 		globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
@@ -86,6 +96,8 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 }
 
 func deleteGlobalServiceGroupNode(guid string) {
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
 	log.Logger.Info("start deleteGlobalServiceGroupNode", log.String("guid", guid))
 	displayGlobalServiceGroup()
 	if v, b := globalServiceGroupMap[guid]; b {
@@ -132,12 +144,6 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 	return
 }
 
-func ListServiceGroup() (result []*models.ServiceGroupTable, err error) {
-	result = []*models.ServiceGroupTable{}
-	err = x.SQL("select * from service_group").Find(&result)
-	return
-}
-
 func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGroupEndpointListObj, err error) {
 	result = []*models.ServiceGroupEndpointListObj{}
 	if searchType == "endpoint" {
@@ -154,10 +160,6 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 		}
 	}
 	return
-}
-
-func CreateServiceGroup(param *models.ServiceGroupTable) {
-
 }
 
 func getCreateServiceGroupAction(param *models.ServiceGroupTable, operator string) (actions []*Action) {
@@ -269,6 +271,8 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 }
 
 func getDeleteServiceGroupAction(serviceGroupGuid string, subNodeList []string) (actions []*Action) {
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
 	var guidList []string
 	if len(subNodeList) > 0 {
 		guidList = subNodeList
