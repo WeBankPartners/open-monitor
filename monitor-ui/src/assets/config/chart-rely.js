@@ -201,21 +201,54 @@ export const drawChart = function (that,config,userConfig, elId) {
         const seconds = date.getSeconds()>=10?date.getSeconds():'0'+date.getSeconds()
         str=hours+':'+minutes+':'+seconds
         let res = `<div>${str}</div>`
-        params.forEach(item => {
-          const str = item.seriesName
-          const step = 100
-          const strLen = str.length
-          const arr = []
-          for (let i=0; i<strLen; i=i+step){
-            arr.push(str.substr(i, step))
-          }
-          arr.join(' ')
-          const seriesName = arr.join('<br>')
-          res = res+`<div><div style=' display: inline-block;width: 10px; 
-          height: 10px;border: 1px solid transparent;border-radius:50%;
-          background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${seriesName}
-          </div>`
-        })
+        const regex = /{.*}/
+        const isAllSeriesNameContainBrackets = params.every(item => regex.test(item.seriesName))
+        // 所有指标中均包含大括号启用分组、否则不原样显示
+        if (isAllSeriesNameContainBrackets) {
+          const titleSet = {}
+          params.forEach(item => {
+            const metricSplit = item.seriesName.split('{')
+            if (Object.keys(titleSet).includes(metricSplit[0])) {
+              titleSet[metricSplit[0]].push({
+                color: item.color,
+                data: item.data,
+                metric: `{${metricSplit[1]}`
+              })
+            } else {
+              titleSet[metricSplit[0]] = [{
+                color: item.color,
+                data: item.data,
+                metric: `{${metricSplit[1]}`
+              }]
+            }
+          })
+          const keys = Object.keys(titleSet)
+          keys.forEach(key => {
+            res = res + `<div style="color:#2d8cf0">${key}</div>`
+            titleSet[key].forEach(item => {
+              res = res+`<div><div style=' display: inline-block;width: 10px; 
+                height: 10px;border: 1px solid transparent;border-radius:50%;
+                background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${item.metric}
+                </div>`
+            })
+          })
+        } else {
+          params.forEach(item => {
+            const str = item.seriesName
+            const step = 100
+            const strLen = str.length
+            const arr = []
+            for (let i=0; i<strLen; i=i+step){
+              arr.push(str.substr(i, step))
+            }
+            arr.join(' ')
+            const seriesName = arr.join('<br>')
+            res = res+`<div><div style=' display: inline-block;width: 10px;
+            height: 10px;border: 1px solid transparent;border-radius:50%;
+            background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${seriesName}
+            </div>`
+          })
+        }
         return res
       },
     },
