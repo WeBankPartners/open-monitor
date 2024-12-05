@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -50,6 +51,21 @@ func GetLogMetricMonitor(c *gin.Context) {
 	}
 }
 
+func validateLogPath(input string) error {
+	regPath := regexp.MustCompile(`^\/([\w|\.|\-|\*]+\/?)+\.\w+$`)
+	err := fmt.Errorf("path:%s illegal", input)
+	if !regPath.MatchString(input) {
+		return err
+	}
+	pathList := strings.Split(input, "/")
+	for i, v := range pathList {
+		if i < len(pathList)-1 && strings.Contains(v, "*") {
+			return err
+		}
+	}
+	return nil
+}
+
 func CreateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorCreateDto
 	var list []*models.LogMetricMonitorTable
@@ -62,8 +78,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		err = fmt.Errorf("Param log_path is empty ")
 	}
 	for _, v := range param.LogPath {
-		if !strings.HasPrefix(v, "/") {
-			err = fmt.Errorf("Path:%s illegal ", v)
+		if err = validateLogPath(v); err != nil {
 			break
 		}
 	}
@@ -106,6 +121,10 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 	}
 	for _, v := range param.EndpointRel {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	}
+	if err = validateLogPath(param.LogPath); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
 	}
 	// 校验路径是否重复
 	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.ServiceGroup); err != nil {
