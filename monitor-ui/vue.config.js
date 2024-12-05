@@ -47,28 +47,31 @@ module.exports = {
 			}
 		}
 	},
-	configureWebpack: {
-    optimization: {
-      runtimeChunk: 'single',
-      splitChunks: {
-        chunks: 'all',
-        minSize: 20000, // 允许新拆出 chunk 的最小体积
-        maxSize: 500000, // 设置chunk的最大体积为500KB
-        automaticNameDelimiter: '-',
-        cacheGroups: {
-          defaultVendors: {
-            test: /[\\/]node_modules[\\/]/,
-            priority: -10
-          },
-          default: {
-            minChunks: 2,
-            priority: -20,
-            reuseExistingChunk: true
-          }
-        }
-      }
-    }
-  },
+	// configureWebpack: {
+  //   optimization: {
+  //     runtimeChunk: 'single',
+  //     splitChunks: {
+  //       chunks: 'all',
+  //       minSize: 200000, // 允许新拆出 chunk 的最小体积
+  //       maxSize: 500000, // 设置chunk的最大体积为500KB
+  //       automaticNameDelimiter: '-',
+	// 			enforceSizeThreshold: 500000,
+  //       cacheGroups: {
+  //         defaultVendors: {
+  //           test: /[\\/]node_modules[\\/]/,
+  //           priority: -10,
+	// 					enforceSizeThreshold: 500000,
+  //         },
+  //         default: {
+  //           minChunks: 2,
+  //           priority: -20,
+  //           reuseExistingChunk: true,
+	// 					enforceSizeThreshold: 500000,
+  //         }
+  //       }
+  //     }
+  //   }
+  // },
 	// configureWebpack: {
 	// 	plugins: [
 	// 		new webpack.ProvidePlugin({
