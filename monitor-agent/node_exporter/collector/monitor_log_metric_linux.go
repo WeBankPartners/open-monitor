@@ -398,7 +398,6 @@ func (c *logMetricMonitorNeObj) startMultiPath() {
 		level.Warn(monitorLogger).Log("log_metric -> startMultiPath_cannotMatchAnyFile", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		return
 	}
-	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
 	var destroyChanList []chan int
 	for _, targetFilePath := range pathList {
@@ -476,6 +475,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 		c.MetricGroupConfig = append(c.MetricGroupConfig, metricGroupObj)
 	}
 	if strings.Contains(c.Path, "*") {
+		c.DataChan = make(chan string, logMetricChanLength)
 		go c.startMultiPath()
 	} else {
 		go c.start()
@@ -539,6 +539,11 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.MetricGroupConfig = newMetricGroupList
 	level.Info(monitorLogger).Log("MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
 	c.Lock.Unlock()
+	if strings.Contains(c.Path, "*") {
+		c.DestroyChan <- 1
+		time.Sleep(2 * time.Second)
+		go c.startMultiPath()
+	}
 }
 
 func initLogMetricGroupNeObj(metricGroupObj *logMetricGroupNeObj) {
