@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"reflect"
 	//"regexp"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -363,6 +364,55 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 }
 
+func (c *logMetricMonitorNeObj) tailLogFile(logPath string, destroyChan chan int) {
+	level.Info(monitorLogger).Log("log_metric_start -> tailMultiLog", fmt.Sprintf("path:%s,serviceGroup:%s", logPath, c.ServiceGroup))
+	logTailSession, err := tail.TailFile(logPath, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
+	if err != nil {
+		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start multi log metric collector fail, path: %s, error: %v", logPath, err))
+		return
+	}
+	destroyFlag := false
+	for {
+		select {
+		case <-destroyChan:
+			destroyFlag = true
+		case line := <-logTailSession.Lines:
+			if line == nil {
+				continue
+			}
+			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
+			c.DataChan <- line.Text
+		}
+		if destroyFlag {
+			break
+		}
+	}
+	logTailSession.Stop()
+	level.Info(monitorLogger).Log("log_metric_end -> tailMultiLog", fmt.Sprintf("path:%s,serviceGroup:%s", logPath, c.ServiceGroup))
+}
+
+func (c *logMetricMonitorNeObj) startMultiPath() {
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__startMultiPath", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+	pathList := listMatchLogPath(c.Path)
+	if len(pathList) == 0 {
+		level.Warn(monitorLogger).Log("log_metric -> startMultiPath_cannotMatchAnyFile", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+		return
+	}
+	go c.startHandleTailData()
+	var destroyChanList []chan int
+	for _, targetFilePath := range pathList {
+		tmpDestroyChan := make(chan int, 1)
+		go c.tailLogFile(targetFilePath, tmpDestroyChan)
+		destroyChanList = append(destroyChanList, tmpDestroyChan)
+	}
+	<-c.DestroyChan
+	for _, tmpDestroyChan := range destroyChanList {
+		tmpDestroyChan <- 1
+	}
+	c.TailDataCancelChan <- 1
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__endMultiPath", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
+}
+
 func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
 	t := time.NewTicker(1 * time.Minute).C
 	for {
@@ -424,7 +474,12 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 		initLogMetricGroupNeObj(metricGroupObj)
 		c.MetricGroupConfig = append(c.MetricGroupConfig, metricGroupObj)
 	}
-	go c.start()
+	if strings.Contains(c.Path, "*") {
+		c.DataChan = make(chan string, logMetricChanLength)
+		go c.startMultiPath()
+	} else {
+		go c.start()
+	}
 }
 
 // 把所有正则初始化
@@ -484,6 +539,11 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.MetricGroupConfig = newMetricGroupList
 	level.Info(monitorLogger).Log("MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
 	c.Lock.Unlock()
+	if strings.Contains(c.Path, "*") {
+		c.DestroyChan <- 1
+		time.Sleep(2 * time.Second)
+		go c.startMultiPath()
+	}
 }
 
 func initLogMetricGroupNeObj(metricGroupObj *logMetricGroupNeObj) {
@@ -1115,5 +1175,32 @@ func getFileLastUpdatedTime(filePath string) (unixTime int64, err error) {
 		return
 	}
 	unixTime = f.ModTime().Unix()
+	return
+}
+
+func listMatchLogPath(inputPath string) (result []string) {
+	var dirPath, fileName string
+	if lastPathIndex := strings.LastIndex(inputPath, "/"); lastPathIndex >= 0 {
+		dirPath = inputPath[:lastPathIndex+1]
+		fileName = inputPath[lastPathIndex+1:]
+	}
+	if fileName == "" {
+		level.Error(monitorLogger).Log("msg", fmt.Sprintf("log path illgal : %s ", inputPath))
+		return
+	}
+	fileName = strings.ReplaceAll(fileName, ".", "\\.")
+	fileName = strings.ReplaceAll(fileName, "*", ".*")
+	cmdString := fmt.Sprintf("ls %s |grep \"^%s$\"", dirPath, fileName)
+	cmd := exec.Command("bash", "-c", cmdString)
+	b, err := cmd.Output()
+	if err != nil {
+		level.Error(monitorLogger).Log("msg", fmt.Sprintf("list log path:%s fail : %v ", cmdString, err))
+		return
+	}
+	for _, row := range strings.Split(string(b), "\n") {
+		if row != "" {
+			result = append(result, dirPath+row)
+		}
+	}
 	return
 }
