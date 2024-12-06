@@ -7,12 +7,34 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
 	"sync"
+	"time"
 )
 
 var (
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
-	serviceGroupRWMutex   sync.RWMutex
+	// 层级对象最后更新时间
+	serviceGroupLatestUpdateTime int64
+	serviceGroupRWMutex          sync.RWMutex
+	// 时间间隔 5s
+	timeInterval int64 = 5
 )
+
+func checkAndReloadServiceGroup() {
+	var latestUpdateTime int64
+	var err error
+	// 判断 缓存中最新更新时间,与当前时间是否相差5s,小于5s内不同步
+	if serviceGroupLatestUpdateTime+timeInterval > time.Now().Unix() {
+		return
+	}
+	if latestUpdateTime, err = GetLatestServiceGroupUpdateTime(); err != nil {
+		log.Logger.Error("GetLatestServiceGroupUpdateTime err", log.Error(err))
+		return
+	}
+	// 判断是否需要更新
+	if latestUpdateTime > serviceGroupLatestUpdateTime {
+		InitServiceGroup()
+	}
+}
 
 func InitServiceGroup() {
 	var serviceGroupTable []*models.ServiceGroupTable
@@ -28,8 +50,6 @@ func InitServiceGroup() {
 }
 
 func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) {
-	serviceGroupRWMutex.Lock()
-	defer serviceGroupRWMutex.Unlock()
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
 	for _, v := range serviceGroupTable {
 		models.GlobalSGDisplayNameMap[v.Guid] = v.DisplayName
@@ -43,12 +63,16 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 			}
 		}
 	}
+	if t, _ := GetLatestServiceGroupUpdateTime(); t > 0 {
+		serviceGroupLatestUpdateTime = t
+	}
 	displayGlobalServiceGroup()
 }
 
 func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
-	serviceGroupRWMutex.RLock()
-	defer serviceGroupRWMutex.RUnlock()
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
+	checkAndReloadServiceGroup()
 	if v, b := globalServiceGroupMap[rootKey]; b {
 		result = v.FetchChildGuid()
 	} else {
@@ -58,8 +82,9 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 }
 
 func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, err error) {
-	serviceGroupRWMutex.RLock()
-	defer serviceGroupRWMutex.RUnlock()
+	serviceGroupRWMutex.Lock()
+	defer serviceGroupRWMutex.Unlock()
+	checkAndReloadServiceGroup()
 	if v, b := globalServiceGroupMap[childKey]; b {
 		result = v.FetchParentGuid()
 	} else {
@@ -771,4 +796,30 @@ func CheckMetricIsServiceMetric(metric, serviceGroup string) (ok bool, tags []st
 		return
 	}
 	return
+}
+
+// GetLatestServiceGroupUpdateTime 获取服务组最新的更新时间
+// 该函数通过查询数据库中service_group表的最大update_time字段值来获取最新的服务组更新时间
+// 返回值:
+//
+//	updateTime: 最新的服务组更新时间戳
+//	err: 错误对象，如果查询过程中发生错误，则返回相应的错误
+func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
+	var result string
+	// 执行 SQL 查询并获取最大更新时间
+	_, err = x.SQL("SELECT MAX(update_time) FROM service_group").Get(&result)
+	if err != nil {
+		return 0, err // 返回错误信息
+	}
+
+	if result != "" {
+		// 解析时间字符串
+		t, err := time.Parse(models.DatetimeFormat, result)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse time: %w", err) // 返回解析错误
+		}
+		updateTime = t.Unix()
+	}
+
+	return updateTime, nil
 }
