@@ -28,7 +28,7 @@
     "cryptiles": "^4.1.2",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.12",
-    "echarts": "^4.2.1",
+    "echarts": "^5.5.1",
     "hoek": "^4.2.1",
     "jquery": "^3.4.1",
     "js-base64": "^2.5.1",
