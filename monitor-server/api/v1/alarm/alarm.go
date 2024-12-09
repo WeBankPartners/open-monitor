@@ -372,9 +372,13 @@ func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj, param *m.AMRespAlert) (exist
 
 func GetHistoryAlarm(c *gin.Context) {
 	idParam := c.Query("id")
+	startIndex := c.Query("startIndex")
+	pageSize := c.Query("pageSize")
+
 	var err error
 	var ids []string
 	var startTime, endTime time.Time
+	var pageInfo m.PageInfo
 	endpointId, _ := strconv.Atoi(idParam)
 	if endpointId > 0 {
 		endpointObj := m.EndpointTable{Id: endpointId}
@@ -425,7 +429,7 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 	}
-	returnData := []*m.AlarmHistoryReturnData{}
+	var returnData []*m.AlarmHistoryReturnData
 	for _, endpointGuid := range ids {
 		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime, mid.GetOperateUserRoles(c))
 		if tmpErr != nil {
@@ -438,7 +442,23 @@ func GetHistoryAlarm(c *gin.Context) {
 		mid.ReturnHandleError(c, fmt.Sprintf("Get history data fail,%s ", err.Error()), err)
 		return
 	}
-	mid.ReturnSuccessData(c, returnData)
+	if startIndex != "" && pageSize != "" {
+		startIndexInt, _ := strconv.Atoi(startIndex)
+		pageSizeInt, _ := strconv.Atoi(pageSize)
+		pageInfo.PageSize = pageSizeInt
+		pageInfo.StartIndex = startIndexInt
+		pageInfo.TotalRows = len(returnData)
+		si := (startIndexInt - 1) * pageSizeInt
+		ei := startIndexInt*pageSizeInt - 1
+		var pageResult []*m.AlarmHistoryReturnData
+		for i, v := range returnData {
+			if i >= si && i <= ei {
+				pageResult = append(pageResult, v)
+			}
+		}
+		returnData = pageResult
+	}
+	mid.ReturnPageData(c, pageInfo, returnData)
 }
 
 func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time, useRoles []string) (err error, data m.AlarmProblemList) {
