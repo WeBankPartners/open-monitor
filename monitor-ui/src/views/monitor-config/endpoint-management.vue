@@ -87,7 +87,17 @@
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
+      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
+      <Page
+        class="history-pagination"
+        :total="historyPagination.total"
+        @on-change="(e) => {historyPagination.page = e; this.getHistoryAlarmData()}"
+        @on-page-size-change="(e) => {historyPagination.size = e; this.getHistoryAlarmData()}"
+        :current="historyPagination.page"
+        :page-size="historyPagination.size"
+        show-total
+        show-sizer
+      />
     </Modal>
 
     <ModalComponent :modelConfig="endpointRejectModel">
@@ -523,7 +533,6 @@ export default {
         },
         process_list: [],
       },
-
       maintenanceWindowModel: {
         modalId: 'maintenance_window_model',
         modalTitle: 'm_button_maintenanceWindow',
@@ -703,7 +712,13 @@ export default {
       ],
       isReviewMode: false,
       encryptKey: '', // 加密key
-      systemType: '' // 0 自定义 1 系统
+      systemType: '', // 0 自定义 1 系统
+      historyPagination: {
+        total: 0,
+        page: 1,
+        size: 10
+      },
+      endPointItem: {}
     }
   },
   computed: {
@@ -964,14 +979,23 @@ export default {
       })
     },
     historyAlarm(rowData) {
-      const params = {
-        id: rowData.guid
-      }
-      this.request('GET', this.$root.apiCenter.alarm.history, params, responseData => {
-        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
-      })
+      this.endPointItem = rowData
+      this.historyPagination.size = 10
+      this.historyPagination.page = 1
+      this.getHistoryAlarmData()
       this.isfullscreen = false
       this.historyAlarmModel = true
+    },
+    getHistoryAlarmData() {
+      const params = {
+        id: this.endPointItem.guid,
+        page: this.historyPagination.page,
+        pageSize: this.historyPagination.size,
+      }
+      this.request('GET', this.$root.apiCenter.alarm.history, params, responseData => {
+        this.historyPagination.total = responseData.pageInfo.totalRows
+        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData.contents.problem_list)
+      })
     },
     changeResultData(dataList) {
       if (dataList && !isEmpty(dataList)) {
@@ -1306,7 +1330,12 @@ export default {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 10000
+  z-index: 10
+}
+.history-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 </style>
 
