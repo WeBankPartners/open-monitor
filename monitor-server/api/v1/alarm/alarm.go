@@ -429,34 +429,38 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 	}
-	var returnData []*m.AlarmHistoryReturnData
+	var returnData m.AlarmHistoryReturnData
 	for _, endpointGuid := range ids {
 		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime, mid.GetOperateUserRoles(c))
 		if tmpErr != nil {
 			err = tmpErr
 			break
 		}
-		returnData = append(returnData, &m.AlarmHistoryReturnData{Endpoint: endpointGuid, ProblemList: tmpData})
+		if len(tmpData) > 0 {
+			returnData = m.AlarmHistoryReturnData{Endpoint: endpointGuid, ProblemList: tmpData}
+			pageInfo.TotalRows = len(tmpData)
+			break
+		}
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, fmt.Sprintf("Get history data fail,%s ", err.Error()), err)
 		return
 	}
+
 	if startIndex != "" && pageSize != "" {
 		startIndexInt, _ := strconv.Atoi(startIndex)
 		pageSizeInt, _ := strconv.Atoi(pageSize)
 		pageInfo.PageSize = pageSizeInt
 		pageInfo.StartIndex = startIndexInt
-		pageInfo.TotalRows = len(returnData)
 		si := (startIndexInt - 1) * pageSizeInt
 		ei := startIndexInt*pageSizeInt - 1
-		var pageResult []*m.AlarmHistoryReturnData
-		for i, v := range returnData {
+		var pageResult m.AlarmProblemList
+		for i, v := range returnData.ProblemList {
 			if i >= si && i <= ei {
 				pageResult = append(pageResult, v)
 			}
 		}
-		returnData = pageResult
+		returnData.ProblemList = pageResult
 	}
 	mid.ReturnPageData(c, pageInfo, returnData)
 }
