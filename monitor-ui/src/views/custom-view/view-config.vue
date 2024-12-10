@@ -608,6 +608,7 @@ export default {
     }, 500),
 
     getAllChartOptionList() {
+      if (!this.isEditStatus) {return}
       this.selectedChartList = []
       const dashboardParams = {
         show: '',
