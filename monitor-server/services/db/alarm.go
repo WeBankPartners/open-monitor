@@ -1455,6 +1455,26 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	return result
 }
 
+func GetServiceGroupHistoryAlarm(param m.ServiceGroupAlarmParam) (data m.AlarmProblemList, count int, err error) {
+	startIndex := (param.Page - 1) * param.PageSize
+	var whereSql = " where endpoint = ?"
+	if !param.StartTime.IsZero() {
+		whereSql += fmt.Sprintf(" and start>='%s' ", param.StartTime.Format(m.DatetimeFormat))
+	}
+	if !param.EndTime.IsZero() {
+		whereSql += fmt.Sprintf(" and end<='%s' ", param.EndTime.Format(m.DatetimeFormat))
+	}
+	serviceGroupEndpoint := "sg__" + param.ServiceGroup
+	countSql := "select count(1) FROM alarm " + whereSql
+	_, err = x.SQL(countSql, serviceGroupEndpoint).Get(&count)
+	if err != nil {
+		return
+	}
+	sql := "SELECT * FROM alarm " + whereSql + " ORDER BY id DESC limit ?,?"
+	err = x.SQL(sql, serviceGroupEndpoint, startIndex, param.PageSize).Find(&data)
+	return
+}
+
 func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
 	var alarmQuery []*m.AlarmProblemQuery

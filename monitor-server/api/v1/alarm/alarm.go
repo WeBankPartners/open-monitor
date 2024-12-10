@@ -382,6 +382,14 @@ func GetHistoryAlarm(c *gin.Context) {
 	var returnData m.AlarmHistoryReturnData
 	start := c.Query("start")
 	end := c.Query("end")
+	pageInt, _ := strconv.Atoi(page)
+	if pageInt == 0 {
+		pageInt = 1
+	}
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	if pageSizeInt == 0 {
+		pageSizeInt = 10
+	}
 	if start != "" {
 		tmpStartTime, err := time.Parse(m.DatetimeFormat, start)
 		if err == nil {
@@ -402,13 +410,22 @@ func GetHistoryAlarm(c *gin.Context) {
 	}
 	// 层级对象处理
 	if strings.TrimSpace(serviceGroup) != "" && idParam == "-1" {
-		tmpErr, tmpData := getServiceGroupHistoryAlarm(serviceGroup, startTime, endTime)
+		param := m.ServiceGroupAlarmParam{
+			ServiceGroup: serviceGroup,
+			StartTime:    startTime,
+			EndTime:      endTime,
+			Page:         pageInt,
+			PageSize:     pageSizeInt,
+		}
+		tmpData, totalRows, tmpErr := db.GetServiceGroupHistoryAlarm(param)
 		if tmpErr != nil {
 			err = tmpErr
 		}
 		if len(tmpData) > 0 {
 			returnData = m.AlarmHistoryReturnData{Endpoint: serviceGroup, ProblemList: tmpData}
-			pageInfo.TotalRows = len(tmpData)
+			pageInfo.StartIndex = (param.Page - 1) * param.PageSize
+			pageInfo.PageSize = pageSizeInt
+			pageInfo.TotalRows = totalRows
 		}
 	} else {
 		endpointId, _ := strconv.Atoi(idParam)
@@ -453,25 +470,23 @@ func GetHistoryAlarm(c *gin.Context) {
 				break
 			}
 		}
+		if page != "" && pageSize != "" {
+			pageInfo.PageSize = pageSizeInt
+			si := (pageInt - 1) * pageSizeInt
+			pageInfo.StartIndex = si
+			ei := pageInt*pageSizeInt - 1
+			var pageResult m.AlarmProblemList
+			for i, v := range returnData.ProblemList {
+				if i >= si && i <= ei {
+					pageResult = append(pageResult, v)
+				}
+			}
+			returnData.ProblemList = pageResult
+		}
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, fmt.Sprintf("Get history data fail,%s ", err.Error()), err)
 		return
-	}
-	if page != "" && pageSize != "" {
-		pageInt, _ := strconv.Atoi(page)
-		pageSizeInt, _ := strconv.Atoi(pageSize)
-		pageInfo.PageSize = pageSizeInt
-		si := (pageInt - 1) * pageSizeInt
-		pageInfo.StartIndex = si
-		ei := pageInt*pageSizeInt - 1
-		var pageResult m.AlarmProblemList
-		for i, v := range returnData.ProblemList {
-			if i >= si && i <= ei {
-				pageResult = append(pageResult, v)
-			}
-		}
-		returnData.ProblemList = pageResult
 	}
 	mid.ReturnPageData(c, pageInfo, returnData)
 }
@@ -483,12 +498,6 @@ func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time, 
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query})
-	return err, data
-}
-
-func getServiceGroupHistoryAlarm(serviceGroup string, startTime, endTime time.Time) (err error, data m.AlarmProblemList) {
-	query := m.AlarmTable{Endpoint: "sg__" + serviceGroup, Start: startTime, End: endTime}
 	err, data = db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query})
 	return err, data
 }

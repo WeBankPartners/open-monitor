@@ -749,6 +749,12 @@ type AlarmOptionsParam struct {
 	Metric    string `json:"metric"`
 }
 
+type ServiceGroupAlarmParam struct {
+	ServiceGroup       string
+	StartTime, EndTime time.Time
+	Page, PageSize     int
+}
+
 type QueryAlarmCondition struct {
 	AlarmTable          AlarmTable
 	Limit               int
