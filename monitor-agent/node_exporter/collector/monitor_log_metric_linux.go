@@ -359,7 +359,7 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	if reopenFlag {
 		level.Info(monitorLogger).Log("log_metric -> reopen", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 		go c.start()
 	}
 }
@@ -541,7 +541,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.Lock.Unlock()
 	if strings.Contains(c.Path, "*") {
 		c.DestroyChan <- 1
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 		go c.startMultiPath()
 	}
 }
@@ -679,7 +679,9 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 	if len(deletePathMap) > 0 && len(tmpLogMetricObjJobs) > 0 {
 		for _, existJob := range tmpLogMetricObjJobs {
 			if _, ok := deletePathMap[existJob.Path]; ok {
-				existJob.ReOpenHandlerChan <- 1
+				if !strings.Contains(existJob.Path, "*") {
+					existJob.ReOpenHandlerChan <- 1
+				}
 			}
 		}
 	}
