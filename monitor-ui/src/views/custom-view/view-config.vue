@@ -244,25 +244,6 @@
                     <span v-else @click.stop="">
                       <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="100" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
-                    <!-- <Poptip
-                      transfer
-                      placement="left-end"
-                      @on-ok="confirmDeleteGroup(item, index)"
-                    >
-                      <template slot='content'>
-                        <div>
-                          <Input :value="item.i"
-                            placeholder=""
-                            show-word-limit />
-                        </div>
-                      </template>
-                      <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
-                        <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)"
-                          class="fa fa-pencil-square"
-                          style="font-size: 16px;"
-                        aria-hidden="true"></i>
-                      </Tooltip>
-                    </Poptip> -->
                     <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" ></Icon>
@@ -294,6 +275,10 @@
                     <Tooltip :content="$t('m_placeholder_chartConfiguration')" theme="light" transfer placement="top">
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
+                    <Tooltip :content="$t('m_line_display_modification')" theme="light" transfer placement="top">
+                      <Icon type="ios-create" size="16" @click="showLineSelectModal(item)" />
+                    </Tooltip>
+
                     <Poptip
                       confirm
                       :title="$t('m_delConfirm_tip')"
@@ -362,6 +347,37 @@
       <template slot='footer'>
         <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
+      </template>
+    </Modal>
+
+    <!-- 实现线条是否展现弹窗 -->
+    <Modal v-model="isLineSelectModalShow"
+           :title="$t('m_line_display_modification')"
+           :mask-closable="false"
+           :width="1000"
+           @on-visible-change="onLineSelectChangeCancel"
+    >
+      <div v-if="isLineSelectModalShow">
+        <Form :label-width="80">
+          <FormItem :label="$t('m_show_line')">
+            <Row v-if="Object.keys(lineSelectModalData[setChartConfigId]).length > 0">
+              <Col span="12" v-for="(seriesName, index) in Object.keys(lineSelectModalData[setChartConfigId])" :key="index">
+              <Checkbox v-model="lineSelectModalData[setChartConfigId][seriesName]">
+                <Tooltip :content="seriesName" transfer :max-width='400'>
+                  <div class="ellipsis-text">{{ seriesName }}</div>
+                </Tooltip>
+              </Checkbox>
+              </Col>
+            </Row>
+            <span v-else>
+              {{ $t('m_noData') }}
+            </span>
+          </FormItem>
+        </Form>
+      </div>
+      <template slot='footer'>
+        <Button @click="onLineSelectChangeCancel(false)">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="onLineSelectChange" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" ></AuthDialog>
@@ -545,7 +561,9 @@ export default {
           )
         }
       ],
-      isShowLoading: false
+      isShowLoading: false,
+      isLineSelectModalShow: false,
+      lineSelectModalData: {}
     }
   },
   computed: {
@@ -566,6 +584,8 @@ export default {
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
+    this.lineSelectModalData = {}
+    window['view-config-selected-line-data'] = null
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
@@ -677,7 +697,6 @@ export default {
     },
     async initPanals(type) {
       const tmpArr = []
-
       const promisSeriesArr = []
       const promisSeriesObj = {}
       let finalSeriesArr = []
@@ -738,6 +757,10 @@ export default {
             single.series = series
           }
           if (single.series && !isEmpty(single.series)) {
+            this.lineSelectModalData[item.id] = this.lineSelectModalData[item.id] || {}
+            single.series.forEach(one => {
+              this.lineSelectModalData[item.id][one.seriesName] = true
+            })
             single.metricToColor = cloneDeep(single.series).map(one => {
               one.metric = one.seriesName
               delete one.seriesName
@@ -775,6 +798,10 @@ export default {
           partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
           logMetricGroup: item.logMetricGroup
         })
+      }
+      // 初始化时，给window['view-config-selected-line-data']赋值
+      if (isEmpty(window['view-config-selected-line-data'])) {
+        window['view-config-selected-line-data'] = cloneDeep(this.lineSelectModalData)
       }
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
@@ -1634,6 +1661,24 @@ export default {
     },
     onCopyTableSelected(chartList) {
       this.selectedChartList = chartList
+    },
+    showLineSelectModal(item) {
+      this.setChartConfigId = item.id
+      if (!isEmpty(window['view-config-selected-line-data'])) {
+        this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChange() {
+      window['view-config-selected-line-data'] = cloneDeep(this.lineSelectModalData)
+      this.isLineSelectModalShow = false
+      this.refreshNow = !this.refreshNow
+    },
+    onLineSelectChangeCancel(isShow = false) {
+      if (!isShow) {
+        this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
+        this.isLineSelectModalShow = false
+      }
     }
   },
   components: {
@@ -1900,7 +1945,7 @@ export default {
 }
 
 .ellipsis-text {
-  width: 170px;
+  width: 350px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
