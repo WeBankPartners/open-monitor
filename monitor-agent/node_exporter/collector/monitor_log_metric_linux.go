@@ -94,6 +94,7 @@ type logMetricMonitorNeObj struct {
 	TailLastUnixTime   int64                  `json:"-"`
 	DestroyChan        chan int               `json:"-"`
 	TailDataCancelChan chan int               `json:"-"`
+	MultiPathNum       int                    `json:"-"`
 }
 
 type logMetricGroupNeObj struct {
@@ -398,6 +399,7 @@ func (c *logMetricMonitorNeObj) startMultiPath() {
 		level.Warn(monitorLogger).Log("log_metric -> startMultiPath_cannotMatchAnyFile", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		return
 	}
+	c.MultiPathNum = len(pathList)
 	go c.startHandleTailData()
 	var destroyChanList []chan int
 	for _, targetFilePath := range pathList {
@@ -484,8 +486,9 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 
 // 把所有正则初始化
 func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
+	level.Info(monitorLogger).Log("do updateLogMetricMonitorNeObj", c.Path)
 	c.Lock.Lock()
-	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj", c.Path)
+	level.Info(monitorLogger).Log("start updateLogMetricMonitorNeObj", c.Path)
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
@@ -537,10 +540,14 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.MetricGroupConfig = newMetricGroupList
-	level.Info(monitorLogger).Log("MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
+	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj_MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
 	c.Lock.Unlock()
 	if strings.Contains(c.Path, "*") {
-		c.DestroyChan <- 1
+		if c.MultiPathNum > 0 {
+			level.Info(monitorLogger).Log("start_updateLogMetricMonitorNeObj_destroy_*: ", c.Path)
+			c.DestroyChan <- 1
+			level.Info(monitorLogger).Log("end_updateLogMetricMonitorNeObj_destroy_*: ", c.Path)
+		}
 		time.Sleep(500 * time.Millisecond)
 		go c.startMultiPath()
 	}
