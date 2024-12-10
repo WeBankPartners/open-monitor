@@ -76,7 +76,14 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 	if v, b := globalServiceGroupMap[rootKey]; b {
 		result = v.FetchChildGuid()
 	} else {
-		err = fmt.Errorf("Can not find service group with guid:%s ", rootKey)
+		// 数据兜底,上面如果还是没找到,db加载数据兜底
+		log.Logger.Warn("fetchGlobalServiceGroupChildGuidList find cache empty")
+		InitServiceGroup()
+		if v, b := globalServiceGroupMap[rootKey]; b {
+			result = v.FetchChildGuid()
+		} else {
+			err = fmt.Errorf("Can not find service group with guid:%s ", rootKey)
+		}
 	}
 	return
 }
@@ -88,7 +95,14 @@ func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, er
 	if v, b := globalServiceGroupMap[childKey]; b {
 		result = v.FetchParentGuid()
 	} else {
-		err = fmt.Errorf("Can not find service group with guid:%s ", childKey)
+		// 数据兜底,上面如果还是没找到,db加载数据兜底
+		log.Logger.Warn("fetchGlobalServiceGroupParentGuidList find cache empty")
+		InitServiceGroup()
+		if v, b := globalServiceGroupMap[childKey]; b {
+			result = v.FetchParentGuid()
+		} else {
+			err = fmt.Errorf("Can not find service group with guid:%s ", childKey)
+		}
 	}
 	return
 }
