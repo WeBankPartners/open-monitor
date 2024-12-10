@@ -1471,7 +1471,40 @@ func GetServiceGroupHistoryAlarm(param m.ServiceGroupAlarmParam) (data m.AlarmPr
 		return
 	}
 	sql := "SELECT * FROM alarm " + whereSql + " ORDER BY id DESC limit ?,?"
-	err = x.SQL(sql, serviceGroupEndpoint, startIndex, param.PageSize).Find(&data)
+	if err = x.SQL(sql, serviceGroupEndpoint, startIndex, param.PageSize).Find(&data); err != nil {
+		return
+	}
+	for _, v := range data {
+		v.StartString = v.Start.Format(m.DatetimeFormat)
+		v.EndString = v.End.Format(m.DatetimeFormat)
+		if v.AlarmName == "" {
+			v.AlarmName = v.Content
+		}
+		if strings.Contains(v.Log, "\n") {
+			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
+		}
+		// 显示 endpointGuid
+		v.EndpointGuid = v.Endpoint
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
+		var alarmDetailList []*m.AlarmDetailData
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			if alarmDetailList, err = GetAlarmDetailList(v.Id); err != nil {
+				return
+			}
+			for _, alarmDetail := range alarmDetailList {
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
+			}
+		} else {
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
+			v.AlarmMetricList = []string{v.SMetric}
+		}
+		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+	}
 	return
 }
 
