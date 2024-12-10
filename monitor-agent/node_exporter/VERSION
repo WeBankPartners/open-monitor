@@ -46,4 +46,4 @@ v3.2.5
 Fix pcre match panic error
 
 v3.3.0.1
-Support log path with wildcard character *
+Support log path with wildcard character
