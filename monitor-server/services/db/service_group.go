@@ -150,6 +150,7 @@ func displayGlobalServiceGroup() {
 			log.Logger.Info("globalServiceGroupMap", log.String("k", k))
 		}
 	}
+	log.Logger.Info("service_group", log.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 }
 
 func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, err error) {
@@ -814,12 +815,12 @@ func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
 
 	if result != "" {
 		// 解析时间字符串
-		t, err := time.Parse(models.DatetimeFormat, result)
+		t, err := time.ParseInLocation(models.DatetimeFormat, result, time.Local)
 		if err != nil {
 			return 0, fmt.Errorf("failed to parse time: %w", err) // 返回解析错误
 		}
 		updateTime = t.Unix()
 	}
-
+	log.Logger.Info("GetLatestServiceGroupUpdateTime", log.Int64("latestUpdateTime", updateTime), log.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 	return updateTime, nil
 }
