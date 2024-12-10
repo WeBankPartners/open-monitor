@@ -8,6 +8,7 @@ require('echarts/lib/component/title')
 require('echarts/lib/component/legend')
 require('echarts/lib/component/toolbox')
 require('echarts/lib/component/legendScroll')
+const {isEmpty} = require('lodash')
 
 import { generateAdjacentColors, stringToNumber } from './random-color'
 const echarts = require('echarts/lib/echarts')
@@ -449,6 +450,9 @@ export const drawChart = function (that,config,userConfig, elId) {
       yAxisIndex: 'none'
     }
   }
+  if (!isEmpty(window['view-config-selected-line-data']) && finalConfig.chartId && !isEmpty(window['view-config-selected-line-data'][finalConfig.chartId])) {
+    option.legend.selected = window['view-config-selected-line-data'][finalConfig.chartId]
+  }
   // 绘制图表
   myChart.clear()
   myChart.setOption(option)
@@ -511,9 +515,13 @@ export const drawPieChart = function (that, responseData) {
       }
     ]
   }
+  if (!isEmpty(window['view-config-selected-line-data']) && responseData.chartId && !isEmpty(window['view-config-selected-line-data'][responseData.chartId])) {
+    option.legend.selected = window['view-config-selected-line-data'][responseData.chartId]
+  }
   const myChart = echarts.init(document.getElementById(that.elId))
   myChart.resize()
   myChart.setOption(option)
+  return myChart
 }
 
 const mgmtYAxesMinMax = function (series) {
