@@ -10,6 +10,7 @@
 
 <script>
 // 引入 ECharts 主模块
+import {cloneDeep, isEmpty} from 'lodash'
 import {drawPieChart} from '@/assets/config/chart-rely'
 
 export default {
@@ -88,7 +89,20 @@ export default {
               this.noDataType = 'noData'
             } else {
               this.noDataType = 'normal'
-              drawPieChart(this, responseData)
+              window['view-config-selected-line-data'] = window['view-config-selected-line-data'] || {}
+              window['view-config-selected-line-data'][this.chartInfo.elId] = window['view-config-selected-line-data'][this.chartInfo.elId] || {}
+              if (isEmpty(window['view-config-selected-line-data'][this.chartInfo.elId])) {
+                responseData.legend.forEach(name => {
+                  window['view-config-selected-line-data'][this.chartInfo.elId][name] = true
+                })
+              }
+              responseData.chartId = this.chartInfo.elId
+              const chartInstance = drawPieChart(this, responseData)
+              if (chartInstance) {
+                chartInstance.on('legendselectchanged', params => {
+                  window['view-config-selected-line-data'][this.chartInfo.elId] = cloneDeep(params.selected)
+                })
+              }
             }
           },
           { isNeedloading: false }

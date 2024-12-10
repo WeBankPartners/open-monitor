@@ -13,6 +13,7 @@
 
 <script>
 // 引入 ECharts 主模块
+import {cloneDeep} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 
 export default {
@@ -137,11 +138,17 @@ export default {
               dataZoom: false,
               lineBarSwitch: true,
               chartType: this.chartInfo.chartType,
-              params: this.chartInfo.chartParams
+              params: this.chartInfo.chartParams,
+              chartId: this.chartInfo.elId
             }
             this.$nextTick(() => {
               this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
               this.scrollHandle()
+              if (this.chartInstance) {
+                this.chartInstance.on('legendselectchanged', params => {
+                  window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
+                })
+              }
             })
           }
         }, { isNeedloading: false })
