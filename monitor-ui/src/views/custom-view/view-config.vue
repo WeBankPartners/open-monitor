@@ -276,9 +276,8 @@
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
                     <Tooltip :content="$t('m_line_display_modification')" theme="light" transfer placement="top">
-                      <Icon type="ios-create" size="16" @click="showLineSelectModal(item)" />
+                      <Icon type="ios-funnel" size="16" @click="showLineSelectModal(item)" />
                     </Tooltip>
-
                     <Poptip
                       confirm
                       :title="$t('m_delConfirm_tip')"
@@ -358,10 +357,19 @@
            @on-visible-change="onLineSelectChangeCancel"
     >
       <div v-if="isLineSelectModalShow">
-        <Form :label-width="80">
+        <Form :label-width="80" v-if="!isEmpty(lineSelectModalData[setChartConfigId]) && Object.keys(lineSelectModalData[setChartConfigId]).length > 0">
+          <FormItem :label="$t('m_line_search')">
+            <Input v-model.trim="lineNameSearch" clearable style="width: 300px" />
+            <Checkbox v-model="islineSelectAll"
+                      style="margin-left: 10px"
+                      @on-change="onLineSelectAllChange"
+            >
+              <span>{{$t('m_select_all')}}</span>
+            </Checkbox>
+          </FormItem>
           <FormItem :label="$t('m_show_line')">
-            <Row v-if="Object.keys(lineSelectModalData[setChartConfigId]).length > 0">
-              <Col span="12" v-for="(seriesName, index) in Object.keys(lineSelectModalData[setChartConfigId])" :key="index">
+            <Row style="min-height: 200px; max-height: 400px;overflow-y: auto;">
+              <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
               <Checkbox v-model="lineSelectModalData[setChartConfigId][seriesName]">
                 <Tooltip :content="seriesName" transfer :max-width='400'>
                   <div class="ellipsis-text">{{ seriesName }}</div>
@@ -369,11 +377,11 @@
               </Checkbox>
               </Col>
             </Row>
-            <span v-else>
-              {{ $t('m_noData') }}
-            </span>
           </FormItem>
         </Form>
+        <span v-else>
+          {{ $t('m_noData') }}
+        </span>
       </div>
       <template slot='footer'>
         <Button @click="onLineSelectChangeCancel(false)">{{ $t('m_button_cancel') }}</Button>
@@ -563,7 +571,10 @@ export default {
       ],
       isShowLoading: false,
       isLineSelectModalShow: false,
-      lineSelectModalData: {}
+      lineSelectModalData: {},
+      lineNameSearch: '',
+      islineSelectAll: true,
+      isEmpty
     }
   },
   computed: {
@@ -573,6 +584,12 @@ export default {
     isEditStatus() {
       return this.permission === 'edit'
     },
+    allShowLineName() {
+      if (Object.keys(this.lineSelectModalData[this.setChartConfigId]).length > 0) {
+        return Object.keys(this.lineSelectModalData[this.setChartConfigId]).filter(item => item.indexOf(this.lineNameSearch) !== -1)
+      }
+      return []
+    }
   },
   mounted() {
     if (!this.pannelId) {
@@ -1667,6 +1684,12 @@ export default {
       if (!isEmpty(window['view-config-selected-line-data'])) {
         this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
       }
+      if (!isEmpty(this.lineSelectModalData[this.setChartConfigId]) && Object.values(this.lineSelectModalData[this.setChartConfigId]).every(item => item === true)) {
+        this.islineSelectAll = true
+      } else {
+        this.islineSelectAll = false
+      }
+      this.lineNameSearch = ''
       this.isLineSelectModalShow = true
     },
     onLineSelectChange() {
@@ -1678,6 +1701,11 @@ export default {
       if (!isShow) {
         this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
         this.isLineSelectModalShow = false
+      }
+    },
+    onLineSelectAllChange(val) {
+      for (const line in this.lineSelectModalData[this.setChartConfigId]) {
+        this.lineSelectModalData[this.setChartConfigId][line] = val
       }
     }
   },
