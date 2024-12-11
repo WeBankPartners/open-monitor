@@ -73,12 +73,6 @@ func GetSharedChartList(c *gin.Context) {
 					Name:            chart.Name,
 					UpdateTime:      chart.UpdateTime,
 				}
-				if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
-					continue
-				}
-				if customDashboard != nil {
-					sharedDto.DashboardName = customDashboard.Name
-				}
 				if strings.TrimSpace(chart.ChartType) == "" {
 					continue
 				}
@@ -95,6 +89,14 @@ func GetSharedChartList(c *gin.Context) {
 	for key, valueList := range sharedResultMap {
 		sort.Sort(models.ChartSharedDtoSort(valueList))
 		valueList = valueList[:min(20, len(valueList))]
+		for _, chart := range valueList {
+			if customDashboard, err = db.GetCustomDashboard(chart.SourceDashboard); err != nil {
+				continue
+			}
+			if customDashboard != nil {
+				chart.DashboardName = customDashboard.Name
+			}
+		}
 		sharedResultMap[key] = valueList
 	}
 	log.Logger.Info("GetSharedChartList 接口总耗时耗时", log.Float64("costTime", time.Since(start).Seconds()))
