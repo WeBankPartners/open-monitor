@@ -19,6 +19,7 @@ import (
 
 // GetSharedChartList 获取可分享的图表列表
 func GetSharedChartList(c *gin.Context) {
+	start := time.Now()
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
 	var chartList, newChartList []*models.CustomChart
 	var customChartList []*models.CustomChartExtend
@@ -34,6 +35,8 @@ func GetSharedChartList(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetSharedChartList QueryAllPublicCustomChartList 耗时", log.Float64("costTime", time.Since(start).Seconds()))
+	start2 := time.Now()
 	if len(chartList) > 0 {
 		// 去掉看板里面 已有重复的图表
 		if param.CurDashboardId != 0 {
@@ -84,12 +87,14 @@ func GetSharedChartList(c *gin.Context) {
 			}
 		}
 	}
+	log.Logger.Info("GetSharedChartList calc 耗时", log.Float64("costTime", time.Since(start2).Seconds()))
 	// 每种类型中最多展示20条数据
 	for key, valueList := range sharedResultMap {
 		sort.Sort(models.ChartSharedDtoSort(valueList))
 		valueList = valueList[:min(20, len(valueList))]
 		sharedResultMap[key] = valueList
 	}
+	log.Logger.Info("GetSharedChartList 接口总耗时耗时", log.Float64("costTime", time.Since(start).Seconds()))
 	middleware.ReturnSuccessData(c, sharedResultMap)
 }
 
