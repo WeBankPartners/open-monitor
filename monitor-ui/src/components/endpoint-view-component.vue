@@ -236,6 +236,8 @@ export default {
       this.pagination.page = 1
       this.pagination.pageSize = 10
       this.endPointItem = rowData
+      this.pagination.total = 0
+      this.historyAlarmPageConfig.table.tableData = []
       this.getHistoryAlarmData()
       this.isfullscreen = false
       this.historyAlarmModel = true
