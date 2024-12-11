@@ -749,8 +749,8 @@ type AlarmOptionsParam struct {
 	Metric    string `json:"metric"`
 }
 
-type ServiceGroupAlarmParam struct {
-	ServiceGroup       string
+type EndpointAlarmParam struct {
+	Endpoint           string
 	StartTime, EndTime time.Time
 	Page, PageSize     int
 }
