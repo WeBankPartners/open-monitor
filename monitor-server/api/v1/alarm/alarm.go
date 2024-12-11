@@ -376,7 +376,7 @@ func GetHistoryAlarm(c *gin.Context) {
 	pageSize := c.Query("pageSize")
 	serviceGroup := c.Query("serviceGroup")
 	var err error
-	var ids []string
+	var endpoint string
 	var startTime, endTime time.Time
 	var pageInfo m.PageInfo
 	var returnData m.AlarmHistoryReturnData
@@ -410,23 +410,7 @@ func GetHistoryAlarm(c *gin.Context) {
 	}
 	// 层级对象处理
 	if strings.TrimSpace(serviceGroup) != "" && idParam == "-1" {
-		param := m.ServiceGroupAlarmParam{
-			ServiceGroup: serviceGroup,
-			StartTime:    startTime,
-			EndTime:      endTime,
-			Page:         pageInt,
-			PageSize:     pageSizeInt,
-		}
-		tmpData, totalRows, tmpErr := db.GetServiceGroupHistoryAlarm(param)
-		if tmpErr != nil {
-			err = tmpErr
-		}
-		if len(tmpData) > 0 {
-			returnData = m.AlarmHistoryReturnData{Endpoint: serviceGroup, ProblemList: tmpData}
-			pageInfo.StartIndex = (param.Page - 1) * param.PageSize
-			pageInfo.PageSize = pageSizeInt
-			pageInfo.TotalRows = totalRows
-		}
+		endpoint = "sg__" + serviceGroup
 	} else {
 		endpointId, _ := strconv.Atoi(idParam)
 		if endpointId > 0 {
@@ -436,7 +420,7 @@ func GetHistoryAlarm(c *gin.Context) {
 				mid.ReturnValidateError(c, fmt.Sprintf("Endpoint id:%d fetch data fail", endpointId))
 				return
 			}
-			ids = append(ids, endpointObj.Guid)
+			endpoint = endpointObj.Guid
 		} else if idParam != "" {
 			endpointObj := m.EndpointTable{Guid: idParam}
 			err = db.GetEndpoint(&endpointObj)
@@ -444,97 +428,31 @@ func GetHistoryAlarm(c *gin.Context) {
 				mid.ReturnValidateError(c, fmt.Sprintf("Endpoint guid:%d fetch data fail", idParam))
 				return
 			}
-			ids = append(ids, endpointObj.Guid)
-		} else {
-			guid := c.Query("guid")
-			if guid == "" {
-				mid.ReturnValidateError(c, "Param guid can not empty when id<0 ")
-				return
-			}
-			err, recursiveObj := db.GetRecursivePanel(guid)
-			if err != nil {
-				mid.ReturnHandleError(c, fmt.Sprintf("Get recursive panel data fail %s", err.Error()), err)
-				return
-			}
-			ids = recursiveHistoryEndpoint(&recursiveObj)
+			endpoint = endpointObj.Guid
 		}
-		for _, endpointGuid := range ids {
-			tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime, mid.GetOperateUserRoles(c))
-			if tmpErr != nil {
-				err = tmpErr
-				break
-			}
-			if len(tmpData) > 0 {
-				returnData = m.AlarmHistoryReturnData{Endpoint: endpointGuid, ProblemList: tmpData}
-				pageInfo.TotalRows = len(tmpData)
-				break
-			}
-		}
-		if page != "" && pageSize != "" {
-			pageInfo.PageSize = pageSizeInt
-			si := (pageInt - 1) * pageSizeInt
-			pageInfo.StartIndex = si
-			ei := pageInt*pageSizeInt - 1
-			var pageResult m.AlarmProblemList
-			for i, v := range returnData.ProblemList {
-				if i >= si && i <= ei {
-					pageResult = append(pageResult, v)
-				}
-			}
-			returnData.ProblemList = pageResult
-		}
+	}
+	param := m.EndpointAlarmParam{
+		Endpoint:  endpoint,
+		StartTime: startTime,
+		EndTime:   endTime,
+		Page:      pageInt,
+		PageSize:  pageSizeInt,
+	}
+	tmpData, totalRows, tmpErr := db.GetEndpointHistoryAlarm(param)
+	if tmpErr != nil {
+		err = tmpErr
+	}
+	if len(tmpData) > 0 {
+		returnData = m.AlarmHistoryReturnData{Endpoint: serviceGroup, ProblemList: tmpData}
+		pageInfo.StartIndex = (param.Page - 1) * param.PageSize
+		pageInfo.PageSize = pageSizeInt
+		pageInfo.TotalRows = totalRows
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, fmt.Sprintf("Get history data fail,%s ", err.Error()), err)
 		return
 	}
 	mid.ReturnPageData(c, pageInfo, returnData)
-}
-
-func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time, useRoles []string) (err error, data m.AlarmProblemList) {
-	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	err = db.GetEndpoint(&endpointObj)
-	if endpointObj.Guid == "" {
-		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
-	}
-	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(m.QueryAlarmCondition{AlarmTable: query})
-	return err, data
-}
-
-func recursiveHistoryEndpoint(input *m.RecursivePanelObj) []string {
-	endpoints := []string{}
-	if len(input.Children) > 0 {
-		for _, v := range input.Children {
-			for _, vv := range recursiveHistoryEndpoint(v) {
-				existFlag := false
-				for _, vvv := range endpoints {
-					if vvv == vv {
-						existFlag = true
-						break
-					}
-				}
-				if !existFlag {
-					endpoints = append(endpoints, vv)
-				}
-			}
-		}
-	}
-	for _, v := range input.Charts {
-		for _, vv := range v.Endpoint {
-			existFlag := false
-			for _, vvv := range endpoints {
-				if vvv == vv {
-					existFlag = true
-					break
-				}
-			}
-			if !existFlag {
-				endpoints = append(endpoints, vv)
-			}
-		}
-	}
-	return endpoints
 }
 
 func GetProblemAlarmOptions(c *gin.Context) {
