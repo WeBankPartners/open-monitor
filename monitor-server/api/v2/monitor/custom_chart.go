@@ -44,6 +44,7 @@ func GetSharedChartList(c *gin.Context) {
 				middleware.ReturnServerHandleError(c, err)
 				return
 			}
+			log.Logger.Info("GetSharedChartList QueryCustomChartListByDashboard 耗时", log.Float64("costTime", time.Since(start2).Seconds()))
 			if len(customChartList) > 0 {
 				for _, chart := range chartList {
 					exist = false
@@ -63,6 +64,7 @@ func GetSharedChartList(c *gin.Context) {
 		} else {
 			newChartList = chartList
 		}
+		start3 := time.Now()
 		if len(newChartList) > 0 {
 			for _, chart := range newChartList {
 				sharedDto := &models.ChartSharedDto{
@@ -86,6 +88,7 @@ func GetSharedChartList(c *gin.Context) {
 				sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
 			}
 		}
+		log.Logger.Info("GetSharedChartList GetCustomDashboard  total耗时", log.Float64("costTime", time.Since(start3).Seconds()))
 	}
 	log.Logger.Info("GetSharedChartList calc 耗时", log.Float64("costTime", time.Since(start2).Seconds()))
 	// 每种类型中最多展示20条数据
