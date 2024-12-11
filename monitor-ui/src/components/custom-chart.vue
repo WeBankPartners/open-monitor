@@ -157,11 +157,17 @@ export default {
                     }
                   })
                   changeSeriesColor(item.series, item.colorGroup)
-                  item.metricToColor = item.series.map(one => {
-                    one.metric = one.seriesName
-                    delete one.seriesName
-                    return one
-                  })
+                }
+                if (item.series && !isEmpty(item.series)) {
+                  if (isEmpty(item.metricToColor)) {
+                    item.metricToColor = item.series.map(one => {
+                      one.metric = one.seriesName
+                      delete one.seriesName
+                      return one
+                    })
+                  }
+                } else {
+                  item.metricToColor = []
                 }
               })
               this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
