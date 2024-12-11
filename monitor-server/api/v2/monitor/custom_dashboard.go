@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -121,6 +122,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 }
 
 func GetCustomDashboard(c *gin.Context) {
+	start := time.Now()
 	var err error
 	var customDashboard *models.CustomDashboardTable
 	var customDashboardDto = &models.CustomDashboardDto{UseRoles: []string{}, MgmtRoles: []string{}}
@@ -140,6 +142,8 @@ func GetCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetCustomDashboard GetCustomDashboardById 耗时", log.Float64("time", time.Since(start).Seconds()))
+	start2 := time.Now()
 	if customDashboard == nil || customDashboard.Id == 0 {
 		middleware.ReturnValidateError(c, "id is invalid")
 		return
@@ -154,18 +158,26 @@ func GetCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetCustomDashboard QueryCustomChartListByDashboard 耗时", log.Float64("time", time.Since(start2).Seconds()))
+	start3 := time.Now()
 	if configMap, err = db.QueryAllChartSeriesConfig(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetCustomDashboard QueryAllChartSeriesConfig 耗时", log.Float64("time", time.Since(start3).Seconds()))
+	start4 := time.Now()
 	if tagMap, err = db.QueryAllChartSeriesTag(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetCustomDashboard QueryAllChartSeriesTag 耗时", log.Float64("time", time.Since(start4).Seconds()))
+	start5 := time.Now()
 	if tagValueMap, err = db.QueryAllChartSeriesTagValue(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	log.Logger.Info("GetCustomDashboard QueryAllChartSeriesTagValue 耗时", log.Float64("time", time.Since(start5).Seconds()))
+	start6 := time.Now()
 	if len(customChartExtendList) > 0 {
 		customDashboardDto.Charts = []*models.CustomChartDto{}
 		for _, chartExtend := range customChartExtendList {
@@ -180,6 +192,7 @@ func GetCustomDashboard(c *gin.Context) {
 			}
 		}
 	}
+	log.Logger.Info("GetCustomDashboard CreateCustomChartDto 耗时", log.Float64("time", time.Since(start6).Seconds()), log.Int("len", len(customChartExtendList)))
 	if strings.TrimSpace(customDashboard.PanelGroups) == "" {
 		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
 	} else {
@@ -198,6 +211,7 @@ func GetCustomDashboard(c *gin.Context) {
 			}
 		}
 	}
+	log.Logger.Info("GetCustomDashboard 接口总耗时", log.Float64("time", time.Since(start).Seconds()))
 	middleware.ReturnSuccessData(c, customDashboardDto)
 }
 
