@@ -557,5 +557,7 @@
   "m_auto_generate_alarm_dashboard": "Auto Generate Alarm Dashboard",
   "m_not_auto_generate_alarm_dashboard": "Not Auto Generate Alarm Dashboard",
   "m_line_display_modification": "Modification Line Display",
-  "m_show_line": "Show Line"
+  "m_show_line": "Show Line",
+  "m_line_search": "Line Search",
+  "m_select_all": "Select All"
 }
