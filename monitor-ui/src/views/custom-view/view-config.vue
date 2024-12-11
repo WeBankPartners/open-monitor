@@ -391,7 +391,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
-import { changeSeriesColor } from '@/assets/config/random-color'
+// import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
   line: 'm_line_chart_s',
@@ -678,23 +678,6 @@ export default {
     },
     async initPanals(type) {
       const tmpArr = []
-
-      const promisSeriesArr = []
-      const promisSeriesObj = {}
-      let finalSeriesArr = []
-      for (let k=0; k<this.viewData.length; k++) { // 解决线条请求阻塞页面选择问题
-        const item = this.viewData[k]
-        for (let i=0; i<item.chartSeries.length; i++) {
-          const single = item.chartSeries[i]
-          single.defaultColor = single.colorGroup
-          if (isEmpty(single.series) && item.chartType !== 'pie') {
-            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, this.isShowLoading))
-            promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
-          }
-        }
-      }
-      finalSeriesArr = await Promise.all(promisSeriesArr)
       this.isShowLoading = false
 
       for (let k=0; k<this.viewData.length; k++) {
@@ -728,25 +711,6 @@ export default {
         }
         for (let i=0; i<item.chartSeries.length; i++) {
           const single = item.chartSeries[i]
-          single.defaultColor = single.colorGroup
-          if (isEmpty(single.series) && item.chartType !== 'pie') {
-            // const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            // const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-            const series = finalSeriesArr[promisSeriesObj[single.chartSeriesGuid]] || []
-            if (!isEmpty(series)) {
-              changeSeriesColor(series, single.colorGroup)
-            }
-            single.series = series
-          }
-          if (single.series && !isEmpty(single.series)) {
-            single.metricToColor = cloneDeep(single.series).map(one => {
-              one.metric = one.seriesName
-              delete one.seriesName
-              return one
-            })
-          } else {
-            single.metricToColor = []
-          }
           params.data.push(single)
         }
         const height = (parsedDisplayConfig.h + 1) * 30-8

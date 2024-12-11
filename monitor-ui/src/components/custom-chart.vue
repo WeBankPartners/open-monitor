@@ -12,8 +12,9 @@
 </template>
 
 <script>
-// 引入 ECharts 主模块
+import {isEmpty} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
+import { changeSeriesColor } from '@/assets/config/random-color'
 
 export default {
   name: '',
@@ -140,6 +141,35 @@ export default {
               params: this.chartInfo.chartParams
             }
             this.$nextTick(() => {
+              !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
+                item.defaultColor = item.colorGroup
+                if (isEmpty(item.series)) {
+                  item.series = []
+                  item.metricToColor = []
+                  const metric = item.metric
+                  responseData.legend.forEach(one => {
+                    if (one.startsWith(metric)){
+                      item.series.push({
+                        seriesName: one,
+                        new: true,
+                        color: ''
+                      })
+                    }
+                  })
+                  changeSeriesColor(item.series, item.colorGroup)
+                }
+                if (item.series && !isEmpty(item.series)) {
+                  if (isEmpty(item.metricToColor)) {
+                    item.metricToColor = item.series.map(one => {
+                      one.metric = one.seriesName
+                      delete one.seriesName
+                      return one
+                    })
+                  }
+                } else {
+                  item.metricToColor = []
+                }
+              })
               this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
               this.scrollHandle()
             })
