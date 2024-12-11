@@ -134,6 +134,32 @@ func QueryAllChartSeriesTagValue() (tagValueMap map[string][]*models.CustomChart
 	return
 }
 
+func QueryAllChartSeries() (chartSeriesMap map[string][]*models.CustomChartSeries, err error) {
+	page := 1
+	pageSize := 2000
+	chartSeriesMap = make(map[string][]*models.CustomChartSeries)
+	for {
+		var list []*models.CustomChartSeries
+		offset := (page - 1) * pageSize
+		query := fmt.Sprintf("SELECT * FROM custom_chart_series LIMIT %d OFFSET %d", pageSize, offset)
+		if err = x.SQL(query).Find(&list); err != nil {
+			return nil, err
+		}
+		if len(list) == 0 {
+			break
+		}
+		for _, chartSeries := range list {
+			if _, ok := chartSeriesMap[chartSeries.DashboardChart]; ok {
+				chartSeriesMap[chartSeries.DashboardChart] = append(chartSeriesMap[chartSeries.DashboardChart], chartSeries)
+			} else {
+				chartSeriesMap[chartSeries.DashboardChart] = []*models.CustomChartSeries{chartSeries}
+			}
+		}
+		page++
+	}
+	return
+}
+
 func QueryCustomDashboardChartRelListByDashboard(dashboardId int) (list []*models.CustomDashboardChartRel, err error) {
 	err = x.SQL("select * from custom_dashboard_chart_rel where custom_dashboard = ?", dashboardId).Find(&list)
 	return
@@ -595,34 +621,35 @@ func QueryCustomChartNameExist(name string) (list []*models.CustomChart, err err
 	return
 }
 
-func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[string][]*models.CustomChartSeriesConfig, tagMap map[string][]*models.CustomChartSeriesTag, tagValueMap map[string][]*models.CustomChartSeriesTagValue) (chart *models.CustomChartDto, err error) {
-	var list []*models.CustomChartSeries
+func CreateCustomChartDto(param models.CreateCustomChartParam) (chart *models.CustomChartDto, err error) {
 	var seriesConfigList []*models.CustomChartSeriesConfig
 	var chartSeriesTagList []*models.CustomChartSeriesTag
 	var chartSeriesTagValueList []*models.CustomChartSeriesTagValue
 	chart = &models.CustomChartDto{
-		Id:                 chartExtend.Guid,
-		Public:             intToBool(chartExtend.Public),
-		SourceDashboard:    chartExtend.SourceDashboard,
-		Name:               chartExtend.Name,
-		ChartTemplate:      chartExtend.ChartTemplate,
-		Unit:               chartExtend.Unit,
-		ChartType:          chartExtend.ChartType,
-		LineType:           chartExtend.LineType,
-		PieType:            chartExtend.PieType,
-		Aggregate:          chartExtend.Aggregate,
-		AggStep:            chartExtend.AggStep,
-		DisplayConfig:      chartExtend.DisplayConfig,
-		GroupDisplayConfig: chartExtend.GroupDisplayConfig,
-		Group:              chartExtend.Group,
-		LogMetricGroup:     &chartExtend.LogMetricGroup,
+		Id:                 param.ChartExtend.Guid,
+		Public:             intToBool(param.ChartExtend.Public),
+		SourceDashboard:    param.ChartExtend.SourceDashboard,
+		Name:               param.ChartExtend.Name,
+		ChartTemplate:      param.ChartExtend.ChartTemplate,
+		Unit:               param.ChartExtend.Unit,
+		ChartType:          param.ChartExtend.ChartType,
+		LineType:           param.ChartExtend.LineType,
+		PieType:            param.ChartExtend.PieType,
+		Aggregate:          param.ChartExtend.Aggregate,
+		AggStep:            param.ChartExtend.AggStep,
+		DisplayConfig:      param.ChartExtend.DisplayConfig,
+		GroupDisplayConfig: param.ChartExtend.GroupDisplayConfig,
+		Group:              param.ChartExtend.Group,
+		LogMetricGroup:     &param.ChartExtend.LogMetricGroup,
 	}
 	chart.ChartSeries = []*models.CustomChartSeriesDto{}
-	if list, err = QueryCustomChartSeriesByChart(chartExtend.Guid); err != nil {
-		return
+	if len(param.ChartSeries) == 0 {
+		if param.ChartSeries, err = QueryCustomChartSeriesByChart(param.ChartExtend.Guid); err != nil {
+			return
+		}
 	}
-	if len(list) > 0 {
-		for _, series := range list {
+	if len(param.ChartSeries) > 0 {
+		for _, series := range param.ChartSeries {
 			seriesConfigList = []*models.CustomChartSeriesConfig{}
 			chartSeriesTagList = []*models.CustomChartSeriesTag{}
 			customChartSeriesDto := &models.CustomChartSeriesDto{
@@ -643,20 +670,24 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 			}
 			// 判断是否是同环比
 			var tempGuid string
-			_, _ = x.SQL("select guid from metric_comparison where metric_id = ?", series.MetricGuid).Get(&tempGuid)
+			if len(param.MetricComparisonMap) == 0 {
+				_, _ = x.SQL("select guid from metric_comparison where metric_id = ?", series.MetricGuid).Get(&tempGuid)
+			} else {
+				tempGuid = param.MetricComparisonMap[series.MetricGuid]
+			}
 			if tempGuid != "" {
 				customChartSeriesDto.Comparison = true
 			}
-			if v, ok := configMap[series.Guid]; ok {
+			if v, ok := param.ConfigMap[series.Guid]; ok {
 				seriesConfigList = v
 			}
-			if v, ok := tagMap[series.Guid]; ok {
+			if v, ok := param.TagMap[series.Guid]; ok {
 				chartSeriesTagList = v
 			}
 			if len(chartSeriesTagList) > 0 {
 				for _, tag := range chartSeriesTagList {
 					chartSeriesTagValueList = []*models.CustomChartSeriesTagValue{}
-					if v, ok := tagValueMap[tag.Guid]; ok {
+					if v, ok := param.TagValueMap[tag.Guid]; ok {
 						chartSeriesTagValueList = v
 					}
 					customChartSeriesDto.Tags = append(customChartSeriesDto.Tags, &models.TagDto{
