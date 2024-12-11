@@ -463,6 +463,8 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var metricComparisonMap = make(map[string]string)
+	var chartSeriesMap = make(map[string][]*models.CustomChartSeries)
 	now := time.Now()
 	// 新增看板
 	customDashboard.Name = customDashboard.Name + "(1)"
@@ -492,12 +494,33 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	if len(subDashboardPermActions) > 0 {
 		actions = append(actions, subDashboardPermActions...)
 	}
+	if metricComparisonMap, err = GetAllMetricComparison(); err != nil {
+		return
+	}
 	if customChartExtendList, err = QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		return
 	}
 	if len(customChartExtendList) > 0 {
+		var chartSeries []*models.CustomChartSeries
+		// 图表大于等于10时候 查询所有图表数据
+		if len(customChartExtendList) >= 10 {
+			if chartSeriesMap, err = QueryAllChartSeries(); err != nil {
+				return
+			}
+		}
 		for _, chartExtend := range customChartExtendList {
-			if chart, err = CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap); err != nil {
+			if len(chartSeriesMap) > 0 {
+				chartSeries = chartSeriesMap[chartExtend.Guid]
+			}
+			chartParam := models.CreateCustomChartParam{
+				ChartExtend:         chartExtend,
+				ConfigMap:           configMap,
+				TagMap:              tagMap,
+				TagValueMap:         tagValueMap,
+				MetricComparisonMap: metricComparisonMap,
+				ChartSeries:         chartSeries,
+			}
+			if chart, err = CreateCustomChartDto(chartParam); err != nil {
 				return
 			}
 			if chart != nil {

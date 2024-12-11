@@ -249,6 +249,7 @@ func GetCustomChart(c *gin.Context) {
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var metricComparisonMap = make(map[string]string)
 	var err error
 	chartId := c.Query("chart_id")
 	if strings.TrimSpace(chartId) == "" {
@@ -271,7 +272,19 @@ func GetCustomChart(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if chartDto, err = db.CreateCustomChartDto(models.ConvertCustomChartToExtend(chart), configMap, tagMap, tagValueMap); err != nil {
+	if metricComparisonMap, err = db.GetAllMetricComparison(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	chartParam := models.CreateCustomChartParam{
+		ChartExtend:         models.ConvertCustomChartToExtend(chart),
+		ConfigMap:           configMap,
+		TagMap:              tagMap,
+		TagValueMap:         tagValueMap,
+		MetricComparisonMap: metricComparisonMap,
+		ChartSeries:         []*models.CustomChartSeries{},
+	}
+	if chartDto, err = db.CreateCustomChartDto(chartParam); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}

@@ -965,3 +965,15 @@ func GetLogTypeByLogMetricGroup(id string) (logType string, err error) {
 	}
 	return
 }
+
+func GetAllMetricComparison() (metricComparisonMap map[string]string, err error) {
+	var list []*models.MetricComparison
+	metricComparisonMap = make(map[string]string)
+	if err = x.SQL("select guid,metric_id from metric_comparison").Find(&list); err != nil {
+		return
+	}
+	for _, item := range list {
+		metricComparisonMap[item.MetricId] = item.Guid
+	}
+	return
+}
