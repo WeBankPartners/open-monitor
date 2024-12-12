@@ -209,7 +209,7 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''">
+        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" @scroll="onGridWindowScroll">
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -306,7 +306,7 @@
                 </div>
                 <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :scrollRefresh="scrollRefresh" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
                   </div>
                 </section>
@@ -545,7 +545,8 @@ export default {
           )
         }
       ],
-      isShowLoading: false
+      isShowLoading: false,
+      scrollRefresh: false
     }
   },
   computed: {
@@ -570,10 +571,6 @@ export default {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
     }, 100)
-
-    setTimeout(() => {
-      this.refreshNow = !this.refreshNow
-    }, 2000)
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
@@ -711,6 +708,7 @@ export default {
         }
         for (let i=0; i<item.chartSeries.length; i++) {
           const single = item.chartSeries[i]
+          single.defaultColor = single.colorGroup
           params.data.push(single)
         }
         const height = (parsedDisplayConfig.h + 1) * 30-8
@@ -726,7 +724,8 @@ export default {
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1])
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          parsedDisplayConfig
         })
         tmpArr.push({
           _activeCharts,
@@ -758,9 +757,6 @@ export default {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.filterLayoutData()
-      setTimeout(() => {
-        this.refreshNow = !this.refreshNow
-      }, 300)
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
@@ -1395,9 +1391,6 @@ export default {
     },
     closeChartInfoDrawer() {
       this.getPannelList()
-      setTimeout(() => {
-        this.refreshNow = !this.refreshNow
-      }, 500)
     },
     exportPanel() {
       this.isModalShow = true
@@ -1599,7 +1592,10 @@ export default {
     },
     onCopyTableSelected(chartList) {
       this.selectedChartList = chartList
-    }
+    },
+    onGridWindowScroll: debounce(function () {
+      this.scrollRefresh = !this.scrollRefresh
+    }, 500)
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
