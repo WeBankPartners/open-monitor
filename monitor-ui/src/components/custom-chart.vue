@@ -167,6 +167,7 @@ export default {
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
         } else {
+          this.chartInstance = null
           responseData.yaxis.unit = this.chartInfo.panalUnit
           this.noDataType = 'normal'
           const chartConfig = {
