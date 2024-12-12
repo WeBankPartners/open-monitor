@@ -385,7 +385,7 @@
       </div>
       <template slot='footer'>
         <Button @click="onLineSelectChangeCancel(false)">{{ $t('m_button_cancel') }}</Button>
-        <Button @click="onLineSelectChange" type="primary">{{ $t('m_button_save') }}</Button>
+        <Button @click="onLineSelectChange" type="primary">{{ $t('m_button_confirm') }}</Button>
       </template>
     </Modal>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" ></AuthDialog>
@@ -1495,6 +1495,12 @@ export default {
 
     onLayoutPopTipConfirm() {
       this.setChartLayoutType(this.tempChartLayoutType)
+      setTimeout(() => {
+        document.querySelector('.vue-grid-layout').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }, 500)
     },
     calculateLayout(data, type='customize') {
       if (isEmpty(data) || type==='customize') {
