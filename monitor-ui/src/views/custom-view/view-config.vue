@@ -337,14 +337,18 @@
     </Drawer>
 
     <!-- 分组新增 -->
-    <Modal v-model="showGroupMgmt" :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')" :mask-closable="false">
+    <Modal v-model="showGroupMgmt"
+           :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')"
+           :mask-closable="false"
+           :width="800"
+    >
       <div>
         <Form :label-width="90">
           <FormItem :label="$t('m_group_chart_name')">
             <Input v-model="groupName" placeholder="" style="width: 100%" :maxlength="20" show-word-limit />
           </FormItem>
           <FormItem :label="$t('m_use_charts')">
-            <Row v-if="panelGroupInfo.length > 0">
+            <Row v-if="panelGroupInfo.length > 0" style="min-height: 200px; max-height: 400px;overflow-y: auto;">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
               <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">
                 <Tooltip :content="panel.label" transfer :max-width='200'>
@@ -546,7 +550,7 @@ export default {
         }
       ],
       isShowLoading: false,
-      scrollRefresh: false
+      scrollRefresh: false,
     }
   },
   computed: {
@@ -570,7 +574,7 @@ export default {
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
-    }, 100)
+    }, 500)
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
@@ -1483,9 +1487,9 @@ export default {
       return this.layoutData
     },
     refreshPannelNow() {
-      setTimeout(() => {
+      this.$nextTick(() => {
         this.refreshNow = !this.refreshNow
-      }, 300)
+      })
     },
     isValidJson(str) {
       try {
@@ -1595,7 +1599,7 @@ export default {
     },
     onGridWindowScroll: debounce(function () {
       this.scrollRefresh = !this.scrollRefresh
-    }, 500)
+    }, 1000)
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
