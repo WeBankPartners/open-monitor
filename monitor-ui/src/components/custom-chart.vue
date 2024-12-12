@@ -26,14 +26,22 @@ export default {
       myChart: '',
       interval: '',
       noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
-      chartInstance: null
+      chartInstance: null,
+      isFirstRefresh: true,
+      hasNotRequest: true
     }
   },
   props: {
     chartInfo: Object,
     params: Object,
     chartIndex: Number,
-    refreshNow: Boolean
+    refreshNow: Boolean,
+    scrollRefresh: Boolean
+  },
+  computed: {
+    isInViewConfig() { // 是否是在自定义看板中
+      return !isEmpty(this.chartInfo.parsedDisplayConfig)
+    }
   },
   watch: {
     params: {
@@ -45,12 +53,28 @@ export default {
     },
     refreshNow: {
       handler() {
-        this.getchartdata()
+        if (this.isFirstRefresh) {
+          this.getchartdata('mounted')
+          setTimeout(() => {
+            this.isFirstRefresh = false
+          }, 5000)
+        } else {
+          this.getchartdata()
+        }
+      }
+    },
+    scrollRefresh: { // 当外层组件滚动时刷新，假如有数据时不加载
+      handler() {
+        if (this.hasNotRequest) {
+          this.getchartdata()
+        }
       }
     }
   },
   mounted() {
-    this.getchartdata('mounted')
+    if (!this.isInViewConfig) {
+      this.getchartdata('mounted')
+    }
     this.isAutoRefresh()
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
@@ -107,7 +131,7 @@ export default {
         },this.params.autoRefresh * 1000)
       }
     },
-    getchartdata(type = '') {
+    async getchartdata(type = '') {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -123,59 +147,71 @@ export default {
       const offset = this.$el.getBoundingClientRect()
       const offsetTop = offset.top
       const offsetBottom = offset.bottom
-      // 进入可视区域
-      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-          if (responseData.legend.length === 0) {
-            this.noDataType = 'noData'
-          } else {
-            responseData.yaxis.unit = this.chartInfo.panalUnit
-            this.noDataType = 'normal'
-            const chartConfig = {
-              title: false,
-              eye: false,
-              clear: true,
-              dataZoom: false,
-              lineBarSwitch: true,
-              chartType: this.chartInfo.chartType,
-              params: this.chartInfo.chartParams
-            }
-            this.$nextTick(() => {
-              !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
-                item.defaultColor = item.colorGroup
-                if (isEmpty(item.series)) {
-                  item.series = []
-                  item.metricToColor = []
-                  const metric = item.metric
-                  responseData.legend.forEach(one => {
-                    if (one.startsWith(metric)){
-                      item.series.push({
-                        seriesName: one,
-                        new: true,
-                        color: ''
-                      })
-                    }
-                  })
-                  changeSeriesColor(item.series, item.colorGroup)
-                }
-                if (item.series && !isEmpty(item.series)) {
-                  if (isEmpty(item.metricToColor)) {
-                    item.metricToColor = item.series.map(one => {
-                      one.metric = one.seriesName
-                      delete one.seriesName
-                      return one
+      if (type === 'mounted') {
+        if (this.isInViewConfig) {
+          if (this.chartInfo.parsedDisplayConfig.y < 35) {
+            // 这里用在自定义视图中首屏渲染
+            this.requestChartData(params)
+          }
+        } else {
+          // 这里用于其余的场景，首屏渲染全量
+          this.requestChartData(params)
+        }
+      } else if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement)) {
+        this.requestChartData(params)
+      }
+    },
+    requestChartData(params) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+        this.hasNotRequest = false
+        if (responseData.legend.length === 0) {
+          this.noDataType = 'noData'
+        } else {
+          responseData.yaxis.unit = this.chartInfo.panalUnit
+          this.noDataType = 'normal'
+          const chartConfig = {
+            title: false,
+            eye: false,
+            clear: true,
+            dataZoom: false,
+            lineBarSwitch: true,
+            chartType: this.chartInfo.chartType,
+            params: this.chartInfo.chartParams
+          }
+          this.$nextTick(() => {
+            !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
+              if (isEmpty(item.series)) {
+                item.series = []
+                item.metricToColor = []
+                const metric = item.metric
+                responseData.legend.forEach(one => {
+                  if (one.startsWith(metric)){
+                    item.series.push({
+                      seriesName: one,
+                      new: true,
+                      color: ''
                     })
                   }
-                } else {
-                  item.metricToColor = []
+                })
+                changeSeriesColor(item.series, item.colorGroup)
+              }
+              if (item.series && !isEmpty(item.series)) {
+                if (isEmpty(item.metricToColor)) {
+                  item.metricToColor = item.series.map(one => {
+                    one.metric = one.seriesName
+                    delete one.seriesName
+                    return one
+                  })
                 }
-              })
-              this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
-              this.scrollHandle()
+              } else {
+                item.metricToColor = []
+              }
             })
-          }
-        }, { isNeedloading: false })
-      }
+            this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
+            this.scrollHandle()
+          })
+        }
+      }, { isNeedloading: false })
     },
     onMouseLeaveContent() {
       if (this.chartInstance) {
