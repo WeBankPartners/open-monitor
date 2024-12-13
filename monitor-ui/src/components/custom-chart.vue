@@ -36,7 +36,8 @@ export default {
     params: Object,
     chartIndex: Number,
     refreshNow: Boolean,
-    scrollRefresh: Boolean
+    scrollRefresh: Boolean, // 外层组件滚动时刷新
+    hasNotRequestStatus: Boolean // 基于该值的变化，来改变hasNotRequest，用于重置hasNotRequest
   },
   computed: {
     isInViewConfig() { // 是否是在自定义看板中
@@ -69,6 +70,11 @@ export default {
           this.getchartdata()
         }
       }
+    },
+    hasNotRequestStatus: {
+      handler() {
+        this.hasNotRequest = true
+      }
     }
   },
   mounted() {
@@ -81,6 +87,7 @@ export default {
   },
   destroyed() {
     this.clearInterval()
+    this.chartInstance = null
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
     if (this.chartInstance) {
@@ -132,6 +139,26 @@ export default {
       }
     },
     async getchartdata(type = '') {
+      window.intervalFrom = 'custom-chart'
+      const modalElement = document.querySelector('#edit-view')
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      if (type === 'mounted') {
+        if (this.isInViewConfig) {
+          if (this.chartInfo.parsedDisplayConfig.y < 35) {
+            // 这里用在自定义视图中首屏渲染
+            this.requestChartData()
+          }
+        } else {
+          // 这里用于其余的场景，首屏渲染全量
+          this.requestChartData()
+        }
+      } else if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement)) {
+        this.requestChartData()
+      }
+    },
+    requestChartData() {
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -142,26 +169,6 @@ export default {
         custom_chart_guid: this.chartInfo.elId
       }
       this.elId = this.chartInfo.elId
-      window.intervalFrom = 'custom-chart'
-      const modalElement = document.querySelector('#edit-view')
-      const offset = this.$el.getBoundingClientRect()
-      const offsetTop = offset.top
-      const offsetBottom = offset.bottom
-      if (type === 'mounted') {
-        if (this.isInViewConfig) {
-          if (this.chartInfo.parsedDisplayConfig.y < 35) {
-            // 这里用在自定义视图中首屏渲染
-            this.requestChartData(params)
-          }
-        } else {
-          // 这里用于其余的场景，首屏渲染全量
-          this.requestChartData(params)
-        }
-      } else if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement)) {
-        this.requestChartData(params)
-      }
-    },
-    requestChartData(params) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         this.hasNotRequest = false
         if (responseData.legend.length === 0) {
