@@ -306,7 +306,15 @@
                 </div>
                 <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :scrollRefresh="scrollRefresh" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                                 :refreshNow="refreshNow"
+                                 :scrollRefresh="scrollRefresh"
+                                 :chartInfo="chartInfo"
+                                 :chartIndex="index"
+                                 :params="viewCondition"
+                                 :hasNotRequestStatus="hasNotRequestStatus"
+                    >
+                    </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
                   </div>
                 </section>
@@ -551,6 +559,7 @@ export default {
       ],
       isShowLoading: false,
       scrollRefresh: false,
+      hasNotRequestStatus: true
     }
   },
   computed: {
@@ -760,6 +769,7 @@ export default {
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
+      this.resetHasNotRequestStatus()
       this.filterLayoutData()
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
@@ -1413,6 +1423,16 @@ export default {
 
     onLayoutPopTipConfirm() {
       this.setChartLayoutType(this.tempChartLayoutType)
+      this.resetHasNotRequestStatus()
+      setTimeout(() => {
+        this.scrollRefresh = !this.scrollRefresh
+      }, 1000)
+      setTimeout(() => {
+        document.querySelector('.vue-grid-layout').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }, 100)
     },
     calculateLayout(data, type='customize') {
       if (isEmpty(data) || type==='customize') {
@@ -1599,7 +1619,10 @@ export default {
     },
     onGridWindowScroll: debounce(function () {
       this.scrollRefresh = !this.scrollRefresh
-    }, 1000)
+    }, 1000),
+    resetHasNotRequestStatus() {
+      this.hasNotRequestStatus = !this.hasNotRequestStatus
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
