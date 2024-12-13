@@ -1,5 +1,5 @@
 <template>
-  <div class="single-chart">
+  <div class="single-chart" @mouseleave="onMouseLeaveContent">
     <div v-if="!noDataTip" :id="elId" class="echart">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
@@ -25,7 +25,8 @@ export default {
       noDataTip: false,
       config: '',
       myChart: '',
-      interval: ''
+      interval: '',
+      chartInstance: null
     }
   },
   props: {
@@ -62,6 +63,13 @@ export default {
   },
   destroyed() {
     clearInterval(this.interval)
+    if (this.chartInstance) {
+      setTimeout(() => {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }, 500)
+    }
   },
   methods: {
     getChartData(tmp, start, end) {
@@ -115,8 +123,15 @@ export default {
           lineBarSwitch: true
         }
         responseData.metric = this.chartInfo.metric[0]
-        readyToDraw(this,responseData, this.chartIndex, chartConfig)
+        this.chartInstance = readyToDraw(this,responseData, this.chartIndex, chartConfig)
       }, { isNeedloading: false })
+    },
+    onMouseLeaveContent() {
+      if (this.chartInstance) {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
     }
   },
   components: {},
