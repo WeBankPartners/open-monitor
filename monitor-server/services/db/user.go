@@ -282,14 +282,15 @@ func StartCronJob() {
 		SyncCoreRole()
 		SyncCoreRoleList()
 	}()
-	if !m.Config().CronJob.Enable {
-		return
-	}
+	//if !m.Config().CronJob.Enable {
+	//	return
+	//}
 	intervalSec := 60
 	if m.Config().CronJob.Interval > 30 {
 		intervalSec = m.Config().CronJob.Interval
 	}
 	go StartSyncCoreJob(intervalSec)
+	go prom.StartConsumeReloadConfig()
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
 	//go StartCronSyncKubernetesPod(intervalSec)
