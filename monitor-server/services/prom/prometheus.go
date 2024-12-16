@@ -11,12 +11,42 @@ import (
 	"time"
 )
 
-func ReloadConfig() error {
+var (
+	reloadConfigChan = make(chan int, 10000)
+)
+
+func StartConsumeReloadConfig() {
+	t := time.NewTicker(5 * time.Second).C
+	for {
+		<-t
+		consumeLength := len(reloadConfigChan)
+		if consumeLength == 0 {
+			continue
+		}
+		for i := 0; i < consumeLength; i++ {
+			<-reloadConfigChan
+		}
+		consumeReloadConfig()
+	}
+}
+
+func consumeReloadConfig() {
 	_, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
 	if err != nil {
 		log.Logger.Error("Reload prometheus config fail", log.Error(err))
+	} else {
+		log.Logger.Info("Reload prometheus config done")
 	}
-	return err
+}
+
+func ReloadConfig() error {
+	//_, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
+	//if err != nil {
+	//	log.Logger.Error("Reload prometheus config fail", log.Error(err))
+	//}
+	//return err
+	reloadConfigChan <- 1
+	return nil
 }
 
 func StartCheckPrometheusJob(interval int) {

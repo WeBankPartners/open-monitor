@@ -209,7 +209,7 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''">
+        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" @scroll="onGridWindowScroll">
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -290,7 +290,15 @@
                 </div>
                 <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                                 :refreshNow="refreshNow"
+                                 :scrollRefresh="scrollRefresh"
+                                 :chartInfo="chartInfo"
+                                 :chartIndex="index"
+                                 :params="viewCondition"
+                                 :hasNotRequestStatus="hasNotRequestStatus"
+                    >
+                    </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
                   </div>
                 </section>
@@ -321,14 +329,18 @@
     </Drawer>
 
     <!-- 分组新增 -->
-    <Modal v-model="showGroupMgmt" :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')" :mask-closable="false">
+    <Modal v-model="showGroupMgmt"
+           :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')"
+           :mask-closable="false"
+           :width="800"
+    >
       <div>
         <Form :label-width="90">
           <FormItem :label="$t('m_group_chart_name')">
             <Input v-model="groupName" placeholder="" style="width: 100%" :maxlength="20" show-word-limit />
           </FormItem>
           <FormItem :label="$t('m_use_charts')">
-            <Row v-if="panelGroupInfo.length > 0">
+            <Row v-if="panelGroupInfo.length > 0" style="min-height: 200px; max-height: 400px;overflow-y: auto;">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
               <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup">
                 <Tooltip :content="panel.label" transfer :max-width='200'>
@@ -415,7 +427,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
-import { changeSeriesColor } from '@/assets/config/random-color'
+// import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
   line: 'm_line_chart_s',
@@ -574,7 +586,9 @@ export default {
       lineSelectModalData: {},
       lineNameSearch: '',
       islineSelectAll: true,
-      isEmpty
+      isEmpty,
+      scrollRefresh: false,
+      hasNotRequestStatus: true
     }
   },
   computed: {
@@ -606,11 +620,7 @@ export default {
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
-    }, 100)
-
-    setTimeout(() => {
-      this.refreshNow = !this.refreshNow
-    }, 2000)
+    }, 500)
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
@@ -645,6 +655,7 @@ export default {
     }, 500),
 
     getAllChartOptionList() {
+      if (!this.isEditStatus) {return}
       this.selectedChartList = []
       const dashboardParams = {
         show: '',
@@ -714,22 +725,6 @@ export default {
     },
     async initPanals(type) {
       const tmpArr = []
-      const promisSeriesArr = []
-      const promisSeriesObj = {}
-      let finalSeriesArr = []
-      for (let k=0; k<this.viewData.length; k++) { // 解决线条请求阻塞页面选择问题
-        const item = this.viewData[k]
-        for (let i=0; i<item.chartSeries.length; i++) {
-          const single = item.chartSeries[i]
-          single.defaultColor = single.colorGroup
-          if (isEmpty(single.series) && item.chartType !== 'pie') {
-            const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            promisSeriesArr.push(this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams, this.isShowLoading))
-            promisSeriesObj[single.chartSeriesGuid] = promisSeriesArr.length - 1
-          }
-        }
-      }
-      finalSeriesArr = await Promise.all(promisSeriesArr)
       this.isShowLoading = false
 
       for (let k=0; k<this.viewData.length; k++) {
@@ -764,28 +759,6 @@ export default {
         for (let i=0; i<item.chartSeries.length; i++) {
           const single = item.chartSeries[i]
           single.defaultColor = single.colorGroup
-          if (isEmpty(single.series) && item.chartType !== 'pie') {
-            // const basicParams = this.processBasicParams(single.metric, single.endpoint, single.serviceGroup, single.monitorType, single.tags, single.chartSeriesGuid, single)
-            // const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-            const series = finalSeriesArr[promisSeriesObj[single.chartSeriesGuid]] || []
-            if (!isEmpty(series)) {
-              changeSeriesColor(series, single.colorGroup)
-            }
-            single.series = series
-          }
-          if (single.series && !isEmpty(single.series)) {
-            this.lineSelectModalData[item.id] = this.lineSelectModalData[item.id] || {}
-            single.series.forEach(one => {
-              this.lineSelectModalData[item.id][one.seriesName] = true
-            })
-            single.metricToColor = cloneDeep(single.series).map(one => {
-              one.metric = one.seriesName
-              delete one.seriesName
-              return one
-            })
-          } else {
-            single.metricToColor = []
-          }
           params.data.push(single)
         }
         const height = (parsedDisplayConfig.h + 1) * 30-8
@@ -801,7 +774,8 @@ export default {
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1])
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          parsedDisplayConfig
         })
         tmpArr.push({
           _activeCharts,
@@ -836,10 +810,8 @@ export default {
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
+      this.resetHasNotRequestStatus()
       this.filterLayoutData()
-      setTimeout(() => {
-        this.refreshNow = !this.refreshNow
-      }, 300)
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
@@ -1474,9 +1446,6 @@ export default {
     },
     closeChartInfoDrawer() {
       this.getPannelList()
-      setTimeout(() => {
-        this.refreshNow = !this.refreshNow
-      }, 500)
     },
     exportPanel() {
       this.isModalShow = true
@@ -1495,12 +1464,16 @@ export default {
 
     onLayoutPopTipConfirm() {
       this.setChartLayoutType(this.tempChartLayoutType)
+      this.resetHasNotRequestStatus()
+      setTimeout(() => {
+        this.scrollRefresh = !this.scrollRefresh
+      }, 1000)
       setTimeout(() => {
         document.querySelector('.vue-grid-layout').scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         })
-      }, 500)
+      }, 100)
     },
     calculateLayout(data, type='customize') {
       if (isEmpty(data) || type==='customize') {
@@ -1575,9 +1548,9 @@ export default {
       return this.layoutData
     },
     refreshPannelNow() {
-      setTimeout(() => {
+      this.$nextTick(() => {
         this.refreshNow = !this.refreshNow
-      }, 300)
+      })
     },
     isValidJson(str) {
       try {
@@ -1713,6 +1686,12 @@ export default {
       for (const line in this.lineSelectModalData[this.setChartConfigId]) {
         this.lineSelectModalData[this.setChartConfigId][line] = val
       }
+    },
+    onGridWindowScroll: debounce(function () {
+      this.scrollRefresh = !this.scrollRefresh
+    }, 1000),
+    resetHasNotRequestStatus() {
+      this.hasNotRequestStatus = !this.hasNotRequestStatus
     }
   },
   components: {
