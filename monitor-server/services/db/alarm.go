@@ -1455,6 +1455,58 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	return result
 }
 
+func GetEndpointHistoryAlarm(param m.EndpointAlarmParam) (data m.AlarmProblemList, count int, err error) {
+	startIndex := (param.Page - 1) * param.PageSize
+	var whereSql = " where endpoint = ?"
+	if !param.StartTime.IsZero() {
+		whereSql += fmt.Sprintf(" and start>='%s' ", param.StartTime.Format(m.DatetimeFormat))
+	}
+	if !param.EndTime.IsZero() {
+		whereSql += fmt.Sprintf(" and end<='%s' ", param.EndTime.Format(m.DatetimeFormat))
+	}
+	countSql := "select count(1) FROM alarm " + whereSql
+	_, err = x.SQL(countSql, param.Endpoint).Get(&count)
+	if err != nil {
+		return
+	}
+	sql := "SELECT * FROM alarm " + whereSql + " ORDER BY id DESC limit ?,?"
+	if err = x.SQL(sql, param.Endpoint, startIndex, param.PageSize).Find(&data); err != nil {
+		return
+	}
+	for _, v := range data {
+		v.StartString = v.Start.Format(m.DatetimeFormat)
+		v.EndString = v.End.Format(m.DatetimeFormat)
+		if v.AlarmName == "" {
+			v.AlarmName = v.Content
+		}
+		if strings.Contains(v.Log, "\n") {
+			v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
+		}
+		// 显示 endpointGuid
+		v.EndpointGuid = v.Endpoint
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
+		var alarmDetailList []*m.AlarmDetailData
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			if alarmDetailList, err = GetAlarmDetailList(v.Id); err != nil {
+				return
+			}
+			for _, alarmDetail := range alarmDetailList {
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
+			}
+		} else {
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
+			v.AlarmMetricList = []string{v.SMetric}
+		}
+		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+	}
+	return
+}
+
 func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
 	var alarmQuery []*m.AlarmProblemQuery
