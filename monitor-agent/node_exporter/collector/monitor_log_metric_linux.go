@@ -94,6 +94,7 @@ type logMetricMonitorNeObj struct {
 	TailLastUnixTime   int64                  `json:"-"`
 	DestroyChan        chan int               `json:"-"`
 	TailDataCancelChan chan int               `json:"-"`
+	MultiPathNum       int                    `json:"-"`
 }
 
 type logMetricGroupNeObj struct {
@@ -359,7 +360,7 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	if reopenFlag {
 		level.Info(monitorLogger).Log("log_metric -> reopen", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 		go c.start()
 	}
 }
@@ -398,6 +399,7 @@ func (c *logMetricMonitorNeObj) startMultiPath() {
 		level.Warn(monitorLogger).Log("log_metric -> startMultiPath_cannotMatchAnyFile", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 		return
 	}
+	c.MultiPathNum = len(pathList)
 	go c.startHandleTailData()
 	var destroyChanList []chan int
 	for _, targetFilePath := range pathList {
@@ -484,8 +486,9 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 
 // 把所有正则初始化
 func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
+	level.Info(monitorLogger).Log("do updateLogMetricMonitorNeObj", c.Path)
 	c.Lock.Lock()
-	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj", c.Path)
+	level.Info(monitorLogger).Log("start updateLogMetricMonitorNeObj", c.Path)
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
@@ -537,11 +540,15 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.MetricGroupConfig = newMetricGroupList
-	level.Info(monitorLogger).Log("MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
+	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj_MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
 	c.Lock.Unlock()
 	if strings.Contains(c.Path, "*") {
-		c.DestroyChan <- 1
-		time.Sleep(2 * time.Second)
+		if c.MultiPathNum > 0 {
+			level.Info(monitorLogger).Log("start_updateLogMetricMonitorNeObj_destroy_*: ", c.Path)
+			c.DestroyChan <- 1
+			level.Info(monitorLogger).Log("end_updateLogMetricMonitorNeObj_destroy_*: ", c.Path)
+		}
+		time.Sleep(500 * time.Millisecond)
 		go c.startMultiPath()
 	}
 }
@@ -679,7 +686,9 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 	if len(deletePathMap) > 0 && len(tmpLogMetricObjJobs) > 0 {
 		for _, existJob := range tmpLogMetricObjJobs {
 			if _, ok := deletePathMap[existJob.Path]; ok {
-				existJob.ReOpenHandlerChan <- 1
+				if !strings.Contains(existJob.Path, "*") {
+					existJob.ReOpenHandlerChan <- 1
+				}
 			}
 		}
 	}

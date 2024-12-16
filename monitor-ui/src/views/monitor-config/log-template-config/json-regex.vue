@@ -168,10 +168,10 @@ import Vue from 'vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
 
 const initRangeConfigMap = {
-  req_suc_rate: {
-    operator: '<',
-    threshold: '90',
-    time: '60',
+  req_fail_rate: {
+    operator: '>',
+    threshold: '10',
+    time: '0',
     time_unit: 's'
   },
   req_costtime_avg: {
@@ -332,7 +332,7 @@ export default {
               <i-switch value={params.row.auto_alarm}
                 on-on-change={val => {
                   if (!val) {
-                    const key = ['req_suc_rate', 'req_costtime_avg'].includes(params.row.metric) ? params.row.metric : 'other'
+                    const key = ['req_fail_rate', 'req_costtime_avg'].includes(params.row.metric) ? params.row.metric : 'other'
                     Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap[key]))
                   }
                   this.configInfo.metric_list[params.index].auto_alarm = val
@@ -520,8 +520,8 @@ export default {
                 'code'
               ],
               color_group: '#20a162',
-              auto_alarm: true,
-              range_config: cloneDeep(initRangeConfigMap.req_suc_rate)
+              auto_alarm: false,
+              range_config: cloneDeep(initRangeConfigMap.other)
             },
             {
               log_param_name: 'code',
@@ -539,13 +539,13 @@ export default {
               log_param_name: 'code',
               metric: 'req_fail_rate',
               display_name: this.$t('m_failure_rate'),
-              agg_type: '100-100*{req_suc_count}/{req_count}',
+              agg_type: '100*{req_fail_count_detail}/{req_count}',
               tag_config: [
                 'code'
               ],
               color_group: '#7c1823',
-              auto_alarm: false,
-              range_config: cloneDeep(initRangeConfigMap.other)
+              auto_alarm: true,
+              range_config: cloneDeep(initRangeConfigMap.req_fail_rate)
             },
             {
               log_param_name: 'code',
