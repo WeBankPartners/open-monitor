@@ -23,7 +23,17 @@
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
+      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
+      <Page
+        class="table-pagination"
+        :total="pagination.total"
+        @on-change="(e) => {pagination.page = e; this.getHistoryAlarmData()}"
+        @on-page-size-change="(e) => {pagination.pageSize = e; this.getHistoryAlarmData()}"
+        :current="pagination.page"
+        :page-size="pagination.pageSize"
+        show-total
+        show-sizer
+      />
     </Modal>
   </div>
 </template>
@@ -152,7 +162,13 @@ export default {
       strategyNameMaps: {
         endpointGroup: 'm_base_group',
         serviceGroup: 'm_field_resourceLevel'
-      }
+      },
+      pagination: {
+        page: 1,
+        pageSize: 10,
+        total: 0
+      },
+      endPointItem: {}
     }
   },
   created() {
@@ -217,14 +233,26 @@ export default {
     },
     // #region 历史告警
     historyAlarm(rowData) {
-      const params = {
-        id: rowData.id
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, responseData => {
-        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
-      })
+      this.pagination.page = 1
+      this.pagination.pageSize = 10
+      this.endPointItem = rowData
+      this.pagination.total = 0
+      this.historyAlarmPageConfig.table.tableData = []
+      this.getHistoryAlarmData()
       this.isfullscreen = false
       this.historyAlarmModel = true
+    },
+    getHistoryAlarmData() {
+      const params = {
+        id: this.endPointItem.id,
+        page: this.pagination.page,
+        pageSize: this.pagination.pageSize,
+        serviceGroup: this.endPointItem.option_value,
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, responseData => {
+        this.pagination.total = responseData.pageInfo.totalRows
+        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData.contents.problem_list || [])
+      })
     },
     changeResultData(dataList) {
       if (dataList && !isEmpty(dataList)) {
@@ -262,7 +290,12 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="less" scoped>
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
 .btn-jump {
   margin-left: 10px;
 }

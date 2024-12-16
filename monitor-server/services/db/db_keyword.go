@@ -490,6 +490,7 @@ func inActiveWindow(activeWindow string) bool {
 		fmt.Printf("end time:%s parse err:%s \n", end, endErr.Error())
 		return true
 	}
+	endTime = endTime.Add(1 * time.Second)
 	nowTime := time.Now().Unix()
 	if nowTime >= startTime.Unix() && nowTime <= endTime.Unix() {
 		return true

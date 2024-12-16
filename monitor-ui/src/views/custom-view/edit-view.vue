@@ -806,9 +806,17 @@ export default {
         if (isEmpty(initialData)) {
           return []
         }
+        const promiseArr = []
+        let resultPromiseArr = []
         for (let i=0; i < initialData.length; i++) {
           const item = initialData[i]
-          item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
+          promiseArr.push(this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup))
+        }
+        resultPromiseArr = await Promise.all(promiseArr)
+        for (let i=0; i < initialData.length; i++) {
+          const item = initialData[i]
+          // item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup)
+          item.tagOptions = resultPromiseArr[i]
           Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
           // 同环比修改
           if (item.comparison) {

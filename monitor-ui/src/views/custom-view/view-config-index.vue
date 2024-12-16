@@ -223,7 +223,11 @@
         </template>
       </AuthDialog>
 
-      <Modal v-model="isShowProcessConfigModel" :title="$t(processConfigModel.modalTitle)" :mask-closable="false">
+      <Modal v-model="isShowProcessConfigModel"
+             :title="$t(processConfigModel.modalTitle)"
+             :mask-closable="false"
+             @on-ok="processConfigSave"
+      >
         <div style="padding: 0 12px; max-height: 500px; overflow-y: auto">
           <div style="display: flex;">
             <div class="port-title">
@@ -447,7 +451,6 @@ export default {
       this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.isShowProcessConfigModel = false
-        // this.$root.JQ('#set_dashboard_modal').modal('hide')
         this.getViewList()
       })
     },
