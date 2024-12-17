@@ -112,12 +112,19 @@
         </div>
       </div>
     </Modal>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 <script>
+import {isEmpty, cloneDeep} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
-// 引入 ECharts 主模块
 import {readyToDraw} from '@/assets/config/chart-rely'
+import ChartLinesModal from '@/components/chart-lines-modal'
 export default {
   name: '',
   data() {
@@ -177,12 +184,16 @@ export default {
         id: '',
         title: '',
       },
-      originalMetricsId: ''
+      originalMetricsId: '',
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   mounted() {
     this.getMetricOptions()
     this.getEndpointType()
+    this.$on('editShowLines', this.handleEditShowLines)
   },
   methods: {
     configMetric() {
@@ -367,9 +378,6 @@ export default {
       }, {isNeedloading: false})
     },
     async getDispalyChartData() {
-      generateUuid().then(elId => {
-        this.displayGroupElId = `id_${elId}`
-      })
       const params = {
         aggregate: 'none',
         time_second: -1800,
@@ -393,12 +401,25 @@ export default {
         const chartConfig = {
           eye: false,
           clear: true,
-          lineBarSwitch: true
+          lineBarSwitch: true,
+          chartId: this.displayGroupElId,
+          canEditShowLines: true,
+          dataZoom: false
         }
-        readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
+        responseData.chartId = this.displayGroupElId
+        this.chartInstance = readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
+        if (this.chartInstance) {
+          this.chartInstance.on('legendselectchanged', params => {
+            window['view-config-selected-line-data'][this.displayGroupElId] = cloneDeep(params.selected)
+          })
+        }
       }, {isNeedloading: false})
     },
     checkEndpoint() {
+      window['view-config-selected-line-data'] = {}
+      generateUuid().then(elId => {
+        this.displayGroupElId = `id_${elId}`
+      })
       this.getDispalyChartData()
     },
     getEndpoint() {
@@ -431,7 +452,24 @@ export default {
       this.metricConfigData.metric = ''
       this.metricConfigData.prom_expr = ''
       this.isRequestChartData = false
-    }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.getDispalyChartData()
+    },
+  },
+  components: {
+    ChartLinesModal
   }
 }
 </script>

@@ -450,18 +450,6 @@ export const drawChart = function (that,config,userConfig, elId) {
       yAxisIndex: 'none'
     }
   }
-  if (!isEmpty(window['view-config-selected-line-data']) && finalConfig.chartId && !isEmpty(window['view-config-selected-line-data'][finalConfig.chartId])) {
-    option.legend.selected = window['view-config-selected-line-data'][finalConfig.chartId]
-  }
-  // 绘制图表
-  myChart.clear()
-  myChart.setOption(option)
-  // 清空所有事件重新绑定
-  myChart.off()
-  setTimeout(() => {
-    myChart.resize()
-  }, 200)
-
   if (finalConfig.zoomCallback) {
     myChart.on('datazoom', function (params) {
       let startValue = null
@@ -475,6 +463,32 @@ export const drawChart = function (that,config,userConfig, elId) {
       that.getChartData(null,startValue, endValue)
     })
   }
+  if (finalConfig.canEditShowLines) {
+    option.toolbox.feature.myEditLines = {
+      show: true,
+      title: that.$t('m_line_display_modification'),
+      icon: 'image://data:image/png;base64,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',
+      iconStyle: {
+        font: '22px',
+        opacity: 0.7
+      },
+      onclick: () => {
+        that.$emit('editShowLines', config)
+      }
+    }
+  }
+  if (!isEmpty(window['view-config-selected-line-data']) && finalConfig.chartId && !isEmpty(window['view-config-selected-line-data'][finalConfig.chartId])) {
+    option.legend.selected = window['view-config-selected-line-data'][finalConfig.chartId]
+  }
+  // 绘制图表
+  myChart.clear()
+  myChart.setOption(option)
+  // 清空所有事件重新绑定
+  myChart.off()
+  setTimeout(() => {
+    myChart.resize()
+  }, 200)
+
   return myChart
 }
 
