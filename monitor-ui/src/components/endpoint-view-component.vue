@@ -229,7 +229,7 @@ export default {
     },
     zoomChart(data) {
       this.showMaxChart = true
-      this.$refs.maxChart.getChartData(data)
+      this.$refs.maxChart.enlargeChart(data)
     },
     // #region 历史告警
     historyAlarm(rowData) {

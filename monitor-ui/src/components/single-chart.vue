@@ -13,6 +13,7 @@
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
+import {cloneDeep} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 // const echarts = require('echarts/lib/echarts');
 
@@ -32,7 +33,11 @@ export default {
   props: {
     chartInfo: Object,
     params: Object,
-    chartIndex: Number
+    chartIndex: Number,
+    refreshNow: {
+      type: Boolean,
+      default: null
+    }
   },
   created(){
     // 外部触发清除刷新
@@ -51,7 +56,12 @@ export default {
           this.getChartData()
         },this.params.autoRefresh*1000)
       }
-    }
+    },
+    refreshNow: {
+      handler() {
+        this.getChartData()
+      }
+    },
   },
   mounted() {
     this.getChartData()
@@ -120,10 +130,16 @@ export default {
         const chartConfig = {
           clear: false,
           editTitle: false,
-          lineBarSwitch: true
+          lineBarSwitch: true,
+          canEditShowLines: true,
+          dataZoom: false,
+          chartId: this.chartInfo.id + ''
         }
         responseData.metric = this.chartInfo.metric[0]
         this.chartInstance = readyToDraw(this,responseData, this.chartIndex, chartConfig)
+        this.chartInstance.on('legendselectchanged', params => {
+          window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
+        })
       }, { isNeedloading: false })
     },
     onMouseLeaveContent() {

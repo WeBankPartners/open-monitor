@@ -362,44 +362,12 @@
     </Modal>
 
     <!-- 实现线条是否展现弹窗 -->
-    <Modal v-model="isLineSelectModalShow"
-           :title="$t('m_line_display_modification')"
-           :mask-closable="false"
-           :width="1000"
-           @on-visible-change="onLineSelectChangeCancel"
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
     >
-      <div v-if="isLineSelectModalShow">
-        <Form :label-width="80" v-if="!isEmpty(lineSelectModalData[setChartConfigId]) && Object.keys(lineSelectModalData[setChartConfigId]).length > 0">
-          <FormItem :label="$t('m_line_search')">
-            <Input v-model.trim="lineNameSearch" clearable style="width: 300px" />
-            <Checkbox v-model="islineSelectAll"
-                      style="margin-left: 10px"
-                      @on-change="onLineSelectAllChange"
-            >
-              <span>{{$t('m_select_all')}}</span>
-            </Checkbox>
-          </FormItem>
-          <FormItem :label="$t('m_show_line')">
-            <Row style="min-height: 200px; max-height: 400px;overflow-y: auto;">
-              <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
-              <Checkbox v-model="lineSelectModalData[setChartConfigId][seriesName]">
-                <Tooltip :content="seriesName" transfer :max-width='400'>
-                  <div class="ellipsis-text">{{ seriesName }}</div>
-                </Tooltip>
-              </Checkbox>
-              </Col>
-            </Row>
-          </FormItem>
-        </Form>
-        <span v-else>
-          {{ $t('m_noData') }}
-        </span>
-      </div>
-      <template slot='footer'>
-        <Button @click="onLineSelectChangeCancel(false)">{{ $t('m_button_cancel') }}</Button>
-        <Button @click="onLineSelectChange" type="primary">{{ $t('m_button_confirm') }}</Button>
-      </template>
-    </Modal>
+    </ChartLinesModal>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" ></AuthDialog>
     <ExportChartModal
       :isModalShow="isModalShow"
@@ -422,6 +390,7 @@ import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
@@ -583,9 +552,6 @@ export default {
       ],
       isShowLoading: false,
       isLineSelectModalShow: false,
-      lineSelectModalData: {},
-      lineNameSearch: '',
-      islineSelectAll: true,
       isEmpty,
       scrollRefresh: false,
       hasNotRequestStatus: true
@@ -597,12 +563,6 @@ export default {
     },
     isEditStatus() {
       return this.permission === 'edit'
-    },
-    allShowLineName() {
-      if (Object.keys(this.lineSelectModalData[this.setChartConfigId]).length > 0) {
-        return Object.keys(this.lineSelectModalData[this.setChartConfigId]).filter(item => item.indexOf(this.lineNameSearch) !== -1)
-      }
-      return []
     }
   },
   mounted() {
@@ -615,8 +575,7 @@ export default {
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
-    this.lineSelectModalData = {}
-    window['view-config-selected-line-data'] = null
+    window['view-config-selected-line-data'] = {}
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
@@ -789,10 +748,6 @@ export default {
           partGroupDisplayConfig: item.groupDisplayConfig === '' ? '' : JSON.parse(item.groupDisplayConfig),
           logMetricGroup: item.logMetricGroup
         })
-      }
-      // 初始化时，给window['view-config-selected-line-data']赋值
-      if (isEmpty(window['view-config-selected-line-data'])) {
-        window['view-config-selected-line-data'] = cloneDeep(this.lineSelectModalData)
       }
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
@@ -1660,32 +1615,11 @@ export default {
     },
     showLineSelectModal(item) {
       this.setChartConfigId = item.id
-      if (!isEmpty(window['view-config-selected-line-data'])) {
-        this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
-      }
-      if (!isEmpty(this.lineSelectModalData[this.setChartConfigId]) && Object.values(this.lineSelectModalData[this.setChartConfigId]).every(item => item === true)) {
-        this.islineSelectAll = true
-      } else {
-        this.islineSelectAll = false
-      }
-      this.lineNameSearch = ''
       this.isLineSelectModalShow = true
     },
-    onLineSelectChange() {
-      window['view-config-selected-line-data'] = cloneDeep(this.lineSelectModalData)
+    onLineSelectChangeCancel() {
       this.isLineSelectModalShow = false
       this.refreshNow = !this.refreshNow
-    },
-    onLineSelectChangeCancel(isShow = false) {
-      if (!isShow) {
-        this.lineSelectModalData = cloneDeep(window['view-config-selected-line-data'])
-        this.isLineSelectModalShow = false
-      }
-    },
-    onLineSelectAllChange(val) {
-      for (const line in this.lineSelectModalData[this.setChartConfigId]) {
-        this.lineSelectModalData[this.setChartConfigId][line] = val
-      }
     },
     onGridWindowScroll: debounce(function () {
       this.scrollRefresh = !this.scrollRefresh
@@ -1703,7 +1637,8 @@ export default {
     ViewChart,
     EditView,
     AuthDialog,
-    ExportChartModal
+    ExportChartModal,
+    ChartLinesModal
   },
 }
 </script>

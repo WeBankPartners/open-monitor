@@ -24,8 +24,10 @@
                       :chartInfo="chartInfo"
                       :chartIndex="chartIndex"
                       :params="params"
+                      :refreshNow="refreshNow"
                       @editTitle="editTitle"
                       @sendConfig="receiveConfig"
+                      @editShowLines="handleEditShowLines"
                     > </SingleChart>
                   </div>
                 </template>
@@ -36,12 +38,21 @@
         </transition>
       </li>
     </ul>
+
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
 <script>
+import {isEmpty} from 'lodash'
 import SingleChart from '@/components/single-chart'
+import ChartLinesModal from '@/components/chart-lines-modal'
 export default {
   name: 'recursive',
   data() {
@@ -66,6 +77,9 @@ export default {
           name: null
         },
       },
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      refreshNow: false
     }
   },
   props: {
@@ -115,6 +129,7 @@ export default {
     }
   },
   created() {
+    window['view-config-selected-line-data'] = {}
     this.recursiveViewConfig.map(_ => {
       _._isShow = true
       if (_.charts) {
@@ -157,10 +172,25 @@ export default {
         this.$root.JQ('#edit_Modal').modal('hide')
         this.$root.$eventBus.$emit('refreshRecursive', '')
       })
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.refreshNow = !this.refreshNow
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.id + ''
+      if (isEmpty(window['view-config-selected-line-data'][config.id])) {
+        window['view-config-selected-line-data'][config.id + ''] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][config.id][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
     }
   },
   components: {
-    SingleChart
+    SingleChart,
+    ChartLinesModal
   }
 }
 </script>
