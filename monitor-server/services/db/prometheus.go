@@ -129,7 +129,9 @@ func checkRuleConfigTime(refreshAll bool) {
 			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
 		}
 	}
-	prom.ReloadConfig()
+	if len(endpointGroup) > 0 {
+		prom.ReloadConfig()
+	}
 	ruleConfigSyncTime = time.Now().Unix()
 }
 
