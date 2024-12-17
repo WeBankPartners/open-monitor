@@ -93,11 +93,18 @@
         <Button type="primary" class="primary" :disabled="viewOnly" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
 <script>
-import {isEmpty} from 'lodash'
+import {isEmpty, cloneDeep} from 'lodash'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
@@ -161,6 +168,9 @@ export default {
       maxHeight: 500,
       monitorTypeOptions: [],
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   computed: {
@@ -199,6 +209,11 @@ export default {
       this.metricConfigData.metric += '1'
     }
     this.getEndpoint()
+    generateUuid().then(elId => {
+      this.echartId = `id_${elId}`
+    })
+    window['view-config-selected-line-data'] = {}
+    this.$on('editShowLines', this.handleEditShowLines)
   },
   methods: {
     setPreviewObject(obj) {
@@ -333,17 +348,9 @@ export default {
         return
       }
       this.getChartData()
-      // if (this.workspace === 'all_object') {
-      //   this.getChartData()
-      // } else {
-      //   this.getEndpoint()
-      // }
     },
     // 渲染echart
     async getChartData() {
-      generateUuid().then(elId => {
-        this.echartId = `id_${elId}`
-      })
       const params = {
         calc_service_group_enable: true,
         aggregate: 'none',
@@ -371,9 +378,18 @@ export default {
           const chartConfig = {
             eye: false,
             clear: true,
-            lineBarSwitch: true
+            lineBarSwitch: true,
+            canEditShowLines: true,
+            dataZoom: false,
+            chartId: this.echartId
           }
-          readyToDraw(this, responseData, 1, chartConfig, this.echartId)
+          responseData.chartId = this.echartId
+          this.chartInstance = readyToDraw(this, responseData, 1, chartConfig, this.echartId)
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data'][this.echartId] = cloneDeep(params.selected)
+            })
+          }
         },
         { isNeedloading: false }
       )
@@ -411,7 +427,24 @@ export default {
     },
     handleCancel() {
       this.$emit('update:visible', false)
-    }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.handleEndPointChange(this.metricConfigData.endpoint)
+    },
+  },
+  components: {
+    ChartLinesModal
   }
 }
 </script>

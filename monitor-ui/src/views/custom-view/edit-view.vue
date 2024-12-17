@@ -208,6 +208,12 @@
       <Button type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
@@ -223,6 +229,7 @@ import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
 import { generateUuid, getRandomColor } from '@/assets/js/utils'
 import { changeSeriesColor } from '@/assets/config/random-color'
+import ChartLinesModal from '@/components/chart-lines-modal'
 const initTableData = [
   {
     endpoint: '',
@@ -734,7 +741,10 @@ export default {
       chartAddTags: [],
       getEndpointSearch: '',
       selectedEndpointOptionItem: {},
-      isChartSeriesEmpty: false
+      isChartSeriesEmpty: false,
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   computed: {
@@ -775,6 +785,7 @@ export default {
     })
   },
   mounted() {
+    this.$on('editShowLines', this.handleEditShowLines)
     this.getAllRolesOptions()
     this.getSingleChartAuth()
     this.getTableData()
@@ -1302,14 +1313,23 @@ export default {
               return
             }
             responseData.yaxis.unit = this.chartConfigForm.unit
+            responseData.chartId = this.elId
             this.isChartSeriesEmpty = false
             setTimeout(() => {
-              readyToDraw(this, responseData, 1, {
+              this.chartInstance = readyToDraw(this, responseData, 1, {
                 eye: false,
                 lineBarSwitch: true,
                 chartType: this.chartConfigForm.chartType,
+                chartId: this.elId,
+                canEditShowLines: true,
+                dataZoom: false,
                 params
               })
+              if (this.chartInstance) {
+                this.chartInstance.on('legendselectchanged', params => {
+                  window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+                })
+              }
             }, 100)
           }
         )
@@ -1379,11 +1399,26 @@ export default {
           })
         })
       }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.debounceDrawChart()
     }
   },
   components: {
     TagShow,
-    AuthDialog
+    AuthDialog,
+    ChartLinesModal
   }
 }
 

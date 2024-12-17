@@ -91,13 +91,19 @@
         <Button type="primary" class="primary" :disabled="metricConfigData.metricId === '' || metricConfigData.calcType.length === 0 || viewOnly" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
 <script>
 import { debounce} from '@/assets/js/utils'
-import {cloneDeep} from 'lodash'
-// import { readyToDraw } from '@/assets/config/chart-rely-yoy'
+import {isEmpty, cloneDeep} from 'lodash'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
 export default {
@@ -198,6 +204,9 @@ export default {
         }
       ],
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   computed: {
@@ -218,6 +227,8 @@ export default {
       this.getConfigData()
     }
     await this.getEndpoint()
+    window['view-config-selected-line-data'] = {}
+    this.$on('editShowLines', this.handleEditShowLines)
   },
   methods: {
     setPreviewObject(obj) {
@@ -361,9 +372,17 @@ export default {
             lineBarSwitch: true,
             params: {
               lineType: 2
-            }
+            },
+            chartId: 'echartId',
+            canEditShowLines: true
           }
-          readyToDraw(this, responseData, 1, chartConfig, 'echartId')
+          responseData.chartId = 'echartId'
+          this.chartInstance = readyToDraw(this, responseData, 1, chartConfig, 'echartId')
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data']['echartId'] = cloneDeep(params.selected)
+            })
+          }
         },
         { isNeedloading: false }
       )
@@ -395,7 +414,24 @@ export default {
     },
     handleCancel() {
       this.$emit('update:visible', false)
-    }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.getChartData()
+    },
+  },
+  components: {
+    ChartLinesModal
   }
 }
 </script>
