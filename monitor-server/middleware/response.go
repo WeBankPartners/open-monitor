@@ -1,12 +1,13 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strings"
+	"strconv"
 )
 
 type RespJson struct {
@@ -21,13 +22,18 @@ type ResponsePageData struct {
 	Contents interface{}     `json:"contents"`
 }
 
-func ReturnError(c *gin.Context, code int, msg string, err error) {
-	log.Logger.Error(fmt.Sprintf("Request %s fail", c.FullPath()), log.Int("Code", code), log.String("Message", msg), log.Error(err))
-	if models.Config().Log.Level == "debug" {
-		c.JSON(code, RespJson{Status: "ERROR", Code: 200, Message: msg, Data: err})
+func ReturnError(c *gin.Context, err error, statusCode int) {
+	errorCode, errorKey, errorMessage := models.GetErrorResult(c.GetHeader("Accept-Language"), err, -1)
+	if !models.IsBusinessErrorCode(errorCode) {
+		log.Logger.Error("systemError", log.String("url", c.FullPath()), log.Int("errorCode", errorCode), log.String("errorKey", errorKey), log.String("message", errorMessage), log.Error(err))
 	} else {
-		c.JSON(code, RespJson{Status: "ERROR", Code: 200, Message: msg})
+		log.Logger.Error("businessError", log.String("url", c.FullPath()), log.Int("errorCode", errorCode), log.String("errorKey", errorKey), log.String("message", errorMessage), log.Error(err))
 	}
+	c.Writer.Header().Add("Error-Code", strconv.Itoa(errorCode))
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+	c.JSON(statusCode, RespJson{Status: "ERROR", Code: errorCode, Message: errorMessage})
 }
 
 func ReturnSuccessWithMessage(c *gin.Context, msg string) {
@@ -35,7 +41,7 @@ func ReturnSuccessWithMessage(c *gin.Context, msg string) {
 }
 
 func ReturnSuccess(c *gin.Context) {
-	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: GetMessageMap(c).Success})
+	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: models.GetMessageMap(c).Success})
 }
 
 func ReturnData(c *gin.Context, data interface{}) {
@@ -49,73 +55,109 @@ func ReturnSuccessData(c *gin.Context, data interface{}) {
 	if fmt.Sprintf("%v", data) == `[]` {
 		data = []string{}
 	}
-	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: GetMessageMap(c).Success, Data: data})
+	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: models.GetMessageMap(c).Success, Data: data})
 }
 
 func ReturnPageData(c *gin.Context, pageInfo models.PageInfo, data interface{}) {
-	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: GetMessageMap(c).Success, Data: ResponsePageData{PageInfo: pageInfo, Contents: data}})
+	c.JSON(http.StatusOK, RespJson{Status: "OK", Code: 200, Message: models.GetMessageMap(c).Success, Data: ResponsePageData{PageInfo: pageInfo, Contents: data}})
 }
 
 func ReturnValidateError(c *gin.Context, msg string) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).ParamValidateError, msg), nil)
+	ReturnError(c, models.GetMessageMap(c).ParamValidateError.WithParam(msg), http.StatusOK)
 }
 
 func ReturnParamTypeError(c *gin.Context, paramName, typeName string) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).ParamTypeError, paramName, typeName), nil)
+	ReturnError(c, models.GetMessageMap(c).ParamTypeError.WithParam(paramName, typeName), http.StatusOK)
 }
 
 func ReturnParamEmptyError(c *gin.Context, key string) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).ParamEmptyError, key), nil)
+	ReturnError(c, models.GetMessageMap(c).ParamEmptyError.WithParam(key), http.StatusOK)
 }
 
 func ReturnQueryTableError(c *gin.Context, table string, err error) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).QueryTableError, table), err)
-}
-
-func ReturnFetchDataError(c *gin.Context, table, key, value string) {
-	tmpErrorMessage := GetMessageMap(c).FetchTableDataError
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%t", table, -1)
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%k", key, -1)
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%v", value, -1)
-	ReturnError(c, http.StatusOK, tmpErrorMessage, nil)
+	errMsg := fmt.Errorf("%s,%s", table, err.Error())
+	ReturnError(c, models.GetMessageMap(c).QueryTableError.WithParam(errMsg), http.StatusOK)
 }
 
 func ReturnUpdateTableError(c *gin.Context, table string, err error) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).UpdateTableError, table)+" detail: "+err.Error(), err)
+	ReturnError(c, models.GetMessageMap(c).UpdateTableError.WithParam(table+" detail: "+err.Error()), http.StatusOK)
 }
 
-func ReturnDeleteTableError(c *gin.Context, table, key, value string, err error) {
-	tmpErrorMessage := GetMessageMap(c).DeleteTableDataError
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%t", table, -1)
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%k", key, -1)
-	tmpErrorMessage = strings.Replace(tmpErrorMessage, "%v", value, -1)
-	ReturnError(c, http.StatusOK, tmpErrorMessage, err)
+func ReturnFetchDataError(c *gin.Context, table, key, value string) {
+	ReturnError(c, models.GetMessageMap(c).FetchTableDataError.WithParam(table, key, value), http.StatusOK)
+}
+
+func ReturnDeleteTableError(c *gin.Context, table, key, value string) {
+	ReturnError(c, models.GetMessageMap(c).DeleteTableDataError.WithParam(table, key, value), http.StatusOK)
 }
 
 func ReturnBodyError(c *gin.Context, err error) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).RequestBodyError, err)
+	if err != nil {
+		var customErr models.CustomError
+		if errors.As(err, &customErr) {
+			ReturnError(c, customErr, http.StatusOK)
+		} else {
+			ReturnError(c, models.GetMessageMap(c).RequestBodyError, http.StatusOK)
+		}
+		return
+	}
+	ReturnError(c, models.GetMessageMap(c).RequestBodyError, http.StatusOK)
 }
 
 func ReturnRequestJsonError(c *gin.Context, err error) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).RequestJsonUnmarshalError, err)
+	if err != nil {
+		var customErr models.CustomError
+		if errors.As(err, &customErr) {
+			ReturnError(c, customErr, http.StatusOK)
+		} else {
+			ReturnError(c, models.GetMessageMap(c).RequestJsonUnmarshalError, http.StatusOK)
+		}
+		return
+	}
+	ReturnError(c, models.GetMessageMap(c).RequestJsonUnmarshalError, http.StatusOK)
 }
 
 func ReturnHandleError(c *gin.Context, msg string, err error) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).HandleError, msg), err)
+	if err != nil {
+		var customErr models.CustomError
+		if errors.As(err, &customErr) {
+			ReturnError(c, customErr.WithParam(msg), http.StatusOK)
+		} else {
+			ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(msg), http.StatusOK)
+		}
+		return
+	}
+	ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(msg), http.StatusOK)
 }
 
 func ReturnServerHandleError(c *gin.Context, err error) {
-	ReturnError(c, http.StatusOK, fmt.Sprintf(GetMessageMap(c).HandleError, err.Error()), err)
+	if err != nil {
+		var customErr models.CustomError
+		if errors.As(err, &customErr) {
+			ReturnError(c, customErr, http.StatusOK)
+		} else {
+			ReturnError(c, models.GetMessageMap(c).HandleError, http.StatusOK)
+		}
+		return
+	}
+	ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(err.Error()), http.StatusOK)
 }
 
 func ReturnPasswordError(c *gin.Context) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).PasswordError, nil)
+	ReturnError(c, models.GetMessageMap(c).PasswordError, http.StatusOK)
 }
 
 func ReturnTokenError(c *gin.Context) {
-	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
+	ReturnError(c, models.GetMessageMap(c).TokenError, http.StatusUnauthorized)
 }
 
 func ReturnDashboardNameRepeatError(c *gin.Context) {
-	ReturnError(c, http.StatusOK, GetMessageMap(c).DashboardNameRepeatError, nil)
+	ReturnError(c, models.GetMessageMap(c).DashboardNameRepeatError, http.StatusOK)
+}
+
+func InitHttpError() {
+	err := models.InitErrorTemplateList("./conf/i18n")
+	if err != nil {
+		log.Logger.Error("Init error template list fail", log.Error(err))
+	}
 }
