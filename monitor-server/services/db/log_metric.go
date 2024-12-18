@@ -768,7 +768,7 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 	return
 }
 
-func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (err error) {
+func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []string, errMsgObj *models.ErrorTemplate) (err error) {
 	var actions []*Action
 	var dashboardIdList []int64
 	var existLogMetricMonitorMap = make(map[string]*models.LogMetricMonitorObj)
@@ -901,7 +901,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	return
 }
 
-func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, roles []string) (actions []*Action, dashboardId []int64, affectHost []string, affectEndpointGroup []string, err error) {
+func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonitorObj, nowTime, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorTemplate, roles []string) (actions []*Action, dashboardId []int64, affectHost []string, affectEndpointGroup []string, err error) {
 	dashboardId = []int64{}
 	if existObj.Guid != "" {
 		// compare log json monitor
@@ -1043,7 +1043,7 @@ func getCreateDBMetricMonitorByImport(inputObj *models.DbMetricMonitorObj, nowTi
 	return
 }
 
-func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, roles []string) (actions []*Action, newDashboardId int64, err error) {
+func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, errMsgObj *models.ErrorTemplate, roles []string) (actions []*Action, newDashboardId int64, err error) {
 	var tmpActions []*Action
 	if metricGroup.LogMonitorTemplate != "" && (metricGroup.LogType == models.LogMonitorRegularType || metricGroup.LogType == models.LogMonitorJsonType) {
 		metricGroup.LogMonitorTemplate, err = GetLogTemplateGuidByName(metricGroup.LogMonitorTemplateName)
@@ -1264,7 +1264,7 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string, roles []string, errMsgObj *models.ErrorTemplate) (result *models.CreateLogMetricGroupDto, err error) {
 	param.LogMetricGroupGuid = ""
 	var actions []*Action
 	var newDashboardId int64
@@ -1283,7 +1283,7 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 		}
 		// 新增看板已经入库,这里数量大于1表示有重复名称
 		if len(customDashboardList) > 1 {
-			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, customDashboardName)
+			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError.Error(), customDashboardName)
 			return
 		}
 	}
@@ -1293,7 +1293,7 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
-func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorMessageObj, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
+func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string, roles []string, existMetricMap map[string]string, errMsgObj *models.ErrorTemplate, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
 	var templateSnapshot []byte
 	var refTemplateVersion, endpointGroup string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
@@ -1761,7 +1761,7 @@ func getLogMetricGroupMapData(logMetricGroupGuid string) (result map[string][]*m
 	return
 }
 
-func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.CreateLogMetricGroupDto, err error) {
+func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string, errMsgObj *models.ErrorTemplate) (result *models.CreateLogMetricGroupDto, err error) {
 	param.Guid = ""
 	var actions []*Action
 	var newDashboardId int64
@@ -1775,7 +1775,7 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	return
 }
 
-func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorMessageObj, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
+func getCreateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, operator string, existMetricMap map[string]string, roles []string, errMsgObj *models.ErrorTemplate, doImport bool) (actions []*Action, result *models.CreateLogMetricGroupDto, newDashboardId int64, err error) {
 	var endpointGroup, refTemplateVersion string
 	var subCreateAlarmStrategyActions, subCreateDashboardActions []*Action
 	var serviceGroupsRoles, alarmStrategyList []string

@@ -48,7 +48,7 @@ func MetricList(id string, endpointType, serviceGroup string) (result []*models.
 	return
 }
 
-func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *models.ErrorMessageObj) error {
+func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *models.ErrorTemplate) error {
 	var actions []*Action
 	var metricTemp *models.MetricTable
 	var metricList []*models.MetricTable
@@ -75,7 +75,7 @@ func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *model
 			return err
 		}
 		if metricTemp != nil && metricTemp.Guid != "" {
-			return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+			return errMsgObj.AddMetricRepeatError
 		}
 		// 同一个层级对象或者对象组里面指标名称重复,也需要校验
 		if metricList, err = GetMetricByName(metric.Metric); err != nil {
@@ -84,10 +84,10 @@ func MetricCreate(param []*models.MetricTable, operator string, errMsgObj *model
 		if len(metricList) > 0 {
 			for _, m := range metricList {
 				if m.ServiceGroup != "" && m.ServiceGroup == metric.ServiceGroup {
-					return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+					return errMsgObj.AddMetricRepeatError
 				}
 				if m.EndpointGroup != "" && m.EndpointGroup == metric.EndpointGroup {
-					return fmt.Errorf(errMsgObj.AddMetricRepeatError)
+					return errMsgObj.AddMetricRepeatError
 				}
 			}
 		}
