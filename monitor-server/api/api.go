@@ -413,7 +413,7 @@ func InitHttpServer() {
 			authRouter.DELETE(funcObj.Url, funcObj.HandlerFunc)
 			break
 		}
-		apiCodeMap[fmt.Sprintf("%s_%s%s", funcObj.Method, models.UrlPrefix, funcObj.Url)] = funcObj.ApiCode
+		apiCodeMap[fmt.Sprintf("%s_%s%s", funcObj.Method, models.UrlPrefix+"/api/v1", funcObj.Url)] = funcObj.ApiCode
 	}
 	authRouterV2 := r.Group(urlPrefix+"/api/v2", user.AuthRequired())
 	for _, funcObj := range httpHandlerFuncListV2 {
@@ -435,7 +435,7 @@ func InitHttpServer() {
 			authRouterV2.DELETE(funcObj.Url, handleFuncList...)
 			break
 		}
-		apiCodeMap[fmt.Sprintf("%s_%s%s", funcObj.Method, models.UrlPrefix, funcObj.Url)] = funcObj.ApiCode
+		apiCodeMap[fmt.Sprintf("%s_%s%s", funcObj.Method, models.UrlPrefix+"/api/v2", funcObj.Url)] = funcObj.ApiCode
 	}
 	r.Run(":" + models.Config().Http.Port)
 }
