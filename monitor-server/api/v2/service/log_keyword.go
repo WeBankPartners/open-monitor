@@ -121,11 +121,11 @@ func CreateLogKeyword(c *gin.Context) {
 		return
 	}
 	if len(sameNameList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertNameRepeatError)
 		return
 	}
 	if len(sameKeywordList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertKeywordRepeatError)
 		return
 	}
 	err = db.CreateLogKeyword(&param, middleware.GetOperateUser(c))
@@ -164,11 +164,11 @@ func UpdateLogKeyword(c *gin.Context) {
 		return
 	}
 	if len(sameNameList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertNameRepeatError)
 		return
 	}
 	if len(sameKeywordList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertKeywordRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertKeywordRepeatError)
 		return
 	}
 	if err = db.UpdateLogKeyword(&param, logKeywordConfig, middleware.GetOperateUser(c)); err != nil {

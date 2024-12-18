@@ -453,7 +453,7 @@ func SyncData() (err error) {
 	return
 }
 
-func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
+func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string, errMsgObj *models.ErrorTemplate) (err error) {
 	var result sql.Result
 	var newDashboardId int64
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
@@ -544,7 +544,7 @@ func CountCustomDashboardByName(name string) int {
 	return count
 }
 
-func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
+func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorTemplate) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
 	var customDashboardList []*models.CustomDashboardTable
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
 	var result sql.Result
@@ -582,7 +582,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 		param.Name = param.Name + "(1)"
 		tempList, _ := QueryCustomDashboardListByName(param.Name)
 		if len(tempList) > 0 {
-			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, param.Name)
+			err = errMsgObj.ImportDashboardNameExistError.WithParam(param.Name)
 			return
 		}
 	}

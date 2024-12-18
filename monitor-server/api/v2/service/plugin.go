@@ -29,7 +29,7 @@ func PluginUpdateServicePath(c *gin.Context) {
 		return
 	}
 	for _, input := range param.Inputs {
-		output, tmpErr := db.PluginUpdateServicePathAction(input, middleware.GetOperateUser(c), []string{}, middleware.GetMessageMap(c))
+		output, tmpErr := db.PluginUpdateServicePathAction(input, middleware.GetOperateUser(c), []string{}, models.GetMessageMap(c))
 		if tmpErr != nil {
 			output.ErrorCode = "1"
 			output.ErrorMessage = tmpErr.Error()

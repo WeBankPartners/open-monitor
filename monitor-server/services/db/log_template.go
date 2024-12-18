@@ -268,7 +268,7 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	return
 }
 
-func DeleteLogMonitorTemplate(logMonitorTemplateGuid string, errMsgObj *models.ErrorMessageObj) (err error) {
+func DeleteLogMonitorTemplate(logMonitorTemplateGuid string, errMsgObj *models.ErrorTemplate) (err error) {
 	var actions []*Action
 	if actions, err = getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid, errMsgObj); err != nil {
 		return
@@ -277,7 +277,7 @@ func DeleteLogMonitorTemplate(logMonitorTemplateGuid string, errMsgObj *models.E
 	return
 }
 
-func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string, errMsgObj *models.ErrorMessageObj) (actions []*Action, err error) {
+func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string, errMsgObj *models.ErrorTemplate) (actions []*Action, err error) {
 	var logMetricGroupNameList []string
 	if _, err = GetSimpleLogMonitorTemplate(logMonitorTemplateGuid); err != nil {
 		return
@@ -286,7 +286,7 @@ func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string, errMsgObj
 		return
 	}
 	if len(logMetricGroupNameList) > 0 {
-		err = fmt.Errorf(errMsgObj.LogMonitorTemplateDeleteError, strings.Join(logMetricGroupNameList, ","))
+		err = errMsgObj.LogMonitorTemplateDeleteError.WithParam(strings.Join(logMetricGroupNameList, ","))
 		return
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_template where log_monitor_template=?", Param: []interface{}{logMonitorTemplateGuid}})

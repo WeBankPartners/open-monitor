@@ -328,7 +328,7 @@ func CopyCustomDashboard(c *gin.Context) {
 		middleware.ReturnValidateError(c, "invalid id")
 		return
 	}
-	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
+	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), models.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -730,13 +730,13 @@ func ImportCustomDashboard(c *gin.Context) {
 			return
 		}
 	}
-	errMsgObj := middleware.GetMessageMap(c)
+	errMsgObj := models.GetMessageMap(c)
 	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles, errMsgObj); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if customDashboard != nil && customDashboard.Id != 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).DashboardIdExistError)
 		return
 	}
 	if importRes != nil && len(importRes.ChartMap) > 0 {
@@ -770,12 +770,12 @@ func TransImportCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
 		return
 	}
-	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, models.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if customDashboard != nil && customDashboard.Id != 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).DashboardIdExistError)
 		return
 	}
 	middleware.ReturnSuccess(c)
