@@ -1932,7 +1932,9 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			// 相同crc策略
 			if row.Tags != alarmConditionObj.Tags {
 				// 不同标签
-				err = fmt.Errorf("same crc alarm:%s is firing,ignore this:%s ", row.Tags, alarmConditionObj.Tags)
+				//err = fmt.Errorf("same crc alarm:%s is firing,ignore this:%s ", row.Tags, alarmConditionObj.Tags)
+				log.Logger.Debug("UpdateAlarmWithConditions same crc alarm is firing ignore", log.String("rowTags", row.Tags), log.String("alarmConditionObjTags", alarmConditionObj.Tags))
+				alarmRow = nil
 				return
 			}
 		}
