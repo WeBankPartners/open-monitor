@@ -122,28 +122,28 @@ func DoSyncAgentManagerJob(param []*m.AgentManagerTable, url string) {
 }
 
 func requestAgentMonitor(param interface{}, url, method string) (resp agentManagerResponse, err error) {
-	postData, err := json.Marshal(param)
-	if err != nil {
-		log.Logger.Error("Failed marshalling data", log.Error(err))
-		return resp, err
+	postData, parseReqBodyErr := json.Marshal(param)
+	if parseReqBodyErr != nil {
+		err = fmt.Errorf("Failed marshalling data,%s ", parseReqBodyErr.Error())
+		return
 	}
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/deploy/%s", url, method), strings.NewReader(string(postData)))
-	if err != nil {
-		log.Logger.Error("Curl agent_monitor http request error", log.Error(err))
-		return resp, err
+	req, newReqErr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/deploy/%s", url, method), strings.NewReader(string(postData)))
+	if newReqErr != nil {
+		err = fmt.Errorf("Curl agent_monitor http request error,%s ", newReqErr.Error())
+		return
 	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Logger.Error("Curl agent_monitor http response error", log.Error(err))
-		return resp, err
+	res, doHttpErr := http.DefaultClient.Do(req)
+	if doHttpErr != nil {
+		err = fmt.Errorf("Curl agent_monitor http response error,%s ", doHttpErr.Error())
+		return
 	}
-	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
 	log.Logger.Debug(fmt.Sprintf("Curl %s agent_monitor response : %s ", method, string(body)))
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		log.Logger.Error("Curl agent_monitor unmarshal error", log.Error(err))
-		return resp, err
+		err = fmt.Errorf("Curl agent_monitor unmarshal error,%s ", err.Error())
+		return
 	}
 	return resp, nil
 }
