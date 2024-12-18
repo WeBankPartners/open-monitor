@@ -48,6 +48,5 @@ func main() {
 	go api.InitDependenceParam()
 	go db.StartInitAlarmUniqueTags()
 	go db.SyncMetricComparison()
-	middleware.InitErrorMessageList()
 	api.InitHttpServer()
 }
