@@ -526,7 +526,7 @@ func getStrategyConditionDeleteAction(alarmStrategyGuid string) (actions []*Acti
 	return
 }
 
-func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
+func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) error {
 	if endpointGroup == "" {
 		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
 	}
@@ -576,7 +576,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 		guidExpr, addressExpr, ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
 		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, copyStrategyListNew(strategyList))
 		if cluster == "default" || cluster == "" {
-			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{WithoutReloadConfig: withoutReloadConfig, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 		} else {
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
