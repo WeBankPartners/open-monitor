@@ -1,5 +1,5 @@
 <template>
-  <div class="page" id="endpointView">
+  <div class="endpoint-view-component" id="endpointView">
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' @refreshConfig="refreshConfig" ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
@@ -23,7 +23,7 @@
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
+      <Table class='history-alarm-config' :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
       <Page
         class="table-pagination"
         :total="pagination.total"
@@ -82,7 +82,8 @@ export default {
           tableEle: [
             {
               title: this.$t('m_alarmName'),
-              key: 'alarm_name'
+              key: 'alarm_name',
+              width: 170,
             },
             {
               title: this.$t('m_tableKey_status'),
@@ -102,7 +103,16 @@ export default {
             },
             {
               title: this.$t('m_alarmContent'),
-              key: 'content'
+              key: 'content',
+              width: 200,
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
+                    <div domPropsInnerHTML={params.row.content}></div>
+                  </div>
+                  <div class='column-eclipse'>{params.row.content || '-'}</div>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_tableKey_s_priority'),
@@ -114,20 +124,26 @@ export default {
             },
             {
               title: this.$t('m_field_metric'),
-              key: 'alarm_metric_list_join'
+              key: 'alarm_metric_list_join',
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
+                    <div domPropsInnerHTML={params.row.alarm_metric_list_join}></div>
+                  </div>
+                  <div class='column-eclipse'>{params.row.alarm_metric_list_join || '-'}</div>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_field_threshold'),
               key: 'alarm_detail',
               width: 200,
-              ellipsis: true,
-              tooltip: true,
               render: (h, params) => (
                 <Tooltip transfer={true} placement="bottom-start" max-width="300">
                   <div slot="content">
                     <div domPropsInnerHTML={params.row.alarm_detail}></div>
                   </div>
-                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                  <span class='column-eclipse'>{params.row.alarm_detail}</span>
                 </Tooltip>
               )
             },
@@ -309,6 +325,17 @@ export default {
     margin-right: 28px;
     font-size: 18px;
     cursor: pointer;
+  }
+}
+</style>
+<style lang="less">
+.history-alarm-config {
+  .column-eclipse {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
   }
 }
 </style>
