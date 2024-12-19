@@ -360,7 +360,7 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 			return
 		}
 		if comparison.Guid != "" {
-			middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AddComparisonMetricRepeatError))
+			middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AddComparisonMetricRepeatError)
 			return
 		}
 		// 新增同环比
