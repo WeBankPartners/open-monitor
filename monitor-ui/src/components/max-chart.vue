@@ -60,6 +60,7 @@
       <div class="chart-zone" v-if="isShowChart">
         <div :id="elId" class="echart" :style="chartStyle"></div>
       </div>
+      <div v-else class="no-data-style">{{this.$t('m_noData')}}</div>
     </div>
     <ChartLinesModal
       :isLineSelectModalShow="isLineSelectModalShow"
@@ -192,12 +193,17 @@ export default {
           chartId: this.elId
         }
         responseData.chartId = this.elId
-        this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
-        if (this.chartInstance) {
-          this.chartInstance.on('legendselectchanged', params => {
-            window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
-          })
+        if (!isEmpty(responseData.legend)) {
+          this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+            })
+          }
+        } else {
+          this.isShowChart = false
         }
+
       })
     },
     YoY(status) {
@@ -272,5 +278,11 @@ export default {
 
   .chart-zone {
     margin-top: 12px;
+  }
+  .no-data-style {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: 30px
   }
 </style>
