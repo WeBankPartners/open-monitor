@@ -37,7 +37,7 @@ func ExportPanelAdd(c *gin.Context) {
 	var result resultObj
 	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param.Inputs) == 0 {
-			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "inputs")}
+			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "inputs")}
 			log.Logger.Warn(result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
@@ -59,7 +59,7 @@ func ExportPanelAdd(c *gin.Context) {
 				tmpMessage = checkRoleErr.Error()
 			}
 			if v.Guid == "" {
-				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
+				tmpMessage = fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "guid")
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
@@ -82,7 +82,7 @@ func ExportPanelAdd(c *gin.Context) {
 					if len(tmpList) == 2 {
 						tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
 					} else {
-						tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).ParamTypeError, "endpoint", "[guid] or [ip:port]")
+						tmpMessage += fmt.Sprintf(m.GetMessageMap(c).ParamTypeError.Error(), "endpoint", "[guid] or [ip:port]")
 						continue
 					}
 					endpointObj = m.EndpointTable{Address: tmpAddress}
@@ -90,7 +90,7 @@ func ExportPanelAdd(c *gin.Context) {
 					if endpointObj.Id > 0 {
 						endpointStringList = append(endpointStringList, endpointObj.Guid)
 					} else {
-						tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).FetchTableDataError, "endpoint", "address", tmpAddress)
+						tmpMessage += fmt.Sprintf(m.GetMessageMap(c).FetchTableDataError.Error(), "endpoint", "address", tmpAddress)
 					}
 				}
 			}
@@ -102,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 			}
 			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList, ","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type}, mid.GetOperateUser(c))
 			if err != nil {
-				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
+				tmpMessage = fmt.Sprintf(m.GetMessageMap(c).UpdateTableError.Error(), "recursive_panel")
 				errorMessage = tmpMessage
 				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, ErrorDetail: err.Error(), MonitorKey: v.Guid})
 				successFlag = "1"
@@ -114,7 +114,7 @@ func ExportPanelAdd(c *gin.Context) {
 		log.Logger.Info("Plugin result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
-		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error())}
+		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
 		log.Logger.Warn(result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}
@@ -179,7 +179,7 @@ func ExportPanelDelete(c *gin.Context) {
 				continue
 			}
 			if v.Guid == "" {
-				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
+				tmpMessage = fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "guid")
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
@@ -207,7 +207,7 @@ func ExportPanelDelete(c *gin.Context) {
 						if len(tmpList) == 2 {
 							tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
 						} else {
-							tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).ParamTypeError, "endpoint", "[guid] or [ip:port]")
+							tmpMessage += fmt.Sprintf(m.GetMessageMap(c).ParamTypeError.Error(), "endpoint", "[guid] or [ip:port]")
 							continue
 						}
 						endpointObj = m.EndpointTable{Address: tmpAddress}
@@ -215,7 +215,7 @@ func ExportPanelDelete(c *gin.Context) {
 						if endpointObj.Id > 0 {
 							endpointStringList = append(endpointStringList, endpointObj.Guid)
 						} else {
-							tmpMessage += fmt.Sprintf(mid.GetMessageMap(c).FetchTableDataError, "endpoint", "address", tmpAddress)
+							tmpMessage += fmt.Sprintf(m.GetMessageMap(c).FetchTableDataError.Error(), "endpoint", "address", tmpAddress)
 						}
 					}
 				}
@@ -230,7 +230,7 @@ func ExportPanelDelete(c *gin.Context) {
 				}
 			}
 			if cErr != nil {
-				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
+				tmpMessage = fmt.Sprintf(m.GetMessageMap(c).UpdateTableError.Error(), "recursive_panel")
 				errorMessage = tmpMessage
 				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage, ErrorDetail: cErr.Error()})
 				successFlag = "1"
@@ -242,7 +242,7 @@ func ExportPanelDelete(c *gin.Context) {
 		log.Logger.Info("Plugin result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
-		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error())}
+		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
 		log.Logger.Warn(result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}

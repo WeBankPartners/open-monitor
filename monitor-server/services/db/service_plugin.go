@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj, operator string, roles []string, errMsgObj *models.ErrorMessageObj) (result *models.PluginUpdateServicePathOutputObj, err error) {
+func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj, operator string, roles []string, errMsgObj *models.ErrorTemplate) (result *models.PluginUpdateServicePathOutputObj, err error) {
 	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input), log.String("operator", operator), log.StringList("roles", roles))
 	result = &models.PluginUpdateServicePathOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid}
 	input.SystemName = input.Guid
@@ -81,7 +81,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	return
 }
 
-func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string, logMonitorTemplateGuid, logMonitorPrefixCode, logMonitorName, operator string, roles []string, errMsgObj *models.ErrorMessageObj, logServiceCodeList []*models.PluginUpdateServiceCodeObj) (err error) {
+func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string, logMonitorTemplateGuid, logMonitorPrefixCode, logMonitorName, operator string, roles []string, errMsgObj *models.ErrorTemplate, logServiceCodeList []*models.PluginUpdateServiceCodeObj) (err error) {
 	var logMetricTable []*models.LogMetricMonitorTable
 	err = x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
 	if err != nil {
