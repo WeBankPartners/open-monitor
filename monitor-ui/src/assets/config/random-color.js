@@ -56,7 +56,51 @@ const hslToHex = (h, s, l) => {
   return '#' + r + g + b
 }
 
-const generateAdjacentColors = (hexColor, count, degree) => {
+/**
+ * 生成同一色系的颜色数组
+ * @param {string} color - 原始颜色（十六进制格式，如 #ffffff）
+ * @param {number} length - 生成的颜色数组长度
+ * @returns {string[]} - 返回一个包含颜色的数组
+ */
+function generateAdjacentColors(color, length) {
+  // 十六进制颜色转 RGB
+  const hexToRgb = hex => {
+    const tempHex = hex.replace('#', '')
+    const bigint = parseInt(tempHex, 16)
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255,
+    }
+  }
+
+  // RGB 转十六进制颜色
+  const rgbToHex = (r, g, b) => {
+    const toHex = value => value.toString(16).padStart(2, '0')
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+  }
+  // 调整颜色亮度
+  const adjustBrightness = function (rgb, factor) {
+    return {
+      r: Math.max(0, Math.min(255, Math.round(rgb.r * factor))),
+      g: Math.max(0, Math.min(255, Math.round(rgb.g * factor))),
+      b: Math.max(0, Math.min(255, Math.round(rgb.b * factor))),
+    }
+  }
+  // 转换原始颜色为 RGB
+  const baseRgb = hexToRgb(color)
+  // 生成颜色数组
+  const colors = []
+  for (let i = 0; i < length; i++) {
+    // 生成亮度因子（在 0.7 到 1.7 之间随机浮动）
+    const factor = 0.6 + (i / (length - 1)) * 1 // 让亮度从暗到亮分布
+    const adjustedRgb = adjustBrightness(baseRgb, factor)
+    colors.push(rgbToHex(adjustedRgb.r, adjustedRgb.g, adjustedRgb.b))
+  }
+  return colors
+}
+
+const generateAdjacentColors11 = (hexColor, count, degree) => {
   const [h, s, l] = hexToHSL(hexColor)
   const adjacentColors = []
   let tempH = h
@@ -82,7 +126,7 @@ const changeSeriesColor = (series = [], color = '') => {
     series[0].color = color
   } else {
     const len = series.length
-    const colorArr = generateAdjacentColors(color, len, 10)
+    const colorArr = generateAdjacentColors(color, len, 5)
     const seriesNameList = series.map(item => item.seriesName)
     seriesNameList.sort()
     for (let i=0; i<seriesNameList.length; i++) {
@@ -98,5 +142,6 @@ const changeSeriesColor = (series = [], color = '') => {
 export {
   generateAdjacentColors,
   stringToNumber,
-  changeSeriesColor
+  changeSeriesColor,
+  generateAdjacentColors11 // 之前的写法，现在已经不用了
 }
