@@ -119,16 +119,16 @@ func ReturnRequestJsonError(c *gin.Context, err error) {
 
 func ReturnHandleError(c *gin.Context, msg string, err error) {
 	if err != nil {
-		log.Logger.Warn("Return Error", log.String("msg", msg))
 		var customErr models.CustomError
 		if errors.As(err, &customErr) {
+			log.Logger.Warn("Return Error", log.String("msg", msg))
 			ReturnError(c, customErr, http.StatusOK)
 		} else {
-			ReturnError(c, models.GetMessageMap(c).HandleError, http.StatusOK)
+			ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(msg), http.StatusOK)
 		}
 		return
 	}
-	ReturnError(c, models.GetMessageMap(c).HandleError, http.StatusOK)
+	ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(msg), http.StatusOK)
 }
 
 func ReturnServerHandleError(c *gin.Context, err error) {
