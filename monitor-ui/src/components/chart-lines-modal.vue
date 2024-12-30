@@ -19,7 +19,7 @@
         <FormItem :label="$t('m_show_line')">
           <Row style="min-height: 200px; max-height: 400px;overflow-y: auto;">
             <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
-            <Checkbox v-model="lineSelectModalData[chartId][seriesName]">
+            <Checkbox v-model="lineSelectModalData[chartId][seriesName]" @on-change="onSingleLineSelectChange">
               <Tooltip :content="seriesName" transfer :max-width='400'>
                 <div class="ellipsis-text">{{ seriesName }}</div>
               </Tooltip>
@@ -102,6 +102,13 @@ export default {
     onLineSelectChange() {
       window['view-config-selected-line-data'] = cloneDeep(this.lineSelectModalData)
       this.onLineSelectChangeCancel(false)
+    },
+    onSingleLineSelectChange() {
+      if (!isEmpty(this.lineSelectModalData[this.chartId]) && Object.values(this.lineSelectModalData[this.chartId]).every(item => item === true)) {
+        this.islineSelectAll = true
+      } else {
+        this.islineSelectAll = false
+      }
     }
   },
   components: {},
