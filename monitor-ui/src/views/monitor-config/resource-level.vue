@@ -15,7 +15,7 @@
       <Input
         v-if="searchParams.type === 'group'"
         v-model="searchParams.name"
-        @on-change="getAllResource(true)"
+        @on-change="debounceGetAllResource"
         :placeholder="$t('m_resourceLevel_level_search_name')"
         style="width: 300px;margin-right:8px"
       />
@@ -28,7 +28,7 @@
         ref="selectObject"
         @on-change="clearObject"
         :placeholder="$t('m_resourceLevel_level_search_endpoint')"
-        :remote-method="getAllObject"
+        @on-query-change="debounceGetAllObject"
       >
         <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
       </Select>
@@ -58,6 +58,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import recursive from '@/views/monitor-config/resource-recursive'
 export default {
   name: '',
@@ -134,6 +135,10 @@ export default {
       this.getAllObject()
       this.getAllResource(true)
     },
+    debounceGetAllObject: debounce(function (tempQuery) {
+      const query = tempQuery ? tempQuery : '.'
+      this.getAllObject(query)
+    }, 500),
     getAllObject(query='.') {
       const params = {
         search: query
@@ -162,6 +167,9 @@ export default {
     inShowLevel(guid) {
       return this.activedLevel.includes(guid) || false
     },
+    debounceGetAllResource: debounce(function () {
+      this.getAllResource()
+    }, 500),
     getAllResource(extend = false) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, responseData => {
         this.resourceRecursive = responseData
