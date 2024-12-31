@@ -832,7 +832,9 @@ export default {
           // 同环比修改
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-            item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            if (isEmpty(item.series)) {
+              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
               this.updateAllColorLine(i)
@@ -1272,6 +1274,7 @@ export default {
       if (this.isPieChart) {
         const params = this.generateLineParamsData()
         params[0].pieType = this.chartConfigForm.pieType
+        params[0].time_second = -1800
         if (!params[0].metric) {
           return
         }
