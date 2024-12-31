@@ -36,7 +36,40 @@ func AcceptAlert(c *gin.Context) {
 			continue
 		}
 		log.Logger.Debug("build alarm result", log.JsonObj("alarm", tmpAlarm))
-		alarms = append(alarms, &tmpAlarm)
+		alarms = append(alarms, &m.AlarmHandleObj{
+			AlarmTable: m.AlarmTable{
+				Id:            tmpAlarm.Id,
+				StrategyId:    tmpAlarm.StrategyId,
+				Endpoint:      tmpAlarm.Endpoint,
+				Status:        tmpAlarm.Status,
+				SMetric:       tmpAlarm.SMetric,
+				SExpr:         tmpAlarm.SExpr,
+				SCond:         tmpAlarm.SCond,
+				SLast:         tmpAlarm.SLast,
+				SPriority:     tmpAlarm.SPriority,
+				Content:       tmpAlarm.Content,
+				Tags:          tmpAlarm.Tags,
+				StartValue:    tmpAlarm.StartValue,
+				Start:         tmpAlarm.Start,
+				EndValue:      tmpAlarm.EndValue,
+				End:           tmpAlarm.End,
+				CloseType:     tmpAlarm.CloseType,
+				CloseMsg:      tmpAlarm.CloseMsg,
+				CloseUser:     tmpAlarm.CloseUser,
+				CustomMessage: tmpAlarm.CustomMessage,
+				EndpointTags:  tmpAlarm.EndpointTags,
+				AlarmStrategy: tmpAlarm.AlarmStrategy,
+				NotifyId:      tmpAlarm.NotifyId,
+				AlarmName:     tmpAlarm.AlarmName,
+			},
+			NotifyEnable:          tmpAlarm.NotifyEnable,
+			NotifyDelay:           tmpAlarm.NotifyDelay,
+			AlarmConditionGuid:    tmpAlarm.AlarmConditionGuid,
+			MultipleConditionFlag: tmpAlarm.MultipleConditionFlag,
+			AlarmConditionCrcHash: tmpAlarm.AlarmConditionCrcHash,
+			CurIndex:              tmpAlarm.CurIndex,
+			AlarmDetail:           tmpAlarm.AlarmDetail,
+		})
 	}
 	alarms = db.UpdateAlarms(alarms)
 	var treeventSendObj m.EventTreeventNotifyDto
