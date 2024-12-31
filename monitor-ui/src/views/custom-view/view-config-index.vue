@@ -615,6 +615,10 @@ export default {
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     uploadSucess(res) {
+      if (res.status === 'ERROR') {
+        this.$Message.error(res.message)
+        return
+      }
       if (!isEmpty(res.data)) {
         let content = ''
         for (const key in res.data) {

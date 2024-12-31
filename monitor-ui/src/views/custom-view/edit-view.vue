@@ -1402,7 +1402,8 @@ export default {
     },
     handleEditShowLines(config) {
       this.setChartConfigId = config.chartId
-      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])
+        || (!isEmpty(window['view-config-selected-line-data'][this.setChartConfigId]) && config.legend.length !== Object.keys(window['view-config-selected-line-data'][this.setChartConfigId]).length)) {
         window['view-config-selected-line-data'][this.setChartConfigId] = {}
         config.legend.forEach(one => {
           window['view-config-selected-line-data'][this.setChartConfigId][one] = true
