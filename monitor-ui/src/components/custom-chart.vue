@@ -190,6 +190,14 @@ export default {
           }
           this.$nextTick(() => {
             window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
+            const metricList = chartConfig.params.data.map(one => one.metric)
+            // 该逻辑是先筛选掉此时window中存在的需要删除的数据
+            for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+              if (metricList.length && !metricList.some(one => key.startsWith(one))) {
+                delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+              }
+            }
+
             !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
               if (isEmpty(item.series)) {
                 item.series = []
