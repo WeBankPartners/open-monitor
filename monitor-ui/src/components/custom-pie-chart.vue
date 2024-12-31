@@ -91,7 +91,9 @@ export default {
               this.noDataType = 'normal'
               window['view-config-selected-line-data'] = window['view-config-selected-line-data'] || {}
               window['view-config-selected-line-data'][this.chartInfo.elId] = window['view-config-selected-line-data'][this.chartInfo.elId] || {}
-              if (isEmpty(window['view-config-selected-line-data'][this.chartInfo.elId])) {
+              if (isEmpty(window['view-config-selected-line-data'][this.chartInfo.elId])
+                || (!isEmpty(window['view-config-selected-line-data'][this.chartInfo.elId]) && Object.keys(window['view-config-selected-line-data'][this.chartInfo.elId]).length !== responseData.legend.length)) {
+                window['view-config-selected-line-data'][this.chartInfo.elId] = {}
                 responseData.legend.forEach(name => {
                   window['view-config-selected-line-data'][this.chartInfo.elId][name] = true
                 })

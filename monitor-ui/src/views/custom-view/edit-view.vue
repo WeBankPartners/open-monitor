@@ -832,7 +832,9 @@ export default {
           // 同环比修改
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-            item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            if (isEmpty(item.series)) {
+              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
               this.updateAllColorLine(i)
@@ -1272,6 +1274,7 @@ export default {
       if (this.isPieChart) {
         const params = this.generateLineParamsData()
         params[0].pieType = this.chartConfigForm.pieType
+        params[0].time_second = -1800
         if (!params[0].metric) {
           return
         }
@@ -1402,7 +1405,8 @@ export default {
     },
     handleEditShowLines(config) {
       this.setChartConfigId = config.chartId
-      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])
+        || (!isEmpty(window['view-config-selected-line-data'][this.setChartConfigId]) && config.legend.length !== Object.keys(window['view-config-selected-line-data'][this.setChartConfigId]).length)) {
         window['view-config-selected-line-data'][this.setChartConfigId] = {}
         config.legend.forEach(one => {
           window['view-config-selected-line-data'][this.setChartConfigId][one] = true
