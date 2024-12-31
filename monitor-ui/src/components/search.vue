@@ -11,7 +11,7 @@
           ref="select"
           :disabled="endpointExternal"
           :placeholder="$t('m_requestMoreData')"
-          :remote-method="getEndpointList"
+          @on-query-change="debounceGetEndpointList"
           @on-change="updateData"
         >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import {find, isEmpty} from 'lodash'
+import {find, isEmpty, debounce} from 'lodash'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
 export default {
@@ -158,6 +158,10 @@ export default {
     pickSecondDate(data) {
       this.compareSecondDate = data
     },
+    debounceGetEndpointList: debounce(function (query) {
+      const finalQuery = query ? query : '.'
+      this.getEndpointList(finalQuery)
+    }, 500),
     async getEndpointList(query = '.') {
       return new Promise(async resolve => {
         const params = {
