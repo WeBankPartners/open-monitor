@@ -190,6 +190,14 @@ export default {
           }
           this.$nextTick(() => {
             window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
+            const metricList = chartConfig.params.data.map(one => one.metric)
+            // 该逻辑是先筛选掉此时window中存在的需要删除的数据
+            for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+              if (metricList.length && !metricList.some(one => key.startsWith(one))) {
+                delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+              }
+            }
+
             !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
               if (isEmpty(item.series)) {
                 item.series = []
@@ -208,8 +216,14 @@ export default {
               }
               if (item.series && !isEmpty(item.series)) {
                 if (isEmpty(window['view-config-selected-line-data'][chartConfig.chartId])
-                  || (!isEmpty(window['view-config-selected-line-data'][chartConfig.chartId]) && Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).every(one => !one.startsWith(item.metric)))) {
-                  // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头，则进入该逻辑
+                  || (!isEmpty(window['view-config-selected-line-data'][chartConfig.chartId]) && Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).every(one => !one.startsWith(item.metric)))
+                  || (Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).filter(single => single.startsWith(item.metric))).length !== item.series.length) {
+                  // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头,或者两者length不一样，则进入该逻辑
+                  for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+                    if (key.startsWith(item.metric)) {
+                      delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+                    }
+                  }
                   item.series.forEach(one => {
                     window['view-config-selected-line-data'][chartConfig.chartId][one.seriesName] = true
                   })
@@ -217,7 +231,6 @@ export default {
                 if (isEmpty(item.metricToColor)) {
                   item.metricToColor = item.series.map(one => {
                     one.metric = one.seriesName
-                    delete one.seriesName
                     return one
                   })
                 }
