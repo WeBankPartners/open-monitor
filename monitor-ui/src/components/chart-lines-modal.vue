@@ -17,7 +17,7 @@
           </Checkbox>
         </FormItem>
         <FormItem :label="$t('m_show_line')">
-          <Row style="min-height: 200px; max-height: 400px;overflow-y: auto;">
+          <Row v-if="allShowLineName.length" style="min-height: 200px; max-height: 400px;overflow-y: auto;">
             <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
             <Checkbox v-model="lineSelectModalData[chartId][seriesName]" @on-change="onSingleLineSelectChange">
               <Tooltip :content="seriesName" transfer :max-width='400'>
@@ -26,6 +26,7 @@
             </Checkbox>
             </Col>
           </Row>
+          <span v-else style="margin-left: 10px">{{$t('m_noData')}}</span>
         </FormItem>
       </Form>
       <span v-else>
