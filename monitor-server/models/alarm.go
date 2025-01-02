@@ -726,7 +726,7 @@ type AutoAlarmStrategyParam struct {
 	ServiceGroup       string
 	EndpointGroup      string
 	Operator           string
-	ErrMsgObj          *ErrorMessageObj
+	ErrMsgObj          *ErrorTemplate
 }
 
 type AutoSimpleAlarmStrategyParam struct {
@@ -735,7 +735,7 @@ type AutoSimpleAlarmStrategyParam struct {
 	ServiceGroup       string
 	EndpointGroup      string
 	Operator           string
-	ErrMsgObj          *ErrorMessageObj
+	ErrMsgObj          *ErrorTemplate
 	AutoCreateWarn     bool
 	LogMetricGroupGuid string
 	MetricPrefixCode   string
@@ -747,6 +747,12 @@ type AlarmOptionsParam struct {
 	AlarmName string `json:"alarmName"`
 	Endpoint  string `json:"endpoint"`
 	Metric    string `json:"metric"`
+}
+
+type EndpointAlarmParam struct {
+	Endpoint           string
+	StartTime, EndTime time.Time
+	Page, PageSize     int
 }
 
 type QueryAlarmCondition struct {

@@ -2,6 +2,15 @@ package models
 
 import "time"
 
+type CreateCustomChartParam struct {
+	ChartExtend         *CustomChartExtend
+	ConfigMap           map[string][]*CustomChartSeriesConfig
+	TagMap              map[string][]*CustomChartSeriesTag
+	TagValueMap         map[string][]*CustomChartSeriesTagValue
+	ChartSeries         []*CustomChartSeries
+	MetricComparisonMap map[string]string
+}
+
 type CustomChart struct {
 	Guid            string `json:"id" xorm:"'guid' pk"`
 	SourceDashboard int    `json:"sourceDashboard" xorm:"source_dashboard"` // 源看板

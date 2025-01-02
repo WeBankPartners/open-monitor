@@ -124,10 +124,13 @@ func checkRuleConfigTime(refreshAll bool) {
 			continue
 		}
 		existMap[v.Guid] = 1
-		tmpErr := SyncPrometheusRuleFile(v.Guid, false)
+		tmpErr := SyncPrometheusRuleFile(v.Guid, true)
 		if tmpErr != nil {
 			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
 		}
+	}
+	if len(endpointGroup) > 0 {
+		prom.ReloadConfig()
 	}
 	ruleConfigSyncTime = time.Now().Unix()
 }

@@ -57,7 +57,7 @@ func DeleteCustomDashboard(c *gin.Context) {
 	query := m.CustomDashboardTable{Id: id}
 	err = db.DeleteCustomDashboard(&query)
 	if err != nil {
-		mid.ReturnDeleteTableError(c, "custom_dashboard", "id", strconv.Itoa(id), err)
+		mid.ReturnDeleteTableError(c, "custom_dashboard", "id", strconv.Itoa(id))
 		return
 	}
 	mid.ReturnSuccess(c)

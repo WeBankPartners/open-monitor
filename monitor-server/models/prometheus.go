@@ -13,11 +13,12 @@ type RFGroup struct {
 }
 
 type RuleLocalConfigJob struct {
-	EndpointGroup string
-	TplId         int
-	FromPeer      bool
-	Name          string
-	Rules         []*RFRule
+	EndpointGroup       string
+	TplId               int
+	FromPeer            bool
+	Name                string
+	Rules               []*RFRule
+	WithoutReloadConfig bool
 }
 
 type RFRule struct {

@@ -83,12 +83,12 @@ func ExportAgentNew(c *gin.Context) {
 	err := json.Unmarshal(data, &param)
 	if err != nil {
 		resultCode = "1"
-		resultMessage = mid.GetMessageMap(c).RequestJsonUnmarshalError
+		resultMessage = m.GetMessageMap(c).RequestJsonUnmarshalError.Error()
 		return
 	}
 	if len(param.Inputs) == 0 {
 		resultCode = "0"
-		resultMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "inputs")
+		resultMessage = fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "inputs")
 		return
 	}
 	for _, v := range param.Inputs {
@@ -125,7 +125,7 @@ func ExportAgentNew(c *gin.Context) {
 			registerParam.Tags = v.Tags
 			validateMessage, endpointGuid, inputErr = AgentRegister(registerParam, mid.GetOperateUser(c))
 			if validateMessage != "" {
-				validateMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, validateMessage)
+				validateMessage = fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), validateMessage)
 			}
 			if validateMessage == "" && inputErr == nil && v.AppLogPaths != "" {
 				inputErr = autoAddAppPathConfig(registerParam, v.AppLogPaths)
@@ -149,7 +149,7 @@ func ExportAgentNew(c *gin.Context) {
 		if validateMessage != "" || inputErr != nil {
 			errorMessage := validateMessage
 			if errorMessage == "" {
-				errorMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, inputErr.Error())
+				errorMessage = fmt.Sprintf(m.GetMessageMap(c).HandleError.Error(), inputErr.Error())
 			}
 			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: errorMessage, Guid: v.Guid, MonitorKey: endpointGuid})
 			resultCode = "1"
@@ -185,7 +185,7 @@ func AlarmControl(c *gin.Context) {
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
-			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "inputs")}
+			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "inputs")}
 			log.Logger.Warn(result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
@@ -210,8 +210,8 @@ func AlarmControl(c *gin.Context) {
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, instanceName, err)
-				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", Guid: v.Guid, ErrorMessage: fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
+				resultMessage = fmt.Sprintf(m.GetMessageMap(c).HandleError.Error(), msg)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", Guid: v.Guid, ErrorMessage: fmt.Sprintf(m.GetMessageMap(c).HandleError.Error(), msg)})
 				successFlag = "1"
 			} else {
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, instanceName)
@@ -223,7 +223,7 @@ func AlarmControl(c *gin.Context) {
 		log.Logger.Info("result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
-		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error())}
+		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
 		log.Logger.Error("Param validate fail", log.Error(err))
 		c.JSON(http.StatusBadRequest, result)
 	}
@@ -281,10 +281,6 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
 	}
-	//err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
-	//if err != nil {
-	//	log.Logger.Error("Update business config error", log.Error(err))
-	//}
 	return err
 }
 

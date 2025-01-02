@@ -1251,3 +1251,8 @@ alter table metric add index metric_update_time(update_time);
 alter table log_metric_group add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
 alter table log_metric_group add column auto_dashboard tinyint(1) default 0 COMMENT '自动生成自定义看板,1表示自动生成';
 #@v3.2.8.23-end@;
+#@v3.3.2-begin@;
+alter table service_group add index service_group_update_time(update_time);
+alter table custom_chart_permission add index custom_chart_permission_role(role_id);
+alter table custom_chart add index dashboard_chart_public(public);
+#@v3.3.2-end@;

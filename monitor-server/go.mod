@@ -5,11 +5,11 @@ go 1.19
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/WeBankPartners/go-common-lib v1.1.6
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/swaggo/swag v1.8.10
 	github.com/toolkits/file v0.0.0-20160325033739-a5b3c5147e07
 	go.uber.org/zap v1.23.0

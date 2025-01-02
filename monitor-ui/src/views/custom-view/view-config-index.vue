@@ -223,7 +223,11 @@
         </template>
       </AuthDialog>
 
-      <Modal v-model="isShowProcessConfigModel" :title="$t(processConfigModel.modalTitle)" :mask-closable="false">
+      <Modal v-model="isShowProcessConfigModel"
+             :title="$t(processConfigModel.modalTitle)"
+             :mask-closable="false"
+             @on-ok="processConfigSave"
+      >
         <div style="padding: 0 12px; max-height: 500px; overflow-y: auto">
           <div style="display: flex;">
             <div class="port-title">
@@ -376,26 +380,29 @@ export default {
   mounted() {
     if (this.$route.query.needCache === 'yes') {
       // 读取列表搜索参数
-      const storage = window.sessionStorage.getItem('search_custom_view') || ''
+      const storage = window.sessionStorage.getItem('monitor_search_custom_view') || ''
       if (storage) {
-        const { searchParams } = JSON.parse(storage)
+        const { searchParams, pagination } = JSON.parse(storage)
+        this.pagination = pagination
         this.searchMap = searchParams
       }
+    } else {
+      this.pagination.pageSize = 18
+      this.pagination.currentPage = 1
     }
     this.initData()
   },
   beforeDestroy() {
     // 缓存列表搜索条件
     const storage = {
-      searchParams: this.searchMap
+      searchParams: this.searchMap,
+      pagination: this.pagination
     }
-    window.sessionStorage.setItem('search_custom_view', JSON.stringify(storage))
+    window.sessionStorage.setItem('monitor_search_custom_view', JSON.stringify(storage))
   },
   methods: {
     initData() {
       this.pathMap = this.$root.apiCenter.template
-      this.pagination.pageSize = 18
-      this.pagination.currentPage = 1
       this.getViewList()
       this.getAllRoles()
       if (this.$route.query.isCreate) {
@@ -444,7 +451,6 @@ export default {
       this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.isShowProcessConfigModel = false
-        // this.$root.JQ('#set_dashboard_modal').modal('hide')
         this.getViewList()
       })
     },
@@ -609,6 +615,10 @@ export default {
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     uploadSucess(res) {
+      if (res.status === 'ERROR') {
+        this.$Message.error(res.message)
+        return
+      }
       if (!isEmpty(res.data)) {
         let content = ''
         for (const key in res.data) {

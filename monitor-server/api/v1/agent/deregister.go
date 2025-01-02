@@ -40,7 +40,7 @@ func DeregisterAgent(c *gin.Context) {
 			return
 		}
 		if len(processList) > 0 {
-			mid.ReturnServerHandleError(c, fmt.Errorf(mid.GetMessageMap(c).EndpointHostDeleteError))
+			mid.ReturnServerHandleError(c, m.GetMessageMap(c).EndpointHostDeleteError)
 			return
 		}
 	}
@@ -146,7 +146,7 @@ func CustomRegister(c *gin.Context) {
 			mid.ReturnSuccess(c)
 		}
 	} else {
-		mid.ReturnValidateError(c, fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error()))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 

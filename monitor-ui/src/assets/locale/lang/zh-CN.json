@@ -555,6 +555,10 @@
   "m_custom_templates": "自定义模板",
   "m_final_metric_key": "最终指标key",
   "m_auto_generate_alarm_dashboard": "自动生成告警看板",
-  "m_not_auto_generate_alarm_dashboard": "不自动生成告警看板"
+  "m_not_auto_generate_alarm_dashboard": "不自动生成告警看板",
+  "m_line_display_modification": "修改线条展示",
+  "m_show_line": "展示线条",
+  "m_line_search": "线条搜索",
+  "m_select_all": "全选"
 }
 

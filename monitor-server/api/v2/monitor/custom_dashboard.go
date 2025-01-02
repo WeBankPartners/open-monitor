@@ -130,6 +130,8 @@ func GetCustomDashboard(c *gin.Context) {
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var boardRoleRelList []*models.CustomDashBoardRoleRel
+	var metricComparisonMap = make(map[string]string)
+	var chartSeriesMap = make(map[string][]*models.CustomChartSeries)
 	id, _ := strconv.Atoi(c.Query("id"))
 	if id == 0 {
 		middleware.ReturnParamEmptyError(c, "id")
@@ -154,6 +156,10 @@ func GetCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	if metricComparisonMap, err = db.GetAllMetricComparison(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if configMap, err = db.QueryAllChartSeriesConfig(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -167,10 +173,29 @@ func GetCustomDashboard(c *gin.Context) {
 		return
 	}
 	if len(customChartExtendList) > 0 {
+		var chartSeries []*models.CustomChartSeries
+		// 图表大于等于10时候 查询所有图表数据
+		if len(customChartExtendList) >= 10 {
+			if chartSeriesMap, err = db.QueryAllChartSeries(); err != nil {
+				middleware.ReturnServerHandleError(c, err)
+				return
+			}
+		}
 		customDashboardDto.Charts = []*models.CustomChartDto{}
 		for _, chartExtend := range customChartExtendList {
 			groupMap[chartExtend.Group] = true
-			chart, err2 := db.CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
+			if len(chartSeriesMap) > 0 {
+				chartSeries = chartSeriesMap[chartExtend.Guid]
+			}
+			chartParam := models.CreateCustomChartParam{
+				ChartExtend:         chartExtend,
+				ConfigMap:           configMap,
+				TagMap:              tagMap,
+				TagValueMap:         tagValueMap,
+				MetricComparisonMap: metricComparisonMap,
+				ChartSeries:         chartSeries,
+			}
+			chart, err2 := db.CreateCustomChartDto(chartParam)
 			if err2 != nil {
 				middleware.ReturnServerHandleError(c, err)
 				return
@@ -303,7 +328,7 @@ func CopyCustomDashboard(c *gin.Context) {
 		middleware.ReturnValidateError(c, "invalid id")
 		return
 	}
-	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), middleware.GetMessageMap(c)); err != nil {
+	if err = db.CopyCustomDashboard(param, customDashboard, middleware.GetOperateUser(c), models.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -538,6 +563,7 @@ func ExportCustomDashboard(c *gin.Context) {
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var exportChartIdMap = make(map[string]bool)
 	var dashboardPermissionList []*models.CustomDashBoardRoleRel
+	var metricComparisonMap = make(map[string]string)
 	var useRoles []string
 	var mgmtRole string
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -590,6 +616,10 @@ func ExportCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	if metricComparisonMap, err = db.GetAllMetricComparison(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
 	if configMap, err = db.QueryAllChartSeriesConfig(); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -604,9 +634,17 @@ func ExportCustomDashboard(c *gin.Context) {
 	}
 	if len(customChartExtendList) > 0 {
 		for _, chartExtend := range customChartExtendList {
+			chartParam := models.CreateCustomChartParam{
+				ChartExtend:         chartExtend,
+				ConfigMap:           configMap,
+				TagMap:              tagMap,
+				TagValueMap:         tagValueMap,
+				MetricComparisonMap: metricComparisonMap,
+				ChartSeries:         []*models.CustomChartSeries{},
+			}
 			// 只导出指定图表数据
 			if exportChartIdMap[chartExtend.Guid] {
-				chart, err2 := db.CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
+				chart, err2 := db.CreateCustomChartDto(chartParam)
 				if err2 != nil {
 					middleware.ReturnServerHandleError(c, err)
 					return
@@ -692,13 +730,13 @@ func ImportCustomDashboard(c *gin.Context) {
 			return
 		}
 	}
-	errMsgObj := middleware.GetMessageMap(c)
+	errMsgObj := models.GetMessageMap(c)
 	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles, errMsgObj); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if customDashboard != nil && customDashboard.Id != 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).DashboardIdExistError)
 		return
 	}
 	if importRes != nil && len(importRes.ChartMap) > 0 {
@@ -732,12 +770,12 @@ func TransImportCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
 		return
 	}
-	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, middleware.GetMessageMap(c)); err != nil {
+	if customDashboard, _, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), "cover", param.MgmtRole, param.UseRoles, models.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if customDashboard != nil && customDashboard.Id != 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).DashboardIdExistError)
 		return
 	}
 	middleware.ReturnSuccess(c)

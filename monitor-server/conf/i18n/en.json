@@ -1,36 +1,137 @@
 {
   "success": "Success",
-  "param_validate_error": "Parameter validattion failed, details: %s",
-  "param_empty_error": "Parameter %s cannot be empty.",
-  "param_type_error": "Parameter %s must be of type %s.",
-  "request_body_error": "Failed to read request body data.",
-  "request_json_unmarshal_error": "Failed unmarshal request body in json.",
-  "query_table_error": "Failed to query db table %s.",
-  "fetch_table_data_error": "Can not find row data in %t with %k=%v",
-  "update_table_error": "Failed to update db table %s.",
-  "delete_table_data_error": "Failed to delete db table %t where %k=%v",
-  "handle_error": "Failed to handle request, details: %s",
-  "password_error": "Password is wrong.",
-  "token_error": "Invalid session token",
-  "token_authority_error": "Token authority validate fail",
-  "save_done_but_sync_fail": "Config Deploy Failed: Deployment to target object failed. Please ensure target object is available, then click [Save] to redeploy configuration.",
-  "metric_duplicate_error": "Save Failed. Duplicate indicator '%s' already exists under the current hierarchy object. Please modify and try again.",
-  "metric_not_found": "Import Failed,Metric: %s not found",
-  "strategy_name_import_duplicate_error": "Import Failed,Name: %s duplicate",
-  "log_group_name_duplicate_error": "Config Name:%s duplicate",
-  "log_group_name_illegal_error": "Config Name:%s illegal",
-  "dashboard_name_repeat_error": "Save failed: A dashboard with the same name already exists",
-  "dashboard_id_exist_error": "Import failed:dashboard ID already exists",
-  "import_dashboard_name_exist_error": "Import failed:dashboard Name %s already exists",
-  "create_dashboard_name_exist_error": "Save Failed:dashboard Name %s already exists",
-  "metric_not_support_preview": "The object group currently does not support the current type. Please switch to a single object to preview",
-  "type_config_name_repeat_error": "Save failed: The same type configuration already exists",
-  "type_config_association_obj_error": "Delete failed: An associated object cannot be deleted",
-  "type_config_association_obj_group_error": "Delete failed: The type configuration cannot be deleted if an associated object group exists",
-  "alert_name_repeat_error": "Save failed: The alarm with the same name already exists",
-  "alert_keyword_repeat_error": "Save failed: The alarm with the same keyword already exists",
-  "endpoint_host_delete_error": "Delete failed: Host endpoint have some relative process endpoint",
-  "log_monitor_template_delete_error": "Deleting Failed: The current template cannot be deleted because it has been referenced by the %s service configuration",
-  "add_comparison_metric_repeat_error": "Save Failed: The current Year-over-Year Metric already exists. Please modify the configuration and try again.",
-  "add_metric_repeat_error": "Save Failed: The current  Metric already exists. Please modify the configuration and try again."
+  "param_validate_error": {
+    "code": 10000001,
+    "message": "Parameter validation failed, details: %s"
+  },
+  "param_empty_error": {
+    "code": 10000002,
+    "message": "Parameter %s cannot be empty."
+  },
+  "param_type_error": {
+    "code": 10000003,
+    "message": "Parameter %s must be of type %s."
+  },
+  "request_body_error": {
+    "code": 10000004,
+    "message": "Failed to read request body data."
+  },
+  "request_json_unmarshal_error": {
+    "code": 10000005,
+    "message": "Failed unmarshal request body in json."
+  },
+  "query_table_error": {
+    "code": 10000006,
+    "message": "Failed to query db table %s."
+  },
+  "fetch_table_data_error": {
+    "code": 10000007,
+    "message": "Can not find row data in %s with %s=%s"
+  },
+  "update_table_error": {
+    "code": 10000008,
+    "message": "Failed to update db table %s."
+  },
+  "delete_table_data_error": {
+    "code": 10000009,
+    "message": "Failed to delete db table %s where %s=%s"
+  },
+  "handle_error": {
+    "code": 10000010,
+    "message": "Failed to handle request, details: %s"
+  },
+  "password_error": {
+    "code": 10000011,
+    "message": "Password is wrong."
+  },
+  "token_error": {
+    "code": 10000012,
+    "message": "Invalid session token"
+  },
+  "token_authority_error": {
+    "code": 10000013,
+    "message": "Token authority validate fail"
+  },
+  "save_done_but_sync_fail": {
+    "code": 20000014,
+    "message": "Config Deploy Failed: Deployment to target object failed. Please ensure target object is available, then click [Save] to redeploy configuration."
+  },
+  "metric_duplicate_error": {
+    "code": 20000015,
+    "message": "Save Failed. Duplicate indicator '%s' already exists under the current hierarchy object. Please modify and try again."
+  },
+  "metric_not_found": {
+    "code": 20000016,
+    "message": "Import Failed,Metric: %s not found"
+  },
+  "strategy_name_import_duplicate_error": {
+    "code": 20000017,
+    "message": "Import Failed,Name: %s duplicate"
+  },
+  "log_group_name_duplicate_error": {
+    "code": 20000018,
+    "message": "Config Name:%s duplicate"
+  },
+  "log_group_name_illegal_error": {
+    "code": 20000019,
+    "message": "Config Name:%s illegal"
+  },
+  "dashboard_name_repeat_error": {
+    "code": 20000020,
+    "message": "Save failed: A dashboard with the same name already exists"
+  },
+  "dashboard_id_exist_error": {
+    "code": 20000021,
+    "message": "Import failed:dashboard ID already exists"
+  },
+  "import_dashboard_name_exist_error": {
+    "code": 20000022,
+    "message": "Import failed:dashboard Name %s already exists"
+  },
+  "create_dashboard_name_exist_error": {
+    "code": 20000023,
+    "message": "Save Failed:dashboard Name %s already exists"
+  },
+  "metric_not_support_preview": {
+    "code": 20000024,
+    "message": "The object group currently does not support the current type. Please switch to a single object to preview"
+  },
+  "type_config_name_repeat_error": {
+    "code": 20000025,
+    "message": "Save failed: The same type configuration already exists"
+  },
+  "type_config_association_obj_error": {
+    "code": 20000026,
+    "message": "Delete failed: An associated object cannot be deleted"
+  },
+  "type_config_association_obj_group_error": {
+    "code": 20000027,
+    "message": "Delete failed: The type configuration cannot be deleted if an associated object group exists"
+  },
+  "alert_name_repeat_error": {
+    "code": 20000028,
+    "message": "Save failed: The alarm with the same name already exists"
+  },
+  "alert_keyword_repeat_error": {
+    "code": 20000029,
+    "message": "Save failed: The alarm with the same keyword already exists"
+  },
+  "endpoint_host_delete_error": {
+    "code": 20000030,
+    "message": "Delete failed: Host endpoint have some relative process endpoint"
+  },
+  "log_monitor_template_delete_error": {
+    "code": 20000031,
+    "message": "Deleting Failed: The current template cannot be deleted because it has been referenced by the %s service configuration"
+  },
+  "add_comparison_metric_repeat_error": {
+    "code": 20000032,
+    "message": "Save Failed: The current Year-over-Year Metric already exists. Please modify the configuration and try again."
+  },
+  "add_metric_repeat_error": {
+    "code": 20000033,
+    "message": "Save Failed: The current  Metric already exists. Please modify the configuration and try again."
+  }
 }
+
+

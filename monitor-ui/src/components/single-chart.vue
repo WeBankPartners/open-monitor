@@ -1,5 +1,5 @@
 <template>
-  <div class="single-chart">
+  <div class="single-chart" @mouseleave="onMouseLeaveContent">
     <div v-if="!noDataTip" :id="elId" class="echart">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
@@ -13,6 +13,7 @@
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
+import {cloneDeep} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 // const echarts = require('echarts/lib/echarts');
 
@@ -25,13 +26,18 @@ export default {
       noDataTip: false,
       config: '',
       myChart: '',
-      interval: ''
+      interval: '',
+      chartInstance: null
     }
   },
   props: {
     chartInfo: Object,
     params: Object,
-    chartIndex: Number
+    chartIndex: Number,
+    refreshNow: {
+      type: Boolean,
+      default: null
+    }
   },
   created(){
     // 外部触发清除刷新
@@ -50,7 +56,12 @@ export default {
           this.getChartData()
         },this.params.autoRefresh*1000)
       }
-    }
+    },
+    refreshNow: {
+      handler() {
+        this.getChartData()
+      }
+    },
   },
   mounted() {
     this.getChartData()
@@ -62,6 +73,13 @@ export default {
   },
   destroyed() {
     clearInterval(this.interval)
+    if (this.chartInstance) {
+      setTimeout(() => {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }, 500)
+    }
   },
   methods: {
     getChartData(tmp, start, end) {
@@ -112,11 +130,24 @@ export default {
         const chartConfig = {
           clear: false,
           editTitle: false,
-          lineBarSwitch: true
+          lineBarSwitch: true,
+          canEditShowLines: true,
+          dataZoom: false,
+          chartId: this.chartInfo.id + ''
         }
         responseData.metric = this.chartInfo.metric[0]
-        readyToDraw(this,responseData, this.chartIndex, chartConfig)
+        this.chartInstance = readyToDraw(this,responseData, this.chartIndex, chartConfig)
+        this.chartInstance.on('legendselectchanged', params => {
+          window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
+        })
       }, { isNeedloading: false })
+    },
+    onMouseLeaveContent() {
+      if (this.chartInstance) {
+        this.chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
     }
   },
   components: {},

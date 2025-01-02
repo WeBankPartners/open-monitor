@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/base64"
+	"errors"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -66,7 +67,7 @@ func Login(c *gin.Context) {
 	}
 }
 
-// @Summary 登出
+// Logout @Summary 登出
 // @Produce  json
 // @Success 200 {string} json "{"message": "successfully logout"}"
 // @Router /login [get]
@@ -76,7 +77,7 @@ func Logout(c *gin.Context) {
 		mid.DelSession(auToken)
 		mid.ReturnSuccess(c)
 	} else {
-		mid.ReturnError(c, http.StatusUnauthorized, "Invalid session token", nil)
+		mid.ReturnError(c, errors.New("invalid session token"), http.StatusUnauthorized)
 	}
 }
 

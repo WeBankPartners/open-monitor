@@ -555,6 +555,7 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 }
 
 func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
+	var seriesName string
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	dto := &models.CustomChartSeriesDto{
@@ -590,9 +591,15 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 				TagName: constRetCode,
 			},
 		}
+		// 平均耗时,只计算成功请求的,线条名称需要加 returnCode
+		if strings.HasPrefix(metric.Metric, constConstTimeAvg) {
+			seriesName = fmt.Sprintf("%s:%s{code=%s,retcode=%s}", metric.Metric, serviceGroupName, code, constSuccess)
+		} else {
+			seriesName = fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroupName, code)
+		}
 		dto.ColorConfig = []*models.ColorConfigDto{
 			{
-				SeriesName: fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroupName, code),
+				SeriesName: seriesName,
 				Color:      metric.ColorGroup,
 			},
 		}

@@ -290,7 +290,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
-	err := x.SQL("SELECT * FROM endpoint WHERE (ip LIKE ? OR name LIKE ?) order by export_type,ip LIMIT 100", endpoint, endpoint).Find(&hosts)
+	err := x.SQL("SELECT * FROM endpoint WHERE guid LIKE ? order by export_type,ip LIMIT 100", endpoint).Find(&hosts)
 	if err != nil {
 		log.Logger.Error("Search host fail", log.Error(err))
 		return err, options

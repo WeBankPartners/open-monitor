@@ -78,7 +78,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -117,7 +117,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -209,12 +209,12 @@ func ImportAlarmStrategy(c *gin.Context) {
 	err, metricNotFound, nameDuplicate = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c), importRule)
 	if err != nil {
 		if len(metricNotFound) > 0 {
-			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotFound, strings.Join(metricNotFound, ","))
+			err = models.GetMessageMap(c).MetricNotFound.WithParam(strings.Join(metricNotFound, ","))
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 		if len(nameDuplicate) > 0 {
-			err = fmt.Errorf(middleware.GetMessageMap(c).StrategyNameImportDuplicateError, strings.Join(nameDuplicate, ","))
+			err = models.GetMessageMap(c).StrategyNameImportDuplicateError.WithParam(strings.Join(nameDuplicate, ","))
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}

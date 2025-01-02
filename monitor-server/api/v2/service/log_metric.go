@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -50,6 +51,21 @@ func GetLogMetricMonitor(c *gin.Context) {
 	}
 }
 
+func validateLogPath(input string) error {
+	regPath := regexp.MustCompile(`^\/([\w|\.|\-|\*]+\/?)+\.\w+$`)
+	err := fmt.Errorf("path:%s illegal", input)
+	if !regPath.MatchString(input) {
+		return err
+	}
+	pathList := strings.Split(input, "/")
+	for i, v := range pathList {
+		if i < len(pathList)-1 && strings.Contains(v, "*") {
+			return err
+		}
+	}
+	return nil
+}
+
 func CreateLogMetricMonitor(c *gin.Context) {
 	var param models.LogMetricMonitorCreateDto
 	var list []*models.LogMetricMonitorTable
@@ -62,8 +78,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		err = fmt.Errorf("Param log_path is empty ")
 	}
 	for _, v := range param.LogPath {
-		if !strings.HasPrefix(v, "/") {
-			err = fmt.Errorf("Path:%s illegal ", v)
+		if err = validateLogPath(v); err != nil {
 			break
 		}
 	}
@@ -106,6 +121,10 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 	}
 	for _, v := range param.EndpointRel {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	}
+	if err = validateLogPath(param.LogPath); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
 	}
 	// 校验路径是否重复
 	if list, err = db.GetLogMetricMonitorByCond([]string{param.LogPath}, param.Guid, param.ServiceGroup); err != nil {
@@ -437,7 +456,7 @@ func ImportLogMetric(c *gin.Context) {
 	for _, dbMonitor := range paramObj.DBConfig {
 		dbMonitor.ServiceGroup = serviceGroup
 	}
-	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
+	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), models.GetMessageMap(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
@@ -660,7 +679,7 @@ func UpdateLogMonitorTemplate(c *gin.Context) {
 
 func DeleteLogMonitorTemplate(c *gin.Context) {
 	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
-	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid, middleware.GetMessageMap(c))
+	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid, models.GetMessageMap(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -713,12 +732,12 @@ func CreateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err = db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
-		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -735,12 +754,12 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if result, err = db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
+	if result, err = db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), models.GetMessageMap(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
-		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		return
 	}
 	middleware.ReturnSuccessData(c, result)
@@ -759,12 +778,12 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName(param.LogMetricGroupGuid, param.Name, param.LogMetricMonitorGuid); err != nil {
-		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -778,7 +797,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -846,14 +865,14 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		}
 		for _, v := range param.MetricList {
 			if _, existFlag := existMetricMap[v.Metric]; existFlag {
-				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				err = fmt.Errorf(models.GetMessageMap(c).MetricDuplicateError.Error(), v.Metric)
 				break
 			} else {
 				existMetricMap[v.Metric] = param.MonitorType
 			}
 		}
 		if err != nil {
-			middleware.ReturnError(c, 200, err.Error(), err)
+			middleware.ReturnError(c, err, http.StatusOK)
 			return
 		}
 	}
@@ -875,12 +894,12 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
-		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -889,12 +908,12 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if result, err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), middleware.GetMessageMap(c)); err != nil {
+	if result, err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c), models.GetMessageMap(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if err = syncLogMetricMonitorConfig(param.LogMetricMonitor); err != nil {
-		middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		return
 	}
 	middleware.ReturnSuccessData(c, result)
@@ -934,12 +953,12 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		}
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
-		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -952,7 +971,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	for _, v := range param.MetricList {
 		if existLogMetricGroup, existFlag := existMetricMap[v.Metric]; existFlag {
 			if existLogMetricGroup != "" && existLogMetricGroup != param.Guid {
-				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				err = fmt.Errorf(models.GetMessageMap(c).MetricDuplicateError.Error(), v.Metric)
 				break
 			}
 		} else {
@@ -960,7 +979,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		}
 	}
 	if err != nil {
-		middleware.ReturnError(c, 200, err.Error(), err)
+		middleware.ReturnError(c, err, http.StatusOK)
 		return
 	}
 	err = db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
@@ -969,7 +988,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
-			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {
 			middleware.ReturnSuccess(c)
 		}

@@ -58,7 +58,7 @@ func AddTypeConfig(c *gin.Context) {
 		return
 	}
 	if len(typeConfigList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).TypeConfigNameRepeatError)
 		return
 	}
 	if err = db.AddTypeConfig(param); err != nil {
@@ -97,7 +97,7 @@ func BatchAddTypeConfig(c *gin.Context) {
 			return
 		}
 		if len(typeConfigList) > 0 {
-			middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameRepeatError))
+			middleware.ReturnServerHandleError(c, models.GetMessageMap(c).TypeConfigNameRepeatError)
 			return
 		}
 		if err = db.AddTypeConfig(typeConfig); err != nil {
@@ -136,7 +136,7 @@ func DeleteTypeConfig(c *gin.Context) {
 		return
 	}
 	if len(endpointList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameAssociationObjectError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).TypeConfigNameAssociationObjectError)
 		return
 	}
 	if endpointGroupList, err = db.GetEndpointGroupByMonitorType(id); err != nil {
@@ -144,7 +144,7 @@ func DeleteTypeConfig(c *gin.Context) {
 		return
 	}
 	if len(endpointGroupList) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).TypeConfigNameAssociationObjectGroupError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).TypeConfigNameAssociationObjectGroupError)
 		return
 	}
 	if err = db.DeleteTypeConfig(id); err != nil {

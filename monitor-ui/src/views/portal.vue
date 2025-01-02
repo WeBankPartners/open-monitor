@@ -11,7 +11,7 @@
           ref="select"
           :placeholder="$t('m_requestMoreData')"
           @on-open-change="getEndpointList('.')"
-          :remote-method="getEndpointList"
+          @on-query-change="debounceGetEndpointList"
         >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
             <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
@@ -51,6 +52,10 @@ export default {
     this.getEndpointList()
   },
   methods: {
+    debounceGetEndpointList: debounce(function (tempQuery) {
+      const query = tempQuery ? tempQuery : '.'
+      this.getEndpointList(query)
+    }, 500),
     getEndpointList(query='.') {
       const params = {
         search: query,

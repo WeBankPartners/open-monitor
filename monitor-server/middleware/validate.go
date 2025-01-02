@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
@@ -46,7 +47,7 @@ func ValidateGet(c *gin.Context) {
 	if isOk {
 		c.Next()
 	} else {
-		ReturnError(c, http.StatusBadRequest, "request get param validate fail", nil)
+		ReturnError(c, errors.New("request get param validate fail"), http.StatusBadRequest)
 		c.Abort()
 		return
 	}
@@ -81,7 +82,7 @@ func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 		}
 	}
 	if !isOk {
-		ReturnError(c, http.StatusBadRequest, "request post param validate fail", nil)
+		ReturnError(c, errors.New("request post param validate fail"), http.StatusBadRequest)
 		c.Abort()
 	}
 	return isOk

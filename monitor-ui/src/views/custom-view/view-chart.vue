@@ -54,14 +54,22 @@
         </div>
       </div>
     </div>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 <script>
 import Vue from 'vue'
-import cloneDeep from 'lodash/cloneDeep'
+import {isEmpty, cloneDeep} from 'lodash'
 import { generateUuid } from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
+import ChartLinesModal from '@/components/chart-lines-modal'
+import { changeSeriesColor } from '@/assets/config/random-color'
 export default {
   name: '',
   data() {
@@ -83,13 +91,19 @@ export default {
       panalTitle: '',
       panalUnit: '',
       interval: null,
-      allParams: null
+      allParams: null,
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   created() {
     generateUuid().then(elId => {
       this.elId = `id_${elId}`
     })
+  },
+  mounted() {
+    this.$on('editShowLines', this.handleEditShowLines)
   },
   destroyed() {
     clearInterval(this.interval)
@@ -171,21 +185,93 @@ export default {
           params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
+            responseData.chartId = this.elId
             const chartConfig = {
               title: false,
               eye: false,
               clear: true,
               lineBarSwitch: true,
               chartType: this.panalData.chartType,
+              chartId: this.elId,
+              canEditShowLines: true,
+              dataZoom: false,
               params
             }
-            readyToDraw(this,responseData, 1, chartConfig)
+
+            this.$nextTick(() => {
+              window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
+              !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
+                if (isEmpty(item.series)) {
+                  item.series = []
+                  item.metricToColor = []
+                  const metric = item.metric
+                  responseData.legend.forEach(one => {
+                    if (one.startsWith(`${metric}:`)){
+                      item.series.push({
+                        seriesName: one,
+                        new: true,
+                        color: ''
+                      })
+                    }
+                  })
+                  changeSeriesColor(item.series, item.colorGroup)
+                }
+                if (item.series && !isEmpty(item.series)) {
+                  if (isEmpty(window['view-config-selected-line-data'][chartConfig.chartId])
+                    || (!isEmpty(window['view-config-selected-line-data'][chartConfig.chartId]) && Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).every(one => !one.startsWith(`${item.metric}:`)))
+                    || (Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).filter(single => single.startsWith(`${item.metric}:`))).length !== item.series.length) {
+                    // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头,或者两者length不一样，则进入该逻辑
+                    for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+                      if (key.startsWith(`${item.metric}:`)) {
+                        delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+                      }
+                    }
+
+                    item.series.forEach(one => {
+                      window['view-config-selected-line-data'][chartConfig.chartId][one.seriesName] = true
+                    })
+                  }
+                  if (isEmpty(item.metricToColor)) {
+                    item.metricToColor = item.series.map(one => {
+                      one.metric = one.seriesName
+                      delete one.seriesName
+                      return one
+                    })
+                  }
+                } else {
+                  item.metricToColor = []
+                }
+              })
+
+              this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
+              if (this.chartInstance) {
+                this.chartInstance.on('legendselectchanged', params => {
+                  window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+                })
+              }
+            })
           }
         )
       }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.initPanal()
     }
   },
-  components: {}
+  components: {
+    ChartLinesModal
+  }
 }
 </script>
 

@@ -453,7 +453,7 @@ func SyncData() (err error) {
 	return
 }
 
-func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string, errMsgObj *models.ErrorMessageObj) (err error) {
+func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard *models.CustomDashboardTable, operator string, errMsgObj *models.ErrorTemplate) (err error) {
 	var result sql.Result
 	var newDashboardId int64
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
@@ -463,6 +463,8 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var metricComparisonMap = make(map[string]string)
+	var chartSeriesMap = make(map[string][]*models.CustomChartSeries)
 	now := time.Now()
 	// 新增看板
 	customDashboard.Name = customDashboard.Name + "(1)"
@@ -492,12 +494,33 @@ func CopyCustomDashboard(param models.CopyCustomDashboardParam, customDashboard 
 	if len(subDashboardPermActions) > 0 {
 		actions = append(actions, subDashboardPermActions...)
 	}
+	if metricComparisonMap, err = GetAllMetricComparison(); err != nil {
+		return
+	}
 	if customChartExtendList, err = QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		return
 	}
 	if len(customChartExtendList) > 0 {
+		var chartSeries []*models.CustomChartSeries
+		// 图表大于等于10时候 查询所有图表数据
+		if len(customChartExtendList) >= 10 {
+			if chartSeriesMap, err = QueryAllChartSeries(); err != nil {
+				return
+			}
+		}
 		for _, chartExtend := range customChartExtendList {
-			if chart, err = CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap); err != nil {
+			if len(chartSeriesMap) > 0 {
+				chartSeries = chartSeriesMap[chartExtend.Guid]
+			}
+			chartParam := models.CreateCustomChartParam{
+				ChartExtend:         chartExtend,
+				ConfigMap:           configMap,
+				TagMap:              tagMap,
+				TagValueMap:         tagValueMap,
+				MetricComparisonMap: metricComparisonMap,
+				ChartSeries:         chartSeries,
+			}
+			if chart, err = CreateCustomChartDto(chartParam); err != nil {
 				return
 			}
 			if chart != nil {
@@ -521,7 +544,7 @@ func CountCustomDashboardByName(name string) int {
 	return count
 }
 
-func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorMessageObj) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
+func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rule, mgmtRole string, useRoles []string, errMsgObj *models.ErrorTemplate) (customDashboard *models.CustomDashboardTable, importRes *models.CustomDashboardImportRes, err error) {
 	var customDashboardList []*models.CustomDashboardTable
 	var actions, subDashboardPermActions, subDashboardChartActions []*Action
 	var result sql.Result
@@ -559,7 +582,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 		param.Name = param.Name + "(1)"
 		tempList, _ := QueryCustomDashboardListByName(param.Name)
 		if len(tempList) > 0 {
-			err = fmt.Errorf(errMsgObj.ImportDashboardNameExistError, param.Name)
+			err = errMsgObj.ImportDashboardNameExistError.WithParam(param.Name)
 			return
 		}
 	}

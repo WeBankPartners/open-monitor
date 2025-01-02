@@ -14,7 +14,6 @@
       </div>
     </header>
     <grid-layout
-
       :layout.sync="layoutData"
       :col-num="12"
       :row-height="30"
@@ -58,11 +57,19 @@
         </div>
       </grid-item>
     </grid-layout>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
 <script>
+import {isEmpty, cloneDeep} from 'lodash'
 import VueGridLayout from 'vue-grid-layout'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import {readyToDraw} from '@/assets/config/chart-rely'
 export default {
@@ -110,13 +117,18 @@ export default {
           label: 'net.if.out.bytes'
         }
       ],
-      array1: []
+      array1: [],
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   mounted() {
     // systemMonitoring?systemName=test&ips=192.168.0.16,192.168.0.5
     this.sysConfig.systemName = this.$route.query.systemName
     this.sysConfig.ips = this.$route.query.ips.split(',')
+    window['view-config-selected-line-data'] = {}
+    this.$on('editShowLines', this.handleEditShowLines)
     this.getMetric()
   },
   methods: {
@@ -188,13 +200,21 @@ export default {
       })
       this.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         this.elId = id
+        responseData.chartId = id
         const chartConfig = {
           eye: false,
           dataZoom: false,
           clear: true,
-          lineBarSwitch: true
+          lineBarSwitch: true,
+          chartId: id,
+          canEditShowLines: true
         }
-        readyToDraw(this,responseData, viewIndex, chartConfig)
+        this.chartInstance = readyToDraw(this,responseData, viewIndex, chartConfig)
+        if (this.chartInstance) {
+          this.chartInstance.on('legendselectchanged', params => {
+            window['view-config-selected-line-data'][id] = cloneDeep(params.selected)
+          })
+        }
       })
     },
     resizeEvent(i, newH, newW, newHPx, newWPx){
@@ -213,10 +233,25 @@ export default {
         }
       })
     },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.getChartData()
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
+    ChartLinesModal
   },
 }
 </script>

@@ -65,7 +65,7 @@
               multiple
               style="width:300px"
               :placeholder="$t('m_requestMoreData')"
-              :remote-method="getAllObject"
+              @on-query-change="debounceGetAllObject"
             >
               <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
                 <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow>
@@ -218,7 +218,7 @@
 <script>
 import {randomColor} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
-import cloneDeep from 'lodash/cloneDeep'
+import {cloneDeep, debounce} from 'lodash'
 export default {
   name: 'recursive',
   data() {
@@ -637,6 +637,10 @@ export default {
         this.getAllObject()
       })
     },
+    debounceGetAllObject: debounce(function (tempQuery) {
+      const query = tempQuery ? tempQuery : '.'
+      this.getAllObject(query)
+    }, 500),
     getAllObject(query='.') {
       const params = {
         search: query

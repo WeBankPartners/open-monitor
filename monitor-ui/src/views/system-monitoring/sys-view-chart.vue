@@ -20,10 +20,18 @@
         </div>
       </div>
     </div>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
 <script>
+import {isEmpty, cloneDeep} from 'lodash'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import { generateUuid } from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 export default {
@@ -33,7 +41,10 @@ export default {
       elId: null,
       noDataTip: false,
       panalTitle: '',
-      panalUnit: ''
+      panalUnit: '',
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   created() {
@@ -46,6 +57,8 @@ export default {
       this.$router.push({ path: 'systemMonitoring' })
     } else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData)) {
+        window['view-config-selected-line-data'] = {}
+        this.$on('editShowLines', this.handleEditShowLines)
         this.initPanal()
       }
     }
@@ -70,14 +83,22 @@ export default {
           this.$root.apiCenter.metricConfigView.api,
           params,
           responseData => {
-
+            responseData.chartId = this.elId
             responseData.yaxis.unit = this.panalUnit
             const chartConfig = {
               eye: false,
               clear: true,
-              lineBarSwitch: true
+              lineBarSwitch: true,
+              dataZoom: false,
+              chartId: this.elId,
+              canEditShowLines: true
             }
-            readyToDraw(this,responseData, 1, chartConfig)
+            this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
+            if (this.chartInstance) {
+              this.chartInstance.on('legendselectchanged', params => {
+                window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+              })
+            }
           }
         )
       }
@@ -87,9 +108,25 @@ export default {
         name: 'systemMonitoring',
         params: this.$route.params.parentData
       })
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.initPanal()
     }
   },
-  components: {}
+  components: {
+    ChartLinesModal
+  }
 }
 </script>
 

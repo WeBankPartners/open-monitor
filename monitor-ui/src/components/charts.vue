@@ -16,17 +16,34 @@
       </template>
       <div class="box">
         <div v-for="(chartInfo,chartIndex) in activeCharts" :key="chartIndex" class="list">
-          <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartInfo="chartInfo" :chartIndex="chartIndex" :params="params"> </SingleChart>
+          <SingleChart
+            :chartInfo="chartInfo"
+            :chartIndex="chartIndex"
+            :params="params"
+            :refreshNow="refreshNow"
+            @sendConfig="receiveConfig"
+            @editTitle="editTitle"
+            @editShowLines="handleEditShowLines"
+          >
+          </SingleChart>
         </div>
         <div v-for="(ph) in phZone" class="list" :key="ph"></div>
       </div>
     </section>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
 <script>
+import {isEmpty} from 'lodash'
 import SingleChart from '@/components/single-chart'
+import ChartLinesModal from '@/components/chart-lines-modal'
 export default {
   name: '',
   data() {
@@ -58,6 +75,9 @@ export default {
           name: null
         },
       },
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      refreshNow: false
     }
   },
   props: {
@@ -82,6 +102,7 @@ export default {
     }
   },
   mounted() {
+    window['view-config-selected-line-data'] = {}
     if (this.charts.chartsConfig.length !== 0) {
       this.activeCharts = this.charts.chartsConfig[0].charts
       this.refreshCharts()
@@ -151,10 +172,24 @@ export default {
         this.$emit('refreshConfig')
       })
     },
-
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.refreshNow = !this.refreshNow
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.id + ''
+      if (isEmpty(window['view-config-selected-line-data'][config.id])) {
+        window['view-config-selected-line-data'][config.id + ''] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][config.id][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    }
   },
   components: {
     SingleChart,
+    ChartLinesModal
   }
 }
 </script>
