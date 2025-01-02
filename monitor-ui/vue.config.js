@@ -1,6 +1,5 @@
 const path = require('path')
 const vueConfig = require('./project-config/project-config.json')
-const baseUrl = 'http://127.0.0.1:18080/'
 module.exports = {
   devServer: {
     // hot: true,
@@ -10,7 +9,7 @@ module.exports = {
     port: 3000,
     proxy: {
       '/': {
-        target: baseUrl,
+        target: process.env.BASE_URL,
 				pathRewrite: {
 						'^/': ''  // rewrite path
 				}
