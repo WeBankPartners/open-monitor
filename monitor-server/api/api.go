@@ -269,7 +269,7 @@ func init() {
 		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodGet, HandlerFunc: monitor.ListEndpoint, ApiCode: "monitor_endpoint_query"},
 		&handlerFuncObj{Url: "/monitor/metric/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetric, ApiCode: "monitor_metric_list"},
 		&handlerFuncObj{Url: "/monitor/metric/list/count", Method: http.MethodGet, HandlerFunc: monitor.ListMetricCount, ApiCode: "monitor_metric_list_count"},
-		&handlerFuncObj{Url: "/monitor/metricmetric_comparison_cache_comparison/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetricComparison, ApiCode: "monitor_metric_comparison_list"},
+		&handlerFuncObj{Url: "/monitor/metric_comparison/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetricComparison, ApiCode: "monitor_metric_comparison_list"},
 		&handlerFuncObj{Url: "/sys/parameter/metric_template", Method: http.MethodGet, HandlerFunc: monitor.GetSysMetricTemplate, ApiCode: "sys_parameter_metric_template"},
 		&handlerFuncObj{Url: "/monitor/endpoint/get/:guid", Method: http.MethodGet, HandlerFunc: monitor.GetEndpoint, ApiCode: "monitor_endpoint_get_by_guid"},
 		&handlerFuncObj{Url: "/monitor/endpoint/update", Method: http.MethodPut, HandlerFunc: monitor.UpdateEndpoint, ApiCode: "monitor_endpoint_update"},
