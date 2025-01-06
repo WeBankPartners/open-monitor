@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,11 +40,16 @@ func ListMetric(c *gin.Context) {
 	endpoint := c.Query("endpoint")
 	query := c.Query("query")
 	metric := c.Query("metric")
-	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric)
+	startIndex, _ := strconv.Atoi(c.Query("startIndex"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	if pageSize == 0 {
+		pageSize = 20
+	}
+	pageInfo, result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric, startIndex, pageSize)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccessData(c, result)
+		middleware.ReturnPageData(c, pageInfo, result)
 	}
 }
 
@@ -58,7 +64,7 @@ func ListMetricCount(c *gin.Context) {
 	onlyService := c.Query("onlyService")
 	endpoint := c.Query("endpoint")
 	metric := c.Query("metric")
-	if metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", metric); err != nil {
+	if _, metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", metric, 0, 0); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
 	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, ""); err != nil {
@@ -111,7 +117,7 @@ func ExportMetric(c *gin.Context) {
 			return
 		}
 	} else {
-		result, err = db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "", "")
+		_, result, err = db.MetricListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "", "", 0, 0)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
