@@ -63,6 +63,16 @@
       :max-height="maxHeight"
       class="level-table"
     />
+    <Page
+      class="table-pagination"
+      :total="pagination.total"
+      @on-change="(e) => {pagination.page = e; this.getList()}"
+      @on-page-size-change="(e) => {pagination.size = e; this.getList()}"
+      :current="pagination.page"
+      :page-size="pagination.size"
+      show-total
+      show-sizer
+    />
     <AddGroupDrawer
       v-if="addVisible && showDrawer === 'originalMetrics'"
       :visible.sync="addVisible"
@@ -338,7 +348,12 @@ export default {
       originalMetricsId: '',
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
-      metric: ''
+      metric: '',
+      pagination: {
+        page: 1,
+        size: 10,
+        total: 0
+      }
     }
   },
   computed: {
@@ -351,14 +366,18 @@ export default {
     this.serviceGroup = this.recursiveOptions[0].guid
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 60
   },
   methods: {
     reloadData(metricType) {
+      if (this.type === 'add') {
+        this.resetPagination()
+      }
       this.metricType = metricType
       this.getList()
     },
     onFilterChange: debounce(function () {
+      this.resetPagination()
       this.getList()
     }, 500),
     getList() {
@@ -366,7 +385,9 @@ export default {
         monitorType: this.monitorType,
         onlyService: 'Y',
         serviceGroup: this.serviceGroup,
-        metric: this.metric
+        metric: this.metric,
+        pageSize: this.pagination.size,
+        startIndex: this.pagination.size * (this.pagination.page - 1)
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -374,7 +395,8 @@ export default {
         api,
         params,
         responseData => {
-          this.tableData = responseData
+          this.tableData = responseData.contents
+          this.pagination.total = responseData.pageInfo.totalRows
         },
         { isNeedloading: true }
       )
@@ -455,6 +477,7 @@ export default {
             this.$Message.success(this.$t('m_tips_success'))
           }
         }
+        this.resetPagination()
         this.getList()
       }
     },
@@ -502,6 +525,10 @@ export default {
       this.viewOnly = false
       this.originalMetricsId = row.guid
     },
+    resetPagination() {
+      this.pagination.size = 10
+      this.pagination.page = 1
+    }
   }
 }
 </script>
@@ -526,6 +553,11 @@ export default {
   }
   .level-table {
     margin-top: 12px;
+  }
+  .table-pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 5px
   }
 }
 </style>

@@ -1341,7 +1341,7 @@ export default {
 
     debounceDrawChart: debounce(function () {
       this.drawChartContent()
-    }, 50),
+    }, 300),
 
     generateLineParamsData() {
       if (isEmpty(this.tableData)) {
