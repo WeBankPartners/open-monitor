@@ -15,6 +15,7 @@
       <Input
         v-if="searchParams.type === 'group'"
         v-model="searchParams.name"
+        clearable
         @on-change="debounceGetAllResource"
         :placeholder="$t('m_resourceLevel_level_search_name')"
         style="width: 300px;margin-right:8px"
@@ -234,8 +235,9 @@ export default {
     margin: 6px;
  }
  .table-pagination {
-  display: flex;
-  justify-content: flex-end;
+  position: fixed;
+  right: 10px;
+  bottom: 20px;
  }
 </style>
 <style lang="less">
