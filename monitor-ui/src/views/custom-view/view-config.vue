@@ -332,7 +332,7 @@
     <Modal v-model="showGroupMgmt"
            :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')"
            :mask-closable="false"
-           :width="800"
+           :width="1000"
     >
       <div>
         <Form :label-width="90">
