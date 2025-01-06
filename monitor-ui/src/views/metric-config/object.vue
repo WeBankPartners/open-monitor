@@ -46,6 +46,7 @@
       @on-page-size-change="(e) => {pagination.size = e; this.getList()}"
       :current="pagination.page"
       :page-size="pagination.size"
+      transfer
       show-total
       show-sizer
     />
@@ -431,9 +432,9 @@ export default {
     margin-top: 12px;
   }
   .table-pagination {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 5px
+    position: fixed;
+    right: 10px;
+    bottom: 20px;
   }
 }
 </style>
