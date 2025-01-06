@@ -21,7 +21,7 @@
             <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
             <Checkbox v-model="lineSelectModalData[chartId][seriesName]" @on-change="onSingleLineSelectChange">
               <Tooltip :content="seriesName" transfer :max-width='400'>
-                <div class="ellipsis-text">{{ seriesName }}</div>
+                <div class="ellipsis-text-style">{{ seriesName }}</div>
               </Tooltip>
             </Checkbox>
             </Col>
@@ -117,7 +117,7 @@ export default {
 </script>
 
 <style scoped lang="less">
-.ellipsis-text {
+.ellipsis-text-style {
   width: 350px;
   overflow: hidden;
   text-overflow: ellipsis;
