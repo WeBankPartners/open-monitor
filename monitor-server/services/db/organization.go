@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-func GetOrganizationList(nameText, endpointText string) (result []*m.OrganizationPanel, err error) {
+func GetOrganizationList(nameText, endpointText string, startIndex, pageSize int) (pageInfo m.PageInfo, result []*m.OrganizationPanel, err error) {
 	nameText = strings.ToLower(nameText)
 	endpointText = strings.ToLower(endpointText)
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
 		log.Logger.Error("Get panel_recursive table error", log.Error(err))
-		return result, err
+		return pageInfo, result, err
 	}
 	if len(data) == 0 {
-		return result, err
+		return pageInfo, result, err
 	}
 	tmpMap := make(map[string]string)
 	objTypeMap := make(map[string]string)
@@ -46,7 +46,22 @@ func GetOrganizationList(nameText, endpointText string) (result []*m.Organizatio
 			}
 		}
 	}
-	for _, v := range headers {
+	var pagedHeaders []string
+	if pageSize == 0 {
+		pagedHeaders = headers
+	} else {
+		pageInfo.StartIndex = startIndex
+		pageInfo.PageSize = pageSize
+		pageInfo.TotalRows = len(headers)
+		// 计算分页范围
+		end := startIndex + pageSize
+		if end > len(headers) {
+			end = len(headers)
+		}
+		// 对 headers 进行分页
+		pagedHeaders = headers[startIndex:end]
+	}
+	for _, v := range pagedHeaders {
 		tmpHeaderObj := m.OrganizationPanel{Guid: v, DisplayName: tmpMap[v], Type: objTypeMap[v]}
 		if nameText != "" {
 			if strings.Contains(strings.ToLower(tmpMap[v]), nameText) {
@@ -68,7 +83,7 @@ func GetOrganizationList(nameText, endpointText string) (result []*m.Organizatio
 		}
 		result = append(result, &tmpNodeList)
 	}
-	return result, nil
+	return pageInfo, result, nil
 }
 
 func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode m.OrganizationPanel, nameText, endpointText string) m.OrganizationPanel {
