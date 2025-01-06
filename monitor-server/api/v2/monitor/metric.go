@@ -69,7 +69,7 @@ func ListMetricCount(c *gin.Context) {
 	if _, metricList, err = db.MetricListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", metric, 0, 0); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
-	if metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, ""); err != nil {
+	if _, metricComparisonList, err = db.MetricComparisonListNew("", monitorType, serviceGroup, onlyService, endpointGroup, endpoint, "", 0, 0); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 	}
 	countRes.Count = len(metricList)
@@ -85,12 +85,18 @@ func ListMetricComparison(c *gin.Context) {
 	endpointGroup := c.Query("endpointGroup")
 	endpoint := c.Query("endpoint")
 	metric := c.Query("metric")
-	result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric)
+	startIndex, _ := strconv.Atoi(c.Query("startIndex"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	pageInfo, result, err := db.MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric, startIndex, pageSize)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		middleware.ReturnSuccessData(c, result)
+		return
 	}
+	if pageSize > 0 {
+		middleware.ReturnPageData(c, pageInfo, result)
+		return
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func GetSysMetricTemplate(c *gin.Context) {
@@ -113,7 +119,7 @@ func ExportMetric(c *gin.Context) {
 	comparison := c.Query("comparison")
 	if comparison == "Y" {
 		fileNamePrefix = "metric_comparison_"
-		result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "")
+		_, result, err = db.MetricComparisonListNew("", monitorType, serviceGroup, "Y", endpointGroup, "", "", 0, 0)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return

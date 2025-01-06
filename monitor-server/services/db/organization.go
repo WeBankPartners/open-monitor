@@ -46,22 +46,7 @@ func GetOrganizationList(nameText, endpointText string, startIndex, pageSize int
 			}
 		}
 	}
-	var pagedHeaders []string
-	if pageSize == 0 {
-		pagedHeaders = headers
-	} else {
-		pageInfo.StartIndex = startIndex
-		pageInfo.PageSize = pageSize
-		pageInfo.TotalRows = len(headers)
-		// 计算分页范围
-		end := startIndex + pageSize
-		if end > len(headers) {
-			end = len(headers)
-		}
-		// 对 headers 进行分页
-		pagedHeaders = headers[startIndex:end]
-	}
-	for _, v := range pagedHeaders {
+	for _, v := range headers {
 		tmpHeaderObj := m.OrganizationPanel{Guid: v, DisplayName: tmpMap[v], Type: objTypeMap[v]}
 		if nameText != "" {
 			if strings.Contains(strings.ToLower(tmpMap[v]), nameText) {
@@ -82,6 +67,18 @@ func GetOrganizationList(nameText, endpointText string, startIndex, pageSize int
 			}
 		}
 		result = append(result, &tmpNodeList)
+	}
+	if pageSize > 0 {
+		pageInfo.StartIndex = startIndex
+		pageInfo.PageSize = pageSize
+		pageInfo.TotalRows = len(result)
+		// 计算分页范围
+		end := startIndex + pageSize
+		if end > len(result) {
+			end = len(result)
+		}
+		// 对 result 进行分页
+		result = result[startIndex:end]
 	}
 	return pageInfo, result, nil
 }
