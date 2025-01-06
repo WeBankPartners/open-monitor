@@ -42,15 +42,17 @@ func ListMetric(c *gin.Context) {
 	metric := c.Query("metric")
 	startIndex, _ := strconv.Atoi(c.Query("startIndex"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
-	if pageSize == 0 {
-		pageSize = 20
-	}
 	pageInfo, result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric, startIndex, pageSize)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		middleware.ReturnPageData(c, pageInfo, result)
+		return
 	}
+	if pageSize == 0 {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	// 分页返回
+	middleware.ReturnPageData(c, pageInfo, result)
 }
 
 func ListMetricCount(c *gin.Context) {

@@ -6,17 +6,24 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 func GetOrganizaionList(c *gin.Context) {
 	nameText := c.Query("name")
 	endpointText := c.Query("endpoint")
-	data, err := db.GetOrganizationList(nameText, endpointText)
+	startIndex, _ := strconv.Atoi(c.Query("startIndex"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	pageInfo, data, err := db.GetOrganizationList(nameText, endpointText, startIndex, pageSize)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "panel_recursive", err)
 		return
 	}
-	mid.ReturnSuccessData(c, data)
+	if pageSize == 0 {
+		mid.ReturnSuccessData(c, data)
+		return
+	}
+	mid.ReturnPageData(c, pageInfo, data)
 }
 
 func UpdateOrgPanel(c *gin.Context) {
