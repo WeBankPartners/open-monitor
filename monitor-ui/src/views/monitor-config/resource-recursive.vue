@@ -65,7 +65,7 @@
               multiple
               style="width:300px"
               :placeholder="$t('m_requestMoreData')"
-              @on-query-change="debounceGetAllObject"
+              :remote-method="getAllObject"
             >
               <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
                 <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow>
