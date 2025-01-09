@@ -120,6 +120,7 @@ export default {
     })
   },
   mounted() {
+    this.searchParams.name = this.$route.query.name || ''
     this.getAllResource()
     this.getAllObject()
   },
