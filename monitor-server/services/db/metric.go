@@ -238,7 +238,7 @@ func MetricDelete(id string) error {
 	return err
 }
 
-func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric string) (result []*models.MetricComparisonExtend, err error) {
+func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, metric string, startIndex, pageSize int) (pageInfo models.PageInfo, result []*models.MetricComparisonExtend, err error) {
 	var params []interface{}
 	baseSql := "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid "
 	if guid != "" {
@@ -247,7 +247,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 	} else {
 		if serviceGroup != "" {
 			if monitorType == "" {
-				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+				return pageInfo, result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
 			if onlyService == "Y" {
 				baseSql = "select m.*,mc.guid as metric_comparison_id,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period,mc.origin_metric_id as metric_id,mc.origin_metric from metric m join metric_comparison mc on mc.metric_id = m.guid and m.monitor_type=? and m.service_group=?"
@@ -278,6 +278,13 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 	}
 	result = []*models.MetricComparisonExtend{}
 	baseSql = baseSql + " order by m.update_time desc"
+	if pageSize > 0 {
+		pageInfo.StartIndex = startIndex
+		pageInfo.PageSize = pageSize
+		pageInfo.TotalRows = queryCount(baseSql, params...)
+		baseSql = baseSql + " limit ?,?"
+		params = append(params, startIndex, pageSize)
+	}
 	err = x.SQL(baseSql, params...).Find(&result)
 	if err != nil {
 		return
@@ -323,7 +330,7 @@ func MetricComparisonListNew(guid, monitorType, serviceGroup, onlyService, endpo
 	return
 }
 
-func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric string) (result []*models.MetricTable, err error) {
+func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, endpoint, query, metric string, startIndex, pageSize int) (pageInfo models.PageInfo, result []*models.MetricTable, err error) {
 	var params []interface{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -365,6 +372,13 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService, endpointGroup, 
 	}
 	result = []*models.MetricTable{}
 	baseSql = baseSql + " order by update_time desc"
+	if pageSize > 0 {
+		pageInfo.StartIndex = startIndex
+		pageInfo.PageSize = pageSize
+		pageInfo.TotalRows = queryCount(baseSql, params...)
+		baseSql = baseSql + " limit ?,?"
+		params = append(params, startIndex, pageSize)
+	}
 	err = x.SQL(baseSql, params...).Find(&result)
 	if err != nil {
 		return
@@ -460,7 +474,7 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 	if monitorType == "" {
 		monitorType = inputMetrics[0].MonitorType
 	}
-	existMetrics, getExistErr := MetricListNew("", monitorType, serviceGroup, "Y", endPointGroup, "", "all", "")
+	_, existMetrics, getExistErr := MetricListNew("", monitorType, serviceGroup, "Y", endPointGroup, "", "all", "", 0, 0)
 	if getExistErr != nil {
 		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
