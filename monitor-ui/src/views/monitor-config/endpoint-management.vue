@@ -762,6 +762,7 @@ export default {
         this.showGroupMsg = true
       }
     }
+    this.searchForm.search = this.$route.query.name || ''
     this.getTableList()
     this.getAllOptions()
     this.getIpList()
