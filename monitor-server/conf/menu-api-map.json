@@ -246,6 +246,10 @@
       "path": "/monitorConfigIndex",
       "urls": [
         {
+			"url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
+			"method": "GET"
+		},
+        {
 			"url": "/monitor/api/v2/service/db_keyword/list",
 			"method": "GET"
 		},
@@ -1052,6 +1056,14 @@
       "content": "管理员配置",
       "path": "/adminConfig",
       "urls": [
+        {
+            "url": "/monitor/api/v1/dashboard/new/chart",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/new/panel/host",
+            "method": "POST"
+        },
         {
             "url": "/monitor/api/v2/monitor/metric/import",
             "method": "POST"
