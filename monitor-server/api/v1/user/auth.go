@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+var whitePathMap = map[string]string{
+	"/monitor/${data}/query": "POST",
+}
+
 type auth struct {
 	Username    string `form:"username" json:"username" binding:"required"`
 	Password    string `form:"password" json:"password" binding:"required"`
@@ -199,6 +203,14 @@ func AuthRequired() gin.HandlerFunc {
 							c.Next()
 							return
 						}
+						// 白名单URL直接放行
+						for path, _ := range whitePathMap {
+							re := regexp.MustCompile(BuildRegexPattern(path))
+							if re.MatchString(c.Request.URL.Path) {
+								c.Next()
+								return
+							}
+						}
 						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
 							legal := validateMenuApi(mid.GetOperateUserRoles(c), c.Request.URL.Path, c.Request.Method)
 							if legal {
@@ -347,6 +359,8 @@ func ListManageRole(c *gin.Context) {
 }
 
 func validateMenuApi(roles []string, path, method string) (legal bool) {
+	// 防止ip 之类数据配置不上
+	path = strings.ReplaceAll(path, ".", "")
 	for _, menuApi := range m.MenuApiGlobalList {
 		for _, role := range roles {
 			if strings.ToLower(menuApi.Menu) == strings.ToLower(role) {
@@ -369,6 +383,6 @@ func validateMenuApi(roles []string, path, method string) (legal bool) {
 }
 
 func BuildRegexPattern(template string) string {
-	// 将 ${variable-a.b} 替换为 (\w+)
-	return regexp.MustCompile(`\$\{[\w.-]+\}`).ReplaceAllString(template, `(\w+)`)
+	// 将 ${variable} 替换为 (\w+) ,并且严格匹配
+	return "^" + regexp.MustCompile(`\$\{[\w.-]+\}`).ReplaceAllString(template, `(\w+)`) + "$"
 }
