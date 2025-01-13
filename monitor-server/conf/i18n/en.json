@@ -134,7 +134,7 @@
   },
   "api_permission_deny": {
     "code": 20200034,
-    "message": "API权限不足"
+    "message": "Api Permission Deny"
   }
 }
 
