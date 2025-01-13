@@ -220,7 +220,7 @@ export default {
         params.custom = false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        this.$parent.$parent.$parent.getAlarm()
+        this.$parent.getAlarm()
       })
     }
   },
