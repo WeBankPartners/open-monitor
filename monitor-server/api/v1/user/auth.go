@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	whitePathMap = map[string]string{
-		"/monitor/${data}/query": "POST",
+	whitePathMap = map[string]bool{
+		"/monitor/entities/${model}/query": true,
 	}
 	ApiMenuMap = make(map[string][]string)
 )
