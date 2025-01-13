@@ -5,6 +5,14 @@
       "path": "/viewConfigIndex",
       "urls": [
         {
+			"url": "/monitor/api/v2/dashboard/custom",
+			"method": "PUT"
+		},
+        {
+			"url": "/monitor/api/v1/dashboard/custom/main/set",
+			"method": "POST"
+		},
+        {
             "method": "POST",
             "url": "/monitor/api/v2/dashboard/custom/import"
         },
@@ -237,6 +245,26 @@
       "content": "监控配置",
       "path": "/monitorConfigIndex",
       "urls": [
+        {
+			"url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_keyword/list",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_metric/list/group/${this.targetId}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/monitor/endpoint/get/${this.targetId}",
+			"method": "GET"
+		},
         {
 			"url": "/monitor/api/v2/service/log_keyword/list",
 			"method": "GET"
@@ -555,7 +583,7 @@
               "key": "businessMonitor",
               "content": "业务配置",
               "method": "GET",
-              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/"
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
           },
           {
               "key": "businessMonitor",
@@ -723,13 +751,13 @@
               "key": "logTemplate",
               "content": "日志模版",
               "method": "GET",
-              "url": "/monitor/api/v2/service/log_metric/affect_service_group/"
+              "url": "/monitor/api/v2/service/log_metric/affect_service_group/${this.targetId}"
           },
           {
               "key": "logTemplate",
               "content": "日志模版",
               "method": "DELETE",
-              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/"
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
           },
           {
               "key": "logTemplate",
@@ -1032,6 +1060,14 @@
       "content": "管理员配置",
       "path": "/adminConfig",
       "urls": [
+        {
+            "url": "/monitor/api/v1/dashboard/new/chart",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/new/panel/host",
+            "method": "POST"
+        },
         {
             "url": "/monitor/api/v2/monitor/metric/import",
             "method": "POST"
