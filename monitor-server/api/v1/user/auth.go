@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -193,6 +194,22 @@ func AuthRequired() gin.HandlerFunc {
 					} else {
 						c.Set("operatorName", coreToken.User)
 						c.Set("operatorRoles", coreToken.Roles)
+						// 子系统直接放行
+						if strings.Contains(strings.Join(mid.GetOperateUserRoles(c), ","), "SUB_SYSTEM") {
+							c.Next()
+							return
+						}
+						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
+							legal := validateMenuApi(mid.GetOperateUserRoles(c), c.Request.URL.Path, c.Request.Method)
+							if legal {
+								c.Next()
+							} else {
+								mid.ReturnApiPermissionError(c)
+								c.Abort()
+							}
+						} else {
+							c.Next()
+						}
 						c.Next()
 					}
 				} else {
@@ -327,4 +344,28 @@ func ListManageRole(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 	}
 	mid.ReturnSuccessData(c, result)
+}
+
+func validateMenuApi(roles []string, path, method string) (legal bool) {
+	for _, menuApi := range m.MenuApiGlobalList {
+		for _, role := range roles {
+			if strings.ToLower(menuApi.Menu) == strings.ToLower(role) {
+				for _, item := range menuApi.Urls {
+					if strings.ToLower(item.Method) == strings.ToLower(method) {
+						re := regexp.MustCompile(BuildRegexPattern(item.Url))
+						if re.MatchString(path) {
+							legal = true
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+func BuildRegexPattern(template string) string {
+	// 将 ${variable-a.b} 替换为 (\w+)
+	return regexp.MustCompile(`\$\{[\w.-]+\}`).ReplaceAllString(template, `(\w+)`)
 }

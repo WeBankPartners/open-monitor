@@ -156,6 +156,10 @@ func ReturnDashboardNameRepeatError(c *gin.Context) {
 	ReturnError(c, models.GetMessageMap(c).DashboardNameRepeatError, http.StatusOK)
 }
 
+func ReturnApiPermissionError(c *gin.Context) {
+	ReturnError(c, models.GetMessageMap(c).ApiPermissionDeny, http.StatusOK)
+}
+
 func InitHttpError() {
 	err := models.InitErrorTemplateList("./conf/i18n")
 	if err != nil {

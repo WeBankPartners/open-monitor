@@ -63,6 +63,7 @@ type ErrorTemplate struct {
 	LogGroupNameDuplicateError                CustomError `json:"log_group_name_duplicate_error"`
 	LogGroupNameIllegalError                  CustomError `json:"log_group_name_illegal_error"`
 	DashboardNameRepeatError                  CustomError `json:"dashboard_name_repeat_error"`
+	ApiPermissionDeny                         CustomError `json:"api_permission_deny"`
 	DashboardIdExistError                     CustomError `json:"dashboard_id_exist_error"`
 	ImportDashboardNameExistError             CustomError `json:"import_dashboard_name_exist_error"`
 	CreateDashboardNameExistError             CustomError `json:"create_dashboard_name_exist_error"`
