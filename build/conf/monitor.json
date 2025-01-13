@@ -187,5 +187,9 @@
   "monitor_alarm_mail_enable": "{{MONITOR_ALARM_MAIL_ENABLE}}",
   "monitor_alarm_callback_level_min": "{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}",
   "monitor_notify_treevent_enable": "{{MONITOR_NOTIFY_TREEVENT_ENABLE}}",
-  "encrypt_seed": "{{ENCRYPT_SEED}}"
+  "encrypt_seed": "{{ENCRYPT_SEED}}",
+  "menu_api_map": {
+    "enable": "{{MONITOR_MENU_API_ENABLE}}",
+    "file": "conf/menu-api-map.json"
+  }
 }
