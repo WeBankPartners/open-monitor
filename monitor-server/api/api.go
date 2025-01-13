@@ -452,6 +452,7 @@ func httpLogHandle() gin.HandlerFunc {
 		}
 		apiCode := apiCodeMap[c.Request.Method+"_"+c.FullPath()]
 		c.Writer.Header().Add("Api-Code", apiCode)
+		c.Set(models.ContextApiCode, apiCode)
 		if ignoreLog {
 			c.Next()
 		} else {
