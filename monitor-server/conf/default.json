@@ -185,5 +185,9 @@
   "default_admin_role": "SUPER_ADMIN",
   "alarm_alive_max_day": "100",
   "monitor_alarm_mail_enable": "Y",
-  "monitor_alarm_callback_level_min": "high"
+  "monitor_alarm_callback_level_min": "high",
+  "menu_api_map": {
+    "enable": "Y",
+    "file": "conf/menu-api-map.json"
+  }
 }

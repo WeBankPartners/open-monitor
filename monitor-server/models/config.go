@@ -189,6 +189,22 @@ type GlobalConfig struct {
 	MonitorAlarmCallbackLevelMin string              `json:"monitor_alarm_callback_level_min"`
 	MonitorNotifyTreeventEnable  string              `json:"monitor_notify_treevent_enable"`
 	EncryptSeed                  string              `json:"encrypt_seed"`
+	MenuApiMap                   MenuApiMapConfig    `json:"menu_api_map"`
+}
+
+type MenuApiMapConfig struct {
+	Enable string `json:"enable"`
+	File   string `json:"file"`
+}
+
+type MenuApiMapObj struct {
+	Menu string           `json:"menu"`
+	Urls []*MenuApiUrlObj `json:"urls"`
+}
+
+type MenuApiUrlObj struct {
+	Url    string `json:"url"`
+	Method string `json:"method"`
 }
 
 var (
@@ -209,6 +225,7 @@ var (
 	AgentManagerRemoteIp string
 	NotifyTreeventEnable bool
 	PrometheusArchiveDay string
+	MenuApiGlobalList    []*MenuApiMapObj
 )
 
 func Config() *GlobalConfig {
@@ -298,6 +315,21 @@ func InitConfig(cfg string) {
 		PrometheusArchiveDay = fmt.Sprintf("%dd", prometheusArchiveDayNum)
 	} else {
 		PrometheusArchiveDay = "30d"
+	}
+	if c.MenuApiMap.Enable == "true" || strings.TrimSpace(c.MenuApiMap.Enable) == "" || strings.ToUpper(c.MenuApiMap.Enable) == "Y" {
+		maBytes, err := ioutil.ReadFile(c.MenuApiMap.File)
+		if err != nil {
+			log.Printf("read menu api map file fail,%s", err.Error())
+			return
+		}
+		err = json.Unmarshal(maBytes, &MenuApiGlobalList)
+		if err != nil {
+			log.Printf("json unmarshal menu api map content fail,%s", err.Error())
+			return
+		}
+		log.Println("enable menu api permission success")
+	} else {
+		log.Println("disable menu api permission success")
 	}
 	initLocalTimeZone()
 }
