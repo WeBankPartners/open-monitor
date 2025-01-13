@@ -215,7 +215,12 @@ func AuthRequired() gin.HandlerFunc {
 							}
 						}
 						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
-							legal := validateMenuApi(mid.GetOperateUserRoles(c), c.Request.URL.Path, c.Request.Method)
+							legal := false
+							if allowMenuList, ok := ApiMenuMap[c.GetString(m.ContextApiCode)]; ok {
+								legal = compareStringList(mid.GetOperateUserRoles(c), allowMenuList)
+							} else {
+								legal = validateMenuApi(mid.GetOperateUserRoles(c), c.Request.URL.Path, c.Request.Method)
+							}
 							if legal {
 								c.Next()
 							} else {
@@ -440,4 +445,20 @@ func DistinctStringList(input, excludeList []string) (output []string) {
 		}
 	}
 	return
+}
+
+func compareStringList(from, target []string) bool {
+	match := false
+	for _, f := range from {
+		for _, t := range target {
+			if f == t {
+				match = true
+				break
+			}
+		}
+		if match {
+			break
+		}
+	}
+	return match
 }

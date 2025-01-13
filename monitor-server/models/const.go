@@ -23,6 +23,7 @@ const (
 	AlarmNotifyManualMode = "manual"
 
 	AuthTokenHeader = "Authorization"
+	ContextApiCode  = "apiCode"
 )
 
 var (
