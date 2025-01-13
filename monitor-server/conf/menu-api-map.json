@@ -4,6 +4,22 @@
       "content": "自定义看板",
       "path": "/viewConfigIndex",
       "urls": [
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/import"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/shared/list"
+        },
           {
               "method": "GET",
               "url": "/monitor/api/v2/chart/custom"
@@ -221,6 +237,54 @@
       "content": "监控配置",
       "path": "/monitorConfigIndex",
       "urls": [
+        {
+			"url": "/monitor/api/v2/service/log_keyword/list",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/alarm/strategy/import/${type}/${targetId}",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_keyword/import",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_metric/import",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/monitor/metric/import",
+			"method": "POST"
+		},
+		{
+            "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
+            "method": "post"
+        },
+        {
+            "url": "/monitor/api/v2/alarm/strategy/export/service/${this.targetId}",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/monitor/metric/export",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service_endpoint/search/endpoint",
+            "method": "get"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/list/endpoint/${this.targetId}",
+            "method": "get"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/list/group/${this.targetId}",
+            "method": "get"
+        },
           {
               "url": "/monitor/api/v2/monitor/endpoint/query",
               "method": "get"
@@ -968,6 +1032,10 @@
       "content": "管理员配置",
       "path": "/adminConfig",
       "urls": [
+        {
+            "url": "/monitor/api/v2/monitor/metric/import",
+            "method": "POST"
+        },
           {
               "key": "typeConfig",
               "content": "类型配置",
