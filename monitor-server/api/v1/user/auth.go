@@ -15,9 +15,12 @@ import (
 	"time"
 )
 
-var whitePathMap = map[string]string{
-	"/monitor/${data}/query": "POST",
-}
+var (
+	whitePathMap = map[string]string{
+		"/monitor/${data}/query": "POST",
+	}
+	ApiMenuMap = make(map[string][]string)
+)
 
 type auth struct {
 	Username    string `form:"username" json:"username" binding:"required"`
@@ -361,6 +364,8 @@ func ListManageRole(c *gin.Context) {
 func validateMenuApi(roles []string, path, method string) (legal bool) {
 	// 防止ip 之类数据配置不上
 	path = strings.ReplaceAll(path, ".", "")
+	path = strings.ReplaceAll(path, "_", "")
+	path = strings.ReplaceAll(path, "-", "")
 	for _, menuApi := range m.MenuApiGlobalList {
 		for _, role := range roles {
 			if strings.ToLower(menuApi.Menu) == strings.ToLower(role) {
@@ -385,4 +390,54 @@ func validateMenuApi(roles []string, path, method string) (legal bool) {
 func BuildRegexPattern(template string) string {
 	// 将 ${variable} 替换为 (\w+) ,并且严格匹配
 	return "^" + regexp.MustCompile(`\$\{[\w.-]+\}`).ReplaceAllString(template, `(\w+)`) + "$"
+}
+
+func InitApiMenuMap(apiMenuCodeMap map[string]string) {
+	matchUrlMap := make(map[string]int)
+	for k, code := range apiMenuCodeMap {
+		re := regexp.MustCompile("^" + regexp.MustCompile(":[\\w\\-]+").ReplaceAllString(strings.ToLower(k), "([\\w\\.\\-\\$\\{\\}:]+)") + "$")
+		for _, menuApi := range m.MenuApiGlobalList {
+			for _, item := range menuApi.Urls {
+				key := strings.ToLower(item.Method + "_" + item.Url)
+				if re.MatchString(key) {
+					if existList, existFlag := ApiMenuMap[code]; existFlag {
+						ApiMenuMap[code] = append(existList, menuApi.Menu)
+					} else {
+						ApiMenuMap[code] = []string{menuApi.Menu}
+					}
+					matchUrlMap[item.Method+"_"+item.Url] = 1
+				}
+			}
+		}
+	}
+	for _, menuApi := range m.MenuApiGlobalList {
+		for _, item := range menuApi.Urls {
+			if _, ok := matchUrlMap[item.Method+"_"+item.Url]; !ok {
+				log.Logger.Info("InitApiMenuMap can not match menuUrl", log.String("menu", menuApi.Menu), log.String("method", item.Method), log.String("url", item.Url))
+			}
+		}
+	}
+	for k, v := range ApiMenuMap {
+		if len(v) > 1 {
+			ApiMenuMap[k] = DistinctStringList(v, []string{})
+		}
+	}
+	log.Logger.Debug("InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
+}
+
+func DistinctStringList(input, excludeList []string) (output []string) {
+	if len(input) == 0 {
+		return
+	}
+	existMap := make(map[string]int)
+	for _, v := range excludeList {
+		existMap[v] = 1
+	}
+	for _, v := range input {
+		if _, ok := existMap[v]; !ok {
+			output = append(output, v)
+			existMap[v] = 1
+		}
+	}
+	return
 }

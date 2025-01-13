@@ -437,6 +437,7 @@ func InitHttpServer() {
 		}
 		apiCodeMap[fmt.Sprintf("%s_%s%s", funcObj.Method, models.UrlPrefix+"/api/v2", funcObj.Url)] = funcObj.ApiCode
 	}
+	user.InitApiMenuMap(apiCodeMap)
 	r.Run(":" + models.Config().Http.Port)
 }
 
