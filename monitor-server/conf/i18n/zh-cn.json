@@ -131,5 +131,9 @@
   "add_metric_repeat_error": {
     "code": 20000033,
     "message": "保存失败：当前指标已存在，请修改配置后重试"
+  },
+  "api_permission_deny": {
+    "code": 20200034,
+    "message": "Api Permission Deny"
   }
 }

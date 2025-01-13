@@ -131,6 +131,10 @@
   "add_metric_repeat_error": {
     "code": 20000033,
     "message": "Save Failed: The current  Metric already exists. Please modify the configuration and try again."
+  },
+  "api_permission_deny": {
+    "code": 20200034,
+    "message": "API权限不足"
   }
 }
 
