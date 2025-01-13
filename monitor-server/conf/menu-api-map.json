@@ -246,6 +246,10 @@
       "path": "/monitorConfigIndex",
       "urls": [
         {
+			"url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
+			"method": "GET"
+		},
+        {
 			"url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
 			"method": "GET"
 		},
