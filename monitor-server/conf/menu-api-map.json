@@ -5,6 +5,10 @@
       "path": "/viewConfigIndex",
       "urls": [
         {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/page"
+        },
+        {
             "url": "/monitor/api/v2/dashboard/custom/export",
             "method": "POST"
         },
@@ -1274,6 +1278,14 @@
     "menu": "HOME_PAGE",
     "content": "monitor首页配置页面",
     "urls": [
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/page"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/custom/main/get",
+            "method": "GET"
+        },
         {
             "url": "/monitor/api/v2/dashboard/custom/export",
             "method": "POST"
