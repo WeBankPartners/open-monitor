@@ -247,6 +247,10 @@
       "urls": [
         {
             "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
             "method": "DELETE"
         },
         {
