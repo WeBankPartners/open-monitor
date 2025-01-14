@@ -226,6 +226,7 @@ var (
 	NotifyTreeventEnable bool
 	PrometheusArchiveDay string
 	MenuApiGlobalList    []*MenuApiMapObj
+	HomePageApi          *MenuApiMapObj
 )
 
 func Config() *GlobalConfig {
@@ -333,6 +334,9 @@ func InitConfig(cfg string) {
 				if !strings.HasPrefix(item.Url, "/") {
 					item.Url = "/" + item.Url
 				}
+			}
+			if menuApi.Menu == HomePage {
+				HomePageApi = menuApi
 			}
 		}
 		log.Println("enable menu api permission success")
