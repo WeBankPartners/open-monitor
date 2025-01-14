@@ -19,7 +19,8 @@ var (
 	whitePathMap = map[string]bool{
 		"/monitor/entities/${model}/query": true,
 	}
-	ApiMenuMap = make(map[string][]string)
+	ApiMenuMap         = make(map[string][]string)
+	HomePageApiCodeMap = make(map[string]bool)
 )
 
 type auth struct {
@@ -215,14 +216,9 @@ func AuthRequired() gin.HandlerFunc {
 							}
 						}
 						// 首页菜单直接放行
-						if m.HomePageApi != nil && len(m.HomePageApi.Urls) > 0 {
-							for _, item := range m.HomePageApi.Urls {
-								re := regexp.MustCompile(BuildRegexPattern(item.Url))
-								if re.MatchString(c.Request.URL.Path) {
-									c.Next()
-									return
-								}
-							}
+						if HomePageApiCodeMap[c.GetString(m.ContextApiCode)] {
+							c.Next()
+							return
 						}
 						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
 							legal := false
@@ -419,6 +415,9 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 						ApiMenuMap[code] = append(existList, menuApi.Menu)
 					} else {
 						ApiMenuMap[code] = []string{menuApi.Menu}
+					}
+					if menuApi.Menu == m.HomePage {
+						HomePageApiCodeMap[code] = true
 					}
 					matchUrlMap[item.Method+"_"+item.Url] = 1
 				}
