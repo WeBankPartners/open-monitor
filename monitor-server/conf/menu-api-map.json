@@ -1280,6 +1280,10 @@
     "urls": [
         {
             "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/get"
+        },
+        {
+            "method": "GET",
             "url": "/monitor/api/v1/dashboard/panels"
         },
         {
