@@ -5,6 +5,14 @@
       "path": "/viewConfigIndex",
       "urls": [
         {
+            "url": "/monitor/api/v2/dashboard/custom/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/chart/custom/copy",
+            "method": "POST"
+        },
+        {
 			"url": "/monitor/api/v2/dashboard/custom",
 			"method": "PUT"
 		},
@@ -233,6 +241,46 @@
       "content": "监控配置",
       "path": "/monitorConfigIndex",
       "urls": [
+        {
+            "url": "/monitor/api/v2/service/log_keyword/notify",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+            "method": "POST"
+        },
+        {
+           "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+           "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/export",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group/${this.targetId}",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}",
+            "method": "DELETE"
+        },
         {
 			"url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
 			"method": "GET"
@@ -1221,5 +1269,167 @@
               "method": "post"
           }
       ]
+  },
+  {
+    "menu": "HOME_PAGE",
+    "content": "monitor首页配置页面",
+    "urls": [
+        {
+            "url": "/monitor/api/v2/dashboard/custom/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/chart/custom/copy",
+            "method": "POST"
+        },
+        {
+			"url": "/monitor/api/v2/dashboard/custom",
+			"method": "PUT"
+		},
+        {
+			"url": "/monitor/api/v1/dashboard/custom/main/set",
+			"method": "POST"
+		},
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/import"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/shared/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/search"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/monitor/metric/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/metric/tag/value-list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/metric/tag/value-list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/series/config"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/series/config"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom/name/exist"
+        },
+        {
+            "method": "PUT",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/pie/chart"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/chart"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/all"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/manage/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "DELETE",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/custom/role/get"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/custom/role/save"
+        },
+        {
+            "method": "DELETE",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/custom/main/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/permission"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/copy"
+        }
+    ]
   }
 ]
