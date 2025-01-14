@@ -5,6 +5,14 @@
       "path": "/viewConfigIndex",
       "urls": [
         {
+            "url": "/monitor/api/v2/dashboard/custom/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/chart/custom/copy",
+            "method": "POST"
+        },
+        {
 			"url": "/monitor/api/v2/dashboard/custom",
 			"method": "PUT"
 		},
@@ -233,6 +241,30 @@
       "content": "监控配置",
       "path": "/monitorConfigIndex",
       "urls": [
+        {
+            "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/export",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group/${this.targetId}",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}",
+            "method": "DELETE"
+        },
         {
 			"url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
 			"method": "GET"
