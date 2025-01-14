@@ -242,12 +242,28 @@
       "path": "/monitorConfigIndex",
       "urls": [
         {
+            "url": "/monitor/api/v2/service/log_keyword/notify",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+            "method": "POST"
+        },
+        {
+           "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+           "method": "PUT"
+        },
+        {
             "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
             "method": "POST"
         },
         {
             "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
             "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "PUT"
         },
         {
             "url": "/monitor/api/v2/service/log_keyword/export",
