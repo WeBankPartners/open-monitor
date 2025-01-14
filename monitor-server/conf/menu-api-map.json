@@ -246,6 +246,30 @@
       "path": "/monitorConfigIndex",
       "urls": [
         {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "DELETE"
+        },
+        {
+            "url": "monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${this.targetId}",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_metric/${this.targetId}",
+            "method": "DELETE"
+        },
+        {
             "url": "/monitor/api/v2/service/log_keyword/notify",
             "method": "POST"
         },
