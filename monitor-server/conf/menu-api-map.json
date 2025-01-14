@@ -1279,6 +1279,10 @@
     "content": "monitor首页配置页面",
     "urls": [
         {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/panels"
+        },
+        {
             "method": "POST",
             "url": "/monitor/api/v1/alarm/problem/close"
         },
