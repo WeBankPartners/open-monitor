@@ -214,6 +214,16 @@ func AuthRequired() gin.HandlerFunc {
 								return
 							}
 						}
+						// 首页菜单直接放行
+						if m.HomePageApi != nil && len(m.HomePageApi.Urls) > 0 {
+							for _, item := range m.HomePageApi.Urls {
+								re := regexp.MustCompile(BuildRegexPattern(item.Url))
+								if re.MatchString(c.Request.URL.Path) {
+									c.Next()
+									return
+								}
+							}
+						}
 						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
 							legal := false
 							if allowMenuList, ok := ApiMenuMap[c.GetString(m.ContextApiCode)]; ok {

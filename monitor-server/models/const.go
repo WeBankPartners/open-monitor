@@ -24,6 +24,7 @@ const (
 
 	AuthTokenHeader = "Authorization"
 	ContextApiCode  = "apiCode"
+	HomePage        = "HOME_PAGE"
 )
 
 var (
