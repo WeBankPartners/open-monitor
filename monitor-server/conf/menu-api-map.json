@@ -1280,6 +1280,18 @@
     "urls": [
         {
             "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/close"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/main",
+            "method": "GET"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/message"
+        },
+        {
+            "method": "POST",
             "url": "/monitor/api/v1/alarm/problem/page"
         },
         {
