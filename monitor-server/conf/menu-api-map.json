@@ -1,1467 +1,1495 @@
 [
   {
-    "menu": "MONITOR_CUSTOM_DASHBOARD",
-    "content": "自定义看板",
-    "path": "/viewConfigIndex",
-    "urls": [
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/page"
-      },
-      {
-        "url": "/monitor/api/v2/dashboard/custom/export",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/chart/custom/copy",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/dashboard/custom",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/custom/main/set",
-        "method": "POST"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/shared/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/name/exist"
-      },
-      {
-        "method": "PUT",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/pie/chart"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/chart"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/all"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/manage/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/role/get"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/custom/role/save"
-      },
-      {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/main/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/permission"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/copy"
-      }
-    ]
+      "menu": "MONITOR_CUSTOM_DASHBOARD",
+      "content": "自定义看板",
+      "path": "/viewConfigIndex",
+      "urls": [
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/page"
+        },
+        {
+            "url": "/monitor/api/v2/dashboard/custom/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/chart/custom/copy",
+            "method": "POST"
+        },
+        {
+			"url": "/monitor/api/v2/dashboard/custom",
+			"method": "PUT"
+		},
+        {
+			"url": "/monitor/api/v1/dashboard/custom/main/set",
+			"method": "POST"
+		},
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/import"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/shared/list"
+        },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v2/chart/custom"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/user/role/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/user/manage_role/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v2/chart/custom/permission"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/search"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/metric/tag/value-list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/metric/tag/value-list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/chart/custom/series/config"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/chart/custom/series/config"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v2/chart/custom/name/exist"
+          },
+          {
+              "method": "PUT",
+              "url": "/monitor/api/v2/chart/custom"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/chart/custom/permission"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/pie/chart"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/chart"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/user/manage_role/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v2/dashboard/all"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/chart/manage/list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/chart/custom/permission"
+          },
+          {
+              "method": "DELETE",
+              "url": "/monitor/api/v2/chart/custom"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/user/manage_role/list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/dashboard/custom/list"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/custom/role/get"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/custom/role/save"
+          },
+          {
+              "method": "DELETE",
+              "url": "/monitor/api/v2/dashboard/custom"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/custom/main/list"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/dashboard/custom"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/dashboard/custom/permission"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v2/dashboard/custom/copy"
+          }
+      ]
   },
   {
-    "menu": "MONITOR_MAIN_DASHBOARD",
-    "content": "对象看板",
-    "path": "/endpointView",
-    "urls": [
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/main"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/panels",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/chart",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/config/chart/title",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/tags",
-        "method": "GET"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/get"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/alarm/history"
-      }
-    ]
+      "menu": "MONITOR_MAIN_DASHBOARD",
+      "content": "对象看板",
+      "path": "/endpointView",
+      "urls": [
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/main"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/search"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/panels",
+              "method": "GET"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/chart",
+              "method": "POST"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/config/chart/title",
+              "method": "POST"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/tags",
+              "method": "GET"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/recursive/get"
+          },
+          {
+              "method": "GET",
+              "url": "/monitor/api/v1/alarm/history"
+          }
+      ]
   },
   {
-    "menu": "MONITOR_ALARM_MANAGEMENT",
-    "content": "告警列表",
-    "path": "/alarmManagement",
-    "urls": [
-      {
-        "url": "/monitor/api/v1/alarm/problem/close",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/problem/notify",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/problem/page",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/problem/options",
-        "method": "post"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/history"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/message"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/page"
-      }
-    ]
+      "menu": "MONITOR_ALARM_MANAGEMENT",
+      "content": "告警列表",
+      "path": "/alarmManagement",
+      "urls": [
+          {
+              "url": "/monitor/api/v1/alarm/problem/close",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/problem/notify",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/problem/page",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/problem/options",
+              "method": "post"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/alarm/problem/history"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/alarm/problem/message"
+          },
+          {
+              "method": "POST",
+              "url": "/monitor/api/v1/alarm/problem/page"
+          }
+      ]
   },
   {
-    "menu": "MONITOR_ALARM_CONFIG",
-    "content": "监控配置",
-    "path": "/monitorConfigIndex",
-    "urls": [
-      {
-        "url": "/monitor/api/v2/service/log_keyword/notify",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/export",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_keyword/list",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_metric/list/group/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/get/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/list",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/strategy/import/${type}/${targetId}",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/strategy/export/service/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/export",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service_endpoint/search/endpoint",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/list/endpoint/${this.targetId}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/list/group/${this.targetId}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/get/${rowData.guid}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/grp/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/window/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/window/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/deregister",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/history",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/endpoint/type_new",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/agent/register",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/update",
-        "method": "put"
-      },
-      {
-        "url": "/monitor/api/v2/seed",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/process/list",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/process/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/endpoint/telnet/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/agent/endpoint/telnet/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/options",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/search",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/options",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/endpoint/type",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service_endpoint/search/group",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group",
-        "method": "put"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/${rowData.guid}/endpoint/list",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/grp/role/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/grp/role/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/connect/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/connect/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/edit",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/add",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/delete",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/delete",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/role/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/role/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/endpoint/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/search",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/endpoint/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/callback/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/callback/update",
-        "method": "post"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/org/panel/add"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "put",
-        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/regexp/match"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/data_map/regexp/match"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/db_metric"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/db_metric"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_config"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_config"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${type}"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_json"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_json"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/db_metric/list"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/affect_service_group/${this.targetId}"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/regexp/test/match"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/regexp/match"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list/count"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/endpoint/type"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/sys/parameter/metric_template"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/endpoint/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/endpoint"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/chart"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "PUT",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/comparison_chart"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list/count"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/endpoint_group/query"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/endpoint/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/${data.endpoint_group}/notify/update"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}/notify/update"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/alarm/strategy/${rowData.guid}"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/event/callback/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v1/user/role/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "PUT",
-        "url": "/monitor/api/v2/alarm/strategy"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/strategy"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "post",
-        "url": "/monitor/api/v2/alarm/strategy/query"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/strategy/search"
-      },
-      {
-        "key": "logManagement",
-        "content": "关键字",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "logManagement",
-        "content": "关键字",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
-      }
-    ]
+      "menu": "MONITOR_ALARM_CONFIG",
+      "content": "监控配置",
+      "path": "/monitorConfigIndex",
+      "urls": [
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "DELETE"
+        },
+        {
+            "url": "monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${this.targetId}",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_metric/${this.targetId}",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/notify",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+            "method": "POST"
+        },
+        {
+           "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+           "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+            "method": "PUT"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_keyword/export",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_metric_group/${this.targetId}",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}",
+            "method": "DELETE"
+        },
+        {
+			"url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_keyword/list",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/db_metric/list/group/${this.targetId}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/monitor/endpoint/get/${this.targetId}",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/service/log_keyword/list",
+			"method": "GET"
+		},
+        {
+			"url": "/monitor/api/v2/alarm/strategy/import/${type}/${targetId}",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_keyword/import",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/service/log_metric/import",
+			"method": "POST"
+		},
+		{
+			"url": "/monitor/api/v2/monitor/metric/import",
+			"method": "POST"
+		},
+		{
+            "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
+            "method": "post"
+        },
+        {
+            "url": "/monitor/api/v2/alarm/strategy/export/service/${this.targetId}",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/monitor/metric/export",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/service_endpoint/search/endpoint",
+            "method": "get"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/list/endpoint/${this.targetId}",
+            "method": "get"
+        },
+        {
+            "url": "/monitor/api/v2/service/log_metric/list/group/${this.targetId}",
+            "method": "get"
+        },
+          {
+              "url": "/monitor/api/v2/monitor/endpoint/query",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/monitor/endpoint/get/${rowData.guid}",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/endpoint/grp/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group/query",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/window/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/window/get",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/config/new/snmp",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/endpoint/list",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/endpoint/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/agent/deregister",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/history",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/endpoint/type_new",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/agent/register",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v2/monitor/endpoint/update",
+              "method": "put"
+          },
+          {
+              "url": "/monitor/api/v2/seed",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/process/list",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/process/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/agent/endpoint/telnet/get",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/agent/endpoint/telnet/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/endpoint/list",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/endpoint/options",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/org/search",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group/options",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/dashboard/endpoint/type",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/service_endpoint/search/group",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group",
+              "method": "put"
+          },
+          {
+              "url": "/monitor/api/v2/monitor/endpoint/query",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group/${rowData.guid}/endpoint/list",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/grp/role/get",
+              "method": "get"
+          },
+          {
+              "url": "/monitor/api/v1/alarm/grp/role/update",
+              "method": "post"
+          },
+          {
+              "url": "/monitor/api/v2/alarm/endpoint_group/query",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/connect/get",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/connect/update",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/panel/get",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/panel/edit",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/panel/add",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/panel/delete",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/panel/delete",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/role/get",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/role/update",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/endpoint/get",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/dashboard/search",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/endpoint/update",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/callback/get",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/alarm/org/callback/update",
+              "method": "post"
+          },
+          {
+
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/search"
+          },
+          {
+
+              "method": "POST",
+              "url": "/monitor/api/v1/alarm/org/panel/add"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "put",
+              "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "GET",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/regexp/match"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/data_map/regexp/match"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "get",
+              "url": "/monitor/api/v2/service/service_group/endpoint_rel"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/db_metric"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/db_metric"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_config"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_config"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "DELETE",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_group/${type}"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_json"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_json"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "GET",
+              "url": "/monitor/api/v2/service/service_group/endpoint_rel"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "get",
+              "url": "/monitor/api/v2/service/service_group/endpoint_rel"
+          },
+          {
+              "key": "businessMonitor",
+              "content": "业务配置",
+              "method": "get",
+              "url": "/monitor/api/v2/service/db_metric/list"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "GET",
+              "url": "/monitor/api/v2/service/log_metric/affect_service_group/${this.targetId}"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "DELETE",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "GET",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "POST",
+              "url": "/monitor/api/v2/regexp/test/match"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "PUT",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
+          },
+          {
+              "key": "logTemplate",
+              "content": "日志模版",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/regexp/match"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list/count"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/endpoint/type"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "DELETE",
+              "url": "/monitor/api/v1/dashboard/new/metric"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "DELETE",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/sys/parameter/metric_template"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/endpoint/metric/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v1/dashboard/endpoint"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/chart"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/new/metric"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "PUT",
+              "url": "/monitor/api/v1/dashboard/new/metric"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/comparison_chart"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list/count"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "DELETE",
+              "url": "/monitor/api/v1/dashboard/new/metric"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "DELETE",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "GET",
+              "url": "/monitor/api/v2/alarm/endpoint_group/query"
+          },
+          {
+              "key": "metricConfig",
+              "content": "指标列表",
+              "method": "POST",
+              "url": "/monitor/api/v1/alarm/endpoint/list"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "POST",
+              "url": "/monitor/api/v2/alarm/endpoint_group/${data.endpoint_group}/notify/update"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "POST",
+              "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}/notify/update"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "DELETE",
+              "url": "/monitor/api/v2/alarm/strategy/${rowData.guid}"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "GET",
+              "url": "/monitor/api/v2/monitor/metric/list"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "GET",
+              "url": "/monitor/api/v2/alarm/event/callback/list"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "GET",
+              "url": "/monitor/api/v1/user/role/list"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "PUT",
+              "url": "/monitor/api/v2/alarm/strategy"
+          },
+          {
+                "key": "thresholdManagement",
+                "content": "指标阈值",
+                "method": "POST",
+                "url": "/monitor/api/v2/alarm/strategy"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "post",
+              "url": "/monitor/api/v2/alarm/strategy/query"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "POST",
+              "url": "/monitor/api/v2/metric/tag/value-list"
+          },
+          {
+              "key": "thresholdManagement",
+              "content": "指标阈值",
+              "method": "GET",
+              "url": "/monitor/api/v2/alarm/strategy/search"
+          },
+          {
+              "key": "logManagement",
+              "content": "关键字",
+              "method": "POST",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
+          },
+          {
+              "key": "logManagement",
+              "content": "关键字",
+              "method": "GET",
+              "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
+          }
+      ]
   },
   {
-    "menu": "MONITOR_ADMINISTRATOR_CONFIG",
-    "content": "管理员配置",
-    "path": "/adminConfig",
-    "urls": [
-      {
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/new/panel/host",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/import",
-        "method": "POST"
-      },
-      {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type/query",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type",
-        "method": "post"
-      },
-      {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type",
-        "method": "delete"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
-        "method": "delete"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
-        "method": "put"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "put"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "post"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/chart",
-        "method": "post"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/endpoint",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/endpoint/type",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list/count",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/endpoint/type",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/metric",
-        "method": "delete"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
-        "method": "delete"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/sys/parameter/metric_template",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/endpoint/metric/list",
-        "method": "post"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/endpoint",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/metric",
-        "method": "post"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/metric",
-        "method": "put"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/comparison_chart",
-        "method": "post"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric",
-        "method": "post"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list/count",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/alarm/endpoint_group/query",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/metric",
-        "method": "delete"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
-        "method": "delete"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list/count",
-        "method": "get"
-      },
-      {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/alarm/endpoint/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/add",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/delete",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "delete"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "put"
-      },
-      {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
-        "method": "get"
-      },
-      {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
-        "method": "delete"
-      },
-      {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
-        "method": "put"
-      },
-      {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
-        "method": "post"
-      }
-    ]
+      "menu": "MONITOR_ADMINISTRATOR_CONFIG",
+      "content": "管理员配置",
+      "path": "/adminConfig",
+      "urls": [
+        {
+            "url": "/monitor/api/v1/dashboard/new/chart",
+            "method": "DELETE"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/new/panel/host",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/monitor/metric/import",
+            "method": "POST"
+        },
+          {
+              "key": "typeConfig",
+              "content": "类型配置",
+              "url": "/monitor/api/v2/config/type/query",
+              "method": "get"
+          },
+          {
+              "key": "typeConfig",
+              "content": "类型配置",
+              "url": "/monitor/api/v2/config/type",
+              "method": "post"
+          },
+          {
+              "key": "typeConfig",
+              "content": "类型配置",
+              "url": "/monitor/api/v2/config/type",
+              "method": "delete"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v2/monitor/metric/list",
+              "method": "get"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/panel",
+              "method": "delete"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/panel",
+              "method": "put"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/chart",
+              "method": "put"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/chart",
+              "method": "post"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/chart",
+              "method": "get"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/new/panel",
+              "method": "get"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/chart",
+              "method": "post"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/endpoint",
+              "method": "get"
+          },
+          {
+              "key": "typeConfig",
+              "content": "看板配置",
+              "url": "/monitor/api/v1/dashboard/endpoint/type",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list/count",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/endpoint/type",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/metric",
+              "method": "delete"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
+              "method": "delete"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/sys/parameter/metric_template",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/endpoint/metric/list",
+              "method": "post"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/endpoint",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/metric",
+              "method": "post"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/metric",
+              "method": "put"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/comparison_chart",
+              "method": "post"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric",
+              "method": "post"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list/count",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/alarm/endpoint_group/query",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/metric",
+              "method": "delete"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
+              "method": "delete"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric_comparison/list",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v2/monitor/metric/list/count",
+              "method": "get"
+          },
+          {
+              "key": "adminMetric",
+              "content": "指标配置",
+              "url": "/monitor/api/v1/alarm/endpoint/list",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/agent/kubernetes/cluster/add",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/agent/kubernetes/cluster/list",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/agent/kubernetes/cluster/delete",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/config/new/snmp",
+              "method": "delete"
+          },
+          {
+
+              "url": "/monitor/api/v1/agent/kubernetes/cluster/update",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/config/new/snmp",
+              "method": "get"
+          },
+          {
+
+              "url": "/monitor/api/v1/config/new/snmp",
+              "method": "post"
+          },
+          {
+
+              "url": "/monitor/api/v1/config/new/snmp",
+              "method": "put"
+          },
+          {
+              "key": "remoteSync",
+              "content": "远程同步",
+              "url": "/monitor/api/v2/config/remote/write",
+              "method": "get"
+          },
+          {
+              "key": "remoteSync",
+              "content": "远程同步",
+              "url": "/monitor/api/v2/config/remote/write",
+              "method": "delete"
+          },
+          {
+              "key": "remoteSync",
+              "content": "远程同步",
+              "url": "/monitor/api/v2/config/remote/write",
+              "method": "put"
+          },
+          {
+              "key": "remoteSync",
+              "content": "远程同步",
+              "url": "/monitor/api/v2/config/remote/write",
+              "method": "post"
+          }
+      ]
   },
   {
     "menu": "HOME_PAGE",
     "content": "monitor首页配置页面",
     "urls": [
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/page"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/custom/main/get",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/dashboard/custom/export",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/chart/custom/copy",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/dashboard/custom",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/custom/main/set",
-        "method": "POST"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/shared/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/name/exist"
-      },
-      {
-        "method": "PUT",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/pie/chart"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/chart"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/all"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/manage/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
-      },
-      {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/chart/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/role/get"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/custom/role/save"
-      },
-      {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/main/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/permission"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/copy"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/analyze"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/strategy/workflow"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/export"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission/batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/log_monitor_template/batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/dashboard/batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/service_group/batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/config/type/batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/config/type-batch"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/trans_import"
-      }
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/get"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/panels"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/close"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/main",
+            "method": "GET"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/message"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/alarm/problem/page"
+        },
+        {
+            "url": "/monitor/api/v1/dashboard/custom/main/get",
+            "method": "GET"
+        },
+        {
+            "url": "/monitor/api/v2/dashboard/custom/export",
+            "method": "POST"
+        },
+        {
+            "url": "/monitor/api/v2/chart/custom/copy",
+            "method": "POST"
+        },
+        {
+			"url": "/monitor/api/v2/dashboard/custom",
+			"method": "PUT"
+		},
+        {
+			"url": "/monitor/api/v1/dashboard/custom/main/set",
+			"method": "POST"
+		},
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/import"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/shared/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/search"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/monitor/metric/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/metric/tag/value-list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/metric/tag/value-list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/series/config"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/series/config"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/chart/custom/name/exist"
+        },
+        {
+            "method": "PUT",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/pie/chart"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/chart"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v2/dashboard/all"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/manage/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/chart/custom/permission"
+        },
+        {
+            "method": "DELETE",
+            "url": "/monitor/api/v2/chart/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/user/manage_role/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/list"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/custom/role/get"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v1/dashboard/custom/role/save"
+        },
+        {
+            "method": "DELETE",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "GET",
+            "url": "/monitor/api/v1/dashboard/custom/main/list"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/permission"
+        },
+        {
+            "method": "POST",
+            "url": "/monitor/api/v2/dashboard/custom/copy"
+        }
     ]
   }
 ]
