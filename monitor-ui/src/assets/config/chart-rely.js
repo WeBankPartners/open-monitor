@@ -250,6 +250,7 @@ export const drawChart = function (that,config,userConfig, elId) {
             </div>`
           })
         }
+        res = `<div class="echarts-custom-tooltip-${finalConfig.chartId || ''}">` + res + '</div>'
         return res
       },
     },
