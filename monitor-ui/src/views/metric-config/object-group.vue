@@ -10,6 +10,7 @@
         style="width:300px;"
         v-model="endpointGroup"
         filterable
+        clearable
         @on-change="() => {
           metric = ''
           changeEndpointGroup()
