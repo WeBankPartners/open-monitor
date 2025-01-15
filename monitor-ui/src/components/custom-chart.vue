@@ -244,6 +244,21 @@ export default {
               this.chartInstance.on('legendselectchanged', params => {
                 window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
               })
+              this.chartInstance.on('showTip', function () {
+                const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
+                const tooltip = document.querySelector(className)
+                if (tooltip) {
+                  const height = tooltip.clientHeight
+                  if (height > 400) {
+                    tooltip.style.maxHeight = '400px'
+                    tooltip.style.overflowY = 'auto'
+                    tooltip.style.pointerEvents = 'auto'
+                  }
+                  tooltip.addEventListener('scroll', function (event) {
+                    event.stopPropagation()
+                  })
+                }
+              })
             }
           })
         }
