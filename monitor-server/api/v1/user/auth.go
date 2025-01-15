@@ -404,13 +404,16 @@ func BuildRegexPattern(template string) string {
 }
 
 func InitApiMenuMap(apiMenuCodeMap map[string]string) {
+	var exist bool
 	matchUrlMap := make(map[string]int)
 	for k, code := range apiMenuCodeMap {
-		re := regexp.MustCompile("^" + regexp.MustCompile(":[\\w\\-]+").ReplaceAllString(strings.ToLower(k), "([\\w\\.\\-\\$\\{\\}:]+)") + "$")
+		exist = false
+		re := regexp.MustCompile("^" + regexp.MustCompile(":[\\w\\-]+").ReplaceAllString(strings.ToLower(k), "([\\w\\.\\-\\$\\{\\}:\\[\\]]+)") + "$")
 		for _, menuApi := range m.MenuApiGlobalList {
 			for _, item := range menuApi.Urls {
 				key := strings.ToLower(item.Method + "_" + item.Url)
 				if re.MatchString(key) {
+					exist = true
 					if existList, existFlag := ApiMenuMap[code]; existFlag {
 						ApiMenuMap[code] = append(existList, menuApi.Menu)
 					} else {
@@ -422,6 +425,9 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 					matchUrlMap[item.Method+"_"+item.Url] = 1
 				}
 			}
+		}
+		if !exist {
+			log.Logger.Info("InitApiMenuMap menu-api-json lack url", log.String("path", k), log.String("code", code))
 		}
 	}
 	for _, menuApi := range m.MenuApiGlobalList {
