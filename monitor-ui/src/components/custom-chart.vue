@@ -16,6 +16,7 @@
 import {cloneDeep, isEmpty} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 import { changeSeriesColor } from '@/assets/config/random-color'
+import {chartTooltipContain} from '@/assets/js/utils'
 
 export default {
   name: '',
@@ -246,18 +247,7 @@ export default {
               })
               this.chartInstance.on('showTip', function () {
                 const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
-                const tooltip = document.querySelector(className)
-                if (tooltip) {
-                  const height = tooltip.clientHeight
-                  if (height > 400) {
-                    tooltip.style.maxHeight = '400px'
-                    tooltip.style.overflowY = 'auto'
-                    tooltip.style.pointerEvents = 'auto'
-                  }
-                  tooltip.addEventListener('scroll', function (event) {
-                    event.stopPropagation()
-                  })
-                }
+                chartTooltipContain(className)
               })
             }
           })

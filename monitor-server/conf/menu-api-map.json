@@ -5,6 +5,10 @@
     "path": "/viewConfigIndex",
     "urls": [
       {
+        "method": "PUT",
+        "url": "/monitor/api/v2/chart/custom/name"
+      },
+      {
         "method": "POST",
         "url": "/monitor/api/v1/alarm/problem/page"
       },
@@ -245,6 +249,10 @@
     "content": "监控配置",
     "path": "/monitorConfigIndex",
     "urls": [
+      {
+        "url": "/monitor/api/v2/service/log_metric/log_metric_config/${this.guid}",
+        "method": "DELETE"
+      },
       {
         "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
         "method": "PUT"
@@ -1282,6 +1290,10 @@
     "menu": "HOME_PAGE",
     "content": "monitor首页配置页面",
     "urls": [
+      {
+        "method": "PUT",
+        "url": "/monitor/api/v2/chart/custom/name"
+      },
       {
         "method": "GET",
         "url": "/monitor/api/v1/dashboard/recursive/get"
