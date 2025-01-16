@@ -856,6 +856,8 @@ export default {
             selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
               option_value: initialData[0].endpoint
             }) || {}
+            this.endpointName = selectedEndpointItem.option_text
+            this.endpointType = selectedEndpointItem.option_type_name
           }
           this.endpointValue = initialData[0].endpoint
           this.serviceGroup = selectedEndpointItem.app_object
