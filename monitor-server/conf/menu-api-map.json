@@ -1509,6 +1509,110 @@
       {
         "method": "POST",
         "url": "/monitor/api/v2/dashboard/custom/trans_import"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/dashboard/data/sync"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/dashboard/system/add"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/stop/${name}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/snmp/exporter/${action}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/alarm/problem/query"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/user/list"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/alarm/endpoint_group/${groupGuid}/notify/list"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/alarm/org/plugin"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/dashboard/new/metric"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/user/role/update"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/process/${operation}"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/alarm/problem/list"
+      },
+      {
+        "method": "get",
+        "url": "/monitor/api/v1/user/message/get"
+      },
+      {
+        "method": "get",
+        "url": "/monitor/api/v1/user/role/user/update"
+      },
+      {
+        "method": "post",
+        "url": "/monitor/api/v1/agent/export/log_monitor/${operation}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/start/${name}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/deregister/${name}"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/dashboard/config/metric/list"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/kubernetes/cluster/${action}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/register/${name}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/export/kubernetes/pod/${action}"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/dashboard/server/chart"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/user/message/update"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/agent/custom/metric/add"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v1/dashboard/system/delete"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/service/plugin/update/path"
       }
     ]
   }
