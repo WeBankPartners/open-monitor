@@ -468,6 +468,11 @@ export default {
                 this.getEndpointSearch = e
                 this.debounceGetEndpointList()
               }}
+              on-on-clear={() => {
+                this.getEndpointSearch = ''
+                this.debounceGetEndpointList()
+              }}
+
               filterable
               clearable
             >
