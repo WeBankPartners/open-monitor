@@ -5,6 +5,22 @@
     "path": "/viewConfigIndex",
     "urls": [
       {
+        "method": "POST",
+        "url": "/monitor/api/v1/alarm/problem/message"
+      },
+      {
+        "url": "/monitor/api/v1/alarm/problem/close",
+        "method": "post"
+      },
+      {
+        "url": "/monitor/api/v1/dashboard/panels",
+        "method": "GET"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/dashboard/main"
+      },
+      {
         "method": "PUT",
         "url": "/monitor/api/v2/chart/custom/name"
       },
