@@ -222,7 +222,6 @@
 
     "metricExport": "/monitor/api/v2/monitor/metric/export",
     "metricImport": "/monitor/api/v2/monitor/metric/import",
-    "getLogMetricByPath": "/monitor/api/v2/service/log_metric/log_metric_monitor",
     "startNotify": "/monitor/api/v1/alarm/problem/notify",
     "logTemplateTableData": "/monitor/api/v2/service/log_metric/log_monitor_template/list",
     "logTemplateConfig": "/monitor/api/v2/service/log_metric/log_monitor_template",

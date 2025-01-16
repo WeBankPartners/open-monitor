@@ -250,6 +250,10 @@
     "path": "/monitorConfigIndex",
     "urls": [
       {
+        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group/${guid}",
+        "method": "GET"
+      },
+      {
         "url": "/monitor/api/v2/service/log_metric/log_metric_config/${this.guid}",
         "method": "DELETE"
       },
