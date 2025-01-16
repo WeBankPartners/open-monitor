@@ -118,7 +118,7 @@ window.use(DelConfirm)
 
 import Dashboard from '@/views/dashboard'
 window.addHomepageComponent && window.addHomepageComponent({
-  code: 'MONITORING',
+  code: 'MONITOR_CUSTOM_DASHBOARD',
   name: () => {
     return window.vm.$t('m_menu_homepageName')
   },
