@@ -227,7 +227,7 @@ import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
-import { generateUuid, getRandomColor } from '@/assets/js/utils'
+import { generateUuid, getRandomColor, chartTooltipContain} from '@/assets/js/utils'
 import { changeSeriesColor } from '@/assets/config/random-color'
 import ChartLinesModal from '@/components/chart-lines-modal'
 const initTableData = [
@@ -842,12 +842,18 @@ export default {
           }
         }
         if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
-          const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+          let selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
             option_value: initialData[0].endpoint
           })
+          if (isEmpty(selectedEndpointItem)) {
+            this.getEndpointSearch = initialData[0].endpointName
+            await this.getEndpointList()
+            selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+              option_value: initialData[0].endpoint
+            }) || {}
+          }
           this.endpointValue = initialData[0].endpoint
           this.serviceGroup = selectedEndpointItem.app_object
-
           this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
             guid: selectedEndpointItem.option_value
           }, res => {
@@ -1331,6 +1337,10 @@ export default {
               if (this.chartInstance) {
                 this.chartInstance.on('legendselectchanged', params => {
                   window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+                })
+                this.chartInstance.on('showTip', () => {
+                  const className = `.echarts-custom-tooltip-${this.elId}`
+                  chartTooltipContain(className)
                 })
               }
             }, 100)

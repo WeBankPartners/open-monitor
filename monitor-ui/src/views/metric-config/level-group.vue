@@ -10,6 +10,7 @@
         style="width:300px;"
         v-model="serviceGroup"
         filterable
+        clearable
         @on-change="() => {
           metric = ''
           onFilterChange()
