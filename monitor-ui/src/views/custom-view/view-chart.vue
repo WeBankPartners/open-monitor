@@ -94,7 +94,8 @@ export default {
       allParams: null,
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      isToolTipShow: false
     }
   },
   created() {
@@ -157,7 +158,7 @@ export default {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       this.noDataTip = false
-      if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
+      if (this.$root.$validate.isEmpty_reset(this.panalData.query) || this.isToolTipShow) {
         return
       }
       const params = {
@@ -249,8 +250,12 @@ export default {
                   window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
                 })
                 this.chartInstance.on('showTip', () => {
+                  this.isToolTipShow = true
                   const className = `.echarts-custom-tooltip-${this.elId}`
                   chartTooltipContain(className)
+                })
+                this.chartInstance.on('hideTip', () => {
+                  this.isToolTipShow = false
                 })
               }
             })

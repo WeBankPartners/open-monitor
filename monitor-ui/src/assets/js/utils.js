@@ -136,7 +136,6 @@ export const chartTooltipContain = className => {
   if (tooltip) {
     const height = tooltip.clientHeight
     if (height > 400) {
-      console.error(height, 'height')
       tooltip.style.maxHeight = '400px'
       tooltip.style.overflowY = 'auto'
       tooltip.style.pointerEvents = 'auto'
