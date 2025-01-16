@@ -42,7 +42,7 @@ func MetricCreate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.MetricCreate(param, middleware.GetOperateUser(c), middleware.GetMessageMap(c))
+	err = db.MetricCreate(param, middleware.GetOperateUser(c), models.GetMessageMap(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {

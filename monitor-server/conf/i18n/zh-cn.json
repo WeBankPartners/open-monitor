@@ -1,36 +1,139 @@
 {
   "success": "成功",
-  "param_validate_error": "参数校验失败，详情:%s",
-  "param_empty_error": "参数 %s 不能为空",
-  "param_type_error": "参数 %s 类型必须是 %s",
-  "request_body_error": "读取请求体body数据错误",
-  "request_json_unmarshal_error": "json反格式化请求体内容错误",
-  "query_table_error": "查询数据库表 %s 失败",
-  "fetch_table_data_error": "用条件 %k=%v 查询数据库表 %t 无数据",
-  "update_table_error": "更新数据库表 %s 失败",
-  "delete_table_data_error": "用条件 %k=%v 删除数据库表 %t 失败",
-  "handle_error": "请求处理失败，详情:%s",
-  "password_error": "密码错误",
-  "token_error": "请求认证失败",
-  "token_authority_error": "鉴权失败，权限不足",
-  "save_done_but_sync_fail": "配置下发失败:下发配置到目标对象失败，请先确认目标对象可用,确认后重新点击[保存]下发配置",
-  "metric_duplicate_error": "保存失败,当前层级对象下已有重名指标%s,请修改之后重试",
-  "metric_not_found": "导入失败，指标: %s 不存在",
-  "strategy_name_import_duplicate_error": "导入失败，名称: %s 重复",
-  "log_group_name_duplicate_error": "配置名%s重复，请修改配置名后重新提交",
-  "log_group_name_illegal_error": "配置名%s不合法，请修改配置名后重新提交",
-  "dashboard_name_repeat_error": "保存失败:同名看板已存在",
-  "dashboard_id_exist_error": "导入失败:看板ID已存在",
-  "import_dashboard_name_exist_error": "导入失败,看板名称: %s 已存在",
-  "create_dashboard_name_exist_error": "保存失败,看板名称: %s 已存在",
-  "metric_not_support_preview": "对象组暂不支持当前类型,请切换单个对象预览",
-  "type_config_name_repeat_error": "保存失败:同名类型配置已存在",
-  "type_config_association_obj_error": "删除失败:类型配置有关联对象不允许删除",
-  "type_config_association_obj_group_error": "删除失败:类型配置有关联对象组不允许删除",
-  "alert_name_repeat_error": "保存失败:同名告警名称已存在",
-  "alert_keyword_repeat_error": "保存失败:同名告警关键字已存在",
-  "endpoint_host_delete_error": "删除失败:主机对象有关联的进程对象",
-  "log_monitor_template_delete_error": "删除失败：当前模版已被%s业务配置引用，无法删除",
-  "add_comparison_metric_repeat_error": "保存失败：当前同环比指标已存在，请修改配置后重试",
-  "add_metric_repeat_error": "保存失败：当前指标已存在，请修改配置后重试"
+  "param_validate_error": {
+    "code": 10000001,
+    "message": "参数校验失败，详情:%s"
+  },
+  "param_empty_error": {
+    "code": 10000002,
+    "message": "参数 %s 不能为空"
+  },
+  "param_type_error": {
+    "code": 10000003,
+    "message": "参数 %s 类型必须是 %s"
+  },
+  "request_body_error": {
+    "code": 10000004,
+    "message": "读取请求体body数据错误"
+  },
+  "request_json_unmarshal_error": {
+    "code": 10000005,
+    "message": "json反格式化请求体内容错误"
+  },
+  "query_table_error": {
+    "code": 10000006,
+    "message": "查询数据库表 %s 失败"
+  },
+  "fetch_table_data_error": {
+    "code": 10000007,
+    "message": "数据库表 %s 使用条件 %s=%s查询无数据"
+  },
+  "update_table_error": {
+    "code": 10000008,
+    "message": "更新数据库表 %s 失败"
+  },
+  "delete_table_data_error": {
+    "code": 10000009,
+    "message": "数据库表 %t 使用条件 %k=%v删除失败"
+  },
+  "handle_error": {
+    "code": 10000010,
+    "message": "请求处理失败，详情:%s"
+  },
+  "password_error": {
+    "code": 10000011,
+    "message": "密码错误"
+  },
+  "token_error": {
+    "code": 10000012,
+    "message": "请求认证失败"
+  },
+  "token_authority_error": {
+    "code": 10000013,
+    "message": "鉴权失败，权限不足"
+  },
+  "save_done_but_sync_fail": {
+    "code": 20000014,
+    "message": "配置下发失败:下发配置到目标对象失败，请先确认目标对象可用,确认后重新点击[保存]下发配置"
+  },
+  "metric_duplicate_error": {
+    "code": 20000015,
+    "message": "保存失败,当前层级对象下已有重名指标%s,请修改之后重试"
+  },
+  "metric_not_found": {
+    "code": 20000016,
+    "message": "导入失败，指标: %s 不存在"
+  },
+  "strategy_name_import_duplicate_error": {
+    "code": 20000017,
+    "message": "导入失败，名称: %s 重复"
+  },
+  "log_group_name_duplicate_error": {
+    "code": 20000018,
+    "message": "配置名%s重复，请修改配置名后重新提交"
+  },
+  "log_group_name_illegal_error": {
+    "code": 20000019,
+    "message": "配置名%s不合法，请修改配置名后重新提交"
+  },
+  "dashboard_name_repeat_error": {
+    "code": 20000020,
+    "message": "保存失败:同名看板已存在"
+  },
+  "dashboard_id_exist_error": {
+    "code": 20000021,
+    "message": "导入失败:看板ID已存在"
+  },
+  "import_dashboard_name_exist_error": {
+    "code": 20000022,
+    "message": "导入失败,看板名称: %s 已存在"
+  },
+  "create_dashboard_name_exist_error": {
+    "code": 20000023,
+    "message": "保存失败,看板名称: %s 已存在"
+  },
+  "metric_not_support_preview": {
+    "code": 20000024,
+    "message": "对象组暂不支持当前类型,请切换单个对象预览"
+  },
+  "type_config_name_repeat_error": {
+    "code": 20000025,
+    "message": "保存失败:同名类型配置已存在"
+  },
+  "type_config_association_obj_error": {
+    "code": 20000026,
+    "message": "删除失败:类型配置有关联对象不允许删除"
+  },
+  "type_config_association_obj_group_error": {
+    "code": 20000027,
+    "message": "删除失败:类型配置有关联对象组不允许删除"
+  },
+  "alert_name_repeat_error": {
+    "code": 20000028,
+    "message": "保存失败:同名告警名称已存在"
+  },
+  "alert_keyword_repeat_error": {
+    "code": 20000029,
+    "message": "保存失败:同名告警关键字已存在"
+  },
+  "endpoint_host_delete_error": {
+    "code": 20000030,
+    "message": "删除失败:主机对象有关联的进程对象"
+  },
+  "log_monitor_template_delete_error": {
+    "code": 20000031,
+    "message": "删除失败：当前模版已被%s业务配置引用，无法删除"
+  },
+  "add_comparison_metric_repeat_error": {
+    "code": 20000032,
+    "message": "保存失败：当前同环比指标已存在，请修改配置后重试"
+  },
+  "add_metric_repeat_error": {
+    "code": 20000033,
+    "message": "保存失败：当前指标已存在，请修改配置后重试"
+  },
+  "api_permission_deny": {
+    "code": 20200034,
+    "message": "无接口访问权限"
+  }
 }

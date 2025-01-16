@@ -208,6 +208,12 @@
       <Button type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
@@ -221,8 +227,9 @@ import Vue from 'vue'
 import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue'
 import { readyToDraw, drawPieChart} from '@/assets/config/chart-rely'
-import { generateUuid, getRandomColor } from '@/assets/js/utils'
+import { generateUuid, getRandomColor, chartTooltipContain} from '@/assets/js/utils'
 import { changeSeriesColor } from '@/assets/config/random-color'
+import ChartLinesModal from '@/components/chart-lines-modal'
 const initTableData = [
   {
     endpoint: '',
@@ -461,6 +468,11 @@ export default {
                 this.getEndpointSearch = e
                 this.debounceGetEndpointList()
               }}
+              on-on-clear={() => {
+                this.getEndpointSearch = ''
+                this.debounceGetEndpointList()
+              }}
+
               filterable
               clearable
             >
@@ -734,7 +746,10 @@ export default {
       chartAddTags: [],
       getEndpointSearch: '',
       selectedEndpointOptionItem: {},
-      isChartSeriesEmpty: false
+      isChartSeriesEmpty: false,
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   computed: {
@@ -775,6 +790,7 @@ export default {
     })
   },
   mounted() {
+    this.$on('editShowLines', this.handleEditShowLines)
     this.getAllRolesOptions()
     this.getSingleChartAuth()
     this.getTableData()
@@ -821,7 +837,9 @@ export default {
           // 同环比修改
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-            item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            if (isEmpty(item.series)) {
+              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+            }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
               this.updateAllColorLine(i)
@@ -829,12 +847,20 @@ export default {
           }
         }
         if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
-          const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+          let selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
             option_value: initialData[0].endpoint
           })
+          if (isEmpty(selectedEndpointItem)) {
+            this.getEndpointSearch = initialData[0].endpointName
+            await this.getEndpointList()
+            selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
+              option_value: initialData[0].endpoint
+            }) || {}
+            this.endpointName = selectedEndpointItem.option_text
+            this.endpointType = selectedEndpointItem.option_type_name
+          }
           this.endpointValue = initialData[0].endpoint
           this.serviceGroup = selectedEndpointItem.app_object
-
           this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
             guid: selectedEndpointItem.option_value
           }, res => {
@@ -1261,6 +1287,7 @@ export default {
       if (this.isPieChart) {
         const params = this.generateLineParamsData()
         params[0].pieType = this.chartConfigForm.pieType
+        params[0].time_second = -1800
         if (!params[0].metric) {
           return
         }
@@ -1302,14 +1329,27 @@ export default {
               return
             }
             responseData.yaxis.unit = this.chartConfigForm.unit
+            responseData.chartId = this.elId
             this.isChartSeriesEmpty = false
             setTimeout(() => {
-              readyToDraw(this, responseData, 1, {
+              this.chartInstance = readyToDraw(this, responseData, 1, {
                 eye: false,
                 lineBarSwitch: true,
                 chartType: this.chartConfigForm.chartType,
+                chartId: this.elId,
+                canEditShowLines: true,
+                dataZoom: false,
                 params
               })
+              if (this.chartInstance) {
+                this.chartInstance.on('legendselectchanged', params => {
+                  window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+                })
+                this.chartInstance.on('showTip', () => {
+                  const className = `.echarts-custom-tooltip-${this.elId}`
+                  chartTooltipContain(className)
+                })
+              }
             }, 100)
           }
         )
@@ -1318,7 +1358,7 @@ export default {
 
     debounceDrawChart: debounce(function () {
       this.drawChartContent()
-    }, 50),
+    }, 300),
 
     generateLineParamsData() {
       if (isEmpty(this.tableData)) {
@@ -1379,11 +1419,27 @@ export default {
           })
         })
       }
+    },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])
+        || (!isEmpty(window['view-config-selected-line-data'][this.setChartConfigId]) && config.legend.length !== Object.keys(window['view-config-selected-line-data'][this.setChartConfigId]).length)) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.debounceDrawChart()
     }
   },
   components: {
     TagShow,
-    AuthDialog
+    AuthDialog,
+    ChartLinesModal
   }
 }
 

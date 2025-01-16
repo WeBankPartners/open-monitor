@@ -113,3 +113,35 @@ export const getRandomColor = () => {
   }
   return color
 }
+
+export const isSameArray = (arr1, arr2) => {
+  if (!Array.isArray(arr1) || !Array.isArray(arr2)) {
+    return false
+  }
+  if (arr1.length !== arr2.length) {
+    return false
+  }
+  const sortedArr1 = arr1.sort()
+  const sortedArr2 = arr2.sort()
+  for (let i = 0; i < sortedArr1.length; i++) {
+    if (sortedArr1[i] !== sortedArr2[i]) {
+      return false
+    }
+  }
+  return true
+}
+
+export const chartTooltipContain = className => {
+  const tooltip = document.querySelector(className)
+  if (tooltip) {
+    const height = tooltip.clientHeight
+    if (height > 400) {
+      tooltip.style.maxHeight = '400px'
+      tooltip.style.overflowY = 'auto'
+      tooltip.style.pointerEvents = 'auto'
+    }
+    tooltip.addEventListener('scroll', function (event) {
+      event.stopPropagation()
+    })
+  }
+}

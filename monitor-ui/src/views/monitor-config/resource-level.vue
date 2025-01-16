@@ -15,7 +15,8 @@
       <Input
         v-if="searchParams.type === 'group'"
         v-model="searchParams.name"
-        @on-change="getAllResource(true)"
+        clearable
+        @on-change="debounceGetAllResource"
         :placeholder="$t('m_resourceLevel_level_search_name')"
         style="width: 300px;margin-right:8px"
       />
@@ -28,36 +29,29 @@
         ref="selectObject"
         @on-change="clearObject"
         :placeholder="$t('m_resourceLevel_level_search_endpoint')"
-        :remote-method="getAllObject"
+        @on-query-change="debounceGetAllObject"
       >
         <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
       </Select>
       <Button type="success" class='add-content-item' @click="addPanel">{{ $t('m_add') }}</Button>
     </div>
     <recursive class='recursive-content' :recursiveViewConfig="resourceRecursive"></recursive>
-    <!-- <template v-if="extend">
-      <recursive :recursiveViewConfig="resourceRecursive"></recursive>
-    </template>
-    <template v-else>
-      <template v-for="(rr, index) in resourceRecursive">
-        <div :key="index">
-          <div class="levelClass" @click="activeLevel(rr.guid)">
-            <i v-if="!inShowLevel(rr.guid)" class="fa fa-angle-double-down" aria-hidden="true"></i>
-            <i v-else class="fa fa-angle-double-up" aria-hidden="true"></i>
-            {{rr.display_name}}
-            <TagShow :tagName='rr.type' />
-          </div>
-          <div v-if="inShowLevel(rr.guid)">
-            <recursive :recursiveViewConfig="[rr]"></recursive>
-          </div>
-        </div>
-      </template>
-    </template> -->
+    <Page
+      class="table-pagination"
+      :total="pagination.total"
+      @on-change="(e) => {pagination.page = e; this.getAllResource()}"
+      @on-page-size-change="(e) => {pagination.size = e; this.getAllResource()}"
+      :current="pagination.page"
+      :page-size="pagination.size"
+      show-total
+      show-sizer
+    />
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
 <script>
+import {debounce} from 'lodash'
 import recursive from '@/views/monitor-config/resource-recursive'
 export default {
   name: '',
@@ -107,7 +101,12 @@ export default {
           display_name: null
         }
       },
-      id: null
+      id: null,
+      pagination: {
+        total: 0,
+        size: 10,
+        page: 1
+      }
     }
   },
   computed: {
@@ -121,19 +120,26 @@ export default {
     })
   },
   mounted() {
+    this.searchParams.name = this.$route.query.name || ''
     this.getAllResource()
     this.getAllObject()
   },
   methods: {
     handleTypeChange() {
+      this.resetPagination()
       this.searchParams.name = ''
       this.searchParams.endpoint = ''
       this.getAllResource()
     },
     clearObject() {
       this.getAllObject()
+      this.resetPagination()
       this.getAllResource(true)
     },
+    debounceGetAllObject: debounce(function (tempQuery) {
+      const query = tempQuery ? tempQuery : '.'
+      this.getAllObject(query)
+    }, 500),
     getAllObject(query='.') {
       const params = {
         search: query
@@ -162,9 +168,19 @@ export default {
     inShowLevel(guid) {
       return this.activedLevel.includes(guid) || false
     },
+    debounceGetAllResource: debounce(function () {
+      this.resetPagination()
+      this.getAllResource()
+    }, 500),
     getAllResource(extend = false) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, responseData => {
-        this.resourceRecursive = responseData
+      const params = {
+        ...this.searchParams,
+        pageSize: this.pagination.size,
+        startIndex: this.pagination.size * (this.pagination.page - 1)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, params, responseData => {
+        this.resourceRecursive = responseData.contents || []
+        this.pagination.total = responseData.pageInfo.totalRows
         this.extend = extend
       })
     },
@@ -177,8 +193,13 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/add', params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_panel_Modal').modal('hide')
+        this.resetPagination()
         this.getAllResource()
       })
+    },
+    resetPagination() {
+      this.pagination.size = 10
+      this.pagination.page = 1
     }
   },
   components: {
@@ -213,6 +234,11 @@ export default {
     padding: 4px 8px;
     border-radius: 4px;
     margin: 6px;
+ }
+ .table-pagination {
+  position: fixed;
+  right: 10px;
+  bottom: 20px;
  }
 </style>
 <style lang="less">
