@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-func GetOrganizationList(nameText, endpointText string) (result []*m.OrganizationPanel, err error) {
+func GetOrganizationList(nameText, endpointText string, startIndex, pageSize int) (pageInfo m.PageInfo, result []*m.OrganizationPanel, err error) {
 	nameText = strings.ToLower(nameText)
 	endpointText = strings.ToLower(endpointText)
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
 		log.Logger.Error("Get panel_recursive table error", log.Error(err))
-		return result, err
+		return pageInfo, result, err
 	}
 	if len(data) == 0 {
-		return result, err
+		return pageInfo, result, err
 	}
 	tmpMap := make(map[string]string)
 	objTypeMap := make(map[string]string)
@@ -68,7 +68,19 @@ func GetOrganizationList(nameText, endpointText string) (result []*m.Organizatio
 		}
 		result = append(result, &tmpNodeList)
 	}
-	return result, nil
+	if pageSize > 0 {
+		pageInfo.StartIndex = startIndex
+		pageInfo.PageSize = pageSize
+		pageInfo.TotalRows = len(result)
+		// 计算分页范围
+		end := startIndex + pageSize
+		if end > len(result) {
+			end = len(result)
+		}
+		// 对 result 进行分页
+		result = result[startIndex:end]
+	}
+	return pageInfo, result, nil
 }
 
 func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode m.OrganizationPanel, nameText, endpointText string) m.OrganizationPanel {

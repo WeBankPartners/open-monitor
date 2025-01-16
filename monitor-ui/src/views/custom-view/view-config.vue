@@ -244,25 +244,6 @@
                     <span v-else @click.stop="">
                       <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="100" show-word-limit style="width:150px" size="small" placeholder="" />
                     </span>
-                    <!-- <Poptip
-                      transfer
-                      placement="left-end"
-                      @on-ok="confirmDeleteGroup(item, index)"
-                    >
-                      <template slot='content'>
-                        <div>
-                          <Input :value="item.i"
-                            placeholder=""
-                            show-word-limit />
-                        </div>
-                      </template>
-                      <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
-                        <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)"
-                          class="fa fa-pencil-square"
-                          style="font-size: 16px;"
-                        aria-hidden="true"></i>
-                      </Tooltip>
-                    </Poptip> -->
                     <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="bottom">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" ></Icon>
@@ -293,6 +274,9 @@
                     </Tooltip>
                     <Tooltip :content="$t('m_placeholder_chartConfiguration')" theme="light" transfer placement="top">
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
+                    </Tooltip>
+                    <Tooltip :content="$t('m_line_display_modification')" theme="light" transfer placement="top">
+                      <Icon type="ios-funnel" size="16" @click="showLineSelectModal(item)" />
                     </Tooltip>
                     <Poptip
                       confirm
@@ -348,7 +332,7 @@
     <Modal v-model="showGroupMgmt"
            :title="groupNameIndex === -1 ? $t('m_add_screen_group') : $t('m_edit_screen_group')"
            :mask-closable="false"
-           :width="800"
+           :width="1000"
     >
       <div>
         <Form :label-width="90">
@@ -376,6 +360,14 @@
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
+
+    <!-- 实现线条是否展现弹窗 -->
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" ></AuthDialog>
     <ExportChartModal
       :isModalShow="isModalShow"
@@ -398,6 +390,7 @@ import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
+import ChartLinesModal from '@/components/chart-lines-modal'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
@@ -558,6 +551,8 @@ export default {
         }
       ],
       isShowLoading: false,
+      isLineSelectModalShow: false,
+      isEmpty,
       scrollRefresh: false,
       hasNotRequestStatus: true
     }
@@ -568,7 +563,7 @@ export default {
     },
     isEditStatus() {
       return this.permission === 'edit'
-    },
+    }
   },
   mounted() {
     if (!this.pannelId) {
@@ -580,6 +575,7 @@ export default {
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
+    window['view-config-selected-line-data'] = {}
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
       !isEmpty(domArr) && domArr.forEach(dom => dom.addEventListener('click', e => e.stopPropagation()))
@@ -1617,6 +1613,14 @@ export default {
     onCopyTableSelected(chartList) {
       this.selectedChartList = chartList
     },
+    showLineSelectModal(item) {
+      this.setChartConfigId = item.id
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.refreshNow = !this.refreshNow
+    },
     onGridWindowScroll: debounce(function () {
       this.scrollRefresh = !this.scrollRefresh
     }, 1000),
@@ -1633,7 +1637,8 @@ export default {
     ViewChart,
     EditView,
     AuthDialog,
-    ExportChartModal
+    ExportChartModal,
+    ChartLinesModal
   },
 }
 </script>
@@ -1733,10 +1738,7 @@ export default {
     overflow: auto !important;
   }
 }
-// 33
-// .vue-grid-item::-webkit-scrollbar {
-//   display: none;
-// }
+
 </style>
 
 <style scoped lang="less">
@@ -1888,7 +1890,7 @@ export default {
 }
 
 .ellipsis-text {
-  width: 170px;
+  width: 350px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

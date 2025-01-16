@@ -10,6 +10,7 @@
         style="width:300px;"
         v-model="endpoint"
         filterable
+        clearable
         @on-change="() => {
           metric = ''
           changeEndpointGroup()
@@ -38,6 +39,17 @@
       :data="tableData"
       :max-height="maxHeight"
       class="level-table"
+    />
+    <Page
+      class="table-pagination"
+      :total="pagination.total"
+      @on-change="(e) => {pagination.page = e; this.getList()}"
+      @on-page-size-change="(e) => {pagination.size = e; this.getList()}"
+      :current="pagination.page"
+      :page-size="pagination.size"
+      transfer
+      show-total
+      show-sizer
     />
     <AddGroupDrawer
       ref="addGroupRef"
@@ -299,7 +311,12 @@ export default {
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
-      metric: ''
+      metric: '',
+      pagination: {
+        page: 1,
+        size: 10,
+        total: 0
+      }
     }
   },
   async mounted() {
@@ -308,24 +325,31 @@ export default {
     this.previewObject = this.endpointOptions[0]
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 20
+    this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 60
   },
   methods: {
     reloadData(metricType) {
+      if (this.type === 'add') {
+        this.resetPagination()
+      }
       this.metricType = metricType
       this.getList()
     },
     changeEndpointGroup(val) {
       this.previewObject = this.endpointOptions.find(item => item.guid === val)
+      this.resetPagination()
       this.getList()
     },
     onFilterChange: debounce(function () {
+      this.resetPagination()
       this.getList()
     }, 500),
     getList() {
       const params = {
         endpoint: this.endpoint,
-        metric: this.metric
+        metric: this.metric,
+        pageSize: this.pagination.size,
+        startIndex: this.pagination.size * (this.pagination.page - 1)
       }
       const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -333,7 +357,8 @@ export default {
         api,
         params,
         responseData => {
-          this.tableData = responseData
+          this.tableData = responseData.contents
+          this.pagination.total = responseData.pageInfo.totalRows
         },
         { isNeedloading: true }
       )
@@ -378,6 +403,10 @@ export default {
         this.$refs[refsItem]&&this.$refs[refsItem].setPreviewObject(this.previewObject)
       })
     },
+    resetPagination() {
+      this.pagination.size = 10
+      this.pagination.page = 1
+    }
   }
 }
 </script>
@@ -402,6 +431,11 @@ export default {
   }
   .level-table {
     margin-top: 12px;
+  }
+  .table-pagination {
+    position: fixed;
+    right: 10px;
+    bottom: 20px;
   }
 }
 </style>

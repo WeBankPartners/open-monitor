@@ -60,15 +60,22 @@
       <div class="chart-zone" v-if="isShowChart">
         <div :id="elId" class="echart" :style="chartStyle"></div>
       </div>
+      <div v-else class="no-data-style">{{this.$t('m_noData')}}</div>
     </div>
+    <ChartLinesModal
+      :isLineSelectModalShow="isLineSelectModalShow"
+      :chartId="setChartConfigId"
+      @modalClose="onLineSelectChangeCancel"
+    >
+    </ChartLinesModal>
   </div>
 </template>
 
 <script>
+import {isEmpty, cloneDeep} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
-// 引入 ECharts 主模块
+import ChartLinesModal from '@/components/chart-lines-modal'
 import {readyToDraw} from '@/assets/config/chart-rely'
-// const echarts = require('echarts/lib/echarts');
 export default {
   name: '',
   data() {
@@ -87,7 +94,10 @@ export default {
       chartStyle: {
         minHeight: '400px',
         minWidth: '700px'
-      }
+      },
+      isLineSelectModalShow: false,
+      setChartConfigId: '',
+      chartInstance: null
     }
   },
   watch: {
@@ -103,13 +113,9 @@ export default {
       deep: true
     }
   },
-  created(){
-    // generateUuid().then((elId)=>{
-    //   this.elId =  `id_${elId}`;
-    //   this.chartStyle.width = window.screen.width * 0.6 + 'px'
-    //   this.chartStyle.height = window.screen.height * 0.4 + 'px'
-    // })
-
+  mounted(){
+    this.$on('editShowLines', this.handleEditShowLines)
+    this.generatUuid()
   },
   methods: {
     datePick(data) {
@@ -129,11 +135,6 @@ export default {
       this.chartCondition.compareSecondDate = data
     },
     getChartData(chartItem, start, end) {
-      generateUuid().then(elId => {
-        this.elId = `id_${elId}`
-        this.chartStyle.width = window.screen.width * 0.6 + 'px'
-        this.chartStyle.height = window.screen.height * 0.4 + 'px'
-      })
       // 为兼容放大区域调用
       if (chartItem) {
         this.chartItem = chartItem
@@ -186,9 +187,23 @@ export default {
         const chartConfig = {
           eye: false,
           clear: true,
-          lineBarSwitch: true
+          lineBarSwitch: true,
+          canEditShowLines: true,
+          dataZoom: false,
+          chartId: this.elId
         }
-        readyToDraw(this,responseData, 1, chartConfig)
+        responseData.chartId = this.elId
+        if (!isEmpty(responseData.legend)) {
+          this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+            })
+          }
+        } else {
+          this.isShowChart = false
+        }
+
       })
     },
     YoY(status) {
@@ -200,8 +215,36 @@ export default {
         this.isShowChart = true
       }
     },
+    handleEditShowLines(config) {
+      this.setChartConfigId = config.chartId
+      if (isEmpty(window['view-config-selected-line-data'][this.setChartConfigId])) {
+        window['view-config-selected-line-data'][this.setChartConfigId] = {}
+        config.legend.forEach(one => {
+          window['view-config-selected-line-data'][this.setChartConfigId][one] = true
+        })
+      }
+      this.isLineSelectModalShow = true
+    },
+    onLineSelectChangeCancel() {
+      this.isLineSelectModalShow = false
+      this.getChartData(this.chartItem)
+    },
+    generatUuid() {
+      generateUuid().then(elId => {
+        this.elId = `id_${elId}`
+        this.chartStyle.width = window.screen.width * 0.6 + 'px'
+        this.chartStyle.height = window.screen.height * 0.4 + 'px'
+      })
+    },
+    enlargeChart(data) {
+      window['view-config-selected-line-data'] = {}
+      this.generatUuid()
+      this.getChartData(data)
+    }
   },
-  components: {},
+  components: {
+    ChartLinesModal
+  },
 }
 </script>
 
@@ -235,5 +278,11 @@ export default {
 
   .chart-zone {
     margin-top: 12px;
+  }
+  .no-data-style {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: 30px
   }
 </style>

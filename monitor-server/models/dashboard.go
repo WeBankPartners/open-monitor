@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type AutoCreateDashboardParam struct {
 	*LogMetricGroupWithTemplate
@@ -8,7 +10,7 @@ type AutoCreateDashboardParam struct {
 	ServiceGroupsRoles []string
 	ServiceGroup       string
 	Operator           string
-	ErrMsgObj          *ErrorMessageObj
+	ErrMsgObj          *ErrorTemplate
 }
 
 type AutoSimpleCreateDashboardParam struct {
@@ -16,7 +18,7 @@ type AutoSimpleCreateDashboardParam struct {
 	ServiceGroupsRoles  []string
 	ServiceGroup        string
 	Operator            string
-	ErrMsgObj           *ErrorMessageObj
+	ErrMsgObj           *ErrorTemplate
 	AutoCreateDashboard bool
 	LogMetricGroupGuid  string
 	MetricPrefixCode    string

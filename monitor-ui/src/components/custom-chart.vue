@@ -12,9 +12,11 @@
 </template>
 
 <script>
-import {isEmpty} from 'lodash'
+// 引入 ECharts 主模块
+import {cloneDeep, isEmpty} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 import { changeSeriesColor } from '@/assets/config/random-color'
+import {chartTooltipContain} from '@/assets/js/utils'
 
 export default {
   name: '',
@@ -28,7 +30,8 @@ export default {
       noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
       chartInstance: null,
       isFirstRefresh: true,
-      hasNotRequest: true
+      hasNotRequest: true,
+      isToolTipShow: false
     }
   },
   props: {
@@ -154,7 +157,7 @@ export default {
           // 这里用于其余的场景，首屏渲染全量
           this.requestChartData()
         }
-      } else if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement)) {
+      } else if (offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !this.isToolTipShow) {
         this.requestChartData()
       }
     },
@@ -184,16 +187,26 @@ export default {
             dataZoom: false,
             lineBarSwitch: true,
             chartType: this.chartInfo.chartType,
-            params: this.chartInfo.chartParams
+            params: this.chartInfo.chartParams,
+            chartId: this.chartInfo.elId
           }
           this.$nextTick(() => {
+            window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
+            const metricList = chartConfig.params.data.map(one => one.metric)
+            // 该逻辑是先筛选掉此时window中存在的需要删除的数据
+            for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+              if (metricList.length && !metricList.some(one => key.startsWith(`${one}:`))) {
+                delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+              }
+            }
+
             !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
               if (isEmpty(item.series)) {
                 item.series = []
                 item.metricToColor = []
                 const metric = item.metric
                 responseData.legend.forEach(one => {
-                  if (one.startsWith(metric)){
+                  if (one.startsWith(`${metric}:`)){
                     item.series.push({
                       seriesName: one,
                       new: true,
@@ -204,10 +217,22 @@ export default {
                 changeSeriesColor(item.series, item.colorGroup)
               }
               if (item.series && !isEmpty(item.series)) {
+                if (isEmpty(window['view-config-selected-line-data'][chartConfig.chartId])
+                  || (!isEmpty(window['view-config-selected-line-data'][chartConfig.chartId]) && Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).every(one => !one.startsWith(`${item.metric}:`)))
+                  || (Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).filter(single => single.startsWith(`${item.metric}:`))).length !== item.series.length) {
+                  // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头,或者两者length不一样，则进入该逻辑
+                  for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+                    if (key.startsWith(`${item.metric}:`)) {
+                      delete window['view-config-selected-line-data'][chartConfig.chartId][key]
+                    }
+                  }
+                  item.series.forEach(one => {
+                    window['view-config-selected-line-data'][chartConfig.chartId][one.seriesName] = true
+                  })
+                }
                 if (isEmpty(item.metricToColor)) {
                   item.metricToColor = item.series.map(one => {
                     one.metric = one.seriesName
-                    delete one.seriesName
                     return one
                   })
                 }
@@ -217,6 +242,19 @@ export default {
             })
             this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
             this.scrollHandle()
+            if (this.chartInstance) {
+              this.chartInstance.on('legendselectchanged', params => {
+                window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
+              })
+              this.chartInstance.on('showTip', () => {
+                this.isToolTipShow = true
+                const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
+                chartTooltipContain(className)
+              })
+              this.chartInstance.on('hideTip', () => {
+                this.isToolTipShow = false
+              })
+            }
           })
         }
       }, { isNeedloading: false })

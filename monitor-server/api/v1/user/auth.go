@@ -2,15 +2,25 @@ package user
 
 import (
 	"encoding/base64"
+	"errors"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	whitePathMap = map[string]bool{
+		"/monitor/entities/${model}/query": true,
+	}
+	ApiMenuMap         = make(map[string][]string)
+	HomePageApiCodeMap = make(map[string]bool)
 )
 
 type auth struct {
@@ -66,7 +76,7 @@ func Login(c *gin.Context) {
 	}
 }
 
-// @Summary 登出
+// Logout @Summary 登出
 // @Produce  json
 // @Success 200 {string} json "{"message": "successfully logout"}"
 // @Router /login [get]
@@ -76,7 +86,7 @@ func Logout(c *gin.Context) {
 		mid.DelSession(auToken)
 		mid.ReturnSuccess(c)
 	} else {
-		mid.ReturnError(c, http.StatusUnauthorized, "Invalid session token", nil)
+		mid.ReturnError(c, errors.New("invalid session token"), http.StatusUnauthorized)
 	}
 }
 
@@ -192,6 +202,40 @@ func AuthRequired() gin.HandlerFunc {
 					} else {
 						c.Set("operatorName", coreToken.User)
 						c.Set("operatorRoles", coreToken.Roles)
+						// 子系统直接放行
+						if strings.Contains(strings.Join(mid.GetOperateUserRoles(c), ","), "SUB_SYSTEM") {
+							c.Next()
+							return
+						}
+						// 白名单URL直接放行
+						for path, _ := range whitePathMap {
+							re := regexp.MustCompile(BuildRegexPattern(path))
+							if re.MatchString(c.Request.URL.Path) {
+								c.Next()
+								return
+							}
+						}
+						// 首页菜单直接放行
+						if HomePageApiCodeMap[c.GetString(m.ContextApiCode)] {
+							c.Next()
+							return
+						}
+						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
+							legal := false
+							if allowMenuList, ok := ApiMenuMap[c.GetString(m.ContextApiCode)]; ok {
+								legal = compareStringList(mid.GetOperateUserRoles(c), allowMenuList)
+							} else {
+								legal = validateMenuApi(mid.GetOperateUserRoles(c), c.Request.URL.Path, c.Request.Method)
+							}
+							if legal {
+								c.Next()
+							} else {
+								mid.ReturnApiPermissionError(c)
+								c.Abort()
+							}
+						} else {
+							c.Next()
+						}
 						c.Next()
 					}
 				} else {
@@ -326,4 +370,110 @@ func ListManageRole(c *gin.Context) {
 		mid.ReturnServerHandleError(c, err)
 	}
 	mid.ReturnSuccessData(c, result)
+}
+
+func validateMenuApi(roles []string, path, method string) (legal bool) {
+	// 防止ip 之类数据配置不上
+	path = strings.ReplaceAll(path, ".", "")
+	path = strings.ReplaceAll(path, "_", "")
+	path = strings.ReplaceAll(path, "-", "")
+	for _, menuApi := range m.MenuApiGlobalList {
+		for _, role := range roles {
+			if strings.ToLower(menuApi.Menu) == strings.ToLower(role) {
+				for _, item := range menuApi.Urls {
+					if strings.TrimSpace(item.Url) == "" {
+						continue
+					}
+					if strings.ToLower(item.Method) == strings.ToLower(method) {
+						re := regexp.MustCompile(BuildRegexPattern(item.Url))
+						if re.MatchString(path) {
+							legal = true
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+func BuildRegexPattern(template string) string {
+	// 将 ${variable} 替换为 (\w+) ,并且严格匹配
+	return "^" + regexp.MustCompile(`\$\{[\w.-]+\}`).ReplaceAllString(template, `(\w+)`) + "$"
+}
+
+func InitApiMenuMap(apiMenuCodeMap map[string]string) {
+	var exist bool
+	matchUrlMap := make(map[string]int)
+	for k, code := range apiMenuCodeMap {
+		exist = false
+		re := regexp.MustCompile("^" + regexp.MustCompile(":[\\w\\-]+").ReplaceAllString(strings.ToLower(k), "([\\w\\.\\-\\$\\{\\}:\\[\\]]+)") + "$")
+		for _, menuApi := range m.MenuApiGlobalList {
+			for _, item := range menuApi.Urls {
+				key := strings.ToLower(item.Method + "_" + item.Url)
+				if re.MatchString(key) {
+					exist = true
+					if existList, existFlag := ApiMenuMap[code]; existFlag {
+						ApiMenuMap[code] = append(existList, menuApi.Menu)
+					} else {
+						ApiMenuMap[code] = []string{menuApi.Menu}
+					}
+					if menuApi.Menu == m.HomePage {
+						HomePageApiCodeMap[code] = true
+					}
+					matchUrlMap[item.Method+"_"+item.Url] = 1
+				}
+			}
+		}
+		if !exist {
+			log.Logger.Info("InitApiMenuMap menu-api-json lack url", log.String("path", k), log.String("code", code))
+		}
+	}
+	for _, menuApi := range m.MenuApiGlobalList {
+		for _, item := range menuApi.Urls {
+			if _, ok := matchUrlMap[item.Method+"_"+item.Url]; !ok {
+				log.Logger.Info("InitApiMenuMap can not match menuUrl", log.String("menu", menuApi.Menu), log.String("method", item.Method), log.String("url", item.Url))
+			}
+		}
+	}
+	for k, v := range ApiMenuMap {
+		if len(v) > 1 {
+			ApiMenuMap[k] = DistinctStringList(v, []string{})
+		}
+	}
+	log.Logger.Debug("InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
+}
+
+func DistinctStringList(input, excludeList []string) (output []string) {
+	if len(input) == 0 {
+		return
+	}
+	existMap := make(map[string]int)
+	for _, v := range excludeList {
+		existMap[v] = 1
+	}
+	for _, v := range input {
+		if _, ok := existMap[v]; !ok {
+			output = append(output, v)
+			existMap[v] = 1
+		}
+	}
+	return
+}
+
+func compareStringList(from, target []string) bool {
+	match := false
+	for _, f := range from {
+		for _, t := range target {
+			if f == t {
+				match = true
+				break
+			}
+		}
+		if match {
+			break
+		}
+	}
+	return match
 }

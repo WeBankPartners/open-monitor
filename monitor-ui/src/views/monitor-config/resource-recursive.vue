@@ -218,7 +218,7 @@
 <script>
 import {randomColor} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
-import cloneDeep from 'lodash/cloneDeep'
+import {cloneDeep, debounce} from 'lodash'
 export default {
   name: 'recursive',
   data() {
@@ -637,6 +637,10 @@ export default {
         this.getAllObject()
       })
     },
+    debounceGetAllObject: debounce(function (tempQuery) {
+      const query = tempQuery ? tempQuery : '.'
+      this.getAllObject(query)
+    }, 500),
     getAllObject(query='.') {
       const params = {
         search: query

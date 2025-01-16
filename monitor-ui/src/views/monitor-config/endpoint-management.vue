@@ -87,7 +87,7 @@
         <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
+      <Table class='history-alarm-config' :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData" />
       <Page
         class="history-pagination"
         :total="historyPagination.total"
@@ -368,7 +368,8 @@ export default {
           tableEle: [
             {
               title: this.$t('m_alarmName'),
-              key: 'alarm_name'
+              key: 'alarm_name',
+              width: 150,
             },
             {
               title: this.$t('m_tableKey_status'),
@@ -380,40 +381,59 @@ export default {
               key: 'strategyGroupsInfo',
               render: (h, params) => (
                 <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
-              )
+              ),
+              width: 80,
             },
             {
               title: this.$t('m_field_endpoint'),
-              key: 'endpoint'
+              key: 'endpoint',
+              width: 150,
             },
             {
               title: this.$t('m_alarmContent'),
-              key: 'content'
+              key: 'content',
+              width: 200,
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
+                    <div domPropsInnerHTML={params.row.content}></div>
+                  </div>
+                  <div class='column-eclipse'>{params.row.content || '-'}</div>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_tableKey_s_priority'),
               key: 's_priority',
-              width: 100,
+              width: 80,
               render: (h, params) => (
                 <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
               )
             },
             {
               title: this.$t('m_field_metric'),
-              key: 'alarm_metric_list_join'
+              key: 'alarm_metric_list_join',
+              minWidth: 100,
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
+                    <div domPropsInnerHTML={params.row.alarm_metric_list_join}></div>
+                  </div>
+                  <span class='column-eclipse'>{params.row.alarm_metric_list_join || '-'}</span>
+                </Tooltip>
+              )
             },
             {
               title: this.$t('m_field_threshold'),
               key: 'alarm_detail',
-              width: 200,
-              ellipsis: true,
+              minWidth: 150,
               tooltip: true,
               render: (h, params) => (
                 <Tooltip transfer={true} placement="bottom-start" max-width="300">
                   <div slot="content">
                     <div domPropsInnerHTML={params.row.alarm_detail}></div>
                   </div>
-                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                  <span class='column-eclipse' domPropsInnerHTML={params.row.alarm_detail}></span>
                 </Tooltip>
               )
             },
@@ -742,6 +762,7 @@ export default {
         this.showGroupMsg = true
       }
     }
+    this.searchForm.search = this.$route.query.name || ''
     this.getTableList()
     this.getAllOptions()
     this.getIpList()
@@ -1344,6 +1365,15 @@ export default {
 <style lang='less'>
 .ivu-table-wrapper {
   overflow: inherit;
+}
+.history-alarm-config {
+  .column-eclipse {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
 }
 
 </style>

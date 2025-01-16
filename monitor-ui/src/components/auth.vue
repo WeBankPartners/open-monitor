@@ -1,33 +1,37 @@
 <template>
   <div>
     <Modal v-model="flowRoleManageModal" width="800" :title="$t('m_role_drawer_title')" :mask-closable="false">
-      <div>
-        <slot name="content-top"></slot>
-        <div class="role-transfer-title">{{ $t('m_mgmt_role') }}</div>
-        <div class="role-transfer-content">
-          <Transfer
-            :titles="transferTitles"
-            :list-style="transferStyle"
-            :data="currentUserRoles"
-            :target-keys="mgmtRolesKeyToFlow"
-            :render-format="renderRoleNameForTransfer"
-            @on-change="handleMgmtRoleTransferChange"
-            filterable
-          ></Transfer>
-        </div>
-      </div>
-      <div style="margin-top: 30px">
-        <div class="role-transfer-title">{{ $t('m_use_role') }}</div>
-        <div class="role-transfer-content">
-          <Transfer
-            :titles="transferTitles"
-            :list-style="transferStyle"
-            :data="allRoles"
-            :target-keys="useRolesKeyToFlow"
-            :render-format="renderRoleNameForTransfer"
-            @on-change="handleUseRoleTransferChange"
-            filterable
-          ></Transfer>
+      <div style="width: 100%; overflow-x: auto">
+        <div style="min-width: 760px" class="content">
+          <div>
+            <slot name="content-top"></slot>
+            <div class="role-transfer-title">{{ $t('m_mgmt_role') }}</div>
+            <div class="role-transfer-content">
+              <Transfer
+                :titles="transferTitles"
+                :list-style="transferStyle"
+                :data="currentUserRoles"
+                :target-keys="mgmtRolesKeyToFlow"
+                :render-format="renderRoleNameForTransfer"
+                @on-change="handleMgmtRoleTransferChange"
+                filterable
+              ></Transfer>
+            </div>
+          </div>
+          <div style="margin-top: 30px">
+            <div class="role-transfer-title">{{ $t('m_use_role') }}</div>
+            <div class="role-transfer-content">
+              <Transfer
+                :titles="transferTitles"
+                :list-style="transferStyle"
+                :data="allRoles"
+                :target-keys="useRolesKeyToFlow"
+                :render-format="renderRoleNameForTransfer"
+                @on-change="handleUseRoleTransferChange"
+                filterable
+              ></Transfer>
+            </div>
+          </div>
         </div>
       </div>
       <div slot="footer">
