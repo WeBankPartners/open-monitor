@@ -190,6 +190,7 @@ export default {
     },
     goToEndpointView(alarmItem) {
       const endpointObject = {
+        option_name: alarmItem.endpoint,
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
@@ -219,7 +220,7 @@ export default {
         params.custom = false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        this.$parent.$parent.$parent.getAlarm()
+        this.$parent.getAlarm()
       })
     }
   },

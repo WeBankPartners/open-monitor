@@ -8,6 +8,7 @@ require('echarts/lib/component/title')
 require('echarts/lib/component/legend')
 require('echarts/lib/component/toolbox')
 require('echarts/lib/component/legendScroll')
+const {isEmpty} = require('lodash')
 
 import { generateAdjacentColors, stringToNumber } from './random-color'
 const echarts = require('echarts/lib/echarts')
@@ -201,21 +202,55 @@ export const drawChart = function (that,config,userConfig, elId) {
         const seconds = date.getSeconds()>=10?date.getSeconds():'0'+date.getSeconds()
         str=hours+':'+minutes+':'+seconds
         let res = `<div>${str}</div>`
-        params.forEach(item => {
-          const str = item.seriesName
-          const step = 100
-          const strLen = str.length
-          const arr = []
-          for (let i=0; i<strLen; i=i+step){
-            arr.push(str.substr(i, step))
-          }
-          arr.join(' ')
-          const seriesName = arr.join('<br>')
-          res = res+`<div><div style=' display: inline-block;width: 10px; 
-          height: 10px;border: 1px solid transparent;border-radius:50%;
-          background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${seriesName}
-          </div>`
-        })
+        const regex = /{.*}/
+        const isAllSeriesNameContainBrackets = params.every(item => regex.test(item.seriesName))
+        // 所有指标中均包含大括号启用分组、否则不原样显示
+        if (isAllSeriesNameContainBrackets) {
+          const titleSet = {}
+          params.forEach(item => {
+            const metricSplit = item.seriesName.split('{')
+            if (Object.keys(titleSet).includes(metricSplit[0])) {
+              titleSet[metricSplit[0]].push({
+                color: item.color,
+                data: item.data,
+                metric: `{${metricSplit[1]}`
+              })
+            } else {
+              titleSet[metricSplit[0]] = [{
+                color: item.color,
+                data: item.data,
+                metric: `{${metricSplit[1]}`
+              }]
+            }
+          })
+          const keys = Object.keys(titleSet)
+          keys.forEach(key => {
+            res = res + `<div style="color:#2d8cf0">${key}</div>`
+            titleSet[key].forEach(item => {
+              res = res+`<div><div style=' display: inline-block;width: 10px; 
+                height: 10px;border: 1px solid transparent;border-radius:50%;
+                background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${item.metric}
+                </div>`
+            })
+          })
+        } else {
+          params.forEach(item => {
+            const str = item.seriesName
+            const step = 100
+            const strLen = str.length
+            const arr = []
+            for (let i=0; i<strLen; i=i+step){
+              arr.push(str.substr(i, step))
+            }
+            arr.join(' ')
+            const seriesName = arr.join('<br>')
+            res = res+`<div><div style=' display: inline-block;width: 10px;
+            height: 10px;border: 1px solid transparent;border-radius:50%;
+            background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${seriesName}
+            </div>`
+          })
+        }
+        res = `<div class="echarts-custom-tooltip-${finalConfig.chartId || ''}">` + res + '</div>'
         return res
       },
     },
@@ -416,15 +451,6 @@ export const drawChart = function (that,config,userConfig, elId) {
       yAxisIndex: 'none'
     }
   }
-  // 绘制图表
-  myChart.clear()
-  myChart.setOption(option)
-  // 清空所有事件重新绑定
-  myChart.off()
-  setTimeout(() => {
-    myChart.resize()
-  }, 200)
-
   if (finalConfig.zoomCallback) {
     myChart.on('datazoom', function (params) {
       let startValue = null
@@ -438,6 +464,32 @@ export const drawChart = function (that,config,userConfig, elId) {
       that.getChartData(null,startValue, endValue)
     })
   }
+  if (finalConfig.canEditShowLines) {
+    option.toolbox.feature.myEditLines = {
+      show: true,
+      title: that.$t('m_line_display_modification'),
+      icon: 'image://data:image/png;base64,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',
+      iconStyle: {
+        font: '22px',
+        opacity: 0.7
+      },
+      onclick: () => {
+        that.$emit('editShowLines', config)
+      }
+    }
+  }
+  if (!isEmpty(window['view-config-selected-line-data']) && finalConfig.chartId && !isEmpty(window['view-config-selected-line-data'][finalConfig.chartId])) {
+    option.legend.selected = window['view-config-selected-line-data'][finalConfig.chartId]
+  }
+  // 绘制图表
+  myChart.clear()
+  myChart.setOption(option)
+  // 清空所有事件重新绑定
+  myChart.off()
+  setTimeout(() => {
+    myChart.resize()
+  }, 200)
+
   return myChart
 }
 
@@ -478,9 +530,13 @@ export const drawPieChart = function (that, responseData) {
       }
     ]
   }
+  if (!isEmpty(window['view-config-selected-line-data']) && responseData.chartId && !isEmpty(window['view-config-selected-line-data'][responseData.chartId])) {
+    option.legend.selected = window['view-config-selected-line-data'][responseData.chartId]
+  }
   const myChart = echarts.init(document.getElementById(that.elId))
   myChart.resize()
   myChart.setOption(option)
+  return myChart
 }
 
 const mgmtYAxesMinMax = function (series) {

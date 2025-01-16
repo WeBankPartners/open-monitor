@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -34,7 +33,7 @@ func CreateDBKeywordConfig(c *gin.Context) {
 		return
 	}
 	if len(list) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertNameRepeatError)
 		return
 	}
 	if len(param.ActiveWindowList) > 0 {
@@ -68,7 +67,7 @@ func UpdateDBKeywordConfig(c *gin.Context) {
 		return
 	}
 	if len(list) > 0 {
-		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).AlertNameRepeatError))
+		middleware.ReturnServerHandleError(c, models.GetMessageMap(c).AlertNameRepeatError)
 		return
 	}
 	if len(param.ActiveWindowList) > 0 {

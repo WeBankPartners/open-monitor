@@ -11,7 +11,7 @@
           ref="select"
           :disabled="endpointExternal"
           :placeholder="$t('m_requestMoreData')"
-          :remote-method="getEndpointList"
+          @on-query-change="debounceGetEndpointList"
           @on-change="updateData"
         >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
@@ -51,7 +51,7 @@
         <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
       </li>
       <li class="search-li">
-        <Button v-if="isShow && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
+        <Button v-if="isShow && endpointObject && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
       </li>
       <li class="search-li">
         <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
@@ -61,6 +61,7 @@
 </template>
 
 <script>
+import {find, isEmpty, debounce} from 'lodash'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
 export default {
@@ -97,32 +98,21 @@ export default {
         this.endpointObject = {}
       }
     },
-    isShow() {
+    async isShow() {
       this.clearEndpoint = []
-      this.getEndpointList('.')
       this.$parent.showCharts = false
       this.$parent.showRecursive = false
+      await this.getEndpointList('.')
     }
   },
-  mounted() {
-    this.getEndpointList('.')
+  async mounted() {
+    await this.getEndpointList('.')
     const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData'))
     localStorage.removeItem('jumpCallData')
     const outerData = jumpCallData || this.$route.params
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
-      const option_value = outerData.option_value || ''
-      const option_value_split = option_value ? option_value.split('_') : ''
-      const option_text = option_value_split ? option_value_split.slice(0, option_value_split.length - 1).join('_') : ''
-      this.endpointList = [{
-        active: false,
-        id: '',
-        option_text,
-        option_type_name: outerData.type,
-        option_value,
-        type: outerData.type
-      }]
-      this.endpoint = option_value || ''
-      this.endpointObject = outerData
+      this.endpointObject = find(this.endpointList, {option_text: outerData.option_name})
+      this.endpoint = this.endpointObject.option_value
     }
     if (this.$root.$validate.isEmpty_reset(outerData) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint || ''
@@ -132,6 +122,7 @@ export default {
         type: this.$route.query.type
       })
     }
+    this.updateData()
   },
   methods: {
     getMainConfig() {
@@ -167,15 +158,23 @@ export default {
     pickSecondDate(data) {
       this.compareSecondDate = data
     },
-    async getEndpointList(query) {
-      const params = {
-        search: query,
-        page: 1,
-        size: 1000
-      }
-      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
-        this.endpointList = responseData
+    debounceGetEndpointList: debounce(function (query) {
+      const finalQuery = query ? query : '.'
+      this.getEndpointList(finalQuery)
+    }, 500),
+    async getEndpointList(query = '.') {
+      return new Promise(async resolve => {
+        const params = {
+          search: query,
+          page: 1,
+          size: 1000
+        }
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
+          this.endpointList = responseData
+          resolve(responseData)
+        })
       })
+
     },
     updateData() {
       this.$nextTick(() => {
@@ -186,9 +185,10 @@ export default {
       this.endpointExternal = val
     },
     async getChartsConfig(endpointObj) {
-      if (endpointObj) {
-        this.endpoint = endpointObj.option_value
-        this.endpointObject = endpointObj
+      if (!isEmpty(endpointObj) && endpointObj.option_name) {
+        await this.getEndpointList()
+        this.endpointObject = find(this.endpointList, {option_text: endpointObj.option_name})
+        this.endpoint = this.endpointObject.option_value
       }
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
@@ -221,6 +221,7 @@ export default {
         this.$parent.manageCharts({}, params)
         return
       }
+
       const res = await this.getMainConfig()
       let url = res.panels.url
       const key = res.search.name
