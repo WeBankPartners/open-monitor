@@ -65,7 +65,7 @@
 <script>
 import Vue from 'vue'
 import {isEmpty, cloneDeep} from 'lodash'
-import { generateUuid } from '@/assets/js/utils'
+import { generateUuid, chartTooltipContain } from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import ChartLinesModal from '@/components/chart-lines-modal'
@@ -247,6 +247,10 @@ export default {
               if (this.chartInstance) {
                 this.chartInstance.on('legendselectchanged', params => {
                   window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+                })
+                this.chartInstance.on('showTip', () => {
+                  const className = `.echarts-custom-tooltip-${this.elId}`
+                  chartTooltipContain(className)
                 })
               }
             })

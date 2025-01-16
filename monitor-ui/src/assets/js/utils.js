@@ -130,3 +130,19 @@ export const isSameArray = (arr1, arr2) => {
   }
   return true
 }
+
+export const chartTooltipContain = className => {
+  const tooltip = document.querySelector(className)
+  if (tooltip) {
+    const height = tooltip.clientHeight
+    if (height > 400) {
+      console.error(height, 'height')
+      tooltip.style.maxHeight = '400px'
+      tooltip.style.overflowY = 'auto'
+      tooltip.style.pointerEvents = 'auto'
+    }
+    tooltip.addEventListener('scroll', function (event) {
+      event.stopPropagation()
+    })
+  }
+}
