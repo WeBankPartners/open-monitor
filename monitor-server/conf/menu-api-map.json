@@ -1413,6 +1413,10 @@
       {
         "method": "POST",
         "url": "/monitor/api/v2/service/plugin/update/path"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v1/dashboard/custom/main/get"
       }
     ]
   }
