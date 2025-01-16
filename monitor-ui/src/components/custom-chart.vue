@@ -30,7 +30,8 @@ export default {
       noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
       chartInstance: null,
       isFirstRefresh: true,
-      hasNotRequest: true
+      hasNotRequest: true,
+      isToolTipShow: false
     }
   },
   props: {
@@ -156,7 +157,7 @@ export default {
           // 这里用于其余的场景，首屏渲染全量
           this.requestChartData()
         }
-      } else if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement)) {
+      } else if (offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !this.isToolTipShow) {
         this.requestChartData()
       }
     },
@@ -245,9 +246,13 @@ export default {
               this.chartInstance.on('legendselectchanged', params => {
                 window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
               })
-              this.chartInstance.on('showTip', function () {
+              this.chartInstance.on('showTip', () => {
+                this.isToolTipShow = true
                 const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
                 chartTooltipContain(className)
+              })
+              this.chartInstance.on('hideTip', () => {
+                this.isToolTipShow = false
               })
             }
           })
