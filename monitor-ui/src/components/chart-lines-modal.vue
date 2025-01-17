@@ -3,6 +3,7 @@
          :title="$t('m_line_display_modification')"
          :mask-closable="false"
          :width="1000"
+         :z-index="3000"
          @on-visible-change="onLineSelectChangeCancel"
   >
     <div v-if="isSelectModalShow">
