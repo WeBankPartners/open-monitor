@@ -5,7 +5,17 @@
     <div v-if="recursiveViewConfig.length && showRecursive">
       <Recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></Recursive>
     </div>
-    <Drawer :title="$t('m_view_details')" :width="zoneWidth" :closable="false" v-model="showMaxChart">
+    <Drawer
+      v-model="showMaxChart"
+      transfer
+      :title="$t('m_view_details')"
+      :width="zoneWidth"
+      :closable="true"
+      :mask="true"
+      :mask-style="{'z-index': 2000}"
+      class-name="custom-drawer"
+      @on-close="onDrawerClose"
+    >
       <MaxChart ref="maxChart"></MaxChart>
     </Drawer>
     <Modal
@@ -245,7 +255,11 @@ export default {
     },
     zoomChart(data) {
       this.showMaxChart = true
-      this.$refs.maxChart.enlargeChart(data)
+      setTimeout(() => {
+        if (this.$refs.maxChart) {
+          this.$refs.maxChart.enlargeChart(data)
+        }
+      }, 200)
     },
     // #region 历史告警
     historyAlarm(rowData) {
@@ -294,7 +308,9 @@ export default {
         this.fullscreenTableHight = document.documentElement.clientHeight - 300
       }
     },
-    // #endregion
+    onDrawerClose() {
+      this.showMaxChart = false
+    }
   },
   components: {
     Search,
@@ -329,6 +345,9 @@ export default {
 }
 </style>
 <style lang="less">
+.custom-drawer {
+  z-index: 2000!important
+}
 .history-alarm-config {
   .column-eclipse {
     overflow: hidden;

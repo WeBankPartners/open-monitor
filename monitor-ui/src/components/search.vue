@@ -109,7 +109,10 @@ export default {
     await this.getEndpointList('.')
     const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData'))
     localStorage.removeItem('jumpCallData')
-    const outerData = jumpCallData || this.$route.params
+    let outerData = jumpCallData || this.$route.params
+    if (this.$route.name === 'viewConfig') {
+      outerData = null
+    }
     if (!this.$root.$validate.isEmpty_reset(outerData)) {
       this.endpointObject = find(this.endpointList, {option_text: outerData.option_name})
       this.endpoint = this.endpointObject.option_value
