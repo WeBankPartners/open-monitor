@@ -17,7 +17,7 @@ docker run运行：
 MONITOR_DB_HOST=127.0.0.1 -> 把127.0.0.1替换成mysql地址
 MONITOR_DB_PORT=3306  -> 把3306替换成mysql端口
 MONITOR_DB_USER=root -> 把root替换成mysql用户
-MONITOR_DB_PWD=wecube -> 把wecube替换成mysql用户密码
+MONITOR_DB_PWD=defalut -> 把defalut替换成mysql用户密码
 monitor:v1.3.0 -> 把后面的版本号改成所导入镜像的版本号
 ```
 ```
