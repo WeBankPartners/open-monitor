@@ -16,13 +16,13 @@ docker run运行：
 ```
 MONITOR_DB_HOST=127.0.0.1 -> 把127.0.0.1替换成mysql地址
 MONITOR_DB_PORT=3306  -> 把3306替换成mysql端口
-***REMOVED*** -> 把root替换成mysql用户
+MONITOR_DB_USER=root -> 把root替换成mysql用户
 MONITOR_DB_PWD=defalut -> 把defalut替换成mysql用户密码
 monitor:v1.3.0 -> 把后面的版本号改成所导入镜像的版本号
 ```
 ```
 mkdir -p /app/test
-docker run --name open-monitor --volume /app/test/prometheus/logs:/app/monitor/prometheus/logs --volume /app/test/prometheus/data:/app/monitor/prometheus/data --volume /app/test/prometheus/rules:/app/monitor/prometheus/rules  --volume /app/test/alertmanager/logs:/app/monitor/alertmanager/logs --volume /app/test/alertmanager/data:/app/monitor/alertmanager/data --volume /app/test/consul/data:/app/monitor/consul/data --volume /app/test/consul/logs:/app/monitor/consul/logs --volume /app/test/monitor/logs:/app/monitor/monitor/logs --volume /app/test/deploy:/app/deploy --volume /app/test/transgateway/logs:/app/monitor/transgateway/logs --volume /app/test/transgateway/data:/app/monitor/transgateway/data --volume /etc/localtime:/etc/localtime -d -p 8080:8080 -p 8500:8500 -p 8300:8300 -p 9090:9090 -p 19091:19091 -e MONITOR_SERVER_PORT=8080 -e MONITOR_DB_HOST=127.0.0.1 -e MONITOR_DB_PORT=3306 -e ***REMOVED*** -e ***REMOVED*** -e MONITOR_SESSION_ENABLE=true -e MONITOR_LOG_LEVEL=info -e MONITOR_ALARM_ALIVE_MAX_DAY=30  monitor:v1.3.0
+docker run --name open-monitor --volume /app/test/prometheus/logs:/app/monitor/prometheus/logs --volume /app/test/prometheus/data:/app/monitor/prometheus/data --volume /app/test/prometheus/rules:/app/monitor/prometheus/rules  --volume /app/test/alertmanager/logs:/app/monitor/alertmanager/logs --volume /app/test/alertmanager/data:/app/monitor/alertmanager/data --volume /app/test/consul/data:/app/monitor/consul/data --volume /app/test/consul/logs:/app/monitor/consul/logs --volume /app/test/monitor/logs:/app/monitor/monitor/logs --volume /app/test/deploy:/app/deploy --volume /app/test/transgateway/logs:/app/monitor/transgateway/logs --volume /app/test/transgateway/data:/app/monitor/transgateway/data --volume /etc/localtime:/etc/localtime -d -p 8080:8080 -p 8500:8500 -p 8300:8300 -p 9090:9090 -p 19091:19091 -e MONITOR_SERVER_PORT=8080 -e MONITOR_DB_HOST=127.0.0.1 -e MONITOR_DB_PORT=3306 -e MONITOR_DB_USER=default -e MONITOR_DB_PWD=default -e MONITOR_SESSION_ENABLE=true -e MONITOR_LOG_LEVEL=info -e MONITOR_ALARM_ALIVE_MAX_DAY=30  monitor:v1.3.0
 ```
 docker-compose运行：  
 去github上拷贝一份open-monitor的docker-compose.tpl，重命名为docker-compose.yml   
