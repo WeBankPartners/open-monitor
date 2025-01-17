@@ -1,5 +1,5 @@
 <template>
-  <Card style="margin-bottom: 8px;">
+  <Card class='alarm-card-style' style="margin-bottom: 8px;">
     <template slot="title">
       <div
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
@@ -211,6 +211,8 @@
       :footer-hide="true"
       :fullscreen="true"
       :title="$t('m_menu_endpointView')"
+      :mask="false"
+      class-name="endpoint-view-modal"
     >
       <EndpointViewComponent v-if='showEndpointView' ref="endpointViewComponentRef"></EndpointViewComponent>
     </Modal>
@@ -256,7 +258,7 @@ export default {
       this.showEndpointView = true
       setTimeout(() => {
         this.$refs.endpointViewComponentRef.refreshConfig(endpointObject)
-      }, 100)
+      }, 200)
     },
     goToNotify(item) {
       if (item.notify_permission === 'no' || !item.notify_permission) {
@@ -314,6 +316,11 @@ export default {
   }
 }
 </script>
+<style lang="less">
+.endpoint-view-modal {
+  z-index: 1000!important;
+}
+</style>
 <style scoped lang="less">
 /deep/ .ivu-card-head {
   background: #f2f3f7;

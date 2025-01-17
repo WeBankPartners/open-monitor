@@ -1316,7 +1316,43 @@
       },
       {
         "method": "GET",
+        "url": "/monitor/api/v2/monitor/metric/export"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/alarm/endpoint_group/query"
+      },
+      {
+        "method": "GET",
         "url": "/monitor/api/v2/alarm/strategy/workflow"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/service/log_metric/export"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/alarm/strategy/export/${a}/${b}"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/service/log_keyword/export"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/dashboard/custom/export"
+      },
+      {
+        "method": "GET",
+        "url": "/monitor/api/v2/dashboard/custom"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/chart/custom/permission/batch"
       },
       {
         "method": "POST",
@@ -1325,6 +1361,42 @@
       {
         "method": "POST",
         "url": "/monitor/api/v2/trans-export/dashboard/batch"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/trans-export/service_group/batch"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/trans-export/config/type/batch"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/config/type-batch"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/alarm/endpoint_group/import"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/monitor/metric/import"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/alarm/strategy/import/${a}/${b}"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/service/log_metric/import"
+      },
+      {
+        "method": "POST",
+        "url": "/monitor/api/v2/service/log_keyword/import"
       },
       {
         "method": "POST",
