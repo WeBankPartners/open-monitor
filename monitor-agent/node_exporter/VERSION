@@ -47,3 +47,6 @@ Fix pcre match panic error
 
 v3.3.0.1
 Support log path with wildcard character
+
+v3.4.0.1
+Fix cpu high && change file watch mode
