@@ -336,9 +336,10 @@ func (c *logMetricMonitorNeObj) start() {
 			destroyFlag = true
 		case line := <-c.TailSession.Lines:
 			if line == nil {
-				continue
+				destroyFlag = true
+				level.Error(monitorLogger).Log("log_metric -> tailSessionBreak", fmt.Sprintf("path:%s,serviceGroup:%s reason:%v ", c.Path, c.ServiceGroup, c.TailSession.Err()))
+				break
 			}
-			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
 			c.DataChan <- line.Text
 		}
 		if reopenFlag || destroyFlag {
