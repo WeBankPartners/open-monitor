@@ -153,7 +153,7 @@ func (c *logKeywordCollector) init() {
 func (c *logKeywordCollector) start() {
 	level.Info(monitorLogger).Log("log_keyword -> logKeywordCollectorStart", c.Path)
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}, Poll: true})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
 		level.Error(monitorLogger).Log("error", fmt.Sprintf("start log keyword collector fail, path: %s, error: %v", c.Path, err))
 		return
