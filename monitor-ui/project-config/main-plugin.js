@@ -4,7 +4,7 @@ import router from './router-plugin'
 import routerP from './router-plugin-p'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
-import ViewUI from 'view-design'
+import '@/plugins/iview.js'
 import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
 import {tableUtil} from '@/assets/js/tableUtil.js'
@@ -14,7 +14,6 @@ import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
 import TagShow from '@/components/Tag-show'
 const eventBus = new Vue()
-Vue.use(ViewUI)
 
 window.use(vuex)
 window.addOptions({
