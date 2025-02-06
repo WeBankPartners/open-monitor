@@ -1,5 +1,4 @@
 const lodash = require('lodash')
-
 const stringToNumber = (str, min = 1, max = 99) => {
   if (!str) {return Math.floor(Math.random() * (max - min + 1)) + min}
   const hash = Array.from(str).reduce((acc, char) => acc + char.charCodeAt(0), 0)
