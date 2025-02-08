@@ -9,12 +9,12 @@
               <Tag v-if='logMetricGroup' class='ml-2 mr-2' style="font-size: 14px; min-width: 46px" color='green'>auto</Tag>
               <template v-if="isEditPanal">
                 <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit/>
-                <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" ></Icon>
+                <Icon class="panal-edit-icon" color="#5384FF" @click="savePanalEdit" type="md-checkmark" ></Icon>
                 <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" ></Icon>
               </template>
               <template v-else>
                 <h5 class="d-inline-block"> {{panalName}}</h5>
-                <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
+                <Icon class="panal-edit-icon" color="#5384FF"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
               </template>
             </div>
           </div>
@@ -77,7 +77,7 @@
                 :key="index"
                 :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
               >
-                <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" ></Icon>
+                <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#5384FF" :size="15" ></Icon>
                 <span @click="selectGroup(item)">
                   {{ `${item}` }}
                 </span>
@@ -87,7 +87,7 @@
                   placement="left-end"
                   @on-ok="confirmDeleteGroup(item, index)"
                 >
-                  <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#ed4014" :size="15" ></Icon>
+                  <Icon v-if="isEditStatus" class="ml-2" type="md-close" color="#FF4D4F" :size="15" ></Icon>
                 </Poptip>
               </div>
               <span>

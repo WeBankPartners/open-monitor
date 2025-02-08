@@ -730,7 +730,7 @@ export default {
       metricTypeMap: {
         common: {
           label: this.$t('m_basic_type'),
-          color: '#2d8cf0'
+          color: '#5384FF'
         },
         business: {
           label: this.$t('m_business_configuration'),

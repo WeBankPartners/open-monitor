@@ -402,7 +402,7 @@ export default {
           value: originData.high,
           filterType: 'priority',
           itemStyle: {
-            color: '#ed4014',
+            color: '#FF4D4F',
           },
         }
         legendData.push('high')
@@ -414,7 +414,7 @@ export default {
           value: originData.low,
           filterType: 'priority',
           itemStyle: {
-            color: '#19be6b',
+            color: '#00CB91',
           },
         }
         legendData.push('low')
@@ -426,7 +426,7 @@ export default {
           value: originData.mid,
           filterType: 'priority',
           itemStyle: {
-            color: '#2d8cf0',
+            color: '#5384FF',
           },
         }
         legendData.push('medium')
@@ -529,7 +529,7 @@ export default {
   width: ~"calc(100vw * 0.4)";
   text-align: center;
   padding: 50px;
-  color: #2d8cf0;
+  color: #5384FF;
 }
 
 .title-wrapper {

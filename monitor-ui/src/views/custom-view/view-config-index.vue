@@ -722,7 +722,7 @@ li {
       right: 20px;
       top: 60px;
       cursor: pointer;
-      color: #2d8cf0;
+      color: #5384FF;
     }
   }
 }
@@ -808,7 +808,7 @@ li {
     line-height: 1;
     font-family: SimSun;
     font-size: 14px;
-    color: #ed4014;
+    color: #FF4D4F;
 }
 
 .card-pagination {

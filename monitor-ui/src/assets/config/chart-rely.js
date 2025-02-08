@@ -225,7 +225,7 @@ export const drawChart = function (that,config,userConfig, elId) {
           })
           const keys = Object.keys(titleSet)
           keys.forEach(key => {
-            res = res + `<div style="color:#2d8cf0">${key}</div>`
+            res = res + `<div style="color:#5384FF">${key}</div>`
             titleSet[key].forEach(item => {
               res = res+`<div><div style=' display: inline-block;width: 10px; 
                 height: 10px;border: 1px solid transparent;border-radius:50%;

@@ -255,7 +255,7 @@ export default {
   width: ~"calc(100vw * 0.4)";
   text-align: center;
   padding:50px;
-  color: #2d8cf0;
+  color: #5384FF;
 }
 .flex-container {
   display: flex;

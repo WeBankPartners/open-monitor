@@ -687,7 +687,7 @@ export default {
           render: (h, params) => (
             <div style="display: flex;">
               <Tooltip placement="top" max-width="400" transfer content={this.$t('m_button_view')}>
-                <Button class="mr-1" size="small" type="info" on-click={() => {
+                <Button class="mr-1" size="small" type="success" on-click={() => {
                   this.endpointRejectModel.modalFooter = []
                   this.isReviewMode = true
                   this.editF(params.row)
