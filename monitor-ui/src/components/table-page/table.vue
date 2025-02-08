@@ -844,7 +844,7 @@ export default {
   }
 
   .ivu-table-sort,.ivu-poptip-rel i.on {
-    color: #2d8cf0;
+    color: #5384FF;
   }
   .popfilter{
     max-height: 200px;
@@ -1050,7 +1050,7 @@ export default {
 
   .cell-icon {
     padding: 4px;
-    color: #2d8cf0;
+    color: #5384FF;
     cursor: pointer;
   }
   .cell-edit {

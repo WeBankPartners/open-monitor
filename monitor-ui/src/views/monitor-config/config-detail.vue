@@ -472,7 +472,7 @@ export default {
               {
                 label: this.$t('m_basic_type'),
                 value: 'common',
-                color: '#2d8cf0'
+                color: '#5384FF'
               },
               {
                 label: this.$t('m_business_configuration'),
@@ -1342,7 +1342,7 @@ export default {
 }
 
 .modal-button-save.modal-button-save {
-  background-color: #2d8cf0!important;
+  background-color: #5384FF!important;
 }
 
 .modal-dialog[data-v-0eaeaf66] {
@@ -1483,8 +1483,8 @@ export default {
   }
   .success-btn {
     color: #fff;
-    background-color: #19be6b;
-    border-color: #19be6b;
+    background-color:  #00CB91;
+    border-color:  #00CB91;
   }
 
   .w-header {

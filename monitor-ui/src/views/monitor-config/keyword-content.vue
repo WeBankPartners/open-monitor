@@ -1428,8 +1428,8 @@ export default {
 }
 .success-btn {
   color: #fff;
-  background-color: #19be6b;
-  border-color: #19be6b;
+  background-color:  #00CB91;
+  border-color:  #00CB91;
 }
 
 .ivu-collapse-header {

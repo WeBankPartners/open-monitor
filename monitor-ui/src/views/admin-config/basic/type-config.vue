@@ -31,7 +31,7 @@
       @on-cancel="deleteVisible = false"
     >
       <div class="confirm-body">
-        <Icon type="md-alert" color="#ff9900" size="28" />
+        <Icon type="md-alert" color="#F29360" size="28" />
         {{ $t('m_delConfirm_tip') }}
       </div>
     </Modal>

@@ -147,7 +147,7 @@ export default {
               {
                 label: this.$t('m_basic_type'),
                 value: 'common',
-                color: '#2d8cf0'
+                color: '#5384FF'
               },
               {
                 label: this.$t('m_business_configuration'),

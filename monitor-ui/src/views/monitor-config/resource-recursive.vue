@@ -187,7 +187,7 @@
         <p style="margin-left: 10px;margin-top: 22px;">{{ $t(this.confirmModal.message) }}</p>
       </div>
       <div slot="footer">
-        <span style="color:#ed4014;float: left;text-align:left">
+        <span style="color:#FF4D4F;float: left;text-align:left">
           <Checkbox v-model="confirmModal.check">{{ $t('m_dangerous_confirm_tip') }}</Checkbox>
         </span>
         <Button @click="cancelConfirmModal">{{$t('m_button_cancel')}}</Button>
@@ -206,7 +206,7 @@
       @on-cancel="cancel"
     >
       <div class="modal-body" style="padding:10px">
-        <div style="color:#ed4014">{{$t('m_delete_follow')}}:</div>
+        <div style="color:#FF4D4F">{{$t('m_delete_follow')}}:</div>
         <div class='will-delete-content'>
           <div v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</div>
         </div>
