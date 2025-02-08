@@ -84,8 +84,9 @@
           placement="bottom-start"
           @on-click="importPanel"
         >
-          <Button type="primary">
-            {{$t('m_import')}}
+          <Button class="btn-upload">
+            <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
+            {{ $t('m_import') }}
           </Button>
           <template  slot='list'>
             <DropdownMenu>

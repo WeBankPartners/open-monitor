@@ -3,11 +3,10 @@
     <section>
       <div class='upload-content'>
         <Button
-          type="info"
-          class="btn-left"
+          class="btn-upload"
           @click="exportData"
         >
-          <img src="../../assets/img/import.png" class="btn-img" alt="" />
+          <img src="@/styles/icon/DownloadOutlined.svg" class="upload-icon" />
           {{ $t('m_export') }}
         </Button>
         <div style="display: inline-block;margin-bottom: 3px;">
@@ -15,8 +14,8 @@
             placement="bottom-start"
             @on-click="onImportButtonClick"
           >
-            <Button type="primary" class="btn-left">
-              <img src="../../assets/img/export.png" class="btn-img" alt="" />
+            <Button class="btn-upload">
+              <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
               {{ $t('m_import') }}
             </Button>
             <template  slot='list'>
@@ -488,7 +487,10 @@
             :on-success="uploadSucess"
             :on-error="uploadFailed"
           >
-            <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
+            <Button class="btn-upload">
+              <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
+              {{ $t('m_import') }}
+            </Button>
           </Upload>
         </div>
       </div>

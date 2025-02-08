@@ -52,11 +52,10 @@
       <div>
         <template v-if="type !== 'endpoint' && targetId">
           <Button
-            type="info"
-            class="btn-left"
+            class="btn-upload"
             @click="exportThreshold"
           >
-            <img src="../../assets/img/export.png" class="btn-img" alt="" />
+            <img src="@/styles/icon/DownloadOutlined.svg" class="upload-icon" />
             {{ $t('m_export') }}
           </Button>
           <div style="display: inline-block;margin-bottom: 3px;">
@@ -69,8 +68,8 @@
               :on-success="uploadSucess"
               :on-error="uploadFailed"
             >
-              <Button type="primary" class="btn-left">
-                <img src="../../assets/img/import.png" class="btn-img" alt="" />
+              <Button class="btn-upload">
+                <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
                 {{ $t('m_import') }}
               </Button>
             </Upload>
