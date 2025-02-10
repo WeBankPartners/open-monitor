@@ -85,7 +85,7 @@
           @on-click="importPanel"
         >
           <Button class="btn-upload">
-            <img src="../../styles/icon/UploadOutlined.svg" class="upload-icon" />
+            <img src="@/assets/img/UploadOutlined.svg" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
           <template  slot='list'>
