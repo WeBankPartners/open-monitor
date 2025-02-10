@@ -80,12 +80,16 @@
           <Button />
         </Upload>
         <Button type="success" @click="addBoardItem">{{$t('m_button_add')}}</Button>
+        <Button class="btn-upload">
+          <img src="../../assets/img/icon_rltm.png" class="upload-icon" />
+          {{ $t('m_import') }}
+        </Button>
         <Dropdown
           placement="bottom-start"
           @on-click="importPanel"
         >
           <Button class="btn-upload">
-            <img src="@/assets/img/UploadOutlined.svg" class="upload-icon" />
+            <img src="../../assets/img/UploadOutlined.svg" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
           <template  slot='list'>
