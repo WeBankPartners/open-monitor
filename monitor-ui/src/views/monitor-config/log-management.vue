@@ -41,7 +41,7 @@
           v-if="typeMap[type] === 'service'"
           @click="exportData"
         >
-          <img src="@/styles/icon/DownloadOutlined.svg" class="upload-icon" />
+          <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
           {{ $t('m_export') }}
         </Button>
         <Upload
@@ -56,7 +56,7 @@
         >
           <!-- <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button> -->
           <Button class="btn-upload">
-            <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
+            <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
         </Upload>

@@ -55,7 +55,7 @@
             class="btn-upload"
             @click="exportThreshold"
           >
-            <img src="@/styles/icon/DownloadOutlined.svg" class="upload-icon" />
+            <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
             {{ $t('m_export') }}
           </Button>
           <div style="display: inline-block;margin-bottom: 3px;">
@@ -69,7 +69,7 @@
               :on-error="uploadFailed"
             >
               <Button class="btn-upload">
-                <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
+                <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
                 {{ $t('m_import') }}
               </Button>
             </Upload>

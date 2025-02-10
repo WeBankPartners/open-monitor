@@ -32,7 +32,7 @@
           class="btn-upload"
           @click.stop="exportData"
         >
-          <img src="@/styles/icon/DownloadOutlined.svg" class="upload-icon" />
+          <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
           {{ $t('m_export') }}
         </Button>
         <Upload
@@ -45,7 +45,7 @@
           :on-error="uploadFailed"
         >
           <Button class="btn-upload">
-            <img src="@/styles/icon/UploadOutlined.svg" class="upload-icon" />
+            <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
         </Upload>
