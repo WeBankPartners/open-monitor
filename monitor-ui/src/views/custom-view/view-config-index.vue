@@ -80,10 +80,6 @@
           <Button />
         </Upload>
         <Button type="success" @click="addBoardItem">{{$t('m_button_add')}}</Button>
-        <Button class="btn-upload">
-          <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
-          {{ $t('m_import') }}
-        </Button>
         <Dropdown
           placement="bottom-start"
           @on-click="importPanel"

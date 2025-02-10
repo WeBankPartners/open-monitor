@@ -16,7 +16,6 @@ module.exports = {
       }
     }
   },
-  publicPath: '/',
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
 	productionSourceMap: false,
@@ -34,7 +33,7 @@ module.exports = {
 				.clear()
 				.add(vueConfig.MAIN_PATH); //独立运行时
     })
-		config.module.rule("images").test(/\.(png|jpeg|jpg)$/).use("url-loader").loader("url-loader").options({
+		config.module.rule("images").test(/\.(png|jpeg|jpg|svg)$/).use("url-loader").loader("url-loader").options({
 			limit: 1024 * 512
 		})
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
