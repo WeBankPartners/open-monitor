@@ -31,11 +31,16 @@ func StartConsumeReloadConfig() {
 }
 
 func consumeReloadConfig() {
-	_, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
+	resp, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
 	if err != nil {
 		log.Logger.Error("Reload prometheus config fail", log.Error(err))
 	} else {
 		log.Logger.Info("Reload prometheus config done")
+	}
+	if resp != nil {
+		if resp.Body != nil {
+			resp.Body.Close()
+		}
 	}
 }
 
@@ -69,10 +74,16 @@ func StartCheckPrometheusJob(interval int) {
 }
 
 func checkPrometheusAlive(address string) {
-	_, err := http.Get(fmt.Sprintf("http://%s", address))
+	resp, err := http.Get(fmt.Sprintf("http://%s", address))
 	if err != nil {
 		log.Logger.Error("Prometheus alive check: error", log.Error(err))
 		restartPrometheus()
+	} else {
+		if resp != nil {
+			if resp.Body != nil {
+				resp.Body.Close()
+			}
+		}
 	}
 }
 
