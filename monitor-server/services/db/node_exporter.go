@@ -55,13 +55,14 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	if respErr != nil {
 		return fmt.Errorf("Do http request to %s fail,%s ", endpointObj.AgentAddress, respErr.Error())
 	}
+	b, _ = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Do http request to %s fail,status code:%d ", endpointObj.AgentAddress, resp.StatusCode)
 	}
-	b, _ = ioutil.ReadAll(resp.Body)
 	var response models.LogMetricNodeExporterResponse
 	err = json.Unmarshal(b, &response)
-	log.Logger.Info("response", log.String("body", string(b)))
+	log.Logger.Debug("response", log.String("body", string(b)))
 	if err == nil {
 		if response.Status == "OK" {
 			return nil
@@ -240,13 +241,14 @@ func updateEndpointLogKeyword(endpoint string) error {
 	if respErr != nil {
 		return fmt.Errorf("Do http request to %s fail,%s ", endpointObj.AgentAddress, respErr.Error())
 	}
+	b, _ = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Do http request to %s fail,status code:%d ", endpointObj.AgentAddress, resp.StatusCode)
 	}
-	b, _ = ioutil.ReadAll(resp.Body)
 	var response models.LogKeywordHttpResult
 	err = json.Unmarshal(b, &response)
-	log.Logger.Info("response", log.String("body", string(b)))
+	log.Logger.Debug("response", log.String("body", string(b)))
 	if err == nil {
 		if response.Status == "OK" {
 			return nil
