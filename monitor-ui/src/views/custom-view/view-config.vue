@@ -49,8 +49,8 @@
 
             <div class="header-tools">
               <template v-if="isEditStatus">
-                <Button type="info" @click.stop="exportPanel">
-                  <Icon type="md-cloud-upload" size="20"></Icon>
+                <Button class="btn-upload" @click.stop="exportPanel">
+                  <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
                   {{$t('m_export')}}
                 </Button>
                 <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
