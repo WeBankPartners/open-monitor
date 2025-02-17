@@ -215,7 +215,7 @@
             :col-num="12"
             :row-height="30"
             :is-draggable="true"
-            :is-resizable="true"
+            :is-resizable="isEditStatus"
             :is-mirrored="false"
             :vertical-compact="true"
             :use-css-transforms="true"
