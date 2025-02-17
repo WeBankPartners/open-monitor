@@ -172,18 +172,15 @@ func (c *logKeywordCollector) start() {
 			destroyFlag = true
 		case line := <-c.TailSession.Lines:
 			if line == nil {
-				continue
+				destroyFlag = true
+				level.Error(monitorLogger).Log("log_keyword -> tailSessionBreak", fmt.Sprintf("path:%s reason:%v ", c.Path, c.TailSession.Err()))
+				break
 			}
 			c.DataChan <- line.Text
 		}
 		if reopenFlag || destroyFlag {
 			break
 		}
-		//else {
-		//	c.TailTimeLock.Lock()
-		//	c.TailLastUnixTime = time.Now().Unix()
-		//	c.TailTimeLock.Unlock()
-		//}
 	}
 	c.TailSession.Stop()
 	//c.TailSession.Cleanup()

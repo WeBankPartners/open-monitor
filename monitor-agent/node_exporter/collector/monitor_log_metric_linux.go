@@ -317,7 +317,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 func (c *logMetricMonitorNeObj) start() {
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", fmt.Sprintf("path:%s,serviceGroup:%s", c.Path, c.ServiceGroup))
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}, Poll: true})
 	if err != nil {
 		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
 		return
@@ -336,19 +336,15 @@ func (c *logMetricMonitorNeObj) start() {
 			destroyFlag = true
 		case line := <-c.TailSession.Lines:
 			if line == nil {
-				continue
+				destroyFlag = true
+				level.Error(monitorLogger).Log("log_metric -> tailSessionBreak", fmt.Sprintf("path:%s,serviceGroup:%s reason:%v ", c.Path, c.ServiceGroup, c.TailSession.Err()))
+				break
 			}
-			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
 			c.DataChan <- line.Text
 		}
 		if reopenFlag || destroyFlag {
 			break
 		}
-		//else {
-		//	c.TailTimeLock.Lock()
-		//	c.TailLastUnixTime = time.Now().Unix()
-		//	c.TailTimeLock.Unlock()
-		//}
 	}
 	c.TailSession.Stop()
 	//c.TailSession.Cleanup()
@@ -367,7 +363,7 @@ func (c *logMetricMonitorNeObj) start() {
 
 func (c *logMetricMonitorNeObj) tailLogFile(logPath string, destroyChan chan int) {
 	level.Info(monitorLogger).Log("log_metric_start -> tailMultiLog", fmt.Sprintf("path:%s,serviceGroup:%s", logPath, c.ServiceGroup))
-	logTailSession, err := tail.TailFile(logPath, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
+	logTailSession, err := tail.TailFile(logPath, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}, Poll: true})
 	if err != nil {
 		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start multi log metric collector fail, path: %s, error: %v", logPath, err))
 		return
@@ -379,7 +375,9 @@ func (c *logMetricMonitorNeObj) tailLogFile(logPath string, destroyChan chan int
 			destroyFlag = true
 		case line := <-logTailSession.Lines:
 			if line == nil {
-				continue
+				destroyFlag = true
+				level.Error(monitorLogger).Log("log_metric -> tailMultiLog -> tailSessionBreak", fmt.Sprintf("path:%s,serviceGroup:%s reason:%v ", logPath, c.ServiceGroup, c.TailSession.Err()))
+				break
 			}
 			//level.Info(monitorLogger).Log("log_metric -> get_new_line", fmt.Sprintf("path:%s,serviceGroup:%s,text:%s", c.Path, c.ServiceGroup, line.Text))
 			c.DataChan <- line.Text

@@ -284,9 +284,9 @@ func SyncDbMetric(initFlag bool) error {
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
 	}
+	bodyByte, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if resp.StatusCode > 300 {
-		bodyByte, _ := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
 		return fmt.Errorf("%s", string(bodyByte))
 	}
 	return nil
