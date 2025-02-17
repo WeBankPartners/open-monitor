@@ -95,9 +95,9 @@ func CheckDbMonitor(param m.DbMonitorUpdateDto) error {
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/check fail,%s ", dbExportAddress, err.Error())
 	}
+	bodyByte, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if resp.StatusCode > 300 {
-		bodyByte, _ := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
 		return fmt.Errorf("%s", string(bodyByte))
 	}
 	return nil
@@ -135,9 +135,9 @@ func SendConfigToDbManager() error {
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
 	}
+	bodyByte, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if resp.StatusCode > 300 {
-		bodyByte, _ := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
 		return fmt.Errorf("%s", string(bodyByte))
 	}
 	return nil
@@ -222,9 +222,9 @@ func SendLogConfig(endpointId, grpId, tplId int) error {
 		if err == nil {
 			log.Logger.Info("Sync log keyword config", log.String("endpoint", v.Address), log.String("param", string(postData)))
 			url := fmt.Sprintf("http://%s/log/config", v.Address)
-			resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
-			if err != nil {
-				log.Logger.Error("curl "+url+" error ", log.Error(err))
+			resp, respErr := http.Post(url, "application/json", strings.NewReader(string(postData)))
+			if respErr != nil {
+				log.Logger.Error("curl "+url+" error ", log.Error(respErr))
 			} else {
 				responseBody, _ := ioutil.ReadAll(resp.Body)
 				log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
