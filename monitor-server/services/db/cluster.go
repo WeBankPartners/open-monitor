@@ -91,10 +91,12 @@ func SyncRemoteSdConfigFile(cluster string, params []*m.SdConfigSyncObj) error {
 		return fmt.Errorf("Try to do request fail,%s ", respErr.Error())
 	}
 	respBodyBytes, bodyErr := ioutil.ReadAll(resp.Body)
+	if resp.Body != nil {
+		resp.Body.Close()
+	}
 	if bodyErr != nil {
 		return fmt.Errorf("Try to read response body fail,%s ", bodyErr.Error())
 	}
-	resp.Body.Close()
 	var respObj m.ClusterAgentResponse
 	unmarshalErr := json.Unmarshal(respBodyBytes, &respObj)
 	if unmarshalErr != nil {
@@ -151,10 +153,12 @@ func SyncRemoteRuleConfigFile(cluster string, param m.RFClusterRequestObj) error
 		return fmt.Errorf("Try to do request fail,%s ", respErr.Error())
 	}
 	respBodyBytes, bodyErr := ioutil.ReadAll(resp.Body)
+	if resp.Body != nil {
+		resp.Body.Close()
+	}
 	if bodyErr != nil {
 		return fmt.Errorf("Try to read response body fail,%s ", bodyErr.Error())
 	}
-	resp.Body.Close()
 	var respObj m.ClusterAgentResponse
 	unmarshalErr := json.Unmarshal(respBodyBytes, &respObj)
 	if unmarshalErr != nil {
