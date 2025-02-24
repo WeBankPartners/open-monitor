@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -50,7 +51,7 @@ func UpdateSysAlertMailConfig(param *models.SysAlertMailParameter) {
 		_, err = x.Exec("update sys_parameter set param_value=? where param_key=?", string(b), models.SPAlertMailKey)
 	}
 	if err != nil {
-		log.Logger.Error("Update sys alert mail fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update sys alert mail fail", zap.Error(err))
 	}
 }
 
@@ -72,7 +73,7 @@ func GetSysMetricTemplateConfig(workspace string) (result []*models.SysMetricTem
 		tmpErr := json.Unmarshal([]byte(v.ParamValue), &tmpObj)
 		if tmpErr != nil {
 			err = tmpErr
-			log.Logger.Error("Json unmarshal value fail", log.String("key", paramKey), log.String("value", v.ParamValue), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Json unmarshal value fail", zap.String("key", paramKey), zap.String("value", v.ParamValue), zap.Error(tmpErr))
 			break
 		} else {
 			result = append(result, &tmpObj)
@@ -84,7 +85,7 @@ func GetSysMetricTemplateConfig(workspace string) (result []*models.SysMetricTem
 func getSysParameterTableData(key string) (result []*models.SysParameterTable, err error) {
 	err = x.SQL("select * from sys_parameter where param_key=?", key).Find(&result)
 	if err != nil {
-		log.Logger.Error("Query sys parameter key fail", log.String("key", key), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query sys parameter key fail", zap.String("key", key), zap.Error(err))
 	}
 	return
 }

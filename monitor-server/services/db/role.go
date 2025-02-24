@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io"
 	"net/http"
@@ -17,16 +18,16 @@ func SyncCoreRoleList() {
 	if models.CoreUrl == "" {
 		return
 	}
-	log.Logger.Debug("Start sync role list")
+	log.Debug(nil, log.LOGGER_APP, "Start sync role list")
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", models.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Get core role key new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key new request fail", zap.Error(err))
 		return
 	}
 	request.Header.Set("Authorization", models.GetCoreToken())
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key ctxhttp request fail", zap.Error(err))
 		return
 	}
 	b, _ := io.ReadAll(res.Body)
@@ -34,11 +35,11 @@ func SyncCoreRoleList() {
 	var result models.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key json unmarshal result", zap.Error(err))
 		return
 	}
 	if len(result.Data) == 0 {
-		log.Logger.Warn("Get core role key fail with no data")
+		log.Warn(nil, log.LOGGER_APP, "Get core role key fail with no data")
 		return
 	}
 	var tableData, insertData, updateData []*models.RoleNewTable
@@ -73,7 +74,7 @@ func SyncCoreRoleList() {
 	if len(actions) > 0 {
 		err = Transaction(actions)
 		if err != nil {
-			log.Logger.Error("Sync core role fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Sync core role fail", zap.Error(err))
 		}
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -42,7 +43,7 @@ func RegisterAgentNew(c *gin.Context) {
 		if param.Password != "" {
 			decodePassword, decodeErr := DecodeUIPassword(c, param.Password)
 			if decodeErr != nil {
-				log.Logger.Info("try to decode ui password fail", log.Error(decodeErr))
+				log.Info(nil, log.LOGGER_APP, "try to decode ui password fail", zap.Error(decodeErr))
 			} else {
 				param.Password = decodePassword
 			}
@@ -53,7 +54,7 @@ func RegisterAgentNew(c *gin.Context) {
 			return
 		}
 		if err != nil {
-			log.Logger.Error("Register agent fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Register agent fail", zap.Error(err))
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
@@ -73,7 +74,7 @@ func InitAgentManager() {
 	if AgentManagerServer != "" {
 		param, err := db.GetAgentManager("")
 		if err != nil {
-			log.Logger.Error("Get agent manager table fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get agent manager table fail", zap.Error(err))
 		} else {
 			prom.InitAgentManager(param, AgentManagerServer)
 		}
@@ -89,7 +90,7 @@ func startSyncAgentManagerJob(url string) {
 	for {
 		param, tmpErr := db.GetAgentManager("")
 		if tmpErr != nil {
-			log.Logger.Error("Sync agent manager job fail with get config", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Sync agent manager job fail with get config", zap.Error(tmpErr))
 		} else {
 			prom.DoSyncAgentManagerJob(param, url)
 		}
@@ -167,11 +168,11 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 		if rData.defaultGroup != "" {
 			_, tmpErr := db.GetSimpleEndpointGroup(rData.defaultGroup)
 			if tmpErr != nil {
-				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "add default group fail", zap.String("group", rData.defaultGroup), zap.Error(err))
 			} else {
 				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, operator, true)
 				if tmpErr != nil {
-					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "append default group endpoint fail", zap.String("group", rData.defaultGroup), zap.Error(err))
 				} else {
 					db.SyncPrometheusRuleFile(rData.defaultGroup, false)
 				}
@@ -188,7 +189,7 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 		}
 		err = db.UpdateAgentManagerTable(rData.endpoint, param.User, param.Password, configFile, binPath, true)
 		if err != nil {
-			log.Logger.Error("Update agent manager table fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update agent manager table fail", zap.Error(err))
 		}
 	}
 	return validateMessage, guid, err
@@ -841,7 +842,7 @@ func calcStep(startTime int64, paramStep int) (step int, err error) {
 			step = defaultStep
 		}
 	}
-	log.Logger.Debug("Calc step", log.Int("step", step))
+	log.Debug(nil, log.LOGGER_APP, "Calc step", zap.Int("step", step))
 	return step, err
 }
 

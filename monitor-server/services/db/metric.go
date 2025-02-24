@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -176,7 +177,7 @@ func MetricDeleteNew(id string) (withComparison bool, err error) {
 	} else {
 		for _, v := range affectEndpointGroup {
 			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
-				log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
+				log.Error(nil, log.LOGGER_APP, "sync prometheus rule file fail", zap.Error(tmpErr))
 			}
 		}
 	}
@@ -563,7 +564,7 @@ func MetricImport(monitorType, serviceGroup, endPointGroup, operator string, inp
 			}
 		}
 	}
-	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
+	log.Info(nil, log.LOGGER_APP, "import metric", zap.Int("actionLen", len(actions)))
 	if len(actions) > 0 {
 		if err = Transaction(actions); err != nil {
 			return failList, fmt.Errorf("import metric fail with exec database,%s ", err.Error())
@@ -924,7 +925,7 @@ func getDeleteEndpointDashboardChartMetricAction(metric, monitorType string) (ac
 	var charts []*models.ChartTable
 	err := x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", monitorType).Find(&charts)
 	if err != nil {
-		log.Logger.Error("getDeleteEndpointDashboardChartMetricAction,try to get charts data fail", log.String("metric", metric), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "getDeleteEndpointDashboardChartMetricAction,try to get charts data fail", zap.String("metric", metric), zap.Error(err))
 		return
 	}
 	if len(charts) > 0 {
@@ -950,7 +951,7 @@ func getMetricComparisonDeleteAction(sourceMetricGuid string) (actions []*Action
 	// 删除同环比 指标
 	var metricRows []*models.MetricComparison
 	if err := x.SQL("select metric_id from metric_comparison where origin_metric_id = ?", sourceMetricGuid).Find(&metricRows); err != nil {
-		log.Logger.Error("getMetricComparisonDeleteAction,query metric_comparison fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "getMetricComparisonDeleteAction,query metric_comparison fail", zap.Error(err))
 		return
 	}
 	for _, row := range metricRows {

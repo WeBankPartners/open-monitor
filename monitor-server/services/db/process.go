@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -20,13 +21,13 @@ type processHttpDto struct {
 func UpdateNodeExporterProcessConfig(endpointId int) error {
 	err, data := GetProcessList(endpointId)
 	if err != nil {
-		log.Logger.Error("Update node_exporter fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update node_exporter fail", zap.Error(err))
 		return err
 	}
 	endpointObj := m.EndpointTable{Id: endpointId}
 	err = GetEndpoint(&endpointObj)
 	if err != nil {
-		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update node_exporter fail, get endpoint msg fail", zap.Error(err))
 		return err
 	}
 	postParam := processHttpDto{Process: []string{}, Check: 0}
@@ -35,17 +36,17 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	}
 	postData, err := json.Marshal(postParam)
 	if err != nil {
-		log.Logger.Error("Update node_exporter fail, marshal post data fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update node_exporter fail, marshal post data fail", zap.Error(err))
 		return err
 	}
 	url := fmt.Sprintf("http://%s/process/config", endpointObj.Address)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
-		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update node_exporter fail, http post fail", zap.Error(err))
 		return err
 	}
 	responseBody, _ := ioutil.ReadAll(resp.Body)
-	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
+	log.Info(nil, log.LOGGER_APP, "curl "+url, zap.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
 }
@@ -88,21 +89,21 @@ func SyncNodeExporterProcessConfig(hostIp string, newEndpoints []*m.EndpointNewT
 		tmpExtendObj := m.EndpointExtendParamObj{}
 		tmpErr := json.Unmarshal([]byte(v.ExtendParam), &tmpExtendObj)
 		if tmpErr != nil {
-			log.Logger.Error("Sync process config,extendParam illegal", log.String("processEndpoint", v.Guid), log.String("extendParam", v.ExtendParam), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Sync process config,extendParam illegal", zap.String("processEndpoint", v.Guid), zap.String("extendParam", v.ExtendParam), zap.Error(tmpErr))
 			continue
 		}
 		syncParam.Process = append(syncParam.Process, &m.SyncProcessObj{ProcessGuid: v.Guid, ProcessName: tmpExtendObj.ProcessName, ProcessTags: tmpExtendObj.ProcessTags})
 	}
 	postData, _ := json.Marshal(syncParam)
-	log.Logger.Info("sync new process config", log.String("postData", string(postData)))
+	log.Info(nil, log.LOGGER_APP, "sync new process config", zap.String("postData", string(postData)))
 	url := fmt.Sprintf("http://%s/process/config", nodeExportAddress)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
-		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update node_exporter fail, http post fail", zap.Error(err))
 		return err
 	}
 	responseBody, _ := ioutil.ReadAll(resp.Body)
-	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
+	log.Info(nil, log.LOGGER_APP, "curl "+url, zap.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
 }
@@ -111,7 +112,7 @@ func CheckNodeExporterProcessConfig(endpointId int, processList []m.ProcessMonit
 	endpointObj := m.EndpointTable{Id: endpointId}
 	err = GetEndpoint(&endpointObj)
 	if err != nil {
-		log.Logger.Error("Check node_exporter fail, get endpoint msg fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check node_exporter fail, get endpoint msg fail", zap.Error(err))
 		return
 	}
 	var processNameList []string
@@ -121,17 +122,17 @@ func CheckNodeExporterProcessConfig(endpointId int, processList []m.ProcessMonit
 	postParam := processHttpDto{Process: processNameList, Check: 1}
 	postData, err := json.Marshal(postParam)
 	if err != nil {
-		log.Logger.Error("Check node_exporter fail, marshal post data fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check node_exporter fail, marshal post data fail", zap.Error(err))
 		return
 	}
 	url := fmt.Sprintf("http://%s/process/config", endpointObj.Address)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
-		log.Logger.Error("Check node_exporter fail, http post fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check node_exporter fail, http post fail", zap.Error(err))
 		return
 	}
 	responseBody, _ := ioutil.ReadAll(resp.Body)
-	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
+	log.Info(nil, log.LOGGER_APP, "curl "+url, zap.String("response", string(responseBody)))
 	resp.Body.Close()
 	msg = string(responseBody)
 	if resp.StatusCode > 300 {
@@ -223,7 +224,7 @@ func GetProcessDisplayMap(endpoint string) map[string]string {
 	var processData []m.ProcessMonitorTable
 	err := x.SQL("SELECT * FROM process_monitor WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", endpoint).Find(&processData)
 	if err != nil {
-		log.Logger.Error("get process monitor data with endpoint fail", log.String("endpoint", endpoint), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "get process monitor data with endpoint fail", zap.String("endpoint", endpoint), zap.Error(err))
 		return result
 	}
 	for _, v := range processData {

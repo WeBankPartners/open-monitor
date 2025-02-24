@@ -8,15 +8,16 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func ListTpl(c *gin.Context)  {
+func ListTpl(c *gin.Context) {
 	searchType := c.Query("type")
-	id,_ := strconv.Atoi(c.Query("id"))
+	id, _ := strconv.Atoi(c.Query("id"))
 	if searchType == "" || id <= 0 {
 		mid.ReturnParamEmptyError(c, "type or id")
 		return
@@ -36,9 +37,9 @@ func ListTpl(c *gin.Context)  {
 	mid.ReturnSuccessData(c, query.Tpl)
 }
 
-func AddStrategy(c *gin.Context)  {
+func AddStrategy(c *gin.Context) {
 	var param m.TplStrategyTable
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		// check param
 		param.Expr = strings.Replace(param.Expr, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "'", "", -1)
@@ -49,7 +50,7 @@ func AddStrategy(c *gin.Context)  {
 		}
 		// check tpl
 		if param.TplId <= 0 {
-			if param.GrpId + param.EndpointId <= 0 {
+			if param.GrpId+param.EndpointId <= 0 {
 				mid.ReturnValidateError(c, "grp_id and endpoint_id is empty")
 				return
 			}
@@ -57,17 +58,17 @@ func AddStrategy(c *gin.Context)  {
 				mid.ReturnValidateError(c, "grp_id and endpoint_id can not be provided at the same time")
 				return
 			}
-			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, mid.GetOperateUser(c))
+			err, tplObj := db.AddTpl(param.GrpId, param.EndpointId, mid.GetOperateUser(c))
 			if err != nil {
 				mid.ReturnUpdateTableError(c, "tpl", err)
 				return
 			}
 			param.TplId = tplObj.Id
 		}
-		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
+		strategyObj := m.StrategyTable{TplId: param.TplId, Metric: param.Metric, Expr: param.Expr, Cond: param.Cond, Last: param.Last, Priority: param.Priority, Content: param.Content}
 		strategyObj.NotifyEnable = param.NotifyEnable
 		strategyObj.NotifyDelay = param.NotifyDelay
-		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
+		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy: []*m.StrategyTable{&strategyObj}, Operation: "insert"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
@@ -79,19 +80,19 @@ func AddStrategy(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func EditStrategy(c *gin.Context)  {
+func EditStrategy(c *gin.Context) {
 	var param m.TplStrategyTable
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if param.StrategyId <= 0 {
 			mid.ReturnParamEmptyError(c, "strategy_id")
 			return
 		}
-		_,strategy := db.GetStrategyTable(param.StrategyId)
+		_, strategy := db.GetStrategyTable(param.StrategyId)
 		if strategy.TplId <= 0 {
 			mid.ReturnHandleError(c, "template for this strategy is empty", nil)
 			return
@@ -104,8 +105,8 @@ func EditStrategy(c *gin.Context)  {
 			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
-		strategyObj := m.StrategyTable{Id:param.StrategyId,TplId:strategy.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content,NotifyEnable: param.NotifyEnable,NotifyDelay: param.NotifyDelay}
-		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
+		strategyObj := m.StrategyTable{Id: param.StrategyId, TplId: strategy.TplId, Metric: param.Metric, Expr: param.Expr, Cond: param.Cond, Last: param.Last, Priority: param.Priority, Content: param.Content, NotifyEnable: param.NotifyEnable, NotifyDelay: param.NotifyDelay}
+		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy: []*m.StrategyTable{&strategyObj}, Operation: "update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
@@ -114,28 +115,28 @@ func EditStrategy(c *gin.Context)  {
 		err = db.SyncRuleConfigFile(strategy.TplId, []string{}, false)
 		//err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
-			log.Logger.Error("Sync rule config file fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Sync rule config file fail", zap.Error(err))
 			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func DeleteStrategy(c *gin.Context)  {
-	strategyId,_ := strconv.Atoi(c.Query("id"))
+func DeleteStrategy(c *gin.Context) {
+	strategyId, _ := strconv.Atoi(c.Query("id"))
 	if strategyId <= 0 {
 		mid.ReturnParamEmptyError(c, "id")
 		return
 	}
-	_,strategy := db.GetStrategyTable(strategyId)
+	_, strategy := db.GetStrategyTable(strategyId)
 	if strategy.Id <= 0 {
 		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
 		return
 	}
-	err := db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyId}}, Operation:"delete"})
+	err := db.UpdateStrategy(&m.UpdateStrategy{Strategy: []*m.StrategyTable{&m.StrategyTable{Id: strategyId}}, Operation: "delete"})
 	if err != nil {
 		mid.ReturnUpdateTableError(c, "strategy", err)
 		return
@@ -150,7 +151,7 @@ func DeleteStrategy(c *gin.Context)  {
 	mid.ReturnSuccess(c)
 }
 
-func SearchObjOption(c *gin.Context)  {
+func SearchObjOption(c *gin.Context) {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
 	if searchType == "" || searchMsg == "" {
@@ -160,32 +161,32 @@ func SearchObjOption(c *gin.Context)  {
 	var err error
 	var data []*m.OptionModel
 	if searchType == "endpoint" {
-		err,data = db.SearchHost(searchMsg)
-	}else{
-		err,data = db.SearchGrp(searchMsg)
+		err, data = db.SearchHost(searchMsg)
+	} else {
+		err, data = db.SearchGrp(searchMsg)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	for _,v := range data {
+	for _, v := range data {
 		v.OptionTypeName = v.OptionType
 	}
 	mid.ReturnSuccessData(c, data)
 }
 
-func SearchUserRole(c *gin.Context)  {
+func SearchUserRole(c *gin.Context) {
 	search := c.Query("search")
-	err,roles := db.SearchUserRole(search, "role")
+	err, roles := db.SearchUserRole(search, "role")
 	if err != nil {
-		log.Logger.Error("Search role error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Search role error", zap.Error(err))
 	}
 	if len(roles) < 15 {
-		err,users := db.SearchUserRole(search, "user")
+		err, users := db.SearchUserRole(search, "user")
 		if err != nil {
-			log.Logger.Error("Search user error", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Search user error", zap.Error(err))
 		}
-		for _,v := range users {
+		for _, v := range users {
 			if len(roles) >= 15 {
 				break
 			}
@@ -195,16 +196,16 @@ func SearchUserRole(c *gin.Context)  {
 	mid.ReturnSuccessData(c, roles)
 }
 
-func UpdateTplAction(c *gin.Context)  {
+func UpdateTplAction(c *gin.Context) {
 	var param m.UpdateActionDto
-	if err := c.ShouldBindJSON(&param); err==nil {
-		var userIds,roleIds []int
-		var extraMail,extraPhone []string
-		for _,v := range param.Accept {
+	if err := c.ShouldBindJSON(&param); err == nil {
+		var userIds, roleIds []int
+		var extraMail, extraPhone []string
+		for _, v := range param.Accept {
 			tmpFlag := false
 			if strings.HasPrefix(v.OptionType, "user_") {
-				tmpId,_ := strconv.Atoi(strings.Split(v.OptionType, "_")[1])
-				for _,vv := range userIds {
+				tmpId, _ := strconv.Atoi(strings.Split(v.OptionType, "_")[1])
+				for _, vv := range userIds {
 					if vv == tmpId {
 						tmpFlag = true
 						break
@@ -214,9 +215,9 @@ func UpdateTplAction(c *gin.Context)  {
 					userIds = append(userIds, tmpId)
 				}
 			}
-			if strings.HasPrefix(v.OptionType,"role_") {
-				tmpId,_ := strconv.Atoi(strings.Split(v.OptionType, "_")[1])
-				for _,vv := range roleIds {
+			if strings.HasPrefix(v.OptionType, "role_") {
+				tmpId, _ := strconv.Atoi(strings.Split(v.OptionType, "_")[1])
+				for _, vv := range roleIds {
 					if vv == tmpId {
 						tmpFlag = true
 						break
@@ -227,7 +228,7 @@ func UpdateTplAction(c *gin.Context)  {
 				}
 			}
 			if v.OptionType == "mail" {
-				for _,vv := range extraMail {
+				for _, vv := range extraMail {
 					if vv == v.OptionValue {
 						tmpFlag = true
 						break
@@ -238,7 +239,7 @@ func UpdateTplAction(c *gin.Context)  {
 				}
 			}
 			if v.OptionType == "phone" {
-				for _,vv := range extraPhone {
+				for _, vv := range extraPhone {
 					if vv == v.OptionValue {
 						tmpFlag = true
 						break
@@ -252,20 +253,20 @@ func UpdateTplAction(c *gin.Context)  {
 		err = db.UpdateTplAction(param.TplId, userIds, roleIds, extraMail, extraPhone)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "tpl", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
-	log.Logger.Debug("Start sync config")
+func SyncConfigHandle(w http.ResponseWriter, r *http.Request) {
+	log.Debug(nil, log.LOGGER_APP, "Start sync config")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
-	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
-	tplId,_ := strconv.Atoi(r.FormValue("id"))
+	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code, response.Message, response.Data)))
+	tplId, _ := strconv.Atoi(r.FormValue("id"))
 	if tplId <= 0 {
 		response.Code = 401
 		response.Message = "Parameter id is empty"
@@ -283,13 +284,13 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 	response.Message = "Success"
 }
 
-func AcceptPeerSdConfigHandle(w http.ResponseWriter,r *http.Request)  {
-	log.Logger.Info("start to sync sd config from peer request")
+func AcceptPeerSdConfigHandle(w http.ResponseWriter, r *http.Request) {
+	log.Info(nil, log.LOGGER_APP, "start to sync sd config from peer request")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
-	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
+	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code, response.Message, response.Data)))
 	var param m.SyncSdConfigDto
-	b,_ := ioutil.ReadAll(r.Body)
+	b, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(b, &param)
 	if err != nil {
 		response.Code = 401
@@ -304,7 +305,7 @@ func AcceptPeerSdConfigHandle(w http.ResponseWriter,r *http.Request)  {
 	}
 	err = db.SyncSdEndpointNew(param.StepList, "default", true)
 	if err != nil {
-		log.Logger.Error("Handle sd config from peer fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Handle sd config from peer fail", zap.Error(err))
 		response.Code = 500
 		response.Message = "Sync peer sd config fail"
 		response.Data = err.Error()

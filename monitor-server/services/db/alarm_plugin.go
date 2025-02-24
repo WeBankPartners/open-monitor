@@ -9,7 +9,7 @@ import (
 )
 
 func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *models.PluginCloseAlarmOutputObj, err error) {
-	log.Logger.Info("PluginCloseAlarmAction", log.JsonObj("input", input))
+	log.Info(nil, log.LOGGER_APP, "PluginCloseAlarmAction", log.JsonObj("input", input))
 	result = &models.PluginCloseAlarmOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", AlarmId: input.AlarmId, Guid: input.Guid}
 	// alarmId -> id-firing-notifyGuid
 	alarmSplit := strings.Split(input.AlarmId, "-")

@@ -9,6 +9,7 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -163,7 +164,7 @@ func GetPanels(c *gin.Context) {
 	businessPanel, matchErr := db.MatchServicePanel(endpoint)
 	//err,businessPanel := fetchBusinessPanel(endpoint)
 	if matchErr != nil {
-		log.Logger.Error("Fetch business panel fail", log.Error(matchErr))
+		log.Error(nil, log.LOGGER_APP, "Fetch business panel fail", zap.Error(matchErr))
 	}
 	if len(businessPanel.Charts) > 0 {
 		panelsDto = append(panelsDto, &businessPanel)
@@ -335,7 +336,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			return
 		}
 		if len(chartSeries) == 0 {
-			log.Logger.Warn("Can not find chart series", log.String("guid", paramConfig.CustomChartGuid))
+			log.Warn(nil, log.LOGGER_APP, "Can not find chart series", zap.String("guid", paramConfig.CustomChartGuid))
 			return
 		}
 		seriesObj := chartSeries[0]
@@ -346,7 +347,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		paramConfig.Tags = seriesObj.Tags
 		paramConfig.PieDisplayTag = seriesObj.PieDisplayTag
 	}
-	log.Logger.Debug("pie paramConfig", log.JsonObj("paramConfig", paramConfig))
+	log.Debug(nil, log.LOGGER_APP, "pie paramConfig", log.JsonObj("paramConfig", paramConfig))
 	for _, v := range paramConfig.Tags {
 		tagNameList = append(tagNameList, v.TagName)
 	}
@@ -438,7 +439,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		}
 	} else {
 		for _, queryObj := range result {
-			log.Logger.Info("queryObj", log.JsonObj("data", queryObj))
+			log.Info(nil, log.LOGGER_APP, "queryObj", log.JsonObj("data", queryObj))
 			ds.PrometheusData(queryObj)
 		}
 	}
@@ -610,7 +611,7 @@ func GetChartsByEndpoint(c *gin.Context) {
 		}
 	}
 	// Query data
-	log.Logger.Debug("Query param", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
+	log.Debug(nil, log.LOGGER_APP, "Query param", zap.Strings("endpoint", query.Endpoint), zap.Strings("metric", query.Metric), zap.Int64("start", query.Start), zap.Int64("end", query.End), zap.String("promQl", query.PromQ))
 	serials := ds.PrometheusData(&query)
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -647,7 +648,7 @@ func GetMainPage(c *gin.Context) {
 	}
 	err, result := db.GetMainCustomDashboard(roleList)
 	if err != nil {
-		log.Logger.Error("Get main page failed", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get main page failed", zap.Error(err))
 	}
 	mid.ReturnSuccessData(c, result)
 }

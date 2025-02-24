@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
 )
 
@@ -136,7 +137,7 @@ func EditLogPath(c *gin.Context) {
 			logMonitorObj := m.LogMonitorTable{Id: v.Id, StrategyId: v.StrategyId, Path: param.Path, Keyword: v.Keyword, NotifyEnable: v.NotifyEnable, OwnerEndpoint: param.OwnerEndpoint, Priority: v.Priority}
 			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&logMonitorObj}, Operation: "update"})
 			if err != nil {
-				log.Logger.Error("Update log monitor alert failed", log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "Update log monitor alert failed", zap.Error(err))
 			}
 		}
 		err = db.SendLogConfig(lms[0].StrategyId, param.GrpId, param.TplId)
@@ -228,14 +229,14 @@ func DeleteLogPath(c *gin.Context) {
 		//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor: []*m.LogMonitorTable{&m.LogMonitorTable{Id: v.Id}}, Operation: "delete"})
 		if err != nil {
-			log.Logger.Error("Delete log monitor alert failed", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Delete log monitor alert failed", zap.Error(err))
 		}
 	}
 	// Delete strategy
 	//for _,v := range strategyObjs {
 	//	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:v.Id}}, Operation:"delete"})
 	//	if err != nil {
-	//		log.Logger.Error("Delete strategy failed", log.Error(err))
+	//		log.Error(nil, log.LOGGER_APP, "Delete strategy failed", zap.Error(err))
 	//	}
 	//}
 	// Call endpoint node exporter

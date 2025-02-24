@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -259,7 +260,7 @@ func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	var endpointRelRows []*models.LogMetricEndpointRelTable
 	queryEndpointErr := x.SQL("select source_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
 	if queryEndpointErr != nil {
-		log.Logger.Error("query log metric template affect endpoints fail", log.String("logMonitorTemplate", param.Guid), log.Error(queryEndpointErr))
+		log.Error(nil, log.LOGGER_APP, "query log metric template affect endpoints fail", zap.String("logMonitorTemplate", param.Guid), zap.Error(queryEndpointErr))
 	} else {
 		for _, v := range endpointRelRows {
 			affectEndpoints = append(affectEndpoints, v.SourceEndpoint)

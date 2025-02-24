@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -55,9 +56,9 @@ func CallSyncWritePrometheusConfig() {
 	go func() {
 		err := SyncRemoteWritePrometheusConfig()
 		if err != nil {
-			log.Logger.Error("SyncRemoteWritePrometheusConfig", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "SyncRemoteWritePrometheusConfig", zap.Error(err))
 		} else {
-			log.Logger.Info("SyncRemoteWritePrometheusConfig done")
+			log.Info(nil, log.LOGGER_APP, "SyncRemoteWritePrometheusConfig done")
 		}
 	}()
 }

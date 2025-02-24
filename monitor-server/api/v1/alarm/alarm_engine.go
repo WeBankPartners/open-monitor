@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -20,15 +21,15 @@ func StartAlarmEngineCron() {
 }
 
 func doMonitorEngineRuleJob() {
-	log.Logger.Debug("doAlarmEngineRuleJob")
+	log.Debug(nil, log.LOGGER_APP, "doAlarmEngineRuleJob")
 	var err error
 	var alarmStrategyMetricRows []*models.AlarmStrategyMetric
 	var existAlarmRows []*models.AlarmTable
 	defer func() {
 		if err != nil {
-			log.Logger.Warn("doAlarmEngineRuleJob fail", log.Error(err))
+			log.Warn(nil, log.LOGGER_APP, "doAlarmEngineRuleJob fail", zap.Error(err))
 		} else {
-			log.Logger.Debug("doAlarmEngineRuleJob done")
+			log.Debug(nil, log.LOGGER_APP, "doAlarmEngineRuleJob done")
 		}
 	}()
 	alarmStrategyMetricRows, err = db.GetMonitorEngineStrategy()
@@ -43,12 +44,12 @@ func doMonitorEngineRuleJob() {
 	for _, row := range alarmStrategyMetricRows {
 		condition, threshold, illegal := analyzeCondition(row.Condition)
 		if illegal {
-			log.Logger.Info("doAlarmEngineRuleJob condition illegal", log.String("alarmStrategyMetric", row.Guid), log.String("condition", row.Condition))
+			log.Info(nil, log.LOGGER_APP, "doAlarmEngineRuleJob condition illegal", zap.String("alarmStrategyMetric", row.Guid), zap.String("condition", row.Condition))
 			continue
 		}
 		alarmObjList, tmpErr := buildMonitorEngineAlarm(row, condition, threshold, existAlarmRows)
 		if tmpErr != nil {
-			log.Logger.Warn("doAlarmEngineRuleJob buildMonitorEngineAlarm fail", log.Error(tmpErr))
+			log.Warn(nil, log.LOGGER_APP, "doAlarmEngineRuleJob buildMonitorEngineAlarm fail", zap.Error(tmpErr))
 		} else if len(alarmObjList) > 0 {
 			alarmList = append(alarmList, alarmObjList...)
 		}
@@ -58,7 +59,7 @@ func doMonitorEngineRuleJob() {
 	}
 	alarmList = db.UpdateAlarms(alarmList)
 	for _, v := range alarmList {
-		log.Logger.Debug("update alarm result", log.JsonObj("alarm", v))
+		log.Debug(nil, log.LOGGER_APP, "update alarm result", log.JsonObj("alarm", v))
 		if v.AlarmConditionGuid != "" {
 			continue
 		}
@@ -159,7 +160,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 		delete(queryObj.Metric, "__name__")
 		tmpTags, getTagsErr := getNewAlarmTags(&models.AMRespAlert{Labels: queryObj.Metric})
 		if getTagsErr != nil {
-			log.Logger.Error("buildMonitorEngineAlarm get tags fail", log.JsonObj("labels", queryObj.Metric), log.Error(getTagsErr))
+			log.Error(nil, log.LOGGER_APP, "buildMonitorEngineAlarm get tags fail", log.JsonObj("labels", queryObj.Metric), zap.Error(getTagsErr))
 			continue
 		}
 		tmpExistAlarm := matchMonitorEngineExistAlarm(queryObj.Metric, existAlarmRows, tmpTags, alarmStrategyMetric)
@@ -179,7 +180,7 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 				}
 			}
 		}
-		log.Logger.Debug("buildMonitorEngineAlarm condition", log.JsonObj("queryObj", queryObj), log.Bool("firingMatch", firingMatch), log.Bool("firingNonMatch", firingNonMatch), log.Float64("startValue", startValue), log.Float64("endValue", endValue))
+		log.Debug(nil, log.LOGGER_APP, "buildMonitorEngineAlarm condition", log.JsonObj("queryObj", queryObj), zap.Bool("firingMatch", firingMatch), zap.Bool("firingNonMatch", firingNonMatch), zap.Float64("startValue", startValue), zap.Float64("endValue", endValue))
 		// 如果有一个不符合的值，则算是不满足
 		if firingNonMatch {
 			if tmpExistAlarm.Id > 0 {
@@ -199,18 +200,18 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 					// 没有正在发生的告警，需要新增
 					strategyObj, _, tmpGetStrategyErr := db.GetAlarmStrategy(alarmStrategyMetric.AlarmStrategy, alarmStrategyMetric.CrcHash)
 					if tmpGetStrategyErr != nil {
-						log.Logger.Error("buildMonitorEngineAlarm get strategy object fail", log.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), log.Error(tmpGetStrategyErr))
+						log.Error(nil, log.LOGGER_APP, "buildMonitorEngineAlarm get strategy object fail", zap.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), zap.Error(tmpGetStrategyErr))
 						continue
 					}
 					// 如果不在告警窗口内跳过
 					if !db.InActiveWindowList(strategyObj.ActiveWindow) {
-						log.Logger.Warn("buildMonitorEngineAlarm alarm not in active window", log.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), log.String("activeWindow", strategyObj.ActiveWindow))
+						log.Warn(nil, log.LOGGER_APP, "buildMonitorEngineAlarm alarm not in active window", zap.String("alarmStrategy", alarmStrategyMetric.AlarmStrategy), zap.String("activeWindow", strategyObj.ActiveWindow))
 						continue
 					}
 					queryObj.Metric["strategy_guid"] = strategyObj.Guid
 					endpointObj, tmpGetEndpointErr := getNewAlarmEndpoint(&models.AMRespAlert{Labels: queryObj.Metric}, &strategyObj)
 					if tmpGetEndpointErr != nil {
-						log.Logger.Error("buildMonitorEngineAlarm get endpoint fail", log.JsonObj("labels", queryObj.Metric), log.Error(tmpGetEndpointErr))
+						log.Error(nil, log.LOGGER_APP, "buildMonitorEngineAlarm get endpoint fail", log.JsonObj("labels", queryObj.Metric), zap.Error(tmpGetEndpointErr))
 						continue
 					}
 					alarmObj.Endpoint = endpointObj.Guid

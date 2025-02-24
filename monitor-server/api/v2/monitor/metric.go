@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -266,7 +267,7 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	log.Logger.Debug("QueryMetricTagValue", log.StringList("tagList", tagList))
+	log.Debug(nil, log.LOGGER_APP, "QueryMetricTagValue", zap.Strings("tagList", tagList))
 	if len(tagList) == 0 {
 		middleware.ReturnSuccessData(c, result)
 		return
@@ -290,14 +291,14 @@ func QueryMetricTagValue(c *gin.Context) {
 	}
 	metricRow.PromExpr = db.ReplacePromQlKeyword(metricRow.PromExpr, "", &endpointObj, []*models.TagDto{})
 	// 查标签值
-	log.Logger.Debug("QueryPromSeries start", log.String("promExpr", metricRow.PromExpr))
+	log.Debug(nil, log.LOGGER_APP, "QueryPromSeries start", zap.String("promExpr", metricRow.PromExpr))
 	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
 	if getSeriesErr != nil {
 		err = fmt.Errorf("query prom series fail,%s ", getSeriesErr)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	log.Logger.Debug("QueryPromSeries end", log.JsonObj("result", seriesMapList))
+	log.Debug(nil, log.LOGGER_APP, "QueryPromSeries end", log.JsonObj("result", seriesMapList))
 	for _, v := range tagList {
 		tmpValueList := []string{}
 		tmpValueDistinctMap := make(map[string]int)
@@ -360,9 +361,9 @@ func AddOrUpdateComparisonMetric(c *gin.Context) {
 		return
 	}
 	promQl := db.NewPromExpr(db.GetComparisonMetricId(metric.Metric, param.ComparisonType, param.CalcMethod, param.CalcPeriod))
-	log.Logger.Debug("CheckPrometheusQL", log.String("promQl", promQl))
+	log.Debug(nil, log.LOGGER_APP, "CheckPrometheusQL", zap.String("promQl", promQl))
 	if err = datasource.CheckPrometheusQL(promQl); err != nil {
-		log.Logger.Debug("CheckPrometheusQL error", log.Error(err))
+		log.Debug(nil, log.LOGGER_APP, "CheckPrometheusQL error", zap.Error(err))
 		middleware.ReturnValidateError(c, "metric is invalid")
 		return
 	}

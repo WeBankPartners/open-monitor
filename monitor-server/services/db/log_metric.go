@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/dlclark/regexp2"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -179,7 +180,7 @@ func ListLogMetricConfig(logMetricJson, logMetricMonitor string) (result []*mode
 		tmpTagConfig := []*models.LogMetricConfigTag{}
 		if v.TagConfig != "" {
 			if tmpErr := json.Unmarshal([]byte(v.TagConfig), &tmpTagConfig); tmpErr != nil {
-				log.Logger.Warn("query log metric config warning with json unmarshal error", log.String("tagConfig", v.TagConfig), log.Error(tmpErr))
+				log.Warn(nil, log.LOGGER_APP, "query log metric config warning with json unmarshal error", zap.String("tagConfig", v.TagConfig), zap.Error(tmpErr))
 			}
 		}
 		tmpJsonTagList := []string{}
@@ -280,14 +281,14 @@ func DeleteLogMetricMonitor(logMetricMonitorGuid string) (err error) {
 	if len(affectHost) > 0 {
 		err = SyncLogMetricExporterConfig(affectHost)
 		if err != nil {
-			log.Logger.Error("SyncLogMetricExporterConfig fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
 		}
 	}
 	if len(affectEndpointGroup) > 0 {
 		for _, v := range affectEndpointGroup {
 			err = SyncPrometheusRuleFile(v, false)
 			if err != nil {
-				log.Logger.Error("SyncPrometheusRuleFile fail", log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile fail", zap.Error(err))
 			}
 		}
 	}
@@ -319,7 +320,7 @@ func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, 
 	for _, v := range logMetricGroupList {
 		deleteActions, tmpEndpointGroup, _, tmpErr := getDeleteLogMetricGroupActions(v.Guid)
 		if tmpErr != nil {
-			log.Logger.Error("try to get delete logMetricGroupAction fail", log.String("logMetricGroupGuid", v.Guid), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "try to get delete logMetricGroupAction fail", zap.String("logMetricGroupGuid", v.Guid), zap.Error(tmpErr))
 			continue
 		} else {
 			actions = append(actions, deleteActions...)
@@ -665,7 +666,7 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, operator, 
 func getDeleteLogMetricConfigAction(logMetricConfigGuid, logMetricMonitorGuid string) (actions []*Action, endpointGroup []string) {
 	lmObj, err := getSimpleLogMetricConfig(logMetricConfigGuid)
 	if err != nil {
-		log.Logger.Error("getDeleteLogMetricConfigAction", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "getDeleteLogMetricConfigAction", zap.Error(err))
 		return
 	}
 	serviceGroup, _ := GetLogMetricServiceGroup(logMetricMonitorGuid)
@@ -822,7 +823,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 				// 如果 不存在对象映射关系,查询所有可以添加的映射关系
 				var endpointRelList []*models.LogMetricEndpointRelTable
 				if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "host", inputLogMonitor.MonitorType); err != nil {
-					log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "GetServiceGroupEndpointRel err", zap.Error(err))
 				}
 				for _, endpointRel := range endpointRelList {
 					actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), inputLogMonitor.Guid, endpointRel.SourceEndpoint, endpointRel.TargetEndpoint}})
@@ -855,7 +856,7 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 		// 查询所有可以添加的映射关系,重写导入EndpointRel关系
 		var endpointRelList []*models.LogMetricEndpointRelTable
 		if endpointRelList, err = GetServiceGroupEndpointRel(param.ServiceGroupTable.Guid, "mysql", dbConfig.MonitorType); err != nil {
-			log.Logger.Error("GetServiceGroupEndpointRel err", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "GetServiceGroupEndpointRel err", zap.Error(err))
 			deleteCustomDashboardList(dashboardIdList)
 		}
 		dbConfig.EndpointRel = []*models.DbMetricEndpointRelTable{}
@@ -883,19 +884,19 @@ func ImportLogMetric(param *models.LogMetricQueryObj, operator string, roles []s
 	for k, _ := range affectEndpointGroupMap {
 		affectEndpointGroupList = append(affectEndpointGroupList, k)
 	}
-	log.Logger.Info("importActions", log.Int("length", len(actions)), log.StringList("affectHostList", affectHostList), log.StringList("affectEndpointGroupList", affectEndpointGroupList))
+	log.Info(nil, log.LOGGER_APP, "importActions", zap.Int("length", len(actions)), zap.Strings("affectHostList", affectHostList), zap.Strings("affectEndpointGroupList", affectEndpointGroupList))
 	err = Transaction(actions)
 	if err != nil {
-		log.Logger.Error("import log monitor exec database fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "import log monitor exec database fail", zap.Error(err))
 		deleteCustomDashboardList(dashboardIdList)
 		return
 	}
 	if tmpErr := SyncLogMetricExporterConfig(affectHostList); tmpErr != nil {
-		log.Logger.Error("sync log metric to affect host fail", log.Error(tmpErr))
+		log.Error(nil, log.LOGGER_APP, "sync log metric to affect host fail", zap.Error(tmpErr))
 	}
 	for _, v := range affectEndpointGroupList {
 		if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
-			log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "sync prometheus rule file fail", zap.Error(tmpErr))
 		}
 	}
 	return
@@ -1198,15 +1199,15 @@ func ImportLogMetricExcel(logMonitorGuid, operator string, param []*models.LogMe
 	}
 	err = Transaction(actions)
 	if err != nil {
-		log.Logger.Error("import log metric from excel exec database fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "import log metric from excel exec database fail", zap.Error(err))
 		return
 	}
 	if tmpErr := SyncLogMetricExporterConfig(affectHostList); tmpErr != nil {
-		log.Logger.Error("sync log metric to affect host fail", log.Error(tmpErr))
+		log.Error(nil, log.LOGGER_APP, "sync log metric to affect host fail", zap.Error(tmpErr))
 	}
 	for _, v := range affectEndpointGroupList {
 		if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
-			log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "sync prometheus rule file fail", zap.Error(tmpErr))
 		}
 	}
 	return
@@ -1341,7 +1342,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 			templateRetCodeMap.ValueType = "success"
 			param.RetCodeStringMap = append(param.RetCodeStringMap, &templateRetCodeMap)
 		} else {
-			log.Logger.Warn("json unmarshal log template success code fail", log.String("successCode", logMonitorTemplateObj.SuccessCode), log.Error(unmarshalErr))
+			log.Warn(nil, log.LOGGER_APP, "json unmarshal log template success code fail", zap.String("successCode", logMonitorTemplateObj.SuccessCode), zap.Error(unmarshalErr))
 		}
 	}
 	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user," +
@@ -1634,12 +1635,12 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 		if v.LogMonitorTemplate != "" && v.LogType != "custom" {
 			tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
 			if tmpGetTemplateErr != nil {
-				log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
+				log.Error(nil, log.LOGGER_APP, "ListLogMetricGroups fail get template data ", zap.String("templateGuid", v.LogMonitorTemplate), zap.Error(tmpGetTemplateErr))
 			} else {
 				logMetricGroupData.JsonRegular = tmpTemplateObj.JsonRegular
 				logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(v.Guid)
 				if getStringMapErr != nil {
-					log.Logger.Error("ListLogMetricGroups getLogMetricGroupMapData fail ", log.String("logMetricGroupGuid", v.Guid), log.Error(getStringMapErr))
+					log.Error(nil, log.LOGGER_APP, "ListLogMetricGroups getLogMetricGroupMapData fail ", zap.String("logMetricGroupGuid", v.Guid), zap.Error(getStringMapErr))
 				}
 				logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
 				// 读取 模版的 ParamList
@@ -1661,7 +1662,7 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 		} else {
 			customGroupData, getCustomErr := GetLogMetricCustomGroup(v.Guid)
 			if getCustomErr != nil {
-				log.Logger.Error("ListLogMetricGroups fail get custom metric group data ", log.String("logMetricGroupGuid", v.Guid), log.Error(getCustomErr))
+				log.Error(nil, log.LOGGER_APP, "ListLogMetricGroups fail get custom metric group data ", zap.String("logMetricGroupGuid", v.Guid), zap.Error(getCustomErr))
 			} else {
 				logMetricGroupData = customGroupData
 				logMetricGroupData.AutoCreateDashboard = v.AutoDashboard == 1
@@ -1670,7 +1671,7 @@ func ListLogMetricGroups(logMetricMonitor, metricKey string) (result []*models.L
 			if v.LogMonitorTemplate != "" {
 				tmpTemplateObj, tmpGetTemplateErr := GetLogMonitorTemplate(v.LogMonitorTemplate)
 				if tmpGetTemplateErr != nil {
-					log.Logger.Error("ListLogMetricGroups fail get template data ", log.String("templateGuid", v.LogMonitorTemplate), log.Error(tmpGetTemplateErr))
+					log.Error(nil, log.LOGGER_APP, "ListLogMetricGroups fail get template data ", zap.String("templateGuid", v.LogMonitorTemplate), zap.Error(tmpGetTemplateErr))
 				} else {
 					logMetricGroupData.LogMonitorTemplateName = tmpTemplateObj.Name
 					logMetricGroupData.LogMonitorTemplateGuid = v.LogMonitorTemplate
