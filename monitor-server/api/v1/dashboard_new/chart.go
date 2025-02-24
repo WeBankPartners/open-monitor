@@ -9,6 +9,7 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -114,7 +115,7 @@ func GetChartData(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 		return
 	}
-	log.Logger.Debug("chartData param", log.JsonObj("param", param))
+	log.Debug(nil, log.LOGGER_APP, "chartData param", log.JsonObj("param", param))
 	// query from prometheus
 	err = GetChartQueryData(queryList, &param, &result)
 	if err != nil {
@@ -202,7 +203,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 		return
 	}
 	if len(chartSeries) == 0 {
-		log.Logger.Warn("Can not find chart series", log.String("guid", param.CustomChartGuid))
+		log.Warn(nil, log.LOGGER_APP, "Can not find chart series", zap.String("guid", param.CustomChartGuid))
 		return
 	}
 	err = chartCompare(param)
@@ -216,7 +217,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 	legend := "$custom"
 	for _, dataConfig := range chartSeries {
 		legend = "$custom"
-		log.Logger.Debug("chart series display config", log.JsonObj("dataConfig", dataConfig))
+		log.Debug(nil, log.LOGGER_APP, "chart series display config", log.JsonObj("dataConfig", dataConfig))
 		tmpPromQl := ""
 		tmpPromQl, err = db.GetPromQLByMetric(dataConfig.Metric, dataConfig.MonitorType, dataConfig.ServiceGroup)
 		if err != nil {
@@ -228,7 +229,7 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 			return
 		}
 		if isServiceMetric {
-			log.Logger.Debug("getChartConfigByCustom $app_metric")
+			log.Debug(nil, log.LOGGER_APP, "getChartConfigByCustom $app_metric")
 			legend = "$app_metric"
 			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{}, dataConfig.Tags)
 			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default", CustomDashboard: true, Tags: tmpTags})
@@ -297,7 +298,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 }
 
 func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
-	log.Logger.Debug("GetChartConfigByCustom param --> ", log.JsonObj("param", param))
+	log.Debug(nil, log.LOGGER_APP, "GetChartConfigByCustom param --> ", log.JsonObj("param", param))
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
@@ -324,7 +325,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				continue
 			}
 			//param.Data[0].Endpoint = endpointList[0].Guid
-			log.Logger.Debug("getChartConfigByCustom", log.String("app", dataConfig.AppObject), log.String("metric", dataConfig.Metric))
+			log.Debug(nil, log.LOGGER_APP, "getChartConfigByCustom", zap.String("app", dataConfig.AppObject), zap.String("metric", dataConfig.Metric))
 			isServiceMetric, tmpTags, tmpErr := db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject)
 			if tmpErr != nil {
 				err = tmpErr
@@ -332,7 +333,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			}
 			if isServiceMetric {
 				serviceTags = tmpTags
-				log.Logger.Debug("getChartConfigByCustom $app_metric")
+				log.Debug(nil, log.LOGGER_APP, "getChartConfigByCustom $app_metric")
 				metricLegend = "$app_metric"
 			}
 			if dataConfig.Endpoint != "" {
@@ -382,7 +383,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		}
 		//queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
-			log.Logger.Debug("GetChartConfigByCustom use app metric query", log.JsonObj("config", dataConfig))
+			log.Debug(nil, log.LOGGER_APP, "GetChartConfigByCustom use app metric query", log.JsonObj("config", dataConfig))
 			tmpEndpointGuid := endpointList[0].Guid
 			if calcServiceGroupAll {
 				tmpEndpointGuid = dataConfig.AppObject
@@ -391,7 +392,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{tmpEndpointGuid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
 			continue
 		}
-		log.Logger.Debug("GetChartConfigByCustom use endpoint query", log.JsonObj("config", dataConfig))
+		log.Debug(nil, log.LOGGER_APP, "GetChartConfigByCustom use endpoint query", log.JsonObj("config", dataConfig))
 		for _, endpoint := range endpointList {
 			tmpPromQL := dataConfig.PromQl
 			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) && !calcServiceGroupAll {
@@ -402,7 +403,7 @@ func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				if strings.Contains(tmpPromQL, "service_group)") {
 					tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group)", "service_group,instance)")
 				}
-				log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
+				log.Debug(nil, log.LOGGER_APP, "build custom chart query", zap.String("tmpPromQL", tmpPromQL))
 			}
 			tmpEndpointGuid := endpoint.Guid
 			if calcServiceGroupAll {
@@ -548,7 +549,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	startTimestamp := float64(param.Start * 1000)
 	endTimestamp := float64(param.End * 1000)
 	for _, query := range queryList {
-		log.Logger.Debug("Query param", log.JsonObj("param", query))
+		log.Debug(nil, log.LOGGER_APP, "Query param", log.JsonObj("param", query))
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
@@ -569,7 +570,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if len(query.Metric) > 0 {
 			// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags
 			if logType, err = db.GetLogTypeByMetric(query.Metric[0]); err != nil {
-				log.Logger.Error("GetLogType err", log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "GetLogType err", zap.Error(err))
 			}
 			query.ServiceConfiguration = logType
 		}
@@ -656,7 +657,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 			result.Title = s.Name[:strings.Index(s.Name, "{")]
 		}
 		if param.Aggregate != "none" && param.AggStep > 10 {
-			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
+			log.Debug(nil, log.LOGGER_APP, "AggregateNew", zap.Int64("aggStep", param.AggStep), zap.String("agg", param.Aggregate))
 			tempData := s.Data
 			s.Data = models.Aggregate(s.Data, param.AggStep, param.Aggregate)
 
@@ -664,8 +665,8 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 			if len(s.Data) > 0 && len(s.Data[len(s.Data)-1]) > 0 && len(tempData) > 0 && len(tempData[len(tempData)-1]) > 0 {
 				// 只看最后一条最新时间,大于5分钟
 				if s.Data[len(s.Data)-1][0]-tempData[len(tempData)-1][0] > 300*1000 {
-					log.Logger.Warn("chart aggregate more than 5min", log.String("chartId", param.CustomChartGuid), log.String("serialName", s.Name),
-						log.Int64("step", param.AggStep), log.String("aggregate", param.Aggregate))
+					log.Warn(nil, log.LOGGER_APP, "chart aggregate more than 5min", zap.String("chartId", param.CustomChartGuid), zap.String("serialName", s.Name),
+						zap.Int64("step", param.AggStep), zap.String("aggregate", param.Aggregate))
 				}
 			}
 		}
@@ -729,7 +730,7 @@ func GetComparisonChartData(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	log.Logger.Debug("GetComparisonChartData", log.JsonObj("queryList", queryList))
+	log.Debug(nil, log.LOGGER_APP, "GetComparisonChartData", log.JsonObj("queryList", queryList))
 	if len(queryList) == 0 {
 		middleware.ReturnSuccessData(c, result)
 		return

@@ -471,7 +471,7 @@ func getMetricByKey(metricMap map[string]*models.LogMetricTemplate, subKey strin
 	if len(metricMap) == 0 {
 		return nil
 	}
-	log.Logger.Debug("getMetricByKey", log.JsonObj("metricMap", metricMap))
+	log.Debug(nil, log.LOGGER_APP, "getMetricByKey", log.JsonObj("metricMap", metricMap))
 	subKey = subKey + "__"
 	for key, template := range metricMap {
 		if strings.HasPrefix(key, subKey) {
@@ -498,7 +498,7 @@ func getAutoAlarmMetricList(list []*models.LogMetricTemplate, serviceGroup, metr
 			json.Unmarshal([]byte(logMetricTemplate.RangeConfig), temp)
 			// 此处添加数据校验,强制校验阈值数据,防止Prometheus解析数据失败挂掉
 			if strings.TrimSpace(temp.Operator) == "" || strings.TrimSpace(temp.Threshold) == "" || strings.TrimSpace(temp.Time) == "" || strings.TrimSpace(temp.TimeUnit) == "" {
-				log.Logger.Warn("getAutoAlarmMetricList strategy format invalid", log.JsonObj("strategy", temp))
+				log.Warn(nil, log.LOGGER_APP, "getAutoAlarmMetricList strategy format invalid", log.JsonObj("strategy", temp))
 				continue
 			}
 			metricThresholdList = append(metricThresholdList, &models.LogMetricThreshold{

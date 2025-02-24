@@ -16,6 +16,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -396,7 +397,7 @@ func InitHttpServer() {
 	for _, funcObj := range httpHandlerFuncList {
 		handleFuncList := []gin.HandlerFunc{funcObj.HandlerFunc}
 		if funcObj.PreHandle != nil {
-			log.Logger.Info("Append pre handle", log.String("url", funcObj.Url))
+			log.Info(nil, log.LOGGER_APP, "Append pre handle", zap.String("url", funcObj.Url))
 			handleFuncList = append([]gin.HandlerFunc{funcObj.PreHandle}, funcObj.HandlerFunc)
 		}
 		switch funcObj.Method {
@@ -473,7 +474,7 @@ func httpLogHandle() gin.HandlerFunc {
 				}
 			}
 			c.Next()
-			log.AccessLogger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", getRemoteIp(c)), log.Float64("cost_second", time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
+			log.Info(nil, log.LOGGER_ACCESS, zap.String("url", c.Request.RequestURI), zap.String("method", c.Request.Method), zap.Int("code", c.Writer.Status()), zap.String("operator", c.GetString("operatorName")), zap.String("ip", getRemoteIp(c)), zap.Float64("cost_second", time.Now().Sub(start).Seconds()), zap.String("body", string(bodyBytes)))
 		}
 	}
 }

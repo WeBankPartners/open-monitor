@@ -11,6 +11,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 )
@@ -128,7 +129,7 @@ func UpdateEndpoint(c *gin.Context) {
 		newEndpoint, err = otherEndpointUpdate(&param, &endpointObj)
 	}
 	if err != nil {
-		log.Logger.Error("Update endpoint fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update endpoint fail", zap.Error(err))
 		return
 	}
 	if newEndpoint.Guid == "" {
@@ -141,7 +142,7 @@ func UpdateEndpoint(c *gin.Context) {
 	} else {
 		newEndpoint.Step = param.Step
 	}
-	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
+	log.Info(nil, log.LOGGER_APP, "new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
 	err = db.UpdateEndpointData(&endpointObj, &newEndpoint, middleware.GetOperateUser(c))
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	"net/http"
@@ -28,7 +29,7 @@ func InitPrometheusDatasource() {
 var PieLegendBlackName = []string{"job", "instance", "__name__", "e_guid"}
 
 func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
-	log.Logger.Debug("prometheus data query", log.JsonObj("queryParam", query))
+	log.Debug(nil, log.LOGGER_APP, "prometheus data query", log.JsonObj("queryParam", query))
 	serials := []*m.SerialModel{}
 	urlParams := url.Values{}
 	hostAddress := promDS.Host
@@ -37,7 +38,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	}
 	requestUrl, err := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", hostAddress))
 	if err != nil {
-		log.Logger.Error("Make url fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Make url fail", zap.Error(err))
 		return serials
 	}
 	var tmpStep int64
@@ -59,39 +60,39 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	requestUrl.RawQuery = urlParams.Encode()
 	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Failed to create request", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Failed to create request", zap.Error(err))
 		return serials
 	}
 	req.Header.Set("Content-Type", "application/json")
 	httpClient, err := promDS.DataSource.GetHttpClient()
 	if err != nil {
-		log.Logger.Error("Get httpClient fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get httpClient fail", zap.Error(err))
 		return serials
 	}
 	res, err := ctxhttp.Do(context.Background(), httpClient, req)
 	if err != nil {
-		log.Logger.Error("Http request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Http request fail", zap.Error(err))
 		return serials
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		log.Logger.Error("Http request body read fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Http request body read fail", zap.Error(err))
 		return serials
 	}
-	//log.Logger.Debug("prometheus data result", log.String("response", string(body)))
+	//log.Debug(nil, log.LOGGER_APP,"prometheus data result", zap.String("response", string(body)))
 	if res.StatusCode/100 != 2 {
-		log.Logger.Warn("Request fail with bad status", log.String("status", res.Status))
+		log.Warn(nil, log.LOGGER_APP, "Request fail with bad status", zap.String("status", res.Status))
 		return serials
 	}
 	var data m.PrometheusResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		log.Logger.Error("Unmarshal response fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Unmarshal response fail", zap.Error(err))
 		return serials
 	}
 	if data.Status != "success" {
-		log.Logger.Warn("Query prometheus data fail", log.String("status", data.Status))
+		log.Warn(nil, log.LOGGER_APP, "Query prometheus data fail", zap.String("status", data.Status))
 		return serials
 	}
 	if query.ChartType == "pie" {
@@ -167,7 +168,7 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 	if query.PieAggType != "new" {
 		useNewValue = false
 	}
-	//log.Logger.Debug("buildPieData", log.String("pieAggType", query.PieAggType), log.JsonObj("dataList", dataList))
+	//log.Debug(nil, log.LOGGER_APP,"buildPieData", zap.String("pieAggType", query.PieAggType), log.JsonObj("dataList", dataList))
 	for _, otr := range dataList {
 		var tmpNameList []string
 		for k, v := range otr.Metric {
@@ -203,7 +204,7 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		pieObj := m.EChartPieObj{}
 		pieObj.Name = strings.Join(tmpNameList, ",")
 		pieObj.NameList = tmpNameList
-		log.Logger.Debug("pieData", log.String("pieName", pieObj.Name), log.StringList("tmpNameList", tmpNameList))
+		log.Debug(nil, log.LOGGER_APP, "pieData", zap.String("pieName", pieObj.Name), zap.Strings("tmpNameList", tmpNameList))
 		if pieObj.Name == "" {
 			pieObj.Name = query.Endpoint[0] + "__" + query.Metric[0]
 		}
@@ -223,19 +224,19 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 				pieObj.Value = m.CalcData(valueDataList, query.PieAggType)
 			}
 		}
-		//log.Logger.Info("buildPidData otr", log.String("name", pieObj.Name), log.Float64("value", pieObj.Value))
+		//log.Info(nil, log.LOGGER_APP, "buildPidData otr", zap.String("name", pieObj.Name), zap.Float64("value", pieObj.Value))
 		//if existPie, ok := pieMap[pieObj.Name]; ok {
 		//	existPie.Value = m.CalcData([]float64{existPie.Value, pieObj.Value}, query.PieAggType)
 		//	continue
 		//} else {
 		//	pieMap[pieObj.Name] = &pieObj
 		//}
-		//log.Logger.Info("buildPidData otr append", log.String("name", pieObj.Name))
+		//log.Info(nil, log.LOGGER_APP, "buildPidData otr append", zap.String("name", pieObj.Name))
 		pieData.Legend = append(pieData.Legend, pieObj.Name)
 		pieData.Data = append(pieData.Data, &pieObj)
 	}
 	if query.PieDisplayTag != "" {
-		log.Logger.Debug("start build pie display tag value", log.String("PieDisplayTag", query.PieDisplayTag))
+		log.Debug(nil, log.LOGGER_APP, "start build pie display tag value", zap.String("PieDisplayTag", query.PieDisplayTag))
 		displayPieData := m.EChartPie{Title: pieData.Title}
 		dataValueMap := make(map[string]float64)
 		for _, dataObj := range pieData.Data {

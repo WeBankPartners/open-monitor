@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -24,18 +25,18 @@ func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) 
 			}
 		}
 		if tmpErr != nil {
-			log.Logger.Error("Get agent metric data fail,retry 3 times", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Get agent metric data fail,retry 3 times", zap.Error(tmpErr))
 			return tmpErr, strList
 		}
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		log.Logger.Error("Get agent metric response body fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get agent metric response body fail", zap.Error(err))
 		return err, strList
 	}
 	if resp.StatusCode/100 != 2 {
-		log.Logger.Error("Get agent metric response code error", log.Int("code", resp.StatusCode))
+		log.Error(nil, log.LOGGER_APP, "Get agent metric response code error", zap.Int("code", resp.StatusCode))
 		return fmt.Errorf("Get agent metric response code:%d ", resp.StatusCode), strList
 	}
 	for _, v := range strings.Split(string(body), "\n") {
@@ -71,7 +72,7 @@ func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) 
 			}
 		}
 	}
-	log.Logger.Info("Get agent metric success", log.Int("num", len(strList)))
+	log.Info(nil, log.LOGGER_APP, "Get agent metric success", zap.Int("num", len(strList)))
 	return nil, strList
 }
 

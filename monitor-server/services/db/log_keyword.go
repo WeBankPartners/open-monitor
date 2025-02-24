@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"go.uber.org/zap"
 
 	"crypto/sha256"
 	"database/sql"
@@ -383,23 +384,23 @@ func doLogKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
 	dataMap, err := datasource.QueryLogKeywordData("log")
 	if err != nil {
-		log.Logger.Error("Check log keyword break with get prometheus data", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check log keyword break with get prometheus data", zap.Error(err))
 		return
 	}
 	if len(dataMap) == 0 {
-		log.Logger.Debug("doLogKeywordMonitorJob break with dataMap empty")
+		log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob break with dataMap empty")
 		return
 	}
 	var logKeywordConfigs []*models.LogKeywordCronJobQuery
 	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t2.content,t2.name,t2.guid as log_keyword_config_guid,t2.active_window,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
 	if len(logKeywordConfigs) == 0 {
-		log.Logger.Debug("Check log keyword break with empty config ")
+		log.Debug(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
 		return
 	}
 	var alarmTable []*models.LogKeywordAlarmTable
 	err = x.SQL("select * from log_keyword_alarm").Find(&alarmTable)
 	if err != nil {
-		log.Logger.Error("Check log keyword break with query exist closed alarm fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check log keyword break with query exist closed alarm fail", zap.Error(err))
 		return
 	}
 	alarmMap := make(map[string]*models.LogKeywordAlarmTable)
@@ -426,11 +427,11 @@ func doLogKeywordMonitorJob() {
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
-			log.Logger.Debug("doLogKeywordMonitorJob ignore lgoKeywordConfig", log.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig", zap.String("key", key))
 			continue
 		}
 		if newValue == 0 {
-			log.Logger.Debug("doLogKeywordMonitorJob ignore lgoKeywordConfig with empty value", log.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig with empty value", zap.String("key", key))
 			continue
 		}
 		addFlag := false
@@ -468,26 +469,26 @@ func doLogKeywordMonitorJob() {
 	}
 	for _, v := range addAlarmRows {
 		if tmpErr := doLogKeywordDBAction(v); tmpErr != nil {
-			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail", zap.String("tags", v.Tags), zap.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
 				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
-					log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("logKeywordConfig", v.AlarmStrategy))
+					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify disable,ignore", zap.String("logKeywordConfig", v.AlarmStrategy))
 					continue
 				}
 				tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
 				if tmpAlarmObj.Id <= 0 {
-					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
+					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify fail,query alarm with tags fail", zap.String("tags", v.Tags))
 					continue
 				}
 				tmpNotifyRow, getNotifyErr := getLogKeywordAlarmNotify(v.AlarmStrategy)
 				if getNotifyErr != nil {
-					log.Logger.Error("doLogKeywordMonitorJob get alarm notify fail", log.String("logKeywordConfigGuid", v.AlarmStrategy), log.Int("alarmId", tmpAlarmObj.Id), log.Error(getNotifyErr))
+					log.Error(nil, log.LOGGER_APP, "doLogKeywordMonitorJob get alarm notify fail", zap.String("logKeywordConfigGuid", v.AlarmStrategy), zap.Int("alarmId", tmpAlarmObj.Id), zap.Error(getNotifyErr))
 					continue
 				}
 				if tmpNotifyRow.ProcCallbackMode == models.AlarmNotifyManualMode && tmpNotifyRow.ProcCallbackKey != "" {
 					if _, execErr := x.Exec("update alarm set notify_id=? where id=?", tmpNotifyRow.Guid, tmpAlarmObj.Id); execErr != nil {
-						log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", tmpAlarmObj.Id), log.Error(execErr))
+						log.Error(nil, log.LOGGER_APP, "update alarm table notify id fail", zap.Int("alarmId", tmpAlarmObj.Id), zap.Error(execErr))
 					}
 				}
 				notifyAction(tmpNotifyRow, &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
@@ -518,13 +519,13 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	postData, _ := json.Marshal(param)
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_keyword/rows", address), strings.NewReader(string(postData)))
 	if err != nil {
-		log.Logger.Error("Get log keyword rows fail,new request error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,new request error", zap.Error(err))
 		return result
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
-		log.Logger.Error("Get log keyword rows fail,response error", log.Error(respErr))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response error", zap.Error(respErr))
 		return result
 	}
 	var responseData models.LogKeywordRowsHttpResult
@@ -532,11 +533,11 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	resp.Body.Close()
 	err = json.Unmarshal(respBytes, &responseData)
 	if err != nil {
-		log.Logger.Error("Get log keyword rows fail,response data json unmarshal error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response data json unmarshal error", zap.Error(err))
 		return result
 	}
 	if responseData.Status != "ok" {
-		log.Logger.Error("Get log keyword rows fail,response status error", log.String("status", responseData.Status), log.String("message", responseData.Message))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response status error", zap.String("status", responseData.Status), zap.String("message", responseData.Message))
 		return result
 	}
 	for _, v := range responseData.Data {
@@ -607,12 +608,12 @@ func ImportLogAndDbKeyword(param *models.LogKeywordServiceGroupObj, operator str
 	err = Transaction(actions)
 	if len(affectHostList) > 0 && err == nil {
 		if syncErr := SyncLogKeywordExporterConfig(affectHostList); syncErr != nil {
-			log.Logger.Error("import log keyword fail with sync host keyword config", log.Error(syncErr), log.StringList("hosts", affectHostList))
+			log.Error(nil, log.LOGGER_APP, "import log keyword fail with sync host keyword config", zap.Error(syncErr), zap.Strings("hosts", affectHostList))
 		}
 	}
 	if len(param.DbConfig) > 0 {
 		if syncDbErr := SyncDbMetric(false); syncDbErr != nil {
-			log.Logger.Error("import db keyword fail with sync config", log.Error(syncDbErr))
+			log.Error(nil, log.LOGGER_APP, "import db keyword fail with sync config", zap.Error(syncDbErr))
 		}
 	}
 	return

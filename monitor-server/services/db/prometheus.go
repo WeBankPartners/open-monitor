@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -30,17 +31,17 @@ func InitPrometheusConfig() {
 	// init kubernetes config
 	err = SyncKubernetesConfig()
 	if err != nil {
-		log.Logger.Error("Start sync kubernetes config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Start sync kubernetes config fail", zap.Error(err))
 	}
 	// init snmp config
 	err = SyncSnmpPrometheusConfig()
 	if err != nil {
-		log.Logger.Error("Start sync snmp config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Start sync snmp config fail", zap.Error(err))
 	}
 	// init snmp config
 	err = SyncRemoteWritePrometheusConfig()
 	if err != nil {
-		log.Logger.Error("Start sync remote write config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Start sync remote write config fail", zap.Error(err))
 	}
 	select {}
 }
@@ -48,12 +49,12 @@ func InitPrometheusConfig() {
 func startCheckPrometheusConfig() {
 	tMin, err := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s00", time.Now().Format("2006-01-02 15:04:")), time.Local)
 	if err != nil {
-		log.Logger.Error("Start check prometheus config job init fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Start check prometheus config job init fail", zap.Error(err))
 		return
 	}
 	sleepTime := tMin.Unix() + 60 - time.Now().Unix()
 	if sleepTime < 0 {
-		log.Logger.Warn("Start check prometheus config job fail,calc sleep time fail", log.Int64("sleep time", sleepTime))
+		log.Warn(nil, log.LOGGER_APP, "Start check prometheus config job fail,calc sleep time fail", zap.Int64("sleep time", sleepTime))
 		return
 	}
 	time.Sleep(time.Duration(sleepTime) * time.Second)
@@ -82,7 +83,7 @@ func checkSdConfigTime(refreshAll bool) {
 	var endpointTable []*models.EndpointNewTable
 	err := x.SQL(querySql).Find(&endpointTable)
 	if err != nil {
-		log.Logger.Error("checkSdConfigTime query endpoint fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "checkSdConfigTime query endpoint fail", zap.Error(err))
 		return
 	}
 	if len(endpointTable) == 0 {
@@ -100,7 +101,7 @@ func checkSdConfigTime(refreshAll bool) {
 	for k, v := range clusterStepMap {
 		tmpErr := SyncSdEndpointNew(v, k, true)
 		if tmpErr != nil {
-			log.Logger.Error("Sync sd config fail", log.String("cluster", k), log.String("steps", fmt.Sprintf("%v", v)), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Sync sd config fail", zap.String("cluster", k), zap.String("steps", fmt.Sprintf("%v", v)), zap.Error(tmpErr))
 		}
 	}
 	sdConfigSyncTime = time.Now().Unix()
@@ -115,7 +116,7 @@ func checkRuleConfigTime(refreshAll bool) {
 	}
 	err := x.SQL(querySql).Find(&endpointGroup)
 	if err != nil {
-		log.Logger.Error("Init prometheus rule config fail,query endpoint group fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init prometheus rule config fail,query endpoint group fail", zap.Error(err))
 		return
 	}
 	existMap := make(map[string]int)
@@ -126,7 +127,7 @@ func checkRuleConfigTime(refreshAll bool) {
 		existMap[v.Guid] = 1
 		tmpErr := SyncPrometheusRuleFile(v.Guid, true)
 		if tmpErr != nil {
-			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "init prometheus rule config fail", zap.String("endpointGroup", v.Guid), zap.Error(tmpErr))
 		}
 	}
 	if len(endpointGroup) > 0 {
@@ -136,7 +137,7 @@ func checkRuleConfigTime(refreshAll bool) {
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
-	log.Logger.Info("QueryExporterMetric", log.JsonObj("param", param))
+	log.Info(nil, log.LOGGER_APP, "QueryExporterMetric", log.JsonObj("param", param))
 	if !param.IsConfigQuery {
 		if param.Cluster == "" || param.Cluster == "default" {
 			err, result = prom.GetEndpointData(param)
@@ -155,9 +156,9 @@ func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, re
 		queryPromQl = fmt.Sprintf("{service_group=\"%s\"}", param.ServiceGroup)
 		tmpMetricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
 		if err != nil {
-			log.Logger.Error("Try go get tGuid fail", log.String("service_group", param.ServiceGroup), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Try go get tGuid fail", zap.String("service_group", param.ServiceGroup), zap.Error(err))
 		} else {
-			log.Logger.Info("tGuid tmpMetricList", log.StringList("tmpMetricList", tmpMetricList))
+			log.Info(nil, log.LOGGER_APP, "tGuid tmpMetricList", zap.Strings("tmpMetricList", tmpMetricList))
 		}
 	}
 	queryPromQl = fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port)

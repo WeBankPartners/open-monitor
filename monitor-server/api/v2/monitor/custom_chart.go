@@ -152,7 +152,7 @@ func CopyCustomChart(c *gin.Context) {
 	defer common.ExceptionStack(func(e interface{}, err interface{}) {
 		retErr := fmt.Errorf("%v", err)
 		middleware.ReturnServerHandleError(c, retErr)
-		log.Logger.Error(e.(string))
+		log.Error(nil, log.LOGGER_APP, e.(string))
 	})
 	if chart, err = db.GetCustomChartById(param.OriginChartId); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -705,7 +705,7 @@ func GetChartSeriesColor(c *gin.Context) {
 			}
 		}
 	}
-	log.Logger.Debug("GetChartSeriesColor config", log.JsonObj("querySeriesConfigList", querySeriesConfigList))
+	log.Debug(nil, log.LOGGER_APP, "GetChartSeriesColor config", log.JsonObj("querySeriesConfigList", querySeriesConfigList))
 	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
 	if err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -714,7 +714,7 @@ func GetChartSeriesColor(c *gin.Context) {
 	for _, v := range querySeriesResult.Legend {
 		result = append(result, &models.ColorConfigDto{SeriesName: v, New: true})
 	}
-	log.Logger.Debug("GetChartSeriesColor result", log.JsonObj("result", result))
+	log.Debug(nil, log.LOGGER_APP, "GetChartSeriesColor result", log.JsonObj("result", result))
 	existSeriesMap := make(map[string]string)
 	// 查已保存的series颜色配置
 	if param.ChartSeriesGuid != "" {

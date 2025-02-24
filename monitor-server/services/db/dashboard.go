@@ -6,6 +6,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"regexp"
 	"sort"
 	"strings"
@@ -21,7 +22,7 @@ func GetDashboard(dType string) (error, m.DashboardTable) {
 		if err == nil {
 			err = fmt.Errorf("No rows fetch ")
 		}
-		log.Logger.Error("Query dashboard fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query dashboard fail", zap.Error(err))
 		return err, m.DashboardTable{}
 	}
 }
@@ -31,7 +32,7 @@ func GetSearch(id int) (error, m.SearchModel) {
 	sql := `select * from search where id=?`
 	err := x.SQL(sql, id).Find(&search)
 	if err != nil {
-		log.Logger.Error("Query search fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query search fail", zap.Error(err))
 	}
 	if len(search) > 0 {
 		return err, *search[0]
@@ -45,7 +46,7 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 	sql := `select * from button where group_id=?`
 	err := x.SQL(sql, bGroup).Find(&buttons)
 	if err != nil {
-		log.Logger.Error("Query button fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query button fail", zap.Error(err))
 	}
 	if len(buttons) > 0 {
 		for _, v := range buttons {
@@ -76,7 +77,7 @@ func GetPanels(pGroup int, endpoint string) (error, []*m.PanelTable) {
 	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('" + strings.Join(serviceGroupList, "','") + "'))"
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err != nil {
-		log.Logger.Error("Query panels fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query panels fail", zap.Error(err))
 	}
 	return err, panels
 }
@@ -96,7 +97,7 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 		err = x.SQL(sql, panelId).Find(&charts)
 	}
 	if err != nil {
-		log.Logger.Error("Query charts fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query charts fail", zap.Error(err))
 	}
 	if len(charts) > 0 {
 		return err, charts
@@ -115,13 +116,13 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 	var query []*m.MetricTable
 	err := x.SQL("SELECT * FROM metric WHERE metric=? and service_group is null", tmpMetric).Find(&query)
 	if err != nil {
-		log.Logger.Error("Query metric fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query metric fail", zap.Error(err))
 	}
 	if len(query) > 0 {
 		host := m.EndpointTable{Guid: endpoint[0]}
 		GetEndpoint(&host)
 		if err != nil || host.Id == 0 {
-			log.Logger.Error("Find endpoint fail", log.String("endpoint", endpoint[0]), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Find endpoint fail", zap.String("endpoint", endpoint[0]), zap.Error(err))
 			return err, promQL
 		}
 		var reg string
@@ -207,7 +208,7 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 	}
 	// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags,tags="test_service_code=deleteUser,test_retcode=304"
 	if logType, err = GetLogTypeByMetric(metric); err != nil {
-		log.Logger.Error("GetLogTypeByMetric err", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "GetLogTypeByMetric err", zap.Error(err))
 	}
 	if len(tagList) > 0 {
 		if logType == m.LogMonitorCustomType {
@@ -269,7 +270,7 @@ func GetDbPromMetric(endpoint, metric, legend string) (error, string) {
 	var query []*m.PromMetricTable
 	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric='db_monitor_count'").Find(&query)
 	if err != nil {
-		log.Logger.Error("Query prom_metric fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query prom_metric fail", zap.Error(err))
 	}
 	if len(query) > 0 {
 		promQL = query[0].PromQl
@@ -282,7 +283,7 @@ func GetDbPromMetric(endpoint, metric, legend string) (error, string) {
 			promQL = promQL + fmt.Sprintf(",%s=\"%s\"}", legend, metric)
 		}
 	}
-	log.Logger.Debug("db prom metric", log.String("promQl", promQL))
+	log.Debug(nil, log.LOGGER_APP, "db prom metric", zap.String("promQl", promQL))
 	return err, promQL
 }
 
@@ -292,7 +293,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	endpoint = `%` + endpoint + `%`
 	err := x.SQL("SELECT * FROM endpoint WHERE guid LIKE ? order by export_type,ip LIMIT 100", endpoint).Find(&hosts)
 	if err != nil {
-		log.Logger.Error("Search host fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Search host fail", zap.Error(err))
 		return err, options
 	}
 	for _, host := range hosts {
@@ -330,7 +331,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 		return fmt.Errorf("Get endpoint table fail,%s ", err.Error())
 	}
 	if len(endpointObj) <= 0 {
-		log.Logger.Warn("Get endpoint fail", log.JsonObj("param", query))
+		log.Warn(nil, log.LOGGER_APP, "Get endpoint fail", log.JsonObj("param", query))
 		return fmt.Errorf("Get endpoint fail,can not fetch any data ")
 	}
 	query.Id = endpointObj[0].Id
@@ -354,19 +355,19 @@ func GetTags(endpoint string, key string, metric string) (error, []*m.OptionMode
 	var endpointObj []*m.EndpointTable
 	err := x.SQL("SELECT id FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
 	if err != nil || len(endpointObj) <= 0 {
-		log.Logger.Error("Get tags fail, can't find endpoint", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get tags fail, can't find endpoint", zap.Error(err))
 		return err, options
 	}
 	var promMetricObj []*m.PromMetricTable
 	err = x.SQL("SELECT prom_main FROM prom_metric WHERE metric=?", metric).Find(&promMetricObj)
 	if err != nil || len(promMetricObj) <= 0 {
-		log.Logger.Error("Get tags fail,can't find prom_metric", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get tags fail,can't find prom_metric", zap.Error(err))
 		return err, options
 	}
 	var endpointMetricObj []*m.EndpointMetricTable
 	err = x.SQL("SELECT metric FROM endpoint_metric WHERE endpoint_id=? AND metric LIKE ?", endpointObj[0].Id, `%`+promMetricObj[0].PromMain+`%`).Find(&endpointMetricObj)
 	if err != nil || len(endpointMetricObj) <= 0 {
-		log.Logger.Error("Get tags fail,can't find metric", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get tags fail,can't find metric", zap.Error(err))
 		return err, options
 	}
 	key = key + "="
@@ -436,7 +437,7 @@ func GetPromMetricTable(metricType string) (err error, result []*m.PromMetricUpd
 		result = []*m.PromMetricUpdateParam{}
 	}
 	if err != nil {
-		log.Logger.Error("Get prom metric table fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get prom metric table fail", zap.Error(err))
 	}
 	// append service metric
 	var logMetricTable []*m.LogMetricConfigTable
@@ -658,7 +659,7 @@ func GetEndpointMetric(endpointGuid, monitorType string) (err error, result []*m
 		ip = exporterAddress[:strings.Index(exporterAddress, ":")]
 		port = exporterAddress[strings.Index(exporterAddress, ":")+1:]
 		if ip == "" || port == "" {
-			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
+			log.Warn(nil, log.LOGGER_APP, "endpoint address illegal ", zap.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
 		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: ""}
@@ -851,16 +852,16 @@ func GetChartTitle(metric string, id int) string {
 func GetArchiveData(query *m.QueryMonitorData, agg string) (err error, step int, result []*m.SerialModel) {
 	if !ArchiveEnable {
 		err = fmt.Errorf("please make sure archive mysql connect done")
-		log.Logger.Error("", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "", zap.Error(err))
 		return err, step, result
 	}
 	checkArchiveDatabase()
 	if query.Start == 0 || query.End == 0 || (query.Start >= query.End) {
 		err = fmt.Errorf("get archive data query start and end validate fail,start:%d end:%d ", query.Start, query.End)
-		log.Logger.Error("", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "", zap.Error(err))
 		return err, step, result
 	}
-	log.Logger.Debug("Start to get archive data", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End))
+	log.Debug(nil, log.LOGGER_APP, "Start to get archive data", zap.Strings("endpoint", query.Endpoint), zap.Strings("metric", query.Metric), zap.Int64("start", query.Start), zap.Int64("end", query.End))
 	if agg == "" || agg == "none" {
 		agg = "avg"
 	}
@@ -939,14 +940,14 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 		err := archiveMysql.SQL(fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)).Find(&tableData)
 		if err != nil {
 			if strings.Contains(err.Error(), "doesn't exist") {
-				log.Logger.Debug(fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
+				log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
 			} else {
-				log.Logger.Info(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
+				log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s error", v), zap.Error(err))
 			}
 			continue
 		}
 		if len(tableData) == 0 {
-			log.Logger.Info(fmt.Sprintf("query archive table:archive_%s empty", v))
+			log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s empty", v))
 			continue
 		}
 		if tagLength <= 1 && i == 0 {
@@ -1057,7 +1058,7 @@ func GetDashboardPanelList(endpointType, searchMetric string) m.PanelResult {
 	var panelChartQuery []*m.PanelChartQueryObj
 	err := x.SQL("select t2.id,t2.tags_key,t2.title,t3.group_id,t3.metric,t3.title as chart_title,t3.unit as chart_unit from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id left join chart t3 on t2.chart_group=t3.group_id where t1.dashboard_type=?", endpointType).Find(&panelChartQuery)
 	if err != nil {
-		log.Logger.Error("Get dashboard panel chart list error", log.String("type", endpointType), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get dashboard panel chart list error", zap.String("type", endpointType), zap.Error(err))
 	}
 	if len(panelChartQuery) == 0 {
 		return returnObj

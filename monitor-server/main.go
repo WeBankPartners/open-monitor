@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -24,7 +25,11 @@ func main() {
 	//exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
 	flag.Parse()
 	m.InitConfig(*cfgFile)
-	log.InitLogger()
+	if err := log.InitLogger(); err != nil {
+		fmt.Printf("Server  init loggers failed, err: %v\n", err)
+		return
+	}
+	defer log.SyncLoggers()
 	db.InitDatabase()
 	if m.Config().Http.Session.Enable == "true" {
 		middleware.InitSession()

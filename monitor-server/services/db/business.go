@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 )
 
@@ -40,24 +41,24 @@ func GetBusinessListNew(endpointId int, ownerEndpoint string) (err error, result
 				tmpStringMap := []*m.BusinessStringMapObj{}
 				tmpErr = json.Unmarshal([]byte(vv.StringMap), &tmpStringMap)
 				if tmpErr != nil {
-					log.Logger.Error("json unmarshal string map obj fail", log.String("string_map", vv.StringMap), log.Error(tmpErr))
+					log.Error(nil, log.LOGGER_APP, "json unmarshal string map obj fail", zap.String("string_map", vv.StringMap), zap.Error(tmpErr))
 				} else {
 					tmpBmc.StringMap = tmpStringMap
 				}
 				tmpMetricConfig := []*m.BusinessMetricObj{}
 				tmpErr = json.Unmarshal([]byte(vv.MetricConfig), &tmpMetricConfig)
 				if tmpErr != nil {
-					log.Logger.Error("json unmarshal metric config obj fail", log.String("metric_config", vv.MetricConfig), log.Error(tmpErr))
+					log.Error(nil, log.LOGGER_APP, "json unmarshal metric config obj fail", zap.String("metric_config", vv.MetricConfig), zap.Error(tmpErr))
 				} else {
 					tmpBmc.MetricConfig = tmpMetricConfig
 				}
 				tmpBup.Rules = append(tmpBup.Rules, &tmpBmc)
-			}else{
+			} else {
 				tmpCustom := m.BusinessMonitorCustomObj{Id: vv.Id, Metric: vv.MetricConfig, AggType: vv.AggType, ValueRegular: vv.Regular}
 				tmpStringMap := []*m.BusinessStringMapObj{}
 				tmpErr = json.Unmarshal([]byte(vv.StringMap), &tmpStringMap)
 				if tmpErr != nil {
-					log.Logger.Error("json unmarshal string map obj fail", log.String("string_map", vv.StringMap), log.Error(tmpErr))
+					log.Error(nil, log.LOGGER_APP, "json unmarshal string map obj fail", zap.String("string_map", vv.StringMap), zap.Error(tmpErr))
 				} else {
 					tmpCustom.StringMap = tmpStringMap
 				}

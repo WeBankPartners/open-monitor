@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ func checkAndReloadServiceGroup() {
 		return
 	}
 	if latestUpdateTime, err = GetLatestServiceGroupUpdateTime(); err != nil {
-		log.Logger.Error("GetLatestServiceGroupUpdateTime err", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "GetLatestServiceGroupUpdateTime err", zap.Error(err))
 		return
 	}
 	// 判断是否需要更新
@@ -40,7 +41,7 @@ func InitServiceGroup() {
 	var serviceGroupTable []*models.ServiceGroupTable
 	err := x.SQL("select guid,parent,display_name,service_type from service_group").Find(&serviceGroupTable)
 	if err != nil {
-		log.Logger.Error("Init service group fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init service group fail", zap.Error(err))
 		return
 	}
 	if len(serviceGroupTable) == 0 {
@@ -77,7 +78,7 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 		result = v.FetchChildGuid()
 	} else {
 		// 数据兜底,上面如果还是没找到,db加载数据兜底
-		log.Logger.Warn("fetchGlobalServiceGroupChildGuidList find cache empty")
+		log.Warn(nil, log.LOGGER_APP, "fetchGlobalServiceGroupChildGuidList find cache empty")
 		InitServiceGroup()
 		if v, b := globalServiceGroupMap[rootKey]; b {
 			result = v.FetchChildGuid()
@@ -96,7 +97,7 @@ func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, er
 		result = v.FetchParentGuid()
 	} else {
 		// 数据兜底,上面如果还是没找到,db加载数据兜底
-		log.Logger.Warn("fetchGlobalServiceGroupParentGuidList find cache empty")
+		log.Warn(nil, log.LOGGER_APP, "fetchGlobalServiceGroupParentGuidList find cache empty")
 		InitServiceGroup()
 		if v, b := globalServiceGroupMap[childKey]; b {
 			result = v.FetchParentGuid()
@@ -137,7 +138,7 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 func deleteGlobalServiceGroupNode(guid string) {
 	serviceGroupRWMutex.Lock()
 	defer serviceGroupRWMutex.Unlock()
-	log.Logger.Info("start deleteGlobalServiceGroupNode", log.String("guid", guid))
+	log.Info(nil, log.LOGGER_APP, "start deleteGlobalServiceGroupNode", zap.String("guid", guid))
 	displayGlobalServiceGroup()
 	if v, b := globalServiceGroupMap[guid]; b {
 		if v.Parent != nil {
@@ -159,12 +160,12 @@ func deleteGlobalServiceGroupNode(guid string) {
 func displayGlobalServiceGroup() {
 	for k, v := range globalServiceGroupMap {
 		if v.Parent != nil {
-			log.Logger.Info("globalServiceGroupMap", log.String("k", k), log.String("parent", v.Parent.Guid))
+			log.Info(nil, log.LOGGER_APP, "globalServiceGroupMap", zap.String("k", k), zap.String("parent", v.Parent.Guid))
 		} else {
-			log.Logger.Info("globalServiceGroupMap", log.String("k", k))
+			log.Info(nil, log.LOGGER_APP, "globalServiceGroupMap", zap.String("k", k))
 		}
 	}
-	log.Logger.Info("service_group", log.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
+	log.Info(nil, log.LOGGER_APP, "service_group", zap.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 }
 
 func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, err error) {
@@ -449,18 +450,18 @@ func getServiceGroupEndpointWithChild(serviceGroup string) map[string][]string {
 func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 	var err error
 	endpointTypeMap := getServiceGroupEndpointWithChild(serviceGroup)
-	log.Logger.Info("UpdateServiceConfigWithEndpoint", log.String("serviceGroup", serviceGroup))
+	log.Info(nil, log.LOGGER_APP, "UpdateServiceConfigWithEndpoint", zap.String("serviceGroup", serviceGroup))
 	err = UpdateLogMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
 	if err != nil {
-		log.Logger.Error("UpdateLogMetricConfigByServiceGroup fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricConfigByServiceGroup fail", zap.Error(err))
 	}
 	err = UpdateDbMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
 	if err != nil {
-		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricConfigByServiceGroup fail", zap.Error(err))
 	}
 	err = UpdateLogKeywordConfigByServiceGroup(serviceGroup, endpointTypeMap)
 	if err != nil {
-		log.Logger.Error("UpdateLogKeywordConfigByServiceGroup fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateLogKeywordConfigByServiceGroup fail", zap.Error(err))
 	}
 }
 
@@ -489,7 +490,7 @@ func UpdateLogKeywordConfigByServiceGroup(serviceGroup string, endpointTypeMap m
 }
 
 func UpdateLogKeywordConfigAction(logKeyword *models.LogKeywordMonitorTable, endpointTypeMap map[string][]string, hostEndpoint []string, hostEndpointIpMap map[string]string) {
-	log.Logger.Info("UpdateLogKeywordConfigAction", log.String("guid", logKeyword.Guid), log.String("monitorType", logKeyword.MonitorType), log.StringList("hostEndpoint", hostEndpoint))
+	log.Info(nil, log.LOGGER_APP, "UpdateLogKeywordConfigAction", zap.String("guid", logKeyword.Guid), zap.String("monitorType", logKeyword.MonitorType), zap.Strings("hostEndpoint", hostEndpoint))
 	var updateHostEndpointList []string
 	var actions []*Action
 	var logKeywordRelTable []*models.LogMetricEndpointRelTable
@@ -543,10 +544,10 @@ func UpdateLogKeywordConfigAction(logKeyword *models.LogKeywordMonitorTable, end
 		if err == nil {
 			err = SyncLogKeywordExporterConfig(updateHostEndpointList)
 			if err != nil {
-				log.Logger.Error("SyncLogKeywordExporterConfig fail", log.String("logKeywordMonitor", logKeyword.Guid), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "SyncLogKeywordExporterConfig fail", zap.String("logKeywordMonitor", logKeyword.Guid), zap.Error(err))
 			}
 		} else {
-			log.Logger.Error("UpdateLogKeywordConfigAction exec sql fail", log.String("logKeywordMonitor", logKeyword.Guid), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "UpdateLogKeywordConfigAction exec sql fail", zap.String("logKeywordMonitor", logKeyword.Guid), zap.Error(err))
 		}
 	}
 }
@@ -576,12 +577,12 @@ func UpdateLogMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap ma
 }
 
 func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpointTypeMap map[string][]string, hostEndpoint []string, hostEndpointIpMap map[string]string) {
-	log.Logger.Info("UpdateLogMetricConfigAction", log.String("guid", logMonitor.Guid), log.String("monitorType", logMonitor.MonitorType), log.StringList("hostEndpoint", hostEndpoint))
+	log.Info(nil, log.LOGGER_APP, "UpdateLogMetricConfigAction", zap.String("guid", logMonitor.Guid), zap.String("monitorType", logMonitor.MonitorType), zap.Strings("hostEndpoint", hostEndpoint))
 	for k, v := range endpointTypeMap {
-		log.Logger.Debug("endpointTypeMap", log.String("k", k), log.StringList("v", v))
+		log.Debug(nil, log.LOGGER_APP, "endpointTypeMap", zap.String("k", k), zap.Strings("v", v))
 	}
 	for k, v := range hostEndpointIpMap {
-		log.Logger.Debug("hostEndpointIpMap", log.String("k", k), log.String("v", v))
+		log.Debug(nil, log.LOGGER_APP, "hostEndpointIpMap", zap.String("k", k), zap.String("v", v))
 	}
 	var updateHostEndpointList []string
 	var actions []*Action
@@ -598,7 +599,7 @@ func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpo
 	}
 	sourceTargetMap := make(map[string]string)
 	for _, vv := range logMetricRelTable {
-		log.Logger.Info("sourceTargetMap", log.String("source", vv.SourceEndpoint), log.String("target", vv.TargetEndpoint))
+		log.Info(nil, log.LOGGER_APP, "sourceTargetMap", zap.String("source", vv.SourceEndpoint), zap.String("target", vv.TargetEndpoint))
 		sourceTargetMap[vv.SourceEndpoint] = vv.TargetEndpoint
 	}
 	for _, host := range hostEndpoint {
@@ -637,10 +638,10 @@ func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpo
 		if err == nil {
 			err = SyncLogMetricExporterConfig(updateHostEndpointList)
 			if err != nil {
-				log.Logger.Error("SyncLogMetricExporterConfig fail", log.String("logMetricMonitor", logMonitor.Guid), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.String("logMetricMonitor", logMonitor.Guid), zap.Error(err))
 			}
 		} else {
-			log.Logger.Error("UpdateLogMetricConfigAction exec sql fail", log.String("logMetricMonitor", logMonitor.Guid), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "UpdateLogMetricConfigAction exec sql fail", zap.String("logMetricMonitor", logMonitor.Guid), zap.Error(err))
 		}
 	}
 }
@@ -691,7 +692,7 @@ func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map
 	}
 	err = SyncDbMetric(false)
 	if err != nil {
-		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.String("serviceGroup", serviceGroup))
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricConfigByServiceGroup fail", zap.String("serviceGroup", serviceGroup))
 	}
 	return
 }
@@ -712,7 +713,7 @@ func DeleteServiceWithChildConfig(serviceGroup string) {
 		for _, v := range endpointGroup {
 			tmpErr := SyncPrometheusRuleFile(v.Guid, false)
 			if tmpErr != nil {
-				log.Logger.Error("DeleteServiceWithChildConfig SyncPrometheusRuleFile fail", log.Error(tmpErr))
+				log.Error(nil, log.LOGGER_APP, "DeleteServiceWithChildConfig SyncPrometheusRuleFile fail", zap.Error(tmpErr))
 			}
 		}
 	}
@@ -729,7 +730,7 @@ func DeleteServiceConfig(serviceGroup string) {
 	for _, v := range logMetricTable {
 		tmpErr := DeleteLogMetricMonitor(v.Guid)
 		if tmpErr != nil {
-			log.Logger.Error("Try to DeleteLogMetricMonitor fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Try to DeleteLogMetricMonitor fail", zap.Error(tmpErr))
 		}
 	}
 	// Remove dbMetric config
@@ -738,13 +739,13 @@ func DeleteServiceConfig(serviceGroup string) {
 	for _, v := range dbMetricTable {
 		tmpErr := DeleteDbMetric(v.Guid)
 		if tmpErr != nil {
-			log.Logger.Error("Try to DeleteDbMetric fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Try to DeleteDbMetric fail", zap.Error(tmpErr))
 		}
 	}
 	if len(dbMetricTable) > 0 {
 		err := SyncDbMetric(false)
 		if err != nil {
-			log.Logger.Error("Try to SyncDbMetric fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Try to SyncDbMetric fail", zap.Error(err))
 		}
 	}
 	// Remove logKeyword config
@@ -753,7 +754,7 @@ func DeleteServiceConfig(serviceGroup string) {
 	for _, v := range logKeywordTable {
 		tmpErr := DeleteLogKeywordMonitor(v.Guid)
 		if tmpErr != nil {
-			log.Logger.Error("Try to DeleteLogKeywordMonitor fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Try to DeleteLogKeywordMonitor fail", zap.Error(tmpErr))
 		}
 	}
 }
@@ -835,6 +836,6 @@ func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
 		}
 		updateTime = t.Unix()
 	}
-	log.Logger.Info("GetLatestServiceGroupUpdateTime", log.Int64("latestUpdateTime", updateTime), log.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
+	log.Info(nil, log.LOGGER_APP, "GetLatestServiceGroupUpdateTime", zap.Int64("latestUpdateTime", updateTime), zap.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 	return updateTime, nil
 }

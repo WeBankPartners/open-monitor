@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -285,7 +286,7 @@ func AuthServerRequest() gin.HandlerFunc {
 func HealthCheck(c *gin.Context) {
 	ip := c.ClientIP()
 	date := time.Now().Format(m.DatetimeFormat)
-	log.Logger.Info("Health check", log.String("requestIp", ip), log.String("date", date))
+	log.Info(nil, log.LOGGER_APP, "Health check", zap.String("requestIp", ip), zap.String("date", date))
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
 
@@ -427,13 +428,13 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 			}
 		}
 		if !exist {
-			log.Logger.Info("InitApiMenuMap menu-api-json lack url", log.String("path", k), log.String("code", code))
+			log.Info(nil, log.LOGGER_APP, "InitApiMenuMap menu-api-json lack url", zap.String("path", k), zap.String("code", code))
 		}
 	}
 	for _, menuApi := range m.MenuApiGlobalList {
 		for _, item := range menuApi.Urls {
 			if _, ok := matchUrlMap[item.Method+"_"+item.Url]; !ok {
-				log.Logger.Info("InitApiMenuMap can not match menuUrl", log.String("menu", menuApi.Menu), log.String("method", item.Method), log.String("url", item.Url))
+				log.Info(nil, log.LOGGER_APP, "InitApiMenuMap can not match menuUrl", zap.String("menu", menuApi.Menu), zap.String("method", item.Method), zap.String("url", item.Url))
 			}
 		}
 	}
@@ -442,7 +443,7 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 			ApiMenuMap[k] = DistinctStringList(v, []string{})
 		}
 	}
-	log.Logger.Debug("InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
+	log.Debug(nil, log.LOGGER_APP, "InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
 }
 
 func DistinctStringList(input, excludeList []string) (output []string) {

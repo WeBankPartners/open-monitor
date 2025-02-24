@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/golang-jwt/jwt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -39,10 +40,10 @@ func InitSession() {
 		})
 		_, err := client.Ping().Result()
 		if err != nil {
-			log.Logger.Error("Init session redis fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Init session redis fail", zap.Error(err))
 			onlyLocalStore = true
 		} else {
-			log.Logger.Info("init session redis success")
+			log.Info(nil, log.LOGGER_APP, "init session redis success")
 			onlyLocalStore = false
 			RedisClient = client
 		}
@@ -54,7 +55,7 @@ func SaveSession(session m.Session) (isOk bool, sId string) {
 	session.Expire = time.Now().Unix() + expireTime
 	serializeData, err := serialize(session)
 	if err != nil {
-		log.Logger.Error("Serialize session error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Serialize session error", zap.Error(err))
 		return false, sId
 	}
 	md := md5.New()
@@ -67,7 +68,7 @@ func SaveSession(session m.Session) (isOk bool, sId string) {
 	if !onlyLocalStore {
 		backCmd := RedisClient.Set(fmt.Sprintf("session_%s", sId), serializeData, time.Duration(expireTime)*time.Second)
 		if !strings.Contains(backCmd.Val(), "OK") {
-			log.Logger.Error("Save session to redis fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Save session to redis fail", zap.Error(err))
 			return false, sId
 		}
 	}
@@ -223,25 +224,25 @@ func DecodeCoreToken(token, key string) (result m.CoreJwtToken, err error) {
 	}
 	keyBytes, err := ioutil.ReadAll(base64.NewDecoder(base64.RawStdEncoding, bytes.NewBufferString(key)))
 	if err != nil {
-		log.Logger.Error("Decode core token fail,base64 decode error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Decode core token fail,base64 decode error", zap.Error(err))
 		return result, err
 	}
 	pToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return keyBytes, nil
 	})
 	if err != nil {
-		log.Logger.Error("Decode core token fail,jwt parse error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Decode core token fail,jwt parse error", zap.Error(err))
 		return result, err
 	}
 	claimMap, ok := pToken.Claims.(jwt.MapClaims)
 	if !ok {
-		log.Logger.Error("Decode core token fail,claims to map error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Decode core token fail,claims to map error", zap.Error(err))
 		return result, err
 	}
 	result.User = fmt.Sprintf("%s", claimMap["sub"])
 	result.Expire, err = strconv.ParseInt(fmt.Sprintf("%.0f", claimMap["exp"]), 10, 64)
 	if err != nil {
-		log.Logger.Error("Decode core token fail,parse expire to int64 error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Decode core token fail,parse expire to int64 error", zap.Error(err))
 		return result, err
 	}
 	roleListString := fmt.Sprintf("%s", claimMap["authority"])

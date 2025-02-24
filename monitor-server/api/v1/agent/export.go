@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -74,11 +75,11 @@ func ExportAgentNew(c *gin.Context) {
 	resultCode = "0"
 	resultData := resultOutput{}
 	defer func() {
-		log.Logger.Info("Plugin result", log.JsonObj("result", resultData))
+		log.Info(nil, log.LOGGER_APP, "Plugin result", log.JsonObj("result", resultData))
 		c.JSON(http.StatusOK, resultObj{ResultCode: resultCode, ResultMessage: resultMessage, Results: resultData})
 	}()
 	data, _ := ioutil.ReadAll(c.Request.Body)
-	log.Logger.Debug("Plugin request", log.String("action", action), log.String("agentType", agentType), log.String("param", string(data)))
+	log.Debug(nil, log.LOGGER_APP, "Plugin request", zap.String("action", action), zap.String("agentType", agentType), zap.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
@@ -141,7 +142,7 @@ func ExportAgentNew(c *gin.Context) {
 			}
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
-				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
+				log.Debug(nil, log.LOGGER_APP, "Export deregister endpoint", zap.Int("id", endpointObj.Id), zap.String("guid", endpointObj.Guid))
 				inputErr = DeregisterJob(endpointObj, mid.GetOperateUser(c))
 				endpointGuid = endpointObj.Guid
 			}
@@ -180,13 +181,13 @@ func AlarmControl(c *gin.Context) {
 	//}
 
 	data, _ := ioutil.ReadAll(c.Request.Body)
-	log.Logger.Info("", log.String("param", string(data)))
+	log.Info(nil, log.LOGGER_APP, "", zap.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
 			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "inputs")}
-			log.Logger.Warn(result.ResultMessage)
+			log.Warn(nil, log.LOGGER_APP, result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
 		}
@@ -217,14 +218,14 @@ func AlarmControl(c *gin.Context) {
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, instanceName)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "0", Guid: v.Guid, ErrorMessage: ""})
 			}
-			log.Logger.Info(msg)
+			log.Info(nil, log.LOGGER_APP, msg)
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: resultMessage, Results: resultOutput{Outputs: tmpResult}}
-		log.Logger.Info("result", log.JsonObj("result", result))
+		log.Info(nil, log.LOGGER_APP, "result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
 		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
-		log.Logger.Error("Param validate fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Param validate fail", zap.Error(err))
 		c.JSON(http.StatusBadRequest, result)
 	}
 }
@@ -278,7 +279,7 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	}
 	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId: hostEndpoint.Id, PathList: businessTables})
 	if err != nil {
-		log.Logger.Error("Update endpoint business table error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update endpoint business table error", zap.Error(err))
 		return err
 	}
 	return err
@@ -346,7 +347,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 			subResult, subError := updateProcessNew(input, operation, mid.GetOperateUser(c))
 			results = append(results, subResult)
 			if subError != nil {
-				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
+				log.Error(nil, log.LOGGER_APP, "Handle auto update process fail", log.JsonObj("input", input), zap.Error(subError))
 				err = subError
 			}
 		}
@@ -521,7 +522,7 @@ func AutoUpdateLogMonitor(c *gin.Context) {
 			}
 			results = append(results, tmpLogResultObj)
 			if tmpError != nil {
-				log.Logger.Error("Handle auto update log monitor fail", log.JsonObj("input", input), log.Error(tmpError))
+				log.Error(nil, log.LOGGER_APP, "Handle auto update log monitor fail", log.JsonObj("input", input), zap.Error(tmpError))
 				err = tmpError
 			}
 		}

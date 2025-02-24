@@ -6,12 +6,13 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
 
 func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj, operator string, roles []string, errMsgObj *models.ErrorTemplate) (result *models.PluginUpdateServicePathOutputObj, err error) {
-	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input), log.String("operator", operator), log.StringList("roles", roles))
+	log.Info(nil, log.LOGGER_APP, "PluginUpdateServicePathAction", log.JsonObj("input", input), zap.String("operator", operator), zap.Strings("roles", roles))
 	result = &models.PluginUpdateServicePathOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid}
 	input.SystemName = input.Guid
 	monitorTypeQuery, _ := x.QueryString("select guid from monitor_type where guid=?", input.MonitorType)
@@ -174,13 +175,13 @@ func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType str
 	}
 	if len(affectHostList) > 0 {
 		if syncErr := SyncLogMetricExporterConfig(affectHostList); syncErr != nil {
-			log.Logger.Error("updateServiceLogMetricPath sync log metric exporter config fail", log.StringList("hostList", affectHostList), log.Error(syncErr))
+			log.Error(nil, log.LOGGER_APP, "updateServiceLogMetricPath sync log metric exporter config fail", zap.Strings("hostList", affectHostList), zap.Error(syncErr))
 		}
 	}
 	if len(affectEndpointGroup) > 0 {
 		for _, v := range affectEndpointGroup {
 			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
-				log.Logger.Error("updateServiceLogMetricPath sync endpointGroup prometheus rule file fail", log.String("endpointGroup", v), log.Error(tmpErr))
+				log.Error(nil, log.LOGGER_APP, "updateServiceLogMetricPath sync endpointGroup prometheus rule file fail", zap.String("endpointGroup", v), zap.Error(tmpErr))
 			}
 		}
 	}

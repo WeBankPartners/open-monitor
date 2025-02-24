@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -42,7 +43,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam, operator string) (st
 			Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime, operator, operator}})
 		err = Transaction(actions)
 		if err != nil {
-			log.Logger.Error("Insert endpoint fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Insert endpoint fail", zap.Error(err))
 			return
 		}
 		host := m.EndpointTable{Guid: endpoint.Guid}
@@ -62,7 +63,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam, operator string) (st
 		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, nowTime, endpoint.Guid}})
 		err = Transaction(actions)
 		if err != nil {
-			log.Logger.Error("Update endpoint fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update endpoint fail", zap.Error(err))
 			return
 		}
 		endpoint.Id = host.Id
@@ -106,7 +107,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		insertSql = insertSql[:len(insertSql)-1]
 		_, err = x.Exec("INSERT INTO endpoint_metric(endpoint_id,metric) VALUES " + insertSql)
 		if err != nil {
-			log.Logger.Error("Update custom endpoint_metric fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update custom endpoint_metric fail", zap.Error(err))
 		}
 	}
 	if err != nil {
@@ -137,7 +138,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		insertSql = insertSql[:len(insertSql)-1]
 		_, err = x.Exec("INSERT INTO prom_metric(metric,metric_type,prom_ql) VALUES " + insertSql)
 		if err != nil {
-			log.Logger.Error("Update custom prom_metric fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update custom prom_metric fail", zap.Error(err))
 			return err
 		}
 	}
@@ -182,7 +183,7 @@ func DeleteEndpoint(guid, operator string) error {
 	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
-		log.Logger.Error("Delete endpoint fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Delete endpoint fail", zap.Error(err))
 		return err
 	} else {
 		for _, v := range endpointGroup {
@@ -252,7 +253,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable, operator string) error {
 			for _, v := range endpointGroup {
 				err = SyncPrometheusRuleFile(v.Guid, false)
 				if err != nil {
-					log.Logger.Error("UpdateRecursivePanel warn,syncPrometheusRule fail", log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "UpdateRecursivePanel warn,syncPrometheusRule fail", zap.Error(err))
 				}
 			}
 			if err == nil {
@@ -527,7 +528,7 @@ func getServiceGroupCharts(endpoints []string, monitorType, serviceGroup string)
 }
 
 func getExtendPanelCharts(endpoints []string, exportType, guid string) []*m.ChartModel {
-	log.Logger.Debug("getExtendPanel", log.String("exportType", exportType), log.StringList("endpoints", endpoints), log.String("guid", guid))
+	log.Debug(nil, log.LOGGER_APP, "getExtendPanel", zap.String("exportType", exportType), zap.Strings("endpoints", endpoints), zap.String("guid", guid))
 	var result []*m.ChartModel
 	if exportType == "java" {
 		for _, endpoint := range endpoints {
@@ -617,7 +618,7 @@ func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
 	}
 	err := Transaction(actions)
 	if err != nil {
-		log.Logger.Error("Update endpoint table fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update endpoint table fail", zap.Error(err))
 	}
 	return err
 }
@@ -638,7 +639,7 @@ func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
 	}
 	err := Transaction(actions)
 	if err != nil {
-		log.Logger.Error("Update endpoint http fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update endpoint http fail", zap.Error(err))
 	}
 	return err
 }
