@@ -110,7 +110,7 @@
             </Option>
           </Select>
         </div>
-        <div v-if="endpointRejectModel.supportStep && systemType === '1'" class="marginbottom params-each">
+        <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
           <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode">
             <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
@@ -328,14 +328,14 @@
 </template>
 
 <script>
-import CryptoJS from 'crypto-js'
-import debounce from 'lodash/debounce'
-import isEmpty from 'lodash/isEmpty'
-import DataMonitor from '@/views/monitor-config/data-monitor'
-import { cycleOption, collectionInterval } from '@/assets/config/common-config'
+import { collectionInterval, cycleOption } from '@/assets/config/common-config'
 import {
   interceptParams, showPoptipOnTable
 } from '@/assets/js/utils'
+import DataMonitor from '@/views/monitor-config/data-monitor'
+import CryptoJS from 'crypto-js'
+import debounce from 'lodash/debounce'
+import isEmpty from 'lodash/isEmpty'
 
 const alarmLevelMap = {
   low: {

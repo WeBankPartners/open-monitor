@@ -1,6 +1,6 @@
-import axios from 'axios'
-import {baseURL_config} from './baseURL'
-import { getToken } from '@/assets/js/cookies.ts'
+import { getToken } from "@/assets/js/cookies.ts"
+import axios from "axios"
+import { baseURL_config } from "./baseURL"
 export default function ajax(options) {
   const ajaxObj = {
     method: options.method,
@@ -10,16 +10,17 @@ export default function ajax(options) {
     params: options.params,
     // params: options.params || '',
     headers: {
-      'Content-type': 'application/json;charset=UTF-8',
-      'X-Auth-Token': getToken() || null,
-      Authorization: 'Bearer ' + localStorage.getItem('monitor-accessToken')
+      "Content-type": "application/json;charset=UTF-8",
+      "X-Auth-Token": getToken() || null,
+      Authorization:
+        "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc0MDQ0OTUwMywiZXhwIjoxNzQwNTM1OTAzLCJ0eXBlIjoiYWNjZXNzVG9rZW4iLCJjbGllbnRUeXBlIjoiIiwicm9sZXMiOltdLCJhdXRob3JpdHkiOiJbQUFfQ0wsZGF0YV9tZ210X3ZpZXcsZGF0YV9xdWVyeV92aWV3LFNVUEVSX0FETUlOLEFETUlOX0JBU0VfTUlHUkFUSU9OLGRhdGFfbWdtdF9jaSxBRE1JTl9TWVNURU1fV09SS0ZMT1dfUkVQT1JULElNUExFTUVOVEFUSU9OX1dPUktGTE9XX0VYRUNVVElPTixJTVBMRU1FTlRBVElPTl9CQVRDSF9FWEVDVVRJT04sSU1QTEVNRU5UQVRJT05fQVJUSUZBQ1RfTUFOQUdFTUVOVCxNT05JVE9SX01BSU5fREFTSEJPQVJELE1PTklUT1JfQ1VTVE9NX0RBU0hCT0FSRCxNT05JVE9SX0FMQVJNX0NPTkZJRyxNT05JVE9SX0FMQVJNX01BTkFHRU1FTlQsQ09MTEFCT1JBVElPTl9QTFVHSU5fTUFOQUdFTUVOVCxDT0xMQUJPUkFUSU9OX1dPUktGTE9XX09SQ0hFU1RSQVRJT04sQURNSU5fU1lTVEVNX1BBUkFNUyxBRE1JTl9SRVNPVVJDRVNfTUFOQUdFTUVOVCxBRE1JTl9VU0VSX1JPTEVfTUFOQUdFTUVOVCxBRE1JTl9DTURCX01PREVMX01BTkFHRU1FTlQsQ01EQl9BRE1JTl9CQVNFX0RBVEFfTUFOQUdFTUVOVCxBRE1JTl9RVUVSWV9MT0csTUVOVV9BRE1JTl9QRVJNSVNTSU9OX01BTkFHRU1FTlQsQURNSU5fQ0VSVElGSUNBVElPTixNT05JVE9SX01FVFJJQ19DT05GSUcsY2lfdGVtcGxhdGVfY29uZmlndXJhdGlvbixkYXRhX3F1ZXJ5X3JlcG9ydCxncmFwaF9jb25maWcsQURNSU5fSVRTX0RBTkdFUk9VU19DT05GSUcsc3RhdGVfbWFjaGluZV9jb25maWd1cmF0aW9uLGJhc2VrZXlfY29uZmlndXJhdGlvbixtb2RlbF9jb25maWd1cmF0aW9uLHJlcG9ydF9jb25maWd1cmF0aW9uLGRhdGFfcXVlcnlfY2ksVEFTS19XT1JLQkVOQ0gsVEFTS19SRVFVRVNUX0FVRElULFRBU0tfVEVNUExBVEVfR1JPVVBfTUFOQUdFTUVOVCxJTVBMRU1FTlRBVElPTl9URVJNSU5BTCxUQVNLX1JFUVVFU1RfTUFOQUdFTUVOVCxzeXN0ZW1fb3BlcmF0aW9uX2xvZyxUQVNLX1RBU0tfTUFOQUdFTUVOVCxUQVNLX1RFTVBMQVRFX01BTkFHRU1FTlQsQURNSU5fVEVSTUlOQUxfQVVESVQsTU9OSVRPUl9BRE1JTklTVFJBVE9SX0NPTkZJRyxBRE1JTl9URVJNSU5BTF9DT05GSUcsZGF0YV9tYW5hZ2VtZW50X2ltcG9ydCxBUFBfREVWLEFBX09ILEhPU1RfUk9PVF9URU1QLFNUR19PUFMsTU9OSVRPUl9BRE1JTixDTURCX0FETUlOLFBSRF9PUFMsQVBQX0FSQ10iLCJuZWVkUmVnaXN0ZXIiOmZhbHNlfQ.5lFS0GO6tHeLhgT1WBSxF0q3gYwuQXge_-8zRFcvCa8woBpAkf57WnQw6NAKoEyzdrxR_0ukx8aZzv1VUWG2yw",
     },
     // data: JSON.stringify(options.data || '')
-    data: JSON.stringify(options.data)
+    data: JSON.stringify(options.data),
   }
   // 导出请求时增加响应类型
-  if (options.url.endsWith('/export')) {
-    ajaxObj.responseType = 'blob'
+  if (options.url.endsWith("/export")) {
+    ajaxObj.responseType = "blob"
   }
   return window.request ? window.request(ajaxObj) : axios(ajaxObj)
 }
