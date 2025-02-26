@@ -605,11 +605,9 @@ export default {
         params.mgmtRole = params.mgmtRoles[0]
         res = await this.request('POST', this.apiCenter.dashboardCustomCopy, params)
       }
-      if (res.status === 'OK') {
-        this.getViewList()
-        if (this.authViewType === 'add') {
-          this.goToPanal(res.data, 'edit')
-        }
+      this.getViewList()
+      if (this.authViewType === 'add') {
+        this.goToPanal(res, 'edit')
       }
     },
     importPanel(type) {
