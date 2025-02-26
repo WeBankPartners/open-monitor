@@ -778,7 +778,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 
 func otherExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
-	result.endpoint.Step = defaultStep
+	result.endpoint.Step = param.Step
 	if mid.IsIllegalName(param.Name) {
 		result.validateMessage = "param instance name illegal"
 		return result
@@ -796,7 +796,7 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.validateMessage = "Default endpoint port can not empty if you want to get exporter metric "
 			return result
 		}
-		startTime := time.Now().Unix()
+		//startTime := time.Now().Unix()
 		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: param.Ip, Port: param.Port, Cluster: param.Cluster, Prefix: []string{}, Keyword: []string{}})
 		if err != nil {
 			result.err = err
@@ -806,11 +806,11 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
 		}
-		result.endpoint.Step, err = calcStep(startTime, param.Step)
-		if err != nil {
-			result.err = err
-			return result
-		}
+		//result.endpoint.Step, err = calcStep(startTime, param.Step)
+		//if err != nil {
+		//	result.err = err
+		//	return result
+		//}
 		result.metricList = strList
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
