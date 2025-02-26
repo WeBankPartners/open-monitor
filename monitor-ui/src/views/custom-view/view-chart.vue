@@ -95,7 +95,9 @@ export default {
       isLineSelectModalShow: false,
       setChartConfigId: '',
       chartInstance: null,
-      isToolTipShow: false
+      isToolTipShow: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter
     }
   },
   created() {
@@ -180,9 +182,9 @@ export default {
       })
       if (params !== []) {
         window.intervalFrom = 'view-chart'
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
+        this.request(
           'POST',
-          this.$root.apiCenter.metricConfigView.api,
+          this.apiCenter.metricConfigView.api,
           params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit

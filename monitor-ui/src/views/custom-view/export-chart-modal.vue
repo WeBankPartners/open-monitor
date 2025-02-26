@@ -64,12 +64,13 @@ export default {
       checkedNodeIdList: [],
       allNodeIdList: [],
       exportChartList: [],
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter
     }
   },
   methods: {
     getTreeList() {
-      this.request('GET', '/monitor/api/v2/dashboard/custom', {
+      this.request('GET', this.apiCenter.template.deleteV2, {
         id: this.pannelId
       }, res => {
         this.processChartList(res.charts || [])
