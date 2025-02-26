@@ -82,6 +82,30 @@ scrape_configs:
         files:
           - '/app/monitor/prometheus/sd_file/sd_file_60.json'
 
+  - job_name: 'sd_file_300'
+    scrape_interval: 300s
+    scrape_timeout: 300s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_300.json'
+
+  - job_name: 'sd_file_1800'
+    scrape_interval: 1800s
+    scrape_timeout: 1800s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_1800.json'
+
+  - job_name: 'sd_file_3600'
+    scrape_interval: 3600s
+    scrape_timeout: 3600s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_3600.json'
+
 #Kubernetes scrape configuration
 #Kubernetes_start
 #Kubernetes_end
