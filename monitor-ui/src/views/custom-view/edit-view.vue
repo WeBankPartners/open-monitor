@@ -839,7 +839,7 @@ export default {
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
             if (isEmpty(item.series)) {
-              item.series = (await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
+              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
             }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
@@ -1132,7 +1132,7 @@ export default {
           guid: this.metricGuid
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
-        const series = (await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
+        const series = await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
         console.error(series, 'testseries')
         const colorGroup = getRandomColor()
         const item = {
@@ -1389,7 +1389,7 @@ export default {
     async updateAllColorLine(index) {
       const item = this.tableData[index]
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-      const series = (await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
+      const series = await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
       console.error(series, 'color1')
       this.tableData[index].series = changeSeriesColor(series, this.tableData[index].colorGroup)
     },
