@@ -321,7 +321,6 @@ export default {
         mgmtRoles: [],
         updateUser: ''
       },
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       cardContentList: [
         {
           key: 'id',
@@ -375,7 +374,9 @@ export default {
       isModalShow: false,
       pannelId: null,
       panalName: '',
-      isShowProcessConfigModel: false
+      isShowProcessConfigModel: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -403,7 +404,7 @@ export default {
   },
   methods: {
     initData() {
-      this.pathMap = this.$root.apiCenter.template
+      this.pathMap = this.apiCenter.template
       this.getViewList()
       this.getAllRoles()
       if (this.$route.query.isCreate) {
@@ -449,7 +450,7 @@ export default {
           main_page_id: item.main_page_id,
         })
       })
-      this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
+      this.request('POST', this.pathMap.templateSet, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.isShowProcessConfigModel = false
         this.getViewList()
@@ -460,7 +461,7 @@ export default {
       const params = {
         dashboard_id: item.id
       }
-      this.request('GET','/monitor/api/v1/dashboard/custom/role/get', params, res => {
+      this.request('GET', this.apiCenter.getDashboardRole, params, res => {
         this.authorizationModel.result = res
         this.$root.JQ('#authorization_model').modal('show')
       })
@@ -470,7 +471,7 @@ export default {
         dashboard_id: this.dashboard_id,
         permission_list: this.authorizationModel.result
       }
-      this.request('POST', '/monitor/api/v1/dashboard/custom/role/save', params, () => {
+      this.request('POST', this.apiCenter.saveDashboardRole, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })
@@ -480,10 +481,10 @@ export default {
         page: 1,
         size: 1000
       }
-      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+      this.request('GET', this.apiCenter.getUserRoleList, params, res => {
         this.userRolesOptions = this.processRolesList(res.data)
       })
-      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+      this.request('GET', this.apiCenter.getUserManageRole, {}, res => {
         this.mgmtRolesOptions = this.processRolesList(res)
       })
     },
@@ -577,12 +578,13 @@ export default {
       this.userRoles = useRoles
       this.submitData()
     },
-    submitData() {
+    async submitData() {
       const params = {
         mgmtRoles: this.mgmtRoles,
         useRoles: this.userRoles
       }
-      let path = ''
+      // let path = ''
+      let res
       if (this.authViewType === 'import') {
         this.importExtraData = {
           rule: this.importPanelType,
@@ -593,22 +595,22 @@ export default {
       }
       if (this.authViewType === 'add') {
         params.name = this.addViewName
-        path = '/monitor/api/v2/dashboard/custom'
+        res = await this.request('POST', this.pathMap.singleDashV2, params)
       } else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
         params.id = this.boardId
-        path = '/monitor/api/v2/dashboard/custom/permission'
+        res = await this.request('POST', this.apiCenter.getDashboardCustomPermission, params)
       } else if (this.authViewType === 'copyDashboard') {
         params.dashboardId = this.pannelId
-        path = '/monitor/api/v2/dashboard/custom/copy'
         params.mgmtRole = params.mgmtRoles[0]
+        res = await this.request('POST', this.apiCenter.dashboardCustomCopy, params)
       }
-      this.request('POST', path, params, val => {
+      if (res.status === 'OK') {
         this.getViewList()
         if (this.authViewType === 'add') {
-          this.goToPanal(val, 'edit')
+          this.goToPanal(res.data, 'edit')
         }
-      })
+      }
     },
     importPanel(type) {
       this.importPanelType = type

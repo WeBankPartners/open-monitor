@@ -213,7 +213,6 @@
     "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group",
     "getThresholdServiceDetail": "/monitor/api/v2/alarm/strategy/list/service",
     "getThresholdDetailMainPath": "/monitor/api/v2/alarm/strategy/list",
-
     "bussinessMonitorExport": "/monitor/api/v2/service/log_keyword/export",
     "bussinessMonitorImport": "/monitor/api/v2/service/log_keyword/import",
 
@@ -238,5 +237,16 @@
     "getEncryptKey": "/monitor/api/v2/seed",
     "getTypeConfigList": "/monitor/api/v2/config/type/query",
     "createTypeConfig": "/monitor/api/v2/config/type",
-    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new"
+    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new",
+
+    "getDashboardRole": "/monitor/api/v1/dashboard/custom/role/get",
+    "saveDashboardRole": "/monitor/api/v1/dashboard/custom/role/save",
+    "getUserRoleList": "/monitor/api/v1/user/role/list",
+    "getUserManageRole": "/monitor/api/v1/user/manage_role/list",
+    "getDashboardCustomPermission": "/monitor/api/v2/dashboard/custom/permission",
+    "dashboardCustomCopy" : "/monitor/api/v2/dashboard/custom/copy",
+    "getDashboardAll": "/monitor/api/v2/dashboard/all",
+    "getChartManageList": "/monitor/api/v2/chart/manage/list",
+    "changeChartCustomPermission": "/monitor/api/v2/chart/custom/permission",
+    "chartInfo": "/monitor/api/v2/chart/custom"
 }
