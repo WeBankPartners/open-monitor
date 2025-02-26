@@ -96,7 +96,9 @@ export default {
         startIndex: 1,
         pageSize: 10
       },
-      autoRefresh: 0 // 保存刷新频率供告警列表使用
+      autoRefresh: 0, // 保存刷新频率供告警列表使用
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter
     }
   },
   mounted() {
@@ -143,7 +145,7 @@ export default {
         page: this.paginationInfo,
         priority: this.filtersForShow.length === 1 ? [this.filtersForShow[0].value] : undefined
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, responseData => {
+      this.request('POST', this.apiCenter.alarmProblemList, params, responseData => {
         this.paginationInfo.total = responseData.page.totalRows
         this.paginationInfo.startIndex = responseData.page.startIndex
         this.paginationInfo.pageSize = responseData.page.pageSize
@@ -177,7 +179,7 @@ export default {
       const params = {
         id: item.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+      this.request('POST',this.apiCenter.startNotify, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
@@ -199,7 +201,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.request('POST', this.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
       })
@@ -213,7 +215,7 @@ export default {
       this.showRemarkModal = true
     },
     remarkAlarm() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
+      this.request('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         this.showRemarkModal = false

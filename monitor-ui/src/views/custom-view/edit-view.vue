@@ -839,7 +839,7 @@ export default {
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
             if (isEmpty(item.series)) {
-              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+              item.series = await this.request('POST', this.apiCenter.chartCustomSeries, basicParams)
             }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
@@ -862,7 +862,7 @@ export default {
           }
           this.endpointValue = initialData[0].endpoint
           this.serviceGroup = selectedEndpointItem.app_object
-          this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
+          this.request('GET', this.apiCenter.recursiveType, {
             guid: selectedEndpointItem.option_value
           }, res => {
             if (!isEmpty(res)) {
@@ -880,15 +880,15 @@ export default {
         page: 1,
         size: 1000
       }
-      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+      this.request('GET', this.apiCenter.getUserRoleList, params, res => {
         this.userRolesOptions = this.processRolesList(res.data)
       })
-      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+      this.request('GET', this.apiCenter.getUserManageRole, {}, res => {
         this.mgmtRolesOptions = this.processRolesList(res)
       })
     },
     getSingleChartAuth() {
-      this.request('GET','/monitor/api/v2/chart/custom/permission', {
+      this.request('GET', this.apiCenter.changeChartCustomPermission, {
         chart_id: this.chartId
       }, res => {
         this.mgmtRoles = res.mgmtRoles
@@ -964,7 +964,7 @@ export default {
           page: 1,
           size: 10000
         }
-        this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
+        this.request('GET', this.apiCenter.resourceSearch.api, params, res => {
           this.endpointOptions = res
           let tempItem
           if (!isEmpty(this.selectedEndpointOptionItem) && this.selectedEndpointOptionItem.option_value) {
@@ -1000,7 +1000,7 @@ export default {
       this.serviceGroup = selectedItem.app_object
       this.endpointName = selectedItem.option_text
       this.endpointType = selectedItem.option_type_name
-      this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
+      this.request('GET', this.apiCenter.recursiveType, {
         guid: selectedItem.option_value
       }, res => {
         this.monitorType = isEmpty(res) ? '' : res[0]
@@ -1034,7 +1034,7 @@ export default {
         const params = {
           guid: selectedItem.option_value
         }
-        this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', params, res => {
+        this.request('GET', this.apiCenter.recursiveType, params, res => {
           this.monitorType = isEmpty(res) ? '' : res[0]
           this.monitorTypeOptions = res
           this.searchMetricByType()
@@ -1047,14 +1047,12 @@ export default {
       if (!this.endpointValue || !this.monitorType) {
         return
       }
-
-      const api = '/monitor/api/v2/monitor/metric/list'
       const params = {
         monitorType: this.monitorType,
         serviceGroup: this.endpointValue,
         query: this.chartConfigForm.lineType === 'twoYaxes' ? 'comparison' : 'all'
       }
-      this.request('GET', api, params, res => {
+      this.request('GET', this.apiCenter.metricList.api, params, res => {
         this.metricOptions = this.filterHasUsedMetric(res)
       })
     },
@@ -1089,14 +1087,13 @@ export default {
       this.chartAddTags = this.initTagsFromOptions(this.chartAddTagOptions)
     },
     findTagsByMetric(metricId, endpoint, serviceGroup) {
-      const api = '/monitor/api/v2/metric/tag/value-list'
       const params = {
         metricId,
         endpoint,
         serviceGroup
       }
       return new Promise(resolve => {
-        this.request('POST', api, params, responseData => {
+        this.request('POST', this.apiCenter.metricTagValue, params, responseData => {
           const result = {}
           if (!isEmpty(responseData)) {
             responseData.forEach(item => {
@@ -1132,8 +1129,7 @@ export default {
           guid: this.metricGuid
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
-        const series = await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-        console.error(series, 'testseries')
+        const series = await this.request('POST', this.apiCenter.chartCustomSeries, basicParams)
         const colorGroup = getRandomColor()
         const item = {
           endpoint: this.endpointValue,
@@ -1166,13 +1162,13 @@ export default {
       })
       Object.assign(this.chartConfigForm, template.value)
     },
-    requestReturnPromise(method, api, params) {
-      return new Promise(resolve => {
-        this.request(method, api, params, res => {
-          resolve(res)
-        })
-      })
-    },
+    // requestReturnPromise(method, api, params) {
+    //   return new Promise(resolve => {
+    //     this.request(method, api, params, res => {
+    //       resolve(res)
+    //     })
+    //   })
+    // },
     removeTableItem(index) {
       this.$delete(this.tableData, index)
       this.searchMetricByType()
@@ -1193,7 +1189,7 @@ export default {
         if (isPublic) {
           params.public = 1 // 是否存入图表库，1表示是
         }
-        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
+        this.request('GET', this.apiCenter.chartCustomNameExist, params, res => {
           if (res) {
             this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')))
           }
@@ -1243,7 +1239,7 @@ export default {
           id: this.chartId,
           chartSeries
         })
-        this.request('PUT', '/monitor/api/v2/chart/custom', params, () => {
+        this.request('PUT', this.apiCenter.chartInfo, params, () => {
           resolve()
         })
       })
@@ -1274,8 +1270,7 @@ export default {
     saveChartAuth(mgmtRoles, useRoles) {
       this.mgmtRoles = mgmtRoles
       this.useRoles = useRoles
-      const path = '/monitor/api/v2/chart/custom/permission'
-      this.request('POST', path, {
+      this.request('POST', this.apiCenter.changeChartCustomPermission, {
         chartId: this.chartId,
         mgmtRoles,
         useRoles
@@ -1295,7 +1290,7 @@ export default {
         }
         this.request(
           'POST',
-          '/monitor/api/v1/dashboard/pie/chart',
+          this.apiCenter.metricConfigPieView.api,
           params,
           res => {
             drawPieChart(this, res)
@@ -1323,7 +1318,7 @@ export default {
         }
         this.request(
           'POST',
-          '/monitor/api/v1/dashboard/chart',
+          this.apiCenter.metricConfigView.api,
           params,
           responseData => {
             if (isEmpty(responseData.series)) {
@@ -1389,8 +1384,7 @@ export default {
     async updateAllColorLine(index) {
       const item = this.tableData[index]
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-      const series = await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
-      console.error(series, 'color1')
+      const series = await this.request('POST', this.apiCenter.chartCustomSeries, basicParams)
       this.tableData[index].series = changeSeriesColor(series, this.tableData[index].colorGroup)
     },
     changeColorGroup(isShow = true, data, key) {

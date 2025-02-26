@@ -248,5 +248,13 @@
     "getDashboardAll": "/monitor/api/v2/dashboard/all",
     "getChartManageList": "/monitor/api/v2/chart/manage/list",
     "changeChartCustomPermission": "/monitor/api/v2/chart/custom/permission",
-    "chartInfo": "/monitor/api/v2/chart/custom"
+    "chartInfo": "/monitor/api/v2/chart/custom",
+    "chartCustomSeries": "/monitor/api/v2/chart/custom/series/config",
+    "metricTagValue": "/monitor/api/v2/metric/tag/value-list",
+    "chartCustomNameExist": "/monitor/api/v2/chart/custom/name/exist",
+    "alarmProblemList": "/monitor/api/v1/alarm/problem/page",
+    "chartSharedList": "/monitor/api/v2/chart/shared/list",
+    "dashboardCustom": "/monitor/api/v2/dashboard/custom",
+    "chartCustomCopy": "/monitor/api/v2/chart/custom/copy",
+    "chartCustomName": "/monitor/api/v2/chart/custom/name"
 }

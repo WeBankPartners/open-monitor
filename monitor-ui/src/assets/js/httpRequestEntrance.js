@@ -87,13 +87,11 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
       if (window.request) {
         if (response.status === 'OK') {
           resolve(response.data)
-          console.error('enter window request', response)
           return callback ? callback(response.data, response.message, response.data) : null
         }
       } else {
         if (response.status < 400) {
           if (response.data.status === 'OK') {
-            console.error('enter 33', response)
             resolve(response.data.data)
             return callback ? callback(response.data.data ,response.data.message, response.data) : null
           }
