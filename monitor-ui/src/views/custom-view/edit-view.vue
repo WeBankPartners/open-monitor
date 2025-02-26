@@ -749,7 +749,8 @@ export default {
       isChartSeriesEmpty: false,
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      apiCenter: this.$root.apiCenter
     }
   },
   computed: {
@@ -798,7 +799,7 @@ export default {
   methods: {
     async getTableData() {
       this.getEndpointList()
-      this.request('GET', '/monitor/api/v2/chart/custom', {
+      this.request('GET', this.apiCenter.chartInfo, {
         chart_id: this.chartId
       }, async res => {
         // public是true的时候，是引用态， public为false的时候，为非引用态
@@ -838,7 +839,7 @@ export default {
           if (item.comparison) {
             const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
             if (isEmpty(item.series)) {
-              item.series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+              item.series = (await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
             }
           } else {
             if (isEmpty(item.series) && this.chartConfigForm.chartType !== 'pie') {
@@ -1131,7 +1132,8 @@ export default {
           guid: this.metricGuid
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '', {})
-        const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+        const series = (await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
+        console.error(series, 'testseries')
         const colorGroup = getRandomColor()
         const item = {
           endpoint: this.endpointValue,
@@ -1387,7 +1389,8 @@ export default {
     async updateAllColorLine(index) {
       const item = this.tableData[index]
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid, item)
-      const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)
+      const series = (await this.request('POST', '/monitor/api/v2/chart/custom/series/config', basicParams)).data
+      console.error(series, 'color1')
       this.tableData[index].series = changeSeriesColor(series, this.tableData[index].colorGroup)
     },
     changeColorGroup(isShow = true, data, key) {
