@@ -298,28 +298,28 @@ type dbLogger struct {
 }
 
 func (d *dbLogger) Debug(v ...interface{}) {
-	d.Logger.Debug(fmt.Sprint(v...))
+	d.Logger.Debugw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Debugf(format string, v ...interface{}) {
-	d.Logger.Debug(fmt.Sprintf(format, v...))
+	d.Logger.Debugw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Error(v ...interface{}) {
-	d.Logger.Error(fmt.Sprint(v...))
+	d.Logger.Errorw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Errorf(format string, v ...interface{}) {
-	d.Logger.Error(fmt.Sprintf(format, v...))
+	d.Logger.Errorw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Info(v ...interface{}) {
-	d.Logger.Info(fmt.Sprint(v...))
+	d.Logger.Infow(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Infof(format string, v ...interface{}) {
 	if len(v) < 4 {
-		d.Logger.Info(fmt.Sprintf(format, v...))
+		d.Logger.Infow(fmt.Sprintf(format, v...))
 		return
 	}
 	var costMs float64 = 0
@@ -339,15 +339,15 @@ func (d *dbLogger) Infof(format string, v ...interface{}) {
 		secTime, _ := strconv.ParseFloat(costTime[mIndex+1:], 64)
 		costMs = (minTime*60 + secTime) * 1000
 	}
-	d.Logger.Info("db_log", zap.String("sql", fmt.Sprintf("%s", v[1])), zap.String("param", fmt.Sprintf("%v", v[2])), zap.Float64("cost_ms", costMs))
+	d.Logger.Infow("db_log", zap.String("sql", fmt.Sprintf("%s", v[1])), zap.String("param", fmt.Sprintf("%v", v[2])), zap.Float64("cost_ms", costMs))
 }
 
 func (d *dbLogger) Warn(v ...interface{}) {
-	d.Logger.Warn(fmt.Sprint(v...))
+	d.Logger.Warnw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Warnf(format string, v ...interface{}) {
-	d.Logger.Warn(fmt.Sprintf(format, v...))
+	d.Logger.Warnw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Level() xorm_log.LogLevel {
