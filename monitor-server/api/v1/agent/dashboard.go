@@ -38,7 +38,7 @@ func ExportPanelAdd(c *gin.Context) {
 	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param.Inputs) == 0 {
 			result = resultObj{ResultCode: "0", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamEmptyError.Error(), "inputs")}
-			log.Logger.Warn(result.ResultMessage)
+			log.Warn(nil, log.LOGGER_APP, result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
 		}
@@ -111,11 +111,11 @@ func ExportPanelAdd(c *gin.Context) {
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
-		log.Logger.Info("Plugin result", log.JsonObj("result", result))
+		log.Info(nil, log.LOGGER_APP, "Plugin result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
 		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
-		log.Logger.Warn(result.ResultMessage)
+		log.Warn(nil, log.LOGGER_APP, result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}
 }
@@ -239,11 +239,11 @@ func ExportPanelDelete(c *gin.Context) {
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
-		log.Logger.Info("Plugin result", log.JsonObj("result", result))
+		log.Info(nil, log.LOGGER_APP, "Plugin result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	} else {
 		result = resultObj{ResultCode: "1", ResultMessage: fmt.Sprintf(m.GetMessageMap(c).ParamValidateError.Error(), err.Error())}
-		log.Logger.Warn(result.ResultMessage)
+		log.Warn(nil, log.LOGGER_APP, result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}
 }

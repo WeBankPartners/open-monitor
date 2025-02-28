@@ -32,7 +32,7 @@
           {{$t('m_button_add')}}
         </p>
         <div style="margin:8px;text-align:center">
-          <Icon @click="addCluster" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />
+          <Icon @click="addCluster" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#5384FF'" />
         </div>
       </Card>
     </Card>
@@ -66,7 +66,7 @@
           {{$t('m_button_add')}}
         </p>
         <div style="margin:8px;text-align:center">
-          <Icon @click="addItem" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />
+          <Icon @click="addItem" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#5384FF'" />
         </div>
       </Card>
     </Card>

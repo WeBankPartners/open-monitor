@@ -153,7 +153,7 @@ export default {
 <style lang="less">
 .business-monitor {
   .ivu-radio-group-button .ivu-radio-wrapper-checked {
-    background: #2d8cf0;
+    background: #5384FF;
     color: #fff;
   }
 }

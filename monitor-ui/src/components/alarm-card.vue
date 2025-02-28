@@ -63,7 +63,7 @@
         />
       </Tooltip>
       <Poptip trigger="hover" transfer>
-        <div slot="title" style="white-space: normal;color: #2d8cf0">
+        <div slot="title" style="white-space: normal;color: #5384FF">
           <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
         </div>
         <div slot="content" style="white-space: normal;padding:12px">
@@ -99,7 +99,7 @@
           type="ios-pricetags"
           size="18"
           class="fa-operate"
-          :color="data.custom_message !== '' ? '#2d8cf0' : ''"
+          :color="data.custom_message !== '' ? '#5384FF' : ''"
           @click="remarkModal(data)"
         />
       </Tooltip>

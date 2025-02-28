@@ -1,177 +1,177 @@
 export const dataPick = [
   {
     value: -1800,
-    label: '30m'
+    label: '30m',
   },
   {
     value: -3600,
-    label: '1h'
+    label: '1h',
   },
   {
     value: -10800,
-    label: '3h'
+    label: '3h',
   },
   {
     value: -43200,
-    label: '12h'
+    label: '12h',
   },
   {
     value: -86400,
-    label: '24h'
-  }
+    label: '24h',
+  },
 ]
 
 export const layoutOptions = [
   {
     value: 'customize',
-    label: 'm_customize'
+    label: 'm_customize',
   },
   {
     value: 'two',
-    label: 'm_two_columns'
+    label: 'm_two_columns',
   },
   {
     value: 'three',
-    label: 'm_three_columns'
+    label: 'm_three_columns',
   },
   {
     value: 'four',
-    label: 'm_four_columns'
+    label: 'm_four_columns',
   },
   {
     value: 'five',
-    label: 'm_five_columns'
+    label: 'm_five_columns',
   },
   {
     value: 'six',
-    label: 'm_six_columns'
+    label: 'm_six_columns',
   },
   {
     value: 'seven',
-    label: 'm_seven_columns'
+    label: 'm_seven_columns',
   },
   {
     value: 'eight',
-    label: 'm_eight_columns'
-  }
+    label: 'm_eight_columns',
+  },
 ]
 
 export const layoutColumns = {
   customize: {
-    w: 6
+    w: 6,
   },
   two: {
-    w: 6
+    w: 6,
   },
   three: {
-    w: 4
+    w: 4,
   },
   four: {
-    w: 3
+    w: 3,
   },
   five: {
-    w: 2.4
+    w: 2.4,
   },
   six: {
-    w: 2
+    w: 2,
   },
   seven: {
-    w: 1.7
+    w: 1.7,
   },
   eight: {
-    w: 1.5
-  }
+    w: 1.5,
+  },
 }
 
 export const autoRefreshConfig = [
   {
     value: -1,
-    label: 'off'
+    label: 'off',
   },
   {
     value: 5,
-    label: '5s'
+    label: '5s',
   },
   {
     value: 10,
-    label: '10s'
+    label: '10s',
   },
   {
     value: 30,
-    label: '30s'
+    label: '30s',
   },
   {
     value: 60,
-    label: '1m'
+    label: '1m',
   },
   {
     value: 300,
-    label: '5m'
-  }
+    label: '5m',
+  },
 ]
 
 export const thresholdList = [
   {
     label: '>',
-    value: '>'
+    value: '>',
   },
   {
     label: '>=',
-    value: '>='
+    value: '>=',
   },
   {
     label: '<',
-    value: '<'
+    value: '<',
   },
   {
     label: '<=',
-    value: '<='
+    value: '<=',
   },
   {
     label: '==',
-    value: '=='
+    value: '==',
   },
   {
     label: '!=',
-    value: '!='
-  }
+    value: '!=',
+  },
 ]
 
 export const lastList = [
   {
     label: 'sec',
-    value: 's'
+    value: 's',
   },
   {
     label: 'min',
-    value: 'm'
+    value: 'm',
   },
   {
     label: 'hour',
-    value: 'h'
-  }
+    value: 'h',
+  },
 ]
 
 export const priorityList = [
   {
     label: 'm_high',
-    value: 'high'
+    value: 'high',
   },
   {
     label: 'm_medium',
-    value: 'medium'
+    value: 'medium',
   },
   {
     label: 'm_low',
-    value: 'low'
-  }
+    value: 'low',
+  },
 ]
 
 export const endpointTag = {
   host: 'cyan',
   mysql: 'blue',
   redis: 'geekblue',
-  tomcat: 'purple'
+  tomcat: 'purple',
 }
 
 export const randomColor = [
@@ -188,15 +188,16 @@ export const randomColor = [
   'orange',
   'cyan',
   'geekblue',
-  'purple']
+  'purple',
+]
 
 export const colorList = {
   cyan: '#13c2c2',
   blue: '#1890ff',
   geekblue: '#2f54eb',
   purple: '#722ed1',
-  primary: '#2d8cf0',
-  success: '#19be6b',
+  primary: '#5384FF',
+  success: '#00CB91',
   warning: '#f90',
   green: '#b7eb8f',
   red: '#52c41a',
@@ -204,62 +205,74 @@ export const colorList = {
   pink: '#ffadd2',
   magenta: '#eb2f96',
   volcano: '#fa541c',
-  orange: '#e8c16d'
+  orange: '#e8c16d',
 }
 export const cycleOption = [
   {
     label: 'm_all',
-    value: 'All'
+    value: 'All',
   },
   {
     label: 'm_monday',
-    value: 'Monday'
+    value: 'Monday',
   },
   {
     label: 'm_tuesday',
-    value: 'Tuesday'
+    value: 'Tuesday',
   },
   {
     label: 'm_wednesday',
-    value: 'Wednesday'
+    value: 'Wednesday',
   },
   {
     label: 'm_thursday',
-    value: 'Thursday'
+    value: 'Thursday',
   },
   {
     label: 'm_friday',
-    value: 'Friday'
+    value: 'Friday',
   },
   {
     label: 'm_saturday',
-    value: 'Saturday'
+    value: 'Saturday',
   },
   {
     label: 'm_sunday',
-    value: 'Sunday'
-  }
+    value: 'Sunday',
+  },
 ]
 
-export const collectionInterval =[
+export const collectionInterval = [
   {
     label: '1s',
-    value: 1
+    value: 1,
   },
   {
     label: '5s',
-    value: 5
+    value: 5,
   },
   {
     label: '10s',
-    value: 10
+    value: 10,
   },
   {
     label: '30s',
-    value: 30
+    value: 30,
   },
   {
     label: '60s',
-    value: 60
+    value: 60,
+  },
+  {
+    label: '5min',
+    value: 300,
+  },
+  {
+    label: '30min',
+    value: 1800,
+  },
+  {
+    label: '60min',
+    value: 3600,
   },
 ]

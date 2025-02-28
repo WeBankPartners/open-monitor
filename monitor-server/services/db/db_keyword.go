@@ -7,6 +7,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -276,7 +277,7 @@ func doDbKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
 	dataMap, err := datasource.QueryLogKeywordData("db")
 	if err != nil {
-		log.Logger.Error("Check log keyword break with get prometheus data", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check log keyword break with get prometheus data", zap.Error(err))
 		return
 	}
 	if len(dataMap) == 0 {
@@ -285,17 +286,17 @@ func doDbKeywordMonitorJob() {
 	var dbKeywordConfigs []*models.DbKeywordMonitorQueryObj
 	err = x.SQL("select distinct t1.guid,t1.service_group,t1.name,t1.query_sql,t1.step,t1.monitor_type,t1.content,t1.priority,t1.active_window,t1.notify_enable,t2.source_endpoint,t2.target_endpoint from db_keyword_monitor t1 left join db_keyword_endpoint_rel t2 on t1.guid=t2.db_keyword_monitor where t2.target_endpoint<>''").Find(&dbKeywordConfigs)
 	if err != nil {
-		log.Logger.Error("DoDbKeywordMonitorJob, query db_keyword_monitor fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "DoDbKeywordMonitorJob, query db_keyword_monitor fail", zap.Error(err))
 		return
 	}
 	if len(dbKeywordConfigs) == 0 {
-		log.Logger.Debug("Check db keyword break with empty config ")
+		log.Debug(nil, log.LOGGER_APP, "Check db keyword break with empty config ")
 		return
 	}
 	var alarmTable []*models.DbKeywordAlarm
 	err = x.SQL("select * from db_keyword_alarm").Find(&alarmTable)
 	if err != nil {
-		log.Logger.Error("Check db keyword break with query exist closed alarm fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Check db keyword break with query exist closed alarm fail", zap.Error(err))
 		return
 	}
 	alarmMap := make(map[string]*models.DbKeywordAlarm)
@@ -330,14 +331,14 @@ func doDbKeywordMonitorJob() {
 			} else {
 				oldValue = existAlarm.StartValue
 			}
-			log.Logger.Debug("doDbKeywordMonitorJob match exist alarm", log.String("key", key), log.Float64("newValue", newValue), log.Float64("oldValue", oldValue), log.String("status", existAlarm.Status))
+			log.Debug(nil, log.LOGGER_APP, "doDbKeywordMonitorJob match exist alarm", zap.String("key", key), zap.Float64("newValue", newValue), zap.Float64("oldValue", oldValue), zap.String("status", existAlarm.Status))
 			if newValue == oldValue {
 				continue
 			}
 			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid, Endpoint: config.TargetEndpoint}
 				if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
-					log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
+					log.Warn(nil, log.LOGGER_APP, "doDbKeywordMonitorJob try to get last keyword fail", zap.String("logKeywordConfigGuid", config.Guid), zap.Error(tmpErr))
 				} else {
 					existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLastRowObj.KeywordContent
 				}
@@ -360,7 +361,7 @@ func doDbKeywordMonitorJob() {
 			}
 			getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid, Endpoint: config.TargetEndpoint}
 			if tmpErr := getDbKeywordLastRow(&getLastRowObj); tmpErr != nil {
-				log.Logger.Warn("doDbKeywordMonitorJob try to get last keyword fail", log.String("logKeywordConfigGuid", config.Guid), log.Error(tmpErr))
+				log.Warn(nil, log.LOGGER_APP, "doDbKeywordMonitorJob try to get last keyword fail", zap.String("logKeywordConfigGuid", config.Guid), zap.Error(tmpErr))
 			} else {
 				alarmContent += getLastRowObj.KeywordContent
 			}
@@ -372,30 +373,30 @@ func doDbKeywordMonitorJob() {
 	}
 	for _, v := range addAlarmRows {
 		if tmpErr := doLogKeywordDBAction(v); tmpErr != nil {
-			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail", zap.String("tags", v.Tags), zap.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
 				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
-					log.Logger.Warn("doDbKeywordMonitorJob ignore notify with config", log.String("dbKeywordMonitor", v.AlarmStrategy))
+					log.Warn(nil, log.LOGGER_APP, "doDbKeywordMonitorJob ignore notify with config", zap.String("dbKeywordMonitor", v.AlarmStrategy))
 					continue
 				}
 				_, tmpNotifyRow, getNotifyErr := GetDbKeywordNotify(v.AlarmStrategy)
 				if getNotifyErr != nil {
-					log.Logger.Error("doDbKeywordMonitorJob get notify data fail", log.String("dbKeywordMonitor", v.AlarmStrategy), log.Error(getNotifyErr))
+					log.Error(nil, log.LOGGER_APP, "doDbKeywordMonitorJob get notify data fail", zap.String("dbKeywordMonitor", v.AlarmStrategy), zap.Error(getNotifyErr))
 					continue
 				}
 				if tmpNotifyRow.Guid == "" {
-					log.Logger.Warn("doDbKeywordMonitorJob get an empty notify row", log.String("dbKeywordMonitor", v.AlarmStrategy))
+					log.Warn(nil, log.LOGGER_APP, "doDbKeywordMonitorJob get an empty notify row", zap.String("dbKeywordMonitor", v.AlarmStrategy))
 					continue
 				}
 				tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
 				if tmpAlarmObj.Id <= 0 {
-					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
+					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify fail,query alarm with tags fail", zap.String("tags", v.Tags))
 					continue
 				}
 				if tmpNotifyRow.ProcCallbackMode == models.AlarmNotifyManualMode && tmpNotifyRow.ProcCallbackKey != "" {
 					if _, execErr := x.Exec("update alarm set notify_id=? where id=?", tmpNotifyRow.Guid, tmpAlarmObj.Id); execErr != nil {
-						log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", tmpAlarmObj.Id), log.Error(execErr))
+						log.Error(nil, log.LOGGER_APP, "update alarm table notify id fail", zap.Int("alarmId", tmpAlarmObj.Id), zap.Error(execErr))
 					}
 				}
 				notifyAction(tmpNotifyRow, &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
@@ -416,7 +417,7 @@ func getDbKeywordLastRow(param *models.DbLastKeywordDto) (err error) {
 		return fmt.Errorf("Can not find db_data_exporter address ")
 	}
 	postDataByte, _ := json.Marshal([]*models.DbLastKeywordDto{param})
-	//log.Logger.Debug("getDbKeywordLastRow", log.String("postData", string(postDataByte)))
+	//log.Debug(nil, log.LOGGER_APP,"getDbKeywordLastRow", zap.String("postData", string(postDataByte)))
 	resp, err := http.Post(fmt.Sprintf("%s/db/lastkeyword", dbExportAddress), "application/json", strings.NewReader(string(postDataByte)))
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
@@ -468,7 +469,7 @@ func InActiveWindowList(activeWindowList string) bool {
 func inActiveWindow(activeWindow string) bool {
 	windowList := strings.Split(activeWindow, "-")
 	if len(windowList) != 2 {
-		log.Logger.Debug("active window illegal", log.String("activeWindow", activeWindow))
+		log.Debug(nil, log.LOGGER_APP, "active window illegal", zap.String("activeWindow", activeWindow))
 		return true
 	}
 	start := windowList[0]

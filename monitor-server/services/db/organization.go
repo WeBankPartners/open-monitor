@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ func GetOrganizationList(nameText, endpointText string, startIndex, pageSize int
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
-		log.Logger.Error("Get panel_recursive table error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get panel_recursive table error", zap.Error(err))
 		return pageInfo, result, err
 	}
 	if len(data) == 0 {
@@ -130,7 +131,7 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 }
 
 func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
-	log.Logger.Info("start UpdateOrganization", log.String("operation", operation), log.String("guid", param.Guid))
+	log.Info(nil, log.LOGGER_APP, "start UpdateOrganization", zap.String("operation", operation), zap.String("guid", param.Guid))
 	var tableData []*m.PanelRecursiveTable
 	var dbMetricMonitorList []*m.DbMetricMonitorObj
 	var actions, delLogMetricMonitorActions []*Action
@@ -248,7 +249,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			if len(affectHost) > 0 {
 				err = SyncLogMetricExporterConfig(affectHost)
 				if err != nil {
-					log.Logger.Error("SyncLogMetricExporterConfig fail", log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
 				}
 			}
 			if len(endpointGroup) > 0 {
@@ -361,7 +362,7 @@ func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) (err error) {
 	actions = append(actions, getUpdateServiceGroupNotifyRoles(param.Guid, roleStringList)...)
 	err = Transaction(actions)
 	if err != nil {
-		log.Logger.Error("Update organization role error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update organization role error", zap.Error(err))
 	}
 	return err
 }
@@ -444,7 +445,7 @@ func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) (err error) {
 	actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, roleList)...)
 	err = Transaction(actions)
 	if err != nil {
-		log.Logger.Error("Update organization callback error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update organization callback error", zap.Error(err))
 	}
 	return err
 }
@@ -452,7 +453,7 @@ func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) (err error) {
 func UpdateOrgConnect(param m.UpdateOrgConnectParam) error {
 	_, err := x.Exec("UPDATE panel_recursive SET email=?,phone=? WHERE guid=?", strings.Join(param.Mail, ","), strings.Join(param.Phone, ","), param.Guid)
 	if err != nil {
-		log.Logger.Error("Update organization connection error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update organization connection error", zap.Error(err))
 	}
 	return err
 }
@@ -485,7 +486,7 @@ func SearchPanelByName(name, endpoint string) []m.OptionModel {
 		err = x.SQL("SELECT guid,display_name,obj_type FROM panel_recursive WHERE display_name LIKE ? AND endpoint LIKE ?", name, endpoint).Find(&panelRecursiveTables)
 	}
 	if err != nil {
-		log.Logger.Error("Get panel_recursive table data fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get panel_recursive table data fail", zap.Error(err))
 	}
 	for _, v := range panelRecursiveTables {
 		result = append(result, m.OptionModel{OptionText: fmt.Sprintf("%s(%s)", v.DisplayName, v.ObjType), OptionValue: v.Guid})

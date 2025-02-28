@@ -37,11 +37,11 @@
       />
       <div class='upload-content mr-4'>
         <Button
-          type="info"
+          class="btn-upload"
           v-if="typeMap[type] === 'service'"
           @click="exportData"
         >
-          <img src="../../assets/img/export.png" class="btn-img" alt="" />
+          <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
           {{ $t('m_export') }}
         </Button>
         <Upload
@@ -55,8 +55,8 @@
           :on-error="uploadFailed"
         >
           <!-- <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button> -->
-          <Button type="primary" class="btn-left">
-            <img src="../../assets/img/import.png" class="btn-img" alt="" />
+          <Button class="btn-upload">
+            <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
         </Upload>
@@ -215,7 +215,7 @@ export default {
 <style lang="less">
 .log-management {
   .ivu-radio-group-button .ivu-radio-wrapper-checked {
-    background: #2d8cf0;
+    background: #5384FF;
     color: #fff;
   }
 }

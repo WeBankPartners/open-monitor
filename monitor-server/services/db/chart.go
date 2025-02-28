@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strconv"
 )
 
@@ -60,7 +61,7 @@ func ChartDelete(ids []string) error {
 	for _, id := range ids {
 		idInt, tmpErr := strconv.Atoi(id)
 		if tmpErr != nil {
-			log.Logger.Error("Try to trans id to int fail", log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Try to trans id to int fail", zap.Error(tmpErr))
 			continue
 		}
 		actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{idInt}})

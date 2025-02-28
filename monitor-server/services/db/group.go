@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -52,7 +53,7 @@ func GetSingleGrp(id int, name string) (error, m.GrpTable) {
 	var result []*m.GrpTable
 	err := x.SQL("SELECT * FROM grp WHERE id=? or name=?", id, name).Find(&result)
 	if err != nil {
-		return fmt.Errorf("Get grp table fail,%s ",err.Error()), m.GrpTable{}
+		return fmt.Errorf("Get grp table fail,%s ", err.Error()), m.GrpTable{}
 	}
 	if len(result) == 0 {
 		return fmt.Errorf("Can not find grp data with id=%d or name=%s ", id, name), m.GrpTable{}
@@ -69,7 +70,7 @@ func SearchGrp(search string) (error, []*m.OptionModel) {
 	search = "%" + search + "%"
 	err := x.SQL(`SELECT * FROM grp WHERE name LIKE ?`, search).Find(&grps)
 	if err != nil {
-		log.Logger.Error("Search grp fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Search grp fail", zap.Error(err))
 		return err, result
 	}
 	for _, v := range grps {
@@ -96,13 +97,13 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 	return err
 }
 
-func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int) {
+func UpdateEndpointGrp(param m.EndpointGrpParam) (err error, affectGroupIds []int) {
 	var grpEndpoints []*m.GrpEndpointTable
 	x.SQL("select * from grp_endpoint where endpoint_id=?", param.EndpointId).Find(&grpEndpoints)
 	if len(grpEndpoints) > 0 {
-		for _,v := range grpEndpoints {
+		for _, v := range grpEndpoints {
 			existFlag := false
-			for _,vv := range param.GroupIds {
+			for _, vv := range param.GroupIds {
 				if vv == v.GrpId {
 					existFlag = true
 					break
@@ -113,9 +114,9 @@ func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int
 				affectGroupIds = append(affectGroupIds, v.GrpId)
 			}
 		}
-		for _,v := range param.GroupIds {
+		for _, v := range param.GroupIds {
 			existFlag := false
-			for _,vv := range grpEndpoints {
+			for _, vv := range grpEndpoints {
 				if vv.GrpId == v {
 					existFlag = true
 					break
@@ -125,7 +126,7 @@ func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int
 				affectGroupIds = append(affectGroupIds, v)
 			}
 		}
-	}else{
+	} else {
 		affectGroupIds = param.GroupIds
 	}
 	var actions []*Action
@@ -137,7 +138,7 @@ func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int
 		}
 		actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
 	}
-	return Transaction(actions),affectGroupIds
+	return Transaction(actions), affectGroupIds
 }
 
 func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
@@ -153,9 +154,9 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
 		}
 		updateError := Transaction(actions)
 		if updateError != nil {
-			return updateError,false
-		}else{
-			return updateError,true
+			return updateError, false
+		} else {
+			return updateError, true
 		}
 	}
 	if len(param.Endpoints) == 0 {
@@ -210,17 +211,17 @@ func getGrpParent(grpId int) m.GrpTable {
 	return m.GrpTable{}
 }
 
-func DeleteEndpointFromGroup(endpointId int) (tplList []int,err error) {
+func DeleteEndpointFromGroup(endpointId int) (tplList []int, err error) {
 	var tplTable []*m.TplTable
 	err = x.SQL("select * from tpl where grp_id in (select grp_id from grp_endpoint where endpoint_id=?)", endpointId).Find(&tplTable)
 	if err != nil {
 		err = fmt.Errorf("Get delete endpoint affect tpl list fail,%s ", err.Error())
 		return
 	}
-	for _,tpl := range tplTable {
+	for _, tpl := range tplTable {
 		tplList = append(tplList, tpl.Id)
 	}
-	_,err = x.Exec("delete from grp_endpoint where endpoint_id=?", endpointId)
+	_, err = x.Exec("delete from grp_endpoint where endpoint_id=?", endpointId)
 	if err != nil {
 		err = fmt.Errorf("Delete group endpoint relation fail,%s ", err.Error())
 	}

@@ -287,12 +287,6 @@ const router = new Router({
       title: "自定义视图外链调用",
       meta: {},
       component: () => import("@/views/call-custom-view-external")
-    },
-    {
-      path: "/test",
-      name: "test",
-      component: () => import("@/views/test"),
-      title: "test"
     }
   ]
 });

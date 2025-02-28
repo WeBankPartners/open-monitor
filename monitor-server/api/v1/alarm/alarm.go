@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -26,23 +27,23 @@ func AcceptAlert(c *gin.Context) {
 		mid.ReturnSuccess(c)
 		return
 	}
-	log.Logger.Debug("accept", log.JsonObj("body", param))
+	log.Debug(nil, log.LOGGER_APP, "accept", log.JsonObj("body", param))
 	nowTime := time.Now()
 	var alarms []*m.AlarmHandleObj
 	for _, v := range param.Alerts {
 		tmpV := v
 		tmpAlarm, tmpErr := buildNewAlarm(&tmpV, nowTime)
 		if tmpErr != nil {
-			log.Logger.Warn("Accept alert handle fail", log.Error(tmpErr))
+			log.Warn(nil, log.LOGGER_APP, "Accept alert handle fail", zap.Error(tmpErr))
 			continue
 		}
-		log.Logger.Debug("build alarm result", log.JsonObj("alarm", tmpAlarm))
+		log.Debug(nil, log.LOGGER_APP, "build alarm result", log.JsonObj("alarm", tmpAlarm))
 		alarms = append(alarms, &tmpAlarm)
 	}
 	alarms = db.UpdateAlarms(alarms)
 	var treeventSendObj m.EventTreeventNotifyDto
 	for _, v := range alarms {
-		log.Logger.Debug("update alarm result", log.JsonObj("alarm", v))
+		log.Debug(nil, log.LOGGER_APP, "update alarm result", log.JsonObj("alarm", v))
 		if v.AlarmConditionGuid != "" {
 			continue
 		}
@@ -75,14 +76,14 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	var strategyConditions []*m.AlarmStrategyMetricWithExpr
 	strategyGuid = param.Labels["strategy_guid"]
 	conditionCrc = param.Labels["condition_crc"]
-	log.Logger.Debug("start build alarm data", log.String("strategyGuid", strategyGuid), log.String("conditionCrc", conditionCrc))
+	log.Debug(nil, log.LOGGER_APP, "start build alarm data", zap.String("strategyGuid", strategyGuid), zap.String("conditionCrc", conditionCrc))
 	alarm.AlarmConditionCrcHash = conditionCrc
 	if strategyGuid != "" {
 		strategyObj, strategyConditions, err = db.GetAlarmStrategy(strategyGuid, conditionCrc)
 		if err != nil {
 			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", strategyGuid, err.Error())
 		}
-		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj), log.JsonObj("conditions", strategyConditions))
+		log.Debug(nil, log.LOGGER_APP, "getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj), log.JsonObj("conditions", strategyConditions))
 		if len(strategyConditions) > 1 {
 			multipleConditionFlag = true
 			alarm.MultipleConditionFlag = true
@@ -106,7 +107,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		return alarm, fmt.Errorf("labels strategy_id and strategy_guid is empty ")
 	}
 	existAlarm := m.AlarmTable{}
-	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", strategyGuid))
+	log.Debug(nil, log.LOGGER_APP, "accept strategy_guid", zap.String("strategy_guid", strategyGuid))
 	if strategyGuid != "" {
 		existAlarm, alarmConditionGuid, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj, multipleConditionFlag)
 	} else if param.Labels["strategy_id"] == "up" {
@@ -120,7 +121,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	if err != nil {
 		return
 	}
-	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
+	log.Debug(nil, log.LOGGER_APP, "exist alarm", log.JsonObj("existAlarm", existAlarm), zap.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
 	alarm.Status = param.Status
 	operation := "add"
 	if alarm.Status == "firing" {
@@ -185,14 +186,14 @@ func checkIsInActiveWindow(input string) bool {
 	}
 	timeSplit := strings.Split(input, "-")
 	if len(timeSplit) != 2 {
-		log.Logger.Error("Active window illegal", log.String("input", input))
+		log.Error(nil, log.LOGGER_APP, "Active window illegal", zap.String("input", input))
 		return false
 	}
 	nowTime := time.Now()
 	dayPrefix := nowTime.Format("2006-01-02")
 	st, sErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", dayPrefix, timeSplit[0]), time.Local)
 	if sErr != nil {
-		log.Logger.Error("Active window start illegal", log.String("start", timeSplit[0]))
+		log.Error(nil, log.LOGGER_APP, "Active window start illegal", zap.String("start", timeSplit[0]))
 		return false
 	}
 	endString := timeSplit[1] + ":00"
@@ -201,7 +202,7 @@ func checkIsInActiveWindow(input string) bool {
 	}
 	et, eErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", dayPrefix, endString), time.Local)
 	if eErr != nil {
-		log.Logger.Error("Active window end illegal", log.String("end", timeSplit[1]))
+		log.Error(nil, log.LOGGER_APP, "Active window end illegal", zap.String("end", timeSplit[1]))
 		return false
 	}
 	if nowTime.Unix() >= st.Unix() && nowTime.Unix() <= et.Unix() {
@@ -281,7 +282,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 	}
 	if guidTagString != "" && eGuidTagString != "" {
 		if guidTagString != eGuidTagString {
-			log.Logger.Warn("EGuid diff with guid,ignore", log.String("guid", guidTagString), log.String("e_guid", eGuidTagString))
+			log.Warn(nil, log.LOGGER_APP, "EGuid diff with guid,ignore", zap.String("guid", guidTagString), zap.String("e_guid", eGuidTagString))
 			err = fmt.Errorf("EGuid diff with guid,ignore ")
 			return
 		}
@@ -294,7 +295,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 
 func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, alarmConditionGuid string, err error) {
 	existAlarm = m.AlarmTable{}
-	log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj))
+	log.Debug(nil, log.LOGGER_APP, "getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj))
 	alarm.AlarmStrategy = strategyObj.Guid
 	alarm.SMetric = strategyObj.MetricName
 	alarm.SExpr = strategyObj.MetricExpr
@@ -819,7 +820,7 @@ func QueryEntityAlarm(c *gin.Context) {
 		var alarmObj m.AlarmEntityObj
 		var err error
 		if id <= 0 {
-			log.Logger.Warn("Can not find alarm with empty id,get last one firing alarm", log.String("request param", string(data)))
+			log.Warn(nil, log.LOGGER_APP, "Can not find alarm with empty id,get last one firing alarm", zap.String("request param", string(data)))
 			alarmObj, err = db.GetAlarmEvent("alarm", "", 0, "firing")
 		} else {
 			alarmObj, err = db.GetAlarmEvent("alarm", notifyGuid, id, alarmStatus)

@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -80,10 +81,10 @@ func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 		return deleteErr
 	}
 
-	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
+	log.Debug(nil, log.LOGGER_APP, "Start delete endpoint", zap.String("guid", guid))
 	err = db.DeleteEndpoint(guid, operator)
 	if err != nil {
-		log.Logger.Error("Delete endpoint failed", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Delete endpoint failed", zap.Error(err))
 		return err
 	}
 	// Update sd file
@@ -123,13 +124,13 @@ func CustomRegister(c *gin.Context) {
 		if TransGateWayAddress == "" {
 			query := m.QueryMonitorData{Start: time.Now().Unix() - 60, End: time.Now().Unix(), Endpoint: []string{"endpoint"}, Metric: []string{"metric"}, PromQ: "up{job=\"transgateway\"}", Legend: "$custom_all"}
 			sm := datasource.PrometheusData(&query)
-			log.Logger.Debug("", log.Int("sm length", len(sm)))
+			log.Debug(nil, log.LOGGER_APP, "", zap.Int("sm length", len(sm)))
 			if len(sm) > 0 {
-				log.Logger.Debug("", log.String("sm0", fmt.Sprintf(" -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data)))
+				log.Debug(nil, log.LOGGER_APP, "", zap.String("sm0", fmt.Sprintf(" -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data)))
 				TransGateWayAddress = strings.Split(strings.Split(sm[0].Name, "instance=")[1], ",job")[0]
 				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "{", "")
 				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "}", "")
-				log.Logger.Debug("", log.String("TransGateWayAddress", TransGateWayAddress))
+				log.Debug(nil, log.LOGGER_APP, "", zap.String("TransGateWayAddress", TransGateWayAddress))
 			}
 		}
 		var endpointObj m.EndpointTable

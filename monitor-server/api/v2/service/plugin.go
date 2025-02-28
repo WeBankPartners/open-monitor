@@ -7,6 +7,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ func PluginUpdateServicePath(c *gin.Context) {
 	var err error
 	defer func() {
 		if err != nil {
-			log.Logger.Error("Update service path handle fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update service path handle fail", zap.Error(err))
 			response.ResultCode = "1"
 			response.ResultMessage = err.Error()
 		}

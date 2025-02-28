@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/exec"
@@ -33,9 +34,9 @@ func StartConsumeReloadConfig() {
 func consumeReloadConfig() {
 	resp, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Reload prometheus config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Reload prometheus config fail", zap.Error(err))
 	} else {
-		log.Logger.Info("Reload prometheus config done")
+		log.Info(nil, log.LOGGER_APP, "Reload prometheus config done")
 	}
 	if resp != nil {
 		if resp.Body != nil {
@@ -47,7 +48,7 @@ func consumeReloadConfig() {
 func ReloadConfig() error {
 	//_, err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
 	//if err != nil {
-	//	log.Logger.Error("Reload prometheus config fail", log.Error(err))
+	//	log.Error(nil, log.LOGGER_APP, "Reload prometheus config fail", zap.Error(err))
 	//}
 	//return err
 	reloadConfigChan <- 1
@@ -76,7 +77,7 @@ func StartCheckPrometheusJob(interval int) {
 func checkPrometheusAlive(address string) {
 	resp, err := http.Get(fmt.Sprintf("http://%s", address))
 	if err != nil {
-		log.Logger.Error("Prometheus alive check: error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Prometheus alive check: error", zap.Error(err))
 		restartPrometheus()
 	} else {
 		if resp != nil {
@@ -88,7 +89,7 @@ func checkPrometheusAlive(address string) {
 }
 
 func restartPrometheus() {
-	log.Logger.Info("Try to start prometheus . . . . . .")
+	log.Info(nil, log.LOGGER_APP, "Try to start prometheus . . . . . .")
 	lastLog, _ := execCommand("tail -n 30 /app/monitor/prometheus/logs/prometheus.log")
 	if lastLog != "" {
 		for _, v := range strings.Split(lastLog, "\n") {
@@ -96,29 +97,29 @@ func restartPrometheus() {
 				errorFile := strings.Split(strings.Split(v, "err=\"/app/monitor/prometheus/rules/")[1], ":")[0]
 				err := os.Remove(fmt.Sprintf("/app/monitor/prometheus/rules/%s", errorFile))
 				if err != nil {
-					log.Logger.Error(fmt.Sprintf("Remove problem file %s error ", errorFile), log.Error(err))
+					log.Error(nil, log.LOGGER_APP, fmt.Sprintf("Remove problem file %s error ", errorFile), zap.Error(err))
 				} else {
-					log.Logger.Info(fmt.Sprintf("Remove problem file %s success", errorFile))
+					log.Info(nil, log.LOGGER_APP, fmt.Sprintf("Remove problem file %s success", errorFile))
 				}
 			}
 		}
 	} else {
-		log.Logger.Info("Prometheus last log is empty ??")
+		log.Info(nil, log.LOGGER_APP, "Prometheus last log is empty ??")
 	}
 	startCommand, _ := execCommand("cat /app/monitor/start.sh |grep prometheus.yml")
 	if startCommand != "" {
 		startCommand = strings.Replace(startCommand, "\n", " && ", -1)
 		startCommand = strings.ReplaceAll(startCommand, "${archive_day}", m.PrometheusArchiveDay)
 		startCommand = startCommand[:len(startCommand)-3]
-		log.Logger.Debug("restartPrometheus", log.String("cmd", startCommand))
+		log.Debug(nil, log.LOGGER_APP, "restartPrometheus", zap.String("cmd", startCommand))
 		_, err := execCommand(startCommand)
 		if err != nil {
-			log.Logger.Error("Start prometheus fail,error", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Start prometheus fail,error", zap.Error(err))
 		} else {
-			log.Logger.Info("Start prometheus success")
+			log.Info(nil, log.LOGGER_APP, "Start prometheus success")
 		}
 	} else {
-		log.Logger.Warn("Start prometheus fail, the start command is empty!!")
+		log.Warn(nil, log.LOGGER_APP, "Start prometheus fail, the start command is empty!!")
 	}
 }
 
@@ -148,9 +149,9 @@ func checkSubProcessAlive(name string) {
 				startCommand = startCommand[:len(startCommand)-3]
 				_, err := execCommand(startCommand)
 				if err != nil {
-					log.Logger.Error("Start sub process fail,error", log.String("process", name), log.String("command", startCommand), log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "Start sub process fail,error", zap.String("process", name), zap.String("command", startCommand), zap.Error(err))
 				} else {
-					log.Logger.Info("Start sub process success", log.String("process", name))
+					log.Info(nil, log.LOGGER_APP, "Start sub process success", zap.String("process", name))
 				}
 			}
 		}
@@ -160,7 +161,7 @@ func checkSubProcessAlive(name string) {
 func execCommand(str string) (string, error) {
 	b, err := exec.Command("/bin/sh", "-c", str).Output()
 	if err != nil {
-		log.Logger.Error(fmt.Sprintf("Exec command %s fail,error", str), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, fmt.Sprintf("Exec command %s fail,error", str), zap.Error(err))
 	}
 	return string(b), err
 }

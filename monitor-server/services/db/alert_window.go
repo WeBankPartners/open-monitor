@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -13,7 +14,7 @@ func GetAlertWindowList(endpoint string) (result []*m.AlertWindowObj, err error)
 	err = x.SQL("select id,endpoint,`start`,`end`,`weekday` from alert_window where endpoint=?", endpoint).Find(&tableData)
 	if err != nil {
 		err = fmt.Errorf("Query alert window table fail,%s ", err.Error())
-		log.Logger.Error(err.Error())
+		log.Error(nil, log.LOGGER_APP, err.Error())
 		return result, err
 	}
 	for _, v := range tableData {
@@ -44,7 +45,7 @@ func UpdateAlertWindowList(endpoint, updateUser string, data []*m.AlertWindowObj
 	err := Transaction(actions)
 	if err != nil {
 		err = fmt.Errorf("Update alert window table fail,%s ", err.Error())
-		log.Logger.Error(err.Error())
+		log.Error(nil, log.LOGGER_APP, err.Error())
 	}
 	return err
 }
@@ -61,12 +62,12 @@ func CheckEndpointActiveAlert(endpoint string) bool {
 		if strings.Contains(v.Weekday, "All") || strings.Contains(v.Weekday, time.Now().Weekday().String()) {
 			startTime, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.Start))
 			if err != nil {
-				log.Logger.Error("Check endpoint is in active alert window error", log.String("start", v.Start), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "Check endpoint is in active alert window error", zap.String("start", v.Start), zap.Error(err))
 				continue
 			}
 			endTime, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.End))
 			if err != nil {
-				log.Logger.Error("Check endpoint is in active alert window error", log.String("end", v.End), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "Check endpoint is in active alert window error", zap.String("end", v.End), zap.Error(err))
 				continue
 			}
 			if (nTime.Unix() >= startTime.Unix()) && (nTime.Unix() <= endTime.Unix()) {

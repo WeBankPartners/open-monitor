@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -40,7 +41,7 @@ func GetClusterAddress(cluster string) string {
 
 // Service discover functions
 func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
-	log.Logger.Info("Start sync sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster", cluster))
+	log.Info(nil, log.LOGGER_APP, "Start sync sd endpoint", zap.String("steps", fmt.Sprintf("%v", steps)), zap.String("cluster", cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
 	for _, step := range steps {
@@ -49,7 +50,7 @@ func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
 			err = tmpErr
 			break
 		}
-		log.Logger.Info("Get sd file list content", log.Int("step", step), log.JsonObj("sdFileList", tmpSdFileList))
+		log.Info(nil, log.LOGGER_APP, "Get sd file list content", zap.Int("step", step), log.JsonObj("sdFileList", tmpSdFileList))
 		if len(tmpSdFileList) <= 0 {
 			continue
 		}
@@ -59,7 +60,7 @@ func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
 		return err
 	}
 	if len(syncList) == 0 {
-		log.Logger.Warn("Sync sd endpoint break,sync list is empty")
+		log.Warn(nil, log.LOGGER_APP, "Sync sd endpoint break,sync list is empty")
 		return nil
 	}
 	if cluster == "" || cluster == "default" {
@@ -67,7 +68,7 @@ func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
 	} else {
 		err = SyncRemoteSdConfigFile(cluster, syncList)
 		if err != nil {
-			log.Logger.Error("Sync remote sd config file fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Sync remote sd config file fail", zap.Error(err))
 		}
 	}
 	return err
@@ -129,7 +130,7 @@ func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFile
 			}
 		}
 		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.AgentAddress}
-		log.Logger.Info("add endpoint", log.String("guid", v.Guid))
+		log.Info(nil, log.LOGGER_APP, "add endpoint", zap.String("guid", v.Guid))
 		result = append(result, &tmpSdFileObj)
 	}
 	return

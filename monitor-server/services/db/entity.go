@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	"net/http"
@@ -22,18 +23,18 @@ func getCoreProcessKey() string {
 		return coreProcessKey
 	}
 	if m.CoreUrl == "" {
-		log.Logger.Info("Get core process key fail, core url is null")
+		log.Info(nil, log.LOGGER_APP, "Get core process key fail, core url is null")
 		return ""
 	}
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/process/definitions", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Get core process key new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key new request fail", zap.Error(err))
 		return ""
 	}
 	request.Header.Set("Authorization", m.GetCoreToken())
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key ctxhttp request fail", zap.Error(err))
 		return ""
 	}
 	defer res.Body.Close()
@@ -41,12 +42,12 @@ func getCoreProcessKey() string {
 	var resultObj m.CoreProcessResult
 	err = json.Unmarshal(b, &resultObj)
 	if err != nil {
-		log.Logger.Error("Get core process key json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key json unmarshal result", zap.Error(err))
 		return ""
 	}
-	log.Logger.Info(fmt.Sprintf("get core process, resultObj status:%s  message:%s  data length:%d", resultObj.Status, resultObj.Message, len(resultObj.Data)))
+	log.Info(nil, log.LOGGER_APP, fmt.Sprintf("get core process, resultObj status:%s  message:%s  data length:%d", resultObj.Status, resultObj.Message, len(resultObj.Data)))
 	for _, v := range resultObj.Data {
-		log.Logger.Info(fmt.Sprintf("process result name:%s", v.ProcDefName))
+		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("process result name:%s", v.ProcDefName))
 		if strings.Contains(v.ProcDefName, "监控告警处理") {
 			coreProcessKey = v.ProcDefKey
 		}
@@ -60,19 +61,19 @@ func GetCoreEventList(userToken string) (result m.CoreProcessResult, err error) 
 		return result, nil
 	}
 	if m.CoreUrl == "" {
-		log.Logger.Warn("Get core process key fail, core url is null")
+		log.Warn(nil, log.LOGGER_APP, "Get core process key fail, core url is null")
 		return result, fmt.Errorf("get core process key fail, core url is null")
 	}
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/public/process/definitions?plugin=monitor&permission=USE&all=N", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Get core process key new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key new request fail", zap.Error(err))
 		return result, err
 	}
 	//request.Header.Set("Authorization", m.GetCoreToken())
 	request.Header.Set("Authorization", userToken)
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key ctxhttp request fail", zap.Error(err))
 		return result, err
 	}
 	b, _ := ioutil.ReadAll(res.Body)
@@ -81,7 +82,7 @@ func GetCoreEventList(userToken string) (result m.CoreProcessResult, err error) 
 	//b := []byte(testResult)
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		log.Logger.Error("Get core process key json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core process key json unmarshal result", zap.Error(err))
 		return result, err
 	}
 	if result.Status != "OK" {
@@ -89,7 +90,7 @@ func GetCoreEventList(userToken string) (result m.CoreProcessResult, err error) 
 		return
 	}
 	sort.Sort(result.Data)
-	log.Logger.Info(fmt.Sprintf("get core process, resultObj status:%s  message:%s  data length:%d", result.Status, result.Message, len(result.Data)))
+	log.Info(nil, log.LOGGER_APP, fmt.Sprintf("get core process, resultObj status:%s  message:%s  data length:%d", result.Status, result.Message, len(result.Data)))
 	return result, nil
 }
 
@@ -195,7 +196,7 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 	if len(eventKeys) == 0 {
 		return fmt.Errorf("notify core event fail, event key is null")
 	} else {
-		log.Logger.Info("Start to notify with event keys", log.StringList("eventKeys", eventKeys))
+		log.Info(nil, log.LOGGER_APP, "Start to notify with event keys", zap.Strings("eventKeys", eventKeys))
 	}
 	for i, coreKey := range eventKeys {
 		keySplit := strings.Split(coreKey, "^")
@@ -206,18 +207,18 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 		requestParam.OperationKey = keySplit[1]
 		requestParam.OperationData = fmt.Sprintf("%d-%s-%s", alarmId, alarmStatus, keySplit[0])
 		requestParam.OperationUser = ""
-		log.Logger.Info(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
+		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
 		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
 		request.Header.Set("Authorization", m.GetCoreToken())
 		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
-			log.Logger.Error("Notify core event new request fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Notify core event new request fail", zap.Error(err))
 			return err
 		}
 		res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 		if err != nil {
-			log.Logger.Error("Notify core event ctxhttp request fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Notify core event ctxhttp request fail", zap.Error(err))
 			return err
 		}
 		resultBody, _ := ioutil.ReadAll(res.Body)
@@ -225,10 +226,10 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 		err = json.Unmarshal(resultBody, &resultObj)
 		res.Body.Close()
 		if err != nil {
-			log.Logger.Error("Notify core event unmarshal json body fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Notify core event unmarshal json body fail", zap.Error(err))
 			return err
 		}
-		log.Logger.Info(fmt.Sprintf("result -> status:%s  message:%s", resultObj.Status, resultObj.Message))
+		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("result -> status:%s  message:%s", resultObj.Status, resultObj.Message))
 	}
 	return nil
 }
@@ -297,7 +298,7 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 					}
 					for _, vv := range strings.Split(v.Parent, "^") {
 						tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole, _, _ := searchRecursiveParent(recursiveData, []string{}, []string{}, []string{}, []string{}, []string{}, vv)
-						log.Logger.Info(fmt.Sprintf("parent: %s  mail: %v phone: %v role: %v", vv, tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole))
+						log.Info(nil, log.LOGGER_APP, fmt.Sprintf("parent: %s  mail: %v phone: %v role: %v", vv, tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole))
 						for _, vvv := range tmpToRecursiveMail {
 							mailMap[vvv] = true
 						}
@@ -358,7 +359,7 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", result.Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
 		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s %s", alarms[0].Endpoint, result.Status, alarms[0].SMetric, alarms[0].StartValue, alarms[0].SCond, alarms[0].SLast, alarms[0].SPriority, alarms[0].Content, alarms[0].Start.Format(m.DatetimeFormat), tagsContent)
 		result.SmsContent = getSmsAlarmContent(alarms[0])
-		log.Logger.Info(fmt.Sprintf("alarm event --> id:%s status:%s to:%s subejct:%s content:%s smsContent:%s", result.Id, result.Status, result.To, result.Subject, result.Content, result.SmsContent))
+		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("alarm event --> id:%s status:%s to:%s subejct:%s content:%s smsContent:%s", result.Id, result.Status, result.To, result.Subject, result.Content, result.SmsContent))
 	}
 	return result, err
 }
@@ -389,7 +390,7 @@ func getCustomAlarmEvent(id int) (result m.AlarmEntityObj, err error) {
 	}
 	result.Subject = fmt.Sprintf("[%s][%s] %s", alarmStatus, priority, customAlarms[0].AlertTitle)
 	result.Content = fmt.Sprintf("Title:%s \r\n Level:%s \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s", customAlarms[0].AlertTitle, priority, customAlarms[0].AlertInfo, customAlarms[0].AlertObj, customAlarms[0].SubSystemId, customAlarms[0].AlertIp, customAlarms[0].RemarkInfo, customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
-	log.Logger.Info("Get custom alarm message done", log.String("subject", result.Subject), log.String("mail", result.ToMail))
+	log.Info(nil, log.LOGGER_APP, "Get custom alarm message done", zap.String("subject", result.Subject), zap.String("mail", result.ToMail))
 	return result, err
 }
 

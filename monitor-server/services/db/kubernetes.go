@@ -6,6 +6,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os/exec"
 	"strings"
@@ -51,7 +52,7 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 	if id <= 0 {
 		kubernetesTables, _ := ListKubernetesCluster(clusterName)
 		if len(kubernetesTables) == 0 {
-			log.Logger.Warn("Delete kubernetes cluster break,can not find fetch data", log.String("cluster_name", clusterName))
+			log.Warn(nil, log.LOGGER_APP, "Delete kubernetes cluster break,can not find fetch data", zap.String("cluster_name", clusterName))
 			return nil
 		}
 		id = kubernetesTables[0].Id
@@ -69,11 +70,11 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 func InitPrometheusConfigFile() {
 	err := SyncKubernetesConfig()
 	if err != nil {
-		log.Logger.Error("Init kubernetes config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init kubernetes config fail", zap.Error(err))
 	}
 	err = SyncSnmpPrometheusConfig()
 	if err != nil {
-		log.Logger.Error("Init Snmp config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init Snmp config fail", zap.Error(err))
 	}
 }
 
@@ -150,7 +151,7 @@ func backupPrometheusConfig() (name string, err error) {
 	backupOutput, err := exec.Command("/bin/sh", "-c", "cp /app/monitor/prometheus/prometheus.yml /tmp/"+name).Output()
 	if err != nil {
 		err = fmt.Errorf("Backup prometheus config file fail,output:%s,err:%s ", string(backupOutput), err.Error())
-		log.Logger.Error("Backup prometheus config fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Backup prometheus config fail", zap.Error(err))
 	}
 	return
 }
@@ -158,7 +159,7 @@ func backupPrometheusConfig() (name string, err error) {
 func recoverPrometheusConfig(name string) {
 	recoverOutput, recoverError := exec.Command("/bin/sh", "-c", "rm -f /app/monitor/prometheus/prometheus.yml && cp /tmp/"+name+" /app/monitor/prometheus/prometheus.yml").Output()
 	if recoverError != nil {
-		log.Logger.Error("Recover prometheus config fail", log.String("output", string(recoverOutput)), log.Error(recoverError))
+		log.Error(nil, log.LOGGER_APP, "Recover prometheus config fail", zap.String("output", string(recoverOutput)), zap.Error(recoverError))
 	}
 }
 
@@ -171,7 +172,7 @@ func StartCronSyncKubernetesPod(interval int) {
 }
 
 func SyncPodToEndpoint() bool {
-	log.Logger.Info("start to sync kubernetes pod")
+	log.Info(nil, log.LOGGER_APP, "start to sync kubernetes pod")
 	var kubernetesTables []*m.KubernetesClusterTable
 	result := false
 	x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
@@ -220,7 +221,7 @@ func SyncPodToEndpoint() bool {
 		newEndpointSql := "insert into endpoint_new(guid,name,ip,monitor_type,step,tags,create_user,update_user) values "
 		for i, v := range endpointTables {
 			tmpGuidList = append(tmpGuidList, v.Guid)
-			log.Logger.Info("add kubernetes pod endpoint", log.String("guid", v.Guid))
+			log.Info(nil, log.LOGGER_APP, "add kubernetes pod endpoint", zap.String("guid", v.Guid))
 			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			newEndpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s','system','system')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			if i < len(endpointTables)-1 {
@@ -230,7 +231,7 @@ func SyncPodToEndpoint() bool {
 		}
 		_, err := x.Exec(endpointSql)
 		if err != nil {
-			log.Logger.Error("Update kubernetes pod to endpoint table fail", log.String("sql", endpointSql), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update kubernetes pod to endpoint table fail", zap.String("sql", endpointSql), zap.Error(err))
 		}
 		x.Exec(newEndpointSql)
 		if len(endpointGroup) > 0 {
@@ -243,7 +244,7 @@ func SyncPodToEndpoint() bool {
 				}
 				_, err = x.Exec(insertEndpointGrpSql[:len(insertEndpointGrpSql)-1])
 				if err != nil {
-					log.Logger.Error("Try to update endpoint group fail", log.String("sql", insertEndpointGrpSql), log.Error(err))
+					log.Error(nil, log.LOGGER_APP, "Try to update endpoint group fail", zap.String("sql", insertEndpointGrpSql), zap.Error(err))
 				}
 			}
 		}
@@ -259,7 +260,7 @@ func SyncPodToEndpoint() bool {
 		}
 		_, err := x.Exec(keRelSql)
 		if err != nil {
-			log.Logger.Error("Update kubernetes endpoint rel table fail", log.String("sql", keRelSql), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Update kubernetes endpoint rel table fail", zap.String("sql", keRelSql), zap.Error(err))
 		}
 	}
 	return result

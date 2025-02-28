@@ -237,7 +237,7 @@ export default {
           render: (h, params) => (
             <div style="display: flex">
               <Tooltip placement="top" max-width="400" transfer content={this.$t('m_endpoint')}>
-                <Button class="mr-1" size="small" type="info" on-click={() => {
+                <Button class="mr-1" size="small" type="success" on-click={() => {
                   this.editEndpoints(params.row)
                 }}>
                   <Icon type="ios-cube" />
@@ -471,7 +471,6 @@ export default {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 10000
 }
 
 .main-content {

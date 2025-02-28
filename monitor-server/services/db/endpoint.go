@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -75,7 +76,7 @@ func GetAlarmRealEndpoint(endpointId, strategyId int, endpointType, expr string)
 			}
 			if endpoint.Guid != "" {
 				GetEndpoint(&endpoint)
-				log.Logger.Info("Use business alarm endpoint", log.Int("from", endpointId), log.String("to", endpoint.Guid))
+				log.Info(nil, log.LOGGER_APP, "Use business alarm endpoint", zap.Int("from", endpointId), zap.String("to", endpoint.Guid))
 				return false, endpoint
 			}
 		}
@@ -99,7 +100,7 @@ func GetAlarmRealEndpoint(endpointId, strategyId int, endpointType, expr string)
 			var endpointTables []*models.EndpointTable
 			x.SQL("select * from endpoint where guid in (select owner_endpoint from business_monitor where endpoint_id=?) and id in (select endpoint_id from grp_endpoint where grp_id=?)", endpointId, tplTables[0].GrpId).Find(&endpointTables)
 			if len(endpointTables) > 0 {
-				log.Logger.Info("Change alarm endpoint", log.Int("from", endpointId), log.String("to", endpointTables[0].Guid))
+				log.Info(nil, log.LOGGER_APP, "Change alarm endpoint", zap.Int("from", endpointId), zap.String("to", endpointTables[0].Guid))
 				return false, *endpointTables[0]
 			}
 		}

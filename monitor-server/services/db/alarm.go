@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -116,7 +117,7 @@ func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
 		if err != nil {
-			log.Logger.Error("Get strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get strategy fail", zap.Error(err))
 			return err
 		}
 		var grpIds string
@@ -159,7 +160,7 @@ func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (` + grpIds + ` endpoint_id=?)  order by t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			log.Logger.Error("Get strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get strategy fail", zap.Error(err))
 			return err
 		}
 		if len(tpls) == 0 {
@@ -219,11 +220,11 @@ func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
 		if err != nil {
-			log.Logger.Error("Get group fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get group fail", zap.Error(err))
 			return err
 		}
 		if len(grps) <= 0 {
-			log.Logger.Warn("Can't find this grp")
+			log.Warn(nil, log.LOGGER_APP, "Can't find this grp")
 			return fmt.Errorf("can't find this grp")
 		}
 		var parentTpls []*m.TplStrategyTable
@@ -272,7 +273,7 @@ func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			log.Logger.Error("Get strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get strategy fail", zap.Error(err))
 			return err
 		}
 		if len(tpls) > 0 {
@@ -383,13 +384,13 @@ func AddTpl(grpId, endpointId int, operateUser string) (error, m.TplTable) {
 	insertSql := fmt.Sprintf("INSERT INTO tpl(grp_id,endpoint_id,create_user,update_user,create_at,update_at) VALUE (%d,%d,'%s','%s',NOW(),NOW())", grpId, endpointId, operateUser, operateUser)
 	_, err := x.Exec(insertSql)
 	if err != nil {
-		log.Logger.Error("Add tpl fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Add tpl fail", zap.Error(err))
 		return err, tpl
 	}
 	_, tpl = GetTpl(0, grpId, endpointId)
 	if tpl.Id <= 0 {
 		err = fmt.Errorf("cat't find the new one")
-		log.Logger.Error("Add tpl fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Add tpl fail", zap.Error(err))
 		return err, tpl
 	}
 	return nil, tpl
@@ -398,7 +399,7 @@ func AddTpl(grpId, endpointId int, operateUser string) (error, m.TplTable) {
 func UpdateTpl(tplId int, operateUser string) error {
 	_, err := x.Exec("UPDATE tpl SET update_user=?,update_at=NOW() WHERE id=?", operateUser, tplId)
 	if err != nil {
-		log.Logger.Error("Update tpl fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update tpl fail", zap.Error(err))
 	}
 	return err
 }
@@ -406,7 +407,7 @@ func UpdateTpl(tplId int, operateUser string) error {
 func DeleteTpl(tplId int) error {
 	_, err := x.Exec("DELETE from tpl where id=?", tplId)
 	if err != nil {
-		log.Logger.Error("Delete tpl fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Delete tpl fail", zap.Error(err))
 	}
 	return err
 }
@@ -415,7 +416,7 @@ func GetStrategyTable(id int) (error, m.StrategyTable) {
 	var result []*m.StrategyTable
 	err := x.SQL("SELECT * FROM strategy WHERE id=?", id).Find(&result)
 	if err != nil || len(result) <= 0 {
-		log.Logger.Error("Get strategy table fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get strategy table fail", zap.Error(err))
 		return err, m.StrategyTable{}
 	}
 	return nil, *result[0]
@@ -509,7 +510,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	}
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
-		log.Logger.Error("Get alarms fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get alarms fail", zap.Error(err))
 		return err, result
 	}
 	var notifyIdList, alarmIdList, alarmStrategyList, endpointList, logKeywordConfigList, dbKeywordMonitorList []string
@@ -677,11 +678,11 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
 		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
 		if matchKeywordStrategyErr != nil {
-			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+			log.Error(nil, log.LOGGER_APP, "try to match alarm keyword strategy fail", zap.Error(matchKeywordStrategyErr))
 		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
-			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
+			log.Error(nil, log.LOGGER_APP, "try to match alarm groups fail", zap.Error(matchErr))
 		} else {
 			for _, v := range sortResult {
 				var tmpStrategyGroups []*m.AlarmStrategyGroup
@@ -729,13 +730,13 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 		if v.MultipleConditionFlag {
 			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
 			if updateConditionAlarmErr != nil {
-				log.Logger.Error("Update alarm condition fail", log.JsonObj("alarm", v), log.Error(updateConditionAlarmErr))
+				log.Error(nil, log.LOGGER_APP, "Update alarm condition fail", log.JsonObj("alarm", v), zap.Error(updateConditionAlarmErr))
 			} else if alarmObj != nil {
 				successAlarms = append(successAlarms, alarmObj)
 			}
 		} else {
 			if tmpErr := doInsertOrUpdateAlarm(v); tmpErr != nil {
-				log.Logger.Warn("doInsertOrUpdateAlarm fail", log.JsonObj("alarm", v), log.Error(tmpErr))
+				log.Warn(nil, log.LOGGER_APP, "doInsertOrUpdateAlarm fail", log.JsonObj("alarm", v), zap.Error(tmpErr))
 			} else {
 				successAlarms = append(successAlarms, v)
 			}
@@ -747,7 +748,7 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 			//	execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
 			//}
 			//if cErr != nil {
-			//	log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
+			//	log.Error(nil, log.LOGGER_APP, "Update alarm fail", log.JsonObj("alarm", v), zap.Error(cErr))
 			//} else {
 			//	rowAffected, _ = execResult.RowsAffected()
 			//	if rowAffected > 0 {
@@ -759,7 +760,7 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 			//		}
 			//		successAlarms = append(successAlarms, v)
 			//	} else {
-			//		log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
+			//		log.Warn(nil, log.LOGGER_APP, "Update alarm done but not any rows affected", log.JsonObj("alarm", v))
 			//	}
 			//}
 		}
@@ -884,7 +885,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT id,name FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
 		if err != nil {
-			log.Logger.Error("Get strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get strategy fail", zap.Error(err))
 			return err
 		}
 		var grpIds string
@@ -905,7 +906,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 				WHERE (` + grpIds + ` t1.endpoint_id=?) and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t3.path`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			log.Logger.Error("Get log monitor strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get log monitor strategy fail", zap.Error(err))
 			return err
 		}
 		if len(tpls) == 0 {
@@ -979,11 +980,11 @@ func ListLogMonitor(query *m.TplQuery) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
 		if err != nil {
-			log.Logger.Error("Get group fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get group fail", zap.Error(err))
 			return err
 		}
 		if len(grps) <= 0 {
-			log.Logger.Warn("Can't find this grp", log.Int("grpId", query.SearchId))
+			log.Warn(nil, log.LOGGER_APP, "Can't find this grp", zap.Int("grpId", query.SearchId))
 			return fmt.Errorf("can't find this grp")
 		}
 		var tpls []*m.TplStrategyLogMonitorTable
@@ -993,7 +994,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 			WHERE t1.grp_id=? and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			log.Logger.Error("Get log monitor strategy fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Get log monitor strategy fail", zap.Error(err))
 			return err
 		}
 		if len(tpls) > 0 {
@@ -1144,13 +1145,13 @@ func SetGrpStrategy(paramObj []*m.GrpStrategyExportObj) error {
 		tmpName := takeGrpName(v.GrpName, existGrp)
 		err := UpdateGrp(&m.UpdateGrp{Operation: "insert", Groups: []*m.GrpTable{&m.GrpTable{Name: tmpName, Description: v.Description}}})
 		if err != nil {
-			log.Logger.Error("Set group strategy, insert group fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Set group strategy, insert group fail", zap.Error(err))
 			return err
 		}
 		_, grpObj := GetSingleGrp(0, tmpName)
 		err, tplObj := AddTpl(grpObj.Id, 0, "")
 		if err != nil {
-			log.Logger.Error("Set group strategy, insert tpl fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Set group strategy, insert tpl fail", zap.Error(err))
 			return err
 		}
 		for _, vv := range v.Strategy {
@@ -1223,10 +1224,10 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				tmpIds = tmpIds[:len(tmpIds)-1]
 				_, cErr := x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
 				if cErr != nil {
-					log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(cErr))
+					log.Error(nil, log.LOGGER_APP, "Update custom alarm close fail", zap.String("ids", tmpIds), zap.Error(cErr))
 				}
 			} else {
-				log.Logger.Warn("Get recover custom alarm,but not found in table", log.JsonObj("input", v))
+				log.Warn(nil, log.LOGGER_APP, "Get recover custom alarm,but not found in table", log.JsonObj("input", v))
 				continue
 			}
 		} else {
@@ -1237,7 +1238,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			subSystemId, _ = strconv.Atoi(v.SubSystemId)
 			_, err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way) VALUE (?,?,?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay)
 			if err != nil {
-				log.Logger.Error("Save open alarm error", log.Error(err))
+				log.Error(nil, log.LOGGER_APP, "Save open alarm error", zap.Error(err))
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
@@ -1248,19 +1249,19 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
 			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {
-				log.Logger.Error("Build custom alarm mail fail", log.Int("Id", customAlarmId), log.Error(buildMailAlarmErr))
+				log.Error(nil, log.LOGGER_APP, "Build custom alarm mail fail", zap.Int("Id", customAlarmId), zap.Error(buildMailAlarmErr))
 			} else {
 				if mailSender, getMailSenderErr := GetMailSender(); getMailSenderErr != nil {
-					log.Logger.Error("Try to send custom alarm mail fail", log.Error(getMailSenderErr))
+					log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(getMailSenderErr))
 				} else {
 					if sendErr := mailSender.Send(mailAlarmObj.Subject, mailAlarmObj.Content, strings.Split(mailAlarmObj.ToMail, ",")); sendErr != nil {
-						log.Logger.Error("Try to send custom alarm mail fail", log.Error(sendErr))
+						log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
 					}
 				}
 			}
 			sendMailErr := NotifyCoreEvent("", 0, 0, customAlarmId)
 			if sendMailErr != nil {
-				log.Logger.Error("Send custom alarm mail event fail", log.Error(sendMailErr))
+				log.Error(nil, log.LOGGER_APP, "Send custom alarm mail event fail", zap.Error(sendMailErr))
 			}
 		}
 	}
@@ -1376,7 +1377,7 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds), Param: []interface{}{}})
 			//_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
 			//if err != nil {
-			//	log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
+			//	log.Error(nil, log.LOGGER_APP, "Update custom alarm close fail", zap.String("ids", tmpIds), zap.Error(err))
 			//}
 		}
 		if err != nil {
@@ -1408,7 +1409,7 @@ func UpdateTplAction(tplId int, user, role []int, extraMail, extraPhone []string
 	}
 	_, err := x.Exec(fmt.Sprintf("UPDATE tpl SET action_user='%s',action_role='%s',extra_mail='%s',extra_phone='%s' WHERE id=%d", userString, roleString, mailString, phoneString, tplId))
 	if err != nil {
-		log.Logger.Error("Update tpl action error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update tpl action error", zap.Error(err))
 	}
 	return err
 }
@@ -1661,11 +1662,11 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 	if len(alarmStrategyList) > 0 || len(logKeywordConfigList) > 0 || len(dbKeywordMonitorList) > 0 {
 		logKeywordConfigMap, dbKeywordMonitorMap, matchKeywordStrategyErr := getAlarmKeywordServiceGroup(logKeywordConfigList, dbKeywordMonitorList)
 		if matchKeywordStrategyErr != nil {
-			log.Logger.Error("try to match alarm keyword strategy fail", log.Error(matchKeywordStrategyErr))
+			log.Error(nil, log.LOGGER_APP, "try to match alarm keyword strategy fail", zap.Error(matchKeywordStrategyErr))
 		}
 		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
 		if matchErr != nil {
-			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
+			log.Error(nil, log.LOGGER_APP, "try to match alarm groups fail", zap.Error(matchErr))
 		} else {
 			for _, v := range result.Data {
 				var tmpStrategyGroups []*m.AlarmStrategyGroup
@@ -1766,7 +1767,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 			x.SQL("select * from alarm where id=?", alarmObj.Id).Find(&alarmRows)
 			if len(alarmRows) > 0 {
 				if (alarmRows[0].End.Unix() - alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
-					log.Logger.Info("Abort recover alarm notify", log.Int("id", alarmObj.Id), log.String("start", alarmRows[0].Start.Format(m.DatetimeFormat)), log.String("end", alarmRows[0].End.Format(m.DatetimeFormat)))
+					log.Info(nil, log.LOGGER_APP, "Abort recover alarm notify", zap.Int("id", alarmObj.Id), zap.String("start", alarmRows[0].Start.Format(m.DatetimeFormat)), zap.String("end", alarmRows[0].End.Format(m.DatetimeFormat)))
 					abortNotify = true
 				}
 			}
@@ -1775,7 +1776,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 			x.SQL("select * from alarm where strategy_id=? and endpoint=? and start=?", alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Start.Format(m.DatetimeFormat)).Find(&alarmRows)
 			if len(alarmRows) > 0 {
 				if alarmRows[0].Status == "ok" {
-					log.Logger.Info("Abort firing alarm notify", log.String("endpoint", alarmObj.Endpoint), log.Int("strategyId", alarmObj.StrategyId), log.String("start", alarmObj.Start.Format(m.DatetimeFormat)))
+					log.Info(nil, log.LOGGER_APP, "Abort firing alarm notify", zap.String("endpoint", alarmObj.Endpoint), zap.Int("strategyId", alarmObj.StrategyId), zap.String("start", alarmObj.Start.Format(m.DatetimeFormat)))
 					abortNotify = true
 				}
 			}
@@ -1787,7 +1788,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 	if m.CoreUrl != "" {
 		notifyErr := NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.Id, 0)
 		if notifyErr != nil {
-			log.Logger.Error("notify core event fail", log.Error(notifyErr))
+			log.Error(nil, log.LOGGER_APP, "notify core event fail", zap.Error(notifyErr))
 		}
 	} else {
 		if m.Config().Alert.Enable {
@@ -1818,12 +1819,12 @@ func NotifyTreevent(param m.EventTreeventNotifyDto) {
 	request.Header.Set("Authorization", m.GetCoreToken())
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		log.Logger.Error("Notify treevent event new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Notify treevent event new request fail", zap.Error(err))
 		return
 	}
 	res, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Logger.Error("Notify treevent event ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Notify treevent event ctxhttp request fail", zap.Error(err))
 		return
 	}
 	resultBody, _ := ioutil.ReadAll(res.Body)
@@ -1831,13 +1832,13 @@ func NotifyTreevent(param m.EventTreeventNotifyDto) {
 	err = json.Unmarshal(resultBody, &responseData)
 	res.Body.Close()
 	if err != nil {
-		log.Logger.Error("Notify treevent event unmarshal json body fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Notify treevent event unmarshal json body fail", zap.Error(err))
 		return
 	}
 	if responseData.Code > 0 {
-		log.Logger.Error("Notify treevent fail", log.String("message", responseData.Msg))
+		log.Error(nil, log.LOGGER_APP, "Notify treevent fail", zap.String("message", responseData.Msg))
 	} else {
-		log.Logger.Info("Notify treevent success", log.Int("event length", len(param.Data)))
+		log.Info(nil, log.LOGGER_APP, "Notify treevent success", zap.Int("event length", len(param.Data)))
 	}
 }
 
@@ -1845,7 +1846,7 @@ func StartInitAlarmUniqueTags() {
 	var alarmRows []*m.AlarmTable
 	err := x.SQL("select * from alarm where status='firing'").Find(&alarmRows)
 	if err != nil {
-		log.Logger.Error("init alarm unique tags fail,query alarm table error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "init alarm unique tags fail,query alarm table error", zap.Error(err))
 		return
 	}
 	for _, row := range alarmRows {
@@ -1933,7 +1934,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			if row.Tags != alarmConditionObj.Tags {
 				// 不同标签
 				//err = fmt.Errorf("same crc alarm:%s is firing,ignore this:%s ", row.Tags, alarmConditionObj.Tags)
-				log.Logger.Debug("UpdateAlarmWithConditions same crc alarm is firing ignore", log.String("rowTags", row.Tags), log.String("alarmConditionObjTags", alarmConditionObj.Tags))
+				log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions same crc alarm is firing ignore", zap.String("rowTags", row.Tags), zap.String("alarmConditionObjTags", alarmConditionObj.Tags))
 				alarmRow = nil
 				return
 			}
@@ -1983,7 +1984,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
 			return
 		}
-		log.Logger.Debug("UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), log.StringList("configCrcList", configCrcList))
+		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), zap.Strings("configCrcList", configCrcList))
 		if len(alarmCrcMap) >= len(configCrcList) {
 			// 如果条件都满足
 			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
@@ -2224,16 +2225,16 @@ func checkHasProcDefUsePermission(alarmNotify *m.AlarmNotifyTable, hasRoleMap ma
 		name = alarmNotify.ProcDefName[:index]
 		version = alarmNotify.ProcDefName[index+1 : len(alarmNotify.ProcDefName)-1]
 		if resByteArr, err = HttpGet(m.CoreUrl+"/platform/v1/public/process/definitions/detail?name="+name+"&version="+version, token); err != nil {
-			log.Logger.Error("checkHasProcDefUsePermission HttpPost err", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "checkHasProcDefUsePermission HttpPost err", zap.Error(err))
 			return
 		}
 		if err = json.Unmarshal(resByteArr, &response); err != nil {
-			log.Logger.Error("checkHasProcDefUsePermission Unmarshal err", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "checkHasProcDefUsePermission Unmarshal err", zap.Error(err))
 			return
 		}
 		if response.Status != "OK" {
 			err = fmt.Errorf(response.Message)
-			log.Logger.Error("checkHasProcDefUsePermission response err", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "checkHasProcDefUsePermission response err", zap.Error(err))
 			return
 		}
 		if response.Data != nil && len(response.Data.UseRoles) > 0 {

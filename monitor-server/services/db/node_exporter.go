@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 )
 
 func SyncLogMetricExporterConfig(endpoints []string) error {
-	log.Logger.Info("UpdateNodeExportConfig", log.StringList("endpoints", endpoints))
+	log.Info(nil, log.LOGGER_APP, "UpdateNodeExportConfig", zap.Strings("endpoints", endpoints))
 	var err error
 	existMap := make(map[string]int)
 	for _, v := range endpoints {
@@ -24,10 +25,10 @@ func SyncLogMetricExporterConfig(endpoints []string) error {
 		err = updateEndpointLogMetric(v)
 		if err != nil {
 			err = fmt.Errorf("Sync endpoint:%s log metric config fail,%s ", v, err.Error())
-			log.Logger.Error("sync log metric data error", log.String("endpoint", v), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "sync log metric data error", zap.String("endpoint", v), zap.Error(err))
 			break
 		}
-		log.Logger.Info("sync log metric data done", log.String("endpoint", v))
+		log.Info(nil, log.LOGGER_APP, "sync log metric data done", zap.String("endpoint", v))
 		existMap[v] = 1
 	}
 	return err
@@ -38,7 +39,7 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
-	log.Logger.Debug("sync log metric config data", log.String("endpoint", endpointGuid), log.JsonObj("logMetricConfig", logMetricConfig))
+	log.Debug(nil, log.LOGGER_APP, "sync log metric config data", zap.String("endpoint", endpointGuid), log.JsonObj("logMetricConfig", logMetricConfig))
 	syncParam := transLogMetricConfigToJobNew(logMetricConfig, endpointGuid)
 	endpointObj := models.EndpointNewTable{Guid: endpointGuid}
 	endpointObj, err = GetEndpointNew(&endpointObj)
@@ -46,7 +47,7 @@ func updateEndpointLogMetric(endpointGuid string) error {
 		return err
 	}
 	b, _ := json.Marshal(syncParam)
-	log.Logger.Info("sync log metric data", log.String("endpoint", endpointGuid), log.String("body", string(b)))
+	log.Info(nil, log.LOGGER_APP, "sync log metric data", zap.String("endpoint", endpointGuid), zap.String("body", string(b)))
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_metric/config", endpointObj.AgentAddress), bytes.NewReader(b))
 	timeOutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	req.WithContext(timeOutCtx)
@@ -62,7 +63,7 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	}
 	var response models.LogMetricNodeExporterResponse
 	err = json.Unmarshal(b, &response)
-	log.Logger.Debug("response", log.String("body", string(b)))
+	log.Debug(nil, log.LOGGER_APP, "response", zap.String("body", string(b)))
 	if err == nil {
 		if response.Status == "OK" {
 			return nil
@@ -204,7 +205,7 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 }
 
 func SyncLogKeywordExporterConfig(endpoints []string) error {
-	log.Logger.Info("UpdateNodeExportConfig", log.StringList("endpoints", endpoints))
+	log.Info(nil, log.LOGGER_APP, "UpdateNodeExportConfig", zap.Strings("endpoints", endpoints))
 	var err error
 	existMap := make(map[string]int)
 	for _, v := range endpoints {
@@ -232,7 +233,7 @@ func updateEndpointLogKeyword(endpoint string) error {
 		return err
 	}
 	b, _ := json.Marshal(syncParam)
-	log.Logger.Info("sync log keyword data", log.String("endpoint", endpoint), log.String("body", string(b)))
+	log.Info(nil, log.LOGGER_APP, "sync log keyword data", zap.String("endpoint", endpoint), zap.String("body", string(b)))
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_keyword/config", endpointObj.AgentAddress), bytes.NewReader(b))
 	timeOutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	req.WithContext(timeOutCtx)
@@ -248,7 +249,7 @@ func updateEndpointLogKeyword(endpoint string) error {
 	}
 	var response models.LogKeywordHttpResult
 	err = json.Unmarshal(b, &response)
-	log.Logger.Debug("response", log.String("body", string(b)))
+	log.Debug(nil, log.LOGGER_APP, "response", zap.String("body", string(b)))
 	if err == nil {
 		if response.Status == "OK" {
 			return nil

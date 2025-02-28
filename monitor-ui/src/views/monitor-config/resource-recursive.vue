@@ -9,14 +9,18 @@
       :scrollable="true"
     >
       <template slot="content">
-        <Form :model="currentData" label-position="left" :label-width="60">
-          <FormItem :label="$t('m_field_guid')">
+        <Form ref="addPanalForm"
+              :model="currentData"
+              label-position="left"
+              :label-width="80"
+        >
+          <FormItem required :label="$t('m_field_guid')">
             <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
           </FormItem>
-          <FormItem :label="$t('m_field_displayName')">
+          <FormItem required :label="$t('m_field_displayName')">
             <Input v-model="currentData.display_name"></Input>
           </FormItem>
-          <FormItem :label="$t('m_field_type')">
+          <FormItem required :label="$t('m_field_type')">
             <Input v-model="currentData.type"></Input>
           </FormItem>
         </Form>
@@ -187,7 +191,7 @@
         <p style="margin-left: 10px;margin-top: 22px;">{{ $t(this.confirmModal.message) }}</p>
       </div>
       <div slot="footer">
-        <span style="color:#ed4014;float: left;text-align:left">
+        <span style="color:#FF4D4F;float: left;text-align:left">
           <Checkbox v-model="confirmModal.check">{{ $t('m_dangerous_confirm_tip') }}</Checkbox>
         </span>
         <Button @click="cancelConfirmModal">{{$t('m_button_cancel')}}</Button>
@@ -206,7 +210,7 @@
       @on-cancel="cancel"
     >
       <div class="modal-body" style="padding:10px">
-        <div style="color:#ed4014">{{$t('m_delete_follow')}}:</div>
+        <div style="color:#FF4D4F">{{$t('m_delete_follow')}}:</div>
         <div class='will-delete-content'>
           <div v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</div>
         </div>
@@ -233,23 +237,19 @@ export default {
         display_name: null,
         type: null
       },
-
       isAssociatedRole: false,
       selectedRole: [],
       allRole: [],
-
       isAssociatedObject: false,
       selectedObject: [],
       allObject: [],
       initAllObject: [],
-
       isAlarmCallback: false,
       selectedFiring: '',
       allFiring: [],
       selectedRecover: '',
       allRecover: [],
       alarmCallbackata: null,
-
       isAlarmReceivers: false,
       currentRecursive: null,
       inputRole: '',
@@ -583,6 +583,10 @@ export default {
       this.isEditPanal = true
     },
     savePanal() {
+      if (!this.currentData.guid || !this.currentData.display_name || !this.currentData.type) {
+        this.$Message.error(this.$t('m_fields_cannot_be_empty'))
+        return
+      }
       const params = JSON.parse(JSON.stringify(this.currentData))
       let api = '/monitor/api/v1/alarm/org/panel/edit'
       if (this.isAdd) {
