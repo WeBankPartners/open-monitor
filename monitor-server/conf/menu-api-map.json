@@ -1,1514 +1,1206 @@
 [
   {
     "menu": "MONITOR_CUSTOM_DASHBOARD",
-    "content": "自定义看板",
-    "path": "/viewConfigIndex",
     "urls": [
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/message"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/problem/close",
+        "key": "template.templateSet",
+        "url": "/monitor/api/v1/dashboard/custom/main/set",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/dashboard/panels",
-        "method": "GET"
+        "key": "getDashboardRole",
+        "url": "/monitor/api/v1/dashboard/custom/role/get",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/main"
+        "key": "saveDashboardRole",
+        "url": "/monitor/api/v1/dashboard/custom/role/save",
+        "method": "post"
       },
       {
-        "method": "PUT",
-        "url": "/monitor/api/v2/chart/custom/name"
+        "key": "getUserRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/page"
+        "key": "getUserManageRole",
+        "url": "/monitor/api/v1/user/manage_role/list",
+        "method": "get"
       },
       {
-        "url": "/monitor/api/v2/dashboard/custom/export",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/chart/custom/copy",
-        "method": "POST"
-      },
-      {
+        "key": "template.deleteV2",
         "url": "/monitor/api/v2/dashboard/custom",
-        "method": "PUT"
+        "method": "delete"
       },
       {
-        "url": "/monitor/api/v1/dashboard/custom/main/set",
-        "method": "POST"
+        "key": "template.listV2",
+        "url": "/monitor/api/v2/dashboard/custom/list",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/import"
+        "key": "template.portalConfig",
+        "url": "/monitor/api/v1/dashboard/custom/main/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom"
+        "key": "template.singleDashV2",
+        "url": "/monitor/api/v2/dashboard/custom",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/custom"
+        "key": "getDashboardCustomPermission",
+        "url": "/monitor/api/v2/dashboard/custom/permission",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/shared/list"
+        "key": "dashboardCustomCopy",
+        "url": "/monitor/api/v2/dashboard/custom/copy",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom"
+        "key": "chartCustomName",
+        "url": "/monitor/api/v2/chart/custom/name",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/role/list"
+        "key": "dashboardCustomImport",
+        "url": "/monitor/api/v2/dashboard/custom/import",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
+        "key": "template.deleteV2",
+        "url": "/monitor/api/v2/dashboard/custom",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/permission"
+        "key": "getUserRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
+        "key": "getUserManageRole",
+        "url": "/monitor/api/v1/user/manage_role/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        "key": "getDashboardAll",
+        "url": "/monitor/api/v2/dashboard/all",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
+        "key": "getChartManageList",
+        "url": "/monitor/api/v2/chart/manage/list",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
+        "key": "changeChartCustomPermission",
+        "url": "/monitor/api/v2/chart/custom/permission",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
+        "key": "chartInfo",
+        "url": "/monitor/api/v2/chart/custom",
+        "method": "delete"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
+        "key": "chartInfo",
+        "url": "/monitor/api/v2/chart/custom",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
+        "key": "chartCustomSeries",
+        "url": "/monitor/api/v2/chart/custom/series/config",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/series/config"
+        "key": "recursiveType",
+        "url": "/monitor/api/v1/dashboard/recursive/endpoint_type/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/chart/custom/name/exist"
+        "key": "getUserRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
       },
       {
-        "method": "PUT",
-        "url": "/monitor/api/v2/chart/custom"
+        "key": "getUserManageRole",
+        "url": "/monitor/api/v1/user/manage_role/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
+        "key": "changeChartCustomPermission",
+        "url": "/monitor/api/v2/chart/custom/permission",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/pie/chart"
+        "key": "resourceSearch.api",
+        "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/chart"
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
+        "key": "metricTagValue",
+        "url": "/monitor/api/v2/metric/tag/value-list",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/all"
+        "key": "chartCustomNameExist",
+        "url": "/monitor/api/v2/chart/custom/name/exist",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/manage/list"
+        "key": "chartInfo",
+        "url": "/monitor/api/v2/chart/custom",
+        "method": "put"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission"
+        "key": "changeChartCustomPermission",
+        "url": "/monitor/api/v2/chart/custom/permission",
+        "method": "post"
       },
       {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/chart/custom"
+        "key": "metricConfigPieView.api",
+        "url": "/monitor/api/v1/dashboard/pie/chart",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/manage_role/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/role/get"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/custom/role/save"
-      },
-      {
-        "method": "DELETE",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/main/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/permission"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/copy"
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
       }
     ]
   },
   {
     "menu": "MONITOR_MAIN_DASHBOARD",
-    "content": "对象看板",
-    "path": "/endpointView",
     "urls": [
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/main"
+        "key": "recursive.api",
+        "url": "/monitor/api/v1/dashboard/recursive/get",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
+        "key": "alarm.history",
+        "url": "/monitor/api/v1/alarm/history",
+        "method": "get"
       },
       {
-        "url": "/monitor/api/v1/dashboard/panels",
-        "method": "GET"
+        "key": "mainConfig.api",
+        "url": "/monitor/api/v1/dashboard/main",
+        "method": "get"
       },
       {
-        "url": "/monitor/api/v1/dashboard/chart",
-        "method": "POST"
+        "key": "resourceSearch.api",
+        "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
       },
       {
+        "key": "getTagDetail",
+        "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "editTitle.api",
         "url": "/monitor/api/v1/dashboard/config/chart/title",
-        "method": "POST"
+        "method": "post"
       },
       {
-        "url": "/monitor/api/v1/dashboard/tags",
-        "method": "GET"
+        "key": "getTagDetail",
+        "url": "/monitor/api/v1/${id}",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/recursive/get"
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/alarm/history"
+        "key": "editTitle.api",
+        "url": "/monitor/api/v1/dashboard/config/chart/title",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
       }
     ]
   },
   {
     "menu": "MONITOR_ALARM_MANAGEMENT",
-    "content": "告警列表",
-    "path": "/alarmManagement",
     "urls": [
       {
-        "url": "/monitor/api/v1/alarm/problem/close",
+        "key": "alarmProblemHistory",
+        "url": "/monitor/api/v1/alarm/problem/history",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/alarm/problem/notify",
+        "key": "remarkAlarm",
+        "url": "/monitor/api/v1/alarm/problem/message",
         "method": "post"
       },
       {
+        "key": "alarmProblemList",
         "url": "/monitor/api/v1/alarm/problem/page",
         "method": "post"
       },
       {
+        "key": "alarmManagement.close.api",
+        "url": "/monitor/api/v1/alarm/problem/close",
+        "method": "post"
+      },
+      {
+        "key": "alarmManagement.close.api",
+        "url": "/monitor/api/v1/alarm/problem/close",
+        "method": "post"
+      },
+      {
+        "key": "startNotify",
+        "url": "/monitor/api/v1/alarm/problem/notify",
+        "method": "post"
+      },
+      {
+        "key": "recursive.api",
+        "url": "/monitor/api/v1/dashboard/recursive/get",
+        "method": "get"
+      },
+      {
+        "key": "alarm.history",
+        "url": "/monitor/api/v1/alarm/history",
+        "method": "get"
+      },
+      {
+        "key": "mainConfig.api",
+        "url": "/monitor/api/v1/dashboard/main",
+        "method": "get"
+      },
+      {
+        "key": "resourceSearch.api",
+        "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "getTagDetail",
+        "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "editTitle.api",
+        "url": "/monitor/api/v1/dashboard/config/chart/title",
+        "method": "post"
+      },
+      {
+        "key": "getTagDetail",
+        "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "editTitle.api",
+        "url": "/monitor/api/v1/dashboard/config/chart/title",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "alarmProblemList",
+        "url": "/monitor/api/v1/alarm/problem/page",
+        "method": "post"
+      },
+      {
+        "key": "alarmProblemOptions",
         "url": "/monitor/api/v1/alarm/problem/options",
         "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/history"
+        "key": "alarmProblemList",
+        "url": "/monitor/api/v1/alarm/problem/page",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/message"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/page"
+        "key": "alarmProblemHistory",
+        "url": "/monitor/api/v1/alarm/problem/history",
+        "method": "post"
       }
     ]
   },
   {
     "menu": "MONITOR_ALARM_CONFIG",
-    "content": "监控配置",
-    "path": "/monitorConfigIndex",
     "urls": [
       {
-        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group/${guid}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_config/${this.guid}",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
-        "method": "DELETE"
-      },
-      {
-        "url": "monitor/api/v2/service/db_keyword/db_keyword_config",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${this.targetId}",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_metric/${this.targetId}",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/notify",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "PUT"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/export",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v2/service/service_group/${this.targetId}/endpoint/${this.type}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_metric/list/endpoint/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_keyword/list",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/db_metric/list/group/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/get/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/list",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/strategy/import/${type}/${targetId}",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_keyword/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/import",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/strategy/export/service/${this.targetId}",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/export",
-        "method": "GET"
-      },
-      {
-        "url": "/monitor/api/v2/service_endpoint/search/endpoint",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/list/endpoint/${this.targetId}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service/log_metric/list/group/${this.targetId}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/endpoint/get/${rowData.guid}",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/grp/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/query",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/window/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/window/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/endpoint/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/deregister",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/history",
-        "method": "get"
-      },
-      {
+        "key": "getEndpointTypeNew",
         "url": "/monitor/api/v1/dashboard/endpoint/type_new",
         "method": "get"
       },
       {
+        "key": "endpointManagement.groupUpdate",
+        "url": "/monitor/api/v1/alarm/endpoint/grp/update",
+        "method": "post"
+      },
+      {
+        "key": "groupManagement.list.api",
+        "url": "/monitor/api/v2/alarm/endpoint_group/query",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.maintenanceWindow.update",
+        "url": "/monitor/api/v1/alarm/window/update",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.maintenanceWindow.get",
+        "url": "/monitor/api/v1/alarm/window/get",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.db.dbMonitor",
+        "url": "/monitor/api/v1/alarm/db/monitor/list",
+        "method": "get"
+      },
+      {
+        "key": "newSnmpConfig",
+        "url": "/monitor/api/v1/config/new/snmp",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.list.api",
+        "url": "/monitor/api/v1/alarm/endpoint/list",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.update.api",
+        "url": "/monitor/api/v1/alarm/endpoint/update",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.deregister.api",
+        "url": "/monitor/api/v1/agent/deregister",
+        "method": "post"
+      },
+      {
+        "key": "alarm.history",
+        "url": "/monitor/api/v1/alarm/history",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.register.api",
         "url": "/monitor/api/v1/agent/register",
         "method": "post"
       },
       {
+        "key": "monitorEndpointUpdate",
         "url": "/monitor/api/v2/monitor/endpoint/update",
         "method": "put"
       },
       {
-        "url": "/monitor/api/v2/seed",
-        "method": "get"
-      },
-      {
+        "key": "alarmProcessList",
         "url": "/monitor/api/v1/alarm/process/list",
         "method": "get"
       },
       {
+        "key": "alarmProcessUpdate",
         "url": "/monitor/api/v1/alarm/process/update",
         "method": "post"
       },
       {
+        "key": "getAgentEndpointTelnet",
         "url": "/monitor/api/v1/agent/endpoint/telnet/get",
         "method": "get"
       },
       {
+        "key": "endpointTelnetUpdate",
         "url": "/monitor/api/v1/agent/endpoint/telnet/update",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/alarm/endpoint/list",
-        "method": "post"
-      },
-      {
+        "key": "alarmEndpointOptions",
         "url": "/monitor/api/v1/alarm/endpoint/options",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/search",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group/options",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/endpoint/type",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/service_endpoint/search/group",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v2/alarm/endpoint_group",
-        "method": "put"
-      },
-      {
+        "key": "monitorEndpointQuery",
         "url": "/monitor/api/v2/monitor/endpoint/query",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v2/alarm/endpoint_group/${rowData.guid}/endpoint/list",
+        "key": "getMonitorEndpointById",
+        "url": "/monitor/api/v2/monitor/endpoint/get/${id}",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update",
+        "key": "endpointManagement.db.panalName",
+        "url": "/monitor/api/v1/alarm/org/search",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.db.check",
+        "url": "/monitor/api/v1/alarm/db/monitor/check",
         "method": "post"
       },
       {
+        "key": "endpointManagement.db.add",
+        "url": "/monitor/api/v1/alarm/db/monitor/add",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.db.dbMonitor",
+        "url": "/monitor/api/v1/alarm/db/monitor/list",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.db.delete",
+        "url": "/monitor/api/v1/alarm/db/monitor/delete",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.db.update",
+        "url": "/monitor/api/v1/alarm/db/monitor/update",
+        "method": "post"
+      },
+      {
+        "key": "endpointManagement.db.updatePanalName",
+        "url": "/monitor/api/v1/alarm/db/monitor/sys/update",
+        "method": "post"
+      },
+      {
+        "key": "alarmEndpointGroupOptions",
+        "url": "/monitor/api/v2/alarm/endpoint_group/options",
+        "method": "get"
+      },
+      {
+        "key": "getEndpointType",
+        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "method": "get"
+      },
+      {
+        "key": "getTargetByEndpointGroup",
+        "url": "/monitor/api/v2/service_endpoint/search/group",
+        "method": "get"
+      },
+      {
+        "key": "groupManagement.add.api",
+        "url": "/monitor/api/v2/alarm/endpoint_group",
+        "method": "post"
+      },
+      {
+        "key": "groupManagement.update.api",
+        "url": "/monitor/api/v2/alarm/endpoint_group",
+        "method": "put"
+      },
+      {
+        "key": "groupManagement.allRoles.api",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "groupManagement.exitRoles.api",
         "url": "/monitor/api/v1/alarm/grp/role/get",
         "method": "get"
       },
       {
+        "key": "groupManagement.updateRoles.api",
         "url": "/monitor/api/v1/alarm/grp/role/update",
         "method": "post"
       },
       {
+        "key": "groupManagement.list.api",
         "url": "/monitor/api/v2/alarm/endpoint_group/query",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/connect/get",
+        "key": "monitorEndpointQuery",
+        "url": "/monitor/api/v2/monitor/endpoint/query",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/connect/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/panel/get",
+        "key": "getEndpointListById",
+        "url": "/monitor/api/v2/alarm/endpoint_group/${guid}/endpoint/list",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/panel/edit",
+        "key": "getEndpointListById",
+        "url": "/monitor/api/v2/alarm/endpoint_group/${guid}/endpoint/list",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/panel/add",
+        "key": "updateEndpointGroup",
+        "url": "/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/panel/delete",
-        "method": "post"
+        "key": "processAlarmEndpointGroup",
+        "url": "/monitor/api/v2/alarm/endpoint_group/${id}",
+        "method": "delete"
       },
       {
-        "url": "/monitor/api/v1/alarm/org/panel/delete",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/role/get",
-        "method": "get"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/role/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/alarm/org/endpoint/get",
-        "method": "get"
-      },
-      {
+        "key": "resourceSearch.api",
         "url": "/monitor/api/v1/dashboard/search",
         "method": "get"
       },
       {
+        "key": "resourceLevel.getAll",
+        "url": "/monitor/api/v1/alarm/org/panel/get",
+        "method": "get"
+      },
+      {
+        "key": "alarmOrgPanelAdd",
+        "url": "/monitor/api/v1/alarm/org/panel/add",
+        "method": "post"
+      },
+      {
+        "key": "groupManagement.allRoles.api",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "resourceLevel.getReceivers",
+        "url": "/monitor/api/v1/alarm/org/connect/get",
+        "method": "get"
+      },
+      {
+        "key": "resourceLevel.updateReceivers",
+        "url": "/monitor/api/v1/alarm/org/connect/update",
+        "method": "post"
+      },
+      {
+        "key": "resourceLevel.getAll",
+        "url": "/monitor/api/v1/alarm/org/panel/get",
+        "method": "get"
+      },
+      {
+        "key": "alarmOrgPanelDelete",
+        "url": "/monitor/api/v1/alarm/org/panel/delete",
+        "method": "post"
+      },
+      {
+        "key": "alarmOrgPanelAdd",
+        "url": "/monitor/api/v1/alarm/org/panel/add",
+        "method": "post"
+      },
+      {
+        "key": "alarmOrgPanelEdit",
+        "url": "/monitor/api/v1/alarm/org/panel/edit",
+        "method": "post"
+      },
+      {
+        "key": "getAlarmOrgRole",
+        "url": "/monitor/api/v1/alarm/org/role/get",
+        "method": "get"
+      },
+      {
+        "key": "userRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "updateAlarmOrgRole",
+        "url": "/monitor/api/v1/alarm/org/role/update",
+        "method": "post"
+      },
+      {
+        "key": "getAlarmOrgEndpoint",
+        "url": "/monitor/api/v1/alarm/org/endpoint/get",
+        "method": "get"
+      },
+      {
+        "key": "resourceSearch.api",
+        "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "updateAlarmOrgEndpoint",
         "url": "/monitor/api/v1/alarm/org/endpoint/update",
         "method": "post"
       },
       {
+        "key": "getAlarmOrgCallback",
         "url": "/monitor/api/v1/alarm/org/callback/get",
         "method": "get"
       },
       {
+        "key": "updateAlarmOrgCallback",
         "url": "/monitor/api/v1/alarm/org/callback/update",
         "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/search"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/org/panel/add"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "put",
-        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/regexp/match"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/data_map/regexp/match"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/db_metric"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/db_metric"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_config"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_config"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${type}"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_json"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_json"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel"
-      },
-      {
-        "key": "businessMonitor",
-        "content": "业务配置",
-        "method": "get",
-        "url": "/monitor/api/v2/service/db_metric/list"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/affect_service_group/${this.targetId}"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${this.targetId}"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/regexp/test/match"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "PUT",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group"
-      },
-      {
-        "key": "logTemplate",
-        "content": "日志模版",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/regexp/match"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list/count"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/endpoint/type"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/sys/parameter/metric_template"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/endpoint/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/endpoint"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/chart"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "PUT",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/comparison_chart"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list/count"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "DELETE",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/endpoint_group/query"
-      },
-      {
-        "key": "metricConfig",
-        "content": "指标列表",
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/endpoint/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/${data.endpoint_group}/notify/update"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/${this.targetId}/notify/update"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "DELETE",
-        "url": "/monitor/api/v2/alarm/strategy/${rowData.guid}"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/event/callback/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v1/user/role/list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "PUT",
-        "url": "/monitor/api/v2/alarm/strategy"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/strategy"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "post",
-        "url": "/monitor/api/v2/alarm/strategy/query"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "POST",
-        "url": "/monitor/api/v2/metric/tag/value-list"
-      },
-      {
-        "key": "thresholdManagement",
-        "content": "指标阈值",
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/strategy/search"
-      },
-      {
-        "key": "logManagement",
-        "content": "关键字",
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list"
-      },
-      {
-        "key": "logManagement",
-        "content": "关键字",
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options"
-      }
-    ]
-  },
-  {
-    "menu": "MONITOR_ADMINISTRATOR_CONFIG",
-    "content": "管理员配置",
-    "path": "/adminConfig",
-    "urls": [
-      {
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "DELETE"
-      },
-      {
-        "url": "/monitor/api/v1/dashboard/new/panel/host",
-        "method": "POST"
-      },
-      {
-        "url": "/monitor/api/v2/monitor/metric/import",
-        "method": "POST"
-      },
-      {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type/query",
+        "key": "getTargetByEndpointByType",
+        "url": "/monitor/api/v2/service_endpoint/search/${type}",
         "method": "get"
       },
       {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type",
-        "method": "post"
+        "key": "getEndpointsByTypeByType",
+        "url": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
+        "method": "get"
       },
       {
-        "key": "typeConfig",
-        "content": "类型配置",
-        "url": "/monitor/api/v2/config/type",
+        "key": "serviceGroupEendpoint",
+        "url": "/monitor/api/v2/service/service_group/endpoint_rel",
         "method": "delete"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
+        "key": "logMetricListEndpoint",
+        "url": "/monitor/api/v2/service/log_metric/list/endpoint/${id}",
         "method": "get"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
+        "key": "dbMetricListEndpoint",
+        "url": "/monitor/api/v2/service/db_metric/list/endpoint/${id}",
+        "method": "get"
+      },
+      {
+        "key": "standardLogRegexMatch",
+        "url": "/monitor/api/v2/service/log_metric/regexp/match",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "put"
+      },
+      {
+        "key": "customLogMetricConfig",
+        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group",
+        "method": "put"
+      },
+      {
+        "key": "customLogMetricConfig",
+        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group",
+        "method": "post"
+      },
+      {
+        "key": "getConfigDetailById",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
+        "method": "get"
+      },
+      {
+        "key": "customLogMetricGroupById",
+        "url": "/monitor/api/v2/service/log_metric/custom/log_metric_group/${id}",
+        "method": "get"
+      },
+      {
+        "key": "logMetricGroup",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+        "method": "post"
+      },
+      {
+        "key": "logMetricGroup",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_group",
+        "method": "put"
+      },
+      {
+        "key": "logMetricDataMapMatch",
+        "url": "/monitor/api/v2/service/log_metric/data_map/regexp/match",
+        "method": "post"
+      },
+      {
+        "key": "getConfigDetailById",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
+        "method": "get"
+      },
+      {
+        "key": "getLogMetricConfigById",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${id}",
+        "method": "get"
+      },
+      {
+        "key": "logTemplateTableData",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list",
+        "method": "post"
+      },
+      {
+        "key": "saveTargetDb",
+        "url": "/monitor/api/v2/service/db_metric",
+        "method": "post"
+      },
+      {
+        "key": "saveTargetDb",
+        "url": "/monitor/api/v2/service/db_metric",
+        "method": "put"
+      },
+      {
+        "key": "logMetricReg",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_config",
+        "method": "post"
+      },
+      {
+        "key": "logMetricReg",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_config",
+        "method": "put"
+      },
+      {
+        "key": "logMetricJson",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_json",
+        "method": "post"
+      },
+      {
+        "key": "logMetricJson",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_json",
+        "method": "put"
+      },
+      {
+        "key": "saveTargetDbById",
+        "url": "/monitor/api/v2/service/db_metric/${id}",
         "method": "delete"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
-        "method": "put"
+        "key": "serviceGroupEendpoint",
+        "url": "/monitor/api/v2/service/service_group/endpoint_rel",
+        "method": "get"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "put"
+        "key": "logMetricRegById",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_config/${id}",
+        "method": "delete"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
+        "key": "deleteLogMetricGroupById",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_group/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "deletePathById",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+        "method": "delete"
+      },
+      {
+        "key": "getEndpointsByTypeByType",
+        "url": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
+        "method": "get"
+      },
+      {
+        "key": "getTargetDetailById",
+        "url": "/monitor/api/v2/service/log_metric/list/group/${id}",
+        "method": "get"
+      },
+      {
+        "key": "getTargetDbDetailById",
+        "url": "/monitor/api/v2/service/db_metric/list/group/${id}",
+        "method": "get"
+      },
+      {
+        "key": "keywordImport",
+        "url": "/monitor/api/v2/service/log_metric/import",
         "method": "post"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/chart",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/new/panel",
-        "method": "get"
-      },
-      {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/chart",
+        "key": "logMetricImportExcel",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}",
         "method": "post"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/endpoint",
+        "key": "regexpTestMatch",
+        "url": "/monitor/api/v2/regexp/test/match",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateTableData",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/list",
+        "method": "post"
+      },
+      {
+        "key": "logMonitorTemplateOptions",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options",
         "method": "get"
       },
       {
-        "key": "typeConfig",
-        "content": "看板配置",
-        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "key": "getAffectServiceGroup",
+        "url": "/monitor/api/v2/service/log_metric/affect_service_group/${id}",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric/list",
+        "key": "getConfigDetailById",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "logMonitorTemplateExport",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
+        "method": "post"
+      },
+      {
+        "key": "logMonitorTemplateImport",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "put"
+      },
+      {
+        "key": "regexpTestMatch",
+        "url": "/monitor/api/v2/regexp/test/match",
+        "method": "post"
+      },
+      {
+        "key": "getConfigDetailById",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "post"
+      },
+      {
+        "key": "logTemplateConfig",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
+        "method": "put"
+      },
+      {
+        "key": "standardLogRegexMatch",
+        "url": "/monitor/api/v2/service/log_metric/regexp/match",
+        "method": "post"
+      },
+      {
+        "key": "getConfigDetailById",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricListCount",
         "url": "/monitor/api/v2/monitor/metric/list/count",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "getEndpointType",
         "url": "/monitor/api/v1/dashboard/endpoint/type",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricManagement",
         "url": "/monitor/api/v1/dashboard/new/metric",
         "method": "delete"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
         "method": "delete"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "getEndpointType",
+        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "method": "get"
+      },
+      {
+        "key": "parameterMetricTemplate",
         "url": "/monitor/api/v2/sys/parameter/metric_template",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "getMetricOptions",
         "url": "/monitor/api/v1/dashboard/endpoint/metric/list",
         "method": "post"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "getEndpoint",
         "url": "/monitor/api/v1/dashboard/endpoint",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "metricManagement",
         "url": "/monitor/api/v1/dashboard/new/metric",
         "method": "post"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricManagement",
         "url": "/monitor/api/v1/dashboard/new/metric",
         "method": "put"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricList.api",
         "url": "/monitor/api/v2/monitor/metric/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricComparisonList",
         "url": "/monitor/api/v2/monitor/metric_comparison/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "getEndpoint",
+        "url": "/monitor/api/v1/dashboard/endpoint",
+        "method": "get"
+      },
+      {
+        "key": "dashboardComparisonChart",
         "url": "/monitor/api/v1/dashboard/comparison_chart",
         "method": "post"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "comparisonMetricMgmt",
         "url": "/monitor/api/v1/dashboard/new/comparison_metric",
         "method": "post"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricList.api",
         "url": "/monitor/api/v2/monitor/metric/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricComparisonList",
         "url": "/monitor/api/v2/monitor/metric_comparison/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricListCount",
         "url": "/monitor/api/v2/monitor/metric/list/count",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v2/alarm/endpoint_group/query",
+        "key": "getTargetByEndpointGroup",
+        "url": "/monitor/api/v2/service_endpoint/search/group",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricManagement",
         "url": "/monitor/api/v1/dashboard/new/metric",
         "method": "delete"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
-        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}",
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
         "method": "delete"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "metricList.api",
         "url": "/monitor/api/v2/monitor/metric/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricComparisonList",
         "url": "/monitor/api/v2/monitor/metric_comparison/list",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "metricListCount",
         "url": "/monitor/api/v2/monitor/metric/list/count",
         "method": "get"
       },
       {
-        "key": "adminMetric",
-        "content": "指标配置",
+        "key": "groupManagement.list.api",
+        "url": "/monitor/api/v2/alarm/endpoint_group/query",
+        "method": "get"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "delete"
+      },
+      {
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricListCount",
+        "url": "/monitor/api/v2/monitor/metric/list/count",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.list.api",
         "url": "/monitor/api/v1/alarm/endpoint/list",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/add",
+        "key": "alarmStrategyImport",
+        "url": "/monitor/api/v2/alarm/strategy/import/${type}/${id}",
         "method": "post"
       },
       {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/list",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/delete",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "delete"
-      },
-      {
-        "url": "/monitor/api/v1/agent/kubernetes/cluster/update",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
+        "key": "alarmStrategyImport",
+        "url": "/monitor/api/v2/alarm/strategy/import/${type}/${id}",
         "method": "get"
       },
       {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "post"
-      },
-      {
-        "url": "/monitor/api/v1/config/new/snmp",
-        "method": "put"
-      },
-      {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
+        "key": "alarmStrategySearch",
+        "url": "/monitor/api/v2/alarm/strategy/search",
         "method": "get"
       },
       {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
-        "method": "delete"
+        "key": "eventCallbackList",
+        "url": "/monitor/api/v2/alarm/event/callback/list",
+        "method": "get"
       },
       {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
+        "key": "userRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "alarmStrategy",
+        "url": "/monitor/api/v2/alarm/strategy",
+        "method": "post"
+      },
+      {
+        "key": "alarmStrategy",
+        "url": "/monitor/api/v2/alarm/strategy",
         "method": "put"
       },
       {
-        "key": "remoteSync",
-        "content": "远程同步",
-        "url": "/monitor/api/v2/config/remote/write",
+        "key": "metricTagValue",
+        "url": "/monitor/api/v2/metric/tag/value-list",
         "method": "post"
-      }
-    ]
-  },
-  {
-    "menu": "HOME_PAGE",
-    "content": "monitor首页配置页面",
-    "urls": [
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/analyze"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/monitor/metric/export"
+        "key": "alarmEndpointGroup",
+        "url": "/monitor/api/v2/alarm/endpoint_group/${group}/notify/update",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/endpoint_group/query"
+        "key": "alarmStrategyById",
+        "url": "/monitor/api/v2/alarm/strategy/${guid}",
+        "method": "delete"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/strategy/workflow"
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_metric/export"
+        "key": "getTargetByEndpointByType",
+        "url": "/monitor/api/v2/service_endpoint/search/${type}",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/export"
+        "key": "bussinessMonitorImport",
+        "url": "/monitor/api/v2/service/log_keyword/import",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/strategy/export/${a}/${b}"
+        "key": "eventCallbackList",
+        "url": "/monitor/api/v2/alarm/event/callback/list",
+        "method": "get"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/service/log_keyword/export"
+        "key": "userRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/export"
+        "key": "logKeywordNotify",
+        "url": "/monitor/api/v2/service/log_keyword/notify",
+        "method": "post"
       },
       {
-        "method": "GET",
-        "url": "/monitor/api/v2/dashboard/custom"
+        "key": "logKeywordConfig",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+        "method": "delete"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/chart/custom/permission/batch"
+        "key": "serviceLogKeywordMonitor",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+        "method": "post"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/log_monitor_template/batch"
+        "key": "serviceLogKeywordMonitor",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+        "method": "put"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/dashboard/batch"
+        "key": "getLogKeywordList",
+        "url": "/monitor/api/v2/service/log_keyword/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/service_group/batch"
+        "key": "getDbKeywordList",
+        "url": "/monitor/api/v2/service/db_keyword/list",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/trans-export/config/type/batch"
+        "key": "serviceDbKeywordConfig",
+        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+        "method": "delete"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/config/type-batch"
+        "key": "logKeywordMonitorById",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${id}",
+        "method": "delete"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/endpoint_group/import"
+        "key": "getEndpointsByTypeByType",
+        "url": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
+        "method": "get"
       },
       {
-        "method": "POST",
-        "url": "/monitor/api/v2/monitor/metric/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/alarm/strategy/import/${a}/${b}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_metric/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/service/log_keyword/import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/custom/trans_import"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/dashboard/data/sync"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/system/add"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/stop/${name}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/snmp/exporter/${action}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/alarm/problem/query"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/user/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v2/alarm/endpoint_group/${groupGuid}/notify/list"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/alarm/org/plugin"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/new/metric"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/user/role/update"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/process/${operation}"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/alarm/problem/list"
-      },
-      {
-        "method": "get",
-        "url": "/monitor/api/v1/user/message/get"
-      },
-      {
-        "method": "get",
-        "url": "/monitor/api/v1/user/role/user/update"
-      },
-      {
-        "method": "post",
-        "url": "/monitor/api/v1/agent/export/log_monitor/${operation}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/start/${name}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/deregister/${name}"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/config/metric/list"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/kubernetes/cluster/${action}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/register/${name}"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/export/kubernetes/pod/${action}"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/server/chart"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/user/message/update"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/agent/custom/metric/add"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v1/dashboard/system/delete"
-      },
-      {
-        "method": "POST",
-        "url": "/monitor/api/v2/service/plugin/update/path"
-      },
-      {
-        "method": "GET",
-        "url": "/monitor/api/v1/dashboard/custom/main/get"
+        "key": "serviceGroupEendpoint",
+        "url": "/monitor/api/v2/service/service_group/endpoint_rel",
+        "method": "get"
       }
     ]
   }

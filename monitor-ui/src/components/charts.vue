@@ -44,6 +44,13 @@
 import {isEmpty} from 'lodash'
 import SingleChart from '@/components/single-chart'
 import ChartLinesModal from '@/components/chart-lines-modal'
+
+export const custom_api_enum = [
+  {
+    getTagDetail: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -77,7 +84,9 @@ export default {
       },
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      refreshNow: false
+      refreshNow: false,
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   props: {
@@ -135,7 +144,7 @@ export default {
       })
     },
     pitchOnBtn() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl + this.currentParameter, '', responseData => {
+      this.request('GET',this.tagsUrl + this.currentParameter, '', responseData => {
         this.activeCharts.forEach((element,index) => {
           element.metric = responseData[index].metric
         })
@@ -166,7 +175,7 @@ export default {
         metric: this.editChartConfig.metric,
         name: this.modelConfig.addRow.name
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
+      this.request('POST', this.apiCenter.editTitle.api, params, () => {
         this.$root.JQ('#edit_Modal').modal('hide')
         // this.refreshCharts()
         this.$emit('refreshConfig')

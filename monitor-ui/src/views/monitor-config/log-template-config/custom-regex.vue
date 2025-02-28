@@ -133,6 +133,27 @@ const initMetricItem = {
   range_config: cloneDeep(initRangeConfigMap)
 }
 
+export const custom_api_enum = [
+  {
+    logTemplateConfig: 'post'
+  },
+  {
+    logTemplateConfig: 'put'
+  },
+  {
+    customLogMetricConfig: 'put'
+  },
+  {
+    customLogMetricConfig: 'post'
+  },
+  {
+    getConfigDetailById: 'get'
+  },
+  {
+    customLogMetricGroupById: 'get'
+  }
+]
+
 export default {
   name: 'standard-regex',
   data() {
@@ -570,10 +591,11 @@ export default {
       auto_create_dashboard: true,
       metricPrefixCode: '',
       tableKey: '',
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       templateGuid: '',
       templateMetricList: [],
-      templateParamList: []
+      templateParamList: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -771,7 +793,7 @@ export default {
       const methodType = this.isAdd ? 'POST' : 'PUT'
       let api = ''
       if (this.isInTemplatePage) { // 在模板配置页面
-        api = this.$root.apiCenter.logTemplateConfig
+        api = this.apiCenter.logTemplateConfig
         tmpData.calc_result = {
           match_text: '',
           json_key_list: [],
@@ -782,7 +804,7 @@ export default {
         })
         this.processSaveData(tmpData)
       } else {
-        api = this.$root.apiCenter.customLogMetricConfig
+        api = this.apiCenter.customLogMetricConfig
         if (this.isAdd) {
           tmpData.log_monitor_template_guid = tmpData.guid
           tmpData.guid = ''
@@ -929,7 +951,7 @@ export default {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
-      this.request('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
+      this.request('POST', this.apiCenter.standardLogRegexMatch, params, responseData => {
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {

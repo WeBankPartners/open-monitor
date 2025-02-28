@@ -44,7 +44,9 @@ export default {
       panalUnit: '',
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   created() {
@@ -78,29 +80,24 @@ export default {
         )
       })
       if (params !== []) {
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',
-          this.$root.apiCenter.metricConfigView.api,
-          params,
-          responseData => {
-            responseData.chartId = this.elId
-            responseData.yaxis.unit = this.panalUnit
-            const chartConfig = {
-              eye: false,
-              clear: true,
-              lineBarSwitch: true,
-              dataZoom: false,
-              chartId: this.elId,
-              canEditShowLines: true
-            }
-            this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
-            if (this.chartInstance) {
-              this.chartInstance.on('legendselectchanged', params => {
-                window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
-              })
-            }
+        this.request('POST', this.apiCenter.metricConfigView.api, params, responseData => {
+          responseData.chartId = this.elId
+          responseData.yaxis.unit = this.panalUnit
+          const chartConfig = {
+            eye: false,
+            clear: true,
+            lineBarSwitch: true,
+            dataZoom: false,
+            chartId: this.elId,
+            canEditShowLines: true
           }
-        )
+          this.chartInstance = readyToDraw(this,responseData, 1, chartConfig)
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data'][this.elId] = cloneDeep(params.selected)
+            })
+          }
+        })
       }
     },
     goBack() {

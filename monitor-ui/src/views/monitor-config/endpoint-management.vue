@@ -337,6 +337,15 @@ import {
   interceptParams, showPoptipOnTable
 } from '@/assets/js/utils'
 
+export const custom_api_enum = [
+  {
+    monitorEndpointQuery: 'get'
+  },
+  {
+    getMonitorEndpointById: 'get'
+  }
+]
+
 const alarmLevelMap = {
   low: {
     label: 'm_low',
@@ -607,7 +616,6 @@ export default {
       },
       objectGroupList: [],
       objectTypeList: [],
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       pagination: {
         __orders: '-created_date',
         total: 0,
@@ -738,7 +746,9 @@ export default {
         page: 1,
         size: 10
       },
-      endPointItem: {}
+      endPointItem: {},
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -786,7 +796,7 @@ export default {
       this.endpointRejectModel.addRow.step = process.step
     },
     getIpList() {
-      const api = '/monitor/api/v2/monitor/endpoint/query?monitorType=host'
+      const api = this.apiCenter.monitorEndpointQuery + '?monitorType=host'
       this.request('GET', api, '', res => {
         this.endpointRejectModel.ipOptions = res.data
       })
@@ -796,7 +806,7 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
+      await this.request('GET', this.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
           label: item.guid,
           value: item.guid,
@@ -822,7 +832,7 @@ export default {
         endpoint_id: Number(this.id),
         group_ids: this.groupModel.group.map(Number)
       }
-      this.request('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.groupUpdate, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#group_modal').modal('hide')
       })
@@ -836,7 +846,7 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.groupManagement.list.api, params, res => {
+      await this.request('GET', this.apiCenter.groupManagement.list.api, params, res => {
         this.groupModel.groupOptions = res.data.map(item => ({
           label: item.name,
           key: item.id
@@ -853,7 +863,7 @@ export default {
         endpoint: this.id,
         data: this.maintenanceWindowModel.result
       }
-      this.request('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
         this.getTableList()
@@ -864,7 +874,7 @@ export default {
       const params = {
         endpoint: rowData.guid
       }
-      this.request('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.maintenanceWindow.get, params, responseData => {
         this.maintenanceWindowModel.result = []
         responseData.forEach(item => {
           this.maintenanceWindowModel.result.push({
@@ -889,7 +899,7 @@ export default {
       const params = {
         endpoint_id: this.dbEndpointId
       }
-      this.request('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
         this.$refs.dataMonitor.managementData(responseData)
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
@@ -929,17 +939,12 @@ export default {
       if (type && type === 'snmp') {
         proxy_exporter.hide = false
         this.endpointRejectModel.supportStep = false
-        this.request(
-          'GET',
-          '/monitor/api/v1/config/new/snmp',
-          {},
-          responseData => {
-            this.endpointRejectModel.v_select_configs.proxy_exporter = responseData.map(item => ({
-              label: item.id,
-              value: item.id
-            }))
-          }
-        )
+        this.request('GET', this.apiCenter.newSnmpConfig, {}, responseData => {
+          this.endpointRejectModel.v_select_configs.proxy_exporter = responseData.map(item => ({
+            label: item.id,
+            value: item.id
+          }))
+        })
       }
     },
     add() {
@@ -950,7 +955,7 @@ export default {
         page: 1,
         size: 300
       }
-      this.request('POST', '/monitor/api/v1/alarm/endpoint/list', params, responseData => {
+      this.request('POST', this.apiCenter.endpointManagement.list.api, params, responseData => {
         responseData.data.forEach(item => {
           if (item.id !== -1) {
             this.modelConfig.slotConfig.resourceOption.push(item)
@@ -965,7 +970,7 @@ export default {
         endpoints: this.modelConfig.slotConfig.resourceSelected.map(Number),
         operation: 'add'
       }
-      this.request('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.update.api, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_object_Modal').modal('hide')
       })
@@ -974,8 +979,7 @@ export default {
       const params = {
         guid: rowData.guid
       }
-      const url = this.$root.apiCenter.endpointManagement.deregister.api
-      this.request('POST', url, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.deregister.api, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getTableList()
       })
@@ -1015,7 +1019,7 @@ export default {
         page: this.historyPagination.page,
         pageSize: this.historyPagination.size,
       }
-      this.request('GET', this.$root.apiCenter.alarm.history, params, responseData => {
+      this.request('GET', this.apiCenter.alarm.history, params, responseData => {
         this.historyPagination.total = responseData.pageInfo.totalRows
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData.contents.problem_list)
       })
@@ -1041,7 +1045,7 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.request('GET', this.$root.apiCenter.getEndpointTypeNew, params, res => {
+      await this.request('GET', this.apiCenter.getEndpointTypeNew, params, res => {
         this.endpointRejectModel.endpointType = res.map(item => ({
           label: item.guid,
           value: item.guid,
@@ -1066,7 +1070,7 @@ export default {
       await this.getEncryptKey()
       this.endpointRejectModel.addRow.port += ''
       const params = this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
-      this.$validator.validate().then(result => {
+      this.$validator.validate().then(async result => {
         if (!result) {
           return
         }
@@ -1085,18 +1089,20 @@ export default {
           }
           params.password = CryptoJS.AES.encrypt(params.password, key, config).toString()
         }
-        const methodType = this.endpointRejectModel.isAdd ? 'POST' : 'PUT'
-        const api = this.endpointRejectModel.isAdd ? this.$root.apiCenter.endpointManagement.register.api : '/monitor/api/v2/monitor/endpoint/update'
-        this.request(methodType, api, params, () => {
-          this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
-          this.$root.JQ('#endpoint_reject_model').modal('hide')
-          this.$Message.success(this.$t('m_tips_success'))
-          this.getTableList()
-        })
+
+        if (this.endpointRejectModel.isAdd) {
+          await this.request('POST', this.apiCenter.endpointManagement.register.api, params)
+        } else {
+          await this.request('PUT', this.apiCenter.monitorEndpointUpdate, params)
+        }
+        this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
+        this.$root.JQ('#endpoint_reject_model').modal('hide')
+        this.$Message.success(this.$t('m_tips_success'))
+        this.getTableList()
       })
     },
     async getEncryptKey() {
-      await this.request('Get', this.$root.apiCenter.getEncryptKey, '', responseData => {
+      await this.request('Get', this.apiCenter.getEncryptKey, '', responseData => {
         this.encryptKey = responseData
       })
     },
@@ -1104,7 +1110,7 @@ export default {
       this.processConfigModel.processName = ''
       this.id = rowData.id
       this.processConfigModel.addRow.processSet = []
-      this.request('GET', '/monitor/api/v1/alarm/process/list', {
+      this.request('GET', this.apiCenter.alarmProcessList, {
         id: this.id
       }, responseData => {
         if (!responseData.length) {
@@ -1129,7 +1135,7 @@ export default {
         process_list: this.processConfigModel.process_list,
         check: true
       }
-      this.request('POST', '/monitor/api/v1/alarm/process/update', params, () => {
+      this.request('POST', this.apiCenter.alarmProcessUpdate, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       })
       this.$root.JQ('#process_config_model').modal('hide')
@@ -1175,7 +1181,7 @@ export default {
       const params = {
         guid: rowData.guid
       }
-      this.request('GET', '/monitor/api/v1/agent/endpoint/telnet/get', params, responseData => {
+      this.request('GET', this.apiCenter.getAgentEndpointTelnet, params, responseData => {
         if (!responseData.length) {
           responseData.push({
             port: null,
@@ -1214,7 +1220,7 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.request('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
+      this.request('POST', this.apiCenter.endpointTelnetUpdate, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#port_Modal').modal('hide')
         this.getTableList()
@@ -1222,8 +1228,8 @@ export default {
     },
     getTableList() {
       const params = Object.assign({}, this.searchForm, this.pagination)
-      const path = '/monitor/api/v1/alarm/endpoint/list'
-      this.request('POST', path, params, res => {
+      // const path = '/monitor/api/v1/alarm/endpoint/list'
+      this.request('POST', this.apiCenter.endpointManagement.list.api, params, res => {
         this.pagination.total = res.num
         this.pagination.page = parseInt(params.page)
         this.objectTableData = isEmpty(res.data) ? [] : res.data
@@ -1243,8 +1249,7 @@ export default {
       }
     },
     getAllOptions() {
-      const path = '/monitor/api/v1/alarm/endpoint/options'
-      this.request('GET', path, {}, res => {
+      this.request('GET', this.apiCenter.alarmEndpointOptions, {}, res => {
         this.objectGroupList = res.endpointGroup
         this.objectTypeList = res.basicType
       })

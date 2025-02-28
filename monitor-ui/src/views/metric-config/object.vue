@@ -316,7 +316,9 @@ export default {
         page: 1,
         size: 10,
         total: 0
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   async mounted() {
@@ -351,17 +353,30 @@ export default {
         pageSize: this.pagination.size,
         startIndex: this.pagination.size * (this.pagination.page - 1)
       }
-      const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
-        api,
-        params,
-        responseData => {
-          this.tableData = responseData.contents
-          this.pagination.total = responseData.pageInfo.totalRows
-        },
-        { isNeedloading: true }
-      )
+      // const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
+      if (this.metricType === 'originalMetrics') {
+        this.request(
+          'GET',
+          this.apiCenter.metricList.api,
+          params,
+          responseData => {
+            this.tableData = responseData.contents
+            this.pagination.total = responseData.pageInfo.totalRows
+          },
+          { isNeedloading: true }
+        )
+      } else {
+        this.request(
+          'GET',
+          this.apiCenter.metricComparisonList,
+          params,
+          responseData => {
+            this.tableData = responseData.contents
+            this.pagination.total = responseData.pageInfo.totalRows
+          },
+          { isNeedloading: true }
+        )
+      }
       this.getMetricTotalNumber()
     },
     getMetricTotalNumber() {
@@ -369,21 +384,21 @@ export default {
         endpoint: this.endpoint,
         metric: this.metric
       }
-      const api = '/monitor/api/v2/monitor/metric/list/count'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
+      // const api = '/monitor/api/v2/monitor/metric/list/count'
+      this.request('GET', this.apiCenter.metricListCount, params, response => {
         this.$emit('totalCount', response, this.metricType)
       }, {isNeedloading: false})
     },
     getEndpointList() {
-      const api = '/monitor/api/v1/alarm/endpoint/list'
+      // const api = '/monitor/api/v1/alarm/endpoint/list'
       const params = {
         __orders: '-created_date',
         page: 1,
         size: 1000000
       }
-      return this.$root.$httpRequestEntrance.httpRequestEntrance(
+      return this.request(
         'POST',
-        api,
+        this.apiCenter.endpointManagement.list.api,
         params,
         responseData => {
           this.endpointOptions = responseData.data || []

@@ -266,7 +266,6 @@ export default {
   },
   data() {
     return {
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       // chartId: "664eff8cbd85ad9a",
       elId: '',
       chartConfigForm: {
@@ -750,7 +749,8 @@ export default {
       isLineSelectModalShow: false,
       setChartConfigId: '',
       chartInstance: null,
-      apiCenter: this.$root.apiCenter
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   computed: {

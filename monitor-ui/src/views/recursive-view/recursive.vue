@@ -79,7 +79,9 @@ export default {
       },
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      refreshNow: false
+      refreshNow: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   props: {
@@ -168,7 +170,7 @@ export default {
         metric: this.editChartConfig.metric,
         name: this.modelConfig.addRow.name
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
+      this.request('POST', this.apiCenter.editTitle.api, params, () => {
         this.$root.JQ('#edit_Modal').modal('hide')
         this.$root.$eventBus.$emit('refreshRecursive', '')
       })

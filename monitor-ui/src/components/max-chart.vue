@@ -97,7 +97,9 @@ export default {
       },
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   watch: {
@@ -182,7 +184,7 @@ export default {
         params.end = end ? end : (this.chartCondition.dateRange[1] ===''
           ?0 :Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.request('POST', this.apiCenter.metricConfigView.api, params, responseData => {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
         const chartConfig = {
           eye: false,

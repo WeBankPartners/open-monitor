@@ -121,23 +121,22 @@ export default {
     return {
       isShowWarning: false,
       selectedData: null,
-
       isShowChangePanalName: false,
       activePanalName: '',
       newPanalName: '',
       panalNameList: [],
-
       db_add_Modal: false,
       db_edit_Modal: false,
       isAdd: true,
       totalData: [],
-
       activeSysPanal: {
         sys_panel: '',
         name: '',
         sql: ''
       },
-      activeId: ''
+      activeId: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   props: ['endpointId'],
@@ -166,7 +165,7 @@ export default {
       this.activeSysPanal.name = ''
       this.activeSysPanal.sql = ''
       // this.activeSysPanal.sys_panel = sys_panel
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
         this.panalNameList.unshift({
           option_text: 'null',
@@ -177,13 +176,13 @@ export default {
     },
     addDbConfig() {
       this.activeSysPanal.endpoint_id = Number(this.endpointId)
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, this.activeSysPanal, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.check, this.activeSysPanal, () => {
         this.addPost(this.activeSysPanal)
       })
     },
     addPost(params) {
       params.sys_panel = this.newPanalName
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.add, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.add, params, () => {
         this.getData()
       })
     },
@@ -191,7 +190,7 @@ export default {
       const params = {
         endpoint_id: this.endpointId
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
         this.managementData(responseData)
       })
     },
@@ -204,13 +203,13 @@ export default {
       const params = {
         id: val.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.delete, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.delete, params, () => {
         this.getData()
       })
     },
     editDbMonitor(row) {
       this.activeId = row.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
         this.panalNameList.unshift({
           option_text: 'null',
@@ -228,12 +227,12 @@ export default {
         endpoint_id: Number(this.endpointId),
         sys_panel: this.newPanalName
       })
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.check, params, () => {
         this.editPost(params)
       })
     },
     editPost(params) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.update, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.update, params, () => {
         this.getData()
       })
     },
@@ -248,7 +247,7 @@ export default {
     editPanalName(panalName) {
       this.newPanalName = panalName
       this.panalName = panalName
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', responseData => {
+      this.request('GET', this.apiCenter.endpointManagement.db.panalName, '', responseData => {
         this.panalNameList = responseData
         this.panalNameList.unshift({
           option_text: 'null',
@@ -263,7 +262,7 @@ export default {
         new_name: this.newPanalName,
         endpoint_id: Number(this.endpointId)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.updatePanalName, params, () => {
+      this.request('POST', this.apiCenter.endpointManagement.db.updatePanalName, params, () => {
         this.$Message.success('Success!')
         this.getData()
       })

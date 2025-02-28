@@ -331,6 +331,18 @@ const equalOptionList = [
   }
 ]
 
+export const custom_api_enum = [
+  {
+    alarmEndpointGroup: 'post'
+  },
+  {
+    alarmStrategyById: 'delete'
+  },
+  {
+    'metricList.api': 'get'
+  }
+]
+
 export default {
   name: '',
   props: {
@@ -835,7 +847,6 @@ export default {
         }
       ],
       mergeSpanMap: {},
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       initialTags: [],
       initialTagOptions: {},
       isModalShow: false, // 为了解决select组件渲染出错问题,
@@ -843,7 +854,9 @@ export default {
 
       isShowAddEditModal: false, // 告警配置弹窗
       isfullscreen: true,
-      refreshKey: ''
+      refreshKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   methods: {
@@ -1058,12 +1071,12 @@ export default {
       })
     },
     getWorkFlow() {
-      this.request('GET', '/monitor/api/v2/alarm/event/callback/list', '', responseData => {
+      this.request('GET', this.apiCenter.eventCallbackList, '', responseData => {
         this.flows = responseData
       })
     },
     getAllRole() {
-      this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1000', '', responseData => {
+      this.request('GET', this.apiCenter.userRoleList, '', responseData => {
         this.allRole = responseData.data.map(_ => ({
           ..._,
           value: _.id
@@ -1122,7 +1135,7 @@ export default {
       }
       return true
     },
-    submitContent() {
+    async submitContent() {
       if (this.formData.name.trim() === '') {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_tips_required'))
       }
@@ -1139,12 +1152,15 @@ export default {
       }
       Object.assign(params, needMergeParams)
       this.processConditions(params.conditions)
-      const requestMethod = this.modelConfig.isAdd ? 'POST' : 'PUT'
-      this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.closeAddEditModal()
-        this.getDetail(this.targetId)
-      })
+      // const requestMethod = this.modelConfig.isAdd ? 'POST' : 'PUT'
+      if (this.modelConfig.isAdd) {
+        await this.request('POST', this.apiCenter.alarmStrategy, params)
+      } else {
+        await this.request('PUT', this.apiCenter.alarmStrategy, params)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.closeAddEditModal()
+      this.getDetail(this.targetId)
     },
     showAddEditModal() {
       this.isShowAddEditModal = true
@@ -1180,7 +1196,7 @@ export default {
     getDetail(targetId) {
       if (targetId) {
         this.targetId = targetId
-        const api = '/monitor/api/v2/alarm/strategy/query'
+        // const api = '/monitor/api/v2/alarm/strategy/query'
         const params = {
           queryType: this.type,
           guid: this.targetId,
@@ -1188,7 +1204,7 @@ export default {
           alarmName: this.alarmName
         }
         this.totalPageConfig = []
-        this.request('post', api, params, responseData => {
+        this.request('post', this.apiCenter.alarmStrategyQuery, params, responseData => {
           this.$emit('feedbackInfo', responseData.length === 0)
           const allConfigDetail = responseData
           allConfigDetail.forEach((item, alarmIndex) => {
@@ -1244,13 +1260,13 @@ export default {
     //   }
     // },
     findTagsByMetric(metricId) {
-      const api = '/monitor/api/v2/metric/tag/value-list'
+      // const api = '/monitor/api/v2/metric/tag/value-list'
       const params = {
         metricId
       }
 
       return new Promise(resolve => {
-        this.request('POST', api, params, responseData => {
+        this.request('POST', this.apiCenter.metricTagValue, params, responseData => {
           const result = {}
           if (!isEmpty(responseData)) {
             responseData.forEach(item => {

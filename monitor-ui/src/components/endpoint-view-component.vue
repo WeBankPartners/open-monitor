@@ -194,7 +194,9 @@ export default {
         pageSize: 10,
         total: 0
       },
-      endPointItem: {}
+      endPointItem: {},
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   created() {
@@ -248,7 +250,7 @@ export default {
     },
     recursiveView(params) {
       this.recursiveViewConfig = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
+      this.request('GET',this.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
@@ -279,7 +281,7 @@ export default {
         pageSize: this.pagination.pageSize,
         serviceGroup: this.endPointItem.option_value,
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, responseData => {
+      this.request('GET', this.apiCenter.alarm.history, params, responseData => {
         this.pagination.total = responseData.pageInfo.totalRows
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData.contents.problem_list || [])
       })

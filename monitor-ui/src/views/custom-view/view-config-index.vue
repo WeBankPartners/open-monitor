@@ -269,6 +269,16 @@ import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+
+export const custom_api_enum = [
+  {
+    chartCustomName: 'post'
+  },
+  {
+    dashboardCustomImport: 'post'
+  }
+]
+
 export default {
   name: '',
   computed: {
@@ -311,7 +321,6 @@ export default {
         result: []
       },
       dashboard_id: '',
-      pathMap: {},
       searchMap: {
         show: false,
         permission: '',
@@ -404,7 +413,6 @@ export default {
   },
   methods: {
     initData() {
-      this.pathMap = this.apiCenter.template
       this.getViewList()
       this.getAllRoles()
       if (this.$route.query.isCreate) {
@@ -450,7 +458,7 @@ export default {
           main_page_id: item.main_page_id,
         })
       })
-      this.request('POST', this.pathMap.templateSet, params, () => {
+      this.request('POST', this.apiCenter.template.templateSet, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.isShowProcessConfigModel = false
         this.getViewList()
@@ -514,7 +522,7 @@ export default {
     },
     removeTemplate(item) {
       const params = {id: item.id}
-      this.request('DELETE',this.pathMap.deleteV2, params, () => {
+      this.request('DELETE',this.apiCenter.template.deleteV2, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getViewList()
       })
@@ -534,13 +542,13 @@ export default {
       if (params.permission === 'all') {
         params.permission = ''
       }
-      this.request('POST',this.pathMap.listV2, params, responseData => {
+      this.request('POST',this.apiCenter.template.listV2, params, responseData => {
         this.dataList = responseData.contents
         this.pagination.totalRows = responseData.pageInfo.totalRows
       })
     },
     setDashboard() {
-      this.request('GET',this.pathMap.portalConfig, '', responseData => {
+      this.request('GET',this.apiCenter.template.portalConfig, '', responseData => {
         this.processConfigModel.dashboardConfig = responseData
         this.isShowProcessConfigModel = true
       })
@@ -595,7 +603,7 @@ export default {
       }
       if (this.authViewType === 'add') {
         params.name = this.addViewName
-        res = await this.request('POST', this.pathMap.singleDashV2, params)
+        res = await this.request('POST', this.apiCenter.template.singleDashV2, params)
       } else if (this.authViewType === 'edit') {
         // 修改自定义看板权限
         params.id = this.boardId

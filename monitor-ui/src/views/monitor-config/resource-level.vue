@@ -106,7 +106,9 @@ export default {
         total: 0,
         size: 10,
         page: 1
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -144,7 +146,7 @@ export default {
       const params = {
         search: query
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, responseData => {
+      this.request('GET', this.apiCenter.resourceSearch.api, params, responseData => {
         this.allObject = []
         responseData.forEach(item => {
           if (item.id !== -1) {
@@ -178,7 +180,7 @@ export default {
         pageSize: this.pagination.size,
         startIndex: this.pagination.size * (this.pagination.page - 1)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, params, responseData => {
+      this.request('GET', this.apiCenter.resourceLevel.getAll, params, responseData => {
         this.resourceRecursive = responseData.contents || []
         this.pagination.total = responseData.pageInfo.totalRows
         this.extend = extend
@@ -190,7 +192,7 @@ export default {
     },
     addPost() {
       const params = this.modelConfig.addRow
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/add', params, () => {
+      this.request('POST', this.apiCenter.alarmOrgPanelAdd, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_panel_Modal').modal('hide')
         this.resetPagination()
