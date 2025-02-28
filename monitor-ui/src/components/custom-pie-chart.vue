@@ -22,7 +22,9 @@ export default {
       config: '',
       myChart: '',
       interval: '',
-      noDataType: 'normal' // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   props: {
@@ -80,9 +82,9 @@ export default {
       const offsetTop = offset.top
       const offsetBottom = offset.bottom
       if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
+        this.request(
           'POST',
-          this.$root.apiCenter.metricConfigPieView.api,
+          this.apiCenter.metricConfigPieView.api,
           params,
           responseData => {
             if (responseData.legend && responseData.legend.length === 0) {

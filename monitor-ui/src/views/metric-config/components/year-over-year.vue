@@ -206,7 +206,9 @@ export default {
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -249,7 +251,7 @@ export default {
           guid: this.data.metricId
         }
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
+      this.request('GET', this.apiCenter.metricList.api, params, responseData => {
         this.metricList = responseData
         this.getMetricType(this.metricConfigData.metricId)
       }, {isNeedloading: true})
@@ -263,7 +265,7 @@ export default {
         guid: this.data.guid,
         endpointGroup: this.endpointGroup
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric_comparison/list', params, responseData => {
+      this.request('GET', this.apiCenter.metricComparisonList, params, responseData => {
         if (responseData.length === 1) {
           this.metricConfigData = responseData[0]
           if (this.fromPage === 'object') {
@@ -299,18 +301,13 @@ export default {
         endpointGroup: this.endpointGroup, // 组
         workspace: 'all_object'
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
-        this.$root.apiCenter.getEndpoint,
-        params,
-        responseData => {
-          this.endpointOptions = responseData
-          if (this.endpointOptions.length > 0) {
-            this.metricConfigData.endpoint = this.endpointOptions[0].guid
-            this.getChartData()
-          }
+      this.request('GET', this.apiCenter.getEndpoint, params, responseData => {
+        this.endpointOptions = responseData
+        if (this.endpointOptions.length > 0) {
+          this.metricConfigData.endpoint = this.endpointOptions[0].guid
+          this.getChartData()
         }
-      )
+      })
     },
     // 选择预览对象
     async getMetricType(val) {
@@ -359,12 +356,12 @@ export default {
         calcPeriod,
         timeSecond: -calcPeriod
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        '/monitor/api/v1/dashboard/comparison_chart',
+        this.apiCenter.dashboardComparisonChart,
         params,
         responseData => {
-          // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
+        // const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: 'twoYaxes', params: this.chartInfo.chartParams};
           const chartConfig = {
             clear: true,
             eye: false,
@@ -391,7 +388,6 @@ export default {
       if (!this.metricConfigData.metricId) {
         return this.$Message.error(this.$t('m_original_metric_key') + this.$t('m_tips_required'))
       }
-      const type = 'POST'
       if (this.operator === 'copy') {
         const keys = ['calcMethod', 'calcPeriod', 'calcType', 'comparisonType', 'endpoint', 'metricId']
         const params = {}
@@ -401,9 +397,9 @@ export default {
         this.metricConfigData = cloneDeep(params)
       }
       this.metricConfigData.endpoint_group = this.endpointGroup
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        type,
-        this.$root.apiCenter.comparisonMetricMgmt,
+      this.request(
+        'POST',
+        this.apiCenter.comparisonMetricMgmt,
         this.metricConfigData,
         () => {
           this.$Message.success(this.$t('m_tips_success'))

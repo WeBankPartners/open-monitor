@@ -48,7 +48,9 @@ export default {
         // endpoint: '192.168.0.16',
         // start: Date.parse(this.dateRange[0]),
         // end: Date.parse(this.dateRange[1])
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   watch: {
@@ -85,15 +87,6 @@ export default {
         this.$root.$store.commit('storeip', {})
       }
       this.getChartsConfig()
-      // const type = this.endpointObject.type
-      // return new Promise(resolve => {
-      //   let params = {
-      //     type: type
-      //   }
-      //   this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
-      //     resolve(responseData)
-      //   })
-      // })
     },
     datePick(data) {
       this.dateRange = data
@@ -141,7 +134,7 @@ export default {
         sys: false
       }
       url = url.replace(`{${key}}`,params[key])
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
+      this.request('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
     },

@@ -131,6 +131,12 @@ import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import Vue from 'vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
 
+export const custom_api_enum = [
+  {
+    getConfigDetailById: 'get'
+  }
+]
+
 const initRangeConfigMap = {
   req_fail_rate: {
     operator: '>',
@@ -369,7 +375,9 @@ export default {
         }
       ],
       successCode: cloneDeep(initSuccessCode),
-      actionType: ''
+      actionType: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   methods: {
@@ -578,7 +586,7 @@ export default {
 
       return false
     },
-    saveConfig() {
+    async saveConfig() {
       const tmpData = JSON.parse(JSON.stringify(this.configInfo))
       if (this.paramsValidate(tmpData)) {
         return
@@ -588,15 +596,19 @@ export default {
       delete tmpData.create_time
       delete tmpData.update_user
       delete tmpData.update_time
-      const methodType = this.isAdd ? 'POST' : 'PUT'
+      // const methodType = this.isAdd ? 'POST' : 'PUT'
       if (this.actionType === 'copy') {
         delete tmpData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logTemplateConfig, tmpData, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.showModal = false
-        this.$emit('refreshData')
-      })
+
+      if (this.isAdd) {
+        await this.request('POST', this.apiCenter.logTemplateConfig, tmpData)
+      } else {
+        await this.request('PUT', this.apiCenter.logTemplateConfig, tmpData)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.showModal = false
+      this.$emit('refreshData')
     },
     processSaveData(data){
       if (isEmpty(data)) {return}
@@ -609,8 +621,8 @@ export default {
       })
     },
     getConfigDetail(guid) {
-      const api = this.$root.apiCenter.getConfigDetailByGuid + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      const api = this.apiCenter.getConfigDetailByGuid + guid
+      this.request('GET', api, {}, resp => {
         this.configInfo = resp
         this.configInfo.param_list.forEach(r => {
           r.regular_font_result = this.regRes(r.regular)
@@ -658,7 +670,7 @@ export default {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
+      this.request('POST', this.apiCenter.standardLogRegexMatch, params, responseData => {
         this.configInfo.param_list = responseData
         this.$Message.success(this.$t('m_success'))
       }, {isNeedloading: false})

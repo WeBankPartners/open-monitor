@@ -198,7 +198,9 @@ export default {
       modelTip: {
         key: 'cluster_name',
         value: null
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -212,13 +214,13 @@ export default {
     },
     addPost() {
       this.modelConfig.addRow.api_server = this.modelConfig.addRow.ip + ':' + this.modelConfig.addRow.port
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/add', this.modelConfig.addRow, () => {
+      this.request('POST', this.apiCenter.addKubernetesCluster, this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
     },
     getClusterList() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/list', '', responseData => {
+      this.request('POST', this.apiCenter.kubernetesClusterList, '', responseData => {
         this.clusterList = responseData
       })
     },
@@ -235,12 +237,12 @@ export default {
     },
     delF() {
       if (this.selectedDataType === 'k8s') {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/delete', this.selectedData, () => {
+        this.request('POST', this.apiCenter.deleteKubernetesCluster, this.selectedData, () => {
           this.isShowWarning = false
           this.getClusterList()
         })
       } else if (this.selectedDataType === 'snmp') {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', '/monitor/api/v1/config/new/snmp', this.selectedData, () => {
+        this.request('DELETE', this.apiCenter.newSnmpConfig, this.selectedData, () => {
           this.isShowWarning = false
           this.getSnmpList()
         })
@@ -257,13 +259,13 @@ export default {
       this.$root.JQ('#cluster_Modal').modal('show')
     },
     editPost() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
+      this.request('POST', this.apiCenter.updateKubernetesCluster, this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
     },
     getSnmpList() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', '', responseData => {
+      this.request('GET', this.apiCenter.newSnmpConfig, '', responseData => {
         this.snmpList = responseData
       })
     },
@@ -292,12 +294,12 @@ export default {
     },
     saveItem() {
       if (this.modelItemConfig.isAdd) {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
+        this.request('POST', this.apiCenter.newSnmpConfig, this.modelItemConfig.addRow, () => {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()
         })
       } else {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
+        this.request('PUT', this.apiCenter.newSnmpConfig, this.modelItemConfig.addRow, () => {
           this.$root.JQ('#item_Modal').modal('hide')
           this.getSnmpList()
         })

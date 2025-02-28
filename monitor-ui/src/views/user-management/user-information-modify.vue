@@ -55,7 +55,9 @@ export default {
         // { label: 'tableKey.password', key: 'new_password' },
       ],
       activeKey: null,
-      userInfo: {}
+      userInfo: {},
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -63,7 +65,7 @@ export default {
   },
   methods: {
     userInformation() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userInformation.get, {}, responseData => {
+      this.request('GET', this.apiCenter.setup.userInformation.get, {}, responseData => {
         this.userInfo = responseData
         this.userInfo.new_password = '**********'
         this.userInfo.re_new_password = ''
@@ -86,7 +88,7 @@ export default {
         }
       }
       this.userInfo.new_password = '**********'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.userInformation.update, params, () => {
+      this.request('POST', this.apiCenter.setup.userInformation.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.userInformation()
       })

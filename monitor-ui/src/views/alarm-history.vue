@@ -129,7 +129,9 @@ export default {
         startIndex: 1,
         pageSize: 10
       },
-      isSpinShow: false
+      isSpinShow: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -267,9 +269,9 @@ export default {
           pageSize: 10
         }
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/page',
+        this.apiCenter.alarmProblemList,
         params,
         responseData => {
           this.noData = false
@@ -346,9 +348,9 @@ export default {
       if (this.isSpinShow === false) {
         this.isSpinShow = true
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/history',
+        this.apiCenter.alarmProblemHistory,
         params,
         responseData => {
           this.loading = false

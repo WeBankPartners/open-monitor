@@ -92,6 +92,16 @@ import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
+
+export const custom_api_enum = [
+  {
+    getTargetByEndpointByType: 'get'
+  },
+  {
+    bussinessMonitorImport: 'post'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -107,7 +117,9 @@ export default {
       alarmName: '',
       token: '',
       isDataEmpty: false,
-      selectKey: ''
+      selectKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   async mounted() {
@@ -128,8 +140,8 @@ export default {
       this.selectKey = +new Date() + ''
     },
     getTargrtList(type = 'init') {
-      const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
+      this.request('GET', api, '', responseData => {
         this.targetOptions = responseData
         if (type === 'init') {
           this.targetId = this.targetOptions[0].guid
