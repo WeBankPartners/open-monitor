@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -126,11 +127,11 @@ func PluginKubernetesCluster(c *gin.Context) {
 	resultCode = "0"
 	resultData := k8sClusterResultOutput{}
 	defer func() {
-		log.Logger.Info(logFuncMessage, log.JsonObj("result", resultData))
+		log.Info(nil, log.LOGGER_APP, logFuncMessage, log.JsonObj("result", resultData))
 		c.JSON(http.StatusOK, k8sClusterResultObj{ResultCode: resultCode, ResultMessage: resultMessage, Results: resultData})
 	}()
 	data, _ := ioutil.ReadAll(c.Request.Body)
-	log.Logger.Debug(logFuncMessage, log.String("action", action), log.String("param", string(data)))
+	log.Debug(nil, log.LOGGER_APP, logFuncMessage, zap.String("action", action), zap.String("param", string(data)))
 	var param k8sClusterRequestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
@@ -151,7 +152,7 @@ func PluginKubernetesCluster(c *gin.Context) {
 			tmpErr = handleDeleteKubernetesCluster(input)
 		}
 		if tmpErr != nil {
-			log.Logger.Error(logFuncMessage, log.String("guid", input.Guid), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, logFuncMessage, zap.String("guid", input.Guid), zap.Error(tmpErr))
 			resultMessage = tmpErr.Error()
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpErr.Error(), Guid: input.Guid})
 		} else {
@@ -180,7 +181,7 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	currentData, _ := db.ListKubernetesCluster(input.ClusterName)
 	if len(currentData) > 0 {
 		if currentData[0].ClusterName == input.ClusterName && currentData[0].Token == input.Token && fmt.Sprintf("%s:%s", input.Ip, input.Port) == currentData[0].ApiServer {
-			log.Logger.Warn("Plugin k8s cluster add break with same data ")
+			log.Warn(nil, log.LOGGER_APP, "Plugin k8s cluster add break with same data ")
 			return nil
 		}
 		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: input.Ip, Port: input.Port, Token: input.Token})
@@ -208,11 +209,11 @@ func PluginKubernetesPod(c *gin.Context) {
 	resultCode = "0"
 	resultData := k8sClusterResultOutput{}
 	defer func() {
-		log.Logger.Info(logFuncMessage, log.JsonObj("result", resultData))
+		log.Info(nil, log.LOGGER_APP, logFuncMessage, log.JsonObj("result", resultData))
 		c.JSON(http.StatusOK, k8sClusterResultObj{ResultCode: resultCode, ResultMessage: resultMessage, Results: resultData})
 	}()
 	data, _ := ioutil.ReadAll(c.Request.Body)
-	log.Logger.Debug(logFuncMessage, log.String("action", action), log.String("param", string(data)))
+	log.Debug(nil, log.LOGGER_APP, logFuncMessage, zap.String("action", action), zap.String("param", string(data)))
 	var param k8sClusterRequestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
@@ -234,7 +235,7 @@ func PluginKubernetesPod(c *gin.Context) {
 			tmpErr = handleDeleteKubernetesPod(input)
 		}
 		if tmpErr != nil {
-			log.Logger.Error(logFuncMessage, log.String("guid", input.Guid), log.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, logFuncMessage, zap.String("guid", input.Guid), zap.Error(tmpErr))
 			resultMessage = tmpErr.Error()
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpErr.Error(), Guid: input.Guid})
 		} else {

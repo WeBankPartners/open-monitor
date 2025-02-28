@@ -29,7 +29,7 @@ func InitDatabase() error {
 		models.Config().Store.User, models.Config().Store.Pwd, "tcp", fmt.Sprintf("%s:%s", models.Config().Store.Server, models.Config().Store.Port), models.Config().Store.DataBase)
 	engine, err := xorm.NewEngine("mysql", connStr)
 	if err != nil {
-		log.Logger.Error("Init database connect fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init database connect fail", zap.Error(err))
 		return err
 	}
 	engine.SetMaxIdleConns(models.Config().Store.MaxIdle)
@@ -39,7 +39,7 @@ func InitDatabase() error {
 	// 使用驼峰式映射
 	engine.SetMapper(core.SnakeMapper{})
 	x = engine
-	log.Logger.Info("Success init database connect !!")
+	log.Info(nil, log.LOGGER_APP, "Success init database connect !!")
 	tmpEnable := strings.ToLower(models.Config().ArchiveMysql.Enable)
 	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
 		initArchiveDbEngine()
@@ -57,7 +57,7 @@ func initArchiveDbEngine() {
 	archiveMysql, err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
 		ArchiveEnable = false
-		log.Logger.Error("Init archive mysql fail", log.String("connectStr", connectStr), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init archive mysql fail", zap.String("connectStr", connectStr), zap.Error(err))
 	} else {
 		ArchiveEnable = true
 		archiveMysql.SetMaxIdleConns(models.Config().ArchiveMysql.MaxIdle)
@@ -67,7 +67,7 @@ func initArchiveDbEngine() {
 		// 使用驼峰式映射
 		archiveMysql.SetMapper(core.SnakeMapper{})
 		archiveDatabase = databaseName
-		log.Logger.Info("Init archive mysql " + archiveDatabase + " success")
+		log.Info(nil, log.LOGGER_APP, "Init archive mysql "+archiveDatabase+" success")
 	}
 }
 
@@ -294,32 +294,32 @@ func transColumn(s string) string {
 type dbLogger struct {
 	LogLevel xorm_log.LogLevel
 	ShowSql  bool
-	Logger   *zap.Logger
+	Logger   *zap.SugaredLogger
 }
 
 func (d *dbLogger) Debug(v ...interface{}) {
-	d.Logger.Debug(fmt.Sprint(v...))
+	d.Logger.Debugw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Debugf(format string, v ...interface{}) {
-	d.Logger.Debug(fmt.Sprintf(format, v...))
+	d.Logger.Debugw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Error(v ...interface{}) {
-	d.Logger.Error(fmt.Sprint(v...))
+	d.Logger.Errorw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Errorf(format string, v ...interface{}) {
-	d.Logger.Error(fmt.Sprintf(format, v...))
+	d.Logger.Errorw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Info(v ...interface{}) {
-	d.Logger.Info(fmt.Sprint(v...))
+	d.Logger.Infow(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Infof(format string, v ...interface{}) {
 	if len(v) < 4 {
-		d.Logger.Info(fmt.Sprintf(format, v...))
+		d.Logger.Infow(fmt.Sprintf(format, v...))
 		return
 	}
 	var costMs float64 = 0
@@ -339,15 +339,15 @@ func (d *dbLogger) Infof(format string, v ...interface{}) {
 		secTime, _ := strconv.ParseFloat(costTime[mIndex+1:], 64)
 		costMs = (minTime*60 + secTime) * 1000
 	}
-	d.Logger.Info("db_log", log.String("sql", fmt.Sprintf("%s", v[1])), log.String("param", fmt.Sprintf("%v", v[2])), log.Float64("cost_ms", costMs))
+	d.Logger.Infow("db_log", zap.String("sql", fmt.Sprintf("%s", v[1])), zap.String("param", fmt.Sprintf("%v", v[2])), zap.Float64("cost_ms", costMs))
 }
 
 func (d *dbLogger) Warn(v ...interface{}) {
-	d.Logger.Warn(fmt.Sprint(v...))
+	d.Logger.Warnw(fmt.Sprint(v...))
 }
 
 func (d *dbLogger) Warnf(format string, v ...interface{}) {
-	d.Logger.Warn(fmt.Sprintf(format, v...))
+	d.Logger.Warnw(fmt.Sprintf(format, v...))
 }
 
 func (d *dbLogger) Level() xorm_log.LogLevel {
@@ -378,7 +378,7 @@ func queryCount(sql string, params ...interface{}) int {
 	params = append([]interface{}{sql}, params...)
 	queryRows, err := x.QueryString(params...)
 	if err != nil || len(queryRows) == 0 {
-		log.Logger.Error("Query sql count message fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query sql count message fail", zap.Error(err))
 		return 0
 	}
 	if _, b := queryRows[0]["COUNT(1)"]; b {

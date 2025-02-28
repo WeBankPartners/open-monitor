@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -89,17 +90,17 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 		time.Sleep(30 * time.Second)
 		resp, err := requestAgentMonitor(&initParam, url, "init")
 		if err != nil {
-			log.Logger.Error("Init agent manager, request error", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Init agent manager, request error", zap.Error(err))
 		}
 		if resp.Code == 200 {
-			log.Logger.Info("Init agent manager success")
+			log.Info(nil, log.LOGGER_APP, "Init agent manager success")
 			break
 		} else {
-			log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
+			log.Warn(nil, log.LOGGER_APP, "Init agent manager, response error", zap.String("message", resp.Message))
 		}
 		count++
 		if count >= 10 {
-			log.Logger.Warn("Init agent manager fail, retry max time")
+			log.Warn(nil, log.LOGGER_APP, "Init agent manager fail, retry max time")
 			break
 		}
 	}
@@ -108,16 +109,16 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 }
 
 func DoSyncAgentManagerJob(param []*m.AgentManagerTable, url string) {
-	log.Logger.Info("Start init agent manager ")
+	log.Info(nil, log.LOGGER_APP, "Start init agent manager ")
 	initParam := m.InitDeployParam{AgentManagerRemoteIp: m.AgentManagerRemoteIp, Config: param}
 	resp, err := requestAgentMonitor(&initParam, url, "init")
 	if err != nil {
-		log.Logger.Error("Init agent manager, request error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init agent manager, request error", zap.Error(err))
 	}
 	if resp.Code == 200 {
-		log.Logger.Info("Init agent manager success")
+		log.Info(nil, log.LOGGER_APP, "Init agent manager success")
 	} else {
-		log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
+		log.Warn(nil, log.LOGGER_APP, "Init agent manager, response error", zap.String("message", resp.Message))
 	}
 }
 
@@ -139,7 +140,7 @@ func requestAgentMonitor(param interface{}, url, method string) (resp agentManag
 	}
 	body, _ := ioutil.ReadAll(res.Body)
 	res.Body.Close()
-	log.Logger.Debug(fmt.Sprintf("Curl %s agent_monitor response : %s ", method, string(body)))
+	log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Curl %s agent_monitor response : %s ", method, string(body)))
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		err = fmt.Errorf("Curl agent_monitor unmarshal error,%s ", err.Error())

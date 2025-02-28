@@ -8,6 +8,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -19,8 +20,18 @@ var (
 	whitePathMap = map[string]bool{
 		"/monitor/entities/${model}/query": true,
 	}
-	ApiMenuMap         = make(map[string][]string)
-	HomePageApiCodeMap = make(map[string]bool)
+	//  需要放行的 ApiCode
+	whiteCodeList = []string{
+		"trans_export_analyze", "monitor_metric_export", "alarm_endpoint_group_query", "alarm_strategy_workflow", "service_log_metric_export", "service_log_metric_log_monitor_template_export",
+		"alarm_strategy_export_by_query_type_and_guid", "service_log_keyword_export", "dashboard_custom_export", "dashboard_custom_get", "chart_custom_permission_batch", "trans_export_log_monitor_template_batch",
+		"trans_export_dashboard_batch", "trans_export_service_group_batch", "trans_export_config_type_batch", "config_type_batch_add", "alarm_endpoint_group_import", "monitor_metric_import",
+		"alarm_strategy_import_by_query_type_and_guid", "service_log_metric_log_monitor_template_import", "service_log_metric_import", "service_log_keyword_import", "dashboard_custom_trans_import",
+		"dashboard_data_sync", "dashboard_system_add", "agent_export_stop", "agent_export_snmp_exporter", "alarm_problem_query", "user_list", "alarm_endpoint_group_notify_list_by_group_guid",
+		"alarm_org_plugin", "dashboard_new_metric_get", "user_role_update", "agent_export_process", "alarm_problem_list", "user_message_get", "user_role_user_update", "agent_export_log_monitor",
+		"agent_export_start", "agent_export_dregister", "dashboard_config_metric_list", "agent_export_kubernetes_cluster", "agent_export_register", "agent_export_kubernetes_pod",
+		"dashboard_server_chart", "user_message_update", "agent_custom_metric_add", "dashboard_system_delete", "service_plugin_update_path", "dashboard_custom_main_get",
+	}
+	ApiMenuMap = make(map[string][]string)
 )
 
 type auth struct {
@@ -207,6 +218,7 @@ func AuthRequired() gin.HandlerFunc {
 							c.Next()
 							return
 						}
+
 						// 白名单URL直接放行
 						for path, _ := range whitePathMap {
 							re := regexp.MustCompile(BuildRegexPattern(path))
@@ -215,10 +227,18 @@ func AuthRequired() gin.HandlerFunc {
 								return
 							}
 						}
-						// 首页菜单直接放行
-						if HomePageApiCodeMap[c.GetString(m.ContextApiCode)] {
-							c.Next()
-							return
+						// 白名单 code直接放行
+						for _, code := range whiteCodeList {
+							if code == c.GetString(m.ContextApiCode) {
+								c.Next()
+								return
+							}
+						}
+						for _, code := range whiteCodeList {
+							if code == c.GetString(m.ContextApiCode) {
+								c.Next()
+								return
+							}
 						}
 						if m.Config().MenuApiMap.Enable == "true" || strings.TrimSpace(m.Config().MenuApiMap.Enable) == "" || strings.ToUpper(m.Config().MenuApiMap.Enable) == "Y" {
 							legal := false
@@ -285,7 +305,7 @@ func AuthServerRequest() gin.HandlerFunc {
 func HealthCheck(c *gin.Context) {
 	ip := c.ClientIP()
 	date := time.Now().Format(m.DatetimeFormat)
-	log.Logger.Info("Health check", log.String("requestIp", ip), log.String("date", date))
+	log.Info(nil, log.LOGGER_APP, "Health check", zap.String("requestIp", ip), zap.String("date", date))
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
 
@@ -419,21 +439,18 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 					} else {
 						ApiMenuMap[code] = []string{menuApi.Menu}
 					}
-					if menuApi.Menu == m.HomePage {
-						HomePageApiCodeMap[code] = true
-					}
 					matchUrlMap[item.Method+"_"+item.Url] = 1
 				}
 			}
 		}
 		if !exist {
-			log.Logger.Info("InitApiMenuMap menu-api-json lack url", log.String("path", k), log.String("code", code))
+			log.Info(nil, log.LOGGER_APP, "InitApiMenuMap menu-api-json lack url", zap.String("path", k), zap.String("code", code))
 		}
 	}
 	for _, menuApi := range m.MenuApiGlobalList {
 		for _, item := range menuApi.Urls {
 			if _, ok := matchUrlMap[item.Method+"_"+item.Url]; !ok {
-				log.Logger.Info("InitApiMenuMap can not match menuUrl", log.String("menu", menuApi.Menu), log.String("method", item.Method), log.String("url", item.Url))
+				log.Info(nil, log.LOGGER_APP, "InitApiMenuMap can not match menuUrl", zap.String("menu", menuApi.Menu), zap.String("method", item.Method), zap.String("url", item.Url))
 			}
 		}
 	}
@@ -442,7 +459,7 @@ func InitApiMenuMap(apiMenuCodeMap map[string]string) {
 			ApiMenuMap[k] = DistinctStringList(v, []string{})
 		}
 	}
-	log.Logger.Debug("InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
+	log.Debug(nil, log.LOGGER_APP, "InitApiMenuMap done", log.JsonObj("ApiMenuMap", ApiMenuMap))
 }
 
 func DistinctStringList(input, excludeList []string) (output []string) {

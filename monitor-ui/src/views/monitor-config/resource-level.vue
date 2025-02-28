@@ -6,7 +6,7 @@
         v-model="searchParams.type"
         @on-change="handleTypeChange"
         type="button"
-        button-style="solid"
+        buttonStyle="solid"
         style="margin-right: 5px"
       >
         <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
@@ -244,7 +244,7 @@ export default {
 <style lang="less">
 .monitor-resource-level {
   .ivu-radio-group-button .ivu-radio-wrapper-checked {
-    background: #2d8cf0;
+    background: #5384FF;
     color: #fff;
   }
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 )
 
 func doInsertOrUpdateAlarm(alarmObj *models.AlarmHandleObj) (err error) {
@@ -34,7 +35,7 @@ func doInsertOrUpdateAlarm(alarmObj *models.AlarmHandleObj) (err error) {
 				}
 			}
 		} else {
-			log.Logger.Warn("doInsertOrUpdateAlarm ignore with illegal status", log.Int("alarmId", alarmObj.Id), log.String("status", alarmObj.Status))
+			log.Warn(nil, log.LOGGER_APP, "doInsertOrUpdateAlarm ignore with illegal status", zap.Int("alarmId", alarmObj.Id), zap.String("status", alarmObj.Status))
 		}
 		return
 	}

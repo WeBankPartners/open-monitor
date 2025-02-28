@@ -45,7 +45,7 @@
           <h5 class="ellipsis-text">{{$t('m_button_add')}}</h5>
         </div>
         <div style="height: 120px;text-align:center;">
-          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer;margin-top:42px" :color="'#2d8cf0'" />
+          <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer;margin-top:42px" :color="'#5384FF'" />
         </div>
       </Card>
     </div>

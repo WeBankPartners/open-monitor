@@ -29,11 +29,11 @@
       <Col :span="8">
       <div class="btn-group">
         <Button
-          type="info"
+          class="btn-upload"
           @click.stop="exportData"
         >
-          <img src="@/assets/img/export.png" alt="" style="width:16px;" />
-          {{ $t("m_export") }}
+          <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
+          {{ $t('m_export') }}
         </Button>
         <Upload
           :action="uploadUrl"
@@ -44,8 +44,8 @@
           :on-success="uploadSucess"
           :on-error="uploadFailed"
         >
-          <Button type="primary">
-            <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+          <Button class="btn-upload">
+            <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
             {{ $t('m_import') }}
           </Button>
         </Upload>
@@ -147,7 +147,7 @@ export default {
               {
                 label: this.$t('m_basic_type'),
                 value: 'common',
-                color: '#2d8cf0'
+                color: '#5384FF'
               },
               {
                 label: this.$t('m_business_configuration'),

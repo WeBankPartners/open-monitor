@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"hash/crc64"
 	"io/ioutil"
@@ -186,7 +187,7 @@ func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, oper
 			}
 			if condition.LogType == "" {
 				if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
-					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+					log.Error(nil, log.LOGGER_APP, "GetLogTypeByMetric err", zap.Error(err2))
 				} else {
 					condition.LogType = logType
 				}
@@ -504,7 +505,7 @@ func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*mo
 	for _, condition := range conditions {
 		if condition.LogType == "" {
 			if logType, err2 := GetLogTypeByMetric(condition.MetricName); err != nil {
-				log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+				log.Error(nil, log.LOGGER_APP, "GetLogTypeByMetric err", zap.Error(err2))
 			} else {
 				condition.LogType = logType
 			}
@@ -534,7 +535,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 	if err != nil {
 		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
 	}
-	log.Logger.Info("SyncPrometheusRuleFile", log.String("endpointGroup", endpointGroup))
+	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile", zap.String("endpointGroup", endpointGroup))
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
 	if endpointGroupObj.ServiceGroup == "" {
@@ -551,7 +552,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 	if getStrategyErr != nil {
 		return getStrategyErr
 	}
-	log.Logger.Debug("SyncPrometheusRuleFile alarm strategy data", log.JsonObj("strategyList", strategyList))
+	log.Debug(nil, log.LOGGER_APP, "SyncPrometheusRuleFile alarm strategy data", log.JsonObj("strategyList", strategyList))
 	// 区分cluster，分别下发
 	var clusterList []string
 	var clusterEndpointMap = make(map[string][]*models.EndpointNewTable)
@@ -581,7 +582,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
 				err = fmt.Errorf("Update remote cluster:%s rule file fail,%s ", cluster, tmpErr.Error())
-				log.Logger.Error("Update remote cluster rule file fail", log.String("cluster", cluster), log.Error(tmpErr))
+				log.Error(nil, log.LOGGER_APP, "Update remote cluster rule file fail", zap.String("cluster", cluster), zap.Error(tmpErr))
 			}
 		}
 		for _, monitorEngineStrategy := range monitorEngineStrategyList {
@@ -602,7 +603,7 @@ func RemovePrometheusRuleFile(endpointGroup string, fromPeer bool) {
 		} else {
 			tmpErr := SyncRemoteRuleConfigFile(cluster.Id, models.RFClusterRequestObj{Name: ruleFileName, Rules: []*models.RFRule{}})
 			if tmpErr != nil {
-				log.Logger.Error("Remove remote cluster rule file fail", log.String("cluster", cluster.Id), log.Error(tmpErr))
+				log.Error(nil, log.LOGGER_APP, "Remove remote cluster rule file fail", zap.String("cluster", cluster.Id), zap.Error(tmpErr))
 			}
 		}
 	}
@@ -744,7 +745,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 		}
 		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, strategy)
 		if strategy.MetricExpr == "" {
-			log.Logger.Warn("metric expr empty", log.String("alertId", tmpRfu.Alert))
+			log.Warn(nil, log.LOGGER_APP, "metric expr empty", zap.String("alertId", tmpRfu.Alert))
 			continue
 		}
 		tmpRfu.Expr = fmt.Sprintf("(%s) %s", strategy.MetricExpr, strategy.Condition)
@@ -885,7 +886,7 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 
 func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if alarmObj.AlarmStrategy == "" {
-		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
+		log.Error(nil, log.LOGGER_APP, "Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
 		return
 	}
 	// 延迟发送通知，在延迟时间内如果告警恢复，则不发送通知，避免那种频繁告警恢复的场景
@@ -896,7 +897,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 			x.SQL("select id,status from alarm where id=?", alarmObj.Id).Find(&nowAlarms)
 			if len(nowAlarms) > 0 {
 				if nowAlarms[0].Status == "ok" {
-					log.Logger.Info("Notify firing alarm break in delay time ", log.Int("alarmId", alarmObj.Id))
+					log.Info(nil, log.LOGGER_APP, "Notify firing alarm break in delay time ", zap.Int("alarmId", alarmObj.Id))
 					return
 				}
 			}
@@ -905,7 +906,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 			x.SQL("select id,`start` from alarm where id=?", alarmObj.Id).Find(&nowAlarms)
 			if len(nowAlarms) > 0 {
 				if (time.Now().Unix() - nowAlarms[0].Start.Unix()) < int64(alarmObj.NotifyDelay) {
-					log.Logger.Info("Notify ok alarm break in delay time ", log.Int("alarmId", alarmObj.Id))
+					log.Info(nil, log.LOGGER_APP, "Notify ok alarm break in delay time ", zap.Int("alarmId", alarmObj.Id))
 					return
 				}
 			}
@@ -916,7 +917,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	var notifyQueryRows []*models.NotifyTable
 	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyQueryRows)
 	if err != nil {
-		log.Logger.Error("Query notify table fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Query notify table fail", zap.Error(err))
 		return
 	}
 	for _, v := range notifyQueryRows {
@@ -933,7 +934,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		var serviceGroup []*models.EndpointServiceRelTable
 		queryErr := x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", alarmObj.Endpoint).Find(&serviceGroup)
 		if queryErr != nil {
-			log.Logger.Error("NotifyStrategyAlarm query endpoint service rel fail", log.Int("alarmId", alarmObj.Id), log.Error(queryErr))
+			log.Error(nil, log.LOGGER_APP, "NotifyStrategyAlarm query endpoint service rel fail", zap.Int("alarmId", alarmObj.Id), zap.Error(queryErr))
 		}
 		for _, v := range serviceGroup {
 			tmpGuidList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
@@ -944,7 +945,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		var tmpNotifyQueryRows []*models.NotifyTable
 		queryErr = x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?)", alarmObj.Status, alarmObj.AlarmStrategy).Find(&tmpNotifyQueryRows)
 		if queryErr != nil {
-			log.Logger.Error("NotifyStrategyAlarm query alarm notify fail", log.Int("alarmId", alarmObj.Id), log.String("alarmStrategy", alarmObj.AlarmStrategy), log.Error(queryErr))
+			log.Error(nil, log.LOGGER_APP, "NotifyStrategyAlarm query alarm notify fail", zap.Int("alarmId", alarmObj.Id), zap.String("alarmStrategy", alarmObj.AlarmStrategy), zap.Error(queryErr))
 		} else {
 			if len(tmpNotifyQueryRows) > 0 {
 				notifyObject = tmpNotifyQueryRows[0]
@@ -954,13 +955,13 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	}
 	// 3.如果都没有，则构造一条通知配置defaultNotify，尝试使用全局接收人接收通知
 	if notifyObject.Guid == "" {
-		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
+		log.Info(nil, log.LOGGER_APP, "can not find notify config,use default notify", zap.Int("alarmId", alarmObj.Id), zap.String("strategy", alarmObj.AlarmStrategy))
 		notifyObject = &models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}
 	}
 	if alarmObj.Status == "firing" {
 		if notifyObject.ProcCallbackMode == models.AlarmNotifyManualMode && notifyObject.ProcCallbackKey != "" {
 			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyObject.Guid, alarmObj.Id); execErr != nil {
-				log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", alarmObj.Id), log.Error(execErr))
+				log.Error(nil, log.LOGGER_APP, "update alarm table notify id fail", zap.Int("alarmId", alarmObj.Id), zap.Error(execErr))
 			}
 		}
 	}
@@ -968,17 +969,17 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 }
 
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
-	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
+	log.Info(nil, log.LOGGER_APP, "Start notify action", zap.String("procCallKey", notify.ProcCallbackKey), zap.String("notify", notify.Guid), zap.Int("alarm", alarmObj.Id))
 	// alarmMailEnable==Y
 	var err, mailErr error
 	if models.AlarmMailEnable {
 		mailErr = notifyMailAction(notify, alarmObj)
 		if mailErr != nil {
-			log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
+			log.Error(nil, log.LOGGER_APP, "Notify mail fail", zap.String("notifyGuid", notify.Guid), zap.Error(mailErr))
 		}
 	}
 	if notify.ProcCallbackMode != models.AlarmNotifyAutoMode {
-		log.Logger.Info("notify proc callback mode is not auto,done", log.Int("alarmId", alarmObj.Id), log.String("notifyId", notify.Guid), log.String("mode", notify.ProcCallbackMode))
+		log.Info(nil, log.LOGGER_APP, "notify proc callback mode is not auto,done", zap.Int("alarmId", alarmObj.Id), zap.String("notifyId", notify.Guid), zap.String("mode", notify.ProcCallbackMode))
 		return
 	}
 	if alarmObj.SPriority == "" {
@@ -993,7 +994,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		if err == nil {
 			break
 		} else {
-			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Notify event fail", zap.String("notifyGuid", notify.Guid), zap.Int("try", i), zap.Error(err))
 		}
 		if withoutRetry {
 			break
@@ -1017,7 +1018,7 @@ func compareNotifyEventLevel(level string) bool {
 
 func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) (withoutRetry bool, err error) {
 	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
-		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
+		log.Info(nil, log.LOGGER_APP, "notify event disable", zap.String("level", alarmObj.SPriority), zap.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
 		err = notifyMailAction(notify, alarmObj)
 		return
 	}
@@ -1044,7 +1045,7 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 	requestParam.OperationKey = notify.ProcCallbackKey
 	requestParam.OperationData = fmt.Sprintf("%d-%s-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid, operator)
 	requestParam.OperationUser = operator
-	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
+	log.Info(nil, log.LOGGER_APP, fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
 	request, reqErr := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", models.CoreUrl), strings.NewReader(string(b)))
 	request.Header.Set("Authorization", models.GetCoreToken())
@@ -1066,14 +1067,14 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 		err = fmt.Errorf("Notify core event unmarshal json body fail,%s ", err.Error())
 		return
 	}
-	log.Logger.Info("Notify core result", log.String("body", string(resultBody)))
+	log.Info(nil, log.LOGGER_APP, "Notify core result", zap.String("body", string(resultBody)))
 	return
 }
 
 func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
 	notifyObj, err := getSimpleNotify(notifyGuid)
 	if err != nil {
-		log.Logger.Warn("getNotifyEventMessage fail", log.Error(err))
+		log.Warn(nil, log.LOGGER_APP, "getNotifyEventMessage fail", zap.Error(err))
 	} else {
 		notifyObj = models.NotifyTable{}
 	}
@@ -1082,7 +1083,7 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 	if strings.HasPrefix(alarm.EndpointTags, "ac_") {
 		alarmDetailList, err = GetAlarmDetailList(alarm.Id)
 		if err != nil {
-			log.Logger.Error("get alarm detail list fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "get alarm detail list fail", zap.Error(err))
 		}
 	} else {
 		alarmDetailList = append(alarmDetailList, &models.AlarmDetailData{Metric: alarm.SMetric, Cond: alarm.SCond, Last: alarm.SLast, Start: alarm.Start, StartValue: alarm.StartValue, End: alarm.End, EndValue: alarm.EndValue, Tags: alarm.Tags})
@@ -1143,7 +1144,7 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		}
 	}
 	if queryRoleErr != nil {
-		log.Logger.Error("notifyMailAction query role fail", log.Int("alarmId", alarmObj.Id), log.Error(queryRoleErr))
+		log.Error(nil, log.LOGGER_APP, "notifyMailAction query role fail", zap.Int("alarmId", alarmObj.Id), zap.Error(queryRoleErr))
 	}
 	// 先拿自己角色表的邮箱，独立运行的情况下有用
 	for _, v := range roles {
@@ -1164,7 +1165,7 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		toAddress = models.DefaultMailReceiver
 	}
 	if len(toAddress) == 0 {
-		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
+		log.Warn(nil, log.LOGGER_APP, "notifyMailAction toAddress empty", zap.String("notify", notify.Guid), zap.Strings("roleList", roleList))
 		return nil
 	}
 	for _, v := range toAddress {
@@ -1221,13 +1222,13 @@ func getRoleMail(roleList []string) (mailList []string) {
 	}
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", models.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Get core role key new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key new request fail", zap.Error(err))
 		return
 	}
 	request.Header.Set("Authorization", models.GetCoreToken())
 	res, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key ctxhttp request fail", zap.Error(err))
 		return
 	}
 	b, _ := ioutil.ReadAll(res.Body)
@@ -1235,7 +1236,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	var result models.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key json unmarshal result", zap.Error(err))
 		return
 	}
 	existMap := make(map[string]int)
@@ -1274,7 +1275,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	for _, v := range metricTable {
 		metricMap[v.Metric] = v
 	}
-	log.Logger.Info("ImportAlarmStrategy", log.String("inputGuid", inputGuid), log.JsonObj("metricMap", metricMap))
+	log.Info(nil, log.LOGGER_APP, "ImportAlarmStrategy", zap.String("inputGuid", inputGuid), log.JsonObj("metricMap", metricMap))
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	if queryType == "group" {
 		var endpointGroupTable []*models.EndpointGroupTable
@@ -1408,7 +1409,7 @@ func getAlarmStrategyImportActions(endpointGroup, nowTime, operator, importRule 
 					break
 				}
 				if logType, err2 := GetLogTypeByMetric(tmpMetricName); err2 != nil {
-					log.Logger.Error("GetLogTypeByMetric err", log.Error(err2))
+					log.Error(nil, log.LOGGER_APP, "GetLogTypeByMetric err", zap.Error(err2))
 				} else {
 					v.LogType = logType
 				}
@@ -1527,7 +1528,7 @@ func GetMonitorEngineMetricMap() (metricMap map[string]int, err error) {
 func UpdateAlarmStrategyMetricExpr(alarmStrategyMetricObj *models.AlarmStrategyMetricObj) {
 	_, err := x.Exec("update alarm_strategy_metric set monitor_engine_expr=? where guid=?", alarmStrategyMetricObj.MetricExpr, alarmStrategyMetricObj.AlarmStrategyMetricGuid)
 	if err != nil {
-		log.Logger.Error("UpdateAlarmStrategyMetricExpr fail", log.String("alarmStrategyMetric", alarmStrategyMetricObj.Guid), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateAlarmStrategyMetricExpr fail", zap.String("alarmStrategyMetric", alarmStrategyMetricObj.Guid), zap.Error(err))
 	}
 }
 

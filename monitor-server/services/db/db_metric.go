@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -258,7 +259,7 @@ func SyncDbMetric(initFlag bool) error {
 		var alarmTable []*models.DbKeywordAlarm
 		err = x.SQL("select * from db_keyword_alarm").Find(&alarmTable)
 		if err != nil {
-			log.Logger.Error("init db keyword warning with query exist alarm fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "init db keyword warning with query exist alarm fail", zap.Error(err))
 		} else {
 			keywordCountMap := make(map[string]float64)
 			for _, row := range alarmTable {
@@ -279,7 +280,7 @@ func SyncDbMetric(initFlag bool) error {
 		}
 	}
 	postDataByte, _ := json.Marshal(postData)
-	log.Logger.Info("Sync db metric", log.String("postData", string(postDataByte)))
+	log.Info(nil, log.LOGGER_APP, "Sync db metric", zap.String("postData", string(postDataByte)))
 	resp, err := http.Post(fmt.Sprintf("%s/db/config", dbExportAddress), "application/json", strings.NewReader(string(postDataByte)))
 	if err != nil {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())

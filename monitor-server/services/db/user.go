@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 func AddUser(user m.UserTable) error {
 	_, err := x.Exec("INSERT INTO user(name,passwd,display_name,email,phone,created) VALUE (?,?,?,?,?,NOW())", user.Name, user.Passwd, user.DisplayName, user.Email, user.Phone)
 	if err != nil {
-		log.Logger.Error(fmt.Sprintf("Add user %s fail", user.Name), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, fmt.Sprintf("Add user %s fail", user.Name), zap.Error(err))
 	}
 	return err
 }
@@ -62,7 +63,7 @@ func UpdateUser(user m.UserTable) error {
 	}
 	_, err := x.Exec(newParam...)
 	if err != nil {
-		log.Logger.Error("Update user error", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Update user error", zap.Error(err))
 	}
 	return err
 }
@@ -94,7 +95,7 @@ func GetMailByStrategy(strategyId int) []string {
 	var tpls []*m.TplTable
 	x.SQL("SELECT DISTINCT t2.* FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.id=?", strategyId).Find(&tpls)
 	if len(tpls) == 0 {
-		log.Logger.Warn(fmt.Sprintf("can not find tpl with strategy %d", strategyId))
+		log.Warn(nil, log.LOGGER_APP, fmt.Sprintf("can not find tpl with strategy %d", strategyId))
 		return result
 	}
 	userIds := tpls[0].ActionUser
@@ -145,7 +146,7 @@ func GetMailByEndpointGroup(guid string) []string {
 	var tpls []*m.TplTable
 	x.SQL("SELECT t1.* FROM tpl t1 LEFT JOIN grp_endpoint t2 ON t1.grp_id=t2.grp_id LEFT JOIN endpoint t3 ON t2.endpoint_id=t3.id WHERE t3.guid=?", guid).Find(&tpls)
 	if len(tpls) == 0 {
-		log.Logger.Warn(fmt.Sprintf("can not find group with endpoint %s", guid))
+		log.Warn(nil, log.LOGGER_APP, fmt.Sprintf("can not find group with endpoint %s", guid))
 		return result
 	}
 	for _, tpl := range tpls {
@@ -313,13 +314,13 @@ func SyncCoreRole() {
 	}
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		log.Logger.Error("Get core role key new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key new request fail", zap.Error(err))
 		return
 	}
 	request.Header.Set("Authorization", m.GetCoreToken())
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key ctxhttp request fail", zap.Error(err))
 		return
 	}
 	b, _ := ioutil.ReadAll(res.Body)
@@ -327,11 +328,11 @@ func SyncCoreRole() {
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core role key json unmarshal result", zap.Error(err))
 		return
 	}
 	if len(result.Data) == 0 {
-		log.Logger.Warn("Get core role key fail with no data")
+		log.Warn(nil, log.LOGGER_APP, "Get core role key fail with no data")
 		return
 	}
 	var tableData, insertData, updateData, deleteData []*m.RoleTable
@@ -383,7 +384,7 @@ func SyncCoreRole() {
 	if len(actions) > 0 {
 		err = Transaction(actions)
 		if err != nil {
-			log.Logger.Error("Sync core role fail", log.Error(err))
+			log.Error(nil, log.LOGGER_APP, "Sync core role fail", zap.Error(err))
 		}
 	}
 }
@@ -402,27 +403,27 @@ func SyncCoreSystemVariable() {
 	postBytes, _ := json.Marshal(param)
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/system-variables/retrieve", m.CoreUrl), bytes.NewReader(postBytes))
 	if err != nil {
-		log.Logger.Error("Get core system variable new request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core system variable new request fail", zap.Error(err))
 		return
 	}
 	request.Header.Set("Authorization", m.GetCoreToken())
 	request.Header.Set("Content-Type", "application/json")
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		log.Logger.Error("Get core system variable ctxhttp request fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core system variable ctxhttp request fail", zap.Error(err))
 		return
 	}
 	defer res.Body.Close()
 	b, _ := ioutil.ReadAll(res.Body)
 	var result m.RequestCoreVariableResult
-	log.Logger.Info("Get core system variable response", log.String("body", string(b)))
+	log.Info(nil, log.LOGGER_APP, "Get core system variable response", zap.String("body", string(b)))
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		log.Logger.Error("Get core system variable json unmarshal result", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get core system variable json unmarshal result", zap.Error(err))
 		return
 	}
 	if result.Status != "OK" {
-		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
+		log.Error(nil, log.LOGGER_APP, "Get core system variable fail", log.JsonObj("response", result))
 	} else {
 		if len(result.Data.Contents) > 0 {
 			tmpValue := result.Data.Contents[0].Value
@@ -430,7 +431,7 @@ func SyncCoreSystemVariable() {
 				tmpValue = result.Data.Contents[0].DefaultValue
 			}
 			if strings.Join(m.DefaultMailReceiver, ",") != tmpValue {
-				log.Logger.Info("Get core system variable success", log.String("name", "MONITOR_MAIL_DEFAULT_RECEIVER"), log.String("value", tmpValue))
+				log.Info(nil, log.LOGGER_APP, "Get core system variable success", zap.String("name", "MONITOR_MAIL_DEFAULT_RECEIVER"), zap.String("value", tmpValue))
 			}
 			m.DefaultMailReceiver = []string{}
 			for _, v := range strings.Split(tmpValue, ",") {
@@ -591,7 +592,7 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 	var queryData []*m.RoleTable
 	err = x.SQL("SELECT t2.id,t2.name,t2.display_name FROM rel_role_grp t1 LEFT JOIN role t2 ON t1.role_id=t2.id WHERE t1.grp_id=?", grpId).Find(&queryData)
 	if err != nil {
-		log.Logger.Error("Get grp role fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get grp role fail", zap.Error(err))
 		return err, result
 	}
 	for _, v := range queryData {
@@ -644,7 +645,7 @@ func CheckRoleList(param string) string {
 		} else {
 			_, err := x.Exec("INSERT INTO role(name,display_name) VALUE (?,?)", k, k)
 			if err != nil {
-				log.Logger.Error(fmt.Sprintf("check role list,insert table with name:%s error", k), log.Error(err))
+				log.Error(nil, log.LOGGER_APP, fmt.Sprintf("check role list,insert table with name:%s error", k), zap.Error(err))
 			} else {
 				x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
 				if len(tableData) > 0 {

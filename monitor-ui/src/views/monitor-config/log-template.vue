@@ -22,7 +22,7 @@
           }}</Option>
         </Select>
         <!-- <span style="margin-top: 8px;margin-left: 24px;">
-          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('m_button_search') }}</Button>
+          <Button @click="getTemplateList" type="primary" style="background-color: #5384FF;">{{ $t('m_button_search') }}</Button>
           <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
         </span> -->
       </div>

@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
@@ -25,9 +26,9 @@ type ResponsePageData struct {
 func ReturnError(c *gin.Context, err error, statusCode int) {
 	errorCode, errorKey, errorMessage := models.GetErrorResult(c.GetHeader("Accept-Language"), err, -1)
 	if !models.IsBusinessErrorCode(errorCode) {
-		log.Logger.Error("systemError", log.String("url", c.FullPath()), log.Int("errorCode", errorCode), log.String("errorKey", errorKey), log.String("message", errorMessage), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "systemError", zap.String("url", c.FullPath()), zap.Int("errorCode", errorCode), zap.String("errorKey", errorKey), zap.String("message", errorMessage), zap.Error(err))
 	} else {
-		log.Logger.Error("businessError", log.String("url", c.FullPath()), log.Int("errorCode", errorCode), log.String("errorKey", errorKey), log.String("message", errorMessage), log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "businessError", zap.String("url", c.FullPath()), zap.Int("errorCode", errorCode), zap.String("errorKey", errorKey), zap.String("message", errorMessage), zap.Error(err))
 	}
 	c.Writer.Header().Add("Error-Code", strconv.Itoa(errorCode))
 	if statusCode == 0 {
@@ -121,7 +122,7 @@ func ReturnHandleError(c *gin.Context, msg string, err error) {
 	if err != nil {
 		var customErr models.CustomError
 		if errors.As(err, &customErr) {
-			log.Logger.Warn("Return Error", log.String("msg", msg))
+			log.Warn(nil, log.LOGGER_APP, "Return Error", zap.String("msg", msg))
 			ReturnError(c, customErr, http.StatusOK)
 		} else {
 			ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(msg), http.StatusOK)
@@ -163,6 +164,6 @@ func ReturnApiPermissionError(c *gin.Context) {
 func InitHttpError() {
 	err := models.InitErrorTemplateList("./conf/i18n")
 	if err != nil {
-		log.Logger.Error("Init error template list fail", log.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Init error template list fail", zap.Error(err))
 	}
 }

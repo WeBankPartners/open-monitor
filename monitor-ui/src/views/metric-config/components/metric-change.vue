@@ -49,7 +49,7 @@ export default {
   background: #fff;
 }
 .active-metric-type {
-  background: #2d8cf0;
+  background: #5384FF;
   color: #fff;
 }
 .btn-group-custom {

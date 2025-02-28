@@ -13,7 +13,7 @@
         <div>
           <FormItem :label="$t('m_display_group')">
             <Select filterable clearable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel" ref="selectdPanel">
-              <Button type="success" style="width:92%;background-color:#19be6b" @click="addPanel('panel')" size="small">
+              <Button type="success" style="width:92%;background-color:#00CB91" @click="addPanel('panel')" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
               <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
@@ -27,7 +27,7 @@
           </FormItem>
           <FormItem :label="$t('m_graph')">
             <Select v-model="selectdGraph" filterable clearable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel" ref="selectdGraph">
-              <Button type="success" style="width:92%;background-color:#19be6b" @click="addGraph()" size="small">
+              <Button type="success" style="width:92%;background-color:#00CB91" @click="addGraph()" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
               <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
