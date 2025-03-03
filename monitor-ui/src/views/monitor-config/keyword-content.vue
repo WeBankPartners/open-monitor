@@ -527,6 +527,18 @@ export const custom_api_enum = [
   },
   {
     serviceGroupEendpoint: 'get'
+  },
+  {
+    logKeywordConfig: 'put'
+  },
+  {
+    logKeywordConfig: 'post'
+  },
+  {
+    serviceDbKeywordConfig: 'post',
+  },
+  {
+    serviceDbKeywordConfig: 'put',
   }
 ]
 
