@@ -1118,6 +1118,26 @@
         "method": "get"
       },
       {
+        "key": "logKeywordConfig",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+        "method": "put"
+      },
+      {
+        "key": "logKeywordConfig",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+        "method": "post"
+      },
+      {
+        "key": "serviceDbKeywordConfig",
+        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+        "method": "post"
+      },
+      {
+        "key": "serviceDbKeywordConfig",
+        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+        "method": "put"
+      },
+      {
         "key": "metricListCount",
         "url": "/monitor/api/v2/monitor/metric/list/count",
         "method": "get"
