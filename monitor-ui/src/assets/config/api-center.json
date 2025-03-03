@@ -313,6 +313,6 @@
     "customLogMetricGroupById": "/monitor/api/v2/service/log_metric/custom/log_metric_group/${id}",
     "getDashboardEndpoint": "/monitor/api/v1/dashboard/custom/endpoint/get",
     "dashboardCustomImport": "/monitor/api/v2/dashboard/custom/import",
-    "logMetricImportExcel": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}"
-
+    "logMetricImportExcel": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}",
+    "getDashboardPanels": "/monitor/api/v1/dashboard/panels"
 }

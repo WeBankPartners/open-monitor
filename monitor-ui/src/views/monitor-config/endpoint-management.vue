@@ -1102,7 +1102,7 @@ export default {
       })
     },
     async getEncryptKey() {
-      await this.request('Get', this.apiCenter.getEncryptKey, '', responseData => {
+      await this.request('GET', this.apiCenter.getEncryptKey, '', responseData => {
         this.encryptKey = responseData
       })
     },

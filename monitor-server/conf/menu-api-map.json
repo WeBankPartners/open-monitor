@@ -171,6 +171,171 @@
         "key": "metricConfigView.api",
         "url": "/monitor/api/v1/dashboard/chart",
         "method": "post"
+      },
+      {
+        "key": "template.deleteV2",
+        "url": "/monitor/api/v2/dashboard/custom",
+        "method": "get"
+      },
+      {
+        "key": "template.listV2",
+        "url": "/monitor/api/v2/dashboard/custom/list",
+        "method": "post"
+      },
+      {
+        "key": "chartSharedList",
+        "url": "/monitor/api/v2/chart/shared/list",
+        "method": "post"
+      },
+      {
+        "key": "template.deleteV2",
+        "url": "/monitor/api/v2/dashboard/custom",
+        "method": "put"
+      },
+      {
+        "key": "chartInfo",
+        "url": "/monitor/api/v2/chart/custom",
+        "method": "post"
+      },
+      {
+        "key": "dashboardCustom",
+        "url": "/monitor/api/v2/dashboard/custom",
+        "method": "put"
+      },
+      {
+        "key": "chartCustomCopy",
+        "url": "/monitor/api/v2/chart/custom/copy",
+        "method": "post"
+      },
+      {
+        "key": "chartCustomName",
+        "url": "/monitor/api/v2/chart/custom/name",
+        "method": "put"
+      },
+      {
+        "key": "chartCustomNameExist",
+        "url": "/monitor/api/v2/chart/custom/name/exist",
+        "method": "get"
+      },
+      {
+        "key": "changeChartCustomPermission",
+        "url": "/monitor/api/v2/chart/custom/permission",
+        "method": "get"
+      },
+      {
+        "key": "getUserRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "getUserManageRole",
+        "url": "/monitor/api/v1/user/manage_role/list",
+        "method": "get"
+      },
+      {
+        "key": "changeChartCustomPermission",
+        "url": "/monitor/api/v2/chart/custom/permission",
+        "method": "post"
+      },
+      {
+        "key": "getDashboardCustomPermission",
+        "url": "/monitor/api/v2/dashboard/custom/permission",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigPieView.api",
+        "url": "/monitor/api/v1/dashboard/pie/chart",
+        "method": "post"
+      },
+      {
+        "key": "alarmProblemList",
+        "url": "/monitor/api/v1/alarm/problem/page",
+        "method": "post"
+      },
+      {
+        "key": "startNotify",
+        "url": "/monitor/api/v1/alarm/problem/notify",
+        "method": "post"
+      },
+      {
+        "key": "alarmManagement.close.api",
+        "url": "/monitor/api/v1/alarm/problem/close",
+        "method": "post"
+      },
+      {
+        "key": "remarkAlarm",
+        "url": "/monitor/api/v1/alarm/problem/message",
+        "method": "post"
+      },
+      {
+        "key": "startNotify",
+        "url": "/monitor/api/v1/alarm/problem/notify",
+        "method": "post"
+      },
+      {
+        "key": "recursive.api",
+        "url": "/monitor/api/v1/dashboard/recursive/get",
+        "method": "get"
+      },
+      {
+        "key": "alarm.history",
+        "url": "/monitor/api/v1/alarm/history",
+        "method": "get"
+      },
+      {
+        "key": "mainConfig.api",
+        "url": "/monitor/api/v1/dashboard/main",
+        "method": "get"
+      },
+      {
+        "key": "resourceSearch.api",
+        "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "getDashboardPanels",
+        "url": "/monitor/api/v1/dashboard/panels",
+        "method": "get"
+      },
+      {
+        "key": "editTitle.api",
+        "url": "/monitor/api/v1/dashboard/config/chart/title",
+        "method": "post"
+      },
+      {
+        "key": "getTagDetail",
+        "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "editTitle.api",
+        "url": "/monitor/api/v1/dashboard/config/chart/title",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "alarmProblemList",
+        "url": "/monitor/api/v1/alarm/problem/page",
+        "method": "post"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
       }
     ]
   },
@@ -198,8 +363,8 @@
         "method": "get"
       },
       {
-        "key": "getTagDetail",
-        "url": "/monitor/api/v1/${id}",
+        "key": "getDashboardPanels",
+        "url": "/monitor/api/v1/dashboard/panels",
         "method": "get"
       },
       {
@@ -283,8 +448,8 @@
         "method": "get"
       },
       {
-        "key": "getTagDetail",
-        "url": "/monitor/api/v1/${id}",
+        "key": "getDashboardPanels",
+        "url": "/monitor/api/v1/dashboard/panels",
         "method": "get"
       },
       {
@@ -401,6 +566,11 @@
         "key": "monitorEndpointUpdate",
         "url": "/monitor/api/v2/monitor/endpoint/update",
         "method": "put"
+      },
+      {
+        "key": "getEncryptKey",
+        "url": "/monitor/api/v2/seed",
+        "method": "get"
       },
       {
         "key": "alarmProcessList",
@@ -953,6 +1123,16 @@
         "method": "put"
       },
       {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "post"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "put"
+      },
+      {
         "key": "metricList.api",
         "url": "/monitor/api/v2/monitor/metric/list",
         "method": "get"
@@ -1113,6 +1293,11 @@
         "method": "put"
       },
       {
+        "key": "alarmStrategyQuery",
+        "url": "/monitor/api/v2/alarm/strategy/query",
+        "method": "post"
+      },
+      {
         "key": "metricTagValue",
         "url": "/monitor/api/v2/metric/tag/value-list",
         "method": "post"
@@ -1201,6 +1386,361 @@
         "key": "serviceGroupEendpoint",
         "url": "/monitor/api/v2/service/service_group/endpoint_rel",
         "method": "get"
+      }
+    ]
+  },
+  {
+    "menu": "MONITOR_ADMINISTRATOR_CONFIG",
+    "urls": [
+      {
+        "key": "getTypeConfigList",
+        "url": "/monitor/api/v2/config/type/query",
+        "method": "get"
+      },
+      {
+        "key": "createTypeConfig",
+        "url": "/monitor/api/v2/config/type",
+        "method": "delete"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "addPanel",
+        "url": "/monitor/api/v1/dashboard/new/panel",
+        "method": "delete"
+      },
+      {
+        "key": "getGraph",
+        "url": "/monitor/api/v1/dashboard/new/chart",
+        "method": "delete"
+      },
+      {
+        "key": "addPanel",
+        "url": "/monitor/api/v1/dashboard/new/panel",
+        "method": "post"
+      },
+      {
+        "key": "addPanel",
+        "url": "/monitor/api/v1/dashboard/new/panel",
+        "method": "put"
+      },
+      {
+        "key": "getGraph",
+        "url": "/monitor/api/v1/dashboard/new/chart",
+        "method": "put"
+      },
+      {
+        "key": "getGraph",
+        "url": "/monitor/api/v1/dashboard/new/chart",
+        "method": "post"
+      },
+      {
+        "key": "getGraph",
+        "url": "/monitor/api/v1/dashboard/new/chart",
+        "method": "get"
+      },
+      {
+        "key": "panelInfo",
+        "url": "/monitor/api/v1/dashboard/new/panel",
+        "method": "get"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "getEndpoint",
+        "url": "/monitor/api/v1/dashboard/endpoint",
+        "method": "get"
+      },
+      {
+        "key": "getEndpointType",
+        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "method": "get"
+      },
+      {
+        "key": "addPanel",
+        "url": "/monitor/api/v1/dashboard/new/panel",
+        "method": "delete"
+      },
+      {
+        "key": "getGraph",
+        "url": "/monitor/api/v1/dashboard/new/chart",
+        "method": "delete"
+      },
+      {
+        "key": "metricListCount",
+        "url": "/monitor/api/v2/monitor/metric/list/count",
+        "method": "get"
+      },
+      {
+        "key": "getEndpointType",
+        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "method": "get"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "delete"
+      },
+      {
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "getEndpointType",
+        "url": "/monitor/api/v1/dashboard/endpoint/type",
+        "method": "get"
+      },
+      {
+        "key": "parameterMetricTemplate",
+        "url": "/monitor/api/v2/sys/parameter/metric_template",
+        "method": "get"
+      },
+      {
+        "key": "getMetricOptions",
+        "url": "/monitor/api/v1/dashboard/endpoint/metric/list",
+        "method": "post"
+      },
+      {
+        "key": "getEndpoint",
+        "url": "/monitor/api/v1/dashboard/endpoint",
+        "method": "get"
+      },
+      {
+        "key": "metricConfigView.api",
+        "url": "/monitor/api/v1/dashboard/chart",
+        "method": "post"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "post"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "put"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "post"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "put"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "getEndpoint",
+        "url": "/monitor/api/v1/dashboard/endpoint",
+        "method": "get"
+      },
+      {
+        "key": "dashboardComparisonChart",
+        "url": "/monitor/api/v1/dashboard/comparison_chart",
+        "method": "post"
+      },
+      {
+        "key": "comparisonMetricMgmt",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric",
+        "method": "post"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricListCount",
+        "url": "/monitor/api/v2/monitor/metric/list/count",
+        "method": "get"
+      },
+      {
+        "key": "getTargetByEndpointGroup",
+        "url": "/monitor/api/v2/service_endpoint/search/group",
+        "method": "get"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "delete"
+      },
+      {
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricListCount",
+        "url": "/monitor/api/v2/monitor/metric/list/count",
+        "method": "get"
+      },
+      {
+        "key": "groupManagement.list.api",
+        "url": "/monitor/api/v2/alarm/endpoint_group/query",
+        "method": "get"
+      },
+      {
+        "key": "metricManagement",
+        "url": "/monitor/api/v1/dashboard/new/metric",
+        "method": "delete"
+      },
+      {
+        "key": "comparisonMetricItem",
+        "url": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "metricExport",
+        "url": "/monitor/api/v2/monitor/metric/export",
+        "method": "get"
+      },
+      {
+        "key": "metricImport",
+        "url": "/monitor/api/v2/monitor/metric/import",
+        "method": "post"
+      },
+      {
+        "key": "metricList.api",
+        "url": "/monitor/api/v2/monitor/metric/list",
+        "method": "get"
+      },
+      {
+        "key": "metricComparisonList",
+        "url": "/monitor/api/v2/monitor/metric_comparison/list",
+        "method": "get"
+      },
+      {
+        "key": "metricListCount",
+        "url": "/monitor/api/v2/monitor/metric/list/count",
+        "method": "get"
+      },
+      {
+        "key": "endpointManagement.list.api",
+        "url": "/monitor/api/v1/alarm/endpoint/list",
+        "method": "post"
+      },
+      {
+        "key": "addKubernetesCluster",
+        "url": "/monitor/api/v1/agent/kubernetes/cluster/add",
+        "method": "post"
+      },
+      {
+        "key": "kubernetesClusterList",
+        "url": "/monitor/api/v1/agent/kubernetes/cluster/list",
+        "method": "post"
+      },
+      {
+        "key": "deleteKubernetesCluster",
+        "url": "/monitor/api/v1/agent/kubernetes/cluster/delete",
+        "method": "post"
+      },
+      {
+        "key": "newSnmpConfig",
+        "url": "/monitor/api/v1/config/new/snmp",
+        "method": "delete"
+      },
+      {
+        "key": "updateKubernetesCluster",
+        "url": "/monitor/api/v1/agent/kubernetes/cluster/update",
+        "method": "post"
+      },
+      {
+        "key": "newSnmpConfig",
+        "url": "/monitor/api/v1/config/new/snmp",
+        "method": "get"
+      },
+      {
+        "key": "newSnmpConfig",
+        "url": "/monitor/api/v1/config/new/snmp",
+        "method": "post"
+      },
+      {
+        "key": "newSnmpConfig",
+        "url": "/monitor/api/v1/config/new/snmp",
+        "method": "put"
+      },
+      {
+        "key": "remoteWrite",
+        "url": "/monitor/api/v2/config/remote/write",
+        "method": "get"
+      },
+      {
+        "key": "remoteWrite",
+        "url": "/monitor/api/v2/config/remote/write",
+        "method": "delete"
+      },
+      {
+        "key": "remoteWrite",
+        "url": "/monitor/api/v2/config/remote/write",
+        "method": "post"
+      },
+      {
+        "key": "remoteWrite",
+        "url": "/monitor/api/v2/config/remote/write",
+        "method": "put"
       }
     ]
   }
