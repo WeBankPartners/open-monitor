@@ -37,7 +37,7 @@ func (q Quoter) IsEmpty() bool {
 // Quote quote a string
 func (q Quoter) Quote(s string) string {
 	var buf strings.Builder
-	q.QuoteTo(&buf, s)
+	_ = q.QuoteTo(&buf, s)
 	return buf.String()
 }
 
@@ -64,7 +64,7 @@ func (q Quoter) Trim(s string) string {
 // Join joins a slice with quoters
 func (q Quoter) Join(a []string, sep string) string {
 	var b strings.Builder
-	q.JoinWrite(&b, a, sep)
+	_ = q.JoinWrite(&b, a, sep)
 	return b.String()
 }
 
@@ -86,7 +86,9 @@ func (q Quoter) JoinWrite(b *strings.Builder, a []string, sep string) error {
 				return err
 			}
 		}
-		q.QuoteTo(b, strings.TrimSpace(s))
+		if err := q.QuoteTo(b, strings.TrimSpace(s)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -109,7 +111,7 @@ func findStart(value string, start int) int {
 		return start
 	}
 
-	var k = -1
+	k := -1
 	for j := start; j < len(value); j++ {
 		if value[j] != ' ' {
 			k = j
@@ -120,8 +122,10 @@ func findStart(value string, start int) int {
 		return len(value)
 	}
 
-	if (value[k] == 'A' || value[k] == 'a') && (value[k+1] == 'S' || value[k+1] == 's') {
-		k = k + 2
+	if k+1 < len(value) &&
+		(value[k] == 'A' || value[k] == 'a') &&
+		(value[k+1] == 'S' || value[k+1] == 's') {
+		k += 2
 	}
 
 	for j := k; j < len(value); j++ {
@@ -133,7 +137,7 @@ func findStart(value string, start int) int {
 }
 
 func (q Quoter) quoteWordTo(buf *strings.Builder, word string) error {
-	var realWord = word
+	realWord := word
 	if (word[0] == CommanQuoteMark && word[len(word)-1] == CommanQuoteMark) ||
 		(word[0] == q.Prefix && word[len(word)-1] == q.Suffix) {
 		realWord = word[1 : len(word)-1]
@@ -161,17 +165,18 @@ func (q Quoter) quoteWordTo(buf *strings.Builder, word string) error {
 }
 
 // QuoteTo quotes the table or column names. i.e. if the quotes are [ and ]
-//   name -> [name]
-//   `name` -> [name]
-//   [name] -> [name]
-//   schema.name -> [schema].[name]
-//   `schema`.`name` -> [schema].[name]
-//   `schema`.name -> [schema].[name]
-//   schema.`name` -> [schema].[name]
-//   [schema].name -> [schema].[name]
-//   schema.[name] -> [schema].[name]
-//   name AS a  ->  [name] AS a
-//   schema.name AS a  ->  [schema].[name] AS a
+//
+//	name -> [name]
+//	`name` -> [name]
+//	[name] -> [name]
+//	schema.name -> [schema].[name]
+//	`schema`.`name` -> [schema].[name]
+//	`schema`.name -> [schema].[name]
+//	schema.`name` -> [schema].[name]
+//	[schema].name -> [schema].[name]
+//	schema.[name] -> [schema].[name]
+//	name AS a  ->  [name] AS a
+//	schema.name AS a  ->  [schema].[name] AS a
 func (q Quoter) QuoteTo(buf *strings.Builder, value string) error {
 	var i int
 	for i < len(value) {
@@ -185,7 +190,7 @@ func (q Quoter) QuoteTo(buf *strings.Builder, value string) error {
 			return nil
 		}
 
-		var nextEnd = findWord(value, start)
+		nextEnd := findWord(value, start)
 		if err := q.quoteWordTo(buf, value[start:nextEnd]); err != nil {
 			return err
 		}
@@ -196,7 +201,7 @@ func (q Quoter) QuoteTo(buf *strings.Builder, value string) error {
 
 // Strings quotes a slice of string
 func (q Quoter) Strings(s []string) []string {
-	var res = make([]string, 0, len(s))
+	res := make([]string, 0, len(s))
 	for _, a := range s {
 		res = append(res, q.Quote(a))
 	}
@@ -215,7 +220,7 @@ func (q Quoter) Replace(sql string) string {
 	var beginSingleQuote bool
 	for i := 0; i < len(sql); i++ {
 		if !beginSingleQuote && sql[i] == CommanQuoteMark {
-			var j = i + 1
+			j := i + 1
 			for ; j < len(sql); j++ {
 				if sql[j] == CommanQuoteMark {
 					break

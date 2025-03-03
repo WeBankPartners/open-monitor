@@ -24,7 +24,10 @@ func Interface2Interface(userLocation *time.Location, v interface{}) (interface{
 		return vv.String, nil
 	case *sql.RawBytes:
 		if len([]byte(*vv)) > 0 {
-			return []byte(*vv), nil
+			src := []byte(*vv)
+			dest := make([]byte, len(src))
+			copy(dest, src)
+			return dest, nil
 		}
 		return nil, nil
 	case *sql.NullInt32:
