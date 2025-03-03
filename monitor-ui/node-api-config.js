@@ -100,6 +100,7 @@ const menuPathMap = {
     "src/views/monitor-config/resource-level",
     "src/views/monitor-config/business-monitor",
     "src/views/monitor-config/log-template",
+    "src/views/monitor-config/keyword-content.vue",
     "src/views/metric-config/index",
     "src/views/monitor-config/threshold-management",
     "src/views/monitor-config/log-management"

@@ -923,6 +923,16 @@
         "method": "put"
       },
       {
+        "key": "logMetricMonitor",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+        "method": "post"
+      },
+      {
+        "key": "logMetricMonitor",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+        "method": "put"
+      },
+      {
         "key": "saveTargetDbById",
         "url": "/monitor/api/v2/service/db_metric/${id}",
         "method": "delete"
@@ -944,7 +954,7 @@
       },
       {
         "key": "deletePathById",
-        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_monitor/${id}",
         "method": "delete"
       },
       {
@@ -1045,6 +1055,66 @@
       {
         "key": "getConfigDetailById",
         "url": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
+        "method": "get"
+      },
+      {
+        "key": "eventCallbackList",
+        "url": "/monitor/api/v2/alarm/event/callback/list",
+        "method": "get"
+      },
+      {
+        "key": "userRoleList",
+        "url": "/monitor/api/v1/user/role/list",
+        "method": "get"
+      },
+      {
+        "key": "logKeywordNotify",
+        "url": "/monitor/api/v2/service/log_keyword/notify",
+        "method": "post"
+      },
+      {
+        "key": "logKeywordConfig",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+        "method": "delete"
+      },
+      {
+        "key": "serviceLogKeywordMonitor",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+        "method": "post"
+      },
+      {
+        "key": "serviceLogKeywordMonitor",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+        "method": "put"
+      },
+      {
+        "key": "getLogKeywordList",
+        "url": "/monitor/api/v2/service/log_keyword/list",
+        "method": "get"
+      },
+      {
+        "key": "getDbKeywordList",
+        "url": "/monitor/api/v2/service/db_keyword/list",
+        "method": "get"
+      },
+      {
+        "key": "serviceDbKeywordConfig",
+        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+        "method": "delete"
+      },
+      {
+        "key": "logKeywordMonitorById",
+        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${id}",
+        "method": "delete"
+      },
+      {
+        "key": "getEndpointsByTypeByType",
+        "url": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
+        "method": "get"
+      },
+      {
+        "key": "serviceGroupEendpoint",
+        "url": "/monitor/api/v2/service/service_group/endpoint_rel",
         "method": "get"
       },
       {
@@ -1326,66 +1396,6 @@
         "key": "bussinessMonitorImport",
         "url": "/monitor/api/v2/service/log_keyword/import",
         "method": "post"
-      },
-      {
-        "key": "eventCallbackList",
-        "url": "/monitor/api/v2/alarm/event/callback/list",
-        "method": "get"
-      },
-      {
-        "key": "userRoleList",
-        "url": "/monitor/api/v1/user/role/list",
-        "method": "get"
-      },
-      {
-        "key": "logKeywordNotify",
-        "url": "/monitor/api/v2/service/log_keyword/notify",
-        "method": "post"
-      },
-      {
-        "key": "logKeywordConfig",
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_config",
-        "method": "delete"
-      },
-      {
-        "key": "serviceLogKeywordMonitor",
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "post"
-      },
-      {
-        "key": "serviceLogKeywordMonitor",
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
-        "method": "put"
-      },
-      {
-        "key": "getLogKeywordList",
-        "url": "/monitor/api/v2/service/log_keyword/list",
-        "method": "get"
-      },
-      {
-        "key": "getDbKeywordList",
-        "url": "/monitor/api/v2/service/db_keyword/list",
-        "method": "get"
-      },
-      {
-        "key": "serviceDbKeywordConfig",
-        "url": "/monitor/api/v2/service/db_keyword/db_keyword_config",
-        "method": "delete"
-      },
-      {
-        "key": "logKeywordMonitorById",
-        "url": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${id}",
-        "method": "delete"
-      },
-      {
-        "key": "getEndpointsByTypeByType",
-        "url": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
-        "method": "get"
-      },
-      {
-        "key": "serviceGroupEendpoint",
-        "url": "/monitor/api/v2/service/service_group/endpoint_rel",
-        "method": "get"
       }
     ]
   },
