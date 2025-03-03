@@ -1142,10 +1142,6 @@ export default {
       this.$Message.success(this.$t('m_tips_success'))
       this.addAndEditModal.isShow = false
       this.getDetail(this.targetId)
-
-      // this.request(methodType, this.apiCenter.serviceLogKeywordMonitor, params, () => {
-
-      // }, {isNeedloading: false})
     },
     cancelAddAndEdit() {
       this.addAndEditModal.isShow = false
