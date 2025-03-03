@@ -35,6 +35,56 @@ func AsInt64(src interface{}) (int64, error) {
 		return int64(v), nil
 	case uint64:
 		return int64(v), nil
+	case *int:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *int16:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *int32:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *int8:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *int64:
+		if v == nil {
+			return 0, nil
+		}
+		return *v, nil
+	case *uint:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *uint8:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *uint16:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *uint32:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
+	case *uint64:
+		if v == nil {
+			return 0, nil
+		}
+		return int64(*v), nil
 	case []byte:
 		return strconv.ParseInt(string(v), 10, 64)
 	case string:
@@ -110,9 +160,7 @@ func AsUint64(src interface{}) (uint64, error) {
 	return 0, fmt.Errorf("unsupported value %T as uint64", src)
 }
 
-var (
-	_ sql.Scanner = &NullUint64{}
-)
+var _ sql.Scanner = &NullUint64{}
 
 // NullUint64 represents an uint64 that may be null.
 // NullUint64 implements the Scanner interface so
@@ -142,9 +190,7 @@ func (n NullUint64) Value() (driver.Value, error) {
 	return n.Uint64, nil
 }
 
-var (
-	_ sql.Scanner = &NullUint32{}
-)
+var _ sql.Scanner = &NullUint32{}
 
 // NullUint32 represents an uint32 that may be null.
 // NullUint32 implements the Scanner interface so

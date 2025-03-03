@@ -3,6 +3,70 @@
 This changelog goes through all the changes that have been made in each release
 without substantial changes to our git log.
 
+## [1.3.2](https://gitea.com/xorm/xorm/releases/tag/1.3.2) - 2022-09-03
+
+* BUGFIXES
+  * Change schemas.Column to use int64 (#2160)
+* MISC
+  * Prevent Sync failure with non-regular indexes on Postgres (#2174)
+
+## [1.3.1](https://gitea.com/xorm/xorm/releases/tag/1.3.1) - 2022-06-03
+
+* BREAKING
+  * Refactor orderby and support arguments (#2150)
+  * return a clear error for set TEXT type as compare condition (#2062)
+* BUGFIXES
+  * Fix oid index for postgres (#2154)
+  * Add ORDER BY SEQ_IN_INDEX to MySQL GetIndexes to Fix IndexTests (#2152)
+  * some improvement (#2136)
+* ENHANCEMENTS
+  * Add interface to allow structs to provide specific index information (#2137)
+  * MySQL/MariaDB: return max length for text columns (#2133)
+  * PostgreSQL: enable comment on column (#2131)
+* TESTING
+  * Add test for find date (#2121)
+
+## [1.3.0](https://gitea.com/xorm/xorm/releases/tag/1.3.0) - 2022-04-14
+
+* BREAKING
+  * New Prepare useage (#2061)
+  * Make Get and Rows.Scan accept multiple parameters (#2029)
+  * Drop sync function and rename sync2 to sync (#2018)
+* FEATURES
+  * Add dameng support (#2007)
+* BUGFIXES
+  * bugfix :Oid It's a special index. You can't put it in (#2105)
+  * Fix new-lined query execution in master DB node. (#2066)
+  * Fix bug of Rows (#2048)
+  * Fix bug (#2046)
+  * fix panic when `Iterate()` fails (#2040)
+  * fix panic when convert sql and args with nil time.Time pointer (#2038)
+* ENHANCEMENTS
+  * Fix to add session.statement.IsForUpdate check in Session.queryRows() (#2064)
+  * Expose ScanString / ScanInterface and etc (#2039)
+* TESTING
+  * Add test for mysql tls (#2049)
+* BUILD
+  * Upgrade dependencies modules (#2078)
+* MISC
+  * Fix oracle keyword AS (#2109)
+  * Some performance optimization for get (#2043)
+
+## [1.2.2](https://gitea.com/xorm/xorm/releases/tag/1.2.2) - 2021-08-11
+
+* MISC
+  * Move convert back to xorm.io/xorm/convert (#2030)
+
+## [1.2.1](https://gitea.com/xorm/xorm/releases/tag/1.2.1) - 2021-08-08
+
+* FEATURES
+  * Add pgx driver support (#1795)
+* BUGFIXES
+  * Fix wrong comment (#2027)
+  * Fix import file bug (#2025)
+* ENHANCEMENTS
+  * Fix timesatmp (#2021)
+
 ## [1.2.0](https://gitea.com/xorm/xorm/releases/tag/1.2.0) - 2021-08-04
 
 * BREAKING
