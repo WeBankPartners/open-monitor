@@ -28,6 +28,13 @@
 <script>
 import { setToken} from '@/assets/js/cookies.ts'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
+
+export const custom_api_enum = [
+  {
+    getDashboardPanels: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {

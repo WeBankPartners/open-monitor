@@ -1204,7 +1204,7 @@ export default {
           alarmName: this.alarmName
         }
         this.totalPageConfig = []
-        this.request('post', this.apiCenter.alarmStrategyQuery, params, responseData => {
+        this.request('POST', this.apiCenter.alarmStrategyQuery, params, responseData => {
           this.$emit('feedbackInfo', responseData.length === 0)
           const allConfigDetail = responseData
           allConfigDetail.forEach((item, alarmIndex) => {

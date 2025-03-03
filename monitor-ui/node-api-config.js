@@ -22,7 +22,7 @@ const {find} = require('lodash')
 const API_SERVER_PATH = 'src/assets/config/api-center.json' // api入口文件
 const GLOBAL_COMPONENT_PATH = './project-config/main.js' // 全局组件入口文件
 const WRITE_API_PATH = path.resolve(path.resolve('..'), 'monitor-server/conf') // api-menu-config.json文件写入的路径
-
+// const WRITE_API_PATH = ''
 // -------------------------------------------------生成组件对应api的引用关系--------------------------------------------------------------
 
 // 根据import语句返回对应API函数列表
@@ -84,7 +84,8 @@ const allImports = scanFilesAndExtractImports(rootPath_)
 const menuPathMap = {
   "MONITOR_CUSTOM_DASHBOARD": [
     "src/views/custom-view/view-config-index",
-    "src/views/custom-view/chart-list"
+    "src/views/custom-view/chart-list",
+    "src/views/custom-view/view-config"
   ],
   "MONITOR_MAIN_DASHBOARD": [
     "src/views/endpoint-view"
@@ -102,8 +103,18 @@ const menuPathMap = {
     "src/views/metric-config/index",
     "src/views/monitor-config/threshold-management",
     "src/views/monitor-config/log-management"
+  ],
+  "MONITOR_ADMINISTRATOR_CONFIG": [
+    "src/views/admin-config/basic/type-config",
+    "src/views/admin-config/basic/board-config",
+    "src/views/admin-config/basic/metric-config",
+    "src/views/admin-config/other/exporter",
+    "src/views/admin-config/other/remote-sync"
   ]
 }
+
+
+
 
 // 全局注册组件特殊匹配--start
 const getGlobalComponetMap = filePath => {

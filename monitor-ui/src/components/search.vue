@@ -67,7 +67,7 @@ import TagShow from '@/components/Tag-show.vue'
 
 export const custom_api_enum = [
   {
-    getTagDetail: 'get'
+    getDashboardPanels: 'get'
   }
 ]
 
