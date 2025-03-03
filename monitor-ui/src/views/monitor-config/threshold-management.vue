@@ -115,6 +115,19 @@ import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
 import {baseURL_config} from '@/assets/js/baseURL'
 import axios from 'axios'
+
+export const custom_api_enum = [
+  {
+    alarmStrategyImport: 'post'
+  },
+  {
+    alarmStrategyImport: 'get'
+  },
+  {
+    alarmStrategySearch: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -143,7 +156,9 @@ export default {
       getTargetOptionsSearch: '',
       alarmName: '', // 告警名称
       onlyShowCreated: 'all', // me用户创建 all所有
-      selectKey: ''
+      selectKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -229,7 +244,7 @@ export default {
     getTargetOptions() {
       return new Promise(resolve => {
         const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${this.getTargetOptionsSearch}`
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.request('GET', api, '', responseData => {
           this.targetOptions = cloneDeep(responseData)
           window.targetOptions = this.targetOptions
           resolve(this.targetOptions)

@@ -513,6 +513,37 @@ import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-
 import axios from 'axios'
 import {showPoptipOnTable} from '@/assets/js/utils.js'
 
+export const custom_api_enum = [
+  {
+    saveTargetDbById: 'delete'
+  },
+  {
+    serviceGroupEendpoint: 'get'
+  },
+  {
+    logMetricRegById: 'delete'
+  }, {
+    deleteLogMetricGroupById: 'delete'
+  }, {
+    deletePathById: 'delete'
+  },
+  {
+    getEndpointsByTypeByType: 'get'
+  },
+  {
+    getTargetDetailById: 'get'
+  },
+  {
+    getTargetDbDetailById: 'get'
+  },
+  {
+    keywordImport: 'post'
+  },
+  {
+    logMetricImportExcel: 'post'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -878,11 +909,13 @@ export default {
         }
       ],
       importType: 'yes',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
     uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targetId}&autoCreate=${this.importType}`
+      return baseURL_config + `${this.apiCenter.keywordImport}?serviceGroup=${this.targetId}&autoCreate=${this.importType}`
     },
     uploadGroupMetricUrl() {
       return baseURL_config + `/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}`
@@ -891,7 +924,7 @@ export default {
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, resp => {
+    this.request('POST', this.apiCenter.logTemplateTableData, {}, resp => {
       this.templateList.json_list = resp.json_list || []
       this.templateList.regular_list = resp.regular_list || []
       this.templateList.custom_list = resp.custom_list || []
@@ -964,8 +997,8 @@ export default {
     },
     // BD config
     delDbItem(rowData) {
-      const api = this.$root.apiCenter.saveTargetDb + '/' + rowData.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
+      const api = this.apiCenter.saveTargetDb + '/' + rowData.guid
+      this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targetId)
       })
@@ -979,7 +1012,7 @@ export default {
     getEndpointDefaultValue(monitorType) {
       this.dbModelConfig.addRow.endpoint_rel = this.dbModelConfig.addRow.endpoint_rel || []
       const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=mysql&targetType=${monitorType}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      this.request('GET', api, '', responseData => {
         if (!isEmpty(responseData)) {
           responseData.forEach(item => {
             this.dbModelConfig.addRow.endpoint_rel.push({
@@ -1012,7 +1045,7 @@ export default {
       this.dbModelConfig.isAdd = true
       this.dbModelConfig.isShow = true
     },
-    saveDb() {
+    async saveDb() {
       // if (!this.dbModelConfig.addRow.display_name) {
       //   return this.$Message.error('显示名不能为空')
       // }
@@ -1030,13 +1063,16 @@ export default {
         return this.$Message.error('指标配置不能为空')
       }
       this.dbModelConfig.addRow.service_group = this.targetId
-      const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.saveTargetDb, this.dbModelConfig.addRow, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.dbModelConfig.isShow = false
-        this.getDetail(this.targetId)
-        this.getDbDetail(this.targetId)
-      }, {isNeedloading: false})
+      // const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
+      if (this.dbModelConfig.isAdd) {
+        await this.request('POST', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+      } else {
+        await this.request('PUT', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.dbModelConfig.isShow = false
+      this.getDetail(this.targetId)
+      this.getDbDetail(this.targetId)
     },
     cancelDb() {
       this.dbModelConfig.isShow = false
@@ -1096,20 +1132,22 @@ export default {
       this.customMetricsModelConfig.isAdd = true
       this.$root.JQ('#custom_metrics').modal('show')
     },
-    saveCustomMetric() {
+    async saveCustomMetric() {
       const params = JSON.parse(JSON.stringify(this.customMetricsModelConfig.addRow))
       params.log_metric_monitor = this.activeData.guid
       if (!(params.regular.includes('(') && params.regular.includes(')'))) {
         this.$Message.error(this.$t('m_regular_tip'))
         return
       }
-      const requestType = this.customMetricsModelConfig.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricReg, params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.$root.JQ('#custom_metrics').modal('hide')
-        this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
-        // this.getDetail(this.targetId)
-      })
+      // const requestType = this.customMetricsModelConfig.isAdd ? 'POST' : 'PUT'
+      if (this.customMetricsModelConfig.isAdd) {
+        await this.request('POST', this.apiCenter.logMetricReg, params)
+      } else {
+        await this.request('PUT', this.apiCenter.logMetricReg, params)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.$root.JQ('#custom_metrics').modal('hide')
+      this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
     },
     editCustomMetricItem(rowData) {
       this.activeData = rowData
@@ -1142,15 +1180,15 @@ export default {
       }
     },
     delCustomMericsItem(rowData) {
-      const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
+      const api = this.apiCenter.logMetricReg + '/' + rowData.guid
+      this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.reloadMetricData(rowData.log_metric_monitor)
       })
     },
     delRuleItem(rowData) {
-      const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
+      const api = this.apiCenter.deleteLogMetricGroup + rowData.guid
+      this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.reloadMetricData(rowData.log_metric_monitor)
       })
@@ -1164,14 +1202,17 @@ export default {
       }
       this.ruleModelConfig.isShow = false
     },
-    saveRule() {
+    async saveRule() {
       this.ruleModelConfig.addRow.log_metric_monitor = this.activeData.guid
-      const requestType = this.ruleModelConfig.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.ruleModelConfig.isShow = false
-        this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
-      })
+      // const requestType = this.ruleModelConfig.isAdd ? 'POST' : 'PUT'
+      if (this.ruleModelConfig.isAdd) {
+        await this.request('POST', this.apiCenter.logMetricJson, this.ruleModelConfig.addRow)
+      } else {
+        await this.request('PUT', this.apiCenter.logMetricJson, this.ruleModelConfig.addRow)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.ruleModelConfig.isShow = false
+      this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
     },
     reloadMetricData() {
       this.getDetail(this.targetId)
@@ -1187,8 +1228,8 @@ export default {
       this.delF(item)
     },
     delF(rowData) {
-      const api = this.$root.apiCenter.deletePath + '/' + rowData.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
+      const api = this.apiCenter.deletePath + '/' + rowData.guid
+      this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targetId)
       })
@@ -1217,7 +1258,7 @@ export default {
       if (this.addAndEditModal.isAdd) {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricMonitor, params, () => {
+      this.request(methodType, this.apiCenter.logMetricMonitor, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.addAndEditModal.isShow = false
         this.getDetail(this.targetId)
@@ -1241,11 +1282,11 @@ export default {
       }
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targetId + '/endpoint/' + type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
+      this.request('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
       const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targetId + '/endpoint/' + val
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
+      this.request('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
       }, {isNeedloading: false})
     },
@@ -1335,7 +1376,7 @@ export default {
     },
     getDefaultConfig(val, type) {
       const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      this.request('GET', api, '', responseData => {
         const tmp = responseData.map(r => ({
           source_endpoint: r.source_endpoint,
           target_endpoint: r.target_endpoint
@@ -1363,7 +1404,7 @@ export default {
         if (this.metricKey) {
           api += `?metricKey=${this.metricKey}`
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.request('GET', api, '', responseData => {
           this.showManagement = true
           if (Array.isArray(responseData)) {
             this.logFileDetail = responseData
@@ -1430,7 +1471,7 @@ export default {
         if (this.metricKey) {
           api += `?metricKey=${this.metricKey}`
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.request('GET', api, '', responseData => {
           if (Array.isArray(responseData)) {
             this.dataBaseTableData = responseData
           } else {

@@ -236,7 +236,9 @@ export default {
         endpointGroup: 'm_base_group',
         serviceGroup: 'm_field_resourceLevel'
       },
-      showEndpointView: false // 弹窗展示对象视图
+      showEndpointView: false, // 弹窗展示对象视图
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   watch: {
@@ -275,7 +277,7 @@ export default {
       const params = {
         id: this.alertId
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+      this.request('POST',this.apiCenter.startNotify, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },

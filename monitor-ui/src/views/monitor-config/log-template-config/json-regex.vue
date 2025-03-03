@@ -188,6 +188,12 @@ const initRangeConfigMap = {
   }
 }
 
+export const custom_api_enum = [
+  {
+    getConfigDetailById: 'get'
+  }
+]
+
 const initSuccessCode = {
   regulative: 0,
   source_value: '200',
@@ -418,7 +424,9 @@ export default {
       generateBackstageTrialWarning: false,
       successCode: cloneDeep(initSuccessCode),
       cloneDeep,
-      actionType: ''
+      actionType: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -648,7 +656,7 @@ export default {
       return false
     },
 
-    saveConfig() {
+    async saveConfig() {
       const tmpData = cloneDeep(this.configInfo)
       if (this.paramsValidate(tmpData)) {
         return
@@ -658,15 +666,18 @@ export default {
       delete tmpData.create_time
       delete tmpData.update_user
       delete tmpData.update_time
-      const methodType = this.isAdd ? 'POST' : 'PUT'
+      // const methodType = this.isAdd ? 'POST' : 'PUT'
       if (this.actionType === 'copy') {
         delete tmpData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logTemplateConfig, tmpData, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.showModal = false
-        this.$emit('refreshData')
-      })
+      if (this.isAdd) {
+        await this.request('POST', this.apiCenter.logTemplateConfig, tmpData)
+      } else {
+        await this.request('PUT', this.apiCenter.logTemplateConfig, tmpData)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.showModal = false
+      this.$emit('refreshData')
     },
     processSaveData(data){
       if (isEmpty(data)) {return}
@@ -679,8 +690,8 @@ export default {
       })
     },
     getConfigDetail(guid) {
-      const api = this.$root.apiCenter.getConfigDetailByGuid + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      const api = this.apiCenter.getConfigDetailByGuid + guid
+      this.request('GET', api, {}, resp => {
         this.configInfo = resp
         this.processConfigInfo()
         if (this.actionType === 'copy') {
@@ -713,7 +724,7 @@ export default {
         reg_string: this.configInfo.json_regular,
         test_context: this.configInfo.demo_log,
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, responseData => {
+      this.request('POST', this.apiCenter.regexpTestMatch, params, responseData => {
         this.configInfo.calc_result.match_text = responseData.match_text
         this.configInfo.calc_result.json_key_list = responseData.json_key_list || []
         this.configInfo.calc_result.json_obj = responseData.json_obj || {}

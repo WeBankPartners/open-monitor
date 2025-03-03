@@ -165,6 +165,7 @@ export default {
       },
       isBatch: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
       isEmpty,
       isSpinShow: false
     }
@@ -310,7 +311,7 @@ export default {
       }
       this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/history',
+        this.apiCenter.alarmProblemHistory,
         params,
         responseData => {
           this.tlow = responseData.low
@@ -388,7 +389,7 @@ export default {
       }
       this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/page',
+        this.apiCenter.alarmProblemList,
         params,
         responseData => {
           this.noData = false
@@ -546,7 +547,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.request('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.request('POST', this.apiCenter.alarmManagement.close.api, params, () => {
         this.clearAll()
       })
     },

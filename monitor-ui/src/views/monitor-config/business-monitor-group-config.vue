@@ -268,6 +268,14 @@ import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
 import JsonRegexDisplay from '@/views/monitor-config/log-template-config/json-regex-display.vue'
 
+export const custom_api_enum = [
+  {
+    getConfigDetailById: 'get'
+  },
+  {
+    getLogMetricConfigById: 'get'
+  }
+]
 const initRangeConfig = {
   operator: '>',
   threshold: 3,
@@ -294,7 +302,9 @@ export default {
       auto_create_warn: true,
       auto_create_dashboard: true,
       templateRetCode: {},
-      actionType: ''
+      actionType: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   methods: {
@@ -365,15 +375,15 @@ export default {
       this.templateRetCode = isEmpty(res.success_code) ? {} : JSON.parse(res.success_code)
     },
     getTemplateDetail(guid) {
-      const api = this.$root.apiCenter.getConfigDetailByGuid + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      const api = this.apiCenter.getConfigDetailByGuid + guid
+      this.request('GET', api, {}, resp => {
         this.processConfigInfo(resp)
         Object.assign(this.businessConfig.retcode_string_map[0], JSON.parse(resp.success_code))
       })
     },
     getConfig(guid) {
-      const api = this.$root.apiCenter.getLogMetricConfig + guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      const api = this.apiCenter.getLogMetricConfig + guid
+      this.request('GET', api, {}, resp => {
         this.businessConfig = resp
         this.processConfigInfo(resp.log_monitor_template)
         if (this.actionType === 'copy') {
@@ -464,49 +474,55 @@ export default {
         data.auto_create_dashboard = this.auto_create_dashboard
       }
     },
-    saveConfig() {
+    async saveConfig() {
       const tmpData = cloneDeep(this.businessConfig)
       this.processUpdateData(tmpData)
       if (this.paramsValidate(tmpData)) {
         return
       }
-      const methodType = this.isAdd ? 'POST' : 'PUT'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, res => {
-        const messageTips = this.$t('m_tips_success')
-        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
-          const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
-          const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
-          this.$Message.success({
-            render: h => h('div', { class: 'add-business-config' }, [
-              h('div', {class: 'add-business-config-item'}, [
-                h('div', this.$t('m_has_create_dashboard') + ':'),
-                h('div', {
-                  domProps: {
-                    innerHTML: tipTwo
-                  }
-                })
-              ]),
-              h('div', { class: 'add-business-config-item' }, [
-                h('div', this.$t('m_has_create_warn') + ':'),
-                h('div', {
-                  class: 'create_warn_text',
-                  domProps: {
-                    innerHTML: tipOne
-                  }
-                })
-              ])
+      // const methodType = this.isAdd ? 'POST' : 'PUT'
+      let res
+      if (this.isAdd) {
+        res = await this.request('POST', this.apiCenter.logMetricGroup, tmpData)
+      } else {
+        res = await this.request('PUT', this.apiCenter.logMetricGroup, tmpData)
+      }
+      // const res = await this.request(methodType, this.apiCenter.logMetricGroup, tmpData)
+      const messageTips = this.$t('m_tips_success')
+      if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard')) {
+        const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
+        const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
+        this.$Message.success({
+          render: h => h('div', { class: 'add-business-config' }, [
+            h('div', {class: 'add-business-config-item'}, [
+              h('div', this.$t('m_has_create_dashboard') + ':'),
+              h('div', {
+                domProps: {
+                  innerHTML: tipTwo
+                }
+              })
             ]),
-            duration: 5
-          })
-        } else {
-          this.$Message.success({
-            content: messageTips,
-            duration: 2
-          })
-        }
-        this.showModel = false
-        this.$emit('reloadMetricData', this.parentGuid)
-      })
+            h('div', { class: 'add-business-config-item' }, [
+              h('div', this.$t('m_has_create_warn') + ':'),
+              h('div', {
+                class: 'create_warn_text',
+                domProps: {
+                  innerHTML: tipOne
+                }
+              })
+            ])
+          ]),
+          duration: 5
+        })
+      } else {
+        this.$Message.success({
+          content: messageTips,
+          duration: 2
+        })
+      }
+      this.showModel = false
+      this.$emit('reloadMetricData', this.parentGuid)
+
     },
     addItem(key) {
       const params = key === 'code_string_map' ? {
@@ -531,13 +547,13 @@ export default {
       this.businessConfig[key].splice(itemIndex, 1)
     },
     onMatchButtonClick(item) {
-      const api = '/monitor/api/v2/service/log_metric/data_map/regexp/match'
+      // const api = '/monitor/api/v2/service/log_metric/data_map/regexp/match'
       const params = {
         content: item.matchingSourceValue,
         regexp: item.source_value,
         is_regexp: item.regulative === 1 ? true : false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, res => {
+      this.request('POST', this.apiCenter.logMetricDataMapMatch, params, res => {
         Vue.set(item, 'matchingResult', res.match)
         this.refreshPage()
       })

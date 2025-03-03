@@ -1,18 +1,15 @@
 {
     "resourceSearch": {
-        "_des": "资源搜索接口",
         "api": "/monitor/api/v1/dashboard/search",
         "strategyApi": "/monitor/api/v1/alarm/strategy/search"
     },
     "mainConfig": {
-        "_des": "主视图配置获取",
         "api": "/monitor/api/v1/dashboard/main"
     },
     "alarm": {
         "history": "/monitor/api/v1/alarm/history"
     },
     "groupManagement": {
-        "_des": "组管理",
         "list": {
             "api": "/monitor/api/v2/alarm/endpoint_group/query"
         },
@@ -42,7 +39,6 @@
         }
     },
     "endpointManagement": {
-        "_des": "对象管理",
         "list": {
             "api": "/monitor/api/v1/alarm/endpoint/list"
         },
@@ -71,7 +67,6 @@
         }
     },
     "thresholdManagement": {
-        "_des": "阈值管理",
         "list": {
             "api": "/monitor/api/v1/alarm/strategy/list"
         },
@@ -85,13 +80,11 @@
             "api": "/monitor/api/v1/alarm/strategy/delete"
         },
         "recevier": {
-            "_des": "接收人管理",
             "getReceivers": "/monitor/api/v1/alarm/action/search",
             "api": "/monitor/api/v1/alarm/action/update"
         }
     },
     "logManagement": {
-        "_des": "阈值管理",
         "list": {
             "api": "/monitor/api/v1/alarm/log/monitor/list"
         },
@@ -112,33 +105,26 @@
         }
     },
     "businessMonitor": {
-        "_des": "业务监控列表",
         "list": "/monitor/api/v1/alarm/business/list",
         "add": "/monitor/api/v1/alarm/business/add",
         "update": "/monitor/api/v1/alarm/business/update"
     },
     "metricList": {
-        "_des": "指标列表",
         "api": "/monitor/api/v2/monitor/metric/list"
     },
     "originMetricList": {
-        "_des": "原始指标列表",
         "api": "/monitor/api/v1/dashboard/endpoint/metric/list"
     },
     "metricUpdate": {
-        "_des": "指标更新",
         "api": "/monitor/api/v1/dashboard/config/metric/update"
     },
     "metricConfigView": {
-        "_des": "指标配置预览视图",
         "api": "/monitor/api/v1/dashboard/chart"
     },
     "metricConfigPieView": {
-        "_des": "指标配置饼图",
         "api": "/monitor/api/v1/dashboard/pie/chart"
     },
     "alarmManagement": {
-        "_des": "告警管理",
         "list": {
             "api": "/monitor/api/v1/alarm/problem/list"
         },
@@ -173,17 +159,14 @@
         }
     },
     "recursive": {
-        "_des": "递归视图配置",
         "api": "/monitor/api/v1/dashboard/recursive/get"
     },
     "resourceLevel": {
-        "_des": "资源层级",
         "getAll": "/monitor/api/v1/alarm/org/panel/get",
         "getReceivers": "/monitor/api/v1/alarm/org/connect/get",
         "updateReceivers": "/monitor/api/v1/alarm/org/connect/update"
     },
     "editTitle": {
-        "_des": "对象视图标题编辑",
         "api": "/monitor/api/v1/dashboard/config/chart/title"
     },
     "panelInfo": "/monitor/api/v1/dashboard/new/panel",
@@ -213,7 +196,6 @@
     "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group",
     "getThresholdServiceDetail": "/monitor/api/v2/alarm/strategy/list/service",
     "getThresholdDetailMainPath": "/monitor/api/v2/alarm/strategy/list",
-
     "bussinessMonitorExport": "/monitor/api/v2/service/log_keyword/export",
     "bussinessMonitorImport": "/monitor/api/v2/service/log_keyword/import",
 
@@ -238,5 +220,99 @@
     "getEncryptKey": "/monitor/api/v2/seed",
     "getTypeConfigList": "/monitor/api/v2/config/type/query",
     "createTypeConfig": "/monitor/api/v2/config/type",
-    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new"
+    "getEndpointTypeNew": "/monitor/api/v1/dashboard/endpoint/type_new",
+
+    "getDashboardRole": "/monitor/api/v1/dashboard/custom/role/get",
+    "saveDashboardRole": "/monitor/api/v1/dashboard/custom/role/save",
+    "getUserRoleList": "/monitor/api/v1/user/role/list",
+    "getUserManageRole": "/monitor/api/v1/user/manage_role/list",
+    "getDashboardCustomPermission": "/monitor/api/v2/dashboard/custom/permission",
+    "dashboardCustomCopy" : "/monitor/api/v2/dashboard/custom/copy",
+    "getDashboardAll": "/monitor/api/v2/dashboard/all",
+    "getChartManageList": "/monitor/api/v2/chart/manage/list",
+    "changeChartCustomPermission": "/monitor/api/v2/chart/custom/permission",
+    "chartInfo": "/monitor/api/v2/chart/custom",
+    "chartCustomSeries": "/monitor/api/v2/chart/custom/series/config",
+    "metricTagValue": "/monitor/api/v2/metric/tag/value-list",
+    "chartCustomNameExist": "/monitor/api/v2/chart/custom/name/exist",
+    "alarmProblemList": "/monitor/api/v1/alarm/problem/page",
+    "chartSharedList": "/monitor/api/v2/chart/shared/list",
+    "dashboardCustom": "/monitor/api/v2/dashboard/custom",
+    "chartCustomCopy": "/monitor/api/v2/chart/custom/copy",
+    "chartCustomName": "/monitor/api/v2/chart/custom/name",
+
+    "getTagDetail": "/monitor/api/v1/${id}",
+    "regexpTestMatch": "/monitor/api/v2/regexp/test/match",
+    "alarmProblemOptions": "/monitor/api/v1/alarm/problem/options",
+    "alarmProblemHistory": "/monitor/api/v1/alarm/problem/history",
+    "addKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/add",
+    "kubernetesClusterList": "/monitor/api/v1/agent/kubernetes/cluster/list",
+    "deleteKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/delete",
+    "newSnmpConfig": "/monitor/api/v1/config/new/snmp",
+    "updateKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/update",
+    "metricListCount": "/monitor/api/v2/monitor/metric/list/count",
+    "metricComparisonList": "/monitor/api/v2/monitor/metric_comparison/list",
+    "comparisonMetricItem": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
+    "getTargetByEndpointGroup": "/monitor/api/v2/service_endpoint/search/group",
+    "parameterMetricTemplate": "/monitor/api/v2/sys/parameter/metric_template",
+    "dashboardComparisonChart": "/monitor/api/v1/dashboard/comparison_chart",
+    "getEndpointsByTypeByType": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
+    "serviceGroupEendpoint": "/monitor/api/v2/service/service_group/endpoint_rel",
+    "logMetricListEndpoint": "/monitor/api/v2/service/log_metric/list/endpoint/${id}",
+    "dbMetricListEndpoint": "/monitor/api/v2/service/db_metric/list/endpoint/${id}",
+    "logMetricDataMapMatch": "/monitor/api/v2/service/log_metric/data_map/regexp/match",
+    "getConfigDetailById": "/monitor/api/v2/service/log_metric/log_monitor_template/${id}",
+    "getLogMetricConfigById": "/monitor/api/v2/service/log_metric/log_metric_group/${id}",
+    "saveTargetDbById": "/monitor/api/v2/service/db_metric/${id}",
+    "logMetricRegById": "/monitor/api/v2/service/log_metric/log_metric_config/${id}",
+    "deleteLogMetricGroupById": "/monitor/api/v2/service/log_metric/log_metric_group/${id}",
+    "deletePathById": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "getTargetDetailById": "/monitor/api/v2/service/log_metric/list/group/${id}",
+    "getTargetDbDetailById": "/monitor/api/v2/service/db_metric/list/group/${id}",
+    "getTargetByEndpointByType": "/monitor/api/v2/service_endpoint/search/${type}",
+    "alarmEndpointGroup": "/monitor/api/v2/alarm/endpoint_group/${group}/notify/update",
+    "alarmStrategyById": "/monitor/api/v2/alarm/strategy/${guid}",
+    "eventCallbackList": "/monitor/api/v2/alarm/event/callback/list",
+    "userRoleList": "/monitor/api/v1/user/role/list?page=1&size=1000",
+    "alarmStrategy": "/monitor/api/v2/alarm/strategy",
+    "alarmStrategyQuery": "/monitor/api/v2/alarm/strategy/query",
+    "alarmStrategyImport": "/monitor/api/v2/alarm/strategy/import/${type}/${id}",
+    "alarmStrategySearch": "/monitor/api/v2/alarm/strategy/search",
+    "monitorEndpointUpdate": "/monitor/api/v2/monitor/endpoint/update",
+    "alarmProcessList": "/monitor/api/v1/alarm/process/list",
+    "alarmProcessUpdate": "/monitor/api/v1/alarm/process/update",
+    "getAgentEndpointTelnet": "/monitor/api/v1/agent/endpoint/telnet/get",
+    "endpointTelnetUpdate": "/monitor/api/v1/agent/endpoint/telnet/update",
+    "alarmEndpointOptions": "/monitor/api/v1/alarm/endpoint/options",
+    "monitorEndpointQuery": "/monitor/api/v2/monitor/endpoint/query",
+    "getMonitorEndpointById": "/monitor/api/v2/monitor/endpoint/get/${id}",
+    "alarmEndpointGroupOptions": "/monitor/api/v2/alarm/endpoint_group/options",
+    "getEndpointListById": "/monitor/api/v2/alarm/endpoint_group/${guid}/endpoint/list",
+    "updateEndpointGroup": "/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update",
+    "processAlarmEndpointGroup": "/monitor/api/v2/alarm/endpoint_group/${id}",
+    "logKeywordNotify": "/monitor/api/v2/service/log_keyword/notify",
+    "logKeywordConfig": "/monitor/api/v2/service/log_keyword/log_keyword_config",
+    "logKeywordMonitorById": "/monitor/api/v2/service/log_keyword/log_keyword_monitor/${id}",
+    "serviceLogKeywordMonitor": "/monitor/api/v2/service/log_keyword/log_keyword_monitor",
+    "getLogKeywordList": "/monitor/api/v2/service/log_keyword/list",
+    "getDbKeywordList": "/monitor/api/v2/service/db_keyword/list",
+    "serviceDbKeywordConfig": "/monitor/api/v2/service/db_keyword/db_keyword_config",
+    "logMonitorTemplateOptions": "/monitor/api/v2/service/log_metric/log_monitor_template/options",
+    "getAffectServiceGroup": "/monitor/api/v2/service/log_metric/affect_service_group/${id}",
+    "logMonitorTemplateExport": "/monitor/api/v2/service/log_metric/log_monitor_template/export",
+    "logMonitorTemplateImport": "/monitor/api/v2/service/log_metric/log_monitor_template/import",
+    "alarmOrgPanelAdd": "/monitor/api/v1/alarm/org/panel/add",
+    "alarmOrgPanelDelete": "/monitor/api/v1/alarm/org/panel/delete",
+    "alarmOrgPanelEdit": "/monitor/api/v1/alarm/org/panel/edit",
+    "getAlarmOrgRole": "/monitor/api/v1/alarm/org/role/get",
+    "updateAlarmOrgRole": "/monitor/api/v1/alarm/org/role/update",
+    "getAlarmOrgEndpoint": "/monitor/api/v1/alarm/org/endpoint/get",
+    "updateAlarmOrgEndpoint": "/monitor/api/v1/alarm/org/endpoint/update",
+    "getAlarmOrgCallback": "/monitor/api/v1/alarm/org/callback/get",
+    "updateAlarmOrgCallback": "/monitor/api/v1/alarm/org/callback/update",
+    "customLogMetricGroupById": "/monitor/api/v2/service/log_metric/custom/log_metric_group/${id}",
+    "getDashboardEndpoint": "/monitor/api/v1/dashboard/custom/endpoint/get",
+    "dashboardCustomImport": "/monitor/api/v2/dashboard/custom/import",
+    "logMetricImportExcel": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}",
+    "getDashboardPanels": "/monitor/api/v1/dashboard/panels"
 }

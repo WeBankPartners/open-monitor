@@ -77,6 +77,24 @@ import isEmpty from 'lodash/isEmpty'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {showPoptipOnTable} from '@/assets/js/utils.js'
 
+export const custom_api_enum = [
+  {
+    monitorEndpointQuery: 'get'
+  },
+  {
+    getEndpointListById: 'get'
+  },
+  {
+    getEndpointListById: 'post'
+  },
+  {
+    updateEndpointGroup: 'post'
+  },
+  {
+    processAlarmEndpointGroup: 'delete'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -174,7 +192,6 @@ export default {
         search: '',
         monitor_type: []
       },
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       pagination: {
         __orders: '-created_date',
         total: 0,
@@ -277,7 +294,9 @@ export default {
         }
       ],
       objectTypeList: [],
-      isAuthorizationModelShow: false
+      isAuthorizationModelShow: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -287,8 +306,8 @@ export default {
   },
   methods: {
     getAllOptions() {
-      const path = '/monitor/api/v2/alarm/endpoint_group/options'
-      this.request('GET', path, {}, res => {
+      // const path = '/monitor/api/v2/alarm/endpoint_group/options'
+      this.request('GET', this.apiCenter.alarmEndpointGroupOptions, {}, res => {
         this.objectTypeList = res
       })
     },
@@ -299,7 +318,7 @@ export default {
         size: 10000,
       }
       await this.getServeGroup()
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.apiCenter.getEndpointType, params, res => {
         this.modelConfig.v_select_configs.monitor_type = res.map(item => ({
           label: item,
           value: item
@@ -308,7 +327,7 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     async getServeGroup() {
-      await this.request('GET', '/monitor/api/v2/service_endpoint/search/group', '', res => {
+      await this.request('GET', this.apiCenter.getTargetByEndpointGroup, '', res => {
         this.modelConfig.v_select_configs.service_group = res.map(item => ({
           label: item.display_name,
           value: item.guid
@@ -317,7 +336,7 @@ export default {
     },
     addPost() {
       const params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
-      this.request('POST', this.$root.apiCenter.groupManagement.add.api, params, () => {
+      this.request('POST', this.apiCenter.groupManagement.add.api, params, () => {
         this.$root.$validate.emptyJson(this.modelConfig.addRow)
         this.$root.JQ('#add_edit_Modal').modal('hide')
         this.$Message.success(this.$t('m_tips_success'))
@@ -327,7 +346,7 @@ export default {
     editPost() {
       const params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
       params.id = this.id
-      this.request('PUT', this.$root.apiCenter.groupManagement.update.api, params, () => {
+      this.request('PUT', this.apiCenter.groupManagement.update.api, params, () => {
         this.$root.$validate.emptyJson(this.modelConfig.addRow)
         this.$root.JQ('#add_edit_Modal').modal('hide')
         this.$Message.success(this.$t('m_tips_success'))
@@ -343,7 +362,7 @@ export default {
         size: 10000,
       }
       await this.getServeGroup()
-      await this.request('GET', this.$root.apiCenter.getEndpointType, params, res => {
+      await this.request('GET', this.apiCenter.getEndpointType, params, res => {
         this.modelConfig.v_select_configs.monitor_type = res.map(item => ({
           label: item,
           value: item
@@ -354,7 +373,7 @@ export default {
     },
     async editEndpoints(rowData) {
       this.id = rowData.guid
-      await this.request('GET', `/monitor/api/v2/monitor/endpoint/query?monitorType=${rowData.monitor_type}`, '', res => {
+      await this.request('GET', `${this.apiCenter.monitorEndpointQuery}?monitorType=${rowData.monitor_type}`, '', res => {
         this.endpointModel.endpointOptions = res.data.map(item => ({
           label: item.guid,
           key: item.guid
@@ -380,7 +399,7 @@ export default {
       })
     },
     deleteTableItem(rowData) {
-      const api = this.$root.apiCenter.groupManagement.delete.api + '/' + rowData.guid
+      const api = this.apiCenter.groupManagement.delete.api + '/' + rowData.guid
       this.request('DELETE', api, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getTableList()
@@ -406,13 +425,13 @@ export default {
     },
     authorizeF(rowData) {
       this.id = rowData.guid
-      this.request('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', responseData => {
+      this.request('GET', this.apiCenter.groupManagement.allRoles.api, '', responseData => {
         this.authorizationModel.roleList = responseData.data
         this.existRole()
       })
     },
     existRole() {
-      this.request('GET', this.$root.apiCenter.groupManagement.exitRoles.api, {grp_id: this.id}, responseData => {
+      this.request('GET', this.apiCenter.groupManagement.exitRoles.api, {grp_id: this.id}, responseData => {
         responseData.forEach(item => {
           this.authorizationModel.addRow.role.push(item.id)
         })
@@ -424,7 +443,7 @@ export default {
         grp_id: this.id,
         role_id: this.authorizationModel.addRow.role
       }
-      this.request('POST', this.$root.apiCenter.groupManagement.updateRoles.api, params, () => {
+      this.request('POST', this.apiCenter.groupManagement.updateRoles.api, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.authorizationModel.addRow.role = []
         this.isAuthorizationModelShow = false
@@ -442,8 +461,8 @@ export default {
     getTableList() {
       const params = Object.assign({}, this.searchForm, this.pagination)
       params.monitor_type = params.monitor_type.join(',')
-      const path = '/monitor/api/v2/alarm/endpoint_group/query'
-      this.request('GET', path, params, res => {
+      // const path = '/monitor/api/v2/alarm/endpoint_group/query'
+      this.request('GET', this.apiCenter.groupManagement.list.api, params, res => {
         this.pagination.total = res.num
         this.pagination.page = parseInt(params.page)
         this.objectTableData = isEmpty(res.data) ? [] : res.data

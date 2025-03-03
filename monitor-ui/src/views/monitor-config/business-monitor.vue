@@ -81,6 +81,13 @@ import {debounce} from 'lodash'
 import endpointManagement from './business-monitor-endpoint.vue'
 import groupManagement from './business-monitor-group.vue'
 import TagShow from '@/components/Tag-show.vue'
+
+export const custom_api_enum = [
+  {
+    getTargetByEndpointByType: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -91,7 +98,9 @@ export default {
       showTargetManagement: false,
       metricKey: '',
       isDataEmpty: false,
-      selectKey: ''
+      selectKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
 
@@ -109,8 +118,8 @@ export default {
       this.selectKey = +new Date() + ''
     },
     getTargrtList(needDefaultTarget = true) {
-      const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
+      this.request('GET', api, '', responseData => {
         this.targetOptions = responseData || []
         if (this.targetOptions.length > 0 && needDefaultTarget) {
           this.targrtId = this.targetOptions[0].guid
