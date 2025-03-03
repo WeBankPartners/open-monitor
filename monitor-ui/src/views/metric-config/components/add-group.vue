@@ -108,6 +108,15 @@ import ChartLinesModal from '@/components/chart-lines-modal'
 import { debounce , generateUuid} from '@/assets/js/utils'
 import { readyToDraw } from '@/assets/config/chart-rely'
 import * as echarts from 'echarts'
+
+export const custom_api_enum = [
+  {
+    metricManagement: 'post'
+  },
+  {
+    metricManagement: 'put'
+  }
+]
 export default {
   props: {
     fromPage: {
@@ -170,7 +179,9 @@ export default {
       previewObject: {}, // 预览对象，供查看时渲染预览对象值使用
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -220,7 +231,7 @@ export default {
       this.previewObject = obj
     },
     getEndpointType() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
+      this.request('GET', this.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData
       }, {isNeedloading: false})
     },
@@ -264,9 +275,9 @@ export default {
       const params = {
         workspace: this.workspace
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'GET',
-        '/monitor/api/v2/sys/parameter/metric_template',
+        this.apiCenter.parameterMetricTemplate,
         params,
         res => {
           this.metricTemplate = res
@@ -294,9 +305,9 @@ export default {
         service_group: this.serviceGroup,
         workspace: this.workspace
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        this.$root.apiCenter.getMetricOptions,
+        this.apiCenter.getMetricOptions,
         params,
         responseData => {
           this.collectedMetricOptions = responseData
@@ -323,20 +334,15 @@ export default {
         workspace: this.workspace
       }
       this.metricConfigData.endpoint = ''
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
-        this.$root.apiCenter.getEndpoint,
-        params,
-        responseData => {
-          if (Array.isArray(responseData) && !isEmpty(responseData)) {
-            this.endpointOptions = [...this.endpointOptions, ...responseData]
-          }
-          if (this.endpointOptions.length > 0) {
-            this.metricConfigData.endpoint = this.endpointOptions[0].guid
-            this.getChartData()
-          }
+      this.request('GET', this.apiCenter.getEndpoint, params, responseData => {
+        if (Array.isArray(responseData) && !isEmpty(responseData)) {
+          this.endpointOptions = [...this.endpointOptions, ...responseData]
         }
-      )
+        if (this.endpointOptions.length > 0) {
+          this.metricConfigData.endpoint = this.endpointOptions[0].guid
+          this.getChartData()
+        }
+      })
     },
     // 选择预览对象
     handleEndPointChange(val) {
@@ -370,9 +376,9 @@ export default {
         prom_ql: this.metricConfigData.prom_expr,
         metric: this.metricConfigData.prom_expr === '' ? this.metricConfigData.metric : ''
       }]
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        this.$root.apiCenter.metricConfigView.api,
+        this.apiCenter.metricConfigView.api,
         params,
         responseData => {
           const chartConfig = {
@@ -394,7 +400,7 @@ export default {
         { isNeedloading: false }
       )
     },
-    handleSubmit() {
+    async handleSubmit() {
       if (!(/^[A-Za-z][A-Za-z0-9_]{0,48}[A-Za-z0-9]$/.test(this.metricConfigData.metric))) {
         return this.$Message.error(this.$t('m_metric_key') + ':' + this.$t('m_regularization_check_failed_tips'))
       }
@@ -404,7 +410,7 @@ export default {
       if (!this.metricConfigData.prom_expr) {
         return this.$Message.error(this.$t('m_field_metric') + this.$t('m_tips_required'))
       }
-      const type = ['add', 'copy'].includes(this.operator) ? 'POST' : 'PUT'
+      // const type = ['add', 'copy'].includes(this.operator) ? 'POST' : 'PUT'
       // 在层级对象页面需要使用页面中选择的对象类型
       this.metricConfigData.monitor_type = this.fromPage === 'level' ? this.metricConfigData.endpoint_type: this.monitorType
       this.metricConfigData.endpoint_group = this.endpoint_group
@@ -414,16 +420,14 @@ export default {
       if (this.operator === 'copy') {
         delete this.metricConfigData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        type,
-        this.$root.apiCenter.metricManagement,
-        [this.metricConfigData],
-        () => {
-          this.$Message.success(this.$t('m_tips_success'))
-          this.$emit('update:visible', false)
-          this.$emit('fetchList')
-        }
-      )
+      if (['add', 'copy'].includes(this.operator)) {
+        await this.request('POST', this.apiCenter.metricManagement, [this.metricConfigData])
+      } else {
+        await this.request('PUT', this.apiCenter.metricManagement, [this.metricConfigData])
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.$emit('update:visible', false)
+      this.$emit('fetchList')
     },
     handleCancel() {
       this.$emit('update:visible', false)

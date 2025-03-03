@@ -276,14 +276,14 @@ export default {
       },
       activeGridConfig: null,
       activeChartType: 'bar',
-
       showAlarm: false, // 显示告警信息
       cutsomViewId: null,
-
       showMaxChart: false,
       zoneWidth: '800',
       showChartConfig: false,
-      chartType: ''
+      chartType: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   props: ['id'],
@@ -303,7 +303,7 @@ export default {
   },
   methods: {
     getDashData(viewId) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.singleDash, {id: viewId}, responseData => {
+      this.request('GET',this.apiCenter.template.singleDash, {id: viewId}, responseData => {
         this.viewId = responseData.id
         this.panalName = responseData.name
         this.editData = responseData
@@ -542,7 +542,7 @@ export default {
         id: this.viewId,
         cfg: JSON.stringify(res)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
+      this.request('POST',this.apiCenter.template.save, params, () => {
         this.isEditPanal = false
         this.$Message.success(this.$t('m_tips_success'))
       })

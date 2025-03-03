@@ -497,7 +497,6 @@ export default {
           }
         }
       ],
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       lineTypeOption: {
         twoYaxes: 2,
         line: 1,
@@ -554,7 +553,9 @@ export default {
       isLineSelectModalShow: false,
       isEmpty,
       scrollRefresh: false,
-      hasNotRequestStatus: true
+      hasNotRequestStatus: true,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -583,7 +584,7 @@ export default {
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
-      this.request('GET', '/monitor/api/v2/dashboard/custom', {
+      this.request('GET', this.apiCenter.template.deleteV2, {
         id: this.pannelId
       }, res => {
         if (isEmpty(res)) {
@@ -627,7 +628,7 @@ export default {
         pageSize: 10000,
         startIndex: 0
       }
-      this.request('POST', '/monitor/api/v2/dashboard/custom/list', dashboardParams, res => {
+      this.request('POST', this.apiCenter.template.listV2, dashboardParams, res => {
         this.allDashBoardList = res.contents
       }, {isNeedloading: false})
 
@@ -636,7 +637,7 @@ export default {
         dashboardId: this.selectedDashBoardId,
         chartName: this.filterChartName
       }
-      this.request('POST', '/monitor/api/v2/chart/shared/list', params, res => {
+      this.request('POST', this.apiCenter.chartSharedList, params, res => {
         this.allChartFilteredList = this.processChartOptions(res)
       }, {isNeedloading: false})
     },
@@ -838,7 +839,7 @@ export default {
       remove(this.allPageLayoutData, {id: this.deleteConfirm.id})
       this.filterLayoutData()
       const params = this.processPannelParams()
-      await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params)
+      await this.request('PUT', this.apiCenter.template.deleteV2, params)
       this.getPannelList()
       this.getAllChartOptionList()
     },
@@ -892,7 +893,7 @@ export default {
           this.saveAuthType = 'board'
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions)
         } else {
-          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+          this.request('PUT', this.apiCenter.template.deleteV2, this.processPannelParams(), () => {
             this.refreshPannelNow()
             resolve()
           })
@@ -1076,7 +1077,7 @@ export default {
             h: 7,
           }
         }
-        this.setChartConfigId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom', addChartParams)
+        this.setChartConfigId = await this.request('POST', this.apiCenter.chartInfo, addChartParams)
         const item = {
           x: 0,
           y: 0,
@@ -1096,7 +1097,7 @@ export default {
         }
         this.layoutData.unshift(item)
         setTimeout(() => {
-          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+          this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
             this.getPannelList(this.activeGroup)
             this.showChartConfig = true
           })
@@ -1120,7 +1121,7 @@ export default {
               h: 7,
             }
           }
-          chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
+          chartId = await this.request('POST', this.apiCenter.chartCustomCopy, copyParams)
           const item = {
             x: 0,
             y: 0,
@@ -1143,7 +1144,7 @@ export default {
           this.initLayoutTypeByWidth(this.layoutData)
         }
         setTimeout(async () => {
-          await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
+          await this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams())
           this.getPannelList(this.activeGroup)
           this.setChartConfigId = chartId
           if (type === 'copy') {
@@ -1217,13 +1218,13 @@ export default {
         refreshWeek: this.viewCondition.autoRefresh
       }
     },
-    requestReturnPromise(method, api, params, isNeedloading = true) {
-      return new Promise(resolve => {
-        this.request(method, api, params, res => {
-          resolve(res)
-        }, { isNeedloading })
-      })
-    },
+    // requestReturnPromise(method, api, params, isNeedloading = true) {
+    //   return new Promise(resolve => {
+    //     this.request(method, api, params, res => {
+    //       resolve(res)
+    //     }, { isNeedloading })
+    //   })
+    // },
     startEditTitle(item) {
       this.initTitle = item.i
       this.editChartId = item.id
@@ -1239,7 +1240,7 @@ export default {
       if (isDuplicateName) {
         return
       }
-      await this.requestReturnPromise('PUT', '/monitor/api/v2/chart/custom/name', {
+      await this.request('PUT', this.apiCenter.chartCustomName, {
         chartId: item.id,
         name: item.i
       })
@@ -1260,7 +1261,7 @@ export default {
         if (isPublic) {
           params.public = 1 // 是否存入图表库，1表示是
         }
-        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
+        this.request('GET', this.apiCenter.chartCustomNameExist, params, res => {
           if (res) {
             this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')))
           }
@@ -1283,7 +1284,7 @@ export default {
     },
     getSingleChartAuth() {
       return new Promise(resolve => {
-        this.request('GET','/monitor/api/v2/chart/custom/permission', {
+        this.request('GET', this.apiCenter.changeChartCustomPermission, {
           chart_id: this.setChartConfigId
         }, res => {
           this.mgmtRoles = res.mgmtRoles
@@ -1297,10 +1298,10 @@ export default {
         page: 1,
         size: 1000
       }
-      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+      this.request('GET', this.apiCenter.getUserRoleList, params, res => {
         this.userRolesOptions = this.processRolesList(res.data)
       })
-      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+      this.request('GET', this.apiCenter.getUserManageRole, {}, res => {
         this.mgmtRolesOptions = this.processRolesList(res)
       })
     },
@@ -1315,8 +1316,7 @@ export default {
       }))
       return resArr
     },
-    saveChartOrDashboardAuth(mgmtRoles, useRoles) {
-      let path = ''
+    async saveChartOrDashboardAuth(mgmtRoles, useRoles) {
       const params = {
         mgmtRoles,
         useRoles
@@ -1324,25 +1324,23 @@ export default {
       if (this.saveAuthType === 'chart') {
         this.mgmtRoles = mgmtRoles
         this.useRoles = useRoles
-        path = '/monitor/api/v2/chart/custom/permission'
         params.chartId = this.setChartConfigId
+        await this.request('POST', this.apiCenter.changeChartCustomPermission, params)
       } else {
         this.boardMgmtRoles = mgmtRoles
         this.boardUseRoles = useRoles
-        path = '/monitor/api/v2/dashboard/custom/permission'
         params.id = this.pannelId
+        await this.request('POST', this.apiCenter.getDashboardCustomPermission, params)
       }
-      this.request('POST', path, params, () => {
-        this.$Message.success(this.$t('m_success'))
-        this.getPannelList()
-      })
+      this.$Message.success(this.$t('m_success'))
+      this.getPannelList()
     },
     onSingleChartGroupClear(item) {
       const singleChart = find(this.allPageLayoutData, {id: item.id})
       if (!isEmpty(singleChart)) {
         singleChart.group = ''
       }
-      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+      this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })
@@ -1394,7 +1392,7 @@ export default {
           }
         }
       }
-      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+      this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })

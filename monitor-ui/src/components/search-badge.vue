@@ -152,6 +152,7 @@ export default ({
       filtersEndpointOptions: [],
       filtersMetricOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
       filters: cloneDeep(initFilters),
       filtersPriorityOptions: [
         {
@@ -195,8 +196,7 @@ export default ({
       this.getFilterAllOptions()
     }, 800),
     getFilterAllOptions() {
-      const api = '/monitor/api/v1/alarm/problem/options'
-      this.request('POST', api, this.filterParams, res => {
+      this.request('POST', this.apiCenter.alarmProblemOptions, this.filterParams, res => {
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
         this.filtersMetricOptions = res.metricList

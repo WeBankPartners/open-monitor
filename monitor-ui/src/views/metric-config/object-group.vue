@@ -111,6 +111,25 @@ import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import TagShow from '@/components/Tag-show.vue'
 import AddGroupDrawer from './components/add-group.vue'
 import YearOverYear from './components/year-over-year.vue'
+
+export const custom_api_enum = [
+  {
+    'groupManagement.list.api': 'get'
+  },
+  {
+    metricManagement: 'delete'
+  },
+  {
+    comparisonMetricItem: 'delete'
+  },
+  {
+    metricExport: 'get'
+  },
+  {
+    metricImport: 'post'
+  }
+]
+
 export default {
   components: {
     TagShow,
@@ -351,12 +370,14 @@ export default {
         page: 1,
         size: 10,
         total: 0
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
     uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
+      return baseURL_config + `${this.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
     }
   },
   async mounted() {
@@ -394,17 +415,31 @@ export default {
         pageSize: this.pagination.size,
         startIndex: this.pagination.size * (this.pagination.page - 1)
       }
-      const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'GET',
-        api,
-        params,
-        responseData => {
-          this.tableData = responseData.contents
-          this.pagination.total = responseData.pageInfo.totalRows
-        },
-        { isNeedloading: true }
-      )
+      // const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
+      if (this.metricType === 'originalMetrics') {
+        this.request(
+          'GET',
+          this.apiCenter.metricList.api,
+          params,
+          responseData => {
+            this.tableData = responseData.contents
+            this.pagination.total = responseData.pageInfo.totalRows
+          },
+          { isNeedloading: true }
+        )
+      } else {
+        this.request(
+          'GET',
+          this.apiCenter.metricComparisonList,
+          params,
+          responseData => {
+            this.tableData = responseData.contents
+            this.pagination.total = responseData.pageInfo.totalRows
+          },
+          { isNeedloading: true }
+        )
+      }
+
       this.getMetricTotalNumber()
     },
     getMetricTotalNumber() {
@@ -412,14 +447,13 @@ export default {
         endpointGroup: this.endpointGroup,
         metric: this.metric
       }
-      const api = '/monitor/api/v2/monitor/metric/list/count'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
+      this.request('GET', this.apiCenter.metricListCount, params, response => {
         this.$emit('totalCount', response, this.metricType)
       }, {isNeedloading: false})
     },
     getObjectGroupList() {
       const api = '/monitor/api/v2/alarm/endpoint_group/query?__orders=-created_date&page=1&size=1000000'
-      return this.$root.$httpRequestEntrance.httpRequestEntrance(
+      return this.request(
         'GET',
         api,
         '',
@@ -430,7 +464,7 @@ export default {
       )
     },
     exportData() {
-      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
+      const api = `${this.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&endpointGroup=${this.endpointGroup}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
       axios({
         method: 'GET',
         url: api,
@@ -509,8 +543,8 @@ export default {
       this.addVisible = true
     },
     submitDelete(row) {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      const api = this.metricType === 'originalMetrics' ? `${this.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
+      this.request(
         'DELETE',
         api,
         '',

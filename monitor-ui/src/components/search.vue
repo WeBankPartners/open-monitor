@@ -64,6 +64,13 @@
 import {find, isEmpty, debounce} from 'lodash'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import TagShow from '@/components/Tag-show.vue'
+
+export const custom_api_enum = [
+  {
+    getDashboardPanels: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -82,7 +89,9 @@ export default {
       autoRefreshConfig,
       is_mom_yoy: false,
       params: {},
-      endpointExternal: false
+      endpointExternal: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -138,7 +147,7 @@ export default {
         const params = {
           type
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, responseData => {
+        this.request('GET', this.apiCenter.mainConfig.api, params, responseData => {
           resolve(responseData)
         })
       })
@@ -172,7 +181,7 @@ export default {
           page: 1,
           size: 1000
         }
-        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
+        await this.request('GET', this.apiCenter.resourceSearch.api, params, responseData => {
           this.endpointList = responseData
           resolve(responseData)
         })
@@ -241,7 +250,7 @@ export default {
         sys: false
       }
       url = '/monitor/api/v1' + url.replace(`{${key}}`,params[key])
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
+      this.request('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
     },

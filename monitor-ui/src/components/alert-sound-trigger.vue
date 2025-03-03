@@ -13,8 +13,9 @@ export default {
     return {
       alertSound: alertSoundConfig.content,
       alertSoundTriggerOpen: false, // 告警声音开关
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      latestAlert: {} // 最新已提示告警
+      latestAlert: {}, // 最新已提示告警
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   props: {
@@ -72,26 +73,26 @@ export default {
       }
       this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/page',
+        this.apiCenter.alarmProblemList,
         params,
         responseData => {
           const alertData = responseData.data || []
           if (alertData.length > 0) {
             if (this.latestAlert.id === alertData[0].id) {
-              // console.error('重复了')
+            // console.error('重复了')
               return
             }
             if (!this.priority.includes(alertData[0].s_priority)) {
-              // console.error('不在范围内')
+            // console.error('不在范围内')
               return
             }
 
             const latestAlert = alertData[0]
             if (this.latestAlert) {
-              // 计算两个时间之间的总间隔
+            // 计算两个时间之间的总间隔
               const diff = dayjs(now).diff(dayjs(latestAlert.start_string))
               if (diff/1000 > this.timeInterval) {
-                // console.error('时间超期了')
+              // console.error('时间超期了')
                 this.audio.pause()
                 return
               }
@@ -152,7 +153,7 @@ export default {
         },
         {isNeedloading: false},
         () => {
-          //
+        //
         }
       )
     }

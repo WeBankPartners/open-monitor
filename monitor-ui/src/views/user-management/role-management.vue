@@ -66,6 +66,13 @@ const btn = [
     color: 'red'
   }
 ]
+
+export const custom_api_enum = [
+  {
+    'setup.role.get': 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -172,7 +179,9 @@ export default {
         },
         userList: []
       },
-      id: null
+      id: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -189,7 +198,7 @@ export default {
     addPost() {
       const params = JSON.parse(JSON.stringify(this.modelConfig.addRow))
       params.operation = 'add'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+      this.request('POST', this.apiCenter.setup.role.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_role_Modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -206,7 +215,7 @@ export default {
       const params = JSON.parse(JSON.stringify(this.modelConfig.addRow))
       params.operation = 'update'
       params.role_id = this.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+      this.request('POST', this.apiCenter.setup.role.update, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_role_Modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -235,7 +244,7 @@ export default {
         role_id: rowData.id,
         operation: 'delete'
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+      this.request('POST', this.apiCenter.setup.role.update, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('m_tips_success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -243,13 +252,13 @@ export default {
     },
     authorizationF(rowData) {
       this.id = rowData.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userManagement.get, '', responseData => {
+      this.request('GET', this.apiCenter.setup.userManagement.get, '', responseData => {
         this.authorizationModel.userList = responseData.data
         this.existUser()
       })
     },
     existUser() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userManagement.get, {role: this.id}, responseData => {
+      this.request('GET', this.apiCenter.setup.userManagement.get, {role: this.id}, responseData => {
         responseData.data.forEach(item => {
           this.authorizationModel.addRow.user.push(item.id)
         })
@@ -261,7 +270,7 @@ export default {
         role_id: this.id,
         user_id: this.authorizationModel.addRow.user
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.authorization, params, () => {
+      this.request('POST', this.apiCenter.setup.role.authorization, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })

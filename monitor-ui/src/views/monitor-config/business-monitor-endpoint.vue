@@ -240,6 +240,22 @@ import {
 } from 'lodash'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
+
+export const custom_api_enum = [
+  {
+    getEndpointsByTypeByType: 'get'
+  },
+  {
+    serviceGroupEendpoint: 'delete'
+  },
+  {
+    logMetricListEndpoint: 'get'
+  },
+  {
+    dbMetricListEndpoint: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -497,7 +513,9 @@ export default {
       dataBaseTableData: [],
       isEmpty,
       logAndDataBaseAllDetail: [],
-      metricKey: ''
+      metricKey: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   methods: {
@@ -508,12 +526,12 @@ export default {
       this.dbModelConfig.isShow = true
     },
     async getEndpoint(val, type, targetId) {
-      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + type
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', responseData => {
+      const sourceApi = this.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + type
+      this.request('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
-      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + val
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', responseData => {
+      const targetApi = this.apiCenter.getEndpointsByType + '/' + targetId + '/endpoint/' + val
+      this.request('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
       }, {isNeedloading: false})
     },
@@ -531,8 +549,8 @@ export default {
       this.addAndEditModal.isShow = true
     },
     getDefaultConfig(val, type) {
-      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+      const api = `${this.apiCenter.serviceGroupEendpoint}?serviceGroup=${this.targetId}&sourceType=${type}&targetType=${val}`
+      this.request('GET', api, '', responseData => {
         const tmp = responseData.map(r => ({
           source_endpoint: r.source_endpoint,
           target_endpoint: r.target_endpoint
@@ -572,11 +590,11 @@ export default {
     },
     async getLogKeyWordDetail() {
       return new Promise(resolve => {
-        let api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
+        let api = this.apiCenter.getTargetDetail + '/endpoint/' + this.targetId
         if (this.metricKey) {
           api += `?metricKey=${this.metricKey}`
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.request('GET', api, '', responseData => {
           this.allPageContentData = responseData.map((res, index) => {
             if (index === 0) {
               res.logFileCollapseValue = ['0']
@@ -620,11 +638,11 @@ export default {
     },
     getDbDetail() {
       return new Promise(resolve => {
-        let api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
+        let api = this.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
         if (this.metricKey) {
           api += `?metricKey=${this.metricKey}`
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', responseData => {
+        this.request('GET', api, '', responseData => {
           this.dataBaseTableData = responseData
           resolve(this.dataBaseTableData)
         }, {isNeedloading: false})

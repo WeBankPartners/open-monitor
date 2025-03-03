@@ -160,7 +160,9 @@ export default {
       strategyNameMaps: {
         endpointGroup: 'm_base_group',
         serviceGroup: 'm_field_resourceLevel'
-      }
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted(){
@@ -219,7 +221,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.request('POST', this.apiCenter.alarmManagement.close.api, params, () => {
         this.$parent.getAlarm()
       })
     }

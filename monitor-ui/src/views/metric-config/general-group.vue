@@ -93,6 +93,27 @@ import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import AddGroupDrawer from './components/add-group.vue'
 import YearOverYear from './components/year-over-year.vue'
+export const custom_api_enum = [ // 对于当前文档中没有放入this.request中的path,为了获取路由
+  {
+    'metricList.api': 'get'
+  },
+  {
+    metricComparisonList: 'get'
+  },
+  {
+    metricManagement: 'delete'
+  },
+  {
+    comparisonMetricItem: 'delete'
+  },
+  {
+    metricExport: 'get'
+  },
+  {
+    metricImport: 'post'
+  }
+]
+
 export default {
   components: {
     AddGroupDrawer,
@@ -327,12 +348,14 @@ export default {
       showDrawer: '', // 控制显示抽屉的类型
       viewOnly: false, // 仅查看
       token: null,
-      metric: ''
+      metric: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
     uploadUrl() {
-      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
+      return baseURL_config + `${this.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
     }
   },
   mounted() {
@@ -352,8 +375,8 @@ export default {
         serviceGroup: this.serviceGroup,
         metric: this.metric
       }
-      const api = this.metricType === 'originalMetrics' ? '/monitor/api/v2/monitor/metric/list' : '/monitor/api/v2/monitor/metric_comparison/list'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, responseData => {
+      const api = this.metricType === 'originalMetrics' ? this.apiCenter.metricList.api : this.apiCenter.metricComparisonList
+      this.request('GET', api, params, responseData => {
         this.tableData = responseData
       }, {isNeedloading: true})
       this.getMetricTotalNumber()
@@ -365,13 +388,12 @@ export default {
         serviceGroup: this.serviceGroup,
         metric: this.metric
       }
-      const api = '/monitor/api/v2/monitor/metric/list/count'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, params, response => {
+      this.request('GET', this.apiCenter.metricListCount, params, response => {
         this.$emit('totalCount', response, this.metricType)
       }, {isNeedloading: false})
     },
     getMonitorType() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
+      this.request('GET', this.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData || []
         this.monitorType = this.monitorTypeOptions[0]
         this.getList()
@@ -402,8 +424,8 @@ export default {
       this.addVisible = true
     },
     submitDelete(row) {
-      const api = this.metricType === 'originalMetrics' ? `${this.$root.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      const api = this.metricType === 'originalMetrics' ? `${this.apiCenter.metricManagement}?id=${row.guid}` : `/monitor/api/v1/dashboard/new/comparison_metric/${row.guid}`
+      this.request(
         'DELETE',
         api,
         '',
@@ -422,7 +444,7 @@ export default {
       this.originalMetricsId = row.guid
     },
     exportData() {
-      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
+      const api = `${this.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`
       axios({
         method: 'GET',
         url: api,
