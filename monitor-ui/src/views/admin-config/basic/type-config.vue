@@ -155,7 +155,7 @@ export default {
     saveAdd() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.request('post', this.apiCenter.createTypeConfig, this.form, () => {
+          this.request('POST', this.apiCenter.createTypeConfig, this.form, () => {
             this.addVisible = false
             this.getList()
             this.$Message.success(this.$t('m_tips_success'))

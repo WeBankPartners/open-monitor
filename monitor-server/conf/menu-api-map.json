@@ -1400,6 +1400,11 @@
       {
         "key": "createTypeConfig",
         "url": "/monitor/api/v2/config/type",
+        "method": "post"
+      },
+      {
+        "key": "createTypeConfig",
+        "url": "/monitor/api/v2/config/type",
         "method": "delete"
       },
       {
@@ -1471,6 +1476,11 @@
         "key": "getGraph",
         "url": "/monitor/api/v1/dashboard/new/chart",
         "method": "delete"
+      },
+      {
+        "key": "newPanelHost",
+        "url": "/monitor/api/v1/dashboard/new/panel/${id}",
+        "method": "post"
       },
       {
         "key": "metricListCount",
