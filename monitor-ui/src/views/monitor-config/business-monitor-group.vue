@@ -1234,7 +1234,7 @@ export default {
         this.getDetail(this.targetId)
       })
     },
-    okAddAndEdit() {
+    async okAddAndEdit() {
       if (!this.addAndEditModal.dataConfig.monitor_type) {
         return this.$Message.error('类型不能为空')
       }
@@ -1253,16 +1253,25 @@ export default {
         return this.$Message.error('映射不能为空')
       }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
-      const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
+      // const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
       params.service_group = this.targetId
       if (this.addAndEditModal.isAdd) {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
-      this.request(methodType, this.apiCenter.logMetricMonitor, params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.addAndEditModal.isShow = false
-        this.getDetail(this.targetId)
-      }, {isNeedloading: false})
+      if (this.addAndEditModal.isAdd) {
+        await this.request('POST', this.apiCenter.logMetricMonitor, params)
+      } else {
+        await this.request('PUT', this.apiCenter.logMetricMonitor, params)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.addAndEditModal.isShow = false
+      this.getDetail(this.targetId)
+
+      // this.request(methodType, this.apiCenter.logMetricMonitor, params, () => {
+      //   this.$Message.success(this.$t('m_tips_success'))
+      //   this.addAndEditModal.isShow = false
+      //   this.getDetail(this.targetId)
+      // }, {isNeedloading: false})
     },
     cancelAddAndEdit() {
       this.addAndEditModal.isShow = false

@@ -266,7 +266,7 @@
     "saveTargetDbById": "/monitor/api/v2/service/db_metric/${id}",
     "logMetricRegById": "/monitor/api/v2/service/log_metric/log_metric_config/${id}",
     "deleteLogMetricGroupById": "/monitor/api/v2/service/log_metric/log_metric_group/${id}",
-    "deletePathById": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "deletePathById": "/monitor/api/v2/service/log_metric/log_metric_monitor/${id}",
     "getTargetDetailById": "/monitor/api/v2/service/log_metric/list/group/${id}",
     "getTargetDbDetailById": "/monitor/api/v2/service/db_metric/list/group/${id}",
     "getTargetByEndpointByType": "/monitor/api/v2/service_endpoint/search/${type}",
@@ -314,5 +314,6 @@
     "getDashboardEndpoint": "/monitor/api/v1/dashboard/custom/endpoint/get",
     "dashboardCustomImport": "/monitor/api/v2/dashboard/custom/import",
     "logMetricImportExcel": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}",
-    "getDashboardPanels": "/monitor/api/v1/dashboard/panels"
+    "getDashboardPanels": "/monitor/api/v1/dashboard/panels",
+    "newPanelHost": "/monitor/api/v1/dashboard/new/panel/${id}"
 }
