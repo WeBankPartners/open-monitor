@@ -190,6 +190,20 @@ func (s AlarmProblemList) Less(i, j int) bool {
 	return s[i].Start.Unix() > s[j].Start.Unix()
 }
 
+type AlarmProblemListDesc []*AlarmProblemQuery
+
+func (s AlarmProblemListDesc) Len() int {
+	return len(s)
+}
+
+func (s AlarmProblemListDesc) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s AlarmProblemListDesc) Less(i, j int) bool {
+	return s[i].Start.Unix() < s[j].Start.Unix()
+}
+
 type AlarmHistoryReturnData struct {
 	Endpoint    string           `json:"endpoint"`
 	ProblemList AlarmProblemList `json:"problem_list"`
@@ -396,17 +410,21 @@ type GrpStrategyQuery struct {
 }
 
 type AlarmCustomTable struct {
-	Id           int       `json:"id"`
-	AlertInfo    string    `json:"alert_info"`
-	AlertIp      string    `json:"alert_ip"`
-	AlertLevel   int       `json:"alert_level"`
-	AlertObj     string    `json:"alert_obj"`
-	AlertTitle   string    `json:"alert_title"`
-	AlertReciver string    `json:"alert_reciver"`
-	RemarkInfo   string    `json:"remark_info"`
-	SubSystemId  string    `json:"sub_system_id"`
-	Closed       int       `json:"closed"`
-	UpdateAt     time.Time `json:"update_at"`
+	Id            int       `json:"id"`
+	AlertInfo     string    `json:"alert_info"`
+	AlertIp       string    `json:"alert_ip"`
+	AlertLevel    int       `json:"alert_level"`
+	AlertObj      string    `json:"alert_obj"`
+	AlertTitle    string    `json:"alert_title"`
+	AlertReciver  string    `json:"alert_reciver"`
+	RemarkInfo    string    `json:"remark_info"`
+	SubSystemId   string    `json:"sub_system_id"`
+	Closed        int       `json:"closed"`
+	UseUmgPolicy  string    `json:"use_umg_policy"`
+	AlertWay      string    `json:"alert_way"`
+	CustomMessage string    `json:"custom_message"`
+	AlarmTotal    int       `json:"alarm_total"`
+	UpdateAt      time.Time `json:"update_at"`
 }
 
 type OpenAlarmObj struct {
@@ -482,13 +500,14 @@ type QueryProblemAlarmDto struct {
 }
 
 type QueryProblemAlarmPageDto struct {
-	Endpoint          []string  `json:"endpoint"`
-	Metric            []string  `json:"metric"`
-	Priority          []string  `json:"priority"`
-	Page              *PageInfo `json:"page"`
-	AlarmName         []string  `json:"alarm_name"`
-	CustomDashboardId int       `json:"custom_dashboard_id"`
-	Query             string    `json:"query"`
+	Endpoint          []string             `json:"endpoint"`
+	Metric            []string             `json:"metric"`
+	Priority          []string             `json:"priority"`
+	Page              *PageInfo            `json:"page"`
+	AlarmName         []string             `json:"alarm_name"`
+	CustomDashboardId int                  `json:"custom_dashboard_id"`
+	Query             string               `json:"query"`
+	Sorting           *QueryRequestSorting `json:"sorting"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -766,6 +785,7 @@ type QueryAlarmCondition struct {
 	UserRoles           []string
 	Token               string
 	Query               string // 支持告警任意搜索
+	Sorting             *QueryRequestSorting
 }
 
 type AlarmFiring struct {

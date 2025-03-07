@@ -615,6 +615,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		UserRoles:           mid.GetOperateUserRoles(c),
 		Token:               c.GetHeader("Authorization"),
 		Query:               param.Query,
+		Sorting:             param.Sorting,
 	})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
