@@ -132,6 +132,9 @@ export const custom_api_enum = [
   },
   {
     getGraph: 'delete'
+  },
+  {
+    newPanelHost: 'post'
   }
 ]
 
