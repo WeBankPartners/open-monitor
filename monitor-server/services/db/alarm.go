@@ -1364,7 +1364,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	//	tmpDisplayEndpoint = "custom_alarm"
 	//}
 	tmpDisplayEndpoint := "custom_alarm"
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, SystemId: query[lastIndex].SubSystemId})
+	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, AlarmTotal: query[lastIndex].AlarmTotal, SystemId: query[lastIndex].SubSystemId})
 	return result
 }
 
@@ -1399,7 +1399,7 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	}
 	for _, v := range query {
 		var subQueryList []*m.AlarmCustomTable
-		err = x.SQL("SELECT * FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=?", v.AlertIp, v.AlertTitle, v.AlertObj).Find(&subQueryList)
+		err = x.SQL("SELECT * FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=? and alert_level=?", v.AlertIp, v.AlertTitle, v.AlertObj, v.AlertLevel).Find(&subQueryList)
 		if len(subQueryList) > 0 {
 			tmpIds := ""
 			for _, vv := range subQueryList {
