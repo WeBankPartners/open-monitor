@@ -138,6 +138,7 @@ type AlarmProblemQuery struct {
 	AlarmMetricList    []string              `json:"alarm_metric_list"`
 	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
 	Log                string                `json:"log"`
+	AlarmTotal         int                   `json:"alarm_total"` // 告警次数
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -188,20 +189,6 @@ func (s AlarmProblemList) Swap(i, j int) {
 
 func (s AlarmProblemList) Less(i, j int) bool {
 	return s[i].Start.Unix() > s[j].Start.Unix()
-}
-
-type AlarmProblemListDesc []*AlarmProblemQuery
-
-func (s AlarmProblemListDesc) Len() int {
-	return len(s)
-}
-
-func (s AlarmProblemListDesc) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s AlarmProblemListDesc) Less(i, j int) bool {
-	return s[i].Start.Unix() < s[j].Start.Unix()
 }
 
 type AlarmHistoryReturnData struct {
