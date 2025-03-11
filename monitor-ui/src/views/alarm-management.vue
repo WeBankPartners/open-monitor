@@ -30,8 +30,25 @@
             <!-- 新告警声音提示 -->
             <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
           </li>
+          <li class="filter-li">
+            <span class="label">{{$t('m_expand_alert')}}：</span>
+            <i-switch
+              size="large"
+              v-model="isExpandAlert"
+              style="vertical-align: bottom;"
+            >
+            </i-switch>
+          </li>
         </ul>
         <div class="top-right-search">
+          <Select
+            v-model="sortingRule"
+            @on-change="onSortingRuleChange"
+            style="margin-right: 10px"
+            :placeholder="$t('m_sorting_rules')"
+          >
+            <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          </Select>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
           <Poptip
             confirm
@@ -65,10 +82,23 @@
           </div>
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
             <section class="alarm-card-container">
-              <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/>
+              <alarm-card-collapse
+                :collapseData="resultData"
+                @openRemarkModal="remarkModal"
+                :isCollapseExpandAll="isExpandAlert"
+              >
+              </alarm-card-collapse>
+              <!-- <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/> -->
             </section>
             <div class="card-pagination">
-              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-sizer show-total />
+              <Page
+                :total="paginationInfo.total"
+                @on-change="pageIndexChange"
+                @on-page-size-change="pageSizeChange"
+                show-sizer
+                show-total
+                :page-size="paginationInfo.pageSize"
+              />
             </div>
           </div>
         </div>
@@ -77,7 +107,15 @@
     <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
       <template v-slot:pagination>
         <div class="pagination-style">
-          <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+          <Page
+            :total="paginationInfo.total"
+            :page-size="paginationInfo.pageSize"
+            show-elevator
+            show-sizer
+            show-total
+            @on-change="pageIndexChange"
+            @on-page-size-change="pageSizeChange"
+          />
         </div>
       </template>
     </ClassicAlarm>
@@ -106,7 +144,7 @@ import CircleRotate from '@/components/circle-rotate.vue'
 import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
 import ClassicAlarm from '@/views/alarm-management-classic'
-import AlarmCard from '@/components/alarm-card.vue'
+import AlarmCardCollapse from '@/components/alarm-card-collapse.vue'
 import AlertSoundTrigger from '@/components/alert-sound-trigger.vue'
 import SearchBadge from '../components/search-badge.vue'
 import GlobalLoading from '../components/globalLoading.vue'
@@ -120,7 +158,7 @@ export default {
     CircleLabel,
     AlarmAssetsBasic,
     ClassicAlarm,
-    AlarmCard,
+    AlarmCardCollapse,
     SearchBadge,
     GlobalLoading,
     AlertSoundTrigger
@@ -138,18 +176,13 @@ export default {
       actveAlarmIndex: null,
       resultData: [],
       outerMetrics: [],
-      // selectedData: '', // 存放选中数据
-
       low: 0,
       mid: 0,
       high: 0,
-
       tlow: 0,
       tmid: 0,
       thigh: 0,
-
       outerTotal: 0,
-
       showRemarkModal: false,
       modelConfig: {
         addRow: { // [通用]-保存用户新增、编辑时数据
@@ -161,13 +194,25 @@ export default {
       paginationInfo: {
         total: 0,
         startIndex: 1,
-        pageSize: 10
+        pageSize: 20
       },
       isBatch: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
       isEmpty,
-      isSpinShow: false
+      isSpinShow: false,
+      isExpandAlert: false,
+      sortingRuleOptions: [
+        {
+          label: '【' + this.$t('m_reverse') + '】' + this.$t('m_first_time_occurrence'),
+          value: 'start'
+        },
+        {
+          label: '【' + this.$t('m_reverse') + '】' + this.$t('m_duration_time'),
+          value: 's_last'
+        }
+      ],
+      sortingRule: 'start'
     }
   },
   computed: {
@@ -305,7 +350,7 @@ export default {
         end: parseInt(end / 1000, 10),
         filter: 'all',
         page: {
-          pageSize: 10,
+          pageSize: 20,
           startIndex: 1
         }
       }
@@ -353,7 +398,7 @@ export default {
         this.paginationInfo = {
           total: 0,
           startIndex: 1,
-          pageSize: 10
+          pageSize: 20
         }
       }
       const params = {
@@ -384,6 +429,10 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
+      params.sorting = {
+        asc: false,
+        field: this.sortingRule
+      }
       if (this.isSpinShow === false && isLoadingShow) {
         this.isSpinShow = true
       }
@@ -565,6 +614,9 @@ export default {
     onFiltersChange(filters) {
       this.filters = filters
       this.getAlarm()
+    },
+    onSortingRuleChange() {
+      this.getAlarm()
     }
   }
 }
@@ -581,7 +633,7 @@ export default {
 <style scoped lang="less">
 .all-content {
   max-height: ~"calc(100vh - 110px)";
-  overflow: auto;
+  // overflow: auto;
 }
 .all-content::-webkit-scrollbar {
     display: none;
@@ -627,7 +679,7 @@ export default {
       display: flex;
       align-items: center;
       li {
-        color: #7E8086;
+        // color: #7E8086;
         font-size: 12px;
         margin-right: 28px;
       }
@@ -693,7 +745,7 @@ export default {
     }
   }
   .card-pagination {
-    max-width: 40%;
+    max-width: 50%;
     position: fixed;
     bottom: 0px;
     right: 0px;
@@ -704,13 +756,13 @@ export default {
 
   .content-stats-container {
     // height: ~"calc(100vh - 180px)";
-    height: ~"calc(100vh - 250px)";
+    height: ~"calc(100vh - 300px)";
     width: 100%;
     display: flex;
     // margin: 12px 0;
     .left {
       position: relative;
-      flex-basis: 60%;
+      flex-basis: 40%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -722,7 +774,7 @@ export default {
       }
     }
     .right {
-      flex-basis: 40%;
+      flex-basis: 60%;
       overflow-x: auto;
 
       .alarm-card-container {

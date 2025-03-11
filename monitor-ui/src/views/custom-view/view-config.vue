@@ -17,7 +17,28 @@
                 <Icon class="panal-edit-icon" color="#5384FF"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
               </template>
             </div>
+            <div class="header-tools">
+              <template v-if="isEditStatus">
+                <Button class="btn-upload" @click.stop="exportPanel">
+                  <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
+                  {{$t('m_export')}}
+                </Button>
+                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
+              </template>
+              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
+                {{$t('m_alert')}}
+              </Button>
+            </div>
           </div>
+        </header>
+
+        <!-- 分组 -->
+        <div class="all-action-region" :style="{maxHeight: isActionRegionExpand ? '190px' : '0px', marginTop: pageType === 'dashboard' ? '35px' : '0px'}">
+          <div class="drop-icon-region" @click="onIconRegionClick">
+            <Icon v-if="isActionRegionExpand" :size="22" type="ios-arrow-dropup" />
+            <Icon v-else :size="22" type="ios-arrow-dropdown" />
+          </div>
+
           <div class="search-container">
             <div>
               <div class="search-zone">
@@ -46,24 +67,7 @@
                 </Select>
               </div>
             </div>
-
-            <div class="header-tools">
-              <template v-if="isEditStatus">
-                <Button class="btn-upload" @click.stop="exportPanel">
-                  <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
-                  {{$t('m_export')}}
-                </Button>
-                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
-              </template>
-              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
-                {{$t('m_alert')}}
-              </Button>
-            </div>
           </div>
-        </header>
-
-        <!-- 分组 -->
-        <div>
           <div class="radio-group">
             <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
             <div class='group-region'>
@@ -103,10 +107,11 @@
             </div>
           </div>
 
-          <div class="ml-2 mt-3 mb-3">
+          <div class="ml-2 mt-2 mb-2">
             <span class="params-title mr-3">{{$t('m_automatic_layout')}}：</span>
             <Poptip
               confirm
+              transfer
               popper-class='chart-layout-poptip'
               :title="$t('m_layout_change_tips')"
               @on-ok="onLayoutPopTipConfirm"
@@ -126,6 +131,7 @@
               trigger="click"
               v-for="(item, index) in allAddChartOptions"
               :key="index"
+              transfer
               class="chart-option-menu"
               transfer-class-name='filter-chart-layer'
               @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
@@ -556,6 +562,7 @@ export default {
       hasNotRequestStatus: true,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      isActionRegionExpand: true
     }
   },
   computed: {
@@ -658,6 +665,7 @@ export default {
       setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
         this.refreshNow = !this.refreshNow
+        this.calculateGridWindowHeight()
       }, 300)
     },
     closeAlarmDisplay() {
@@ -1624,6 +1632,22 @@ export default {
     }, 1000),
     resetHasNotRequestStatus() {
       this.hasNotRequestStatus = !this.hasNotRequestStatus
+    },
+    onIconRegionClick() {
+      this.isActionRegionExpand = !this.isActionRegionExpand
+      this.$nextTick(() => {
+        this.calculateGridWindowHeight()
+      })
+    },
+    calculateGridWindowHeight() {
+      const header = document.querySelector('.view-config-top-content')
+      const gridContent = document.querySelector('.grid-window')
+      const alarmContent = document.querySelector('.view-config-alarm')
+      const alarmListContent = document.querySelector('.alarm-list')
+      const headerHeight = header.offsetHeight
+      gridContent && (gridContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
+      alarmContent && (alarmContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
+      alarmListContent && (alarmListContent.style.height = `calc(100vh - ${headerHeight + 100 + 120}px)`)
     }
   },
   components: {
@@ -1705,12 +1729,6 @@ export default {
       font-size: 18px !important
     }
   }
-  .header-tools {
-    .ivu-btn-info {
-      background-color: #aa8aea;
-      border-color: #aa8aea;
-    }
-  }
 
   .header-grid-name {
     .ivu-tooltip-rel {
@@ -1719,12 +1737,6 @@ export default {
       flex-grow: 1;
       i {
         font-size: 18px !important
-      }
-    }
-    .header-tools {
-      .ivu-btn-info {
-        background-color: #aa8aea;
-        border-color: #aa8aea;
       }
     }
   }
@@ -1741,6 +1753,19 @@ export default {
 <style scoped lang="less">
 /deep/ .ivu-form-item {
   margin-bottom: 0;
+}
+
+.all-action-region {
+  position: relative;
+  // margin-top: 18px;
+  border: 1px solid #cfd0d3;
+}
+
+.drop-icon-region {
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  cursor: pointer;
 }
 
 .view-config-top-content {
@@ -1762,8 +1787,14 @@ export default {
   margin-bottom: 10px;
 }
 .header-name {
+  position: relative;
   font-size: 16px;
   margin-left: 15px;
+}
+.header-tools {
+  position: absolute;
+  right: 0px;
+  top: 0px;
 }
 
 .panal-edit-icon {
@@ -1773,7 +1804,7 @@ export default {
 .search-container {
   display: flex;
   justify-content: space-between;
-  margin: 8px;
+  margin: 2px 8px 2px;
   font-size: 16px;
 }
 .search-zone {
@@ -1843,7 +1874,7 @@ export default {
 }
 
 .grid-window {
-  height: ~"calc(100vh - 330px)";
+  height: ~"calc(100vh - 300px)";
   overflow: auto;
   width: 100%;
   display: inline-block;

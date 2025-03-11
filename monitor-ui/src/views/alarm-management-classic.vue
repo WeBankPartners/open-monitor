@@ -105,6 +105,14 @@ export default {
           width: 170
         },
         {
+          title: this.$t('m_frequency'),
+          key: 'alarm_total',
+          render: (h, params) => (
+            <div>{params.row.alarm_total}</div>
+          ),
+          minWidth: 160
+        },
+        {
           title: this.$t('m_remark'),
           key: 'custom_message',
           render: (h, params) => (

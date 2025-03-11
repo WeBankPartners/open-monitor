@@ -25,6 +25,7 @@
               v-model="filters.priority"
               placement='bottom'
               multiple
+              transfer
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarm_level')"
               @on-change="onFilterChange"
@@ -41,6 +42,7 @@
               v-model="filters.alarm_name"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_alarmName')"
               @on-change="onFilterChange"
@@ -64,6 +66,7 @@
               v-model="filters.metric"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_metric')"
               @on-change="onFilterChange"
@@ -87,6 +90,7 @@
               v-model="filters.endpoint"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_endpoint')"
               @on-change="onFilterChange"
@@ -266,6 +270,7 @@ export default ({
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 60px;
   font-size: 14px;
   color: #5981ef;
   background-color: #f8f8f8;

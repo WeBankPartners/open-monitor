@@ -1,7 +1,7 @@
 <template>
   <div class="basic-container">
     <img class="bg" src="../assets/img/bgd_main_cube.png" />
-    <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+    <img class="cube" width="600" height="600" src="../assets/img/the_cube.png" />
     <template v-if="$attrs.noData">
       <img class="nodata" v-if="$attrs.total === 0" width="373" height="373" src="../assets/img/nodata.png" />
       <div class="nodata-text left" v-if="$attrs.total === 0">NO DATA</div>
