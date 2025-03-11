@@ -44,7 +44,7 @@
           <Select
             v-model="sortingRule"
             @on-change="onSortingRuleChange"
-            style="margin-right: 10px"
+            style="margin-right: 10px; width: 180px"
             :placeholder="$t('m_sorting_rules')"
           >
             <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -762,7 +762,7 @@ export default {
     // margin: 12px 0;
     .left {
       position: relative;
-      flex-basis: 40%;
+      width: 42vw;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -774,13 +774,12 @@ export default {
       }
     }
     .right {
-      flex-basis: 60%;
+      width: 58vw;
       overflow-x: auto;
-
       .alarm-card-container {
         // height: 740px;
         // width: 38vw;
-        height: ~"calc(100vh - 310px)";
+        height: ~"calc(100vh - 320px)";
         padding-bottom: 20px;
         overflow-y: auto;
 

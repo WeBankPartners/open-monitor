@@ -83,7 +83,7 @@ export default {
 .m-item {
   display: flex;
   align-items: center;
-  margin: auto 40px;
+  // margin: auto 40px;
 
   .circle {
     flex-shrink: 0;
@@ -133,21 +133,21 @@ export default {
   }
 }
 
-@media (max-width: 1680px) {
-  .m-item {
-    margin: auto 30px;
-  }
-}
+// @media (max-width: 1680px) {
+//   .m-item {
+//     margin: auto 30px;
+//   }
+// }
 
-@media (max-width: 1480px) {
-  .m-item {
-    margin: auto 6px;
-  }
-}
+// @media (max-width: 1480px) {
+//   .m-item {
+//     margin: auto 0px;
+//   }
+// }
 
-@media (max-width: 1280px) {
-  .m-item {
-    margin: auto 10px;
-  }
-}
+// @media (max-width: 1280px) {
+//   .m-item {
+//     margin: auto 10px;
+//   }
+// }
 </style>
