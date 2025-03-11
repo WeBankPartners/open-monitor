@@ -428,6 +428,7 @@ type OpenAlarmObj struct {
 	SubSystemId   string    `json:"sub_system_id"`
 	UpdateAt      time.Time `json:"update_at"`
 	CustomMessage string    `json:"custom_message"`
+	AlarmTotal    int       `json:"alarm_total"`
 }
 
 type OpenAlarmRequest struct {
