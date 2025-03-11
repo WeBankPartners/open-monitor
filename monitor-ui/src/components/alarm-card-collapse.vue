@@ -108,7 +108,7 @@
                         <div slot="content">
                           <div v-html="item.content || '-'"></div>
                         </div>
-                        <div v-html="item.content || '-'" class="ellipsis-text" style="width: 450px;"></div>
+                        <div v-html="item.content || '-'" class="ellipsis-text" style="width: 350px;"></div>
                       </Tooltip>
                     </div>
                   </div>
@@ -332,16 +332,17 @@ export default {
 <style lang="less">
 .alarm-card-collapse {
   .start-time {
+    position: absolute;
+    right: 2px;
+    top: 0px;
     font-size: 14px;
-    float: right;
-    margin-right: 10px;
   }
   .collapse-content {
     position: relative;
     .right-action-button {
       position: absolute;
       top: -5px;
-      right: 10px
+      right: 0px
     }
   }
 }
@@ -398,7 +399,6 @@ li {
 
 .fa-operate {
   margin: 8px;
-  float: right;
   font-size: 16px;
   cursor: pointer;
 }
@@ -419,9 +419,9 @@ li {
   display: flex;
   align-items: center;
   .custom-title-text {
+    max-width: 450px;
     font-size: 16px;
     display: inline-block;
-    max-width: ~"calc(40vw - 285px)";
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

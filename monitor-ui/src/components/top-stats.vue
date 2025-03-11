@@ -7,7 +7,7 @@
           <img class="time-icon" src="../assets/img/icon_rltm.png" />
         </div>
       </div>
-      <div style="display: flex; justify-content: space-between">
+      <div style="display: flex; flex: 1; justify-content: space-around">
         <circle-item
           v-for="stat in $attrs.lstats"
           :key="stat.key"
@@ -97,12 +97,14 @@ export default {
   }
 
   .left {
-    flex-basis: 40%;
+    width: 42vw;
+    // flex-basis: 40%;
     height: 100%;
     display: flex;
   }
   .right {
-    flex-basis: 60%;
+    width: 58vw;
+    // flex-basis: 60%;
     height: 100%;
     display: flex;
     justify-content: flex-start;

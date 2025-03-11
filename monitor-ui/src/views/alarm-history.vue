@@ -590,7 +590,7 @@ export default {
 
     .left {
       position: relative;
-      flex-basis: 40%;
+      width: 42vw;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -607,7 +607,7 @@ export default {
       }
     }
     .right {
-      flex-basis: 60%;
+      width: 58vw;
       overflow-x: auto;
 
       .card-pagination {
@@ -619,9 +619,8 @@ export default {
         background: #fff;
         padding-bottom: 20px;
       }
-
       .alarm-card-container {
-        max-height: ~"calc(100vh - 310px)";
+        max-height: ~"calc(100vh - 320px)";
         height: 740px;
         overflow-y: auto;
         padding-bottom: 40px;
