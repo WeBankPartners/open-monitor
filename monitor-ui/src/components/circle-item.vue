@@ -141,7 +141,7 @@ export default {
 
 @media (max-width: 1480px) {
   .m-item {
-    margin: auto 20px;
+    margin: auto 6px;
   }
 }
 

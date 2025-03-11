@@ -61,7 +61,7 @@ export default {
   position: absolute;
   // top: 732px;
   top: ~"calc(100% - 10px)";
-  width: 750px;
+  width: 550px;
   height: 31px;
   background: #ffffff;
   box-shadow: 0px 8px 15px 0px rgba(17, 110, 249, 0.15);

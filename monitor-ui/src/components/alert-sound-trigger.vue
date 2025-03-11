@@ -62,7 +62,7 @@ export default {
       this.setInterval()
     },
     getAlarm() {
-      this.audio&&this.audio.pause()
+      this.audio && this.audio.pause()
       const now = dayjs().format('YYYY-MM-DD HH:mm:ss')
       const params = {
         page: {

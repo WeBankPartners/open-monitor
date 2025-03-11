@@ -559,5 +559,11 @@
   "m_line_display_modification": "Modification Line Display",
   "m_show_line": "Show Line",
   "m_line_search": "Line Search",
-  "m_select_all": "Select All"
+  "m_select_all": "Select All",
+  "m_expand_alert": "Expand Alert",
+  "m_sorting_rules": "Sorting Rules",
+  "m_reverse": "Reverse",
+  "m_first_time_occurrence": "First Time Occurrence",
+  "m_duration_time": "Duration Time",
+  "m_frequency": "Frequency"
 }
