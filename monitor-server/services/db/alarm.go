@@ -623,11 +623,28 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 	var sortResult []*m.AlarmProblemQuery
 	if len(result) >= 1 {
 		sortResult = result
-		if cond.Sorting != nil && cond.Sorting.Asc == false {
-			sort.Sort(m.AlarmProblemListDesc(sortResult))
-		} else {
-			sort.Sort(m.AlarmProblemList(sortResult))
+		if cond.Sorting == nil {
+			cond.Sorting = &m.QueryRequestSorting{Field: "start", Asc: false}
 		}
+		sort.SliceStable(result, func(i, j int) bool {
+			switch cond.Sorting.Field {
+			case "start":
+				if cond.Sorting.Asc {
+					return result[i].Start.Before(result[j].Start)
+				} else {
+					return result[i].Start.After(result[j].Start)
+				}
+			case "s_last":
+				if cond.Sorting.Asc {
+					return result[i].SLast < result[j].SLast
+				} else {
+					return result[i].SLast > result[j].SLast
+				}
+			// 可以添加更多的字段比较逻辑
+			default:
+			}
+			return result[i].Start.After(result[j].Start)
+		})
 	}
 
 	if len(notifyIdList) > 0 {
