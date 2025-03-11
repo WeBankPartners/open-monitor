@@ -1259,7 +1259,6 @@ alter table custom_chart add index dashboard_chart_public(public);
 #@v3.4.3-begin@;
 alter table alarm_custom add column create_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间';
 alter table alarm_custom add column alarm_total int(11) DEFAULT 0 COMMENT '告警次数';
-ALTER TABLE alarm_custom ADD UNIQUE INDEX idx_unique_alert (alert_obj, alert_level, alert_ip, alert_title);
 CREATE TABLE `history_alarm_custom`
 (
     `id`             int(11) unsigned NOT NULL AUTO_INCREMENT,
