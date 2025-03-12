@@ -919,7 +919,6 @@ export default {
       /*width: 120px;*/
       height: 40px;
       padding: 2px 0px 2px 8px;
-      font-family: MicrosoftYaHei-Bold;
       font-size: 13px;
       color: #333333;
       letter-spacing: 0.7px;
@@ -1164,7 +1163,6 @@ export default {
     margin-right: 20px;
     background-color: @color-blue;
     border-color: @color-blue;
-    font-family: MicrosoftYaHei;
     font-size: 14px;
     color: #FFFFFF;
     letter-spacing: 0.7px;

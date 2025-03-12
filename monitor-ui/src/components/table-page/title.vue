@@ -61,7 +61,6 @@ export default {
     }
     h5 {
       text-align: left;
-      font-family: MicrosoftYaHei-Bold;
       font-size: 16px;
       /*padding-left: 12px;*/
       color: #333333;

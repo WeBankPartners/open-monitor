@@ -815,7 +815,6 @@ li {
     display: inline-block;
     margin-right: 4px;
     line-height: 1;
-    font-family: SimSun;
     font-size: 14px;
     color: #FF4D4F;
 }
