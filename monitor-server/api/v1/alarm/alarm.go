@@ -625,6 +625,10 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	var highCount, mediumCount, lowCount int
 	metricMap := make(map[string]int)
 	for _, v := range data {
+		// 默认告警条数为1
+		if v.AlarmTotal == 0 {
+			v.AlarmTotal = 1
+		}
 		if v.SPriority == "high" {
 			highCount += 1
 		}

@@ -112,6 +112,7 @@ type AlarmProblemQuery struct {
 	StartValue         float64               `json:"start_value"`
 	Start              time.Time             `json:"start"`
 	StartString        string                `json:"start_string"`
+	UpdateString       string                `json:"update_string"`
 	EndValue           float64               `json:"end_value"`
 	End                time.Time             `json:"end"`
 	EndString          string                `json:"end_string"`
@@ -138,7 +139,8 @@ type AlarmProblemQuery struct {
 	AlarmMetricList    []string              `json:"alarm_metric_list"`
 	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
 	Log                string                `json:"log"`
-	AlarmTotal         int                   `json:"alarm_total"` // 告警次数
+	AlarmTotal         int                   `json:"alarm_total"`  // 告警次数
+	DurationSec        int64                 `json:"duration_sec"` // 持续时间,秒
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -412,6 +414,7 @@ type AlarmCustomTable struct {
 	CustomMessage string    `json:"custom_message"`
 	AlarmTotal    int       `json:"alarm_total"`
 	UpdateAt      time.Time `json:"update_at"`
+	CreateAt      time.Time `json:"create_at"`
 }
 
 type OpenAlarmObj struct {
@@ -427,6 +430,7 @@ type OpenAlarmObj struct {
 	RemarkInfo    string    `json:"remark_info"`
 	SubSystemId   string    `json:"sub_system_id"`
 	UpdateAt      time.Time `json:"update_at"`
+	CreateAt      time.Time `json:"create_at"`
 	CustomMessage string    `json:"custom_message"`
 	AlarmTotal    int       `json:"alarm_total"`
 }
