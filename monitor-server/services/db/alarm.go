@@ -1544,6 +1544,15 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		for _, v := range alarmQuery {
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
+			v.UpdateString = v.EndString
+			if v.End.IsZero() {
+				v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+			} else {
+				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
+			}
+			if v.AlarmTotal == 0 {
+				v.AlarmTotal = 1
+			}
 			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
 				if v.SMetric == "log_monitor" {
 					logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
