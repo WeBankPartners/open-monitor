@@ -123,6 +123,7 @@
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
             <section class="alarm-card-container">
               <alarm-card-collapse
+                ref='alarmCardCollapse'
                 :collapseData="resultData"
                 :isCollapseExpandAll="isExpandAlert"
                 :isCanAction="isRealTimeAlarm"
@@ -528,6 +529,13 @@ export default {
           this.showSunburst(responseData)
           if (this.isSpinShow) {
             this.isSpinShow = false
+          }
+          if (isLoadingShow) {
+            if (this.isExpandAlert) {
+              this.$refs.alarmCardCollapse.expandAllCollapse()
+            } else {
+              this.$refs.alarmCardCollapse.closeAllCollapse()
+            }
           }
           this.$refs.classicAlarm.getAlarm(this.resultData)
         },

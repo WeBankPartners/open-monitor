@@ -1668,7 +1668,7 @@ export default {
 <style lang="less">
 .monitor-custom-view-config {
   .custom-title-text {
-    max-width: 400px !important;
+    max-width: 375px !important;
   }
 }
 .chart-layout-poptip {
