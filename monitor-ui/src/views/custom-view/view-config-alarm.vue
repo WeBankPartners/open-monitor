@@ -32,11 +32,11 @@
           <Button type="warning" @click="addParams('medium')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
           <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
         </div>
-        <div style="display: flex">
+        <div style="display: flex; margin-right: 15px">
           <Select
             v-model="sortingRule"
             @on-change="onSortingRuleChange"
-            style="margin-right: 10px"
+            style="margin-right: 10px; width: 180px"
             :placeholder="$t('m_sorting_rules')"
           >
             <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
