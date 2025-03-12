@@ -354,7 +354,6 @@ h4 {
   }
 }
 .btn-operation {
-    font-family: PingFangSC-Regular;
     font-size: 12px;
     color: @color-blue;
     line-height: 20px;

@@ -205,14 +205,14 @@ export default {
       sortingRuleOptions: [
         {
           label: '【' + this.$t('m_reverse') + '】' + this.$t('m_first_time_occurrence'),
-          value: 'start'
+          value: 'firstTime'
         },
         {
           label: '【' + this.$t('m_reverse') + '】' + this.$t('m_duration_time'),
-          value: 's_last'
+          value: 'duration'
         }
       ],
-      sortingRule: 'start'
+      sortingRule: 'firstTime'
     }
   },
   computed: {
@@ -430,8 +430,8 @@ export default {
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
       params.sorting = {
-        asc: false,
-        field: this.sortingRule
+        asc: this.sortingRule === 'duration',
+        field: 'start'
       }
       if (this.isSpinShow === false && isLoadingShow) {
         this.isSpinShow = true
