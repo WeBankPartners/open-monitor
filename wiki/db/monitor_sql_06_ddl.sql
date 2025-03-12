@@ -1,5 +1,5 @@
 alter table alarm_custom add column create_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间';
-alter table alarm_custom add column alarm_total int(11) DEFAULT 0 COMMENT '告警次数';
+alter table alarm_custom add column alarm_total int(11) DEFAULT 1 COMMENT '告警次数';
 
 CREATE TABLE `history_alarm_custom`
 (
@@ -13,6 +13,7 @@ CREATE TABLE `history_alarm_custom`
     `remark_info`    varchar(256)       DEFAULT '',
     `sub_system_id`  varchar(10)        DEFAULT '',
     `closed`         int(10) unsigned NOT NULL DEFAULT '1',
+    `create_at`      timestamp NOT NULL,
     `update_at`      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `use_umg_policy` varchar(50)        DEFAULT '',
     `alert_way`      varchar(50)        DEFAULT '',

@@ -517,6 +517,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
+		v.UpdateString = v.StartString
+		v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 		if v.AlarmName == "" {
 			v.AlarmName = v.Content
 		}
@@ -617,6 +619,7 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 	}
 	if cond.ExtOpenAlarm && len(cond.MetricFilterList) == 0 && len(cond.EndpointFilterList) == 0 {
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
+			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 			result = append(result, v)
 		}
 	}
@@ -1347,7 +1350,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 			//	tmpDisplayEndpoint = "custom_alarm"
 			//}
 			tmpDisplayEndpoint := "custom_alarm"
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId})
+			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].CreateAt, StartString: query[i-1].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId, UpdateString: query[i-1].UpdateAt.Format(m.DatetimeFormat)})
 		}
 	}
 	priority := "high"
@@ -1364,7 +1367,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	//	tmpDisplayEndpoint = "custom_alarm"
 	//}
 	tmpDisplayEndpoint := "custom_alarm"
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, AlarmTotal: query[lastIndex].AlarmTotal, SystemId: query[lastIndex].SubSystemId})
+	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].CreateAt, StartString: query[lastIndex].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, AlarmTotal: query[lastIndex].AlarmTotal, SystemId: query[lastIndex].SubSystemId, UpdateString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat)})
 	return result
 }
 
@@ -1405,8 +1408,8 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			for _, vv := range subQueryList {
 				tmpIds += fmt.Sprintf("%d,", vv.Id)
 				actions = append(actions, &Action{Sql: "INSERT INTO history_alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id," +
-					"use_umg_policy,alert_way,custom_message,alarm_total) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{vv.AlertInfo, vv.AlertIp, vv.AlertLevel, vv.AlertObj, vv.AlertTitle,
-					vv.AlertReciver, vv.RemarkInfo, vv.SubSystemId, vv.UseUmgPolicy, vv.AlertWay, vv.CustomMessage, vv.AlarmTotal}})
+					"use_umg_policy,alert_way,custom_message,alarm_total,create_at) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{vv.AlertInfo, vv.AlertIp, vv.AlertLevel, vv.AlertObj, vv.AlertTitle,
+					vv.AlertReciver, vv.RemarkInfo, vv.SubSystemId, vv.UseUmgPolicy, vv.AlertWay, vv.CustomMessage, vv.AlarmTotal, vv.CreateAt}})
 			}
 			tmpIds = tmpIds[:len(tmpIds)-1]
 			actions = append(actions, &Action{Sql: fmt.Sprintf("delete from  alarm_custom WHERE id in (%s)", tmpIds), Param: []interface{}{}})
