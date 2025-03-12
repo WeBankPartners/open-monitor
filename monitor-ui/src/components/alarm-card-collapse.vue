@@ -43,7 +43,7 @@
             <span v-if="item.is_custom" v-html="item.title"></span>
             <span v-else v-html="item.content"></span>
           </div>
-          <span class="start-time">{{item.start_string}}</span>
+          <span class="start-time">{{$t('m_first_time') + ': ' + item.start_string}}</span>
         </template>
         <template slot="content">
           <div class="collapse-content">
@@ -188,6 +188,14 @@
                 <label class="card-label" v-html="$t('m_frequency')"></label>
                 <div class="card-content" v-html="item.alarm_total"></div>
               </li>
+              <li>
+                <label class="card-label" v-html="$t('m_update')"></label>
+                <div class="card-content" v-html="item.update_string"></div>
+              </li>
+              <li>
+                <label class="card-label" v-html="$t('m_duration')"></label>
+                <div class="card-content" v-html="formatDuration(item.duration_sec)"></div>
+              </li>
             </ul>
           </div>
         </template>
@@ -320,9 +328,35 @@ export default {
       inputElement.remove()
       this.$Message.success(this.$t('m_copied_to_clipboard'))
     },
-    // getImagePath(name) {
-    //   return require(`@/assets/img/${name}`)
-    // }
+    formatDuration(seconds) {
+      const units = [
+        {
+          value: Math.floor(seconds / 86400),
+          label: '日'
+        }, // 天数
+        {
+          value: Math.floor((seconds % 86400) / 3600),
+          label: '时'
+        }, // 小时数
+        {
+          value: Math.floor((seconds % 3600) / 60),
+          label: '分'
+        }, // 分钟数
+        {
+          value: seconds % 60,
+          label: '秒'
+        } // 秒数
+      ]
+      const result = []
+      let hasHigherUnit = false
+      for (const unit of units) {
+        if (unit.value > 0 || hasHigherUnit) {
+          result.push(`${unit.value}${unit.label}`)
+          hasHigherUnit = true // 标记存在更大单位，后续单位需保留
+        }
+      }
+      return result.length > 0 ? result.join('') : '0秒'
+    }
   },
   components: {
     EndpointViewComponent
@@ -331,9 +365,16 @@ export default {
 </script>
 <style lang="less">
 .alarm-card-collapse {
+  .ivu-collapse {
+    border: 0px;
+  }
+  .ivu-collapse-header {
+    background-color: #F2F3F7;
+  }
   .start-time {
+    color: rgb(126,128,134);
     position: absolute;
-    right: 2px;
+    right: 16px;
     top: 0px;
     font-size: 14px;
   }
@@ -419,7 +460,9 @@ li {
   display: flex;
   align-items: center;
   .custom-title-text {
-    max-width: 440px;
+    color: rgb(64,65,68);
+    max-width: 550px;
+    // max-width: 440px;
     font-size: 16px;
     display: inline-block;
     white-space: nowrap;

@@ -12,7 +12,7 @@ export default {
   name: 'circle-label',
   data() {
     return {
-      L: 280
+      L: 240
     }
   },
   computed: {

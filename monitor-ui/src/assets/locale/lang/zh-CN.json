@@ -565,6 +565,8 @@
   "m_reverse": "倒序",
   "m_first_time_occurrence": "首次发生时间",
   "m_duration_time": "持续时长",
-  "m_frequency": "次数"
+  "m_frequency": "次数",
+  "m_first_time": "首次",
+  "m_duration": "持续"
 }
 
