@@ -240,6 +240,8 @@ export default {
       } else {
         singleArr.push(type)
       }
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = 20
       this.getAlarmdata(this.cacheParams.id)
     },
     clearFiltersForShow() {
@@ -306,6 +308,8 @@ export default {
     },
     onFiltersChange(filters) {
       this.filters = filters
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = 20
       this.getAlarmdata(this.cacheParams.id)
     },
     onSortingRuleChange() {
