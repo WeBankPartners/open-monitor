@@ -1345,12 +1345,8 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 				priority = "medium"
 			}
 			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp)
-			//if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
-			//	tmpDisplayEndpoint = "custom_alarm"
-			//}
 			tmpDisplayEndpoint := "custom_alarm"
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].CreateAt, StartString: query[i-1].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId, UpdateString: query[i-1].UpdateAt.Format(m.DatetimeFormat)})
+			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].CreateAt, StartString: query[i-1].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId, UpdateString: query[i-1].UpdateAt.Format(m.DatetimeFormat), AlarmTotal: query[i-1].AlarmTotal})
 		}
 	}
 	priority := "high"
@@ -1362,10 +1358,6 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 		priority = "medium"
 	}
 	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp)
-	//if query[lastIndex].AlertObj == "" && query[lastIndex].AlertIp == "" {
-	//	tmpDisplayEndpoint = "custom_alarm"
-	//}
 	tmpDisplayEndpoint := "custom_alarm"
 	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].CreateAt, StartString: query[lastIndex].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, AlarmTotal: query[lastIndex].AlarmTotal, SystemId: query[lastIndex].SubSystemId, UpdateString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat)})
 	return result
