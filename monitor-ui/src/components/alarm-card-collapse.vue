@@ -419,7 +419,7 @@ li {
   display: flex;
   align-items: center;
   .custom-title-text {
-    max-width: 450px;
+    max-width: 440px;
     font-size: 16px;
     display: inline-block;
     white-space: nowrap;
