@@ -356,6 +356,15 @@ export default {
         }
       }
       return result.length > 0 ? result.join('') : '0秒'
+    },
+    closeAllCollapse() {
+      this.expandCollapse = []
+    },
+    expandAllCollapse() {
+      this.expandCollapse = []
+      for (let i=0; i<50; i++) {
+        this.expandCollapse.push(i + '')
+      }
     }
   },
   components: {
@@ -367,6 +376,10 @@ export default {
 .alarm-card-collapse {
   .ivu-collapse {
     border: 0px;
+  }
+  .ivu-collapse-content:last-of-type {
+    border-bottom: 1px solid #CFD0D3;
+    border-radius: 0px;
   }
   .ivu-collapse-header {
     background-color: #F2F3F7;
