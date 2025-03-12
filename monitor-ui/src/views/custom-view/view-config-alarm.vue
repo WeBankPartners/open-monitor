@@ -140,15 +140,15 @@ export default {
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
       isExpandAlert: false,
-      sortingRule: 'start',
+      sortingRule: 'firstTime',
       sortingRuleOptions: [
         {
           label: '【' + this.$t('m_reverse') + '】' + this.$t('m_first_time_occurrence'),
-          value: 'start'
+          value: 'firstTime'
         },
         {
           label: '【' + this.$t('m_reverse') + '】' + this.$t('m_duration_time'),
-          value: 's_last'
+          value: 'duration'
         }
       ],
     }
@@ -207,8 +207,8 @@ export default {
         params[keys[i]] = filters[keys[i]]
       }
       params.sorting = {
-        asc: false,
-        field: this.sortingRule
+        asc: this.sortingRule === 'duration',
+        field: 'start'
       }
     },
     getAlarmdata(id = this.cacheParams.id) {
