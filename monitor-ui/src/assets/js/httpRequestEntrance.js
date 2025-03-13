@@ -108,7 +108,7 @@ function httpRequestEntrance(method, url, data, callback, customHttpConfig, errC
           },0)
         }
         const { response } = err
-        if (response.status === 401 && err.config.url !== '/auth/v1/api/login') {
+        if (response && response.status === 401 && err.config.url !== '/auth/v1/api/login') {
           const refreshToken = localStorage.getItem('monitor-refreshToken')
           if (refreshToken.length > 0) {
             const refreshRequest = axios.get('/auth/v1/api/token', {
