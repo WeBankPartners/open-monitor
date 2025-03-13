@@ -138,6 +138,10 @@ const initFilterParams = {
 
 export default ({
   props: {
+    isRealTime: { // 是否是处于实时告警装填，默认不是
+      type: Boolean,
+      default: false
+    },
     tempFilters: String,
   },
   watch: {
@@ -191,7 +195,6 @@ export default ({
     document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
     document.querySelector('.badge-content').addEventListener('click', () => {
       this.filterParams = cloneDeep(initFilterParams)
-      this.filterParams.status = this.$route.path === '/alarmManagement' ? 'firing' : ''
       this.getFilterAllOptions()
     })
   },
@@ -200,6 +203,7 @@ export default ({
       this.getFilterAllOptions()
     }, 800),
     getFilterAllOptions() {
+      this.filterParams.status = this.isRealTime ? 'firing' : ''
       this.request('POST', this.apiCenter.alarmProblemOptions, this.filterParams, res => {
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
