@@ -108,7 +108,7 @@
                         <div slot="content">
                           <div v-html="item.content || '-'"></div>
                         </div>
-                        <div v-html="item.content || '-'" class="ellipsis-text" style="max-width: 550px;"></div>
+                        <div v-html="item.content || '-'" class="ellipsis-text" style="max-width: 40vw"></div>
                       </Tooltip>
                     </div>
                   </div>
@@ -123,7 +123,7 @@
                         <div slot="content">
                           <div v-html="item.log || '-'"></div>
                         </div>
-                        <div v-html="item.log || '-'" class="ellipsis-text" style="max-width: 550px"></div>
+                        <div v-html="item.log || '-'" class="ellipsis-text" style="max-width: 40vw"></div>
                       </Tooltip>
                     </div>
                   </div>
