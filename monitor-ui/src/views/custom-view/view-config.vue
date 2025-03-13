@@ -1670,6 +1670,9 @@ export default {
   .custom-title-text {
     max-width: 375px !important;
   }
+  .ellipsis-text {
+    max-width: 400px !important;
+  }
 }
 .chart-layout-poptip {
   max-width: 350px !important;
