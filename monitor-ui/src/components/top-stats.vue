@@ -34,6 +34,7 @@
           :title="stat.title"
           :total="stat.total"
           :value="stat.value"
+          :icon="stat.icon"
         />
       </div>
     </div>
@@ -68,7 +69,7 @@ export default {
 
     .col {
       position: relative;
-      width: 120px;
+      width: 100px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -76,7 +77,7 @@ export default {
       justify-content: center;
 
       .title {
-        font-size: 16px;
+        font-size: 14px;
       }
 
       .time-icon {

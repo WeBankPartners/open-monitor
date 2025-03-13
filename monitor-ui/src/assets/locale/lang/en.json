@@ -565,5 +565,7 @@
   "m_reverse": "Reverse",
   "m_first_time_occurrence": "First Time Occurrence",
   "m_duration_time": "Duration Time",
-  "m_frequency": "Frequency"
+  "m_frequency": "Frequency",
+  "m_first_time": "First Time",
+  "m_duration": "Duration"
 }
