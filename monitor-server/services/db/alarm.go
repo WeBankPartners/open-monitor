@@ -1544,11 +1544,12 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		for _, v := range alarmQuery {
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
-			v.UpdateString = v.EndString
 			if v.End.IsZero() {
 				v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+				v.UpdateString = v.StartString
 			} else {
 				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
+				v.UpdateString = v.EndString
 			}
 			if v.AlarmTotal == 0 {
 				v.AlarmTotal = 1
