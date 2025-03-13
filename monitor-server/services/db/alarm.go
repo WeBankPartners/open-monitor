@@ -1503,6 +1503,9 @@ func GetEndpointHistoryAlarm(param m.EndpointAlarmParam) (data m.AlarmProblemLis
 	for _, v := range data {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
+		if v.AlarmTotal == 0 {
+			v.AlarmTotal = 1
+		}
 		if v.AlarmName == "" {
 			v.AlarmName = v.Content
 		}
@@ -1650,7 +1653,11 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 	var alarmStrategyList, endpointList []string
 	for _, v := range result.Data {
 		if v.AlarmName == "" {
-			v.AlarmName = v.Content
+			if strings.TrimSpace(v.Title) != "" {
+				v.AlarmName = v.Title
+			} else {
+				v.AlarmName = v.Content
+			}
 		}
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
