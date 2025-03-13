@@ -1628,7 +1628,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		}
 		if v.DurationSec == 0 {
 			if v.End.IsZero() && strings.TrimSpace(v.UpdateString) != "" {
-				updateTime, _ := time.Parse(m.DatetimeFormat, v.UpdateString)
+				updateTime, _ := time.ParseInLocation(m.DatetimeFormat, v.UpdateString, time.Local)
 				v.DurationSec = int64(updateTime.Sub(v.Start).Seconds())
 			} else {
 				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
