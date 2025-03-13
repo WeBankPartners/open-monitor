@@ -728,6 +728,8 @@ export default {
       this.showGraph = true
       this.isAlertSound = false
       this.sortingRule = 'firstTime'
+      this.startDate = new Date(new Date().toLocaleDateString())
+      this.endDate = new Date()
     }
   }
 }
