@@ -16,6 +16,10 @@
                 <h5 class="d-inline-block"> {{panalName}}</h5>
                 <Icon class="panal-edit-icon" color="#5384FF"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
               </template>
+              <span class="drop-icon-region" @click="onIconRegionClick">
+                <Icon v-if="isActionRegionExpand" color="#5384FF" :size="22" type="ios-arrow-dropup" />
+                <Icon v-else :size="22" color="#5384FF" type="ios-arrow-dropdown" />
+              </span>
             </div>
             <div class="header-tools">
               <template v-if="isEditStatus">
@@ -34,10 +38,6 @@
 
         <!-- 分组 -->
         <div class="all-action-region" :style="{maxHeight: isActionRegionExpand ? '190px' : '0px', marginTop: pageType === 'dashboard' ? '35px' : '0px'}">
-          <div class="drop-icon-region" @click="onIconRegionClick">
-            <Icon v-if="isActionRegionExpand" :size="22" type="ios-arrow-dropup" />
-            <Icon v-else :size="22" type="ios-arrow-dropdown" />
-          </div>
 
           <div class="search-container">
             <div>
@@ -1666,6 +1666,11 @@ export default {
 </script>
 
 <style lang="less">
+.monitor-custom-view-config {
+  .custom-title-text {
+    max-width: 375px !important;
+  }
+}
 .chart-layout-poptip {
   max-width: 350px !important;
   top: 75px !important;
@@ -1758,13 +1763,11 @@ export default {
 .all-action-region {
   position: relative;
   // margin-top: 18px;
-  border: 1px solid #cfd0d3;
+  // border: 1px solid #cfd0d3;
 }
 
 .drop-icon-region {
-  position: absolute;
-  left: 50%;
-  top: -20px;
+  margin-left: 5px;
   cursor: pointer;
 }
 

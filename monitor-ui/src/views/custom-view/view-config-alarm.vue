@@ -49,6 +49,7 @@
     <div class="alarm-list">
       <section class="alarm-card-container">
         <alarm-card-collapse
+          ref="alarmCollapseContent"
           :collapseData="resultData"
           :isCollapseExpandAll="isExpandAlert"
           @openRemarkModal="remarkModal"
@@ -187,7 +188,7 @@ export default {
       this.getAlarmdata(id)
       if (viewCondition.autoRefresh && viewCondition.autoRefresh > 0) {
         this.interval = setInterval(() => {
-          this.getAlarmdata(id)
+          this.getAlarmdata(id, true)
         }, (viewCondition.autoRefresh || 10) * 1000)
       }
     },
@@ -211,7 +212,7 @@ export default {
         field: 'start'
       }
     },
-    getAlarmdata(id = this.cacheParams.id) {
+    getAlarmdata(id = this.cacheParams.id, isInterval = false) {
       const params = {
         customDashboardId: id,
         page: this.paginationInfo,
@@ -226,6 +227,14 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
+
+        if (!isInterval) {
+          if (this.isExpandAlert) {
+            this.$refs.alarmCollapseContent.expandAllCollapse()
+          } else {
+            this.$refs.alarmCollapseContent.closeAllCollapse()
+          }
+        }
       }, {isNeedloading: false})
     },
     addParams(type) {

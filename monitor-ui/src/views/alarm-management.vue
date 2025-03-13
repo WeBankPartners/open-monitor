@@ -4,32 +4,72 @@
     <div class="title-wrapper">
       <div class="title-form">
         <ul>
-          <li class="filter-li">
-            <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
+          <li>
+            <RadioGroup
+              v-model="alarmType"
+              type="button"
+              button-style="solid"
+              @on-change="onAlarmTypeChange"
+            >
+              <Radio label="realTime">{{$t('m_realTimeAlarm')}}</Radio>
+              <Radio label="history">{{$t('m_alarmHistory')}}</Radio>
+            </RadioGroup>
           </li>
-          <li class="filter-li">
-            <span class="label">{{$t('m_alarmStatistics')}}：</span>
-            <i-switch size="large" v-model="showGraph" style="vertical-align: bottom;">
-              <span slot="open"></span>
-              <span slot="close"></span>
-            </i-switch>
-          </li>
-          <li class="filter-li">
-            <span class="label">{{$t('m_classic_mode')}}：</span>
-            <i-switch size="large" v-model="isClassicModel" style="vertical-align: bottom;">
-              <span slot="open"></span>
-              <span slot="close"></span>
-            </i-switch>
-          </li>
-          <li class="filter-li">
-            <span class="label">{{$t('m_audio_prompt')}}：</span>
-            <i-switch size="large" @on-change="alertSoundChange" style="vertical-align: bottom;">
-              <span slot="true"></span>
-              <span slot="false"></span>
-            </i-switch>
-            <!-- 新告警声音提示 -->
-            <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
-          </li>
+          <template v-if="!isRealTimeAlarm">
+            <li class="filter-li">
+              <DatePicker
+                type="date"
+                :value="startDate"
+                @on-change="changeStartDate"
+                format="yyyy-MM-dd HH:mm:ss"
+                placement="bottom-start"
+                :placeholder="$t('m_startDatePlaceholder')"
+                style="width: 220px"
+              >
+              </DatePicker>
+            </li>
+            <li class="filter-li">
+              <DatePicker
+                type="date"
+                :value="endDate"
+                @on-change="changeEndDate"
+                format="yyyy-MM-dd HH:mm:ss"
+                placement="bottom-start"
+                :placeholder="$t('m_endDatePlaceholder')"
+                style="width: 220px"
+              >
+              </DatePicker>
+            </li>
+          </template>
+          <template v-if="isRealTimeAlarm">
+            <li class="filter-li">
+              <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
+            </li>
+            <li class="filter-li">
+              <span class="label">{{$t('m_alarmStatistics')}}：</span>
+              <i-switch size="large" v-model="showGraph" style="vertical-align: bottom;">
+                <span slot="open"></span>
+                <span slot="close"></span>
+              </i-switch>
+            </li>
+            <li class="filter-li">
+              <span class="label">{{$t('m_classic_mode')}}：</span>
+              <i-switch size="large" v-model="isClassicModel" style="vertical-align: bottom;">
+                <span slot="open"></span>
+                <span slot="close"></span>
+              </i-switch>
+            </li>
+            <li class="filter-li">
+              <span class="label">{{$t('m_audio_prompt')}}：</span>
+              <i-switch size="large" v-model="isAlertSound" @on-change="alertSoundChange" style="vertical-align: bottom;">
+                <span slot="true"></span>
+                <span slot="false"></span>
+              </i-switch>
+              <!-- 新告警声音提示 -->
+              <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="10" ></AlertSoundTrigger>
+            </li>
+          </template>
+
           <li class="filter-li">
             <span class="label">{{$t('m_expand_alert')}}：</span>
             <i-switch
@@ -43,9 +83,10 @@
         <div class="top-right-search">
           <Select
             v-model="sortingRule"
-            @on-change="onSortingRuleChange"
-            style="margin-right: 10px; width: 180px"
+            :disabled="!isRealTimeAlarm"
             :placeholder="$t('m_sorting_rules')"
+            class="sort-rule-select"
+            @on-change="onSortingRuleChange"
           >
             <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
@@ -57,12 +98,11 @@
             @on-ok="deleteConfirmModal()"
           >
             <Button
-              :disabled="isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
+              :disabled="!isRealTimeAlarm || isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
             >
               {{$t('m_batch_close')}}
             </Button>
           </Poptip>
-          <Button type="primary" @click="alarmHistory">{{$t('m_alarmHistory')}}</Button>
         </div>
       </div>
     </div>
@@ -83,9 +123,11 @@
           <div class="right" :class="{'cover': !showGraph}" v-if="total > 0 && !noData">
             <section class="alarm-card-container">
               <alarm-card-collapse
+                ref='alarmCardCollapse'
                 :collapseData="resultData"
-                @openRemarkModal="remarkModal"
                 :isCollapseExpandAll="isExpandAlert"
+                :isCanAction="isRealTimeAlarm"
+                @openRemarkModal="remarkModal"
               >
               </alarm-card-collapse>
               <!-- <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true"/> -->
@@ -137,7 +179,7 @@
 
 <script>
 import Vue from 'vue'
-import {isEmpty, cloneDeep} from 'lodash'
+import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import TopStats from '@/components/top-stats.vue'
 import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
@@ -168,6 +210,7 @@ export default {
       noData: false,
       showGraph: true,
       alramEmpty: true,
+      isAlertSound: false,
       isClassicModel: false,
       interval: null,
       timeForDataAchieve: null,
@@ -212,10 +255,16 @@ export default {
           value: 'duration'
         }
       ],
-      sortingRule: 'firstTime'
+      sortingRule: 'firstTime',
+      alarmType: 'realTime', // 为枚举值，realTime实时告警， history历史告警
+      startDate: new Date(new Date().toLocaleDateString()),
+      endDate: new Date(),
     }
   },
   computed: {
+    isRealTimeAlarm() {
+      return this.alarmType === 'realTime'
+    },
     total() {
       return this.low + this.mid + this.high
     },
@@ -230,7 +279,7 @@ export default {
           title: this.$t('m_total'),
           total: this.total,
           value: this.total,
-          icon: require('../assets/img/icon_alarm_ttl.png')
+          // icon: require('../assets/img/icon_alarm_ttl.png')
         },
         {
           key: 'l_low',
@@ -272,21 +321,24 @@ export default {
           type: 'low',
           title: this.$t('m_low'),
           total: this.ttotal,
-          value: this.tlow
+          value: this.tlow,
+          icon: require('../assets/img/icon_alarm_L.png')
         },
         {
           key: 'r_medium',
           type: 'medium',
           title: this.$t('m_medium'),
           total: this.ttotal,
-          value: this.tmid
+          value: this.tmid,
+          icon: require('../assets/img/icon_alarm_M.png')
         },
         {
           key: 'r_high',
           type: 'high',
           title: this.$t('m_high'),
           total: this.ttotal,
-          value: this.thigh
+          value: this.thigh,
+          icon: require('../assets/img/icon_alarm_H.png')
         }
       ]
     },
@@ -329,6 +381,9 @@ export default {
     }
   },
   mounted(){
+    if (hasIn(this.$route.query, 'alarmType') && ['realTime', 'history'].includes(this.$route.query.alarmType)) {
+      this.alarmType = this.$route.query.alarmType
+    }
     this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(() => {
@@ -394,6 +449,18 @@ export default {
       this.getAlarm('keep')
     },
     getAlarm(ifPageKeep, isLoadingShow = true) {
+      if (
+        !this.startDate
+        || !this.endDate
+        || Date.parse(new Date(this.startDate))
+          > Date.parse(new Date(this.endDate))
+      ) {
+        this.$Message.error(this.$t('m_timeIntervalWarn'))
+        return
+      }
+      if (this.startDate === this.endDate) {
+        this.endDate = this.endDate.replace('00:00:00', '23:59:59')
+      }
       if (ifPageKeep !== 'keep') {
         this.paginationInfo = {
           total: 0,
@@ -429,16 +496,25 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      params.sorting = {
-        asc: this.sortingRule === 'duration',
-        field: 'start'
+      let api
+      if (this.isRealTimeAlarm) {
+        api = this.apiCenter.alarmProblemList
+        params.sorting = {
+          asc: this.sortingRule === 'duration',
+          field: 'start'
+        }
+      } else {
+        api = this.apiCenter.alarmProblemHistory
+        params.filter = 'all'
+        params.start = Date.parse(this.startDate) / 1000
+        params.end = Date.parse(this.endDate) / 1000
       }
       if (this.isSpinShow === false && isLoadingShow) {
         this.isSpinShow = true
       }
       this.request(
         'POST',
-        this.apiCenter.alarmProblemList,
+        api,
         params,
         responseData => {
           this.noData = false
@@ -453,6 +529,13 @@ export default {
           this.showSunburst(responseData)
           if (this.isSpinShow) {
             this.isSpinShow = false
+          }
+          if (isLoadingShow) {
+            if (this.isExpandAlert) {
+              this.$refs.alarmCardCollapse.expandAllCollapse()
+            } else {
+              this.$refs.alarmCardCollapse.closeAllCollapse()
+            }
           }
           this.$refs.classicAlarm.getAlarm(this.resultData)
         },
@@ -608,21 +691,62 @@ export default {
       delete this.filters[key]
       this.getAlarm()
     },
-    alarmHistory() {
-      this.$router.push({name: 'alarmHistory'})
-    },
     onFiltersChange(filters) {
       this.filters = filters
       this.getAlarm()
     },
     onSortingRuleChange() {
       this.getAlarm()
+    },
+    changeStartDate(data) {
+      this.startDate = data
+      this.$nextTick(() => {
+        this.getAlarm()
+      })
+    },
+    changeEndDate(data) {
+      if (data && data.indexOf('00:00:00') !== -1) {
+        this.endDate = data.replace('00:00:00', '23:59:59')
+      } else {
+        this.endDate = data
+      }
+      this.$nextTick(() => {
+        this.getAlarm()
+      })
+    },
+    onAlarmTypeChange() {
+      this.resetSearchParams()
+      if (isEmpty(this.filters)) {
+        this.getAlarm()
+      } else {
+        this.filters = {}
+      }
+    },
+    resetSearchParams() {
+      this.isExpandAlert = false
+      this.isClassicModel = false
+      this.showGraph = true
+      this.isAlertSound = false
+      this.sortingRule = 'firstTime'
     }
   }
 }
 </script>
 
 <style lang='less'>
+.title-form {
+  .ivu-radio-group-button .ivu-radio-wrapper-checked {
+    background: #5384FF;
+    color: #fff;
+  }
+}
+.sort-rule-select {
+  margin-right: 10px;
+  width: 180px;
+  .ivu-select-selected-value {
+    color: #116EF9;
+  }
+}
 .drop-down-content {
   .ivu-select-dropdown {
     overflow: scroll;
@@ -681,7 +805,7 @@ export default {
       li {
         // color: #7E8086;
         font-size: 12px;
-        margin-right: 28px;
+        margin-right: 25px;
       }
     }
   }
