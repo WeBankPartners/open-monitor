@@ -617,7 +617,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 			}
 		}
 	}
-	if cond.ExtOpenAlarm && len(cond.MetricFilterList) == 0 && len(cond.EndpointFilterList) == 0 {
+
+	if cond.ExtOpenAlarm && checkContainsCustomAlarm(cond.MetricFilterList, cond.EndpointFilterList) {
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
 			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 			result = append(result, v)
@@ -733,6 +734,27 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 		}
 	}
 	return err, sortResult
+}
+
+func checkContainsCustomAlarm(metricFilterList, endpointFilterList []string) bool {
+	var metricFlag, endpointFlag bool
+	if len(metricFilterList) == 0 && len(endpointFilterList) == 0 {
+		return true
+	}
+	for _, metricFilter := range metricFilterList {
+		if metricFilter == "custom" {
+			metricFlag = true
+		}
+	}
+	for _, endpointFilter := range endpointFilterList {
+		if endpointFilter == "custom_alarm" {
+			endpointFlag = true
+		}
+	}
+	if metricFlag && endpointFlag {
+		return true
+	}
+	return false
 }
 
 func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
@@ -1634,6 +1656,10 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
 			}
 		}
+		// 正在进行中告警中告警,一律用当前时间减去告警开始时间
+		if v.Status == "firing" {
+			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+		}
 	}
 	var resultCount m.AlarmProblemCountList
 	for k, v := range metricMap {
@@ -1669,7 +1695,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		}
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
-		alarmDetailList := []*m.AlarmDetailData{}
+		var alarmDetailList []*m.AlarmDetailData
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
@@ -1682,7 +1708,9 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
 			v.AlarmMetricList = []string{v.SMetric}
 		}
-		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		if v.Endpoint != "custom_alarm" {
+			v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		}
 		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
@@ -1773,20 +1801,11 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		param.Page = &m.PageInfo{}
 	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
+	customQueryParam.Enable = true
 	if param.Query != "" {
-		customQueryParam.Enable = true
 		customQueryParam.Query = param.Query
 	}
-	if len(param.Metric) > 0 {
-		for _, s := range param.Metric {
-			if s != "custom" {
-				customQueryParam.Enable = false
-				break
-			}
-		}
-	} else {
-		customQueryParam.Enable = true
-	}
+	customQueryParam.Enable = checkContainsCustomAlarm(param.Metric, param.Endpoint)
 	err, result = QueryAlarmBySql(sql, params, customQueryParam, param.Page)
 	return err, result
 }
@@ -2133,6 +2152,15 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 		}
 	}
 	return
+}
+
+func GetCustomAlarmCount(table string) int64 {
+	var count int64
+	_, err := x.SQL("select count(1) from " + table).Get(&count)
+	if err != nil {
+		return 0
+	}
+	return count
 }
 
 func GetAlarmNameList(status, alarmName string) (list []string, err error) {
