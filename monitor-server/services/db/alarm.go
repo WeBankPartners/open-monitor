@@ -603,6 +603,9 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 		cond.ExtOpenAlarm = true
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
 			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+			if len(v.AlarmMetricList) == 0 {
+				v.AlarmMetricList = []string{"custom"}
+			}
 			result = append(result, v)
 		}
 	}
@@ -2146,7 +2149,7 @@ func GetCustomAlarmCount(table string) int64 {
 }
 
 func GetAlarmNameList(status, alarmName string) (list []string, err error) {
-	var alarmList, customAlarmList []*m.SimpleAlarm
+	var alarmList, customAlarmList, historyAlarmList []*m.SimpleAlarm
 	var closed = 1
 	if status == "firing" {
 		closed = 0
@@ -2181,6 +2184,14 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	}
 
 	alarmList = append(alarmList, customAlarmList...)
+
+	// 添加历史告警
+	customAlarmSQL = strings.Replace(customAlarmSQL, "FROM alarm_custom", "FROM history_alarm_custom", -1)
+	if err = x.SQL(customAlarmSQL, customAlarmParams...).Find(&historyAlarmList); err != nil {
+		return
+	}
+	alarmList = append(alarmList, historyAlarmList...)
+
 	// 数据去重复
 	alarmList = filterRepeatAndEmptyNameAlarm(alarmList)
 	// 按最新时间在前面
