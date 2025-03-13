@@ -599,26 +599,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if !cond.ExtOpenAlarm {
-		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 && cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0 {
-			cond.ExtOpenAlarm = true
-		} else {
-			for _, v := range cond.EndpointFilterList {
-				if v == "custom_alarm" {
-					cond.ExtOpenAlarm = true
-					break
-				}
-			}
-			for _, v := range cond.MetricFilterList {
-				if v == "custom" {
-					cond.ExtOpenAlarm = true
-					break
-				}
-			}
-		}
-	}
-
-	if cond.ExtOpenAlarm && checkContainsCustomAlarm(cond.MetricFilterList, cond.EndpointFilterList) {
+	if checkContainsCustomAlarm(cond.MetricFilterList, cond.EndpointFilterList) {
+		cond.ExtOpenAlarm = true
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
 			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 			result = append(result, v)
@@ -751,7 +733,7 @@ func checkContainsCustomAlarm(metricFilterList, endpointFilterList []string) boo
 			endpointFlag = true
 		}
 	}
-	if metricFlag && endpointFlag {
+	if metricFlag || endpointFlag {
 		return true
 	}
 	return false
