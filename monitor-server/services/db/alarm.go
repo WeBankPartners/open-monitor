@@ -1785,10 +1785,9 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if param.Page == nil {
 		param.Page = &m.PageInfo{}
 	}
-	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
-	customQueryParam.Enable = true
-	if param.Query != "" {
-		customQueryParam.Query = param.Query
+	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all", Query: param.Query}
+	if len(param.AlarmName) > 0 {
+		customQueryParam.AlterTitleList = append(customQueryParam.AlterTitleList, param.AlarmName...)
 	}
 	customQueryParam.Enable = checkContainsCustomAlarm(param.Metric, param.Endpoint)
 	err, result = QueryAlarmBySql(sql, params, customQueryParam, param.Page)
