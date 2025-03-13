@@ -4,9 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/go-common-lib/guid"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"go.uber.org/zap"
 
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -1341,32 +1342,16 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	if len(query) == 0 {
 		return result
 	}
-	tmpFlag := fmt.Sprintf("%d_%s_%s_%d", query[0].SubSystemId, query[0].AlertTitle, query[0].AlertIp, query[0].AlertLevel)
-	for i, v := range query {
-		if tmpFlag != fmt.Sprintf("%d_%s_%s_%d", v.SubSystemId, v.AlertTitle, v.AlertIp, v.AlertLevel) {
-			priority := "high"
-			tmpAlertLevel, _ := strconv.Atoi(query[i-1].AlertLevel)
-			if tmpAlertLevel > 4 {
-				priority = "low"
-			} else if tmpAlertLevel > 2 {
-				priority = "medium"
-			}
-			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			tmpDisplayEndpoint := "custom_alarm"
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].CreateAt, StartString: query[i-1].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId, UpdateString: query[i-1].UpdateAt.Format(m.DatetimeFormat), AlarmTotal: query[i-1].AlarmTotal})
+	for _, v := range query {
+		priority := "high"
+		tmpAlertLevel, _ := strconv.Atoi(v.AlertLevel)
+		if tmpAlertLevel > 4 {
+			priority = "low"
+		} else if tmpAlertLevel > 2 {
+			priority = "medium"
 		}
+		result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: v.Id, Endpoint: "custom_alarm", Status: "firing", Content: v.AlertInfo, Start: v.CreateAt, StartString: v.CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: v.CustomMessage, Title: v.AlertTitle, SystemId: v.SubSystemId, UpdateString: v.UpdateAt.Format(m.DatetimeFormat), AlarmTotal: v.AlarmTotal})
 	}
-	priority := "high"
-	lastIndex := len(query) - 1
-	tmpAlertLevel, _ := strconv.Atoi(query[lastIndex].AlertLevel)
-	if tmpAlertLevel > 4 {
-		priority = "low"
-	} else if tmpAlertLevel > 2 {
-		priority = "medium"
-	}
-	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	tmpDisplayEndpoint := "custom_alarm"
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].CreateAt, StartString: query[lastIndex].CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, AlarmTotal: query[lastIndex].AlarmTotal, SystemId: query[lastIndex].SubSystemId, UpdateString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat)})
 	return result
 }
 
