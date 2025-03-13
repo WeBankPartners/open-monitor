@@ -648,13 +648,13 @@ alter table alarm modify content text;
 #@v2.0.0.11-end@;
 
 #@v2.0.0.12-begin@;
-update alarm_strategy set update_time=now() where update_time='' or update_time is null;
+update alarm_strategy set update_time=now() where update_time is null;
 alter table alarm_strategy modify update_time datetime;
-update endpoint_new set update_time=now() where update_time='' or update_time is null;
+update endpoint_new set update_time=now() where update_time is null;
 alter table endpoint_new modify update_time datetime;
-update endpoint_group set update_time=now() where update_time='' or update_time is null;
+update endpoint_group set update_time=now() where update_time is null;
 alter table endpoint_group modify update_time datetime;
-update service_group set update_time=now() where update_time='' or update_time is null;
+update service_group set update_time=now() where update_time is null;
 alter table service_group modify update_time datetime;
 #@v2.0.0.12-end@;
 
