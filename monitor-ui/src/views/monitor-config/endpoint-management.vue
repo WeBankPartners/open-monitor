@@ -380,11 +380,11 @@ export default {
               key: 'alarm_name',
               width: 150,
             },
-            {
-              title: this.$t('m_tableKey_status'),
-              width: 80,
-              key: 'status'
-            },
+            // {
+            //   title: this.$t('m_tableKey_status'),
+            //   width: 80,
+            //   key: 'status'
+            // },
             {
               title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
@@ -452,17 +452,25 @@ export default {
               width: 120,
             },
             {
-              title: this.$t('m_tableKey_end'),
-              key: 'end_string',
-              width: 120,
-              render: (h, params) => {
-                let res = params.row.end_string
-                if (params.row.end_string === '0001-01-01 00:00:00') {
-                  res = '-'
-                }
-                return h('span', res)
-              }
+              title: this.$t('m_frequency'),
+              key: 'alarm_total',
+              width: 80,
+              render: (h, params) => (
+                <div>{params.row.alarm_total}</div>
+              )
             },
+            // {
+            //   title: this.$t('m_tableKey_end') + 'wee',
+            //   key: 'end_string',
+            //   width: 120,
+            //   render: (h, params) => {
+            //     let res = params.row.end_string
+            //     if (params.row.end_string === '0001-01-01 00:00:00') {
+            //       res = '-'
+            //     }
+            //     return h('span', res)
+            //   }
+            // },
             {
               title: this.$t('m_remark'),
               key: 'custom_message',

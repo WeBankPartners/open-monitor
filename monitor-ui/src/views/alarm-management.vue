@@ -90,7 +90,11 @@
           >
             <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
-          <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
+          <SearchBadge
+            :tempFilters="JSON.stringify(filters)"
+            :isRealTime="isRealTimeAlarm"
+            @filtersChange='onFiltersChange'
+          />
           <Poptip
             confirm
             :title="$t('m_confirm_close_alarm')"
