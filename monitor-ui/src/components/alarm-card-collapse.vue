@@ -481,7 +481,7 @@ li {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
+    white-space: pre-wrap
   }
 }
 </style>
