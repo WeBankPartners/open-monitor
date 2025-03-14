@@ -433,6 +433,7 @@ type OpenAlarmObj struct {
 	CreateAt      time.Time `json:"create_at"`
 	CustomMessage string    `json:"custom_message"`
 	AlarmTotal    int       `json:"alarm_total"`
+	Closed        int       `json:"closed"`
 }
 
 type OpenAlarmRequest struct {

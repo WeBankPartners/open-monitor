@@ -22,11 +22,12 @@ const (
 	AlarmNotifyAutoMode   = "auto"
 	AlarmNotifyManualMode = "manual"
 
-	AuthTokenHeader    = "Authorization"
-	ContextApiCode     = "apiCode"
-	HomePage           = "HOME_PAGE"
-	HEADER_BUSINESS_ID = "BusinessId" // 业务流水号
-	HEADER_REQUEST_ID  = "RequestId"  // 交易流水号
+	AuthTokenHeader        = "Authorization"
+	ContextApiCode         = "apiCode"
+	HomePage               = "HOME_PAGE"
+	HEADER_BUSINESS_ID     = "BusinessId" // 业务流水号
+	HEADER_REQUEST_ID      = "RequestId"  // 交易流水号
+	DefaultOptionsPageSize = 20
 )
 
 var (

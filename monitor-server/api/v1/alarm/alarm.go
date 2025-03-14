@@ -471,13 +471,6 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		MetricList:    []string{},
 		AlarmNameList: []string{},
 	}
-	// 查询历史,从 history_alarm_custom查询
-	var count int64
-	table := "alarm_custom"
-	if param.Status != "firing" {
-		table = "history_alarm_custom"
-	}
-	count = db.GetCustomAlarmCount(table)
 	// 查询全量
 	if strings.TrimSpace(param.AlarmName) != "" {
 		if data.AlarmNameList, err = db.GetAlarmNameList(param.Status, param.AlarmName); err != nil {
@@ -492,12 +485,10 @@ func GetProblemAlarmOptions(c *gin.Context) {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}
-		if count > 0 {
-			if len(data.EndpointList) >= 20 {
-				data.EndpointList[19] = customEndpoint
-			} else {
-				data.EndpointList = append(data.EndpointList, customEndpoint)
-			}
+		if len(data.EndpointList) >= m.DefaultOptionsPageSize {
+			data.EndpointList[m.DefaultOptionsPageSize-1] = customEndpoint
+		} else {
+			data.EndpointList = append(data.EndpointList, customEndpoint)
 		}
 		mid.ReturnSuccessData(c, data)
 		return
@@ -507,12 +498,10 @@ func GetProblemAlarmOptions(c *gin.Context) {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}
-		if count > 0 {
-			if len(data.MetricList) >= 20 {
-				data.MetricList[19] = customMetric
-			} else {
-				data.MetricList = append(data.MetricList, customMetric)
-			}
+		if len(data.MetricList) >= m.DefaultOptionsPageSize {
+			data.MetricList[m.DefaultOptionsPageSize-1] = customMetric
+		} else {
+			data.MetricList = append(data.MetricList, customMetric)
 		}
 		mid.ReturnSuccessData(c, data)
 		return
@@ -526,19 +515,15 @@ func GetProblemAlarmOptions(c *gin.Context) {
 	if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
 		mid.ReturnServerHandleError(c, err)
 	}
-	if count > 0 {
-		if len(data.EndpointList) >= 20 {
-			data.EndpointList[19] = customEndpoint
-		} else {
-			data.EndpointList = append(data.EndpointList, customEndpoint)
-		}
+	if len(data.EndpointList) >= m.DefaultOptionsPageSize {
+		data.EndpointList[m.DefaultOptionsPageSize-1] = customEndpoint
+	} else {
+		data.EndpointList = append(data.EndpointList, customEndpoint)
 	}
-	if count > 0 {
-		if len(data.MetricList) >= 20 {
-			data.MetricList[19] = customMetric
-		} else {
-			data.MetricList = append(data.MetricList, customMetric)
-		}
+	if len(data.MetricList) >= m.DefaultOptionsPageSize {
+		data.MetricList[m.DefaultOptionsPageSize-1] = customMetric
+	} else {
+		data.MetricList = append(data.MetricList, customMetric)
 	}
 	mid.ReturnSuccessData(c, data)
 }
