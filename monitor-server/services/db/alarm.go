@@ -1344,13 +1344,17 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	}
 	for _, v := range query {
 		priority := "high"
+		status := "closed"
 		tmpAlertLevel, _ := strconv.Atoi(v.AlertLevel)
 		if tmpAlertLevel > 4 {
 			priority = "low"
 		} else if tmpAlertLevel > 2 {
 			priority = "medium"
 		}
-		result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: v.Id, Endpoint: "custom_alarm", Status: "firing", Content: v.AlertInfo, Start: v.CreateAt, StartString: v.CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: v.CustomMessage, Title: v.AlertTitle, SystemId: v.SubSystemId, UpdateString: v.UpdateAt.Format(m.DatetimeFormat), AlarmTotal: v.AlarmTotal})
+		if v.Closed == 0 {
+			status = "firing"
+		}
+		result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: v.Id, Endpoint: "custom_alarm", Status: status, Content: v.AlertInfo, Start: v.CreateAt, StartString: v.CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: v.CustomMessage, Title: v.AlertTitle, SystemId: v.SubSystemId, UpdateString: v.UpdateAt.Format(m.DatetimeFormat), AlarmTotal: v.AlarmTotal})
 	}
 	return result
 }
@@ -2133,7 +2137,7 @@ func GetCustomAlarmCount(table string) int64 {
 }
 
 func GetAlarmNameList(status, alarmName string) (list []string, err error) {
-	var alarmList, customAlarmList, historyAlarmList []*m.SimpleAlarm
+	var alarmList, customAlarmList []*m.SimpleAlarm
 	var closed = 1
 	if status == "firing" {
 		closed = 0
@@ -2167,15 +2171,6 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 		return
 	}
 
-	alarmList = append(alarmList, customAlarmList...)
-
-	// 添加历史告警
-	customAlarmSQL = strings.Replace(customAlarmSQL, "FROM alarm_custom", "FROM history_alarm_custom", -1)
-	if err = x.SQL(customAlarmSQL, customAlarmParams...).Find(&historyAlarmList); err != nil {
-		return
-	}
-	alarmList = append(alarmList, historyAlarmList...)
-
 	// 数据去重复
 	alarmList = filterRepeatAndEmptyNameAlarm(alarmList)
 	// 按最新时间在前面
@@ -2187,7 +2182,7 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 		}
 		list = append(list, alarm.AlarmName)
 		// 最长20条数据
-		if len(list) >= 20 {
+		if len(list) >= m.DefaultOptionsPageSize {
 			break
 		}
 	}
