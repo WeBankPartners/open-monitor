@@ -252,7 +252,7 @@ export default ({
       this.limitFiltersLength()
       this.processOptions()
       this.onFilterConditionChange()
-    }, 400),
+    }, 800),
     onFilterConditionChange() {
       this.$emit('filtersChange', cloneDeep(this.filters))
     },
