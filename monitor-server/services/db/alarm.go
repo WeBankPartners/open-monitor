@@ -1307,13 +1307,12 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
 	var sql string
-	result := []*m.AlarmProblemQuery{}
-	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
+	var result []*m.AlarmProblemQuery
 	if param.Status == "problem" {
 		sql = "SELECT * FROM alarm_custom WHERE closed=0 "
 	} else {
 		if param.Start != "" && param.End != "" {
-			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
+			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE create_at<='%s' AND create_at>'%s' ", param.End, param.Start)
 		}
 	}
 	levelFilterSql := getLevelSQL(convertString2Map(param.Level))
@@ -1335,6 +1334,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	// 需要合并 history_alarm_custom 数据
 	if param.Start != "" && param.End != "" && param.Status != "problem" {
 		var historyQuery []*m.OpenAlarmObj
+		// 这个SQL 依赖 前面sql,字段大小写不要改了
 		sql = strings.Replace(sql, "FROM alarm_custom", "FROM history_alarm_custom", -1)
 		x.SQL(sql).Find(&historyQuery)
 		query = append(query, historyQuery...)
