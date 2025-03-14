@@ -138,7 +138,7 @@ func ReturnServerHandleError(c *gin.Context, err error) {
 		if errors.As(err, &customErr) {
 			ReturnError(c, customErr, http.StatusOK)
 		} else {
-			ReturnError(c, models.GetMessageMap(c).HandleError, http.StatusOK)
+			ReturnError(c, models.GetMessageMap(c).HandleError.WithParam(err.Error()), http.StatusOK)
 		}
 		return
 	}
