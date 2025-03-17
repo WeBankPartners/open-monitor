@@ -323,6 +323,7 @@ export default {
       chartId: '',
       showChartConfig: false,
       operator: '', // edit or view
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted(){
@@ -336,13 +337,13 @@ export default {
         page: 1,
         size: 1000
       }
-      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+      this.request('GET', this.apiCenter.getUserRoleList, params, res => {
         this.userRolesOptions = this.processRolesList(res.data)
       })
-      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+      this.request('GET', this.apiCenter.getUserManageRole, {}, res => {
         this.mgmtRolesOptions = this.processRolesList(res)
       }),
-      this.request('GET', '/monitor/api/v2/dashboard/all', {}, res => {
+      this.request('GET', this.apiCenter.getDashboardAll, {}, res => {
         this.dashboardOptions = res
       })
     },
@@ -375,7 +376,7 @@ export default {
       if (params.permission === 'all') {
         params.permission = ''
       }
-      this.request('POST', '/monitor/api/v2/chart/manage/list', params, responseData => {
+      this.request('POST', this.apiCenter.getChartManageList, params, responseData => {
         this.tableData = responseData.contents || []
         this.pagination.totalRows = responseData.pageInfo.totalRows
       })
@@ -404,7 +405,7 @@ export default {
         mgmtRoles,
         useRoles
       }
-      this.request('POST', '/monitor/api/v2/chart/custom/permission', params, () => {
+      this.request('POST', this.apiCenter.changeChartCustomPermission, params, () => {
         this.resetPaginationConfig()
         this.getChartList()
       })
@@ -417,7 +418,7 @@ export default {
       this.isShowWarning = true
     },
     onDeleteConfirm() {
-      this.request('DELETE', '/monitor/api/v2/chart/custom', {
+      this.request('DELETE', this.apiCenter.chartInfo, {
         chart_id: this.chartId
       }, () => {
         this.resetPaginationConfig()

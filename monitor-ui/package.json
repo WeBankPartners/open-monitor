@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "start": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "node node-api-config.js && vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "plugin": "vue-cli-service build --mode plugin"
+    "plugin": "node node-api-config.js && vue-cli-service build --mode plugin"
   },
   "husky": {
     "hooks": {

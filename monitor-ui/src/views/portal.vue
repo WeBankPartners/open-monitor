@@ -36,7 +36,9 @@ export default {
     return {
       endpoint: '',
       endpointObject: {},
-      endpointList: []
+      endpointList: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   watch: {
@@ -62,7 +64,7 @@ export default {
         page: 1,
         size: 1000
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, responseData => {
+      this.request('GET', this.apiCenter.resourceSearch.api, params, responseData => {
         this.endpointList = responseData
       })
     },

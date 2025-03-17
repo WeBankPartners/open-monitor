@@ -25,6 +25,7 @@
               v-model="filters.priority"
               placement='bottom'
               multiple
+              transfer
               filterable
               :placeholder="$t('m_please_select') + $t('m_alarm_level')"
               @on-change="onFilterChange"
@@ -41,6 +42,7 @@
               v-model="filters.alarm_name"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_alarmName')"
               @on-change="onFilterChange"
@@ -64,6 +66,7 @@
               v-model="filters.metric"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_metric')"
               @on-change="onFilterChange"
@@ -87,6 +90,7 @@
               v-model="filters.endpoint"
               multiple
               filterable
+              transfer
               placement='bottom'
               :placeholder="$t('m_please_select') + $t('m_endpoint')"
               @on-change="onFilterChange"
@@ -134,6 +138,10 @@ const initFilterParams = {
 
 export default ({
   props: {
+    isRealTime: { // 是否是处于实时告警装填，默认不是
+      type: Boolean,
+      default: false
+    },
     tempFilters: String,
   },
   watch: {
@@ -152,6 +160,7 @@ export default ({
       filtersEndpointOptions: [],
       filtersMetricOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
       filters: cloneDeep(initFilters),
       filtersPriorityOptions: [
         {
@@ -186,7 +195,6 @@ export default ({
     document.querySelector('.drop-down-content.ivu-form.ivu-form-label-right').addEventListener('click', e => e.stopPropagation())
     document.querySelector('.badge-content').addEventListener('click', () => {
       this.filterParams = cloneDeep(initFilterParams)
-      this.filterParams.status = this.$route.path === '/alarmManagement' ? 'firing' : ''
       this.getFilterAllOptions()
     })
   },
@@ -195,8 +203,8 @@ export default ({
       this.getFilterAllOptions()
     }, 800),
     getFilterAllOptions() {
-      const api = '/monitor/api/v1/alarm/problem/options'
-      this.request('POST', api, this.filterParams, res => {
+      this.filterParams.status = this.isRealTime ? 'firing' : ''
+      this.request('POST', this.apiCenter.alarmProblemOptions, this.filterParams, res => {
         this.filtersAlarmNameOptions = res.alarmNameList
         this.filtersEndpointOptions = res.endpointList
         this.filtersMetricOptions = res.metricList
@@ -244,7 +252,7 @@ export default ({
       this.limitFiltersLength()
       this.processOptions()
       this.onFilterConditionChange()
-    }, 400),
+    }, 800),
     onFilterConditionChange() {
       this.$emit('filtersChange', cloneDeep(this.filters))
     },
@@ -266,6 +274,7 @@ export default ({
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 60px;
   font-size: 14px;
   color: #5981ef;
   background-color: #f8f8f8;

@@ -16,8 +16,29 @@
                 <h5 class="d-inline-block"> {{panalName}}</h5>
                 <Icon class="panal-edit-icon" color="#5384FF"  @click="isEditPanal = true" v-if="isEditStatus" type="md-create" ></Icon>
               </template>
+              <span class="drop-icon-region" @click="onIconRegionClick">
+                <Icon v-if="isActionRegionExpand" color="#5384FF" :size="22" type="ios-arrow-dropup" />
+                <Icon v-else :size="22" color="#5384FF" type="ios-arrow-dropdown" />
+              </span>
+            </div>
+            <div class="header-tools">
+              <template v-if="isEditStatus">
+                <Button class="btn-upload" @click.stop="exportPanel">
+                  <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
+                  {{$t('m_export')}}
+                </Button>
+                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
+              </template>
+              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
+                {{$t('m_alert')}}
+              </Button>
             </div>
           </div>
+        </header>
+
+        <!-- 分组 -->
+        <div class="all-action-region" :style="{maxHeight: isActionRegionExpand ? '190px' : '0px', marginTop: pageType === 'dashboard' ? '35px' : '0px'}">
+
           <div class="search-container">
             <div>
               <div class="search-zone">
@@ -46,24 +67,7 @@
                 </Select>
               </div>
             </div>
-
-            <div class="header-tools">
-              <template v-if="isEditStatus">
-                <Button class="btn-upload" @click.stop="exportPanel">
-                  <img src="@/styles/icon/DownloadOutlined.png" class="upload-icon" />
-                  {{$t('m_export')}}
-                </Button>
-                <Button type="primary" @click="savePanelInfo">{{$t('m_save')}}</Button>
-              </template>
-              <Button type="warning" @click="showAlarm ? closeAlarmDisplay() : openAlarmDisplay()">
-                {{$t('m_alert')}}
-              </Button>
-            </div>
           </div>
-        </header>
-
-        <!-- 分组 -->
-        <div>
           <div class="radio-group">
             <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
             <div class='group-region'>
@@ -103,10 +107,11 @@
             </div>
           </div>
 
-          <div class="ml-2 mt-3 mb-3">
+          <div class="ml-2 mt-2 mb-2">
             <span class="params-title mr-3">{{$t('m_automatic_layout')}}：</span>
             <Poptip
               confirm
+              transfer
               popper-class='chart-layout-poptip'
               :title="$t('m_layout_change_tips')"
               @on-ok="onLayoutPopTipConfirm"
@@ -126,6 +131,7 @@
               trigger="click"
               v-for="(item, index) in allAddChartOptions"
               :key="index"
+              transfer
               class="chart-option-menu"
               transfer-class-name='filter-chart-layer'
               @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
@@ -497,7 +503,6 @@ export default {
           }
         }
       ],
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       lineTypeOption: {
         twoYaxes: 2,
         line: 1,
@@ -554,7 +559,10 @@ export default {
       isLineSelectModalShow: false,
       isEmpty,
       scrollRefresh: false,
-      hasNotRequestStatus: true
+      hasNotRequestStatus: true,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
+      isActionRegionExpand: true
     }
   },
   computed: {
@@ -583,7 +591,7 @@ export default {
   },
   methods: {
     getPannelList(activeGroup=this.activeGroup) {
-      this.request('GET', '/monitor/api/v2/dashboard/custom', {
+      this.request('GET', this.apiCenter.template.deleteV2, {
         id: this.pannelId
       }, res => {
         if (isEmpty(res)) {
@@ -627,7 +635,7 @@ export default {
         pageSize: 10000,
         startIndex: 0
       }
-      this.request('POST', '/monitor/api/v2/dashboard/custom/list', dashboardParams, res => {
+      this.request('POST', this.apiCenter.template.listV2, dashboardParams, res => {
         this.allDashBoardList = res.contents
       }, {isNeedloading: false})
 
@@ -636,7 +644,7 @@ export default {
         dashboardId: this.selectedDashBoardId,
         chartName: this.filterChartName
       }
-      this.request('POST', '/monitor/api/v2/chart/shared/list', params, res => {
+      this.request('POST', this.apiCenter.chartSharedList, params, res => {
         this.allChartFilteredList = this.processChartOptions(res)
       }, {isNeedloading: false})
     },
@@ -657,6 +665,7 @@ export default {
       setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
         this.refreshNow = !this.refreshNow
+        this.calculateGridWindowHeight()
       }, 300)
     },
     closeAlarmDisplay() {
@@ -838,7 +847,7 @@ export default {
       remove(this.allPageLayoutData, {id: this.deleteConfirm.id})
       this.filterLayoutData()
       const params = this.processPannelParams()
-      await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params)
+      await this.request('PUT', this.apiCenter.template.deleteV2, params)
       this.getPannelList()
       this.getAllChartOptionList()
     },
@@ -892,7 +901,7 @@ export default {
           this.saveAuthType = 'board'
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions)
         } else {
-          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+          this.request('PUT', this.apiCenter.template.deleteV2, this.processPannelParams(), () => {
             this.refreshPannelNow()
             resolve()
           })
@@ -1076,7 +1085,7 @@ export default {
             h: 7,
           }
         }
-        this.setChartConfigId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom', addChartParams)
+        this.setChartConfigId = await this.request('POST', this.apiCenter.chartInfo, addChartParams)
         const item = {
           x: 0,
           y: 0,
@@ -1096,7 +1105,7 @@ export default {
         }
         this.layoutData.unshift(item)
         setTimeout(() => {
-          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+          this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
             this.getPannelList(this.activeGroup)
             this.showChartConfig = true
           })
@@ -1120,7 +1129,7 @@ export default {
               h: 7,
             }
           }
-          chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams)
+          chartId = await this.request('POST', this.apiCenter.chartCustomCopy, copyParams)
           const item = {
             x: 0,
             y: 0,
@@ -1143,7 +1152,7 @@ export default {
           this.initLayoutTypeByWidth(this.layoutData)
         }
         setTimeout(async () => {
-          await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams())
+          await this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams())
           this.getPannelList(this.activeGroup)
           this.setChartConfigId = chartId
           if (type === 'copy') {
@@ -1217,13 +1226,13 @@ export default {
         refreshWeek: this.viewCondition.autoRefresh
       }
     },
-    requestReturnPromise(method, api, params, isNeedloading = true) {
-      return new Promise(resolve => {
-        this.request(method, api, params, res => {
-          resolve(res)
-        }, { isNeedloading })
-      })
-    },
+    // requestReturnPromise(method, api, params, isNeedloading = true) {
+    //   return new Promise(resolve => {
+    //     this.request(method, api, params, res => {
+    //       resolve(res)
+    //     }, { isNeedloading })
+    //   })
+    // },
     startEditTitle(item) {
       this.initTitle = item.i
       this.editChartId = item.id
@@ -1239,7 +1248,7 @@ export default {
       if (isDuplicateName) {
         return
       }
-      await this.requestReturnPromise('PUT', '/monitor/api/v2/chart/custom/name', {
+      await this.request('PUT', this.apiCenter.chartCustomName, {
         chartId: item.id,
         name: item.i
       })
@@ -1260,7 +1269,7 @@ export default {
         if (isPublic) {
           params.public = 1 // 是否存入图表库，1表示是
         }
-        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
+        this.request('GET', this.apiCenter.chartCustomNameExist, params, res => {
           if (res) {
             this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')))
           }
@@ -1283,7 +1292,7 @@ export default {
     },
     getSingleChartAuth() {
       return new Promise(resolve => {
-        this.request('GET','/monitor/api/v2/chart/custom/permission', {
+        this.request('GET', this.apiCenter.changeChartCustomPermission, {
           chart_id: this.setChartConfigId
         }, res => {
           this.mgmtRoles = res.mgmtRoles
@@ -1297,10 +1306,10 @@ export default {
         page: 1,
         size: 1000
       }
-      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+      this.request('GET', this.apiCenter.getUserRoleList, params, res => {
         this.userRolesOptions = this.processRolesList(res.data)
       })
-      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+      this.request('GET', this.apiCenter.getUserManageRole, {}, res => {
         this.mgmtRolesOptions = this.processRolesList(res)
       })
     },
@@ -1315,8 +1324,7 @@ export default {
       }))
       return resArr
     },
-    saveChartOrDashboardAuth(mgmtRoles, useRoles) {
-      let path = ''
+    async saveChartOrDashboardAuth(mgmtRoles, useRoles) {
       const params = {
         mgmtRoles,
         useRoles
@@ -1324,25 +1332,23 @@ export default {
       if (this.saveAuthType === 'chart') {
         this.mgmtRoles = mgmtRoles
         this.useRoles = useRoles
-        path = '/monitor/api/v2/chart/custom/permission'
         params.chartId = this.setChartConfigId
+        await this.request('POST', this.apiCenter.changeChartCustomPermission, params)
       } else {
         this.boardMgmtRoles = mgmtRoles
         this.boardUseRoles = useRoles
-        path = '/monitor/api/v2/dashboard/custom/permission'
         params.id = this.pannelId
+        await this.request('POST', this.apiCenter.getDashboardCustomPermission, params)
       }
-      this.request('POST', path, params, () => {
-        this.$Message.success(this.$t('m_success'))
-        this.getPannelList()
-      })
+      this.$Message.success(this.$t('m_success'))
+      this.getPannelList()
     },
     onSingleChartGroupClear(item) {
       const singleChart = find(this.allPageLayoutData, {id: item.id})
       if (!isEmpty(singleChart)) {
         singleChart.group = ''
       }
-      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+      this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })
@@ -1394,7 +1400,7 @@ export default {
           }
         }
       }
-      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), () => {
+      this.request('PUT', this.apiCenter.dashboardCustom, this.processPannelParams(), () => {
         this.$Message.success(this.$t('m_success'))
         this.getPannelList(this.activeGroup)
       })
@@ -1626,6 +1632,22 @@ export default {
     }, 1000),
     resetHasNotRequestStatus() {
       this.hasNotRequestStatus = !this.hasNotRequestStatus
+    },
+    onIconRegionClick() {
+      this.isActionRegionExpand = !this.isActionRegionExpand
+      this.$nextTick(() => {
+        this.calculateGridWindowHeight()
+      })
+    },
+    calculateGridWindowHeight() {
+      const header = document.querySelector('.view-config-top-content')
+      const gridContent = document.querySelector('.grid-window')
+      const alarmContent = document.querySelector('.view-config-alarm')
+      const alarmListContent = document.querySelector('.alarm-list')
+      const headerHeight = header.offsetHeight
+      gridContent && (gridContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
+      alarmContent && (alarmContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
+      alarmListContent && (alarmListContent.style.height = `calc(100vh - ${headerHeight + 100 + 120}px)`)
     }
   },
   components: {
@@ -1644,6 +1666,14 @@ export default {
 </script>
 
 <style lang="less">
+.monitor-custom-view-config {
+  .custom-title-text {
+    max-width: 375px !important;
+  }
+  .ellipsis-text {
+    max-width: 400px !important;
+  }
+}
 .chart-layout-poptip {
   max-width: 350px !important;
   top: 75px !important;
@@ -1707,12 +1737,6 @@ export default {
       font-size: 18px !important
     }
   }
-  .header-tools {
-    .ivu-btn-info {
-      background-color: #aa8aea;
-      border-color: #aa8aea;
-    }
-  }
 
   .header-grid-name {
     .ivu-tooltip-rel {
@@ -1721,12 +1745,6 @@ export default {
       flex-grow: 1;
       i {
         font-size: 18px !important
-      }
-    }
-    .header-tools {
-      .ivu-btn-info {
-        background-color: #aa8aea;
-        border-color: #aa8aea;
       }
     }
   }
@@ -1743,6 +1761,17 @@ export default {
 <style scoped lang="less">
 /deep/ .ivu-form-item {
   margin-bottom: 0;
+}
+
+.all-action-region {
+  position: relative;
+  // margin-top: 18px;
+  // border: 1px solid #cfd0d3;
+}
+
+.drop-icon-region {
+  margin-left: 5px;
+  cursor: pointer;
 }
 
 .view-config-top-content {
@@ -1764,8 +1793,14 @@ export default {
   margin-bottom: 10px;
 }
 .header-name {
+  position: relative;
   font-size: 16px;
   margin-left: 15px;
+}
+.header-tools {
+  position: absolute;
+  right: 0px;
+  top: 0px;
 }
 
 .panal-edit-icon {
@@ -1775,7 +1810,7 @@ export default {
 .search-container {
   display: flex;
   justify-content: space-between;
-  margin: 8px;
+  margin: 2px 8px 2px;
   font-size: 16px;
 }
 .search-zone {
@@ -1845,7 +1880,7 @@ export default {
 }
 
 .grid-window {
-  height: ~"calc(100vh - 330px)";
+  height: ~"calc(100vh - 300px)";
   overflow: auto;
   width: 100%;
   display: inline-block;

@@ -12,7 +12,7 @@ export default {
   name: 'circle-label',
   data() {
     return {
-      L: 280
+      L: 240
     }
   },
   computed: {
@@ -24,7 +24,7 @@ export default {
       const { deg, tx, ty } = this.$attrs.data
 
       return {
-        transform: `rotate(${deg}) translate(${2 * tx * this.circleWidth}px, ${2 * ty * this.circleWidth}px)`
+        transform: `rotate(${deg}) translate(${2 * tx * this.circleWidth}px, ${ty * this.circleWidth}px)`
       }
     },
     textStyle() {
@@ -73,7 +73,7 @@ export default {
       color: #404144;
     }
     .value {
-      font-size: 36px;
+      font-size: 30px;
       font-weight: 500;
     }
   }
@@ -82,8 +82,9 @@ export default {
     border: 2px solid #6ED06D;
 
     .text {
-      margin-left: -140px;
-      margin-top: -90px;
+      margin-left: 55px;
+      // margin-top: -90px;
+      margin-top: -130px;
 
       .value {
         color: #6ED06D;
@@ -106,8 +107,10 @@ export default {
     border: 2px solid #DA4E2B;
 
     .text {
-      margin-left: 10px;
-      margin-top: 10px;
+      margin-left: -50px;
+      margin-top: 58px;
+      // margin-left: 10px;
+      // margin-top: 10px;
 
       .value {
         color: #DA4E2B;

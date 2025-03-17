@@ -172,8 +172,8 @@ func (condNotIn condNotIn) WriteTo(w Writer) error {
 			return err
 		}
 		w.Append(vals...)
-	case expr:
-		val := condNotIn.vals[0].(expr)
+	case *Expression:
+		val := condNotIn.vals[0].(*Expression)
 		if _, err := fmt.Fprintf(w, "%s NOT IN (", condNotIn.col); err != nil {
 			return err
 		}

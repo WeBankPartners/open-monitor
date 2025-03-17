@@ -518,6 +518,30 @@ const initFormData = {
   }
 }
 
+export const custom_api_enum = [
+  {
+    logKeywordMonitorById: 'delete'
+  },
+  {
+    getEndpointsByTypeByType: 'get'
+  },
+  {
+    serviceGroupEendpoint: 'get'
+  },
+  {
+    logKeywordConfig: 'put'
+  },
+  {
+    logKeywordConfig: 'post'
+  },
+  {
+    serviceDbKeywordConfig: 'post',
+  },
+  {
+    serviceDbKeywordConfig: 'put',
+  }
+]
+
 export default {
   name: '',
   props: {
@@ -821,7 +845,6 @@ export default {
       ],
       allRoles: [],
       allFlows: [],
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       callbackMode: [
         {
           label: 'm_manual',
@@ -959,7 +982,9 @@ export default {
       dataBaseGuid: '',
       logAndDataBaseAllDetail: [],
       alarmName: '',
-      actionType: ''
+      actionType: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -977,10 +1002,10 @@ export default {
   },
   methods: {
     getFlowsAndRolesOptions() {
-      this.request('GET', '/monitor/api/v2/alarm/event/callback/list', '', responseData => {
+      this.request('GET', this.apiCenter.eventCallbackList, '', responseData => {
         this.allFlows = responseData
       })
-      this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1000', '', responseData => {
+      this.request('GET', this.apiCenter.userRoleList, '', responseData => {
         this.allRoles = responseData.data.map(_ => ({
           ..._,
           value: _.id
@@ -1031,8 +1056,8 @@ export default {
         log_keyword_monitor: item.guid,
         notify: item.notify
       }
-      const api = '/monitor/api/v2/service/log_keyword/notify'
-      this.request('POST', api, params, () => {
+      // const api = '/monitor/api/v2/service/log_keyword/notify'
+      this.request('POST', this.apiCenter.logKeywordNotify, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       })
     },
@@ -1084,10 +1109,8 @@ export default {
       this.formData.notify = isEmpty(this.formData.notify) ? cloneDeep(initNotify) : this.formData.notify
     },
     delCustomMericsItem(rowData) {
-      const api = '/monitor/api/v2/service/log_keyword/log_keyword_config'
-      this.request('DELETE', api, {
-        guid: rowData.guid
-      }, () => {
+      // const api = '/monitor/api/v2/service/log_keyword/log_keyword_config'
+      this.request('DELETE', this.apiCenter.logKeywordConfig, { guid: rowData.guid}, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targetId)
       })
@@ -1099,7 +1122,7 @@ export default {
         this.getDetail(this.targetId)
       })
     },
-    okAddAndEdit() {
+    async okAddAndEdit() {
       if (!this.addAndEditModal.dataConfig.monitor_type) {
         return this.$Message.error('类型不能为空')
       }
@@ -1118,16 +1141,19 @@ export default {
         return this.$Message.error('映射不能为空')
       }
       const params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
-      const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
+      // const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
       params.service_group = this.targetId
       if (this.addAndEditModal.isAdd) {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
-      this.request(methodType, '/monitor/api/v2/service/log_keyword/log_keyword_monitor', params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.addAndEditModal.isShow = false
-        this.getDetail(this.targetId)
-      }, {isNeedloading: false})
+      if (this.addAndEditModal.isAdd) {
+        await this.request('POST', this.apiCenter.serviceLogKeywordMonitor, params)
+      } else {
+        await this.request('PUT', this.apiCenter.serviceLogKeywordMonitor, params)
+      }
+      this.$Message.success(this.$t('m_tips_success'))
+      this.addAndEditModal.isShow = false
+      this.getDetail(this.targetId)
     },
     cancelAddAndEdit() {
       this.addAndEditModal.isShow = false
@@ -1142,11 +1168,11 @@ export default {
     async getEndpoint(val, type) {
       this.addAndEditModal.dataConfig.endpoint_rel = []
       await this.getDefaultConfig(val, type)
-      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + (this.isEditState ? this.targetId : this.service_group) + '/endpoint/' + type
+      const sourceApi = this.apiCenter.getEndpointsByType + '/' + (this.isEditState ? this.targetId : this.service_group) + '/endpoint/' + type
       this.request('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData
       }, {isNeedloading: false})
-      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + (this.isEditState ? this.targetId : this.service_group) + '/endpoint/' + val
+      const targetApi = this.apiCenter.getEndpointsByType + '/' + (this.isEditState ? this.targetId : this.service_group) + '/endpoint/' + val
 
       this.request('GET', targetApi, '', responseData => {
         this.targetEndpoints = responseData
@@ -1238,7 +1264,7 @@ export default {
     },
     getLogKeyWordDetail() {
       return new Promise(resolve => {
-        this.request('GET', '/monitor/api/v2/service/log_keyword/list', {
+        this.request('GET', this.apiCenter.getLogKeywordList, {
           type: this.keywordType,
           guid: this.targetId,
           alarmName: this.alarmName
@@ -1257,7 +1283,7 @@ export default {
     },
     getDataBaseDetail() {
       return new Promise(resolve => {
-        this.request('GET', '/monitor/api/v2/service/db_keyword/list', {
+        this.request('GET', this.apiCenter.getDbKeywordList, {
           type: this.keywordType,
           guid: this.targetId,
           alarmName: this.alarmName
@@ -1311,8 +1337,8 @@ export default {
       this.isTableChangeFormShow = true
     },
     deleteDataBaseItem(rowData) {
-      const api = '/monitor/api/v2/service/db_keyword/db_keyword_config'
-      this.request('DELETE', api, {
+      // const api = '/monitor/api/v2/service/db_keyword/db_keyword_config'
+      this.request('DELETE', this.apiCenter.serviceDbKeywordConfig, {
         guid: rowData.guid
       }, () => {
         this.$Message.success(this.$t('m_tips_success'))
@@ -1377,7 +1403,7 @@ export default {
           if (!this.isAddState) { // 日志编辑
             method = 'PUT'
           }
-          this.request(method, '/monitor/api/v2/service/log_keyword/log_keyword_config', params, async () => {
+          this.request(method, this.apiCenter.logKeywordConfig, params, async () => {
             this.$Message.success(this.$t('m_tips_success'))
             this.isTableChangeFormShow = false
             this.getDetail(this.targetId)
@@ -1389,7 +1415,7 @@ export default {
           if (isEmpty(params.endpoint_rel) || isEmpty(params.endpoint_rel[0].target_endpoint) || isEmpty(params.endpoint_rel[0].source_endpoint)) {
             return this.$Message.error(this.$t('m_database_map') + this.$t('m_cannot_be_empty'))
           }
-          this.request(method, '/monitor/api/v2/service/db_keyword/db_keyword_config', params, async () => {
+          this.request(method, this.apiCenter.serviceDbKeywordConfig, params, async () => {
             this.$Message.success(this.$t('m_tips_success'))
             this.isTableChangeFormShow = false
             this.getDetail(this.targetId)

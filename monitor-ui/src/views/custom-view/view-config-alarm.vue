@@ -1,17 +1,18 @@
 <template>
   <div class="alarm-all-content">
     <div class='alarm-header'>
-      <section style="margin: 10px 2px 2px" class="c-dark-exclude-color">
-        <template v-for="(filterItem, filterIndex) in filtersForShow">
-          <Tag color="success" type="border" closable @on-close="clearFiltersForShow" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-        </template>
-      </section>
-      <div class="alarm-total">
-        <Button type="success" @click="addParams('low')" size="small"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Button>
-        <Button type="warning" @click="addParams('medium')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
-        <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
-        <div style="float: right;">
-          <span style="font-size: 14px;vertical-align: bottom;">{{$t('m_audio_prompt')}}：</span>
+      <div style="display: flex; margin: 10px 2px">
+        <div style="margin-right: 10px">
+          <span class="switch-label">{{$t('m_expand_alert')}}：</span>
+          <i-switch
+            size="large"
+            v-model="isExpandAlert"
+            style="vertical-align: bottom;"
+          >
+          </i-switch>
+        </div>
+        <div>
+          <span class="switch-label">{{$t('m_audio_prompt')}}：</span>
           <i-switch size="large" @on-change="alertSoundChange">
             <span slot="true">ON</span>
             <span slot="false">OFF</span>
@@ -20,14 +21,50 @@
           <AlertSoundTrigger ref="alertSoundTriggerRef" :timeInterval="autoRefresh" ></AlertSoundTrigger>
         </div>
       </div>
+      <!-- <section style="margin: 10px 2px 2px" class="c-dark-exclude-color">
+        <template v-for="(filterItem, filterIndex) in filtersForShow">
+          <Tag color="success" type="border" closable @on-close="clearFiltersForShow" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+        </template>
+      </section> -->
+      <div class="alarm-total">
+        <div>
+          <Button type="success" @click="addParams('low')" size="small"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Button>
+          <Button type="warning" @click="addParams('medium')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
+          <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
+        </div>
+        <div style="display: flex; margin-right: 15px">
+          <Select
+            v-model="sortingRule"
+            @on-change="onSortingRuleChange"
+            style="margin-right: 10px; width: 180px"
+            :placeholder="$t('m_sorting_rules')"
+          >
+            <Option v-for="item in sortingRuleOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          </Select>
+          <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
+        </div>
+      </div>
     </div>
     <div style='border-bottom: 1px solid #fff'></div>
     <div class="alarm-list">
       <section class="alarm-card-container">
-        <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true" :hideFilter="true"></alarm-card>
+        <alarm-card-collapse
+          ref="alarmCollapseContent"
+          :collapseData="resultData"
+          :isCollapseExpandAll="isExpandAlert"
+          @openRemarkModal="remarkModal"
+        >
+        </alarm-card-collapse>
+        <!-- <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true" :hideFilter="true"></alarm-card> -->
       </section>
       <div class='alarm-pagination'>
-        <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-sizer show-total />
+        <Page
+          :total="paginationInfo.total"
+          :page-size="paginationInfo.pageSize"
+          @on-change="pageIndexChange"
+          @on-page-size-change="pageSizeChange"
+          show-sizer show-total
+        />
       </div>
     </div>
     <div class='last-block'></div>
@@ -60,13 +97,16 @@
 </template>
 
 <script>
-import AlarmCard from '@/components/alarm-card.vue'
+import {cloneDeep, isEmpty} from 'lodash'
 import AlertSoundTrigger from '@/components/alert-sound-trigger.vue'
+import SearchBadge from '@/components/search-badge.vue'
+import AlarmCardCollapse from '@/components/alarm-card-collapse.vue'
 export default {
   name: '',
   components: {
-    AlarmCard,
-    AlertSoundTrigger
+    AlertSoundTrigger,
+    SearchBadge,
+    AlarmCardCollapse
   },
   data() {
     return {
@@ -86,6 +126,7 @@ export default {
           is_custom: false
         }
       },
+      filters: {},
       filtersForShow: [], // 缓存级别过滤
       cacheParams: {
         id: '',
@@ -94,9 +135,23 @@ export default {
       paginationInfo: {
         total: 0,
         startIndex: 1,
-        pageSize: 10
+        pageSize: 20
       },
-      autoRefresh: 0 // 保存刷新频率供告警列表使用
+      autoRefresh: 0, // 保存刷新频率供告警列表使用
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
+      isExpandAlert: false,
+      sortingRule: 'firstTime',
+      sortingRuleOptions: [
+        {
+          label: '【' + this.$t('m_reverse') + '】' + this.$t('m_first_time_occurrence'),
+          value: 'firstTime'
+        },
+        {
+          label: '【' + this.$t('m_reverse') + '】' + this.$t('m_duration_time'),
+          value: 'duration'
+        }
+      ],
     }
   },
   mounted() {
@@ -133,17 +188,38 @@ export default {
       this.getAlarmdata(id)
       if (viewCondition.autoRefresh && viewCondition.autoRefresh > 0) {
         this.interval = setInterval(() => {
-          this.getAlarmdata(id)
+          this.getAlarmdata(id, true)
         }, (viewCondition.autoRefresh || 10) * 1000)
       }
     },
-    getAlarmdata(id) {
+    processParamsByFilter(params) {
+      const filters = cloneDeep(this.filters)
+      const endpointList = []
+      !isEmpty(filters.endpoint) && filters.endpoint.forEach(val => {
+        if (val.indexOf('$*$') > -1) {
+          endpointList.push(val.split('$*$')[1])
+        } else {
+          endpointList.push(val)
+        }
+      })
+      filters.endpoint = endpointList
+      const keys = Object.keys(filters)
+      for (let i = 0; i< keys.length; i++) {
+        params[keys[i]] = filters[keys[i]]
+      }
+      params.sorting = {
+        asc: this.sortingRule === 'duration',
+        field: 'start'
+      }
+    },
+    getAlarmdata(id = this.cacheParams.id, isInterval = false) {
       const params = {
         customDashboardId: id,
         page: this.paginationInfo,
-        priority: this.filtersForShow.length === 1 ? [this.filtersForShow[0].value] : undefined
+        // priority: this.filtersForShow.length === 1 ? [this.filtersForShow[0].value] : undefined
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, responseData => {
+      this.processParamsByFilter(params)
+      this.request('POST', this.apiCenter.alarmProblemList, params, responseData => {
         this.paginationInfo.total = responseData.page.totalRows
         this.paginationInfo.startIndex = responseData.page.startIndex
         this.paginationInfo.pageSize = responseData.page.pageSize
@@ -151,6 +227,14 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
+
+        if (!isInterval) {
+          if (this.isExpandAlert) {
+            this.$refs.alarmCollapseContent.expandAllCollapse()
+          } else {
+            this.$refs.alarmCollapseContent.closeAllCollapse()
+          }
+        }
       }, {isNeedloading: false})
     },
     addParams(type) {
@@ -158,6 +242,15 @@ export default {
         key: 'priority',
         value: type
       }]
+      this.filters.priority = this.filters.priority || []
+      const singleArr = this.filters.priority
+      if (singleArr.includes(type)) {
+        singleArr.splice(singleArr.indexOf(type), 1)
+      } else {
+        singleArr.push(type)
+      }
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = 20
       this.getAlarmdata(this.cacheParams.id)
     },
     clearFiltersForShow() {
@@ -177,7 +270,7 @@ export default {
       const params = {
         id: item.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+      this.request('POST',this.apiCenter.startNotify, params, () => {
         this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
@@ -199,7 +292,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.request('POST', this.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
       })
@@ -213,7 +306,7 @@ export default {
       this.showRemarkModal = true
     },
     remarkAlarm() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
+      this.request('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         this.showRemarkModal = false
@@ -222,12 +315,22 @@ export default {
     cancelRemark() {
       this.showRemarkModal = false
     },
+    onFiltersChange(filters) {
+      this.filters = filters
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = 20
+      this.getAlarmdata(this.cacheParams.id)
+    },
+    onSortingRuleChange() {
+      this.getAlarmdata()
+    }
   }
 }
 </script>
 
 <style scoped lang="less">
 .alarm-all-content {
+  height: 100%;
   position: relative;
   .alarm-header {
     position: absolute;
@@ -235,6 +338,10 @@ export default {
     left: 0;
     min-width: 100%;
     // padding-bottom: 30px;
+    .switch-label {
+      font-size: 14px;
+      vertical-align: bottom;
+    }
   }
   .alarm-pagination {
     position: absolute;
@@ -269,13 +376,15 @@ label {
   text-align: right;
 }
 .alarm-total {
-  // float: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 18px;
-  margin-bottom: 8px;
 }
 .alarm-list {
-  margin-top: 74px;
-  height: ~"calc(100vh - 445px)";
+  margin-top: 76px;
+  height: 75%;
+  // height: ~"calc(100vh - 445px)";
   width: 700px;
   overflow-y: auto;
 }

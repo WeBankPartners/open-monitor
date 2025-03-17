@@ -4,9 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/go-common-lib/guid"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"go.uber.org/zap"
 
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -431,7 +432,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
+func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -517,6 +518,8 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
+		v.UpdateString = v.StartString
+		v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 		if v.AlarmName == "" {
 			v.AlarmName = v.Content
 		}
@@ -597,37 +600,41 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if !cond.ExtOpenAlarm {
-		if cond.AlarmTable.Endpoint == "" && len(cond.EndpointFilterList) == 0 && cond.AlarmTable.SMetric == "" && len(cond.MetricFilterList) == 0 {
-			cond.ExtOpenAlarm = true
-		} else {
-			for _, v := range cond.EndpointFilterList {
-				if v == "custom_alarm" {
-					cond.ExtOpenAlarm = true
-					break
-				}
-			}
-			for _, v := range cond.MetricFilterList {
-				if v == "custom" {
-					cond.ExtOpenAlarm = true
-					break
-				}
-			}
-		}
-	}
-	if cond.ExtOpenAlarm && len(cond.MetricFilterList) == 0 && len(cond.EndpointFilterList) == 0 {
+	if checkContainsCustomAlarm(cond.MetricFilterList, cond.EndpointFilterList) {
+		cond.ExtOpenAlarm = true
 		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: cond.PriorityList, AlterTitleList: cond.AlarmNameFilterList, Query: cond.Query}) {
+			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+			if len(v.AlarmMetricList) == 0 {
+				v.AlarmMetricList = []string{"custom"}
+			}
 			result = append(result, v)
 		}
 	}
-	//}
-	var sortResult m.AlarmProblemList
-	sortResult = result
-	if len(result) > 1 {
-		sort.Sort(sortResult)
-	}
-	if len(result) == 0 {
-		sortResult = []*m.AlarmProblemQuery{}
+	var sortResult []*m.AlarmProblemQuery
+	if len(result) >= 1 {
+		sortResult = result
+		if cond.Sorting == nil {
+			cond.Sorting = &m.QueryRequestSorting{Field: "start", Asc: false}
+		}
+		sort.SliceStable(result, func(i, j int) bool {
+			switch cond.Sorting.Field {
+			case "start":
+				if cond.Sorting.Asc {
+					return result[i].Start.Before(result[j].Start)
+				} else {
+					return result[i].Start.After(result[j].Start)
+				}
+			case "s_last":
+				if cond.Sorting.Asc {
+					return result[i].SLast < result[j].SLast
+				} else {
+					return result[i].SLast > result[j].SLast
+				}
+			// 可以添加更多的字段比较逻辑
+			default:
+			}
+			return result[i].Start.After(result[j].Start)
+		})
 	}
 
 	if len(notifyIdList) > 0 {
@@ -713,6 +720,27 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, m.AlarmProblemList) {
 		}
 	}
 	return err, sortResult
+}
+
+func checkContainsCustomAlarm(metricFilterList, endpointFilterList []string) bool {
+	var metricFlag, endpointFlag bool
+	if len(metricFilterList) == 0 && len(endpointFilterList) == 0 {
+		return true
+	}
+	for _, metricFilter := range metricFilterList {
+		if metricFilter == "custom" {
+			metricFlag = true
+		}
+	}
+	for _, endpointFilter := range endpointFilterList {
+		if endpointFilter == "custom_alarm" {
+			endpointFlag = true
+		}
+	}
+	if metricFlag || endpointFlag {
+		return true
+	}
+	return false
 }
 
 func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
@@ -1212,8 +1240,9 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			v.AlertInfo = v.AlertInfo[:1024]
 		}
 		var customAlarmId int
-		var query []*m.OpenAlarmObj
-		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
+		var query []*m.AlarmCustomTable
+		//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0 ", v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Find(&query)
 		if v.AlertLevel == "0" {
 			if len(query) > 0 {
 				tmpIds := ""
@@ -1232,6 +1261,13 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			}
 		} else {
 			if len(query) > 0 {
+				// 由于存在历史重复数据,没法用 ON DUPLICATE KEY UPDATE
+				for _, vv := range query {
+					_, cErr := x.Exec("update alarm_custom set update_at = CURRENT_TIMESTAMP,alarm_total = ? where id=?", vv.AlarmTotal+1, vv.Id)
+					if cErr != nil {
+						log.Error(nil, log.LOGGER_APP, "Update custom alarm total fail", zap.Error(cErr))
+					}
+				}
 				continue
 			}
 			alertLevel, _ = strconv.Atoi(v.AlertLevel)
@@ -1242,7 +1278,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
-			x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
+			//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
 			for _, vv := range query {
 				customAlarmId = vv.Id
 			}
@@ -1271,13 +1307,12 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
 	var sql string
-	result := []*m.AlarmProblemQuery{}
-	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
+	var result []*m.AlarmProblemQuery
 	if param.Status == "problem" {
 		sql = "SELECT * FROM alarm_custom WHERE closed=0 "
 	} else {
 		if param.Start != "" && param.End != "" {
-			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
+			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE create_at<='%s' AND create_at>'%s' ", param.End, param.Start)
 		}
 	}
 	levelFilterSql := getLevelSQL(convertString2Map(param.Level))
@@ -1296,43 +1331,31 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	}
 	sql += " ORDER BY id DESC"
 	x.SQL(sql).Find(&query)
+	// 需要合并 history_alarm_custom 数据
+	if param.Start != "" && param.End != "" && param.Status != "problem" {
+		var historyQuery []*m.OpenAlarmObj
+		// 这个SQL 依赖 前面sql,字段大小写不要改了
+		sql = strings.Replace(sql, "FROM alarm_custom", "FROM history_alarm_custom", -1)
+		x.SQL(sql).Find(&historyQuery)
+		query = append(query, historyQuery...)
+	}
 	if len(query) == 0 {
 		return result
 	}
-	tmpFlag := fmt.Sprintf("%d_%s_%s_%d", query[0].SubSystemId, query[0].AlertTitle, query[0].AlertIp, query[0].AlertLevel)
-	for i, v := range query {
-		if tmpFlag != fmt.Sprintf("%d_%s_%s_%d", v.SubSystemId, v.AlertTitle, v.AlertIp, v.AlertLevel) {
-			priority := "high"
-			tmpAlertLevel, _ := strconv.Atoi(query[i-1].AlertLevel)
-			if tmpAlertLevel > 4 {
-				priority = "low"
-			} else if tmpAlertLevel > 2 {
-				priority = "medium"
-			}
-			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp)
-			//if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
-			//	tmpDisplayEndpoint = "custom_alarm"
-			//}
-			tmpDisplayEndpoint := "custom_alarm"
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId})
+	for _, v := range query {
+		priority := "high"
+		status := "closed"
+		tmpAlertLevel, _ := strconv.Atoi(v.AlertLevel)
+		if tmpAlertLevel > 4 {
+			priority = "low"
+		} else if tmpAlertLevel > 2 {
+			priority = "medium"
 		}
+		if v.Closed == 0 {
+			status = "firing"
+		}
+		result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: v.Id, Endpoint: "custom_alarm", Status: status, Content: v.AlertInfo, Start: v.CreateAt, StartString: v.CreateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: v.CustomMessage, Title: v.AlertTitle, SystemId: v.SubSystemId, UpdateString: v.UpdateAt.Format(m.DatetimeFormat), AlarmTotal: v.AlarmTotal})
 	}
-	priority := "high"
-	lastIndex := len(query) - 1
-	tmpAlertLevel, _ := strconv.Atoi(query[lastIndex].AlertLevel)
-	if tmpAlertLevel > 4 {
-		priority = "low"
-	} else if tmpAlertLevel > 2 {
-		priority = "medium"
-	}
-	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp)
-	//if query[lastIndex].AlertObj == "" && query[lastIndex].AlertIp == "" {
-	//	tmpDisplayEndpoint = "custom_alarm"
-	//}
-	tmpDisplayEndpoint := "custom_alarm"
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, SystemId: query[lastIndex].SubSystemId})
 	return result
 }
 
@@ -1352,7 +1375,7 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 	if containsCustomMetric && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
 	} else if len(param.Priority) > 0 {
-		levelList := []string{}
+		var levelList []string
 		for _, v := range param.Priority {
 			if levelValue, ok := priorityMap[v]; ok {
 				levelList = append(levelList, levelValue...)
@@ -1366,19 +1389,18 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 		return
 	}
 	for _, v := range query {
-		subQueryList := []*m.OpenAlarmObj{}
-		err = x.SQL("SELECT id FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=?", v.AlertIp, v.AlertTitle, v.AlertObj).Find(&subQueryList)
+		var subQueryList []*m.AlarmCustomTable
+		err = x.SQL("SELECT * FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=? and alert_level=?", v.AlertIp, v.AlertTitle, v.AlertObj, v.AlertLevel).Find(&subQueryList)
 		if len(subQueryList) > 0 {
 			tmpIds := ""
 			for _, vv := range subQueryList {
 				tmpIds += fmt.Sprintf("%d,", vv.Id)
+				actions = append(actions, &Action{Sql: "INSERT INTO history_alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id," +
+					"use_umg_policy,alert_way,custom_message,alarm_total,create_at) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{vv.AlertInfo, vv.AlertIp, vv.AlertLevel, vv.AlertObj, vv.AlertTitle,
+					vv.AlertReciver, vv.RemarkInfo, vv.SubSystemId, vv.UseUmgPolicy, vv.AlertWay, vv.CustomMessage, vv.AlarmTotal, vv.CreateAt}})
 			}
 			tmpIds = tmpIds[:len(tmpIds)-1]
-			actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds), Param: []interface{}{}})
-			//_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
-			//if err != nil {
-			//	log.Error(nil, log.LOGGER_APP, "Update custom alarm close fail", zap.String("ids", tmpIds), zap.Error(err))
-			//}
+			actions = append(actions, &Action{Sql: fmt.Sprintf("delete from  alarm_custom WHERE id in (%s)", tmpIds), Param: []interface{}{}})
 		}
 		if err != nil {
 			break
@@ -1477,6 +1499,9 @@ func GetEndpointHistoryAlarm(param m.EndpointAlarmParam) (data m.AlarmProblemLis
 	for _, v := range data {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
+		if v.AlarmTotal == 0 {
+			v.AlarmTotal = 1
+		}
 		if v.AlarmName == "" {
 			v.AlarmName = v.Content
 		}
@@ -1518,6 +1543,16 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		for _, v := range alarmQuery {
 			v.StartString = v.Start.Format(m.DatetimeFormat)
 			v.EndString = v.End.Format(m.DatetimeFormat)
+			if v.End.IsZero() {
+				v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
+				v.UpdateString = v.StartString
+			} else {
+				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
+				v.UpdateString = v.EndString
+			}
+			if v.AlarmTotal == 0 {
+				v.AlarmTotal = 1
+			}
 			if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
 				if v.SMetric == "log_monitor" {
 					logKeywordConfigList = append(logKeywordConfigList, v.AlarmStrategy)
@@ -1561,25 +1596,6 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			if strings.Contains(v.Log, "\n") {
 				v.Log = strings.ReplaceAll(v.Log, "\n", "<br/>")
 			}
-			//if v.SMetric == "log_monitor" || v.SMetric == "db_keyword_monitor" {
-			//	v.IsLogMonitor = true
-			//	if v.EndValue > 0 {
-			//		v.Start, v.End = v.End, v.Start
-			//		v.StartValue = v.EndValue - v.StartValue + 1
-			//		if strings.Contains(v.Content, "^^") {
-			//			v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
-			//		}
-			//		v.StartString = v.EndString
-			//	} else {
-			//		v.StartValue = 1
-			//		if strings.HasSuffix(v.Content, "^^") {
-			//			v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
-			//		}
-			//	}
-			//}
-			//if strings.Contains(v.Content, "\n") {
-			//	v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
-			//}
 		}
 	}
 	if customQueryParam.Enable {
@@ -1605,6 +1621,18 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			metricMap[tmpMetricLevel] += 1
 		} else {
 			metricMap[tmpMetricLevel] = 1
+		}
+		if v.DurationSec == 0 {
+			if v.End.IsZero() && strings.TrimSpace(v.UpdateString) != "" {
+				updateTime, _ := time.ParseInLocation(m.DatetimeFormat, v.UpdateString, time.Local)
+				v.DurationSec = int64(updateTime.Sub(v.Start).Seconds())
+			} else {
+				v.DurationSec = int64(v.End.Sub(v.Start).Seconds())
+			}
+		}
+		// 正在进行中告警中告警,一律用当前时间减去告警开始时间
+		if v.Status == "firing" {
+			v.DurationSec = int64(time.Now().Sub(v.Start).Seconds())
 		}
 	}
 	var resultCount m.AlarmProblemCountList
@@ -1633,11 +1661,15 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 	var alarmStrategyList, endpointList []string
 	for _, v := range result.Data {
 		if v.AlarmName == "" {
-			v.AlarmName = v.Content
+			if strings.TrimSpace(v.Title) != "" {
+				v.AlarmName = v.Title
+			} else {
+				v.AlarmName = v.Content
+			}
 		}
 		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
 		endpointList = append(endpointList, v.Endpoint)
-		alarmDetailList := []*m.AlarmDetailData{}
+		var alarmDetailList []*m.AlarmDetailData
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
 			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
@@ -1650,7 +1682,9 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
 			v.AlarmMetricList = []string{v.SMetric}
 		}
-		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		if v.Endpoint != "custom_alarm" {
+			v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+		}
 		v.EndpointGuid = v.Endpoint
 		if strings.HasPrefix(v.Endpoint, "sg__") {
 			v.Endpoint = v.Endpoint[4:]
@@ -1740,21 +1774,11 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if param.Page == nil {
 		param.Page = &m.PageInfo{}
 	}
-	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
-	if param.Query != "" {
-		customQueryParam.Enable = true
-		customQueryParam.Query = param.Query
+	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all", Query: param.Query}
+	if len(param.AlarmName) > 0 {
+		customQueryParam.AlterTitleList = append(customQueryParam.AlterTitleList, param.AlarmName...)
 	}
-	if len(param.Metric) > 0 {
-		for _, s := range param.Metric {
-			if s != "custom" {
-				customQueryParam.Enable = false
-				break
-			}
-		}
-	} else {
-		customQueryParam.Enable = true
-	}
+	customQueryParam.Enable = checkContainsCustomAlarm(param.Metric, param.Endpoint)
 	err, result = QueryAlarmBySql(sql, params, customQueryParam, param.Page)
 	return err, result
 }
@@ -2103,6 +2127,15 @@ func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMa
 	return
 }
 
+func GetCustomAlarmCount(table string) int64 {
+	var count int64
+	_, err := x.SQL("select count(1) from " + table).Get(&count)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
 func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 	var alarmList, customAlarmList []*m.SimpleAlarm
 	var closed = 1
@@ -2138,7 +2171,6 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 		return
 	}
 
-	alarmList = append(alarmList, customAlarmList...)
 	// 数据去重复
 	alarmList = filterRepeatAndEmptyNameAlarm(alarmList)
 	// 按最新时间在前面
@@ -2150,7 +2182,7 @@ func GetAlarmNameList(status, alarmName string) (list []string, err error) {
 		}
 		list = append(list, alarm.AlarmName)
 		// 最长20条数据
-		if len(list) >= 20 {
+		if len(list) >= m.DefaultOptionsPageSize {
 			break
 		}
 	}

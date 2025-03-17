@@ -125,7 +125,9 @@ export default {
             </div>
           )
         }
-      ]
+      ],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -141,7 +143,7 @@ export default {
       const params = {
         name: this.searchParams.displayName
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getTypeConfigList, params, data => {
+      this.request('GET', this.apiCenter.getTypeConfigList, params, data => {
         this.loading = false
         this.tableData = data || []
       }, {isNeedloading: false})
@@ -153,7 +155,7 @@ export default {
     saveAdd() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.$root.$httpRequestEntrance.httpRequestEntrance('post', this.$root.apiCenter.createTypeConfig, this.form, () => {
+          this.request('POST', this.apiCenter.createTypeConfig, this.form, () => {
             this.addVisible = false
             this.getList()
             this.$Message.success(this.$t('m_tips_success'))
@@ -165,7 +167,7 @@ export default {
       const params = {
         id: this.currentRow.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.createTypeConfig, params, () => {
+      this.request('DELETE', this.apiCenter.createTypeConfig, params, () => {
         this.deleteVisible = false
         this.getList()
         this.$Message.success(this.$t('m_tips_success'))

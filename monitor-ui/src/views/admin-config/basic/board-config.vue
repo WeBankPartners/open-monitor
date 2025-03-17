@@ -125,6 +125,19 @@ import {isEmpty, cloneDeep} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
 import {readyToDraw} from '@/assets/config/chart-rely'
 import ChartLinesModal from '@/components/chart-lines-modal'
+
+export const custom_api_enum = [
+  {
+    addPanel: 'delete'
+  },
+  {
+    getGraph: 'delete'
+  },
+  {
+    newPanelHost: 'post'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -176,7 +189,6 @@ export default {
         legend: ''
       },
       showGraphConfig: false, // 指标配置区
-
       titleManagement: {
         show: false,
         isAdd: true,
@@ -187,7 +199,9 @@ export default {
       originalMetricsId: '',
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -210,7 +224,7 @@ export default {
         onlyService: 'Y',
         serviceGroup: this.serviceGroup
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/monitor/metric/list', params, responseData => {
+      this.request('GET', this.apiCenter.metricList.api, params, responseData => {
         this.metricOptions = responseData
       }, {isNeedloading: false})
     },
@@ -272,7 +286,7 @@ export default {
       this.isShowWarning = true
     },
     removePanel(id) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
+      this.request('DELETE', this.apiCenter.addPanel + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.selectdPanel = ''
         this.$root.$eventBus.$emit('hideConfirmModal')
@@ -312,7 +326,7 @@ export default {
       this.isShowWarning = true
     },
     removeGraph(id) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
+      this.request('DELETE', this.apiCenter.getGraph + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.selectMetrc = ''
       })
@@ -324,7 +338,7 @@ export default {
             title: this.titleManagement.title,
             service_group: this.serviceGroup
           }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
+          this.request('POST', this.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
             this.$Message.success(this.$t('m_tips_success'))
           })
         } else {
@@ -333,7 +347,7 @@ export default {
             title: this.titleManagement.title,
             service_group: this.serviceGroup
           }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.addPanel, [params], () => {
+          this.request('PUT', this.apiCenter.addPanel, [params], () => {
             this.$Message.success(this.$t('m_tips_success'))
           })
         }
@@ -350,12 +364,12 @@ export default {
         id: this.selectdGraph
       }
       if (this.selectdGraph) {
-        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
+        this.request('PUT', this.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
       } else {
         delete params.id
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
+        this.request('POST', this.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('m_tips_success'))
         })
       }
@@ -364,7 +378,7 @@ export default {
       const params = {
         groupId: this.selectdPanel
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getGraph, params, responseData => {
+      this.request('GET', this.apiCenter.getGraph, params, responseData => {
         this.graphOptions = responseData
       }, {isNeedloading: false})
     },
@@ -373,7 +387,7 @@ export default {
         monitorType: this.monitorType,
         serviceGroup: this.serviceGroup
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.panelInfo, params, responseData => {
+      this.request('GET', this.apiCenter.panelInfo, params, responseData => {
         this.panelOptions = responseData
       }, {isNeedloading: false})
     },
@@ -396,7 +410,7 @@ export default {
         })
       })
       this.isRequestChartData = true
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.request('POST',this.apiCenter.metricConfigView.api, params, responseData => {
         // const chartConfig = {eye: false,clear:true, zoomCallback: true}
         const chartConfig = {
           eye: false,
@@ -428,7 +442,7 @@ export default {
         type: this.monitorType,
         serviceGroup: this.serviceGroup
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getEndpoint, params, responseData => {
+      this.request('GET',this.apiCenter.getEndpoint, params, responseData => {
         this.endpointOptions = responseData
         this.metricConfigData.endpoint = this.endpoint
         this.showEndpointSelect = true
@@ -438,7 +452,7 @@ export default {
       this.getEndpoint()
     },
     getEndpointType() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', responseData => {
+      this.request('GET', this.apiCenter.getEndpointType, '', responseData => {
         this.monitorTypeOptions = responseData
       }, {isNeedloading: false})
     },

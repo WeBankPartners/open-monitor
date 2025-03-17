@@ -27,6 +27,7 @@ type Table struct {
 	StoreEngine   string
 	Charset       string
 	Comment       string
+	Collation     string
 }
 
 // NewEmptyTable creates an empty table
@@ -36,7 +37,8 @@ func NewEmptyTable() *Table {
 
 // NewTable creates a new Table object
 func NewTable(name string, t reflect.Type) *Table {
-	return &Table{Name: name, Type: t,
+	return &Table{
+		Name: name, Type: t,
 		columnsSeq:  make([]string, 0),
 		columns:     make([]*Column, 0),
 		columnsMap:  make(map[string][]*Column),

@@ -213,7 +213,7 @@ func QueryEndpointList(endpoint string) (list []models.AlarmEndpoint, err error)
 		}
 	}
 	if len(list) > 0 {
-		list = list[:min(20, len(list))]
+		list = list[:min(models.DefaultOptionsPageSize, len(list))]
 	}
 	return
 }

@@ -34,7 +34,9 @@ export default {
       regx: '',
       textString: '',
       // regRes: '',
-      apiRes: ''
+      apiRes: '',
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   computed: {
@@ -66,7 +68,7 @@ export default {
         reg_string: this.regx,
         test_context: this.textString
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, responseData => {
+      this.request('POST', this.apiCenter.regexpTestMatch, params, responseData => {
         this.apiRes = responseData
       }, {isNeedloading: false})
     }

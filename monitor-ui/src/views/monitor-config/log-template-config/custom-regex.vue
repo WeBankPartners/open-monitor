@@ -133,6 +133,27 @@ const initMetricItem = {
   range_config: cloneDeep(initRangeConfigMap)
 }
 
+export const custom_api_enum = [
+  {
+    logTemplateConfig: 'post'
+  },
+  {
+    logTemplateConfig: 'put'
+  },
+  {
+    customLogMetricConfig: 'put'
+  },
+  {
+    customLogMetricConfig: 'post'
+  },
+  {
+    getConfigDetailById: 'get'
+  },
+  {
+    customLogMetricGroupById: 'get'
+  }
+]
+
 export default {
   name: 'standard-regex',
   data() {
@@ -570,10 +591,11 @@ export default {
       auto_create_dashboard: true,
       metricPrefixCode: '',
       tableKey: '',
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       templateGuid: '',
       templateMetricList: [],
-      templateParamList: []
+      templateParamList: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -759,7 +781,7 @@ export default {
         metric.tag_config = tmpTag
       })
     },
-    saveConfig() {
+    async saveConfig() {
       const tmpData = JSON.parse(JSON.stringify(this.configInfo))
       if (this.paramsValidate(tmpData)) {
         return
@@ -768,10 +790,10 @@ export default {
       delete tmpData.create_time
       delete tmpData.update_user
       delete tmpData.update_time
-      const methodType = this.isAdd ? 'POST' : 'PUT'
+      // const methodType = this.isAdd ? 'POST' : 'PUT'
       let api = ''
       if (this.isInTemplatePage) { // 在模板配置页面
-        api = this.$root.apiCenter.logTemplateConfig
+        api = this.apiCenter.logTemplateConfig
         tmpData.calc_result = {
           match_text: '',
           json_key_list: [],
@@ -782,7 +804,7 @@ export default {
         })
         this.processSaveData(tmpData)
       } else {
-        api = this.$root.apiCenter.customLogMetricConfig
+        api = this.apiCenter.customLogMetricConfig
         if (this.isAdd) {
           tmpData.log_monitor_template_guid = tmpData.guid
           tmpData.guid = ''
@@ -804,42 +826,48 @@ export default {
         tmpData.log_monitor_template_guid = tmpData.log_monitor_template
         delete tmpData.guid
       }
-      this.request(methodType, api, tmpData, res => {
-        const messageTips = this.$t('m_tips_success')
-        if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard') && (!isEmpty(res.alarm_list) || !isEmpty(res.custom_dashboard))) {
-          const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
-          const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
-          this.$Message.success({
-            render: h => h('div', { class: 'add-business-config' }, [
-              h('div', {class: 'add-business-config-item'}, [
-                h('div', this.$t('m_has_create_dashboard') + ':'),
-                h('div', {
-                  domProps: {
-                    innerHTML: tipTwo
-                  }
-                })
-              ]),
-              h('div', { class: 'add-business-config-item' }, [
-                h('div', this.$t('m_has_create_warn') + ':'),
-                h('div', {
-                  class: 'create_warn_text',
-                  domProps: {
-                    innerHTML: tipOne
-                  }
-                })
-              ])
+      let res
+      if (this.isAdd) {
+        res = await this.request('POST', api, tmpData)
+      } else {
+        res = await this.request('PUT', api, tmpData)
+      }
+      const messageTips = this.$t('m_tips_success')
+      if (!isEmpty(res) && hasIn(res, 'alarm_list') && hasIn(res, 'custom_dashboard') && (!isEmpty(res.alarm_list) || !isEmpty(res.custom_dashboard))) {
+        const tipOne = isEmpty(res.alarm_list) ? '' : '<br/>' + res.alarm_list.join('<br/>')
+        const tipTwo = isEmpty(res.custom_dashboard) ? '' : res.custom_dashboard
+        this.$Message.success({
+          render: h => h('div', { class: 'add-business-config' }, [
+            h('div', {class: 'add-business-config-item'}, [
+              h('div', this.$t('m_has_create_dashboard') + ':'),
+              h('div', {
+                domProps: {
+                  innerHTML: tipTwo
+                }
+              })
             ]),
-            duration: 5
-          })
-        } else {
-          this.$Message.success({
-            content: messageTips,
-            duration: 2
-          })
-        }
-        this.showModal = false
-        this.$emit('reloadMetricData', this.parentGuid)
-      })
+            h('div', { class: 'add-business-config-item' }, [
+              h('div', this.$t('m_has_create_warn') + ':'),
+              h('div', {
+                class: 'create_warn_text',
+                domProps: {
+                  innerHTML: tipOne
+                }
+              })
+            ])
+          ]),
+          duration: 5
+        })
+      } else {
+        this.$Message.success({
+          content: messageTips,
+          duration: 2
+        })
+      }
+      this.showModal = false
+      this.$emit('reloadMetricData', this.parentGuid)
+      // this.request(methodType, api, tmpData, res => {
+      // })
     },
     processSaveData(data){
       if (isEmpty(data)) {return}
@@ -929,7 +957,7 @@ export default {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
-      this.request('POST', this.$root.apiCenter.standardLogRegexMatch, params, responseData => {
+      this.request('POST', this.apiCenter.standardLogRegexMatch, params, responseData => {
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {

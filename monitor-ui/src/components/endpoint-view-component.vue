@@ -24,7 +24,6 @@
       :mask-closable="false"
       :footer-hide="true"
       :fullscreen="isfullscreen"
-      :title="$t('m_button_historicalAlert')"
     >
       <div slot="header" class="custom-modal-header">
         <span>
@@ -95,11 +94,11 @@ export default {
               key: 'alarm_name',
               width: 170,
             },
-            {
-              title: this.$t('m_tableKey_status'),
-              width: 80,
-              key: 'status'
-            },
+            // {
+            //   title: this.$t('m_tableKey_status'),
+            //   width: 80,
+            //   key: 'status'
+            // },
             {
               title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
@@ -112,7 +111,7 @@ export default {
               key: 'endpoint'
             },
             {
-              title: this.$t('m_alarmContent'),
+              title: this.$t('m_tableKey_content'),
               key: 'content',
               width: 200,
               render: (h, params) => (
@@ -121,6 +120,18 @@ export default {
                     <div domPropsInnerHTML={params.row.content}></div>
                   </div>
                   <div class='column-eclipse'>{params.row.content || '-'}</div>
+                </Tooltip>
+              )
+            },
+            {
+              title: this.$t('m_log'),
+              key: 'log',
+              render: (h, params) => (
+                <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                  <div slot="content">
+                    <div domPropsInnerHTML={params.row.log}></div>
+                  </div>
+                  <div class='column-eclipse'>{params.row.log || '-'}</div>
                 </Tooltip>
               )
             },
@@ -163,17 +174,24 @@ export default {
               width: 120,
             },
             {
-              title: this.$t('m_tableKey_end'),
-              key: 'end_string',
-              width: 120,
-              render: (h, params) => {
-                let res = params.row.end_string
-                if (params.row.end_string === '0001-01-01 00:00:00') {
-                  res = '-'
-                }
-                return h('span', res)
-              }
+              title: this.$t('m_frequency'),
+              key: 'alarm_total',
+              render: (h, params) => (
+                <div>{params.row.alarm_total}</div>
+              )
             },
+            // {
+            //   title: this.$t('m_tableKey_end'),
+            //   key: 'end_string',
+            //   width: 120,
+            //   render: (h, params) => {
+            //     let res = params.row.end_string
+            //     if (params.row.end_string === '0001-01-01 00:00:00') {
+            //       res = '-'
+            //     }
+            //     return h('span', res)
+            //   }
+            // },
             {
               title: this.$t('m_remark'),
               key: 'custom_message',
@@ -194,7 +212,9 @@ export default {
         pageSize: 10,
         total: 0
       },
-      endPointItem: {}
+      endPointItem: {},
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   created() {
@@ -248,7 +268,7 @@ export default {
     },
     recursiveView(params) {
       this.recursiveViewConfig = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
+      this.request('GET',this.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
@@ -279,7 +299,7 @@ export default {
         pageSize: this.pagination.pageSize,
         serviceGroup: this.endPointItem.option_value,
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, responseData => {
+      this.request('GET', this.apiCenter.alarm.history, params, responseData => {
         this.pagination.total = responseData.pageInfo.totalRows
         this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData.contents.problem_list || [])
       })
