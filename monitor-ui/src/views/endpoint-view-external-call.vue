@@ -22,7 +22,9 @@ export default {
       charts: {
         chartsConfig: []
       },
-      recursiveViewConfig: []
+      recursiveViewConfig: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -57,7 +59,7 @@ export default {
     },
     recursiveView(params) {
       this.recursiveViewConfig = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
+      this.request('GET',this.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })

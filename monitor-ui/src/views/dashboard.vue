@@ -41,11 +41,11 @@ export default {
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
-
       showAlarm: true, // 显示告警信息
       cutsomViewId: null,
-
-      dataHome: []
+      dataHome: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -65,7 +65,7 @@ export default {
       this.initPanals()
     },
     getDashboardData() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
+      this.request('GET',this.apiCenter.template.get, '', responseData => {
         this.dataHome = responseData
         if (this.dataHome.length === 0) {
           if (window.request) {

@@ -29,15 +29,16 @@
             >
             </DatePicker>
           </li>
-          <!-- <li class="filter-li">
-            <Select v-model="filter" style="width: 220px">
-              <Option value="all">{{ $t('all') }}</Option>
-              <Option value="low">{{ $t('low') }}</Option>
-              <Option value="medium">{{ $t('medium') }}</Option>
-              <Option value="high">{{ $t('high')}}</Option>
-            </Select>
-          </li> -->
-          <Button type="primary" @click="getAlarm" style="margin-left: 24px;">{{ $t("m_button_search") }}</Button>
+          <Button type="primary" @click="getAlarm" style="margin: 0 24px;">{{ $t("m_button_search") }}</Button>
+          <li class="filter-li">
+            <span class="label">{{$t('m_expand_alert')}}：</span>
+            <i-switch
+              size="large"
+              v-model="isExpandAlert"
+              style="vertical-align: bottom;"
+            >
+            </i-switch>
+          </li>
         </ul>
         <div class='top-right-search'>
           <SearchBadge :tempFilters="JSON.stringify(filters)" @filtersChange='onFiltersChange' />
@@ -63,10 +64,22 @@
           </div>
           <div class="right" v-if="total > 0 && !noData">
             <section class="alarm-card-container">
-              <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
+              <alarm-card-collapse
+                :collapseData="resultData"
+                :isCollapseExpandAll="isExpandAlert"
+                :isCanAction="false"
+              >
+              </alarm-card-collapse>
+              <!-- <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card> -->
             </section>
             <div class='card-pagination'>
-              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-sizer show-total />
+              <Page :total="paginationInfo.total"
+                    :page-size="paginationInfo.pageSize"
+                    @on-change="pageIndexChange"
+                    @on-page-size-change="pageSizeChange"
+                    show-sizer
+                    show-total
+              />
             </div>
           </div>
         </div>
@@ -83,7 +96,8 @@ import MetricsBar from '@/components/metrics-bar.vue'
 import CircleRotate from '@/components/circle-rotate.vue'
 import CircleLabel from '@/components/circle-label.vue'
 import AlarmAssetsBasic from '@/components/alarm-assets-basic.vue'
-import AlarmCard from '@/components/alarm-card.vue'
+// import AlarmCard from '@/components/alarm-card.vue'
+import AlarmCardCollapse from '@/components/alarm-card-collapse.vue'
 import SearchBadge from '../components/search-badge.vue'
 import GlobalLoading from '../components/globalLoading.vue'
 
@@ -95,7 +109,8 @@ export default {
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
-    AlarmCard,
+    // AlarmCard,
+    AlarmCardCollapse,
     SearchBadge,
     GlobalLoading
   },
@@ -127,9 +142,12 @@ export default {
       paginationInfo: {
         total: 0,
         startIndex: 1,
-        pageSize: 10
+        pageSize: 20
       },
-      isSpinShow: false
+      isSpinShow: false,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
+      isExpandAlert: false
     }
   },
   computed: {
@@ -264,12 +282,12 @@ export default {
       const params = {
         page: {
           startIndex: 1,
-          pageSize: 10
+          pageSize: 20
         }
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/page',
+        this.apiCenter.alarmProblemList,
         params,
         responseData => {
           this.noData = false
@@ -346,9 +364,9 @@ export default {
       if (this.isSpinShow === false) {
         this.isSpinShow = true
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
+      this.request(
         'POST',
-        '/monitor/api/v1/alarm/problem/history',
+        this.apiCenter.alarmProblemHistory,
         params,
         responseData => {
           this.loading = false
@@ -510,7 +528,7 @@ export default {
 <style scoped lang="less">
 .all-content {
   max-height: ~"calc(100vh - 110px)";
-  overflow: auto;
+  // overflow: auto;
 }
 .all-content::-webkit-scrollbar {
     display: none;
@@ -545,6 +563,11 @@ export default {
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
+    .label {
+      color: #116EF9;
+      font-size: 14px;
+      font-weight: bold;
+    }
 
     /deep/.ivu-input {
       border: 1px solid #f2f3f7;
@@ -561,13 +584,13 @@ export default {
 .data-stats-container {
 
   .content-stats-container {
-    height: ~"calc(100vh - 250px)";
+    height: ~"calc(100vh - 300px)";
     width: 100%;
     display: flex;
 
     .left {
       position: relative;
-      flex-basis: 60%;
+      width: 42vw;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -584,11 +607,11 @@ export default {
       }
     }
     .right {
-      flex-basis: 40%;
+      width: 58vw;
       overflow-x: auto;
 
       .card-pagination {
-        width: 40%;
+        max-width: 50%;
         position: fixed;
         bottom: 0px;
         right: 0px;
@@ -596,9 +619,8 @@ export default {
         background: #fff;
         padding-bottom: 20px;
       }
-
       .alarm-card-container {
-        // height: ~"calc(100vh - 310px)";
+        max-height: ~"calc(100vh - 320px)";
         height: 740px;
         overflow-y: auto;
         padding-bottom: 40px;

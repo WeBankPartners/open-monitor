@@ -16,7 +16,7 @@ export default {
   name: 'circle-rotate',
   data() {
     return {
-      L: 280
+      L: 240
     }
   },
   computed: {

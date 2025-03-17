@@ -7,15 +7,17 @@
           <img class="time-icon" src="../assets/img/icon_rltm.png" />
         </div>
       </div>
-      <circle-item
-        v-for="stat in $attrs.lstats"
-        :key="stat.key"
-        :type="stat.type"
-        :title="stat.title"
-        :total="stat.total"
-        :value="$attrs.noData ? '-' : stat.value"
-        :icon="stat.icon"
-      />
+      <div style="display: flex; flex: 1; justify-content: space-around">
+        <circle-item
+          v-for="stat in $attrs.lstats"
+          :key="stat.key"
+          :type="stat.type"
+          :title="stat.title"
+          :total="stat.total"
+          :value="$attrs.noData ? '-' : stat.value"
+          :icon="stat.icon"
+        />
+      </div>
     </div>
     <div class="right">
       <div class="metics-metal">
@@ -24,14 +26,17 @@
           <img class="time-icon" src="../assets/img/icon_today.png" />
         </div>
       </div>
-      <circle-item
-        v-for="stat in $attrs.rstats"
-        :key="stat.key"
-        :type="stat.type"
-        :title="stat.title"
-        :total="stat.total"
-        :value="stat.value"
-      />
+      <div style="display: flex; justify-content: space-around; flex: 1">
+        <circle-item
+          v-for="stat in $attrs.rstats"
+          :key="stat.key"
+          :type="stat.type"
+          :title="stat.title"
+          :total="stat.total"
+          :value="stat.value"
+          :icon="stat.icon"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -64,7 +69,7 @@ export default {
 
     .col {
       position: relative;
-      width: 180px;
+      width: 100px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -72,7 +77,7 @@ export default {
       justify-content: center;
 
       .title {
-        font-size: 16px;
+        font-size: 14px;
       }
 
       .time-icon {
@@ -93,12 +98,14 @@ export default {
   }
 
   .left {
-    flex-basis: 60%;
+    width: 42vw;
+    // flex-basis: 40%;
     height: 100%;
     display: flex;
   }
   .right {
-    flex-basis: 40%;
+    width: 58vw;
+    // flex-basis: 60%;
     height: 100%;
     display: flex;
     justify-content: flex-start;

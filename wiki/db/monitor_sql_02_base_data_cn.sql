@@ -648,13 +648,13 @@ alter table alarm modify content text;
 #@v2.0.0.11-end@;
 
 #@v2.0.0.12-begin@;
-update alarm_strategy set update_time=now() where update_time='' or update_time is null;
+update alarm_strategy set update_time=now() where update_time is null;
 alter table alarm_strategy modify update_time datetime;
-update endpoint_new set update_time=now() where update_time='' or update_time is null;
+update endpoint_new set update_time=now() where update_time is null;
 alter table endpoint_new modify update_time datetime;
-update endpoint_group set update_time=now() where update_time='' or update_time is null;
+update endpoint_group set update_time=now() where update_time is null;
 alter table endpoint_group modify update_time datetime;
-update service_group set update_time=now() where update_time='' or update_time is null;
+update service_group set update_time=now() where update_time is null;
 alter table service_group modify update_time datetime;
 #@v2.0.0.12-end@;
 
@@ -1256,3 +1256,28 @@ alter table service_group add index service_group_update_time(update_time);
 alter table custom_chart_permission add index custom_chart_permission_role(role_id);
 alter table custom_chart add index dashboard_chart_public(public);
 #@v3.3.2-end@;
+#@v3.4.3-begin@;
+alter table alarm_custom add column create_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间';
+alter table alarm_custom add column alarm_total int(11) DEFAULT 1 COMMENT '告警次数';
+CREATE TABLE `history_alarm_custom`
+(
+    `id`             int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `alert_info`     varchar(2048)      DEFAULT '',
+    `alert_ip`       varchar(50)        DEFAULT '',
+    `alert_level`    int(11) NOT NULL,
+    `alert_obj`      varchar(50)        DEFAULT '',
+    `alert_title`    varchar(1024)      DEFAULT '',
+    `alert_reciver`  varchar(500)       DEFAULT '',
+    `remark_info`    varchar(256)       DEFAULT '',
+    `sub_system_id`  varchar(10)        DEFAULT '',
+    `closed`         int(10) unsigned NOT NULL DEFAULT '1',
+    `create_at`      timestamp NOT NULL,
+    `update_at`      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `use_umg_policy` varchar(50)        DEFAULT '',
+    `alert_way`      varchar(50)        DEFAULT '',
+    `custom_message` varchar(500)       DEFAULT NULL,
+    `alarm_total` int(11) DEFAULT '1' COMMENT '告警次数',
+    PRIMARY KEY (`id`),
+    index `update_at_index` (`update_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v3.4.3-end@;

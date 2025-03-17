@@ -31,7 +31,9 @@ export default {
       chartInstance: null,
       isFirstRefresh: true,
       hasNotRequest: true,
-      isToolTipShow: false
+      isToolTipShow: false,
+      apiCenter: this.$root.apiCenter,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance
     }
   },
   props: {
@@ -172,7 +174,7 @@ export default {
         custom_chart_guid: this.chartInfo.elId
       }
       this.elId = this.chartInfo.elId
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.request('POST',this.apiCenter.metricConfigView.api, params, responseData => {
         this.hasNotRequest = false
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'

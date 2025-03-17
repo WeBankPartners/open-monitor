@@ -113,7 +113,9 @@ export default {
         }
       },
       isShowWarning: false,
-      selectedData: {}
+      selectedData: {},
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -121,7 +123,7 @@ export default {
   },
   methods: {
     getList() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.remoteWrite, {}, resp => {
+      this.request('GET', this.apiCenter.remoteWrite, {}, resp => {
         this.cardList = resp || []
       })
     },
@@ -146,7 +148,7 @@ export default {
       this.isShowWarning = true
     },
     onDeleteConfirm() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.remoteWrite, this.selectedData, () => {
+      this.request('DELETE', this.apiCenter.remoteWrite, this.selectedData, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getList()
       })
@@ -155,11 +157,19 @@ export default {
       this.isShowWarning = false
     },
     saveModal() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance(this.modelParams.isAdd ? 'POST' : 'PUT', this.$root.apiCenter.remoteWrite, this.modelParams.params, () => {
-        this.$Message.success(this.$t('m_tips_success'))
-        this.cancelModal()
-        this.getList()
-      })
+      if (this.modelParams.isAdd) {
+        this.request('POST', this.apiCenter.remoteWrite, this.modelParams.params, () => {
+          this.$Message.success(this.$t('m_tips_success'))
+          this.cancelModal()
+          this.getList()
+        })
+      } else {
+        this.request('PUT', this.apiCenter.remoteWrite, this.modelParams.params, () => {
+          this.$Message.success(this.$t('m_tips_success'))
+          this.cancelModal()
+          this.getList()
+        })
+      }
     },
     cancelModal() {
       this.modelParams.isShow = false

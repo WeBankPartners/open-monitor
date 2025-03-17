@@ -16,11 +16,9 @@ import (
 	"io"
 	"reflect"
 	"strconv"
-	"strings"
-
 	"xorm.io/xorm/contexts"
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/core"
-	"xorm.io/xorm/internal/convert"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/internal/statements"
 	"xorm.io/xorm/log"
@@ -34,7 +32,7 @@ type ErrFieldIsNotExist struct {
 }
 
 func (e ErrFieldIsNotExist) Error() string {
-	return fmt.Sprintf("field %s is not valid on table %s", e.FieldName, e.TableName)
+	return fmt.Sprintf("field %s is not exist on table %s", e.FieldName, e.TableName)
 }
 
 // ErrFieldIsNotValid is not valid
@@ -79,7 +77,8 @@ type Session struct {
 	afterClosures   []func(interface{})
 	afterProcessors []executedProcessor
 
-	stmtCache map[uint32]*core.Stmt //key: hash.Hash32 of (queryStr, len(queryStr))
+	stmtCache   map[uint32]*core.Stmt // key: hash.Hash32 of (queryStr, len(queryStr))
+	txStmtCache map[uint32]*core.Stmt // for tx statement
 
 	lastSQL     string
 	lastSQLArgs []interface{}
@@ -123,13 +122,14 @@ func newSession(engine *Engine) *Session {
 		autoResetStatement:     true,
 		prepareStmt:            false,
 
-		afterInsertBeans: make(map[interface{}]*[]func(interface{}), 0),
-		afterUpdateBeans: make(map[interface{}]*[]func(interface{}), 0),
-		afterDeleteBeans: make(map[interface{}]*[]func(interface{}), 0),
+		afterInsertBeans: make(map[interface{}]*[]func(interface{})),
+		afterUpdateBeans: make(map[interface{}]*[]func(interface{})),
+		afterDeleteBeans: make(map[interface{}]*[]func(interface{})),
 		beforeClosures:   make([]func(interface{}), 0),
 		afterClosures:    make([]func(interface{}), 0),
 		afterProcessors:  make([]executedProcessor, 0),
 		stmtCache:        make(map[uint32]*core.Stmt),
+		txStmtCache:      make(map[uint32]*core.Stmt),
 
 		lastSQL:     "",
 		lastSQLArgs: make([]interface{}, 0),
@@ -150,6 +150,12 @@ func (session *Session) Close() error {
 		}
 	}
 
+	for _, v := range session.txStmtCache {
+		if err := v.Close(); err != nil {
+			return err
+		}
+	}
+
 	if !session.isClosed {
 		// When Close be called, if session is a transaction and do not call
 		// Commit or Rollback, then call Rollback.
@@ -160,6 +166,7 @@ func (session *Session) Close() error {
 		}
 		session.tx = nil
 		session.stmtCache = nil
+		session.txStmtCache = nil
 		session.isClosed = true
 	}
 	return nil
@@ -172,6 +179,11 @@ func (session *Session) db() *core.DB {
 // Engine returns session Engine
 func (session *Session) Engine() *Engine {
 	return session.engine
+}
+
+// Tx returns session tx
+func (session *Session) Tx() *core.Tx {
+	return session.tx
 }
 
 func (session *Session) getQueryer() core.Queryer {
@@ -195,6 +207,7 @@ func (session *Session) IsClosed() bool {
 func (session *Session) resetStatement() {
 	if session.autoResetStatement {
 		session.statement.Reset()
+		session.prepareStmt = false
 	}
 }
 
@@ -260,8 +273,8 @@ func (session *Session) Limit(limit int, start ...int) *Session {
 
 // OrderBy provide order by query condition, the input parameter is the content
 // after order by on a sql statement.
-func (session *Session) OrderBy(order string) *Session {
-	session.statement.OrderBy(order)
+func (session *Session) OrderBy(order interface{}, args ...interface{}) *Session {
+	session.statement.OrderBy(order, args...)
 	return session
 }
 
@@ -299,7 +312,7 @@ func (session *Session) Cascade(trueOrFalse ...bool) *Session {
 
 // MustLogSQL means record SQL or not and don't follow engine's setting
 func (session *Session) MustLogSQL(logs ...bool) *Session {
-	var showSQL = true
+	showSQL := true
 	if len(logs) > 0 {
 		showSQL = logs[0]
 	}
@@ -315,7 +328,7 @@ func (session *Session) NoCache() *Session {
 }
 
 // Join join_operator should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
-func (session *Session) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session {
+func (session *Session) Join(joinOperator string, tablename interface{}, condition interface{}, args ...interface{}) *Session {
 	session.statement.Join(joinOperator, tablename, condition, args...)
 	return session
 }
@@ -339,7 +352,7 @@ func (session *Session) DB() *core.DB {
 
 func (session *Session) canCache() bool {
 	if session.statement.RefTable == nil ||
-		session.statement.JoinStr != "" ||
+		session.statement.NeedTableName() ||
 		session.statement.RawSQL != "" ||
 		!session.statement.UseCache ||
 		session.statement.IsForUpdate ||
@@ -365,10 +378,25 @@ func (session *Session) doPrepare(db *core.DB, sqlStr string) (stmt *core.Stmt, 
 	return
 }
 
-func (session *Session) getField(dataStruct *reflect.Value, table *schemas.Table, colName string, idx int) (*schemas.Column, *reflect.Value, error) {
-	var col = table.GetColumnIdx(colName, idx)
+func (session *Session) doPrepareTx(sqlStr string) (stmt *core.Stmt, err error) {
+	crc := crc32.ChecksumIEEE([]byte(sqlStr))
+	// TODO try hash(sqlStr+len(sqlStr))
+	var has bool
+	stmt, has = session.txStmtCache[crc]
+	if !has {
+		stmt, err = session.tx.PrepareContext(session.ctx, sqlStr)
+		if err != nil {
+			return nil, err
+		}
+		session.txStmtCache[crc] = stmt
+	}
+	return
+}
+
+func getField(dataStruct *reflect.Value, table *schemas.Table, field *QueryedField) (*schemas.Column, *reflect.Value, error) {
+	col := field.ColumnSchema
 	if col == nil {
-		return nil, nil, ErrFieldIsNotExist{colName, table.Name}
+		return nil, nil, ErrFieldIsNotExist{field.FieldName, table.Name}
 	}
 
 	fieldValue, err := col.ValueOfV(dataStruct)
@@ -376,10 +404,10 @@ func (session *Session) getField(dataStruct *reflect.Value, table *schemas.Table
 		return nil, nil, err
 	}
 	if fieldValue == nil {
-		return nil, nil, ErrFieldIsNotValid{colName, table.Name}
+		return nil, nil, ErrFieldIsNotValid{field.FieldName, table.Name}
 	}
 	if !fieldValue.IsValid() || !fieldValue.CanSet() {
-		return nil, nil, ErrFieldIsNotValid{colName, table.Name}
+		return nil, nil, ErrFieldIsNotValid{field.FieldName, table.Name}
 	}
 
 	return col, fieldValue, nil
@@ -388,11 +416,12 @@ func (session *Session) getField(dataStruct *reflect.Value, table *schemas.Table
 // Cell cell is a result of one column field
 type Cell *interface{}
 
-func (session *Session) rows2Beans(rows *core.Rows, fields []string, types []*sql.ColumnType,
+func (session *Session) rows2Beans(rows *core.Rows, columnsSchema *ColumnsSchema, fields []string, types []*sql.ColumnType,
 	table *schemas.Table, newElemFunc func([]string) reflect.Value,
-	sliceValueSetFunc func(*reflect.Value, schemas.PK) error) error {
+	sliceValueSetFunc func(*reflect.Value, schemas.PK) error,
+) error {
 	for rows.Next() {
-		var newValue = newElemFunc(fields)
+		newValue := newElemFunc(fields)
 		bean := newValue.Interface()
 		dataStruct := newValue.Elem()
 
@@ -401,7 +430,7 @@ func (session *Session) rows2Beans(rows *core.Rows, fields []string, types []*sq
 		if err != nil {
 			return err
 		}
-		pk, err := session.slice2Bean(scanResults, fields, bean, &dataStruct, table)
+		pk, err := session.slice2Bean(scanResults, columnsSchema, fields, bean, &dataStruct, table)
 		if err != nil {
 			return err
 		}
@@ -435,7 +464,7 @@ func (session *Session) row2Slice(rows *core.Rows, fields []string, types []*sql
 	return scanResults, nil
 }
 
-func (session *Session) setJSON(fieldValue *reflect.Value, fieldType reflect.Type, scanResult interface{}) error {
+func setJSON(fieldValue *reflect.Value, fieldType reflect.Type, scanResult interface{}) error {
 	bs, ok := convert.AsBytes(scanResult)
 	if !ok {
 		return fmt.Errorf("unsupported database data type: %#v", scanResult)
@@ -503,8 +532,11 @@ func asKind(vv reflect.Value, tp reflect.Type) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported primary key type: %v, %v", tp, vv)
 }
 
+var uint8ZeroValue = reflect.ValueOf(uint8(0))
+
 func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflect.Value,
-	scanResult interface{}, table *schemas.Table) error {
+	scanResult interface{}, table *schemas.Table,
+) error {
 	v, ok := scanResult.(*interface{})
 	if ok {
 		scanResult = *v
@@ -518,6 +550,9 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 			data, ok := convert.AsBytes(scanResult)
 			if !ok {
 				return fmt.Errorf("cannot convert %#v as bytes", scanResult)
+			}
+			if data == nil {
+				return nil
 			}
 			return structConvert.FromDB(data)
 		}
@@ -543,7 +578,7 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 	fieldType := fieldValue.Type()
 
 	if col.IsJSON {
-		return session.setJSON(fieldValue, fieldType, scanResult)
+		return setJSON(fieldValue, fieldType, scanResult)
 	}
 
 	switch fieldType.Kind() {
@@ -562,8 +597,8 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 		}
 		return nil
 	case reflect.Complex64, reflect.Complex128:
-		return session.setJSON(fieldValue, fieldType, scanResult)
-	case reflect.Slice, reflect.Array:
+		return setJSON(fieldValue, fieldType, scanResult)
+	case reflect.Slice:
 		bs, ok := convert.AsBytes(scanResult)
 		if ok && fieldType.Elem().Kind() == reflect.Uint8 {
 			if col.SQLType.IsText() {
@@ -574,15 +609,29 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 				}
 				fieldValue.Set(x.Elem())
 			} else {
-				if fieldValue.Len() > 0 {
-					for i := 0; i < fieldValue.Len(); i++ {
-						if i < vv.Len() {
-							fieldValue.Index(i).Set(vv.Index(i))
-						}
-					}
-				} else {
-					for i := 0; i < vv.Len(); i++ {
-						fieldValue.Set(reflect.Append(*fieldValue, vv.Index(i)))
+				fieldValue.Set(reflect.ValueOf(bs))
+			}
+			return nil
+		}
+	case reflect.Array:
+		bs, ok := convert.AsBytes(scanResult)
+		if ok && fieldType.Elem().Kind() == reflect.Uint8 {
+			if col.SQLType.IsText() {
+				x := reflect.New(fieldType)
+				err := json.DefaultJSONHandler.Unmarshal(bs, x.Interface())
+				if err != nil {
+					return err
+				}
+				fieldValue.Set(x.Elem())
+			} else {
+				if fieldValue.Len() < vv.Len() {
+					return fmt.Errorf("Set field %s[Array] failed because of data too long", col.Name)
+				}
+				for i := 0; i < fieldValue.Len(); i++ {
+					if i < vv.Len() {
+						fieldValue.Index(i).Set(vv.Index(i))
+					} else {
+						fieldValue.Index(i).Set(uint8ZeroValue)
 					}
 				}
 			}
@@ -626,7 +675,7 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 			if len(table.PrimaryKeys) != 1 {
 				return errors.New("unsupported non or composited primary key cascade")
 			}
-			var pk = make(schemas.PK, len(table.PrimaryKeys))
+			pk := make(schemas.PK, len(table.PrimaryKeys))
 			pk[0], err = asKind(vv, reflect.TypeOf(scanResult))
 			if err != nil {
 				return err
@@ -654,34 +703,22 @@ func (session *Session) convertBeanField(col *schemas.Column, fieldValue *reflec
 	return convert.AssignValue(fieldValue.Addr(), scanResult)
 }
 
-func (session *Session) slice2Bean(scanResults []interface{}, fields []string, bean interface{}, dataStruct *reflect.Value, table *schemas.Table) (schemas.PK, error) {
+func (session *Session) slice2Bean(scanResults []interface{}, columnsSchema *ColumnsSchema, fields []string, bean interface{}, dataStruct *reflect.Value, table *schemas.Table) (schemas.PK, error) {
 	defer func() {
 		executeAfterSet(bean, fields, scanResults)
 	}()
 
 	buildAfterProcessors(session, bean)
 
-	var tempMap = make(map[string]int)
 	var pk schemas.PK
-	for i, colName := range fields {
-		var idx int
-		var lKey = strings.ToLower(colName)
-		var ok bool
-
-		if idx, ok = tempMap[lKey]; !ok {
-			idx = 0
-		} else {
-			idx = idx + 1
-		}
-		tempMap[lKey] = idx
-
-		col, fieldValue, err := session.getField(dataStruct, table, colName, idx)
-		if err != nil {
-			if _, ok := err.(ErrFieldIsNotValid); !ok {
-				session.engine.logger.Warnf("%v", err)
-			}
+	for i, field := range columnsSchema.Fields {
+		col, fieldValue, err := getField(dataStruct, table, field)
+		if _, ok := err.(ErrFieldIsNotExist); ok {
 			continue
+		} else if err != nil {
+			return nil, err
 		}
+
 		if fieldValue == nil {
 			continue
 		}
@@ -724,6 +761,12 @@ func (session *Session) incrVersionFieldValue(fieldValue *reflect.Value) {
 
 // Context sets the context on this session
 func (session *Session) Context(ctx context.Context) *Session {
+	if session.engine.logSessionID && session.ctx != nil {
+		ctx = context.WithValue(ctx, log.SessionIDKey, session.ctx.Value(log.SessionIDKey))
+		ctx = context.WithValue(ctx, log.SessionKey, session.ctx.Value(log.SessionKey))
+		ctx = context.WithValue(ctx, log.SessionShowSQLKey, session.ctx.Value(log.SessionShowSQLKey))
+	}
+
 	session.ctx = ctx
 	return session
 }
@@ -736,4 +779,14 @@ func (session *Session) PingContext(ctx context.Context) error {
 
 	session.engine.logger.Infof("PING DATABASE %v", session.engine.DriverName())
 	return session.DB().PingContext(ctx)
+}
+
+// disable version check
+func (session *Session) NoVersionCheck() *Session {
+	session.statement.CheckVersion = false
+	return session
+}
+
+func SetDefaultJSONHandler(jsonHandler json.Interface) {
+	json.DefaultJSONHandler = jsonHandler
 }

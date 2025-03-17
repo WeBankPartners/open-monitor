@@ -460,6 +460,8 @@ func GetHistoryAlarm(c *gin.Context) {
 func GetProblemAlarmOptions(c *gin.Context) {
 	var err error
 	var param m.AlarmOptionsParam
+	var customEndpoint = m.AlarmEndpoint{Name: "custom_alarm", DisplayName: "custom_alarm"}
+	var customMetric = "custom"
 	if err = c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
@@ -483,6 +485,11 @@ func GetProblemAlarmOptions(c *gin.Context) {
 			mid.ReturnServerHandleError(c, err)
 			return
 		}
+		if len(data.EndpointList) >= m.DefaultOptionsPageSize {
+			data.EndpointList[m.DefaultOptionsPageSize-1] = customEndpoint
+		} else {
+			data.EndpointList = append(data.EndpointList, customEndpoint)
+		}
 		mid.ReturnSuccessData(c, data)
 		return
 	}
@@ -490,6 +497,11 @@ func GetProblemAlarmOptions(c *gin.Context) {
 		if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
 			mid.ReturnServerHandleError(c, err)
 			return
+		}
+		if len(data.MetricList) >= m.DefaultOptionsPageSize {
+			data.MetricList[m.DefaultOptionsPageSize-1] = customMetric
+		} else {
+			data.MetricList = append(data.MetricList, customMetric)
 		}
 		mid.ReturnSuccessData(c, data)
 		return
@@ -502,6 +514,16 @@ func GetProblemAlarmOptions(c *gin.Context) {
 	}
 	if data.MetricList, err = db.QueryMetricNameList(param.Metric); err != nil {
 		mid.ReturnServerHandleError(c, err)
+	}
+	if len(data.EndpointList) >= m.DefaultOptionsPageSize {
+		data.EndpointList[m.DefaultOptionsPageSize-1] = customEndpoint
+	} else {
+		data.EndpointList = append(data.EndpointList, customEndpoint)
+	}
+	if len(data.MetricList) >= m.DefaultOptionsPageSize {
+		data.MetricList[m.DefaultOptionsPageSize-1] = customMetric
+	} else {
+		data.MetricList = append(data.MetricList, customMetric)
 	}
 	mid.ReturnSuccessData(c, data)
 }
@@ -615,6 +637,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		UserRoles:           mid.GetOperateUserRoles(c),
 		Token:               c.GetHeader("Authorization"),
 		Query:               param.Query,
+		Sorting:             param.Sorting,
 	})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
@@ -624,6 +647,10 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	var highCount, mediumCount, lowCount int
 	metricMap := make(map[string]int)
 	for _, v := range data {
+		// 默认告警条数为1
+		if v.AlarmTotal == 0 {
+			v.AlarmTotal = 1
+		}
 		if v.SPriority == "high" {
 			highCount += 1
 		}

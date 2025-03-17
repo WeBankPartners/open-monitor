@@ -72,6 +72,13 @@ import VueGridLayout from 'vue-grid-layout'
 import ChartLinesModal from '@/components/chart-lines-modal'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import {readyToDraw} from '@/assets/config/chart-rely'
+
+export const custom_api_enum = [
+  {
+    getDashboardEndpoint: 'get'
+  }
+]
+
 export default {
   name: '',
   data() {
@@ -120,7 +127,9 @@ export default {
       array1: [],
       isLineSelectModalShow: false,
       setChartConfigId: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   mounted() {
@@ -133,10 +142,10 @@ export default {
   },
   methods: {
     getMetric() {
-      let url = '/monitor/api/v1//dashboard/custom/endpoint/get?'
+      let url = '/monitor/api/v1/dashboard/custom/endpoint/get?'
       const ipManage = this.sysConfig.ips.map(item => 'ip=' + item)
       url += ipManage.join('&')
-      this.$httpRequestEntrance.httpRequestEntrance('GET',url, '', responseData => {
+      this.request('GET',url, '', responseData => {
         this.sysConfig.endpointList = []
         responseData.forEach(i => {
           this.sysConfig.endpointList.push(i.guid)
@@ -198,7 +207,7 @@ export default {
           time: '-1800'
         })
       })
-      this.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.request('POST',this.apiCenter.metricConfigView.api, params, responseData => {
         this.elId = id
         responseData.chartId = id
         const chartConfig = {

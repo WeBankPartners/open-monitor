@@ -217,6 +217,7 @@ type mssql struct {
 	Base
 	defaultVarchar string
 	defaultChar    string
+	useLegacy      bool
 }
 
 func (db *mssql) Init(uri *URI) error {
@@ -226,10 +227,12 @@ func (db *mssql) Init(uri *URI) error {
 	return db.Base.Init(db, uri)
 }
 
+func (db *mssql) UseLegacyLimitOffset() bool { return db.useLegacy }
+
 func (db *mssql) SetParams(params map[string]string) {
 	defaultVarchar, ok := params["DEFAULT_VARCHAR"]
 	if ok {
-		var t = strings.ToUpper(defaultVarchar)
+		t := strings.ToUpper(defaultVarchar)
 		switch t {
 		case "NVARCHAR", "VARCHAR":
 			db.defaultVarchar = t
@@ -242,7 +245,7 @@ func (db *mssql) SetParams(params map[string]string) {
 
 	defaultChar, ok := params["DEFAULT_CHAR"]
 	if ok {
-		var t = strings.ToUpper(defaultChar)
+		t := strings.ToUpper(defaultChar)
 		switch t {
 		case "NCHAR", "CHAR":
 			db.defaultChar = t
@@ -251,6 +254,13 @@ func (db *mssql) SetParams(params map[string]string) {
 		}
 	} else {
 		db.defaultChar = "CHAR"
+	}
+
+	useLegacy, ok := params["USE_LEGACY_LIMIT_OFFSET"]
+	if ok {
+		if b, _ := strconv.ParseBool(useLegacy); b {
+			db.useLegacy = true
+		}
 	}
 }
 
@@ -282,10 +292,16 @@ func (db *mssql) Version(ctx context.Context, queryer core.Queryer) (*schemas.Ve
 	}, nil
 }
 
+func (db *mssql) Features() *DialectFeatures {
+	return &DialectFeatures{
+		AutoincrMode: IncrAutoincrMode,
+	}
+}
+
 func (db *mssql) SQLType(c *schemas.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {
-	case schemas.Bool:
+	case schemas.Bool, schemas.Boolean:
 		res = schemas.Bit
 		if strings.EqualFold(c.Default, "true") {
 			c.Default = "1"
@@ -313,8 +329,12 @@ func (db *mssql) SQLType(c *schemas.Column) string {
 		if c.Length == 0 {
 			res += "(MAX)"
 		}
-	case schemas.TimeStamp:
-		res = schemas.DateTime
+	case schemas.TimeStamp, schemas.DateTime:
+		if c.Length > 3 {
+			res = "DATETIME2"
+		} else {
+			return schemas.DateTime
+		}
 	case schemas.TimeStampz:
 		res = "DATETIMEOFFSET"
 		c.Length = 7
@@ -322,7 +342,7 @@ func (db *mssql) SQLType(c *schemas.Column) string {
 		res = schemas.Int
 	case schemas.Text, schemas.MediumText, schemas.TinyText, schemas.LongText, schemas.Json:
 		res = db.defaultVarchar + "(MAX)"
-	case schemas.Double:
+	case schemas.Double, schemas.UnsignedFloat:
 		res = schemas.Real
 	case schemas.Uuid:
 		res = schemas.Varchar
@@ -357,7 +377,7 @@ func (db *mssql) SQLType(c *schemas.Column) string {
 		res = t
 	}
 
-	if res == schemas.Int || res == schemas.Bit || res == schemas.DateTime {
+	if res == schemas.Int || res == schemas.Bit {
 		return res
 	}
 
@@ -365,9 +385,9 @@ func (db *mssql) SQLType(c *schemas.Column) string {
 	hasLen2 := (c.Length2 > 0)
 
 	if hasLen2 {
-		res += "(" + strconv.Itoa(c.Length) + "," + strconv.Itoa(c.Length2) + ")"
+		res += "(" + strconv.FormatInt(c.Length, 10) + "," + strconv.FormatInt(c.Length2, 10) + ")"
 	} else if hasLen1 {
-		res += "(" + strconv.Itoa(c.Length) + ")"
+		res += "(" + strconv.FormatInt(c.Length, 10) + ")"
 	}
 	return res
 }
@@ -393,11 +413,11 @@ func (db *mssql) IsReserved(name string) bool {
 func (db *mssql) SetQuotePolicy(quotePolicy QuotePolicy) {
 	switch quotePolicy {
 	case QuotePolicyNone:
-		var q = mssqlQuoter
+		q := mssqlQuoter
 		q.IsReserved = schemas.AlwaysNoReserve
 		db.quoter = q
 	case QuotePolicyReserved:
-		var q = mssqlQuoter
+		q := mssqlQuoter
 		q.IsReserved = db.IsReserved
 		db.quoter = q
 	case QuotePolicyAlways:
@@ -418,8 +438,8 @@ func (db *mssql) DropTableSQL(tableName string) (string, bool) {
 }
 
 func (db *mssql) ModifyColumnSQL(tableName string, col *schemas.Column) string {
-	s, _ := ColumnString(db.dialect, col, false)
-	return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s", tableName, s)
+	s, _ := ColumnString(db.dialect, col, false, true)
+	return fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s", db.quoter.Quote(tableName), s)
 }
 
 func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
@@ -444,7 +464,7 @@ func (db *mssql) GetColumns(queryer core.Queryer, ctx context.Context, tableName
 	s := `select a.name as name, b.name as ctype,a.max_length,a.precision,a.scale,a.is_nullable as nullable,
 		  "default_is_null" = (CASE WHEN c.text is null THEN 1 ELSE 0 END),
 	      replace(replace(isnull(c.text,''),'(',''),')','') as vdefault,
-		  ISNULL(p.is_primary_key, 0), a.is_identity as is_identity
+		  ISNULL(p.is_primary_key, 0), a.is_identity as is_identity, a.collation_name
           from sys.columns a 
 		  left join sys.types b on a.user_type_id=b.user_type_id
           left join sys.syscomments c on a.default_object_id=c.id
@@ -465,9 +485,10 @@ func (db *mssql) GetColumns(queryer core.Queryer, ctx context.Context, tableName
 	colSeq := make([]string, 0)
 	for rows.Next() {
 		var name, ctype, vdefault string
-		var maxLen, precision, scale int
+		var collation *string
+		var maxLen, precision, scale int64
 		var nullable, isPK, defaultIsNull, isIncrement bool
-		err = rows.Scan(&name, &ctype, &maxLen, &precision, &scale, &nullable, &defaultIsNull, &vdefault, &isPK, &isIncrement)
+		err = rows.Scan(&name, &ctype, &maxLen, &precision, &scale, &nullable, &defaultIsNull, &vdefault, &isPK, &isIncrement, &collation)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -489,6 +510,9 @@ func (db *mssql) GetColumns(queryer core.Queryer, ctx context.Context, tableName
 		} else {
 			col.Length = maxLen
 		}
+		if collation != nil {
+			col.Collation = *collation
+		}
 		switch ct {
 		case "DATETIMEOFFSET":
 			col.SQLType = schemas.SQLType{Name: schemas.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
@@ -498,6 +522,12 @@ func (db *mssql) GetColumns(queryer core.Queryer, ctx context.Context, tableName
 				col.Length /= 2
 				col.Length2 /= 2
 			}
+		case "DATETIME2":
+			col.SQLType = schemas.SQLType{Name: schemas.DateTime, DefaultLength: 7, DefaultLength2: 0}
+			col.Length = scale
+		case "DATETIME":
+			col.SQLType = schemas.SQLType{Name: schemas.DateTime, DefaultLength: 3, DefaultLength2: 0}
+			col.Length = scale
 		case "IMAGE":
 			col.SQLType = schemas.SQLType{Name: schemas.VarBinary, DefaultLength: 0, DefaultLength2: 0}
 		case "NCHAR":
@@ -556,10 +586,10 @@ func (db *mssql) GetIndexes(queryer core.Queryer, ctx context.Context, tableName
 IXS.NAME                    AS  [INDEX_NAME],
 C.NAME                      AS  [COLUMN_NAME],
 IXS.is_unique AS [IS_UNIQUE]
-FROM SYS.INDEXES IXS
-INNER JOIN SYS.INDEX_COLUMNS   IXCS
+FROM sys.indexes IXS
+INNER JOIN sys.index_columns IXCS
 ON IXS.OBJECT_ID=IXCS.OBJECT_ID  AND IXS.INDEX_ID = IXCS.INDEX_ID
-INNER   JOIN SYS.COLUMNS C  ON IXS.OBJECT_ID=C.OBJECT_ID
+INNER   JOIN sys.columns C  ON IXS.OBJECT_ID=C.OBJECT_ID
 AND IXCS.COLUMN_ID=C.COLUMN_ID
 WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 `
@@ -615,39 +645,38 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 	return indexes, nil
 }
 
-func (db *mssql) CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool) {
-	var sql string
+func (db *mssql) CreateTableSQL(ctx context.Context, queryer core.Queryer, table *schemas.Table, tableName string) (string, bool, error) {
 	if tableName == "" {
 		tableName = table.Name
 	}
 
-	sql = "IF NOT EXISTS (SELECT [name] FROM sys.tables WHERE [name] = '" + tableName + "' ) CREATE TABLE "
+	quoter := db.dialect.Quoter()
+	var b strings.Builder
+	b.WriteString("IF NOT EXISTS (SELECT [name] FROM sys.tables WHERE [name] = '")
+	quoter.QuoteTo(&b, tableName)
+	b.WriteString("' ) CREATE TABLE ")
+	quoter.QuoteTo(&b, tableName)
+	b.WriteString(" (")
 
-	sql += db.Quoter().Quote(tableName) + " ("
-
-	pkList := table.PrimaryKeys
-
-	for _, colName := range table.ColumnsSeq() {
+	for i, colName := range table.ColumnsSeq() {
 		col := table.GetColumn(colName)
-		s, _ := ColumnString(db, col, col.IsPrimaryKey && len(pkList) == 1)
-		sql += s
-		sql = strings.TrimSpace(sql)
-		sql += ", "
+		s, _ := ColumnString(db.dialect, col, col.IsPrimaryKey && len(table.PrimaryKeys) == 1, true)
+		b.WriteString(s)
+
+		if i != len(table.ColumnsSeq())-1 {
+			b.WriteString(", ")
+		}
 	}
 
-	if len(pkList) > 1 {
-		sql += "PRIMARY KEY ( "
-		sql += strings.Join(pkList, ",")
-		sql += " ), "
+	if len(table.PrimaryKeys) > 1 {
+		b.WriteString(", PRIMARY KEY (")
+		b.WriteString(quoter.Join(table.PrimaryKeys, ","))
+		b.WriteString(")")
 	}
 
-	sql = sql[:len(sql)-2] + ")"
-	sql += ";"
-	return []string{sql}, true
-}
+	b.WriteString(")")
 
-func (db *mssql) ForUpdateSQL(query string) string {
-	return query
+	return b.String(), true, nil
 }
 
 func (db *mssql) Filters() []Filter {

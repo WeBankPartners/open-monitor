@@ -112,6 +112,7 @@ type AlarmProblemQuery struct {
 	StartValue         float64               `json:"start_value"`
 	Start              time.Time             `json:"start"`
 	StartString        string                `json:"start_string"`
+	UpdateString       string                `json:"update_string"`
 	EndValue           float64               `json:"end_value"`
 	End                time.Time             `json:"end"`
 	EndString          string                `json:"end_string"`
@@ -138,6 +139,8 @@ type AlarmProblemQuery struct {
 	AlarmMetricList    []string              `json:"alarm_metric_list"`
 	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
 	Log                string                `json:"log"`
+	AlarmTotal         int                   `json:"alarm_total"`  // 告警次数
+	DurationSec        int64                 `json:"duration_sec"` // 持续时间,秒
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -396,17 +399,22 @@ type GrpStrategyQuery struct {
 }
 
 type AlarmCustomTable struct {
-	Id           int       `json:"id"`
-	AlertInfo    string    `json:"alert_info"`
-	AlertIp      string    `json:"alert_ip"`
-	AlertLevel   int       `json:"alert_level"`
-	AlertObj     string    `json:"alert_obj"`
-	AlertTitle   string    `json:"alert_title"`
-	AlertReciver string    `json:"alert_reciver"`
-	RemarkInfo   string    `json:"remark_info"`
-	SubSystemId  string    `json:"sub_system_id"`
-	Closed       int       `json:"closed"`
-	UpdateAt     time.Time `json:"update_at"`
+	Id            int       `json:"id"`
+	AlertInfo     string    `json:"alert_info"`
+	AlertIp       string    `json:"alert_ip"`
+	AlertLevel    int       `json:"alert_level"`
+	AlertObj      string    `json:"alert_obj"`
+	AlertTitle    string    `json:"alert_title"`
+	AlertReciver  string    `json:"alert_reciver"`
+	RemarkInfo    string    `json:"remark_info"`
+	SubSystemId   string    `json:"sub_system_id"`
+	Closed        int       `json:"closed"`
+	UseUmgPolicy  string    `json:"use_umg_policy"`
+	AlertWay      string    `json:"alert_way"`
+	CustomMessage string    `json:"custom_message"`
+	AlarmTotal    int       `json:"alarm_total"`
+	UpdateAt      time.Time `json:"update_at"`
+	CreateAt      time.Time `json:"create_at"`
 }
 
 type OpenAlarmObj struct {
@@ -422,7 +430,10 @@ type OpenAlarmObj struct {
 	RemarkInfo    string    `json:"remark_info"`
 	SubSystemId   string    `json:"sub_system_id"`
 	UpdateAt      time.Time `json:"update_at"`
+	CreateAt      time.Time `json:"create_at"`
 	CustomMessage string    `json:"custom_message"`
+	AlarmTotal    int       `json:"alarm_total"`
+	Closed        int       `json:"closed"`
 }
 
 type OpenAlarmRequest struct {
@@ -482,13 +493,14 @@ type QueryProblemAlarmDto struct {
 }
 
 type QueryProblemAlarmPageDto struct {
-	Endpoint          []string  `json:"endpoint"`
-	Metric            []string  `json:"metric"`
-	Priority          []string  `json:"priority"`
-	Page              *PageInfo `json:"page"`
-	AlarmName         []string  `json:"alarm_name"`
-	CustomDashboardId int       `json:"custom_dashboard_id"`
-	Query             string    `json:"query"`
+	Endpoint          []string             `json:"endpoint"`
+	Metric            []string             `json:"metric"`
+	Priority          []string             `json:"priority"`
+	Page              *PageInfo            `json:"page"`
+	AlarmName         []string             `json:"alarm_name"`
+	CustomDashboardId int                  `json:"custom_dashboard_id"`
+	Query             string               `json:"query"`
+	Sorting           *QueryRequestSorting `json:"sorting"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -766,6 +778,7 @@ type QueryAlarmCondition struct {
 	UserRoles           []string
 	Token               string
 	Query               string // 支持告警任意搜索
+	Sorting             *QueryRequestSorting
 }
 
 type AlarmFiring struct {

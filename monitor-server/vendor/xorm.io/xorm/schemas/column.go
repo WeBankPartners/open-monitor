@@ -26,8 +26,8 @@ type Column struct {
 	FieldIndex      []int  // Available only when parsed from a struct
 	SQLType         SQLType
 	IsJSON          bool
-	Length          int
-	Length2         int
+	Length          int64
+	Length2         int64
 	Nullable        bool
 	Default         string
 	Indexes         map[string]int
@@ -45,10 +45,11 @@ type Column struct {
 	DisableTimeZone bool
 	TimeZone        *time.Location // column specified time zone
 	Comment         string
+	Collation       string
 }
 
 // NewColumn creates a new column
-func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
+func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int64, nullable bool) *Column {
 	return &Column{
 		Name:            name,
 		IsJSON:          sqlType.IsJson(),
@@ -82,13 +83,15 @@ func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 
 // ValueOfV returns column's filed of struct's value accept reflevt value
 func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
-	var v = *dataStruct
+	v := *dataStruct
 	for _, i := range col.FieldIndex {
 		if v.Kind() == reflect.Ptr {
 			if v.IsNil() {
 				v.Set(reflect.New(v.Type().Elem()))
 			}
 			v = v.Elem()
+		} else if v.Kind() == reflect.Interface {
+			v = reflect.Indirect(v.Elem())
 		}
 		v = v.FieldByIndex([]int{i})
 	}

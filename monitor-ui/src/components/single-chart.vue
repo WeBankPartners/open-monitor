@@ -27,7 +27,9 @@ export default {
       config: '',
       myChart: '',
       interval: '',
-      chartInstance: null
+      chartInstance: null,
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   props: {
@@ -126,7 +128,7 @@ export default {
         })
       }
       window.intervalFrom = 'single-chart'
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.request('POST', this.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {
           clear: false,
           editTitle: false,

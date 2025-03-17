@@ -128,6 +128,21 @@ import StandardRegex from './log-template-config/standard-regex.vue'
 import {showPoptipOnTable} from '@/assets/js/utils.js'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 
+export const custom_api_enum = [
+  {
+    getAffectServiceGroup: 'get'
+  },
+  {
+    getConfigDetailById: 'delete'
+  },
+  {
+    logMonitorTemplateExport: 'post'
+  },
+  {
+    logMonitorTemplateImport: 'post'
+  }
+]
+
 export default {
   name: 'log-template',
   data() {
@@ -231,7 +246,9 @@ export default {
       filterServiceGroup: '',
       serviceGroup: [], // 层级对象
       selectedParams: [], // 待导出数据
-      updateUserOptions: []
+      updateUserOptions: [],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      apiCenter: this.$root.apiCenter,
     }
   },
   computed: {
@@ -247,7 +264,7 @@ export default {
     getTemplateList() {
       this.spinShow = true
       this.selectedParams = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, resp => {
+      this.request('POST', this.apiCenter.logTemplateTableData, this.searchParams, resp => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
         this.data[2].tableData = !isEmpty(resp.custom_list) ? resp.custom_list : []
@@ -305,15 +322,15 @@ export default {
     // 查看关联层级对象
     viewAction(row) {
       this.filterServiceGroup = ''
-      const api = this.$root.apiCenter.getAffectServiceGroupByGuid + row.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, resp => {
+      const api = this.apiCenter.getAffectServiceGroupByGuid + row.guid
+      this.request('GET', api, {}, resp => {
         this.serviceGroup = resp || []
         this.showServiceGroup = true
       })
     },
     confirmDeleteTemplate(row) {
-      const api = this.$root.apiCenter.deleteLogTemplate + row.guid
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, {}, () => {
+      const api = this.apiCenter.deleteLogTemplate + row.guid
+      this.request('DELETE', api, {}, () => {
         this.$Message.success(this.$t('m_tips_success'))
         this.getTemplateList()
       })
@@ -349,8 +366,8 @@ export default {
       this.selectedParams.splice(findIndex, 1)
     },
     getUpdateUserOptions() {
-      const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', res => {
+      // const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
+      this.request('GET', this.apiCenter.logMonitorTemplateOptions, '', res => {
         this.updateUserOptions = res
       })
     }

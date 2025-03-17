@@ -1,6 +1,6 @@
 # xorm
 
-[中文](https://gitea.com/xorm/xorm/src/branch/master/README_CN.md)
+[中文](https://gitea.com/xorm/xorm/src/branch/v1/README_CN.md)
 
 Xorm is a simple and powerful ORM for Go.
 
@@ -41,17 +41,19 @@ Drivers for Go's sql package which currently support database/sql includes:
 
 * [Postgres](https://github.com/postgres/postgres) / [Cockroach](https://github.com/cockroachdb/cockroach)
   - [github.com/lib/pq](https://github.com/lib/pq)
+  - [github.com/jackc/pgx](https://github.com/jackc/pgx)
 
 * [SQLite](https://sqlite.org)
   - [github.com/mattn/go-sqlite3](https://github.com/mattn/go-sqlite3)
-  - [modernc.org/sqlite](https://gitlab.com/cznic/sqlite) (windows unsupported)
+  - [modernc.org/sqlite](https://gitlab.com/cznic/sqlite)
 
 * MsSql
-  - [github.com/denisenkom/go-mssqldb](https://github.com/denisenkom/go-mssqldb)
+  - [github.com/microsoft/go-mssqldb](https://github.com/microsoft/go-mssqldb)
 
 * Oracle
-  - [github.com/godror/godror)](https://github.com/godror/godror) (experiment)
+  - [github.com/godror/godror](https://github.com/godror/godror) (experiment)
   - [github.com/mattn/go-oci8](https://github.com/mattn/go-oci8) (experiment)
+  - [github.com/sijms/go-ora](https://github.com/sijms/go-ora) (experiment)
 
 ## Installation
 
@@ -73,7 +75,7 @@ Firstly, we should new an engine for a database.
 engine, err := xorm.NewEngine(driverName, dataSourceName)
 ```
 
-* Define a struct and Sync2 table struct to database
+* Define a struct and Sync table struct to database
 
 ```Go
 type User struct {
@@ -86,7 +88,7 @@ type User struct {
     Updated time.Time `xorm:"updated"`
 }
 
-err := engine.Sync2(new(User))
+err := engine.Sync(new(User))
 ```
 
 * Create Engine Group
@@ -140,6 +142,24 @@ affected, err := engine.Insert(&users)
 affected, err := engine.Insert(&user1, &users)
 // INSERT INTO struct1 () values ()
 // INSERT INTO struct2 () values (),(),()
+
+affected, err := engine.Table("user").Insert(map[string]interface{}{
+    "name": "lunny",
+    "age": 18,
+})
+// INSERT INTO user (name, age) values (?,?)
+
+affected, err := engine.Table("user").Insert([]map[string]interface{}{
+    {
+        "name": "lunny",
+        "age": 18,
+    },
+    {
+        "name": "lunny2",
+        "age": 19,
+    },
+})
+// INSERT INTO user (name, age) values (?,?),(?,?)
 ```
 
 * `Get` query one record from database
@@ -159,6 +179,11 @@ var id int64
 has, err := engine.Table(&user).Where("name = ?", name).Cols("id").Get(&id)
 has, err := engine.SQL("select id from user").Get(&id)
 // SELECT id FROM user WHERE name = ?
+
+var id int64
+var name string
+has, err := engine.Table(&user).Cols("id", "name").Get(&id, &name)
+// SELECT id, name FROM user LIMIT 1
 
 var valuesMap = make(map[string]string)
 has, err := engine.Table(&user).Where("id = ?", id).Get(&valuesMap)
@@ -233,13 +258,30 @@ err := engine.BufferSize(100).Iterate(&User{Name:name}, func(idx int, bean inter
 })
 // SELECT * FROM user Limit 0, 100
 // SELECT * FROM user Limit 101, 100
+```
 
+You can use rows which is similiar with `sql.Rows`
+
+```Go
 rows, err := engine.Rows(&User{Name:name})
 // SELECT * FROM user
 defer rows.Close()
 bean := new(Struct)
 for rows.Next() {
     err = rows.Scan(bean)
+}
+```
+
+or
+
+```Go
+rows, err := engine.Cols("name", "age").Rows(&User{Name:name})
+// SELECT * FROM user
+defer rows.Close()
+for rows.Next() {
+    var name string
+    var age int
+    err = rows.Scan(&name, &age)
 }
 ```
 

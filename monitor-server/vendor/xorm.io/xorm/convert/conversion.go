@@ -16,11 +16,21 @@ import (
 	"time"
 )
 
+// ConversionFrom is an inteface to allow retrieve data from database
+type ConversionFrom interface {
+	FromDB([]byte) error
+}
+
+// ConversionTo is an interface to allow store data to database
+type ConversionTo interface {
+	ToDB() ([]byte, error)
+}
+
 // Conversion is an interface. A type implements Conversion will according
 // the custom method to fill into database and retrieve from database.
 type Conversion interface {
-	FromDB([]byte) error
-	ToDB() ([]byte, error)
+	ConversionFrom
+	ConversionTo
 }
 
 // ErrNilPtr represents an error
@@ -283,11 +293,9 @@ func Assign(dest, src interface{}, originalLocation *time.Location, convertedLoc
 		}
 	}
 
-	var sv reflect.Value
-
 	switch d := dest.(type) {
 	case *string:
-		sv = reflect.ValueOf(src)
+		var sv = reflect.ValueOf(src)
 		switch sv.Kind() {
 		case reflect.Bool,
 			reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
@@ -324,6 +332,9 @@ var (
 func AssignValue(dv reflect.Value, src interface{}) error {
 	if src == nil {
 		return nil
+	}
+	if v, ok := src.(*interface{}); ok {
+		return AssignValue(dv, *v)
 	}
 
 	if dv.Type().Implements(scannerType) {
