@@ -24,6 +24,13 @@ const router = new Router({
           component: () => import("@/views/alarm-management")
         },
         {
+          path: "alarmHistory",
+          name: "alarmHistory",
+          title: "告警历史",
+          meta: {},
+          component: () => import("@/views/alarm-history")
+        },
+        {
           path: "dashboard",
           name: "dashboard",
           title: "首页",
