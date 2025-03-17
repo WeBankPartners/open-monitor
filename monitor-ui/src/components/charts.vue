@@ -48,6 +48,9 @@ import ChartLinesModal from '@/components/chart-lines-modal'
 export const custom_api_enum = [
   {
     getTagDetail: 'get'
+  },
+  {
+    getDashboardTags: 'get'
   }
 ]
 
