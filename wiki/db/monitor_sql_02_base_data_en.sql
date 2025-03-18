@@ -648,13 +648,13 @@ alter table alarm modify content text;
 #@v2.0.0.11-end@;
 
 #@v2.0.0.12-begin@;
-update alarm_strategy set update_time=now() where update_time is null;
+update alarm_strategy set update_time=now() where update_time is null or update_time='';
 alter table alarm_strategy modify update_time datetime;
-update endpoint_new set update_time=now() where update_time is null;
+update endpoint_new set update_time=now() where update_time is null or update_time='';
 alter table endpoint_new modify update_time datetime;
-update endpoint_group set update_time=now() where update_time is null;
+update endpoint_group set update_time=now() where update_time is null or update_time='';
 alter table endpoint_group modify update_time datetime;
-update service_group set update_time=now() where update_time is null;
+update service_group set update_time=now() where update_time is null or update_time='';
 alter table service_group modify update_time datetime;
 #@v2.0.0.12-end@;
 
@@ -1059,7 +1059,7 @@ CREATE TABLE  `metric_comparison` (
       PRIMARY KEY (`guid`),
       CONSTRAINT `fore_metric_comparison_metric_id` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`guid`),
       CONSTRAINT `fore_metric_comparison_origin_metric_id` FOREIGN KEY (`origin_metric_id`) REFERENCES `metric` (`guid`)
-)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '指标同环比';
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '指标同环比';
 
 alter table metric add column endpoint_group varchar(64)  default NULL COMMENT '对象组';
 
