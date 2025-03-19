@@ -315,5 +315,6 @@
     "dashboardCustomImport": "/monitor/api/v2/dashboard/custom/import",
     "logMetricImportExcel": "/monitor/api/v2/service/log_metric/log_metric_import/excel/${id}",
     "getDashboardPanels": "/monitor/api/v1/dashboard/panels",
-    "newPanelHost": "/monitor/api/v1/dashboard/new/panel/${id}"
+    "newPanelHost": "/monitor/api/v1/dashboard/new/panel/${id}",
+    "getDashboardTags": "/monitor/api/v1/dashboard/tags"
 }
