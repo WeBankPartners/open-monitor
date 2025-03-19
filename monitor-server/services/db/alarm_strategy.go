@@ -54,10 +54,11 @@ func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) 
 		} else {
 			if len(tmpStrategyConditions) == 0 {
 				tmpStrategyConditions = append(tmpStrategyConditions, &models.StrategyConditionObj{
-					Metric:    v.Metric,
-					Condition: v.Condition,
-					Last:      v.Last,
-					Tags:      []*models.MetricTag{},
+					Metric:     v.Metric,
+					MetricName: v.MetricName,
+					Condition:  v.Condition,
+					Last:       v.Last,
+					Tags:       []*models.MetricTag{},
 				})
 			}
 			tmpStrategyObj.Conditions = tmpStrategyConditions
