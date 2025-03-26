@@ -13,13 +13,31 @@
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" split-panels :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  split-panels
+                  :value="chartCondition.compareFirstDate"
+                  placement="bottom-start"
+                  @on-change="pickFirstDate"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                ></DatePicker>
               </div>
             </li>
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_comparedTimeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" :value="chartCondition.compareSecondDate" split-panels placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  :value="chartCondition.compareSecondDate"
+                  split-panels
+                  placement="bottom-start"
+                  @on-change="pickSecondDate"
+                  :placeholder="$t('m_placeholder_comparedDatePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                ></DatePicker>
               </div>
             </li>
           </template>
@@ -37,7 +55,17 @@
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" :value="chartCondition.dateRange" split-panels placement="bottom-start" @on-change="datePick" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  :value="chartCondition.dateRange"
+                  split-panels
+                  placement="bottom-start"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                  @on-change="datePick"
+                >
+                </DatePicker>
               </div>
             </li>
             <li>
@@ -72,7 +100,7 @@
 </template>
 
 <script>
-import {isEmpty, cloneDeep} from 'lodash'
+import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
 import ChartLinesModal from '@/components/chart-lines-modal'
 import {readyToDraw} from '@/assets/config/chart-rely'
@@ -84,6 +112,13 @@ export default {
       chartItem: {},
       elId: null,
       is_mom_yoy: false,
+      initChartCondition: {
+        timeTnterval: -1800,
+        dateRange: ['',''],
+        compareFirstDate: ['', ''],
+        compareSecondDate: ['', ''],
+        agg: 'none' // 聚合类型
+      },
       chartCondition: {
         timeTnterval: -1800,
         dateRange: ['',''],
@@ -239,6 +274,14 @@ export default {
       })
     },
     enlargeChart(data) {
+      this.chartCondition = cloneDeep(this.initChartCondition)
+      if (hasIn(this.$parent, '$parent.$refs.search.dateRange')
+        && !isEmpty(this.$parent.$parent.$refs.search.dateRange)
+        && this.$parent.$parent.$refs.search.dateRange.length === 2
+        && this.$parent.$parent.$refs.search.dateRange[0]
+        && this.$parent.$parent.$refs.search.dateRange[1]) {
+        this.chartCondition.dateRange = cloneDeep(this.$parent.$parent.$refs.search.dateRange)
+      }
       window['view-config-selected-line-data'] = {}
       this.generatUuid()
       this.getChartData(data)
