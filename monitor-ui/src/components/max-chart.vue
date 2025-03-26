@@ -37,7 +37,17 @@
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" :value="chartCondition.dateRange" split-panels placement="bottom-start" @on-change="datePick" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  :value="chartCondition.dateRange"
+                  split-panels
+                  placement="bottom-start"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                  @on-change="datePick"
+                >
+                </DatePicker>
               </div>
             </li>
             <li>
