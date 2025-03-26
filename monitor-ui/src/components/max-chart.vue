@@ -112,6 +112,13 @@ export default {
       chartItem: {},
       elId: null,
       is_mom_yoy: false,
+      initChartCondition: {
+        timeTnterval: -1800,
+        dateRange: ['',''],
+        compareFirstDate: ['', ''],
+        compareSecondDate: ['', ''],
+        agg: 'none' // 聚合类型
+      },
       chartCondition: {
         timeTnterval: -1800,
         dateRange: ['',''],
@@ -267,6 +274,7 @@ export default {
       })
     },
     enlargeChart(data) {
+      this.chartCondition = cloneDeep(this.initChartCondition)
       window['view-config-selected-line-data'] = {}
       this.generatUuid()
       this.getChartData(data)
