@@ -100,7 +100,7 @@
 </template>
 
 <script>
-import {isEmpty, cloneDeep} from 'lodash'
+import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import {generateUuid} from '@/assets/js/utils'
 import ChartLinesModal from '@/components/chart-lines-modal'
 import {readyToDraw} from '@/assets/config/chart-rely'
@@ -275,6 +275,13 @@ export default {
     },
     enlargeChart(data) {
       this.chartCondition = cloneDeep(this.initChartCondition)
+      if (hasIn(this.$parent, '$parent.$refs.search.dateRange')
+        && !isEmpty(this.$parent.$parent.$refs.search.dateRange)
+        && this.$parent.$parent.$refs.search.dateRange.length === 2
+        && this.$parent.$parent.$refs.search.dateRange[0]
+        && this.$parent.$parent.$refs.search.dateRange[1]) {
+        this.chartCondition.dateRange = cloneDeep(this.$parent.$parent.$refs.search.dateRange)
+      }
       window['view-config-selected-line-data'] = {}
       this.generatUuid()
       this.getChartData(data)
