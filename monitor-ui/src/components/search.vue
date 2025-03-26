@@ -156,9 +156,7 @@ export default {
       this.dateRange = data
       this.disableTime = false
       if (this.dateRange[0] && this.dateRange[1]) {
-        if (this.dateRange[0] === this.dateRange[1]) {
-          this.dateRange[1] = this.dateRange[1].replace('00:00:00', '23:59:59')
-        }
+        this.dateRange[1] = this.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
         this.autoRefresh = 0
       }
