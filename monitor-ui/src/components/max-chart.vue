@@ -13,13 +13,31 @@
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" split-panels :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  split-panels
+                  :value="chartCondition.compareFirstDate"
+                  placement="bottom-start"
+                  @on-change="pickFirstDate"
+                  :placeholder="$t('m_placeholder_datePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                ></DatePicker>
               </div>
             </li>
             <li>
               <div class="condition condition-title c-black-gray">{{$t('m_field_comparedTimeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" :value="chartCondition.compareSecondDate" split-panels placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 200px"></DatePicker>
+                <DatePicker
+                  type="daterange"
+                  :value="chartCondition.compareSecondDate"
+                  split-panels
+                  placement="bottom-start"
+                  @on-change="pickSecondDate"
+                  :placeholder="$t('m_placeholder_comparedDatePicker')"
+                  style="width: 200px"
+                  :transfer="false"
+                ></DatePicker>
               </div>
             </li>
           </template>
