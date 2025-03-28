@@ -38,7 +38,7 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, operat
 		sql = sql + " and log_metric_group is  null"
 	}
 	sql = sql + " and id in (" + strings.Join(ids, ",") + ")"
-	sql = sql + " order by update_at desc "
+	sql = sql + " order by name  COLLATE utf8_bin ASC "
 	pageInfo.StartIndex = condition.StartIndex
 	pageInfo.PageSize = condition.PageSize
 	pageInfo.TotalRows = queryCount(sql, params...)
