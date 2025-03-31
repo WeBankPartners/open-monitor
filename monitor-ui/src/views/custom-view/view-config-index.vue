@@ -114,7 +114,7 @@
                 <span @click="goToPanal(item, 'view')" :class="['panal-title-name-text', item.logMetricGroup ? 'is-auto-max-width' : 'is-not-auto-max-width']">{{ item.name }}</span>
               </Tooltip>
               <Tooltip :content="$t('m_copy') + $t('m_screen_name')" :max-width='400' theme="dark" transfer placement="top">
-                <Icon @click="copyPanalName(item.name)" style="cursor: pointer; margin-left: 5px" type="ios-copy" color="#00CB91" size="20"></Icon>
+                <Icon @click="copyPanalName(item.name)" style="cursor: pointer; margin-left: 5px; margin-bottom: 2px" type="ios-copy" color="#00CB91" size="20"></Icon>
               </Tooltip>
             </div>
             <span class="panal-title-update">
@@ -660,7 +660,22 @@ export default {
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     copyPanalName(name) {
-      navigator.clipboard.writeText(name)
+      if (navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(name)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = name
+        textarea.style.position = 'fixed' // 隐藏元素避免闪烁
+        textarea.style.top = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.select()
+        try {
+          document.execCommand('copy')
+          document.body.removeChild(textarea)
+        } catch (err) {
+          console.error('传统方法复制失败:', err)
+        }
+      }
       this.$Message.success(this.$t('m_screen_name') + this.$t('m_copy_success'))
     }
   },
@@ -808,7 +823,7 @@ li {
 }
 
 .is-not-auto-max-width {
-  max-width: calc((100vw - 140px) / 3 - 215px );
+  max-width: calc((100vw - 140px) / 3 - 225px );
 }
 
 .fa-star {
