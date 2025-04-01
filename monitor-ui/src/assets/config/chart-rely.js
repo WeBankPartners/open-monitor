@@ -158,9 +158,9 @@ export const drawChart = function (that,config,userConfig, elId) {
   // 基于准备好的dom，初始化echarts实例
   const myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
-  if (finalConfig.clear) {
-    myChart.clear()
-  }
+  // if (finalConfig.clear) {
+  //   myChart.clear()
+  // }
   let isTwoYaxes = false
   if (finalConfig.params && finalConfig.params.lineType === 2) {
     isTwoYaxes = true
@@ -482,7 +482,7 @@ export const drawChart = function (that,config,userConfig, elId) {
     option.legend.selected = window['view-config-selected-line-data'][finalConfig.chartId]
   }
   // 绘制图表
-  myChart.clear()
+  // myChart.clear()
   myChart.setOption(option)
   // 清空所有事件重新绑定
   myChart.off()

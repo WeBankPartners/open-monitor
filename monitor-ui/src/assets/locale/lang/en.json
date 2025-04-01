@@ -567,5 +567,6 @@
   "m_duration_time": "Duration Time",
   "m_frequency": "Frequency",
   "m_first_time": "First Time",
-  "m_duration": "Duration"
+  "m_duration": "Duration",
+  "m_copy_success": "Copy Success"
 }
