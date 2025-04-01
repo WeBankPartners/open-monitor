@@ -660,12 +660,12 @@ export default {
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
     },
     copyPanalName(name) {
-      if (navigator.clipboard.writeText) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(name)
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = name
-        textarea.style.position = 'fixed' // 隐藏元素避免闪烁
+        textarea.style.position = 'fixed'
         textarea.style.top = '-9999px'
         document.body.appendChild(textarea)
         textarea.select()
@@ -823,7 +823,7 @@ li {
 }
 
 .is-not-auto-max-width {
-  max-width: calc((100vw - 140px) / 3 - 225px );
+  max-width: calc((100vw - 140px) / 3 - 231px );
 }
 
 .fa-star {
