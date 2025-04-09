@@ -258,3 +258,20 @@ func matchMonitorEngineExistAlarm(metaMap map[string]string, existAlarmRows []*m
 	}
 	return
 }
+
+func StartSQLQueryCron() {
+	for {
+		now := time.Now()
+		next := now.Add(time.Hour * 24)
+		next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
+		t := time.NewTimer(next.Sub(now))
+		<-t.C
+		go doSQLQueryJob()
+	}
+}
+
+func doSQLQueryJob() {
+	log.Debug(nil, log.LOGGER_APP, "doSQLQueryJob start")
+	value := db.GetQuery()
+	log.Info(nil, log.LOGGER_APP, "SQL Query Result", zap.String("ExecutionTime", time.Now().Format(time.RFC3339)), zap.String("Value", value))
+}

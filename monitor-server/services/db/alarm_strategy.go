@@ -1533,6 +1533,16 @@ func UpdateAlarmStrategyMetricExpr(alarmStrategyMetricObj *models.AlarmStrategyM
 	}
 }
 
+func GetQuery() string {
+	var value string
+	query := "SELECT VARIABLE_VALUE AS Value FROM information_schema.GLOBAL_STATUS WHERE VARIABLE_NAME = 'Com_stmt_prepare';"
+	_, err := x.SQL(query).Get(&value)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "doSQLQueryJob fail", zap.Error(err))
+		return value
+	}
+	return value
+}
 func GetMonitorEngineAlarmList() (alarmList []*models.AlarmTable, err error) {
 	err = x.SQL("select id,endpoint,status,s_metric,tags,alarm_strategy from alarm where status='firing' and alarm_strategy in (select alarm_strategy from alarm_strategy_metric where monitor_engine=1) order by id desc").Find(&alarmList)
 	if err != nil {
