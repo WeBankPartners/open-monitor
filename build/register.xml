@@ -45,13 +45,15 @@
             <attribute name="displayName" datatype="str" description="显示名"/>
             <attribute name="name" datatype="str" description="对象名"/>
             <attribute name="ip" datatype="str" description="对象IP"/>
-            <attribute name="monitorType" datatype="str" description="监控类型"/>
+            <attribute name="monitorType" datatype="ref" description="监控类型" refPackageName="monitor" refEntityName="monitor_type" />
+            <attribute name="endpointGroup" datatype="ref" description="监控组" refPackageName="monitor" refEntityName="endpoint_group" />
+            <attribute name="serviceGroup" datatype="ref" description="层级对象" refPackageName="monitor" refEntityName="service_group" />
         </entity>
         <entity name="endpoint_group" displayName="监控组" description="监控组模型">
             <attribute name="id" datatype="str" description="唯一ID"/>
             <attribute name="displayName" datatype="str" description="显示名"/>
             <attribute name="description" datatype="str" description="描述"/>
-            <attribute name="monitorType" datatype="str" description="监控类型"/>
+            <attribute name="monitorType" datatype="ref" description="监控类型" refPackageName="monitor" refEntityName="monitor_type" />
         </entity>
         <entity name="service_group" displayName="层级对象" description="层级对象模型">
             <attribute name="id" datatype="str" description="唯一ID"/>
