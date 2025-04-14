@@ -263,12 +263,28 @@ func GetLogKeywordConfigUniqueData(guid, name, keyword, logKeywordMonitorGuid st
 	if err != nil {
 		return
 	}
+	// 由于db设置不区分大小写,结果集过滤大小写
+	var filteredSameNameList []*models.LogKeywordConfigTable
+	for _, config := range sameNameList {
+		if config.Name == name {
+			filteredSameNameList = append(filteredSameNameList, config)
+		}
+	}
+	sameNameList = filteredSameNameList
 	sameKeywordList = []*models.LogKeywordConfigTable{}
-	if keyword == "" {
+	if guid == "" {
 		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and keyword=?", logKeywordMonitorGuid, keyword).Find(&sameKeywordList)
 	} else {
 		err = x.SQL("select * from log_keyword_config where log_keyword_monitor=? and keyword=? and guid<>?", logKeywordMonitorGuid, keyword, guid).Find(&sameKeywordList)
 	}
+	// 过滤大小写
+	var filteredSameKeywordList []*models.LogKeywordConfigTable
+	for _, config := range sameKeywordList {
+		if config.Keyword == keyword {
+			filteredSameKeywordList = append(filteredSameKeywordList, config)
+		}
+	}
+	sameKeywordList = filteredSameKeywordList
 	return
 }
 
