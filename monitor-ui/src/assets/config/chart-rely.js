@@ -296,6 +296,11 @@ export const drawChart = function (that,config,userConfig, elId) {
           color: chartTextColor
         },
         formatter(value) {
+          window.maxFormatTimeStamp = window.maxFormatTimeStamp || value
+          if (value > window.maxFormatTimeStamp) {
+            window.maxFormatTimeStamp = value
+            window.maxFormatTimeFormat = echarts.format.formatTime('MM-dd\nhh:mm:ss', value)
+          }
           return echarts.format.formatTime('MM-dd\nhh:mm:ss', value)
         }
       },
