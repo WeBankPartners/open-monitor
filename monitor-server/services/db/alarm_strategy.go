@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/crc64"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -11,11 +17,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
-	"hash/crc64"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 )
 
 // 系统内置 指标阈值-组 ,& old_1~old_20
@@ -1020,7 +1021,7 @@ func compareNotifyEventLevel(level string) bool {
 func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) (withoutRetry bool, err error) {
 	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Info(nil, log.LOGGER_APP, "notify event disable", zap.String("level", alarmObj.SPriority), zap.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
-		err = notifyMailAction(notify, alarmObj)
+		// err = notifyMailAction(notify, alarmObj)
 		return
 	}
 	if notify.ProcCallbackKey == "" {
