@@ -21,7 +21,7 @@
           <Row v-if="allShowLineName.length" style="min-height: 200px; max-height: 400px;overflow-y: auto;">
             <Col span="12" v-for="(seriesName, index) in allShowLineName" :key="index">
             <Checkbox v-model="lineSelectModalData[chartId][seriesName]" @on-change="onSingleLineSelectChange">
-              <Tooltip :content="seriesName" :max-width='400'>
+              <Tooltip :content="seriesName" :transfer="false" :max-width='400'>
                 <div class="ellipsis-text-style">{{ seriesName }}</div>
               </Tooltip>
             </Checkbox>
