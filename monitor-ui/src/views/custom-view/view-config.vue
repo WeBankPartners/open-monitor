@@ -321,7 +321,7 @@
       </div>
     </div>
     <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
-      <ViewChart v-if="showMaxChart" ref="viewChart"></ViewChart>
+      <ViewChart v-if="showMaxChart" ref="viewChart" id="max-view-chart"></ViewChart>
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->

@@ -146,6 +146,7 @@ export default {
     async getchartdata(type = '') {
       window.intervalFrom = 'custom-chart'
       const modalElement = document.querySelector('#edit-view')
+      const maxViewElement = document.querySelector('#max-view-chart')
       const offset = this.$el.getBoundingClientRect()
       const offsetTop = offset.top
       const offsetBottom = offset.bottom
@@ -159,7 +160,7 @@ export default {
           // 这里用于其余的场景，首屏渲染全量
           this.requestChartData()
         }
-      } else if (offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !this.isToolTipShow) {
+      } else if (offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !maxViewElement && !this.isToolTipShow) {
         this.requestChartData()
       }
     },
