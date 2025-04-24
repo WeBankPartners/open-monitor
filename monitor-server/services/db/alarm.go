@@ -1272,16 +1272,17 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			}
 			alertLevel, _ = strconv.Atoi(v.AlertLevel)
 			subSystemId, _ = strconv.Atoi(v.SubSystemId)
-			_, err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way) VALUE (?,?,?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay)
-			if err != nil {
+			insertResult, execErr := x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way) VALUE (?,?,?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay)
+			if execErr != nil {
+				err = execErr
 				log.Error(nil, log.LOGGER_APP, "Save open alarm error", zap.Error(err))
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
+			lastInsertId, _ := insertResult.LastInsertId()
+			customAlarmId = int(lastInsertId)
+			log.Info(nil, log.LOGGER_APP, "insert custom alarm row donw", zap.Int("id", customAlarmId))
 			//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
-			for _, vv := range query {
-				customAlarmId = vv.Id
-			}
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
 			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {
