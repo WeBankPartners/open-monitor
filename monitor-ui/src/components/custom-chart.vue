@@ -13,7 +13,7 @@
 
 <script>
 // 引入 ECharts 主模块
-import {cloneDeep, isEmpty} from 'lodash'
+import {cloneDeep, isEmpty, hasIn} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 import { changeSeriesColor } from '@/assets/config/random-color'
 import {chartTooltipContain} from '@/assets/js/utils'
@@ -144,6 +144,9 @@ export default {
       }
     },
     async getchartdata(type = '') {
+      if (hasIn(this, '$parent.$parent.$parent.isNeedRefresh') && !this.$parent.$parent.$parent.isNeedRefresh) {
+        return
+      }
       window.intervalFrom = 'custom-chart'
       const modalElement = document.querySelector('#edit-view')
       const maxViewElement = document.querySelector('#max-view-chart')
@@ -152,7 +155,7 @@ export default {
       const offsetBottom = offset.bottom
       if (type === 'mounted') {
         if (this.isInViewConfig) {
-          if (this.chartInfo.parsedDisplayConfig.y < 35) {
+          if (this.chartInfo.parsedDisplayConfig.y < 21) {
             // 这里用在自定义视图中首屏渲染
             this.requestChartData()
           }

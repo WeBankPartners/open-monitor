@@ -89,6 +89,7 @@
 <script>
 import {isEmpty} from 'lodash'
 import Vue from 'vue'
+import {renderDisplayName} from '@/assets/js/utils'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
 export default {
   name: 'standard-regex',
@@ -167,7 +168,8 @@ export default {
         {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
-          width: 120
+          width: 120,
+          render: (h, params) => (<span>{renderDisplayName(params.row.display_name)}</span>)
         },
         {
           title: this.$t('m_metric_key'),

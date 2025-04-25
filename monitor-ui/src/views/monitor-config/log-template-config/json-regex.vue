@@ -166,6 +166,7 @@
 import {isEmpty, cloneDeep, hasIn} from 'lodash'
 import Vue from 'vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
+import {renderDisplayName} from '@/assets/js/utils'
 
 const initRangeConfigMap = {
   req_fail_rate: {
@@ -294,7 +295,8 @@ export default {
         {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
-          width: 120
+          width: 120,
+          render: (h, params) => (<span>{renderDisplayName(params.row.display_name)}</span>)
         },
         {
           title: this.$t('m_metric_key'),

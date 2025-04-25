@@ -54,15 +54,26 @@
                   :value="viewCondition.dateRange"
                   format="yyyy-MM-dd HH:mm:ss"
                   placement="bottom-start"
+                  :transfer="true"
                   split-panels
                   @on-change="datePick"
+                  @on-ok="onDatePickOk"
+                  @on-open-change="onDatePickChange"
                   :placeholder="$t('m_placeholder_datePicker')"
                   style="width: 250px"
                 ></DatePicker>
               </div>
               <div class="search-zone">
                 <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
-                <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
+                <Select
+                  filterable
+                  :transfer="true"
+                  v-model="viewCondition.autoRefresh"
+                  :disabled="disableTime"
+                  style="width:100px"
+                  @on-change="onAutoRefreshSelectChange"
+                  :placeholder="$t('m_placeholder_refresh')"
+                >
                   <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
                 </Select>
               </div>
@@ -215,7 +226,11 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" @scroll="onGridWindowScroll">
+        <div class="grid-window" 
+          :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" 
+          @scroll="onGridWindowScroll"
+          @mouseleave="handleGridWindowMouseLeave"
+        >
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -226,7 +241,7 @@
             :vertical-compact="true"
             :use-css-transforms="true"
           >
-            <grid-item v-for="(item,index) in tmpLayoutData"
+            <grid-item v-for="(item, index) in tmpLayoutData"
                        style="cursor: auto; overflow-y: hidden;"
                        class="c-dark"
                        :x="item.x"
@@ -294,15 +309,16 @@
                     </Poptip>
                   </div>
                 </div>
-                <section style="height: 90%;">
+                <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
-                                 :refreshNow="refreshNow"
-                                 :scrollRefresh="scrollRefresh"
-                                 :chartInfo="chartInfo"
-                                 :chartIndex="index"
-                                 :params="viewCondition"
-                                 :hasNotRequestStatus="hasNotRequestStatus"
+                                :ref="'chart' + index"
+                                :refreshNow="refreshNow"
+                                :scrollRefresh="scrollRefresh"
+                                :chartInfo="chartInfo"
+                                :chartIndex="index"
+                                :params="viewCondition"
+                                :hasNotRequestStatus="hasNotRequestStatus"
                     >
                     </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -562,7 +578,8 @@ export default {
       hasNotRequestStatus: true,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
-      isActionRegionExpand: true
+      isActionRegionExpand: true,
+      isNeedRefresh: true
     }
   },
   computed: {
@@ -679,9 +696,24 @@ export default {
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
-        this.viewCondition.autoRefresh = 0
+        this.viewCondition.autoRefresh = -1
       }
       this.initPanals()
+    },
+    onDatePickChange(flag) {
+      if (!flag) {
+        this.onDatePickOk()
+      }
+    },
+    onDatePickOk() {
+      const datePickDomList = document.querySelectorAll('.search-zone .ivu-input.ivu-input-default.ivu-input-with-suffix')
+      const valStr = datePickDomList[0].value
+      if (valStr) {
+        const matches = valStr.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g)
+        if (matches.length === 2) {
+          this.datePick(matches)
+        }
+      }
     },
     dateToTimestamp(date) {
       if (!date) {
@@ -1648,7 +1680,38 @@ export default {
       gridContent && (gridContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
       alarmContent && (alarmContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
       alarmListContent && (alarmListContent.style.height = `calc(100vh - ${headerHeight + 100 + 120}px)`)
-    }
+    },
+    onAutoRefreshSelectChange(time) {
+      if (time === -1) {
+        this.isNeedRefresh = false
+      }
+      this.initPanals()
+      if (!this.isNeedRefresh) {
+        window.setTimeout(() => {
+          this.isNeedRefresh = true
+        }, 1000)
+      }
+    },
+    handleSingleChartMouseLeave: debounce(function(index){
+      const refsName = `chart${index}` 
+      const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+      if (chartInstance) {
+        chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
+    }, 500),
+    handleGridWindowMouseLeave: debounce(function() {
+      this.tmpLayoutData.forEach((one, index) => {
+        const refsName = `chart${index}`
+        const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+        if (chartInstance) {
+          chartInstance.dispatchAction({
+            type: 'hideTip'
+          })
+        }
+      })
+    }, 2000)
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,

@@ -145,3 +145,18 @@ export const chartTooltipContain = className => {
     })
   }
 }
+
+const displayNameMap = {
+  请求量: 'Request Volume',
+  成功量: 'Success Volume',
+  成功率: 'Success Rate',
+  失败量: 'Failure Volume',
+  失败率: 'Failure Rate',
+  分类失败量: 'Categorized Failure Count',
+  平均耗时: 'Average Time Consumed',
+  最大耗时: 'Maximum Time Consumed'
+}
+
+export const renderDisplayName = name => (localStorage.getItem('lang') || (navigator.language || navigator.userLanguage === 'zh-CN' ? 'zh-CN': 'en-US')) === 'zh-CN'
+  ? name
+  : (displayNameMap[name] ? displayNameMap[name] : name)
