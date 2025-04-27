@@ -3,7 +3,7 @@ import Cookies from 'js-cookie'
 // User
 const tokenKey = 'accessToken'
 export const getToken = () => {
-  const cookie = Cookies.get(tokenKey)
+  const cookie = localStorage.getItem('monitor-accessToken')
   return cookie
 }
 const key = 'accessToken'

@@ -17,6 +17,7 @@
         :headers="{'Authorization': token}"
         :on-success="uploadSucess"
         :on-error="uploadFailed"
+        :before-upload="handleBeforeUpload"
       >
         <Button class="btn-upload">
           <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
@@ -33,7 +34,8 @@ export default {
   name: '',
   data() {
     return {
-      token: ''
+      token: '',
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
     }
   },
   props: {
@@ -76,14 +78,15 @@ export default {
   },
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+    this.token = this.returnLatestToken()
   },
   methods: {
-    exportHandler() {
+    async exportHandler() {
       if (this.validateExportDataEmpty && this.exportData.length === 0) {
         this.$Message.warning(this.$t('m_select_data_tip'))
         return
       }
+      this.token = await this.refreshToken()
       axios({
         method: this.exportMethod,
         url: this.exportUrl,
@@ -132,6 +135,20 @@ export default {
     uploadFailed(file) {
       this.$Message.warning(file.message)
     },
+    async refreshToken() {
+      await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
+      const token = this.returnLatestToken()
+      return new Promise(resolve => {
+        resolve(token)
+      })
+    },
+    returnLatestToken() {
+      return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+    },
+    async handleBeforeUpload() {
+      this.token = await this.refreshToken()
+      return true
+    }
   }
 }
 </script>
