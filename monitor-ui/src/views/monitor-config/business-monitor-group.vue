@@ -505,7 +505,7 @@ import {
   uniq, filter, cloneDeep, map, isEmpty
 } from 'lodash'
 // import Vue from 'vue'
-import { returnLatestToken } from '@/assets/js/cookies.ts'
+import { getPlatFormToken, getToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
@@ -1523,10 +1523,13 @@ export default {
     },
     async refreshToken() {
       await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
-      const token = returnLatestToken()
+      const token = this.returnLatestToken()
       return new Promise(resolve => {
         resolve(token)
       })
+    },
+    returnLatestToken() {
+      return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
     }
   },
   components: {
