@@ -226,10 +226,10 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window" 
-          :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" 
-          @scroll="onGridWindowScroll"
-          @mouseleave="handleGridWindowMouseLeave"
+        <div class="grid-window"
+             :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''"
+             @scroll="onGridWindowScroll"
+             @mouseleave="handleGridWindowMouseLeave"
         >
           <grid-layout
             :layout.sync="tmpLayoutData"
@@ -312,13 +312,13 @@
                 <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
-                                :ref="'chart' + index"
-                                :refreshNow="refreshNow"
-                                :scrollRefresh="scrollRefresh"
-                                :chartInfo="chartInfo"
-                                :chartIndex="index"
-                                :params="viewCondition"
-                                :hasNotRequestStatus="hasNotRequestStatus"
+                                 :ref="'chart' + index"
+                                 :refreshNow="refreshNow"
+                                 :scrollRefresh="scrollRefresh"
+                                 :chartInfo="chartInfo"
+                                 :chartIndex="index"
+                                 :params="viewCondition"
+                                 :hasNotRequestStatus="hasNotRequestStatus"
                     >
                     </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -693,6 +693,7 @@ export default {
     datePick(data) {
       this.viewCondition.dateRange = data
       this.disableTime = false
+      this.viewCondition.autoRefresh = 10
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
@@ -1692,8 +1693,8 @@ export default {
         }, 1000)
       }
     },
-    handleSingleChartMouseLeave: debounce(function(index){
-      const refsName = `chart${index}` 
+    handleSingleChartMouseLeave: debounce(function (index){
+      const refsName = `chart${index}`
       const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
       if (chartInstance) {
         chartInstance.dispatchAction({
@@ -1701,7 +1702,7 @@ export default {
         })
       }
     }, 500),
-    handleGridWindowMouseLeave: debounce(function() {
+    handleGridWindowMouseLeave: debounce(function () {
       this.tmpLayoutData.forEach((one, index) => {
         const refsName = `chart${index}`
         const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
