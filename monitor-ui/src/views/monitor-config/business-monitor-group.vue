@@ -1522,9 +1522,9 @@ export default {
       document.querySelector('.log-file-upload .ivu-upload-input').click()
     },
     async refreshToken() {
-      return new Promise(async resolve => {
-        await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
-        const token = returnLatestToken()
+      await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
+      const token = returnLatestToken()
+      return new Promise(resolve => {
         resolve(token)
       })
     }
