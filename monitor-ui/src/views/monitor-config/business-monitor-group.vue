@@ -1524,7 +1524,8 @@ export default {
     async refreshToken() {
       return new Promise(async resolve => {
         await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
-        resolve(returnLatestToken())
+        const token = returnLatestToken()
+        resolve(token)
       })
     }
   },
