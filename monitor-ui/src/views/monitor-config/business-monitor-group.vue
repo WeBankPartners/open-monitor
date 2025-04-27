@@ -923,7 +923,7 @@ export default {
   },
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
-    this.token = this.refreshToken()
+    this.token = this.returnLatestToken()
   },
   methods: {
     getMonitorTemplateList() {

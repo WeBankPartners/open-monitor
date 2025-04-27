@@ -53,6 +53,7 @@
           :headers="{'Authorization': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed"
+          :before-upload="handleBeforeUpload"
         >
           <!-- <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button> -->
           <Button class="btn-upload">
@@ -161,7 +162,8 @@ export default {
     onFilterChange: debounce(function () {
       this.search()
     }, 300),
-    exportData() {
+    async exportData() {
+      this.token = await this.refreshToken()
       const api = `${this.$root.apiCenter.bussinessMonitorExport}?serviceGroup=${this.targetId}`
       axios({
         method: 'GET',
@@ -215,6 +217,20 @@ export default {
     },
     onFeedbackInfo(allData) {
       this.isDataEmpty = allData.length === 0
+    },
+    async refreshToken() {
+      await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
+      const token = this.returnLatestToken()
+      return new Promise(resolve => {
+        resolve(token)
+      })
+    },
+    returnLatestToken() {
+      return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+    },
+    async handleBeforeUpload() {
+      this.token = await this.refreshToken()
+      return true
     }
   },
   components: {
