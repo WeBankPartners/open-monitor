@@ -12,6 +12,7 @@ import (
 	"time"
 	"xorm.io/core"
 	"xorm.io/xorm"
+	"xorm.io/xorm/caches"
 	xorm_log "xorm.io/xorm/log"
 )
 
@@ -25,7 +26,7 @@ var (
 //var RedisStore sessions.RedisStore
 
 func InitDatabase() error {
-	connStr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+	connStr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&interpolateParams=true&parseTime=true",
 		models.Config().Store.User, models.Config().Store.Pwd, "tcp", fmt.Sprintf("%s:%s", models.Config().Store.Server, models.Config().Store.Port), models.Config().Store.DataBase)
 	engine, err := xorm.NewEngine("mysql", connStr)
 	if err != nil {
@@ -38,6 +39,30 @@ func InitDatabase() error {
 	engine.SetLogger(&dbLogger{LogLevel: 1, ShowSql: true, Logger: log.DatabaseLogger})
 	// 使用驼峰式映射
 	engine.SetMapper(core.SnakeMapper{})
+	// 设置连接池空闲时间
+	engine.SetConnMaxIdleTime(time.Duration(models.Config().Store.Timeout) * time.Second)
+	// 创建一个LRU缓存，设置大小为1000条记录
+	cacher := caches.NewLRUCacher(caches.NewMemoryStore(), 1000)
+	// 对高频表启用缓存 - 按查询频率从高到低排序
+	engine.MapCacher("alarm_strategy", cacher)        // 查询次数: 10033+
+	engine.MapCacher("alarm_strategy_metric", cacher) // 查询次数: 8391
+	engine.MapCacher("alarm", cacher)                 // 查询次数: 8380
+	engine.MapCacher("alert_window", cacher)          // 查询次数: 6901
+	engine.MapCacher("endpoint_new", cacher)          // 查询次数: 6558+
+	engine.MapCacher("endpoint_group", cacher)        // 查询次数: 1808
+	engine.MapCacher("notify", cacher)                // 查询次数: 1100+
+	engine.MapCacher("role_new", cacher)              // 查询次数: 1000+
+	engine.MapCacher("endpoint_service_rel", cacher)  // 查询次数: 976
+	engine.MapCacher("alarm_firing", cacher)          // 查询次数: 752+
+	engine.MapCacher("custom_dashboard", cacher)
+	engine.MapCacher("custom_chart", cacher)
+	engine.MapCacher("custom_chart_permission", cacher)
+	engine.MapCacher("custom_chart_series", cacher)
+	engine.MapCacher("custom_chart_series_config", cacher)
+	engine.MapCacher("custom_chart_series_tag", cacher)
+	engine.MapCacher("custom_chart_series_tagvalue", cacher)
+	// 或者为所有表启用缓存
+	engine.SetDefaultCacher(cacher)
 	x = engine
 	log.Info(nil, log.LOGGER_APP, "Success init database connect !!")
 	tmpEnable := strings.ToLower(models.Config().ArchiveMysql.Enable)
