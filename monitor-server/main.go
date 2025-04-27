@@ -53,7 +53,6 @@ func main() {
 	go api.InitDependenceParam()
 	go db.StartInitAlarmUniqueTags()
 	go db.SyncMetricComparison()
-	go alarm.StartSQLQueryCron()
 
 	api.InitHttpServer()
 }
