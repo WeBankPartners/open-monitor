@@ -319,6 +319,7 @@
                                  :chartIndex="index"
                                  :params="viewCondition"
                                  :hasNotRequestStatus="hasNotRequestStatus"
+                                 @isChartInWindow="collectInWindowChartRef('chart' + index)"
                     >
                     </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -579,7 +580,8 @@ export default {
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
-      isNeedRefresh: true
+      isNeedRefresh: true,
+      inWindowChartRefs: []
     }
   },
   computed: {
@@ -1661,6 +1663,7 @@ export default {
       this.refreshNow = !this.refreshNow
     },
     onGridWindowScroll: debounce(function () {
+      this.inWindowChartRefs = []
       this.scrollRefresh = !this.scrollRefresh
     }, 1000),
     resetHasNotRequestStatus() {
@@ -1703,16 +1706,21 @@ export default {
       }
     }, 500),
     handleGridWindowMouseLeave: debounce(function () {
-      this.tmpLayoutData.forEach((one, index) => {
-        const refsName = `chart${index}`
+      this.inWindowChartRefs.forEach(refsName => {
         const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
-        if (chartInstance) {
+        const isChartInWindow = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].isChartInWindow : null
+        if (chartInstance && isChartInWindow) {
           chartInstance.dispatchAction({
             type: 'hideTip'
           })
         }
       })
-    }, 2000)
+    }, 2000),
+    collectInWindowChartRef(ref) {
+      if (this.inWindowChartRefs.indexOf(ref) === -1) {
+        this.inWindowChartRefs.push(ref)
+      }
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,

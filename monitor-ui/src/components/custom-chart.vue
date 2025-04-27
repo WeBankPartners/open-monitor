@@ -33,7 +33,8 @@ export default {
       hasNotRequest: true,
       isToolTipShow: false,
       apiCenter: this.$root.apiCenter,
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      isChartInWindow: false
     }
   },
   props: {
@@ -52,7 +53,6 @@ export default {
   watch: {
     params: {
       handler() {
-        this.isAutoRefresh()
         this.getchartdata()
       },
       deep: true
@@ -86,12 +86,11 @@ export default {
     if (!this.isInViewConfig) {
       this.getchartdata('mounted')
     }
-    this.isAutoRefresh()
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
   },
   destroyed() {
-    this.clearInterval()
+    this.clearIntervalInfo()
     this.chartInstance = null
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
@@ -106,12 +105,12 @@ export default {
   methods: {
     isTabActive() {
       if (document.hidden) {
-        this.clearInterval()
+        this.clearIntervalInfo()
       } else {
         this.isAutoRefresh()
       }
     },
-    clearInterval() {
+    clearIntervalInfo() {
       clearInterval(this.interval)
       this.interval = null
     },
@@ -126,12 +125,14 @@ export default {
           this.isAutoRefresh()
         }
       } else {
-        clearInterval(this.interval)
-        this.interval = null
+        this.clearIntervalInfo()
       }
     },
     isAutoRefresh() {
-      clearInterval(this.interval)
+      this.clearIntervalInfo()
+      if (!this.isChartInWindow) {
+        return
+      }
       const element = document.querySelector('#custome-chart-view')
       if (!element) {
         return
@@ -139,7 +140,6 @@ export default {
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
         this.interval = setInterval(() => {
           this.getchartdata()
-          this.isAutoRefresh()
         },this.params.autoRefresh * 1000)
       }
     },
@@ -153,17 +153,21 @@ export default {
       const offset = this.$el.getBoundingClientRect()
       const offsetTop = offset.top
       const offsetBottom = offset.bottom
+      this.isChartInWindow = offsetTop <= window.innerHeight && offsetBottom >= 0
       if (type === 'mounted') {
         if (this.isInViewConfig) {
           if (this.chartInfo.parsedDisplayConfig.y < 21) {
             // 这里用在自定义视图中首屏渲染
+            this.$emit('isChartInWindow')
             this.requestChartData()
+            this.isAutoRefresh()
           }
         } else {
           // 这里用于其余的场景，首屏渲染全量
           this.requestChartData()
         }
-      } else if (offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !maxViewElement && !this.isToolTipShow) {
+      } else if (this.isChartInWindow && !modalElement && !maxViewElement && !this.isToolTipShow) {
+        this.$emit('isChartInWindow')
         this.requestChartData()
       }
     },
