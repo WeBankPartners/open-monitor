@@ -1528,6 +1528,7 @@ export default {
       this.filterLayoutData()
     },
     filterLayoutData() {
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1011')
       if (this.activeGroup === 'ALL') {
         this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
       } else {
@@ -1549,12 +1550,15 @@ export default {
         }
       }
       this.chartLayoutType = this.confirmLayoutType(this.layoutData)
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
       this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
       this.$nextTick(() => {
+        window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1010')
         this.refreshNow = !this.refreshNow
       })
     },

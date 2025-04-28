@@ -34,7 +34,7 @@ export default {
       isToolTipShow: false,
       apiCenter: this.$root.apiCenter,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      isChartInWindow: false
+      isChartInWindow: null
     }
   },
   props: {
@@ -53,7 +53,10 @@ export default {
   watch: {
     params: {
       handler() {
-        this.getchartdata()
+        this.isChartInWindow = this.calcIsChartInWindow()
+        if (this.isChartInWindow) {
+          this.getchartdata()
+        }
       },
       deep: true
     },
@@ -117,15 +120,9 @@ export default {
       this.interval = null
     },
     scrollHandle() {
-      const offset = this.$el.getBoundingClientRect()
-      const offsetTop = offset.top
-      const offsetBottom = offset.bottom
-      // const offsetHeight = offset.height;
-      // 进入可视区域
-      if (offsetTop <= window.innerHeight && offsetBottom >= 0) {
-        if (this.interval === null) {
-          this.isAutoRefresh()
-        }
+      this.isChartInWindow = this.calcIsChartInWindow()
+      if (this.isChartInWindow) {
+        this.isAutoRefresh()
       } else {
         this.clearIntervalInfo()
       }
@@ -152,13 +149,10 @@ export default {
       window.intervalFrom = 'custom-chart'
       const modalElement = document.querySelector('#edit-view')
       const maxViewElement = document.querySelector('#max-view-chart')
-      const offset = this.$el.getBoundingClientRect()
-      const offsetTop = offset.top
-      const offsetBottom = offset.bottom
-      this.isChartInWindow = offsetTop <= window.innerHeight && offsetBottom >= 0
+      this.isChartInWindow = this.calcIsChartInWindow()
       if (type === 'mounted') {
         if (this.isInViewConfig) {
-          if (this.chartInfo.parsedDisplayConfig.y < 21) {
+          if (this.chartInfo.parsedDisplayConfig.y < 14) {
             // 这里用在自定义视图中首屏渲染
             this.$emit('isChartInWindow')
             this.requestChartData()
@@ -281,6 +275,12 @@ export default {
           type: 'hideTip'
         })
       }
+    },
+    calcIsChartInWindow() {
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      return offsetTop <= window.innerHeight && offsetBottom >= 0
     }
   },
   components: {},
