@@ -592,7 +592,7 @@ export default {
       return this.permission === 'edit'
     }
   },
-  mounted() {
+  created() {
     window.viewTimeStepArr = []
     window.startTimeStep = +new Date()
     if (!this.pannelId) {

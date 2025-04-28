@@ -49,7 +49,7 @@ export default {
   mounted() {
     this.getchartdata('mounted')
   },
-  destroyed() {
+  beforeDestroy() {
     clearInterval(this.interval)
   },
   methods: {

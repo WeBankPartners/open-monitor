@@ -92,7 +92,7 @@ export default {
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
   },
-  destroyed() {
+  beforeDestroy() {
     this.clearIntervalInfo()
     window.removeEventListener('scroll', this.scrollHandle, true)
     window.removeEventListener('visibilitychange', this.isTabActive, true)
@@ -149,6 +149,7 @@ export default {
       window.intervalFrom = 'custom-chart'
       const modalElement = document.querySelector('#edit-view')
       const maxViewElement = document.querySelector('#max-view-chart')
+      const customChartEle = document.querySelector('#custome-chart-view')
       this.isChartInWindow = this.calcIsChartInWindow()
       if (type === 'mounted') {
         if (this.isInViewConfig) {
@@ -162,7 +163,7 @@ export default {
           // 这里用于其余的场景，首屏渲染全量
           this.requestChartData()
         }
-      } else if (this.isChartInWindow && !modalElement && !maxViewElement && !this.isToolTipShow) {
+      } else if (this.isChartInWindow && customChartEle && !modalElement && !maxViewElement && !this.isToolTipShow) {
         this.$emit('isChartInWindow')
         this.requestChartData()
       }
@@ -253,6 +254,9 @@ export default {
             })
             this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
             window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1018')
+            if (window.viewTimeStepArr.length > 30) {
+              window.viewTimeStepArr.length = 30
+            }
             this.scrollHandle()
             if (this.chartInstance) {
               this.chartInstance.on('legendselectchanged', params => {
