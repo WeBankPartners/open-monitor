@@ -16,7 +16,7 @@
 import {cloneDeep, isEmpty, hasIn} from 'lodash'
 import {readyToDraw} from '@/assets/config/chart-rely'
 import { changeSeriesColor } from '@/assets/config/random-color'
-import {chartTooltipContain} from '@/assets/js/utils'
+import {chartTooltipContain, dateToTimestamp} from '@/assets/js/utils'
 
 export default {
   name: '',
@@ -175,7 +175,9 @@ export default {
       }
       const params = {
         ...this.chartInfo.chartParams,
-        custom_chart_guid: this.chartInfo.elId
+        custom_chart_guid: this.chartInfo.elId,
+        start: dateToTimestamp(this.params.dateRange[0]),
+        end: dateToTimestamp(this.params.dateRange[1]),
       }
       this.elId = this.chartInfo.elId
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1015')

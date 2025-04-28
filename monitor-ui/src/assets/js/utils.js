@@ -160,3 +160,12 @@ const displayNameMap = {
 export const renderDisplayName = name => (localStorage.getItem('lang') || (navigator.language || navigator.userLanguage === 'zh-CN' ? 'zh-CN': 'en-US')) === 'zh-CN'
   ? name
   : (displayNameMap[name] ? displayNameMap[name] : name)
+
+export const dateToTimestamp = date => {
+  if (!date) {
+    return 0
+  }
+  let timestamp = Date.parse(new Date(date))
+  timestamp = timestamp / 1000
+  return timestamp
+}

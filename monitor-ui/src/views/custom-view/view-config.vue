@@ -405,7 +405,7 @@
 import {
   isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter, debounce
 } from 'lodash'
-import {generateUuid} from '@/assets/js/utils'
+import {generateUuid, dateToTimestamp} from '@/assets/js/utils'
 import {
   dataPick, autoRefreshConfig, layoutOptions, layoutColumns
 } from '@/assets/config/common-config'
@@ -700,6 +700,9 @@ export default {
       this.refreshNow = !this.refreshNow
     },
     datePick(data) {
+      if (data[0] === this.viewCondition.dateRange[0] && data[1] === this.viewCondition.dateRange[1]) {
+        return
+      }
       this.viewCondition.dateRange = data
       this.disableTime = false
       this.viewCondition.autoRefresh = 10
@@ -708,7 +711,7 @@ export default {
         this.disableTime = true
         this.viewCondition.autoRefresh = -1
       }
-      this.initPanals()
+      // this.initPanals()
     },
     onDatePickChange(flag) {
       if (!flag) {
@@ -724,14 +727,6 @@ export default {
           this.datePick(matches)
         }
       }
-    },
-    dateToTimestamp(date) {
-      if (!date) {
-        return 0
-      }
-      let timestamp = Date.parse(new Date(date))
-      timestamp = timestamp / 1000
-      return timestamp
     },
     async initPanals(type) {
       const tmpArr = []
@@ -760,8 +755,8 @@ export default {
           agg_step: item.aggStep,
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
-          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          start: dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: dateToTimestamp(this.viewCondition.dateRange[1]),
           title: '',
           unit: '',
           data: []
@@ -783,8 +778,8 @@ export default {
           agg_step: item.aggStep,
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
-          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          start: dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: dateToTimestamp(this.viewCondition.dateRange[1]),
           parsedDisplayConfig
         })
         tmpArr.push({
@@ -1703,7 +1698,7 @@ export default {
       if (time === -1) {
         this.isNeedRefresh = false
       }
-      this.initPanals()
+      // this.initPanals()
       if (!this.isNeedRefresh) {
         window.setTimeout(() => {
           this.isNeedRefresh = true
