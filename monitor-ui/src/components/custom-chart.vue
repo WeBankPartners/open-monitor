@@ -55,6 +55,7 @@ export default {
       handler() {
         this.isChartInWindow = this.calcIsChartInWindow()
         if (this.isChartInWindow) {
+          this.isAutoRefresh()
           this.getchartdata()
         }
       },
