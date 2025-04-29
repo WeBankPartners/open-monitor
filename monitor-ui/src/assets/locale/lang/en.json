@@ -568,5 +568,6 @@
   "m_frequency": "Frequency",
   "m_first_time": "First Time",
   "m_duration": "Duration",
-  "m_copy_success": "Copy Success"
+  "m_copy_success": "Copy Success",
+  "m_repeated_value": "Repeated Value"
 }

@@ -262,7 +262,7 @@
 
 <script>
 import {
-  cloneDeep, isEmpty, hasIn, debounce, countBy, some
+  cloneDeep, isEmpty, hasIn, debounce, countBy, some, keys, pickBy
 } from 'lodash'
 import Vue from 'vue'
 import StandardRegexDisplay from '@/views/monitor-config/log-template-config/standard-regex-display.vue'
@@ -436,14 +436,18 @@ export default {
         const targetValueCount = countBy(tmpData.code_string_map, 'target_value')
         const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
         if (targetValueHasDuplicates) {
-          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          const hasDuplicatedKeys = keys(pickBy(targetValueCount, value => value > 1))
+          const warningTips = this.$t('m_service_code') + this.$t('m_match_value_pure') + this.$t('m_cannot_be_repeated') + '; ' + (hasDuplicatedKeys.length ? (this.$t('m_repeated_value') + ': ' + hasDuplicatedKeys.join(';')) : '')
+          this.$Message.warning(warningTips)
           return true
         }
 
         const sourceValueCount = countBy(tmpData.code_string_map, 'source_value')
         const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
         if (sourceValueHasDuplicates) {
-          this.$Message.warning(`${this.$t('m_service_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          const hasDuplicatedKeys = keys(pickBy(sourceValueCount, value => value > 1))
+          const warningTips = this.$t('m_service_code') + this.$t('m_source_value') + this.$t('m_cannot_be_repeated') + '; ' + (hasDuplicatedKeys.length ? (this.$t('m_repeated_value') + ': ' + hasDuplicatedKeys.join(';')) : '')
+          this.$Message.warning(warningTips)
           return true
         }
       }
@@ -452,14 +456,18 @@ export default {
         const targetValueCount = countBy(tmpData.retcode_string_map, 'target_value')
         const targetValueHasDuplicates = some(targetValueCount, count => count > 1)
         if (targetValueHasDuplicates) {
-          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_match_value_pure')}${this.$t('m_cannot_be_repeated')}`)
+          const hasDuplicatedKeys = keys(pickBy(targetValueCount, value => value > 1))
+          const warningTips = this.$t('m_return_code') + this.$t('m_match_value_pure') + this.$t('m_cannot_be_repeated') + '; ' + (hasDuplicatedKeys.length ? (this.$t('m_repeated_value') + ': ' + hasDuplicatedKeys.join(';')) : '')
+          this.$Message.warning(warningTips)
           return true
         }
 
         const sourceValueCount = countBy(tmpData.retcode_string_map, 'source_value')
         const sourceValueHasDuplicates = some(sourceValueCount, count => count > 1)
         if (sourceValueHasDuplicates) {
-          this.$Message.warning(`${this.$t('m_return_code')}${this.$t('m_source_value')}${this.$t('m_cannot_be_repeated')}`)
+          const hasDuplicatedKeys = keys(pickBy(sourceValueCount, value => value > 1))
+          const warningTips = this.$t('m_return_code') + this.$t('m_source_value') + this.$t('m_cannot_be_repeated') + '; ' + (hasDuplicatedKeys.length ? (this.$t('m_repeated_value') + ': ' + hasDuplicatedKeys.join(';')) : '')
+          this.$Message.warning(warningTips)
           return true
         }
       }
