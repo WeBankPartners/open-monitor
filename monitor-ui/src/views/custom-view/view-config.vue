@@ -142,7 +142,7 @@
               trigger="click"
               v-for="(item, index) in allAddChartOptions"
               :key="index"
-              transfer
+              :transfer="true"
               class="chart-option-menu"
               transfer-class-name='filter-chart-layer'
               @on-click="(info) => onAddChart(JSON.parse(info), item.type)"
@@ -1767,7 +1767,7 @@ export default {
   }
 }
 
-.filter-chart-layer {
+.filter-chart-layer.ivu-select-dropdown.ivu-dropdown-transfer {
   max-height: 520px !important;
 }
 
