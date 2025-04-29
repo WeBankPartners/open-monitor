@@ -277,7 +277,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
       type: 'scroll',
       y: 'bottom',
-      padding: 10,
+      padding: 20,
       orient: 'horizontal',
       data: config.legend
     },
