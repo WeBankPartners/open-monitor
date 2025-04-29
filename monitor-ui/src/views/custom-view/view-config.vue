@@ -228,7 +228,10 @@
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
         <div class="grid-window"
              :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''"
-             @scroll="onGridWindowScroll"
+             @scroll="() => {
+               this.isFirstRender = false
+               this.onGridWindowScroll()
+             }"
              @mouseleave="handleGridWindowMouseLeave"
         >
           <grid-layout
@@ -311,7 +314,7 @@
                 </div>
                 <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                    <CustomChart v-if="isFirstRender ? (['line','bar'].includes(chartInfo.chartType) && chartInfo.parsedDisplayConfig.y < 14) : ['line','bar'].includes(chartInfo.chartType)"
                                  :ref="'chart' + index"
                                  :refreshNow="refreshNow"
                                  :scrollRefresh="scrollRefresh"
@@ -581,7 +584,8 @@ export default {
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
       isNeedRefresh: true,
-      inWindowChartRefs: []
+      inWindowChartRefs: [],
+      isFirstRender: false
     }
   },
   computed: {
@@ -593,6 +597,7 @@ export default {
     }
   },
   created() {
+    this.isFirstRender = true
     window.viewTimeStepArr = []
     window.startTimeStep = +new Date()
     if (!this.pannelId) {
