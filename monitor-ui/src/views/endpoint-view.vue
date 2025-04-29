@@ -1,6 +1,6 @@
 <template>
   <div class="page" id="endpointView">
-    <Title :title="$t('m_menu_endpointView')"></Title>
+    <!-- <Title :title="$t('m_menu_endpointView')"></Title> -->
     <EndpointViewComponent  ref="endpointViewComponentRef"></EndpointViewComponent>
   </div>
 </template>

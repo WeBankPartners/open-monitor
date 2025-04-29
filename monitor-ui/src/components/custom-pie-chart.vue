@@ -49,7 +49,7 @@ export default {
   mounted() {
     this.getchartdata('mounted')
   },
-  destroyed() {
+  beforeDestroy() {
     clearInterval(this.interval)
   },
   methods: {
@@ -78,10 +78,11 @@ export default {
       this.elId = this.chartInfo.elId
 
       const modalElement = document.querySelector('#edit-view')
+      const maxViewElement = document.querySelector('#max-view-chart')
       const offset = this.$el.getBoundingClientRect()
       const offsetTop = offset.top
       const offsetBottom = offset.bottom
-      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement) || type === 'mounted') {
+      if ((offsetTop <= window.innerHeight && offsetBottom >= 0 && !modalElement && !maxViewElement) || type === 'mounted') {
         this.request(
           'POST',
           this.apiCenter.metricConfigPieView.api,

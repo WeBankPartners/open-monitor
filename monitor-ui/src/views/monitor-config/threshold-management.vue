@@ -67,6 +67,7 @@
               :headers="{'Authorization': token}"
               :on-success="uploadSucess"
               :on-error="uploadFailed"
+              :before-upload="handleBeforeUpload"
             >
               <Button class="btn-upload">
                 <img src="@/styles/icon/UploadOutlined.png" class="upload-icon" />
@@ -166,8 +167,8 @@ export default {
       return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targetId}`
     }
   },
-  async mounted() {
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+  mounted() {
+    this.token = this.returnLatestToken()
     this.getTargetOptionsSearch = ''
     this.initTargetByType()
   },
@@ -185,7 +186,8 @@ export default {
         this.searchTableDetail()
       }
     },
-    exportThreshold() {
+    async exportThreshold() {
+      this.token = await this.refreshToken()
       const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
       axios({
         method: 'GET',
@@ -280,6 +282,20 @@ export default {
     }, 300),
     onTargetIdClear() {
       this.$refs.thresholdDetail.getDetail('')
+    },
+    async refreshToken() {
+      await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
+      const token = this.returnLatestToken()
+      return new Promise(resolve => {
+        resolve(token)
+      })
+    },
+    returnLatestToken() {
+      return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+    },
+    async handleBeforeUpload() {
+      this.token = await this.refreshToken()
+      return true
     }
   },
   components: {

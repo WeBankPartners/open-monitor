@@ -53,5 +53,6 @@ func main() {
 	go api.InitDependenceParam()
 	go db.StartInitAlarmUniqueTags()
 	go db.SyncMetricComparison()
+
 	api.InitHttpServer()
 }

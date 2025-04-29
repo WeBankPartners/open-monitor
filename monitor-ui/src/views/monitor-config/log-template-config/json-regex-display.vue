@@ -116,6 +116,7 @@
 import {isEmpty} from 'lodash'
 import Vue from 'vue'
 import {thresholdList, lastList} from '@/assets/config/common-config.js'
+import {renderDisplayName} from '@/assets/js/utils'
 export default {
   name: 'json-regex',
   data() {
@@ -200,7 +201,8 @@ export default {
         {
           title: this.$t('m_field_displayName'),
           key: 'display_name',
-          width: 120
+          width: 120,
+          render: (h, params) => (<span>{renderDisplayName(params.row.display_name)}</span>)
         },
         {
           title: this.$t('m_metric_key'),

@@ -3,9 +3,6 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
@@ -13,6 +10,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -172,7 +173,7 @@ func doProcessMonitor() {
 }
 
 func matchProcess(processList []*processUsedResource, config *processConfigObj) (result []*processMonitorObj) {
-	nameList := strings.Split(config.ProcessName, ",")
+	nameList := strings.Split(strings.ToLower(config.ProcessName), ",")
 	for _, v := range processList {
 		nameMatchFlag := false
 		for _, name := range nameList {

@@ -54,15 +54,26 @@
                   :value="viewCondition.dateRange"
                   format="yyyy-MM-dd HH:mm:ss"
                   placement="bottom-start"
+                  :transfer="true"
                   split-panels
                   @on-change="datePick"
+                  @on-ok="onDatePickOk"
+                  @on-open-change="onDatePickChange"
                   :placeholder="$t('m_placeholder_datePicker')"
                   style="width: 250px"
                 ></DatePicker>
               </div>
               <div class="search-zone">
                 <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
-                <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
+                <Select
+                  filterable
+                  :transfer="true"
+                  v-model="viewCondition.autoRefresh"
+                  :disabled="disableTime"
+                  style="width:100px"
+                  @on-change="onAutoRefreshSelectChange"
+                  :placeholder="$t('m_placeholder_refresh')"
+                >
                   <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
                 </Select>
               </div>
@@ -215,7 +226,11 @@
 
       <!-- 图表展示区域 -->
       <div v-if="tmpLayoutData.length > 0" style="display: flex" class=''>
-        <div class="grid-window" :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''" @scroll="onGridWindowScroll">
+        <div class="grid-window"
+             :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''"
+             @scroll="onGridWindowScroll"
+             @mouseleave="handleGridWindowMouseLeave"
+        >
           <grid-layout
             :layout.sync="tmpLayoutData"
             :col-num="12"
@@ -226,7 +241,7 @@
             :vertical-compact="true"
             :use-css-transforms="true"
           >
-            <grid-item v-for="(item,index) in tmpLayoutData"
+            <grid-item v-for="(item, index) in tmpLayoutData"
                        style="cursor: auto; overflow-y: hidden;"
                        class="c-dark"
                        :x="item.x"
@@ -294,15 +309,17 @@
                     </Poptip>
                   </div>
                 </div>
-                <section style="height: 90%;">
+                <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                                 :ref="'chart' + index"
                                  :refreshNow="refreshNow"
                                  :scrollRefresh="scrollRefresh"
                                  :chartInfo="chartInfo"
                                  :chartIndex="index"
                                  :params="viewCondition"
                                  :hasNotRequestStatus="hasNotRequestStatus"
+                                 @isChartInWindow="collectInWindowChartRef('chart' + index)"
                     >
                     </CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -321,7 +338,7 @@
       </div>
     </div>
     <Drawer :title="$t('m_view_details')" :width="zoneWidth" v-model="showMaxChart">
-      <ViewChart v-if="showMaxChart" ref="viewChart"></ViewChart>
+      <ViewChart v-if="showMaxChart" ref="viewChart" id="max-view-chart"></ViewChart>
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
@@ -388,7 +405,7 @@
 import {
   isEmpty, remove, cloneDeep, find, orderBy, maxBy, filter, debounce
 } from 'lodash'
-import {generateUuid} from '@/assets/js/utils'
+import {generateUuid, dateToTimestamp} from '@/assets/js/utils'
 import {
   dataPick, autoRefreshConfig, layoutOptions, layoutColumns
 } from '@/assets/config/common-config'
@@ -562,7 +579,9 @@ export default {
       hasNotRequestStatus: true,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
-      isActionRegionExpand: true
+      isActionRegionExpand: true,
+      isNeedRefresh: true,
+      inWindowChartRefs: []
     }
   },
   computed: {
@@ -573,16 +592,21 @@ export default {
       return this.permission === 'edit'
     }
   },
-  mounted() {
+  created() {
+    window.viewTimeStepArr = []
+    window.startTimeStep = +new Date()
     if (!this.pannelId) {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
     this.isShowLoading = true
     this.getAllChartOptionList()
+    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$111')
     this.getPannelList()
+    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$222')
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
+    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$333')
     window['view-config-selected-line-data'] = {}
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
@@ -606,8 +630,10 @@ export default {
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
+          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
+          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
     },
@@ -674,27 +700,38 @@ export default {
       this.refreshNow = !this.refreshNow
     },
     datePick(data) {
+      if (data[0] === this.viewCondition.dateRange[0] && data[1] === this.viewCondition.dateRange[1]) {
+        return
+      }
       this.viewCondition.dateRange = data
       this.disableTime = false
+      this.viewCondition.autoRefresh = 10
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         this.disableTime = true
-        this.viewCondition.autoRefresh = 0
+        this.viewCondition.autoRefresh = -1
       }
-      this.initPanals()
+      // this.initPanals()
     },
-    dateToTimestamp(date) {
-      if (!date) {
-        return 0
+    onDatePickChange(flag) {
+      if (!flag) {
+        this.onDatePickOk()
       }
-      let timestamp = Date.parse(new Date(date))
-      timestamp = timestamp / 1000
-      return timestamp
+    },
+    onDatePickOk() {
+      const datePickDomList = document.querySelectorAll('.search-zone .ivu-input.ivu-input-default.ivu-input-with-suffix')
+      const valStr = datePickDomList[0].value
+      if (valStr) {
+        const matches = valStr.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g)
+        if (matches.length === 2) {
+          this.datePick(matches)
+        }
+      }
     },
     async initPanals(type) {
       const tmpArr = []
       this.isShowLoading = false
-
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$555')
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
         // 先对groupDisplayConfig进行初始化，防止异常值
@@ -718,8 +755,8 @@ export default {
           agg_step: item.aggStep,
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
-          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          start: dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: dateToTimestamp(this.viewCondition.dateRange[1]),
           title: '',
           unit: '',
           data: []
@@ -741,8 +778,8 @@ export default {
           agg_step: item.aggStep,
           lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
-          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
-          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          start: dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: dateToTimestamp(this.viewCondition.dateRange[1]),
           parsedDisplayConfig
         })
         tmpArr.push({
@@ -758,6 +795,7 @@ export default {
           logMetricGroup: item.logMetricGroup
         })
       }
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$666')
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
@@ -770,12 +808,14 @@ export default {
           }
         })
       }
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
       this.filterLayoutData()
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
@@ -1483,6 +1523,7 @@ export default {
       this.filterLayoutData()
     },
     filterLayoutData() {
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1011')
       if (this.activeGroup === 'ALL') {
         this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
       } else {
@@ -1504,12 +1545,15 @@ export default {
         }
       }
       this.chartLayoutType = this.confirmLayoutType(this.layoutData)
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
+      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
       this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
       this.$nextTick(() => {
+        window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1010')
         this.refreshNow = !this.refreshNow
       })
     },
@@ -1628,6 +1672,7 @@ export default {
       this.refreshNow = !this.refreshNow
     },
     onGridWindowScroll: debounce(function () {
+      this.inWindowChartRefs = []
       this.scrollRefresh = !this.scrollRefresh
     }, 1000),
     resetHasNotRequestStatus() {
@@ -1648,6 +1693,42 @@ export default {
       gridContent && (gridContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
       alarmContent && (alarmContent.style.height = `calc(100vh - ${headerHeight + 100}px)`)
       alarmListContent && (alarmListContent.style.height = `calc(100vh - ${headerHeight + 100 + 120}px)`)
+    },
+    onAutoRefreshSelectChange(time) {
+      if (time === -1) {
+        this.isNeedRefresh = false
+      }
+      // this.initPanals()
+      if (!this.isNeedRefresh) {
+        window.setTimeout(() => {
+          this.isNeedRefresh = true
+        }, 1000)
+      }
+    },
+    handleSingleChartMouseLeave: debounce(function (index){
+      const refsName = `chart${index}`
+      const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+      if (chartInstance) {
+        chartInstance.dispatchAction({
+          type: 'hideTip'
+        })
+      }
+    }, 500),
+    handleGridWindowMouseLeave: debounce(function () {
+      this.inWindowChartRefs.forEach(refsName => {
+        const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+        const isChartInWindow = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].isChartInWindow : null
+        if (chartInstance && isChartInWindow) {
+          chartInstance.dispatchAction({
+            type: 'hideTip'
+          })
+        }
+      })
+    }, 2000),
+    collectInWindowChartRef(ref) {
+      if (this.inWindowChartRefs.indexOf(ref) === -1) {
+        this.inWindowChartRefs.push(ref)
+      }
     }
   },
   components: {

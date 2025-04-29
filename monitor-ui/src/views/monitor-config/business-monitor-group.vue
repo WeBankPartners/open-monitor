@@ -505,7 +505,7 @@ import {
   uniq, filter, cloneDeep, map, isEmpty
 } from 'lodash'
 // import Vue from 'vue'
-import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import { getPlatFormToken, getToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
@@ -923,32 +923,35 @@ export default {
   },
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
-    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.request('POST', this.apiCenter.logTemplateTableData, {}, resp => {
-      this.templateList.json_list = resp.json_list || []
-      this.templateList.regular_list = resp.regular_list || []
-      this.templateList.custom_list = resp.custom_list || []
-      this.allTemplateList = [{
-        name: this.$t('m_standard_json'),
-        value: 'm_standard_json',
-        disabled: true
-      }, ...resp.json_list, {
-        name: this.$t('m_standard_regex'),
-        value: 'm_standard_regex',
-        disabled: true
-      }, ...resp.regular_list, {
-        name: this.$t('m_custom_regex'),
-        value: 'm_custom_regex',
-        disabled: true
-      }, ...this.templateList.custom_list]
-    })
+    this.token = this.returnLatestToken()
   },
   methods: {
+    getMonitorTemplateList() {
+      this.request('POST', this.apiCenter.logTemplateTableData, {}, resp => {
+        this.templateList.json_list = resp.json_list || []
+        this.templateList.regular_list = resp.regular_list || []
+        this.templateList.custom_list = resp.custom_list || []
+        this.allTemplateList = [{
+          name: this.$t('m_standard_json'),
+          value: 'm_standard_json',
+          disabled: true
+        }, ...resp.json_list, {
+          name: this.$t('m_standard_regex'),
+          value: 'm_standard_regex',
+          disabled: true
+        }, ...resp.regular_list, {
+          name: this.$t('m_custom_regex'),
+          value: 'm_custom_regex',
+          disabled: true
+        }, ...this.templateList.custom_list]
+      })
+    },
     importConfig(rowData) {
       this.groupMetricId = rowData.guid
       this.isShowGroupMetricUpload = true
     },
-    exportData() {
+    async exportData() {
+      this.token = await this.refreshToken()
       const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targetId}`
       axios({
         method: 'GET',
@@ -1445,6 +1448,9 @@ export default {
       })
     },
     async getDetail(targetId, metricKey) {
+      if (isEmpty(this.allTemplateList)) {
+        this.getMonitorTemplateList()
+      }
       if (targetId) {
         if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
           this.metricKey = metricKey
@@ -1510,9 +1516,20 @@ export default {
     clearQuery() {
       this.$refs.selectRef.query = ''
     },
-    onImportButtonClick(type = 'yes') {
+    async onImportButtonClick(type = 'yes') {
+      this.token = await this.refreshToken()
       this.importType = type
       document.querySelector('.log-file-upload .ivu-upload-input').click()
+    },
+    async refreshToken() {
+      await this.request('GET', '/monitor/api/v1/user/role/list?page=1&size=1', '')
+      const token = this.returnLatestToken()
+      return new Promise(resolve => {
+        resolve(token)
+      })
+    },
+    returnLatestToken() {
+      return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
     }
   },
   components: {
