@@ -436,7 +436,6 @@ export default {
       this.searchMap = Object.assign({}, this.searchMap, resetObj)
       this.pagination.currentPage = 1
       this.getViewList()
-      this.getTestApi()
     },
     getAuthorization() {
       if (localStorage.getItem('monitor-accessToken')) {
@@ -515,6 +514,7 @@ export default {
       this.authViewType = 'add'
       this.addViewName = ''
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
+      this.getTestApi()
     },
     editBoardAuth(item) {
       this.authViewType = 'edit'
