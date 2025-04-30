@@ -63,16 +63,15 @@ export default {
     },
     refreshNow: {
       handler() {
-        this.getchartdata()
-        // console.error(9998, this.isFirstRefresh)
-        // if (this.isFirstRefresh) {
-        //   this.getchartdata('mounted')
-        //   setTimeout(() => {
-        //     this.isFirstRefresh = false
-        //   }, 5000)
-        // } else {
-        //   this.getchartdata()
-        // }
+        // this.getchartdata()
+        if (this.isFirstRefresh) {
+          this.getchartdata('mounted')
+          setTimeout(() => {
+            this.isFirstRefresh = false
+          }, 5000)
+        } else {
+          this.getchartdata()
+        }
       }
     },
     scrollRefresh: { // 当外层组件滚动时刷新，假如有数据时不加载
@@ -91,13 +90,6 @@ export default {
   mounted() {
     if (!this.isInViewConfig) {
       this.getchartdata('mounted')
-    } else {
-      if (this.isFirstRefresh) {
-        this.getchartdata('mounted')
-        setTimeout(() => {
-          this.isFirstRefresh = false
-        }, 5000)
-      }
     }
     window.addEventListener('scroll', this.scrollHandle, true)
     window.addEventListener('visibilitychange', this.isTabActive, true)
