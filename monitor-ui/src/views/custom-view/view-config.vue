@@ -831,16 +831,12 @@ export default {
         })
       }
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
-      if (type !== 'init') {
-        this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
-      }
+      this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
-      if (type !== 'init') {
-        this.filterLayoutData()
-      }
+      this.filterLayoutData()
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
 
