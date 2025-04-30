@@ -422,7 +422,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
-import {initPanalsWebWorker} from './worker'
+import DataWorker from '@/views/custom-view/view.worker.js'
 // import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
@@ -648,27 +648,15 @@ export default {
       })
     },
     testWorker(arr) {
-      const workerScript = `
-        self.onmessage = function(e) {
-          const result = (${initPanalsWebWorker.toString()})(e.data)
-          self.postMessage(result)
-        }
-      `
-
-      // 创建 Blob URL 并初始化 Worker
-      const blob = new Blob([workerScript], { type: 'application/javascript' })
-      const worker = new Worker(URL.createObjectURL(blob))
-
-      // 发送计算任务
+      // 初始化模块化 Worker
+      const worker = new DataWorker()
       worker.postMessage({
         viewDataArr: arr,
         viewCondition: this.viewCondition
       })
-
-      // 接收结果
       worker.onmessage = e => {
         this.layoutData = e.data
-        worker.terminate() // 释放资源
+        worker.terminate()
       }
     },
     onCopyButtonClick() {

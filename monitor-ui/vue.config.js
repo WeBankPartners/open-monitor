@@ -36,6 +36,10 @@ module.exports = {
 		config.module.rule("images").test(/\.(png|jpeg|jpg|svg)$/).use("url-loader").loader("url-loader").options({
 			limit: 1024 * 512
 		})
+    config.module.rule('worker').test(/\.worker\.js$/).use('worker-loader').loader('worker-loader')
+      .options({ inline: 'fallback' }) // 内联模式，兼容旧浏览器
+      .end();
+    config.module.rule('js').exclude.add(/\.worker\.js$/);
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
 		types.forEach(type => addStyleResource(config.module.rule('less').oneOf(type)))
 	},
