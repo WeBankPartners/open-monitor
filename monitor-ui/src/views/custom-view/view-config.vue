@@ -422,6 +422,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+import {initPanalsWebWorker} from './worker'
 // import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
@@ -639,11 +640,36 @@ export default {
           if (window.isTestStatus) {
             this.viewData = res.charts.slice(0, 15)
           }
+          this.testWorker(res.charts)
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
+    },
+    testWorker(arr) {
+      const workerScript = `
+        self.onmessage = function(e) {
+          const result = (${initPanalsWebWorker.toString()})(e.data)
+          self.postMessage(result)
+        }
+      `
+
+      // 创建 Blob URL 并初始化 Worker
+      const blob = new Blob([workerScript], { type: 'application/javascript' })
+      const worker = new Worker(URL.createObjectURL(blob))
+
+      // 发送计算任务
+      worker.postMessage({
+        viewDataArr: arr,
+        viewCondition: this.viewCondition
+      })
+
+      // 接收结果
+      worker.onmessage = e => {
+        this.layoutData = e.data
+        worker.terminate() // 释放资源
+      }
     },
     onCopyButtonClick() {
       this.filterChartName = ''
@@ -829,6 +855,7 @@ export default {
       }
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
+
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
       if (allItem.comparison && !isEmpty(tags) && tags[0].tagName === 'calc_type' && isEmpty(tags[0].tagValue)) {
