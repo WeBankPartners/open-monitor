@@ -636,6 +636,9 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
+          if (window.isTestStatus) {
+            this.viewData = res.charts.slice(0, 15)
+          }
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
@@ -814,12 +817,16 @@ export default {
         })
       }
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
-      this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+      if (type !== 'init') {
+        this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+      }
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
-      this.filterLayoutData()
+      if (type !== 'init') {
+        this.filterLayoutData()
+      }
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
