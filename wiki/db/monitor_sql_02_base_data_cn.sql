@@ -1281,3 +1281,6 @@ CREATE TABLE `history_alarm_custom`
     index `update_at_index` (`update_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v3.4.3-end@;
+#@v3.5.7-begin@;
+ALTER TABLE custom_dashboard_chart_rel MODIFY COLUMN `group` VARCHAR(500) DEFAULT NULL;
+#@v3.5.7-end@;
