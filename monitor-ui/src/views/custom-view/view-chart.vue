@@ -15,7 +15,7 @@
               <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
-          <div class="search-zone">
+          <div class="search-zone view-chart-date-picker">
             <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
             <DatePicker
               type="datetimerange"
@@ -24,6 +24,8 @@
               format="yyyy-MM-dd HH:mm:ss"
               placement="bottom-start"
               @on-change="datePick"
+              @on-ok="onDatePickOk"
+              @on-open-change="onDatePickChange"
               :placeholder="$t('m_placeholder_datePicker')"
               style="width: 320px"
             />
@@ -145,7 +147,25 @@ export default {
       this.initPanal()
       this.scheduledRequest()
     },
+    onDatePickChange(flag) {
+      if (!flag) {
+        this.onDatePickOk()
+      }
+    },
+    onDatePickOk() {
+      const datePickDomList = document.querySelectorAll('.view-chart-date-picker .ivu-input.ivu-input-default.ivu-input-with-suffix')
+      const valStr = datePickDomList[0].value
+      if (valStr) {
+        const matches = valStr.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g)
+        if (matches.length === 2) {
+          this.datePick(matches)
+        }
+      }
+    },
     datePick(data) {
+      if (data[0] === this.viewCondition.dateRange[0] && data[1] === this.viewCondition.dateRange[1]) {
+        return
+      }
       this.viewCondition.dateRange = data
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {

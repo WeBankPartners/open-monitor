@@ -63,6 +63,7 @@ export default {
     },
     refreshNow: {
       handler() {
+        // this.getchartdata()
         if (this.isFirstRefresh) {
           this.getchartdata('mounted')
           setTimeout(() => {
@@ -202,77 +203,77 @@ export default {
             params: this.chartInfo.chartParams,
             chartId: this.chartInfo.elId
           }
-          this.$nextTick(() => {
-            window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1017')
-            window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
-            const metricList = chartConfig.params.data.map(one => one.metric)
-            // 该逻辑是先筛选掉此时window中存在的需要删除的数据
-            for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
-              if (metricList.length && !metricList.some(one => key.startsWith(`${one}:`))) {
-                delete window['view-config-selected-line-data'][chartConfig.chartId][key]
-              }
+          // this.$nextTick(() => {
+          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1017')
+          window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
+          const metricList = chartConfig.params.data.map(one => one.metric)
+          // 该逻辑是先筛选掉此时window中存在的需要删除的数据
+          for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+            if (metricList.length && !metricList.some(one => key.startsWith(`${one}:`))) {
+              delete window['view-config-selected-line-data'][chartConfig.chartId][key]
             }
+          }
 
-            !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
-              if (isEmpty(item.series)) {
-                item.series = []
-                item.metricToColor = []
-                const metric = item.metric
-                responseData.legend.forEach(one => {
-                  if (one.startsWith(`${metric}:`)){
-                    item.series.push({
-                      seriesName: one,
-                      new: true,
-                      color: ''
-                    })
-                  }
-                })
-                changeSeriesColor(item.series, item.colorGroup)
-              }
-              if (item.series && !isEmpty(item.series)) {
-                if (isEmpty(window['view-config-selected-line-data'][chartConfig.chartId])
+          !isEmpty(chartConfig.params.data) && chartConfig.params.data.forEach(item => {
+            if (isEmpty(item.series)) {
+              item.series = []
+              item.metricToColor = []
+              const metric = item.metric
+              responseData.legend.forEach(one => {
+                if (one.startsWith(`${metric}:`)){
+                  item.series.push({
+                    seriesName: one,
+                    new: true,
+                    color: ''
+                  })
+                }
+              })
+              changeSeriesColor(item.series, item.colorGroup)
+            }
+            if (item.series && !isEmpty(item.series)) {
+              if (isEmpty(window['view-config-selected-line-data'][chartConfig.chartId])
                   || (!isEmpty(window['view-config-selected-line-data'][chartConfig.chartId]) && Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).every(one => !one.startsWith(`${item.metric}:`)))
                   || (Object.keys(window['view-config-selected-line-data'][chartConfig.chartId]).filter(single => single.startsWith(`${item.metric}:`))).length !== item.series.length) {
-                  // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头,或者两者length不一样，则进入该逻辑
-                  for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
-                    if (key.startsWith(`${item.metric}:`)) {
-                      delete window['view-config-selected-line-data'][chartConfig.chartId][key]
-                    }
+                // 当widow中当前线条为空，或者不为空但是window中线条每个线条都不是以当前item.metric开头,或者两者length不一样，则进入该逻辑
+                for (const key in window['view-config-selected-line-data'][chartConfig.chartId]) {
+                  if (key.startsWith(`${item.metric}:`)) {
+                    delete window['view-config-selected-line-data'][chartConfig.chartId][key]
                   }
-                  item.series.forEach(one => {
-                    window['view-config-selected-line-data'][chartConfig.chartId][one.seriesName] = true
-                  })
                 }
-                if (isEmpty(item.metricToColor)) {
-                  item.metricToColor = item.series.map(one => {
-                    one.metric = one.seriesName
-                    return one
-                  })
-                }
-              } else {
-                item.metricToColor = []
+                item.series.forEach(one => {
+                  window['view-config-selected-line-data'][chartConfig.chartId][one.seriesName] = true
+                })
               }
-            })
-            this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
-            window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1018')
-            if (window.viewTimeStepArr.length > 30) {
-              window.viewTimeStepArr.length = 30
-            }
-            this.scrollHandle()
-            if (this.chartInstance) {
-              this.chartInstance.on('legendselectchanged', params => {
-                window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
-              })
-              this.chartInstance.on('showTip', () => {
-                this.isToolTipShow = true
-                const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
-                chartTooltipContain(className)
-              })
-              this.chartInstance.on('hideTip', () => {
-                this.isToolTipShow = false
-              })
+              if (isEmpty(item.metricToColor)) {
+                item.metricToColor = item.series.map(one => {
+                  one.metric = one.seriesName
+                  return one
+                })
+              }
+            } else {
+              item.metricToColor = []
             }
           })
+          this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
+          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1018')
+          if (window.viewTimeStepArr.length > 30) {
+            window.viewTimeStepArr.length = 30
+          }
+          this.scrollHandle()
+          if (this.chartInstance) {
+            this.chartInstance.on('legendselectchanged', params => {
+              window['view-config-selected-line-data'][chartConfig.chartId] = cloneDeep(params.selected)
+            })
+            this.chartInstance.on('showTip', () => {
+              this.isToolTipShow = true
+              const className = `.echarts-custom-tooltip-${chartConfig.chartId}`
+              chartTooltipContain(className)
+            })
+            this.chartInstance.on('hideTip', () => {
+              this.isToolTipShow = false
+            })
+          }
+          // })
         }
       }, { isNeedloading: false })
     },

@@ -277,7 +277,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       },
       type: 'scroll',
       y: 'bottom',
-      padding: 10,
+      padding: 25,
       orient: 'horizontal',
       data: config.legend
     },
@@ -286,7 +286,7 @@ export const drawChart = function (that,config,userConfig, elId) {
       top: '40',
       left: '3%',
       right: '5%',
-      bottom: '40' ,
+      bottom: '40',
       containLabel: true
     },
     xAxis: {

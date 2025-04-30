@@ -32,8 +32,19 @@
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
-        <li class="search-li">
-          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('m_placeholder_datePicker')" style="width: 320px"></DatePicker>
+        <li class="search-li view-pannal-date-picker">
+          <DatePicker
+            type="datetimerange"
+            :value="dateRange"
+            split-panels
+            @on-change="datePick"
+            @on-ok="onDatePickOk"
+            @on-open-change="onDatePickChange"
+            format="yyyy-MM-dd HH:mm:ss"
+            placement="bottom-start"
+            :placeholder="$t('m_placeholder_datePicker')"
+            style="width: 320px"
+          ></DatePicker>
         </li>
       </template>
       <template v-else>
@@ -153,6 +164,9 @@ export default {
       })
     },
     datePick(data) {
+      if (data[0] === this.dateRange[0] && data[1] === this.dateRange[1]) {
+        return
+      }
       this.dateRange = data
       this.disableTime = false
       if (this.dateRange[0] && this.dateRange[1]) {
@@ -161,6 +175,21 @@ export default {
         this.autoRefresh = 0
       }
       this.getChartsConfig()
+    },
+    onDatePickChange(flag) {
+      if (!flag) {
+        this.onDatePickOk()
+      }
+    },
+    onDatePickOk() {
+      const datePickDomList = document.querySelectorAll('.view-pannal-date-picker .ivu-input.ivu-input-default.ivu-input-with-suffix')
+      const valStr = datePickDomList[0].value
+      if (valStr) {
+        const matches = valStr.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g)
+        if (matches.length === 2) {
+          this.datePick(matches)
+        }
+      }
     },
     pickFirstDate(data) {
       this.compareFirstDate = data
