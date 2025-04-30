@@ -1548,7 +1548,7 @@ export default {
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
-      // this.refreshPannelNow()
+      this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {

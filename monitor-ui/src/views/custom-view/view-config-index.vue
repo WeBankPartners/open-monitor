@@ -514,7 +514,6 @@ export default {
       this.authViewType = 'add'
       this.addViewName = ''
       this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions)
-      this.getTestApi()
     },
     editBoardAuth(item) {
       this.authViewType = 'edit'
@@ -678,14 +677,6 @@ export default {
         }
       }
       this.$Message.success(this.$t('m_screen_name') + this.$t('m_copy_success'))
-    },
-    getTestApi() {
-      const testTime = +new Date()
-      this.request('GET', this.apiCenter.template.deleteV2, {
-        id: window.testId || 310
-      }, res => {
-        console.error(res, +new Date() - testTime, '444')
-      })
     }
   },
   components: {
