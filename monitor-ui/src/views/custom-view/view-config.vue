@@ -229,7 +229,6 @@
         <div class="grid-window"
              :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''"
              @scroll="() => {
-               this.isFirstRender = false
                this.onGridWindowScroll()
              }"
              @mouseleave="handleGridWindowMouseLeave"
@@ -314,7 +313,7 @@
                 </div>
                 <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="isFirstRender ? (['line','bar'].includes(chartInfo.chartType) && chartInfo.parsedDisplayConfig.y < 14) : ['line','bar'].includes(chartInfo.chartType)"
+                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
                                  :ref="'chart' + index"
                                  :refreshNow="refreshNow"
                                  :scrollRefresh="scrollRefresh"
@@ -585,8 +584,7 @@ export default {
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
       isNeedRefresh: true,
-      inWindowChartRefs: [],
-      isFirstRender: false
+      inWindowChartRefs: []
     }
   },
   computed: {
@@ -598,7 +596,6 @@ export default {
     }
   },
   created() {
-    this.isFirstRender = true
     window.viewTimeStepArr = []
     window.startTimeStep = +new Date()
     if (!this.pannelId) {
@@ -637,17 +634,20 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
-          if (window.isTestStatus) {
+          if (window.isTestStatus && res.charts.length > 15) {
+            console.error('111')
             this.viewData = res.charts.slice(0, 15)
+            this.initPanalWorker(res.charts, 'init')
           }
-          this.testWorker(res.charts)
+          console.error('222')
           this.initPanals('init')
+          console.error('333')
           this.cutsomViewId = this.pannelId
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
     },
-    testWorker(arr) {
+    initPanalWorker(arr, type) {
       // 初始化模块化 Worker
       const worker = new DataWorker()
       worker.postMessage({
@@ -655,7 +655,27 @@ export default {
         viewCondition: this.viewCondition
       })
       worker.onmessage = e => {
-        this.layoutData = e.data
+        const tmpArr = e.data
+
+        if (isEmpty(this.layoutData) || type === 'init') {
+          this.layoutData = tmpArr
+        } else {
+          tmpArr.forEach(tmpItem => {
+            const item = find(this.layoutData, {
+              id: tmpItem.id
+            })
+            if (!isEmpty(item)) {
+              item._activeCharts = tmpItem._activeCharts
+            }
+          })
+        }
+        this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+        if (type === 'init') {
+          this.allPageLayoutData = cloneDeep(this.layoutData)
+        }
+        this.resetHasNotRequestStatus()
+        this.filterLayoutData()
+        console.error('worker done')
         worker.terminate()
       }
     },
@@ -1571,7 +1591,7 @@ export default {
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
-      // this.refreshPannelNow()
+      this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
