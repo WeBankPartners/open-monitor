@@ -690,7 +690,7 @@ export default {
           this.allPageLayoutData = cloneDeep(this.layoutData)
           console.error(this.allPageLayoutData, 'this.allPageLayoutData', this.activeGroup)
         }
-        this.refreshPannelNow()
+        // this.refreshPannelNow()
 
         console.error('worker done')
         worker.terminate()
