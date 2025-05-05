@@ -584,7 +584,8 @@ export default {
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
       isNeedRefresh: true,
-      inWindowChartRefs: []
+      inWindowChartRefs: [],
+      isFirstRender: true
     }
   },
   computed: {
@@ -634,10 +635,11 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
-          if (window.isTestStatus && res.charts.length > 15) {
+          if (res.charts.length > 15 && this.isFirstRender) {
             console.error('111')
             this.viewData = res.charts.slice(0, 15)
             this.initPanalWorker(res.charts, 'init')
+            this.isFirstRender = false
           }
           console.error('222')
           this.initPanals('init')
@@ -653,10 +655,12 @@ export default {
       worker.postMessage({
         viewDataArr: arr,
         viewCondition: this.viewCondition
+        // activeGroup: this.activeGroup,
+        // type,
+        // layoutData: this.layoutData
       })
       worker.onmessage = e => {
         const tmpArr = e.data
-
         if (isEmpty(this.layoutData) || type === 'init') {
           this.layoutData = tmpArr
         } else {
@@ -675,6 +679,17 @@ export default {
         }
         this.resetHasNotRequestStatus()
         this.filterLayoutData()
+
+        // this.resetHasNotRequestStatus()
+        // this.layoutData = resultObj.layoutData
+        // this.chartLayoutType = resultObj.chartLayoutType
+        // this.previousChartLayoutType = this.chartLayoutType
+        // if (type === 'init' && this.activeGroup === 'ALL') {
+        //   this.allPageLayoutData = cloneDeep(this.layoutData)
+        //   console.error(this.allPageLayoutData, 'this.allPageLayoutData', this.activeGroup)
+        // }
+        // this.refreshPannelNow()
+
         console.error('worker done')
         worker.terminate()
       }
@@ -852,7 +867,7 @@ export default {
       }
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
-      if (type === 'init') {
+      if (type === 'init' && this.activeGroup === 'ALL') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
@@ -1029,6 +1044,7 @@ export default {
       this.activeGroup = item
       this.chartLayoutType = 'customize'
       this.getPannelList(this.activeGroup)
+      this.scrollToEndOrStart('start', 100)
     },
     addGroupItem() {
       this.groupName = ''
@@ -1244,12 +1260,7 @@ export default {
           this.getAllChartOptionList()
         }, 50)
       }
-      setTimeout(() => {
-        document.querySelector('.vue-grid-layout').scrollIntoView({
-          behavior: 'smooth',
-          block: 'end'
-        })
-      }, 500)
+      this.scrollToEndOrStart('end', 500)
     },
     extendTime() {
       return new Promise(resolve => {
@@ -1512,12 +1523,7 @@ export default {
       setTimeout(() => {
         this.scrollRefresh = !this.scrollRefresh
       }, 1000)
-      setTimeout(() => {
-        document.querySelector('.vue-grid-layout').scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        })
-      }, 100)
+      this.scrollToEndOrStart('start', 100)
     },
     calculateLayout(data, type='customize') {
       if (isEmpty(data) || type==='customize') {
@@ -1616,42 +1622,40 @@ export default {
       if (isEmpty(data) || this.chartLayoutType !== 'customize') {
         return
       }
-      const isTwo = data.every(item => item.h === 7 && item.w === 6)
-      const isThree = data.every(item => item.h === 7 && item.w === 4)
-      const isFour = data.every(item => item.h === 7 && item.w === 3)
-      const isFive = data.every(item => item.h === 7 && item.w === 2.4)
-      const isSix = data.every(item => item.h === 7 && item.w === 2)
-      const isSeven = data.every(item => item.h === 7 && item.w === 1.7)
-      const isEight = data.every(item => item.h === 7 && item.w === 1.5)
-
-      isTwo ? this.chartLayoutType = 'two'
-        : isThree ? this.chartLayoutType = 'three'
-          : isFour ? this.chartLayoutType = 'four'
-            : isFive ? this.chartLayoutType = 'five'
-              : isSix ? this.chartLayoutType = 'six'
-                : isSeven ? this.chartLayoutType = 'seven'
-                  : isEight ? this.chartLayoutType = 'eight' : 'customize'
+      // const isTwo = data.every(item => item.h === 7 && item.w === 6)
+      // const isThree = data.every(item => item.h === 7 && item.w === 4)
+      // const isFour = data.every(item => item.h === 7 && item.w === 3)
+      // const isFive = data.every(item => item.h === 7 && item.w === 2.4)
+      // const isSix = data.every(item => item.h === 7 && item.w === 2)
+      // const isSeven = data.every(item => item.h === 7 && item.w === 1.7)
+      // const isEight = data.every(item => item.h === 7 && item.w === 1.5)
+      data.every(item => item.h === 7 && item.w === 4) ? this.chartLayoutType = 'three'
+        : data.every(item => item.h === 7 && item.w === 6) ? this.chartLayoutType = 'two'
+          : data.every(item => item.h === 7 && item.w === 3) ? this.chartLayoutType = 'four'
+            : data.every(item => item.h === 7 && item.w === 2.4) ? this.chartLayoutType = 'five'
+              : data.every(item => item.h === 7 && item.w === 2) ? this.chartLayoutType = 'six'
+                : data.every(item => item.h === 7 && item.w === 1.7) ? this.chartLayoutType = 'seven'
+                  : data.every(item => item.h === 7 && item.w === 1.5) ? this.chartLayoutType = 'eight' : 'customize'
     },
     confirmLayoutType(data) {
       if (isEmpty(data)) {
         return 'customize'
       }
       let res = ''
-      const isTwo = data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6)
-      const isThree = data.every((item, i) => (item.x === (i % 3) * 4) && item.y === Math.floor(i / 3) * 7 && item.h === 7 && item.w === 4)
-      const isFour = data.every((item, i) => (item.x === (i % 4) * 3) && item.y === Math.floor(i / 4) * 7 && item.h === 7 && item.w === 3)
-      const isFive = data.every((item, i) => (item.x === (i % 5) * 2.4) && item.y === Math.floor(i / 5) * 7 && item.h === 7 && item.w === 2.4)
-      const isSix = data.every((item, i) => (item.x === (i % 6) * 2) && item.y === Math.floor(i / 6) * 7 && item.h === 7 && item.w === 2)
-      const isSeven = data.every((item, i) => (item.x === (i % 7) * 1.7) && item.y === Math.floor(i / 7) * 7 && item.h === 7 && item.w === 1.7)
-      const isEight = data.every((item, i) => (item.x === (i % 8) * 1.5) && item.y === Math.floor(i / 8) * 7 && item.h === 7 && item.w === 1.5)
-
-      isTwo ? res = 'two'
-        : isThree ? res = 'three'
-          : isFour ? res = 'four'
-            : isFive ? res = 'five'
-              : isSix ? res = 'six'
-                : isSeven ? res = 'seven'
-                  : isEight ? res = 'eight' : res = 'customize'
+      // const isTwo = data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6)
+      // const isThree = data.every((item, i) => (item.x === (i % 3) * 4) && item.y === Math.floor(i / 3) * 7 && item.h === 7 && item.w === 4)
+      // const isFour = data.every((item, i) => (item.x === (i % 4) * 3) && item.y === Math.floor(i / 4) * 7 && item.h === 7 && item.w === 3)
+      // const isFive = data.every((item, i) => (item.x === (i % 5) * 2.4) && item.y === Math.floor(i / 5) * 7 && item.h === 7 && item.w === 2.4)
+      // const isSix = data.every((item, i) => (item.x === (i % 6) * 2) && item.y === Math.floor(i / 6) * 7 && item.h === 7 && item.w === 2)
+      // const isSeven = data.every((item, i) => (item.x === (i % 7) * 1.7) && item.y === Math.floor(i / 7) * 7 && item.h === 7 && item.w === 1.7)
+      // const isEight = data.every((item, i) => (item.x === (i % 8) * 1.5) && item.y === Math.floor(i / 8) * 7 && item.h === 7 && item.w === 1.5)
+      data.every((item, i) => (item.x === (i % 3) * 4) && item.y === Math.floor(i / 3) * 7 && item.h === 7 && item.w === 4) ? res = 'three'
+        : data.every((item, i) => item.x === (i % 2) * 6 && item.y === Math.floor(i / 2) * 7 && item.h === 7 && item.w === 6) ? res = 'two'
+          : data.every((item, i) => (item.x === (i % 4) * 3) && item.y === Math.floor(i / 4) * 7 && item.h === 7 && item.w === 3) ? res = 'four'
+            : data.every((item, i) => (item.x === (i % 5) * 2.4) && item.y === Math.floor(i / 5) * 7 && item.h === 7 && item.w === 2.4) ? res = 'five'
+              : data.every((item, i) => (item.x === (i % 6) * 2) && item.y === Math.floor(i / 6) * 7 && item.h === 7 && item.w === 2) ? res = 'six'
+                : data.every((item, i) => (item.x === (i % 7) * 1.7) && item.y === Math.floor(i / 7) * 7 && item.h === 7 && item.w === 1.7) ? res = 'seven'
+                  : data.every((item, i) => (item.x === (i % 8) * 1.5) && item.y === Math.floor(i / 8) * 7 && item.h === 7 && item.w === 1.5) ? res = 'eight' : res = 'customize'
       return res
     },
     // 在新增时计算DisplayConfig的值
@@ -1772,6 +1776,14 @@ export default {
       if (this.inWindowChartRefs.indexOf(ref) === -1) {
         this.inWindowChartRefs.push(ref)
       }
+    },
+    scrollToEndOrStart(type='start', time=100) {
+      setTimeout(() => {
+        document.querySelector('.vue-grid-layout').scrollIntoView({
+          behavior: 'smooth',
+          block: type
+        })
+      }, time)
     }
   },
   components: {
