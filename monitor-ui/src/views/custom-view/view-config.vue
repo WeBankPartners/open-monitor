@@ -654,41 +654,43 @@ export default {
       const worker = new DataWorker()
       worker.postMessage({
         viewDataArr: arr,
-        viewCondition: this.viewCondition
-        // activeGroup: this.activeGroup,
-        // type,
-        // layoutData: this.layoutData
+        viewCondition: this.viewCondition,
+        activeGroup: this.activeGroup,
+        type,
+        layoutData: this.layoutData
       })
       worker.onmessage = e => {
-        const tmpArr = e.data
-        if (isEmpty(this.layoutData) || type === 'init') {
-          this.layoutData = tmpArr
-        } else {
-          tmpArr.forEach(tmpItem => {
-            const item = find(this.layoutData, {
-              id: tmpItem.id
-            })
-            if (!isEmpty(item)) {
-              item._activeCharts = tmpItem._activeCharts
-            }
-          })
-        }
-        this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
-        if (type === 'init') {
-          this.allPageLayoutData = cloneDeep(this.layoutData)
-        }
-        this.resetHasNotRequestStatus()
-        this.filterLayoutData()
+        const resultObj = e.data
 
-        // this.resetHasNotRequestStatus()
-        // this.layoutData = resultObj.layoutData
-        // this.chartLayoutType = resultObj.chartLayoutType
-        // this.previousChartLayoutType = this.chartLayoutType
-        // if (type === 'init' && this.activeGroup === 'ALL') {
-        //   this.allPageLayoutData = cloneDeep(this.layoutData)
-        //   console.error(this.allPageLayoutData, 'this.allPageLayoutData', this.activeGroup)
+        // const tmpArr = e.data
+        // if (isEmpty(this.layoutData) || type === 'init') {
+        //   this.layoutData = tmpArr
+        // } else {
+        //   tmpArr.forEach(tmpItem => {
+        //     const item = find(this.layoutData, {
+        //       id: tmpItem.id
+        //     })
+        //     if (!isEmpty(item)) {
+        //       item._activeCharts = tmpItem._activeCharts
+        //     }
+        //   })
         // }
-        // this.refreshPannelNow()
+        // this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+        // if (type === 'init') {
+        //   this.allPageLayoutData = cloneDeep(this.layoutData)
+        // }
+        // this.resetHasNotRequestStatus()
+        // this.filterLayoutData()
+
+        this.resetHasNotRequestStatus()
+        this.layoutData = resultObj.layoutData
+        this.chartLayoutType = resultObj.chartLayoutType
+        this.previousChartLayoutType = this.chartLayoutType
+        if (type === 'init' && this.activeGroup === 'ALL') {
+          this.allPageLayoutData = cloneDeep(this.layoutData)
+          console.error(this.allPageLayoutData, 'this.allPageLayoutData', this.activeGroup)
+        }
+        this.refreshPannelNow()
 
         console.error('worker done')
         worker.terminate()
