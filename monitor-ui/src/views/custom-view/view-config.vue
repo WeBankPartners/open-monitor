@@ -649,6 +649,11 @@ export default {
     initPanalWorker(arr, type) {
       // 初始化模块化 Worker
       const worker = new DataWorker()
+      worker.onerror = event => {
+        console.error('Worker加载失败:', event.message)
+        this.viewData = arr || []
+        this.initPanals('init')
+      }
       worker.postMessage({
         viewDataArr: arr,
         viewCondition: this.viewCondition,
@@ -687,11 +692,6 @@ export default {
         }
         console.error('worker done')
         worker.terminate()
-      }
-      worker.onerror = event => {
-        console.error('Worker加载失败:', event.message)
-        this.viewData = arr || []
-        this.initPanals('init')
       }
     },
     onCopyButtonClick() {
@@ -967,7 +967,6 @@ export default {
     },
     async modifyLayoutData() {
       const resViewData = []
-      console.error(this.layoutData, this.viewData, '888')
       this.layoutData.forEach(layoutDataItem => {
         const temp = {
           panalTitle: layoutDataItem.i,
