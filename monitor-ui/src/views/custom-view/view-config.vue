@@ -419,6 +419,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+import DataWorker from '@/views/custom-view/view.worker.js'
 // import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
@@ -581,7 +582,8 @@ export default {
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
       isNeedRefresh: true,
-      inWindowChartRefs: []
+      inWindowChartRefs: [],
+      isFirstRender: true
     }
   },
   computed: {
@@ -631,11 +633,64 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
+          if (res.charts.length > 15 && this.isFirstRender) {
+            try {
+              this.viewData = res.charts.slice(0, 15)
+              this.initPanalWorker(res.charts, 'init')
+            } catch (e) {
+              console.error(e, 'eee')
+              this.viewData = res.charts || []
+            }
+            this.isFirstRender = false
+          }
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
+    },
+    initPanalWorker(arr, type) {
+      // 初始化模块化 Worker
+      const worker = new DataWorker()
+      worker.postMessage({
+        viewDataArr: arr,
+        viewCondition: this.viewCondition,
+        activeGroup: this.activeGroup,
+        type,
+        layoutData: this.layoutData
+      })
+      worker.onmessage = e => {
+        const resultObj = e.data
+
+        // const tmpArr = e.data
+        // if (isEmpty(this.layoutData) || type === 'init') {
+        //   this.layoutData = tmpArr
+        // } else {
+        //   tmpArr.forEach(tmpItem => {
+        //     const item = find(this.layoutData, {
+        //       id: tmpItem.id
+        //     })
+        //     if (!isEmpty(item)) {
+        //       item._activeCharts = tmpItem._activeCharts
+        //     }
+        //   })
+        // }
+        // this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+        // if (type === 'init') {
+        //   this.allPageLayoutData = cloneDeep(this.layoutData)
+        // }
+        // this.resetHasNotRequestStatus()
+        // this.filterLayoutData()
+        this.resetHasNotRequestStatus()
+        this.layoutData = resultObj.layoutData
+        this.chartLayoutType = resultObj.chartLayoutType
+        this.previousChartLayoutType = this.chartLayoutType
+        if (type === 'init' && this.activeGroup === 'ALL') {
+          this.allPageLayoutData = cloneDeep(this.layoutData)
+        }
+        console.error('worker done')
+        worker.terminate()
+      }
     },
     onCopyButtonClick() {
       this.filterChartName = ''
