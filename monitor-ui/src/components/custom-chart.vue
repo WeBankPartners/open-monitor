@@ -57,6 +57,8 @@ export default {
         if (this.isChartInWindow) {
           this.isAutoRefresh()
           this.getchartdata()
+        } else {
+          this.clearIntervalInfo()
         }
       },
       deep: true
@@ -146,6 +148,7 @@ export default {
     },
     async getchartdata(type = '') {
       if (hasIn(this, '$parent.$parent.$parent.isNeedRefresh') && !this.$parent.$parent.$parent.isNeedRefresh) {
+        this.clearIntervalInfo()
         return
       }
       window.intervalFrom = 'custom-chart'
@@ -181,6 +184,7 @@ export default {
         custom_chart_guid: this.chartInfo.elId,
         start: dateToTimestamp(this.params.dateRange[0]),
         end: dateToTimestamp(this.params.dateRange[1]),
+        time_second: this.params.timeTnterval
       }
       this.elId = this.chartInfo.elId
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1015')

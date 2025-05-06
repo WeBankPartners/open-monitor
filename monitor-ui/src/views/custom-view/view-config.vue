@@ -43,7 +43,7 @@
             <div>
               <div class="search-zone">
                 <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
-                <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                <RadioGroup v-model="viewCondition.timeTnterval" type="button" size="small">
                   <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
                 </RadioGroup>
               </div>
@@ -583,7 +583,8 @@ export default {
       isActionRegionExpand: true,
       isNeedRefresh: true,
       inWindowChartRefs: [],
-      isFirstRender: true
+      isFirstRender: true,
+      initialViewData: []
     }
   },
   computed: {
@@ -632,6 +633,7 @@ export default {
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
+          this.initialViewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
           if (res.charts.length > 15 && this.isFirstRender) {
             this.viewData = res.charts.slice(0, 15)
@@ -965,6 +967,7 @@ export default {
     },
     async modifyLayoutData() {
       const resViewData = []
+      console.error(this.layoutData, this.viewData, '888')
       this.layoutData.forEach(layoutDataItem => {
         const temp = {
           panalTitle: layoutDataItem.i,
@@ -973,16 +976,15 @@ export default {
           query: [],
           viewConfig: layoutDataItem
         }
-        this.viewData.forEach(i => {
-          if (layoutDataItem.id === i.id) {
-            temp.panalUnit = i.unit
-            temp.query = i.chartSeries
-            temp.chartType = i.chartType
-            temp.aggregate = i.aggregate
-            temp.agg_step = i.aggStep
-            temp.lineType = this.lineTypeOption[i.lineType]
-          }
-        })
+        const singleOne = find(this.initialViewData, {id: layoutDataItem.id})
+        if (singleOne) {
+          temp.panalUnit = singleOne.unit
+          temp.query = singleOne.chartSeries
+          temp.chartType = singleOne.chartType
+          temp.aggregate = singleOne.aggregate
+          temp.agg_step = singleOne.aggStep
+          temp.lineType = this.lineTypeOption[singleOne.lineType]
+        }
         resViewData.push(temp)
       })
       return resViewData
@@ -1729,7 +1731,7 @@ export default {
     onGridWindowScroll: debounce(function () {
       this.inWindowChartRefs = []
       this.scrollRefresh = !this.scrollRefresh
-    }, 1000),
+    }, 800),
     resetHasNotRequestStatus() {
       this.hasNotRequestStatus = !this.hasNotRequestStatus
     },
