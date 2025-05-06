@@ -634,13 +634,8 @@ export default {
           this.viewData = res.charts || []
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
           if (res.charts.length > 15 && this.isFirstRender) {
-            try {
-              this.viewData = res.charts.slice(0, 15)
-              this.initPanalWorker(res.charts, 'init')
-            } catch (e) {
-              console.error(e, 'eee')
-              this.viewData = res.charts || []
-            }
+            this.viewData = res.charts.slice(0, 15)
+            this.initPanalWorker(res.charts, 'init')
             this.isFirstRender = false
           }
           this.initPanals('init')
@@ -690,6 +685,11 @@ export default {
         }
         console.error('worker done')
         worker.terminate()
+      }
+      worker.onerror = event => {
+        console.error('Worker加载失败:', event.message)
+        this.viewData = arr || []
+        this.initPanals('init')
       }
     },
     onCopyButtonClick() {
