@@ -1772,7 +1772,6 @@ export default {
       // const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
       // const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
       if (chartInstance) {
-        console.error('11')
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
