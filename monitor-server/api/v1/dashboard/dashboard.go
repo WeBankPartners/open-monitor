@@ -313,6 +313,7 @@ func GetPieChart(c *gin.Context) {
 }
 
 func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData, err error) {
+	var logType string
 	if paramConfig.MonitorType != "" {
 		paramConfig.AppObjectEndpointType = paramConfig.MonitorType
 	}
@@ -406,14 +407,22 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		}
 	}
 	promMap := make(map[string]bool)
+	if len(paramConfig.Metric) > 0 {
+		// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags
+		if logType, err = db.GetLogTypeByMetric(paramConfig.Metric); err != nil {
+			log.Error(nil, log.LOGGER_APP, "GetLogType err", zap.Error(err))
+		}
+		log.Info(nil, log.LOGGER_APP, "getPieData logType", zap.String("logType", logType))
+	}
 	for _, endpoint := range endpointList {
 		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint, paramConfig.Tags)
 		if _, b := promMap[tmpPromQL]; b {
 			continue
 		}
 		promMap[tmpPromQL] = true
-		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType, Tags: tagNameList, PieDisplayTag: paramConfig.PieDisplayTag})
+		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType, Tags: tagNameList, PieDisplayTag: paramConfig.PieDisplayTag, ServiceConfiguration: logType})
 	}
+
 	if paramConfig.PieMetricType == "value" {
 		if len(result) == 0 {
 			return
