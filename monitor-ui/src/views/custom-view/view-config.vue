@@ -312,6 +312,7 @@
                 <section style="height: 90%;" @mouseleave="(e) => handleSingleChartMouseLeave(e, index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                                 :class="'chart' + index"
                                  :ref="'chart' + index"
                                  :refreshNow="refreshNow"
                                  :scrollRefresh="scrollRefresh"
@@ -1764,12 +1765,14 @@ export default {
     handleSingleChartMouseLeave: debounce(function (e, index){
       const refsName = `chart${index}`
       const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
-      const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
-      const className = `.echarts-custom-tooltip-${chartId}`
-      const tooltipDom = document.querySelector(className)
-      const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
-      console.error(isOverlayRelated, '111')
-      if (chartInstance && !isOverlayRelated) {
+      // const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
+      // const className = `.echarts-custom-tooltip-${chartId}`
+      // const tooltipDom = document.querySelector(className)
+      const originDom = document.querySelector(`.${refsName}`)
+      // const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
+      const isStillInOrigin = e.target.contains(e.relatedTarget)
+      console.error('111', isStillInOrigin, originDom, e.relatedTarget, e.target)
+      if (chartInstance && !isStillInOrigin) {
         console.error('222')
         chartInstance.dispatchAction({
           type: 'hideTip'
