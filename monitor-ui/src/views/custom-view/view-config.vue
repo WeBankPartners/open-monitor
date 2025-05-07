@@ -1765,20 +1765,19 @@ export default {
     handleSingleChartMouseLeave: debounce(function (e, index){
       const refsName = `chart${index}`
       const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
-      const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
-      const className = `.echarts-custom-tooltip-${chartId}`
-      const tooltipDom = document.querySelector(className)
-      const originDom = document.querySelector(`.${refsName}`)
+      // const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
+      // const className = `.echarts-custom-tooltip-${chartId}`
+      // const tooltipDom = document.querySelector(className)
+      // const originDom = document.querySelector(`.${refsName}`)
       // const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
-      const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
-      console.error('111', isStillInOrigin, originDom, e.relatedTarget, e.target)
-      if (chartInstance && !isStillInOrigin) {
-        console.error('222')
+      // const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
+      if (chartInstance) {
+        console.error('11')
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
       }
-    }, 500),
+    }, 5000),
     handleGridWindowMouseLeave: debounce(function () {
       this.inWindowChartRefs.forEach(refsName => {
         const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
