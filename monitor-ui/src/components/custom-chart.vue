@@ -189,7 +189,6 @@ export default {
       this.elId = this.chartInfo.elId
       window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1015')
       this.request('POST',this.apiCenter.metricConfigView.api, params, responseData => {
-        this.hasNotRequest = false
         window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1016')
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
@@ -205,7 +204,8 @@ export default {
             lineBarSwitch: true,
             chartType: this.chartInfo.chartType,
             params: this.chartInfo.chartParams,
-            chartId: this.chartInfo.elId
+            chartId: this.chartInfo.elId,
+            isNeedClear: this.hasNotRequest // 第一次请求的时候强制刷新
           }
           // this.$nextTick(() => {
           window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1017')
@@ -279,6 +279,7 @@ export default {
           }
           // })
         }
+        this.hasNotRequest = false
       }, { isNeedloading: false })
     },
     onMouseLeaveContent() {

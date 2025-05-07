@@ -158,6 +158,10 @@ export const drawChart = function (that,config,userConfig, elId) {
   // 基于准备好的dom，初始化echarts实例
   const myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
+  // 最新的参数，假如isNeedClear为true, 则需要重新刷新
+  if (finalConfig.isNeedClear) {
+    myChart.clear()
+  }
   // if (finalConfig.clear) {
   //   myChart.clear()
   // }
