@@ -309,7 +309,7 @@
                     </Poptip>
                   </div>
                 </div>
-                <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
+                <section style="height: 90%;" @mouseleave="(e) => handleSingleChartMouseLeave(e, index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
                                  :ref="'chart' + index"
@@ -1761,10 +1761,16 @@ export default {
         }, 1000)
       }
     },
-    handleSingleChartMouseLeave: debounce(function (index){
+    handleSingleChartMouseLeave: debounce(function (e, index){
       const refsName = `chart${index}`
       const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
-      if (chartInstance) {
+      const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
+      const className = `.echarts-custom-tooltip-${chartId}`
+      const tooltipDom = document.querySelector(className)
+      const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
+      console.error(isOverlayRelated, '111')
+      if (chartInstance && !isOverlayRelated) {
+        console.error('222')
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
