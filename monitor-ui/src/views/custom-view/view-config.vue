@@ -597,20 +597,15 @@ export default {
     }
   },
   created() {
-    window.viewTimeStepArr = []
-    window.startTimeStep = +new Date()
     if (!this.pannelId) {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
     this.isShowLoading = true
     this.getAllChartOptionList()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$111')
     this.getPannelList()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$222')
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$333')
     window['view-config-selected-line-data'] = {}
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
@@ -635,7 +630,6 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           this.initialViewData = res.charts || []
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
           if (res.charts.length > 15 && this.isFirstRender) {
             this.viewData = res.charts.slice(0, 15)
             this.initPanalWorker(res.charts, 'init')
@@ -643,7 +637,6 @@ export default {
           }
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
     },
@@ -789,7 +782,6 @@ export default {
     async initPanals(type) {
       const tmpArr = []
       this.isShowLoading = false
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$555')
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
         // 先对groupDisplayConfig进行初始化，防止异常值
@@ -853,7 +845,6 @@ export default {
           logMetricGroup: item.logMetricGroup
         })
       }
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$666')
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
@@ -866,14 +857,12 @@ export default {
           }
         })
       }
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
       this.filterLayoutData()
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
@@ -1580,7 +1569,6 @@ export default {
       this.filterLayoutData()
     },
     filterLayoutData() {
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1011')
       if (this.activeGroup === 'ALL') {
         this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
       } else {
@@ -1602,15 +1590,12 @@ export default {
         }
       }
       this.chartLayoutType = this.confirmLayoutType(this.layoutData)
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
       this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
       this.$nextTick(() => {
-        window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1010')
         this.refreshNow = !this.refreshNow
       })
     },
