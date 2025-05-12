@@ -804,23 +804,47 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 150,
+          width: 180,
           key: 'index',
           fixed: 'right',
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                <Button size="small" type="success" on-click={() => this.copySingleItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
               <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
-                <Button size="small" class="mr-1" type="primary" on-click={() => {
+                <Button size="small" type="primary" on-click={() => {
                   this.editRuleItem(params.row)
                 }}>
                   <Icon type="md-create" size="16"></Icon>
                 </Button>
               </Tooltip>
+
+              {1===1 ? (<Poptip
+                confirm
+                title={this.$t('m_disabled_confirm_tip')}
+                placement="left-end"
+                transfer={true}
+                on-on-ok={() => {
+                  this.onDisabledSingleConfirmed(params.row)
+                }}>
+                <Tooltip placement="top" transfer content={this.$t('m_disable')}>
+                  <Button size="small" type="error">
+                    <Icon type="md-lock" size="16" />
+                  </Button>
+                </Tooltip>
+              </Poptip>
+              ) : (
+                <Tooltip placement="top" transfer content={this.$t('m_alarm_open')}>
+                  <Button size="small" type="success" on-click={() => {
+                    this.onEnableAlarm(params.row)
+                  }}>
+                    <Icon type="md-unlock" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              )}
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
@@ -1530,6 +1554,16 @@ export default {
     },
     returnLatestToken() {
       return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+    },
+    onDisabledSingleConfirmed(data) {
+      console.error(data, 'data')
+      // await this.request('POST', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+      this.getDetail(this.targetId)
+    },
+    onEnableAlarm(data) {
+      console.error(data, 'data11')
+      // await this.request('POST', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+      this.getDetail(this.targetId)
     }
   },
   components: {
