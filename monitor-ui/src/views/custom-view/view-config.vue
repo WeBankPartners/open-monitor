@@ -630,7 +630,6 @@ export default {
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
           this.initialViewData = res.charts || []
-          console.error(this.$route.params.canUseWorker, 'canUseWorker')
           if (this.$route.params.canUseWorker && res.charts.length > 15 && this.isFirstRender) {
             // 这里是作为首屏优化，当图表数量大时，使用webWorker不阻塞渲染
             this.viewData = res.charts.slice(0, 15)
