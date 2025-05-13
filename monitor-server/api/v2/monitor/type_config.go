@@ -161,11 +161,3 @@ func ConvertArr2Map(list []string) map[string]bool {
 	}
 	return hashMap
 }
-
-func ConvertMap2Arr(hashMap map[string]bool) []string {
-	var list []string
-	for s, _ := range hashMap {
-		list = append(list, s)
-	}
-	return list
-}

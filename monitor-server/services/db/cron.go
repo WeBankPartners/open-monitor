@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
@@ -14,6 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
 var (
@@ -208,4 +211,141 @@ func cleanAlarmTableJob() {
 	}
 	rowAffected, _ := execResult.RowsAffected()
 	log.Info(nil, log.LOGGER_APP, "Clean alarm table job done", zap.String("last day", lastDayString), zap.Int64("delete row num", rowAffected))
+}
+
+// StartCheckBusinessConfigMatchCodeCount /** 检查业务配置 匹配的code数是否超过阈值配置,超过最大值的话,则认为配置错误,直接禁用该条业务配置
+func StartCheckBusinessConfigMatchCodeCount() {
+	t := time.NewTicker(time.Minute * 10).C
+	for {
+		go checkBusinessConfigMatchCodeCount()
+		<-t
+	}
+}
+
+func checkBusinessConfigMatchCodeCount() {
+	var metricKeyMap = make(map[string]int)
+	var metricServiceGroupMap = make(map[string]string)
+	var logMetricGroups, subLogMetricGroups, logMetricMonitorGuids []string
+	var logMetricMonitorGuidMap = make(map[string]bool)
+	var logMetricGroupWarnDtoList []*m.LogMetricGroupWarnDto
+	var logMetricGroupWarnDto *m.LogMetricGroupWarnDto
+	var err error
+	maxCountStr := os.Getenv("MONITOR_BUSINESS_CONFIG_MAX_CODE_COUNT")
+	maxCount, _ := strconv.Atoi(maxCountStr)
+	if maxCount == 0 {
+		log.Warn(nil, log.LOGGER_APP, "system variable MONITOR_BUSINESS_CONFIG_MAX_CODE_COUNT is null")
+		maxCount = 1000
+	}
+	if metricKeyMap, err = getRecentCustomMetricCodeStats(maxCount); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Get recent custom metric code fail", zap.Error(err))
+		return
+	}
+	if len(metricKeyMap) == 0 {
+		return
+	}
+	for metric, _ := range metricKeyMap {
+		if subLogMetricGroups, err = GetLogMetricGroupByMetric(metric); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Get log metric fail", zap.Error(err))
+			continue
+		}
+		if len(subLogMetricGroups) > 0 {
+			metricServiceGroupMap[metric] = subLogMetricGroups[0]
+		}
+		logMetricGroups = append(logMetricGroups, subLogMetricGroups...)
+	}
+	if len(logMetricGroups) == 0 {
+		return
+	}
+	for _, logMetricGroup := range logMetricGroups {
+		if logMetricGroupWarnDto, err = GetLogMetricGroupDto(logMetricGroup); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Get log metric fail", zap.Error(err))
+			continue
+		}
+		if logMetricGroupWarnDto == nil {
+			continue
+		}
+		logMetricGroupWarnDto.ServiceGroupDisplayName = GetServiceGroupDisplayName(logMetricGroupWarnDto.ServiceGroup)
+		logMetricGroupWarnDtoList = append(logMetricGroupWarnDtoList, logMetricGroupWarnDto)
+		logMetricMonitorGuidMap[logMetricGroupWarnDto.LogMetricMonitorGuid] = true
+	}
+	log.Info(nil, log.LOGGER_APP, "start do disable log_metric_group", zap.Strings("logMetricGroups", logMetricGroups))
+	// 更新状态
+	if err = BatchDisableLogMetricGroupStatus(logMetricGroups); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Batch disable log metric fail", zap.Error(err))
+		return
+	}
+	// 同步 prometheus数据
+	if len(logMetricMonitorGuidMap) > 0 {
+		logMetricMonitorGuids = ConvertMap2Arr(logMetricMonitorGuidMap)
+		for _, guid := range logMetricMonitorGuids {
+			var endpointList []string
+			endpointRel := ListLogMetricEndpointRel(guid)
+			for _, v := range endpointRel {
+				if v.SourceEndpoint != "" {
+					endpointList = append(endpointList, v.SourceEndpoint)
+				}
+			}
+			if err = SyncLogMetricExporterConfig(endpointList); err != nil {
+				log.Error(nil, log.LOGGER_APP, "Sync log metric  exporter config fail", zap.Error(err))
+			}
+		}
+	}
+	// 发送邮件
+	var mailSender *smtp.MailSender
+	var getMailSenderErr error
+	if mailSender, getMailSenderErr = GetMailSender(); getMailSenderErr != nil {
+		log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(getMailSenderErr))
+		return
+	}
+	toMail := []string{os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL"), os.Getenv("MONITOR_MAIL_DEFAULT_RECEIVER")}
+	for _, dto := range logMetricGroupWarnDtoList {
+		subject := fmt.Sprintf("业务配置【%s】自动关闭通知", dto.LogMetricGroupName)
+		content := fmt.Sprintf("【层级对象%s】【%s】【%s】服务码code识别超过n条，可能出现大量异常告警%d条，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
+		if sendErr := mailSender.Send(subject, content, toMail); sendErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
+		}
+	}
+}
+
+// getRecentCustomMetricCodeStats 查询最近60秒所有自定义指标内容，统计每个key下不同code的数量，返回数量大于1000的key及其code列表
+func getRecentCustomMetricCodeStats(maxCount int) (map[string]int, error) {
+	// 1. 查询所有自定义 service_group
+	serviceGroups := GetLogMetricMonitorServiceGroups()
+	result := make(map[string]map[string]struct{}) // key -> set of code
+	end := time.Now().Unix()
+	start := end - 60
+	step := int64(10)
+	for _, sg := range serviceGroups {
+		promQL := fmt.Sprintf(`node_log_metric_monitor_value{service_group="%s", key=~".*_req_count$"}`, sg)
+		data, err := datasource.QueryPrometheusRange(promQL, start, end, step)
+		if err != nil || data == nil {
+			continue
+		}
+		for _, r := range data.Result {
+			key := r.Metric["key"]
+			code := r.Metric["code"]
+			if key == "" || code == "" {
+				continue
+			}
+			if _, ok := result[key]; !ok {
+				result[key] = make(map[string]struct{})
+			}
+			result[key][code] = struct{}{}
+		}
+	}
+	filtered := make(map[string]int)
+	for key, codeSet := range result {
+		if len(codeSet) > maxCount {
+			filtered[key] = len(codeSet)
+		}
+	}
+	return filtered, nil
+}
+
+func ConvertMap2Arr(hashMap map[string]bool) []string {
+	var list []string
+	for s, _ := range hashMap {
+		list = append(list, s)
+	}
+	return list
 }
