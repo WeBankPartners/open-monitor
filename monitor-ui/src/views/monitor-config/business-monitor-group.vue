@@ -1555,15 +1555,24 @@ export default {
     returnLatestToken() {
       return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
     },
-    onDisabledSingleConfirmed(data) {
-      console.error(data, 'data')
-      // await this.request('POST', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+    async onDisabledSingleConfirmed(data) {
+      await this.updateSingleDisabled(data.guid, 'disabled')
       this.getDetail(this.targetId)
     },
-    onEnableAlarm(data) {
-      console.error(data, 'data11')
-      // await this.request('POST', this.apiCenter.saveTargetDb, this.dbModelConfig.addRow)
+    async onEnableAlarm(data) {
+      await this.updateSingleDisabled(data.guid, 'enable')
       this.getDetail(this.targetId)
+    },
+    updateSingleDisabled(guid, status) {
+      const params = {
+        log_metric_group_guid: this.targetId,
+        log_metric_monitor_guid: guid,
+        status
+      }
+      return new Promise(async resolve => {
+        await this.request('PUT', this.apiCenter.disabledSingleAlarm, params)
+        resolve()
+      })
     }
   },
   components: {

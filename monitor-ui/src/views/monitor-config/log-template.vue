@@ -259,6 +259,7 @@ export default {
   mounted() {
     this.getTemplateList()
     this.getUpdateUserOptions()
+    this.getSystemParams()
   },
   methods: {
     getTemplateList() {
@@ -369,6 +370,11 @@ export default {
       // const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
       this.request('GET', this.apiCenter.logMonitorTemplateOptions, '', res => {
         this.updateUserOptions = res
+      })
+    },
+    getSystemParams() {
+      this.request('GET', this.apiCenter.getTemplateSystemParams, '', res => {
+        console.error(res, 'res')
       })
     }
   },
