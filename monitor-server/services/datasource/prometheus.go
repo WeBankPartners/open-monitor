@@ -491,13 +491,6 @@ func QueryLogKeywordData(keywordMode string) (result map[string]float64, err err
 }
 
 func QueryPromSeries(promQL string) (result []map[string]string, err error) {
-	//if strings.Contains(promQL, "$") {
-	//	re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
-	//	fetchTag := re.FindAll([]byte(promQL), -1)
-	//	for _, vv := range fetchTag {
-	//		promQL = strings.Replace(promQL, string(vv), "=~\".*\"", -1)
-	//	}
-	//}
 	promQL = getPromQlMainExpr(promQL)
 	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/series", promDS.Host))
 	if urlParseErr != nil {

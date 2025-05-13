@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -334,7 +335,7 @@ func syncLogMetricMonitorConfig(logMetricMonitor string) error {
 	endpointList := []string{}
 	endpointRel := db.ListLogMetricEndpointRel(logMetricMonitor)
 	for _, v := range endpointRel {
-		if v.TargetEndpoint != "" {
+		if v.SourceEndpoint != "" {
 			endpointList = append(endpointList, v.SourceEndpoint)
 		}
 	}
@@ -652,6 +653,23 @@ func getError(metric, rangeConfig string) error {
 	return fmt.Errorf("metric: %s alarm config:%+v illegal", metric, rangeConfig)
 }
 
+func GetLogMonitorTemplateSysParamsConfig(c *gin.Context) {
+	var paramMap = make(map[string]int)
+	autoCreateWarn := os.Getenv("MONITOR_AUTO_CREATE_WARN")
+	if strings.ToLower(autoCreateWarn) == "yes" || strings.ToLower(autoCreateWarn) == "y" {
+		paramMap["auto_create_warn"] = 1
+	} else {
+		paramMap["auto_create_warn"] = 0
+	}
+	autoCreateDashboard := os.Getenv("MONITOR_AUTO_CREATE_DASHBOARD")
+	if strings.ToLower(autoCreateDashboard) == "yes" || strings.ToLower(autoCreateDashboard) == "y" {
+		paramMap["auto_create_dashboard"] = 1
+	} else {
+		paramMap["auto_create_dashboard"] = 0
+	}
+	middleware.ReturnData(c, paramMap)
+}
+
 func UpdateLogMonitorTemplate(c *gin.Context) {
 	var param models.LogMonitorTemplateDto
 	if err := c.ShouldBindJSON(&param); err != nil {
@@ -802,6 +820,25 @@ func UpdateLogMetricGroup(c *gin.Context) {
 			middleware.ReturnSuccess(c)
 		}
 	}
+}
+
+func UpdateLogMetricGroupStatus(c *gin.Context) {
+	var param models.UpdateLogMetricGroupStatus
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := db.UpdateLogMetricGroupStatus(param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
+	if err != nil {
+		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func DeleteLogMetricGroup(c *gin.Context) {

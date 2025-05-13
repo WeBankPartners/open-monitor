@@ -1346,9 +1346,9 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 	}
 	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user," +
-		"create_time,update_user,update_time,template_snapshot,ref_template_version,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		"create_time,update_user,update_time,template_snapshot,ref_template_version,auto_alarm,auto_dashboard,status) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator,
-		nowTime, operator, nowTime, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard,
+		nowTime, operator, nowTime, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard, param.Status,
 	}})
 	sucRetCode, createMapActions := getCreateLogMetricGroupMapAction(param, nowTime)
 	actions = append(actions, createMapActions...)
@@ -1440,10 +1440,15 @@ func UpdateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
+func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operator string) (err error) {
+	_, err = x.Exec("update log_metric_group set update_user=?,update_time=?,status=? where guid=?", operator, time.Now(), param.Status, param.LogMetricGroupGuid)
+	return
+}
+
 func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string) (actions []*Action, err error) {
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-		param.Name, operator, nowTime, param.LogMetricGroupGuid,
+	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,update_user=?,update_time=?,status=? where guid=?", Param: []interface{}{
+		param.Name, operator, nowTime, param.Status, param.LogMetricGroupGuid,
 	}})
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select source_value,target_value,value_type from log_metric_string_map where log_metric_group=?", param.LogMetricGroupGuid).Find(&logMetricStringMapRows)

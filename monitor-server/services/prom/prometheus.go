@@ -136,6 +136,19 @@ func StartCheckProcessList(interval int) {
 	}
 }
 
+// StartCheckBusinessConfigMatchCodeCount /** 检查业务配置 匹配的code数是否超过阈值配置,超过最大值的话,则认为配置错误,直接禁用该条业务配置
+func StartCheckBusinessConfigMatchCodeCount() {
+	t := time.NewTicker(time.Minute * 10).C
+	for {
+		go checkBusinessConfigMatchCodeCount()
+		<-t
+	}
+}
+
+func checkBusinessConfigMatchCodeCount() {
+
+}
+
 func checkSubProcessAlive(name string) {
 	if name == "" {
 		return

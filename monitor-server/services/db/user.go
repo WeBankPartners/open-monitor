@@ -294,6 +294,7 @@ func StartCronJob() {
 	go prom.StartConsumeReloadConfig()
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
+	go prom.StartCheckBusinessConfigMatchCodeCount()
 	//go StartCronSyncKubernetesPod(intervalSec)
 	go StartCleanAlarmTable()
 }
