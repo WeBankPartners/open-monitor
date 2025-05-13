@@ -1446,6 +1446,32 @@ func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operato
 	return
 }
 
+func BatchQueryDisabledLogMetricGroupStatus(ids []string) (disableIdsMap map[string]bool, err error) {
+	var list []string
+	if len(ids) == 0 {
+		err = errors.New("no IDs provided")
+		return
+	}
+	disableIdsMap = make(map[string]bool)
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	sql := fmt.Sprintf("select guid from  log_metric_group  WHERE guid IN (%s) and status = 'disabled'", strings.Join(placeholders, ", "))
+	// 创建一个足够大的 args 切片
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	if err = x.SQL(sql, args...).Find(&ids); err != nil {
+		return
+	}
+	for _, guid := range list {
+		disableIdsMap[guid] = true
+	}
+	return
+}
+
 func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
 	if len(ids) == 0 {
 		return errors.New("no IDs provided")

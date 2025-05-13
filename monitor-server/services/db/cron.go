@@ -268,6 +268,23 @@ func checkBusinessConfigMatchCodeCount() {
 		logMetricGroupWarnDtoList = append(logMetricGroupWarnDtoList, logMetricGroupWarnDto)
 		logMetricMonitorGuidMap[logMetricGroupWarnDto.LogMetricMonitorGuid] = true
 	}
+	// 过滤掉已经禁用的数据(兜底逻辑)
+	var disableIdsMap = make(map[string]bool)
+	if disableIdsMap, err = BatchQueryDisabledLogMetricGroupStatus(logMetricGroups); err != nil {
+		log.Error(nil, log.LOGGER_APP, "BatchQueryDisabledLogMetricGroupStatus fail", zap.Error(err))
+	}
+	if len(disableIdsMap) > 0 {
+		var tempLogMetricGroups []string
+		for _, group := range logMetricGroups {
+			if _, ok := disableIdsMap[group]; !ok {
+				tempLogMetricGroups = append(tempLogMetricGroups, group)
+			}
+		}
+		logMetricGroups = tempLogMetricGroups
+	}
+	if len(logMetricGroups) == 0 {
+		return
+	}
 	log.Info(nil, log.LOGGER_APP, "start do disable log_metric_group", zap.Strings("logMetricGroups", logMetricGroups))
 	// 更新状态
 	if err = BatchDisableLogMetricGroupStatus(logMetricGroups); err != nil {
