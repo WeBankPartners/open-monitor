@@ -616,13 +616,13 @@ export default {
     },
   },
   methods: {
-    loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
+    async loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
       this.isLogTemplate = isLogTemplate
       this.isfullscreen = true
       this.parentGuid = parentGuid
       this.metricPrefixCode = ''
-      this.auto_create_dashboard = true
-      this.auto_create_warn = true
+      // this.auto_create_dashboard = true
+      // this.auto_create_warn = true
       // actionType add/edit
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
@@ -633,6 +633,7 @@ export default {
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
+        await this.getSystemParams()
         this.configInfo = {
           guid: '',
           log_metric_monitor: '',
@@ -818,7 +819,7 @@ export default {
           tmpData.metric_prefix_code = this.metricPrefixCode
         }
       }
-      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy) {
+      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy || this.isInTemplatePage) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
       }
@@ -901,6 +902,10 @@ export default {
         }
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
+        }
+        if (this.isInTemplatePage || this.isBaseCustomeTemplateAdd) {
+          this.auto_create_dashboard = hasIn(this.configInfo, 'auto_create_dashboard') ? this.configInfo.auto_create_dashboard : true
+          this.auto_create_warn = hasIn(this.configInfo, 'auto_create_warn') ? this.configInfo.auto_create_warn : true
         }
         const param_list = this.configInfo.param_list || []
         param_list.forEach(item => {
@@ -1071,6 +1076,15 @@ export default {
       }
       const findItem = find(list, compareObj)
       return !isEmpty(findItem) && index === findIndex(list, compareObj)
+    },
+    getSystemParams() {
+      return new Promise(resolve => {
+        this.request('GET', this.apiCenter.getTemplateSystemParams, '', res => {
+          this.auto_create_warn = res.auto_create_warn
+          this.auto_create_dashboard = res.auto_create_dashboard
+          resolve()
+        })
+      })
     }
   },
   components: {

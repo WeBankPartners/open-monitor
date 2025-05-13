@@ -143,8 +143,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <!-- <Checkbox v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox> -->
-        <!-- <Checkbox v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox> -->
+        <Checkbox v-model="configInfo.auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-model="configInfo.auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -430,9 +430,7 @@ export default {
       cloneDeep,
       actionType: '',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
-      apiCenter: this.$root.apiCenter,
-      auto_create_warn: true,
-      auto_create_dashboard: true,
+      apiCenter: this.$root.apiCenter
     }
   },
   computed: {
@@ -600,8 +598,12 @@ export default {
               auto_alarm: false,
               range_config: cloneDeep(initRangeConfigMap.other)
             }
-          ]
+          ],
+          auto_create_warn: this.$parent.auto_create_warn,
+          auto_create_dashboard: this.$parent.auto_create_dashboard
         }
+        // this.auto_create_warn = this.$parent.auto_create_warn
+        // this.auto_create_dashboard = this.$parent.auto_create_dashboard
         this.showModal = true
         this.isAdd = true
       }

@@ -822,7 +822,7 @@ export default {
                 </Button>
               </Tooltip>
 
-              {1===1 ? (<Poptip
+              {params.row.status === 'enable' ? (<Poptip
                 confirm
                 title={this.$t('m_disabled_confirm_tip')}
                 placement="left-end"
@@ -1556,17 +1556,17 @@ export default {
       return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
     },
     async onDisabledSingleConfirmed(data) {
-      await this.updateSingleDisabled(data.guid, 'disabled')
+      await this.updateSingleDisabled(data, 'disabled')
       this.getDetail(this.targetId)
     },
     async onEnableAlarm(data) {
-      await this.updateSingleDisabled(data.guid, 'enable')
+      await this.updateSingleDisabled(data, 'enable')
       this.getDetail(this.targetId)
     },
-    updateSingleDisabled(guid, status) {
+    updateSingleDisabled(data, status) {
       const params = {
-        log_metric_group_guid: this.targetId,
-        log_metric_monitor_guid: guid,
+        log_metric_group_guid: data.guid,
+        log_metric_monitor_guid: data.log_metric_monitor,
         status
       }
       return new Promise(async resolve => {
