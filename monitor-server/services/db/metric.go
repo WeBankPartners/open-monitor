@@ -982,9 +982,22 @@ func GetLogTypeByLogMetricGroup(id string) (logType string, err error) {
 }
 
 func GetLogMetricGroupByMetric(metric string) ([]string, error) {
-	var result []string
-	err := x.SQL("select log_metric_group from metric where metric =?", metric).Find(&result)
-	return result, err
+	var result []struct {
+		LogMetricGroup sql.NullString
+	}
+	// 执行 SQL 查询
+	err := x.SQL("SELECT log_metric_group FROM metric WHERE metric = ?", metric).Find(&result)
+	if err != nil {
+		return nil, err // 返回错误信息
+	}
+	// 将结果转换为字符串切片
+	var logMetricGroups []string
+	for _, item := range result {
+		if item.LogMetricGroup.Valid {
+			logMetricGroups = append(logMetricGroups, item.LogMetricGroup.String)
+		}
+	}
+	return logMetricGroups, nil
 }
 
 func GetAllMetricComparison() (metricComparisonMap map[string]string, err error) {

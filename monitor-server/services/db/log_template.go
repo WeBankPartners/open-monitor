@@ -153,6 +153,12 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	if param.Guid == "" {
 		param.Guid = "lmt_" + guid.CreateGuid()
 	}
+	if param.AutoCreateWarn {
+		param.AutoAlarm = 1
+	}
+	if param.AutoCreateDashboard {
+		param.AutoDashboard = 1
+	}
 	nowTime := time.Now()
 	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time,success_code,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode, param.AutoDashboard, param.AutoAlarm, param.AutoDashboard,
@@ -193,6 +199,12 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 }
 
 func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, operator string) (actions []*Action, affectEndpoints []string, err error) {
+	if param.AutoCreateWarn {
+		param.AutoAlarm = 1
+	}
+	if param.AutoCreateDashboard {
+		param.AutoDashboard = 1
+	}
 	existLogMonitorObj, getExistDataErr := GetLogMonitorTemplate(param.Guid)
 	if getExistDataErr != nil {
 		err = fmt.Errorf("get exist log monitor data fail,%s ", getExistDataErr.Error())

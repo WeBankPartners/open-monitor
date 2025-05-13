@@ -828,6 +828,8 @@ func GetServiceGroupDisplayName(serviceGroup string) string {
 //	err: 错误对象，如果查询过程中发生错误，则返回相应的错误
 func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
 	var result string
+	var t time.Time
+	var tmpErr error
 	// 执行 SQL 查询并获取最大更新时间
 	_, err = x.SQL("SELECT MAX(update_time) FROM service_group").Get(&result)
 	if err != nil {
@@ -836,9 +838,11 @@ func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
 
 	if result != "" {
 		// 解析时间字符串
-		t, err := time.ParseInLocation(models.DatetimeFormat, result, time.Local)
+		t, err = time.ParseInLocation(models.DatetimeFormat, result, time.Local)
 		if err != nil {
-			return 0, fmt.Errorf("failed to parse time: %w", err) // 返回解析错误
+			if t, tmpErr = time.ParseInLocation(time.RFC3339, result, time.Local); tmpErr != nil {
+				return 0, tmpErr
+			}
 		}
 		updateTime = t.Unix()
 	}
