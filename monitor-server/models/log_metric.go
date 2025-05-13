@@ -247,11 +247,11 @@ type UpdateLogMetricGroupStatus struct {
 }
 
 type LogMetricGroupWarnDto struct {
-	LogMetricGroupName      string
-	Metric                  string
-	LogMetricMonitorGuid    string
-	ServiceGroup            string
-	ServiceGroupDisplayName string
+	LogMetricGroupName      string `json:"log_metric_group_name" xorm:"log_metric_group_name"`
+	Metric                  string `json:"metric" xorm:"metric"`
+	LogMetricMonitorGuid    string `json:"log_metric_monitor_guid" xorm:"log_metric_monitor_guid"`
+	ServiceGroup            string `json:"service_group" xorm:"service_group"`
+	ServiceGroupDisplayName string `json:"service_group_display_name" xorm:"-"`
 }
 
 type LogMetricThreshold struct {
