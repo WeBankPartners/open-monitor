@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/go-common-lib/pcre"
@@ -1446,8 +1447,24 @@ func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operato
 }
 
 func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
-	sql := fmt.Sprintf("UPDATE log_metric_group SET update_time=?, status=? WHERE guid IN (%s)", strings.Join(ids, ", "))
-	_, err = x.Exec(sql, time.Now(), "disabled")
+	if len(ids) == 0 {
+		return errors.New("no IDs provided")
+	}
+
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	sql := fmt.Sprintf("UPDATE log_metric_group SET update_time=?, status=? WHERE guid IN (%s)", strings.Join(placeholders, ", "))
+	// 创建一个足够大的 args 切片
+	args := make([]interface{}, len(ids)+3)
+	args[0] = sql
+	args[1] = time.Now()
+	args[2] = "disabled"
+	for i, id := range ids {
+		args[i+2] = id
+	}
+	_, err = x.Exec(args...)
 	return
 }
 
