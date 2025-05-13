@@ -1447,7 +1447,7 @@ func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operato
 
 func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
 	sql := fmt.Sprintf("UPDATE log_metric_group SET update_time=?, status=? WHERE guid IN (%s)", strings.Join(ids, ", "))
-	_, err = x.Exec(sql, time.Now(), "disabled", ids)
+	_, err = x.Exec(sql, time.Now(), "disabled")
 	return
 }
 

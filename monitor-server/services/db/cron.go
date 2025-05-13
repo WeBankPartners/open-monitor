@@ -298,6 +298,7 @@ func checkBusinessConfigMatchCodeCount() {
 		return
 	}
 	toMail := []string{os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL"), os.Getenv("MONITOR_MAIL_DEFAULT_RECEIVER")}
+	log.Info(nil, log.LOGGER_APP, "send mail, ", zap.Strings("receivers", toMail))
 	for _, dto := range logMetricGroupWarnDtoList {
 		subject := fmt.Sprintf("业务配置【%s】自动关闭通知", dto.LogMetricGroupName)
 		content := fmt.Sprintf("【层级对象%s】【%s】【%s】服务码code识别超过n条，可能出现大量异常告警%d条，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
