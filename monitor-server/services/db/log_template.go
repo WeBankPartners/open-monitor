@@ -60,7 +60,9 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 	}
 	logMonitorTemplateRow.CreateTimeString = logMonitorTemplateRow.CreateTime.Format(models.DatetimeFormat)
 	logMonitorTemplateRow.UpdateTimeString = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeFormat)
-	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{}}
+	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{},
+		ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{},
+		AutoCreateWarn: logMonitorTemplateRow.AutoAlarm == 1, AutoCreateDashboard: logMonitorTemplateRow.AutoDashboard == 1}
 	result.LogMonitorTemplateVersion = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeDigitFormat)
 	if result.CalcResult != "" {
 		if err = json.Unmarshal([]byte(result.CalcResult), result.CalcResultObj); err != nil {

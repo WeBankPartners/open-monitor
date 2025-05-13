@@ -246,6 +246,14 @@ type UpdateLogMetricGroupStatus struct {
 	Status               string `json:"status"`
 }
 
+type LogMetricGroupWarnDto struct {
+	LogMetricGroupName      string
+	Metric                  string
+	LogMetricMonitorGuid    string
+	ServiceGroup            string
+	ServiceGroupDisplayName string
+}
+
 type LogMetricThreshold struct {
 	MetricId    string
 	Metric      string

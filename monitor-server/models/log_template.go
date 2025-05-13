@@ -103,6 +103,8 @@ type LogMonitorTemplateDto struct {
 	MetricList                []*LogMetricTemplate          `json:"metric_list"`
 	Permission                *LogMonitorTemplatePermission `json:"permission"`
 	LogMonitorTemplateVersion string                        `json:"log_monitor_template_version"`
+	AutoCreateWarn            bool                          `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard       bool                          `json:"auto_create_dashboard"` //自动创建自定义看板
 }
 
 type LogMonitorTemplatePermission struct {

@@ -814,6 +814,12 @@ func CheckMetricIsServiceMetric(metric, serviceGroup string) (ok bool, tags []st
 	return
 }
 
+func GetServiceGroupDisplayName(serviceGroup string) string {
+	var result string
+	x.SQL("select display_name from service_group where guid=?", serviceGroup).Get(&result)
+	return result
+}
+
 // GetLatestServiceGroupUpdateTime 获取服务组最新的更新时间
 // 该函数通过查询数据库中service_group表的最大update_time字段值来获取最新的服务组更新时间
 // 返回值:

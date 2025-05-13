@@ -981,6 +981,12 @@ func GetLogTypeByLogMetricGroup(id string) (logType string, err error) {
 	return
 }
 
+func GetLogMetricGroupByMetric(metric string) ([]string, error) {
+	var result []string
+	err := x.SQL("select log_metric_group from metric where metric =?", metric).Find(&result)
+	return result, err
+}
+
 func GetAllMetricComparison() (metricComparisonMap map[string]string, err error) {
 	var list []*models.MetricComparison
 	metricComparisonMap = make(map[string]string)

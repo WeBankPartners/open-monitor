@@ -1445,6 +1445,12 @@ func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operato
 	return
 }
 
+func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
+	sql := fmt.Sprintf("UPDATE log_metric_group SET update_time=?, status=? WHERE guid IN (%s)", strings.Join(ids, ", "))
+	_, err = x.Exec(sql, time.Now(), "disabled", ids)
+	return
+}
+
 func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string) (actions []*Action, err error) {
 	nowTime := time.Now()
 	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,update_user=?,update_time=?,status=? where guid=?", Param: []interface{}{
@@ -2160,5 +2166,17 @@ func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *
 		ColorGroup:       config.ColorGroup,
 		FullMetric:       config.FullMetric,
 	}
+	return
+}
+
+func GetLogMetricMonitorServiceGroups() []string {
+	var serviceGroups []string
+	x.SQL("select distinct service_group from log_metric_monitor").Find(&serviceGroups)
+	return serviceGroups
+}
+
+func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarnDto, err error) {
+	dto = &models.LogMetricGroupWarnDto{}
+	_, err = x.SQL("select lmg.name as 'logMetricGroupName',lmg.log_metric_monitor as 'logMetricMonitorGuid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(&dto)
 	return
 }
