@@ -153,9 +153,11 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	if param.Guid == "" {
 		param.Guid = "lmt_" + guid.CreateGuid()
 	}
+	param.AutoAlarm = 0
 	if param.AutoCreateWarn {
 		param.AutoAlarm = 1
 	}
+	param.AutoDashboard = 0
 	if param.AutoCreateDashboard {
 		param.AutoDashboard = 1
 	}
@@ -199,9 +201,11 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 }
 
 func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, operator string) (actions []*Action, affectEndpoints []string, err error) {
+	param.AutoAlarm = 0
 	if param.AutoCreateWarn {
 		param.AutoAlarm = 1
 	}
+	param.AutoDashboard = 0
 	if param.AutoCreateDashboard {
 		param.AutoDashboard = 1
 	}

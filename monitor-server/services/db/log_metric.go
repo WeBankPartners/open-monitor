@@ -1462,7 +1462,7 @@ func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
 	args[1] = time.Now()
 	args[2] = "disabled"
 	for i, id := range ids {
-		args[i+2] = id
+		args[i+3] = id
 	}
 	_, err = x.Exec(args...)
 	return
