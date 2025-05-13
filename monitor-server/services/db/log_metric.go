@@ -2177,6 +2177,6 @@ func GetLogMetricMonitorServiceGroups() []string {
 
 func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarnDto, err error) {
 	dto = &models.LogMetricGroupWarnDto{}
-	_, err = x.SQL("select lmg.name as 'logMetricGroupName',lmg.log_metric_monitor as 'logMetricMonitorGuid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(&dto)
+	_, err = x.SQL("select lmg.name as 'logMetricGroupName',lmg.log_metric_monitor as 'logMetricMonitorGuid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(dto)
 	return
 }

@@ -161,7 +161,7 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	}
 	nowTime := time.Now()
 	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time,success_code,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode, param.AutoDashboard, param.AutoAlarm, param.AutoDashboard,
+		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode, param.AutoAlarm, param.AutoDashboard,
 	}})
 	logParamGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, logParamObj := range param.ParamList {
