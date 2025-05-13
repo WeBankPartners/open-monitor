@@ -1463,7 +1463,7 @@ func BatchQueryDisabledLogMetricGroupStatus(ids []string) (disableIdsMap map[str
 	for i, id := range ids {
 		args[i] = id
 	}
-	if err = x.SQL(sql, args...).Find(&ids); err != nil {
+	if err = x.SQL(sql, args...).Find(&list); err != nil {
 		return
 	}
 	for _, guid := range list {
