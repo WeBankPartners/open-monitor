@@ -96,8 +96,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy || isInTemplatePage" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy || isInTemplatePage" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -902,7 +902,6 @@ export default {
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
         }
-        {/* 整理计算类型可选项 */}
         const param_list = this.configInfo.param_list || []
         param_list.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)

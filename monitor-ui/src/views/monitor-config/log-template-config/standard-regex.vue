@@ -119,6 +119,8 @@
         </Row>
       </div>
       <div slot="footer">
+        <!-- <Checkbox v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox> -->
+        <!-- <Checkbox v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox> -->
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -380,6 +382,8 @@ export default {
       actionType: '',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      auto_create_warn: true,
+      auto_create_dashboard: true,
     }
   },
   methods: {

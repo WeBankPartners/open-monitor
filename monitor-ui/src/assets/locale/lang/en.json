@@ -569,5 +569,7 @@
   "m_first_time": "First Time",
   "m_duration": "Duration",
   "m_copy_success": "Copy Success",
-  "m_repeated_value": "Repeated Value"
+  "m_repeated_value": "Repeated Value",
+  "m_disable": "Disabled",
+  "m_disabled_confirm_tip": "Confirm To Disable Data"
 }
