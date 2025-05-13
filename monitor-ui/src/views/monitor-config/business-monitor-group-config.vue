@@ -321,8 +321,8 @@ export default {
       this.view = actionType === 'view'
       this.businessConfig.log_monitor_template_guid = templateGuid
       this.businessConfig.log_metric_monitor_guid = parentGuid
-      this.auto_create_warn = true
-      this.auto_create_dashboard = true
+      // this.auto_create_warn = true
+      // this.auto_create_dashboard = true
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -377,6 +377,8 @@ export default {
     getTemplateDetail(guid) {
       const api = this.apiCenter.getConfigDetailByGuid + guid
       this.request('GET', api, {}, resp => {
+        this.auto_create_dashboard = hasIn(resp, 'auto_create_dashboard') ? resp.auto_create_dashboard : true
+        this.auto_create_warn = hasIn(resp, 'auto_create_warn') ? resp.auto_create_warn : true
         this.processConfigInfo(resp)
         Object.assign(this.businessConfig.retcode_string_map[0], JSON.parse(resp.success_code))
       })
