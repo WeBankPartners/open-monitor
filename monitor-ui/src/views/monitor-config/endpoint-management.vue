@@ -292,6 +292,7 @@
                 size="small"
                 type="error"
                 icon="md-trash"
+                style="background-color: #FF4D4F !important"
               ></Button>
               <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
               <Select v-model="item.weekday" multiple filterable style="width:200px">
@@ -306,6 +307,7 @@
             type="success"
             size="small"
             long
+            style="background-color: #00CB91 !important"
           >{{ $t('m_button_add') }}</Button>
         </div>
       </template>

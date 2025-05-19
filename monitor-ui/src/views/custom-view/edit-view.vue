@@ -1336,6 +1336,7 @@ export default {
                 chartId: this.elId,
                 canEditShowLines: true,
                 dataZoom: false,
+                isNeedClear: true,
                 params
               })
               if (this.chartInstance) {

@@ -272,6 +272,7 @@ import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import DataWorker from '@/views/custom-view/view.worker.js'
 
 export const custom_api_enum = [
   {
@@ -389,6 +390,8 @@ export default {
       isShowProcessConfigModel: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      webWorker: null,
+      canUseWorker: true
     }
   },
   mounted() {
@@ -405,6 +408,12 @@ export default {
       this.pagination.currentPage = 1
     }
     this.initData()
+    // 这里看是否兼容web wroker并将canUseWorker传给编辑页面
+    this.webWorker = new DataWorker()
+    this.webWorker.onerror = event => {
+      this.canUseWorker = false
+      console.error('Worker加载失败:', event.message)
+    }
   },
   beforeDestroy() {
     // 缓存列表搜索条件
@@ -413,6 +422,9 @@ export default {
       pagination: this.pagination
     }
     window.sessionStorage.setItem('monitor_search_custom_view', JSON.stringify(storage))
+    if (this.webWorker) {
+      this.webWorker.terminate()
+    }
   },
   methods: {
     initData() {
@@ -560,7 +572,8 @@ export default {
       const params = {
         permission: type,
         panalItem,
-        pannelId: panalItem.id
+        pannelId: panalItem.id,
+        canUseWorker: this.canUseWorker
       }
       this.$router.push({
         name: 'viewConfig',
