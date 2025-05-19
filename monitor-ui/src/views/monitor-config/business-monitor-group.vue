@@ -822,7 +822,15 @@ export default {
                 </Button>
               </Tooltip>
 
-              {params.row.status === 'enable' ? (<Poptip
+              {params.row.status === 'disabled' ? (
+                <Tooltip placement="top" transfer content={this.$t('m_alarm_open')}>
+                  <Button class="mr-1" size="small" type="success" on-click={() => {
+                    this.onEnableAlarm(params.row)
+                  }}>
+                    <Icon type="md-unlock" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              ) : (<Poptip
                 confirm
                 title={this.$t('m_disabled_confirm_tip')}
                 placement="left-end"
@@ -836,14 +844,6 @@ export default {
                   </Button>
                 </Tooltip>
               </Poptip>
-              ) : (
-                <Tooltip placement="top" transfer content={this.$t('m_alarm_open')}>
-                  <Button class="mr-1" size="small" type="success" on-click={() => {
-                    this.onEnableAlarm(params.row)
-                  }}>
-                    <Icon type="md-unlock" size="16"></Icon>
-                  </Button>
-                </Tooltip>
               )}
               <Poptip
                 confirm
