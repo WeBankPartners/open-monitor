@@ -810,12 +810,12 @@ export default {
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button size="small" type="success" on-click={() => this.copySingleItem(params.row)}>
+                <Button class="mr-1" size="small" type="success" on-click={() => this.copySingleItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
               <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
-                <Button size="small" type="primary" on-click={() => {
+                <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.editRuleItem(params.row)
                 }}>
                   <Icon type="md-create" size="16"></Icon>
@@ -831,14 +831,14 @@ export default {
                   this.onDisabledSingleConfirmed(params.row)
                 }}>
                 <Tooltip placement="top" transfer content={this.$t('m_disable')}>
-                  <Button size="small" type="error">
+                  <Button class="mr-1" size="small" type="error">
                     <Icon type="md-lock" size="16" />
                   </Button>
                 </Tooltip>
               </Poptip>
               ) : (
                 <Tooltip placement="top" transfer content={this.$t('m_alarm_open')}>
-                  <Button size="small" type="success" on-click={() => {
+                  <Button class="mr-1" size="small" type="success" on-click={() => {
                     this.onEnableAlarm(params.row)
                   }}>
                     <Icon type="md-unlock" size="16"></Icon>
