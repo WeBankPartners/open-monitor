@@ -113,7 +113,7 @@ export default {
   methods: {
     typeChange(needDefaultTarget) {
       this.metricKey = ''
-      // this.clearTargrt()
+      this.clearTargrt()
       this.getTargrtList(needDefaultTarget)
       this.selectKey = +new Date() + ''
     },

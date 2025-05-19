@@ -505,7 +505,7 @@ export default {
         this.$Message.success({
           render: h => h('div', { class: 'add-business-config' }, [
             h('div', {class: 'add-business-config-item'}, [
-              h('div', this.$t('m_has_create_dashboard') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_dashboard') + ':'),
               h('div', {
                 domProps: {
                   innerHTML: tipTwo
@@ -513,7 +513,7 @@ export default {
               })
             ]),
             h('div', { class: 'add-business-config-item' }, [
-              h('div', this.$t('m_has_create_warn') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_warn') + ':'),
               h('div', {
                 class: 'create_warn_text',
                 domProps: {
@@ -662,6 +662,9 @@ export default {
     flex-direction: row;
     .create_warn_text {
       text-align: left
+    }
+    .add-business-config-item-title {
+      min-width: 80px;
     }
   }
 }
