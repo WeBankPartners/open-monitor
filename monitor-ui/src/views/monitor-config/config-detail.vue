@@ -94,7 +94,7 @@
                 <span style="color:red">*</span>
                 {{ $t('m_alarmName') }}
               </span>
-              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit></Input>
+              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="150" show-word-limit></Input>
             </FormItem>
             <FormItem>
               <span slot="label">

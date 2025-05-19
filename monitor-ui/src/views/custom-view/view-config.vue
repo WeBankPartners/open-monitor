@@ -229,7 +229,6 @@
         <div class="grid-window"
              :style="pageType === 'link' ? 'height: calc(100vh - 250px)' : ''"
              @scroll="onGridWindowScroll"
-             @mouseleave="handleGridWindowMouseLeave"
         >
           <grid-layout
             :layout.sync="tmpLayoutData"
@@ -1715,6 +1714,14 @@ export default {
       this.refreshNow = !this.refreshNow
     },
     onGridWindowScroll: debounce(function () {
+      this.inWindowChartRefs.forEach(refsName => {
+        const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+        if (chartInstance) {
+          chartInstance.dispatchAction({
+            type: 'hideTip'
+          })
+        }
+      })
       this.inWindowChartRefs = []
       this.scrollRefresh = !this.scrollRefresh
     }, 800),
@@ -1757,23 +1764,16 @@ export default {
       // const originDom = document.querySelector(`.${refsName}`)
       // const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
       // const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
+
+      if (e.relatedTarget && e.relatedTarget.classList.contains('chart-single-tips')) {
+        return
+      }
       if (chartInstance) {
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
       }
-    }, 5000),
-    handleGridWindowMouseLeave: debounce(function () {
-      this.inWindowChartRefs.forEach(refsName => {
-        const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
-        const isChartInWindow = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].isChartInWindow : null
-        if (chartInstance && isChartInWindow) {
-          chartInstance.dispatchAction({
-            type: 'hideTip'
-          })
-        }
-      })
-    }, 2000),
+    }, 500),
     collectInWindowChartRef(ref) {
       if (this.inWindowChartRefs.indexOf(ref) === -1) {
         this.inWindowChartRefs.push(ref)
