@@ -738,9 +738,6 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.Status == "" {
-		param.Status = "enable"
-	}
 	if param.LogMetricMonitorGuid == "" || param.LogMonitorTemplateGuid == "" {
 		err := fmt.Errorf("LogMetricMonitorGuid and LogMonitorTemplateGuid can not empty")
 		middleware.ReturnHandleError(c, err.Error(), err)

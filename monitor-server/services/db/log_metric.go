@@ -1310,6 +1310,9 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	if param.AutoCreateDashboard {
 		autoDashboard = 1
 	}
+	if param.Status == "" {
+		param.Status = "enable"
+	}
 	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
