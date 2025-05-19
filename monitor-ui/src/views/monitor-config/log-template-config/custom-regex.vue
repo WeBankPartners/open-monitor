@@ -605,6 +605,9 @@ export default {
     isBaseCustomeTemplateAdd() { // 在业务配置页面基于下拉模板新增配置
       return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
     },
+    isBaseCustomeAdd() { // 在业务配置页面直接点击新增自定义配置
+      return this.actionType === 'add' && !this.isLogTemplate && !isEmpty(this.parentGuid)
+    },
     isInTemplatePage() { // 在模板配置也新增or修改
       return this.isLogTemplate && isEmpty(this.parentGuid)
     },
@@ -1046,14 +1049,13 @@ export default {
       if (this.view) {
         return true
       }
-      if (this.isInTemplatePage) {
+      if (this.isInTemplatePage || this.isBaseCustomeAdd) {
         return false
       }
       if (!isEmpty(item) && type) {
         return type === 'paramList' ? this.isParamsListItemDisabled(this.templateParamList, item, index) : this.isMetricItemDisabled(this.templateMetricList, item, index)
       }
       return this.isBaseCustomeTemplateEdit || this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateAdd
-
     },
     isParamsListItemDisabled(list, item, index=-2) {
       const compareObj = {
