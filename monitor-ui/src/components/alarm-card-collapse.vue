@@ -28,7 +28,7 @@
             @click="e => addParams('priority', item.s_priority, e)"
           />
           <template v-if="item.alarm_name">
-            <Tooltip :content="item.alarm_name" max-width="300" >
+            <Tooltip :content="item.alarm_name" max-width="600" >
               <div class="custom-title">
                 <span class="custom-title-text">{{item.alarm_name}}</span>
                 <img
