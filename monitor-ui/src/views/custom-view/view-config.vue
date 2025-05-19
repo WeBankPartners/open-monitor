@@ -1766,11 +1766,9 @@ export default {
       // const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
 
       if (e.relatedTarget && e.relatedTarget.classList.contains('chart-single-tips')) {
-        console.error('在图例上面')
         return
       }
       if (chartInstance) {
-        console.error('销毁tooltip')
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
