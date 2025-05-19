@@ -323,7 +323,10 @@ func checkBusinessConfigMatchCodeCount() {
 	if smtp.VerifyMailAddress(deferReceiver) {
 		toMail = append(toMail, deferReceiver)
 	}
-	log.Info(nil, log.LOGGER_APP, "send mail", zap.Strings("receivers", toMail), zap.Int("alarmLen", len(logMetricGroupWarnDtoList)))
+	log.Info(nil, log.LOGGER_APP, "send mail", zap.String("SenderName", mailSender.SenderName), zap.String("SenderMail",
+		mailSender.SenderMail), zap.String("AuthUser", mailSender.AuthUser), zap.String("AuthServer", mailSender.AuthServer),
+		zap.String("AuthPassword", mailSender.AuthPassword), zap.Bool("SSL", mailSender.SSL),
+		zap.Strings("receivers", toMail), zap.Int("alarmLen", len(logMetricGroupWarnDtoList)))
 	if len(toMail) == 0 {
 		log.Warn(nil, log.LOGGER_APP, "send mail receivers is empty")
 		return
