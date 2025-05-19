@@ -43,7 +43,7 @@
             <div>
               <div class="search-zone">
                 <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
-                <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                <RadioGroup v-model="viewCondition.timeTnterval" type="button" size="small">
                   <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
                 </RadioGroup>
               </div>
@@ -309,9 +309,10 @@
                     </Poptip>
                   </div>
                 </div>
-                <section style="height: 90%;" @mouseleave="handleSingleChartMouseLeave(index)">
+                <section style="height: 90%;" @mouseleave="(e) => handleSingleChartMouseLeave(e, index)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)"
+                                 :class="'chart' + index"
                                  :ref="'chart' + index"
                                  :refreshNow="refreshNow"
                                  :scrollRefresh="scrollRefresh"
@@ -419,6 +420,7 @@ import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue'
 import ExportChartModal from './export-chart-modal.vue'
+import DataWorker from '@/views/custom-view/view.worker.js'
 // import { changeSeriesColor } from '@/assets/config/random-color'
 
 const lineTypeNameMap = {
@@ -581,7 +583,9 @@ export default {
       apiCenter: this.$root.apiCenter,
       isActionRegionExpand: true,
       isNeedRefresh: true,
-      inWindowChartRefs: []
+      inWindowChartRefs: [],
+      isFirstRender: true,
+      initialViewData: []
     }
   },
   computed: {
@@ -593,20 +597,15 @@ export default {
     }
   },
   created() {
-    window.viewTimeStepArr = []
-    window.startTimeStep = +new Date()
     if (!this.pannelId) {
       return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
     this.zoneWidth = window.screen.width * 0.65
     this.isShowLoading = true
     this.getAllChartOptionList()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$111')
     this.getPannelList()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$222')
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()
-    window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$333')
     window['view-config-selected-line-data'] = {}
     setTimeout(() => {
       const domArr = document.querySelectorAll('.copy-drowdown-slot')
@@ -630,12 +629,65 @@ export default {
           this.activeGroup = activeGroup
           this.panel_group_list = res.panelGroupList || []
           this.viewData = res.charts || []
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$444')
+          this.initialViewData = res.charts || []
+          if (this.$route.params.canUseWorker && res.charts.length > 15 && this.isFirstRender) {
+            // 这里是作为首屏优化，当图表数量大时，使用webWorker不阻塞渲染
+            this.viewData = res.charts.slice(0, 15)
+            this.initPanalWorker(res.charts, 'init')
+            this.isFirstRender = false
+          }
           this.initPanals('init')
           this.cutsomViewId = this.pannelId
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$999')
         }
       })
+    },
+    initPanalWorker(arr, type) {
+      // 初始化模块化 Worker
+      const worker = new DataWorker()
+      worker.onerror = event => {
+        console.error('Worker加载失败:', event.message)
+        this.viewData = arr || []
+        this.initPanals('init')
+      }
+      worker.postMessage({
+        viewDataArr: arr,
+        viewCondition: this.viewCondition,
+        activeGroup: this.activeGroup,
+        type,
+        layoutData: this.layoutData
+      })
+      worker.onmessage = e => {
+        const resultObj = e.data
+
+        // const tmpArr = e.data
+        // if (isEmpty(this.layoutData) || type === 'init') {
+        //   this.layoutData = tmpArr
+        // } else {
+        //   tmpArr.forEach(tmpItem => {
+        //     const item = find(this.layoutData, {
+        //       id: tmpItem.id
+        //     })
+        //     if (!isEmpty(item)) {
+        //       item._activeCharts = tmpItem._activeCharts
+        //     }
+        //   })
+        // }
+        // this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
+        // if (type === 'init') {
+        //   this.allPageLayoutData = cloneDeep(this.layoutData)
+        // }
+        // this.resetHasNotRequestStatus()
+        // this.filterLayoutData()
+        this.resetHasNotRequestStatus()
+        this.layoutData = resultObj.layoutData
+        this.chartLayoutType = resultObj.chartLayoutType
+        this.previousChartLayoutType = this.chartLayoutType
+        if (type === 'init' && this.activeGroup === 'ALL') {
+          this.allPageLayoutData = cloneDeep(this.layoutData)
+        }
+        console.error('worker done')
+        worker.terminate()
+      }
     },
     onCopyButtonClick() {
       this.filterChartName = ''
@@ -731,7 +783,6 @@ export default {
     async initPanals(type) {
       const tmpArr = []
       this.isShowLoading = false
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$555')
       for (let k=0; k<this.viewData.length; k++) {
         const item = this.viewData[k]
         // 先对groupDisplayConfig进行初始化，防止异常值
@@ -795,7 +846,6 @@ export default {
           logMetricGroup: item.logMetricGroup
         })
       }
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$666')
       if (isEmpty(this.layoutData) || type === 'init') {
         this.layoutData = tmpArr
       } else {
@@ -808,14 +858,12 @@ export default {
           }
         })
       }
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$777')
       this.layoutData = this.sortLayoutData(cloneDeep(this.layoutData))
       if (type === 'init') {
         this.allPageLayoutData = cloneDeep(this.layoutData)
       }
       this.resetHasNotRequestStatus()
       this.filterLayoutData()
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$888')
     },
     processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '', allItem = {}) {
       let tempTags = tags
@@ -918,16 +966,15 @@ export default {
           query: [],
           viewConfig: layoutDataItem
         }
-        this.viewData.forEach(i => {
-          if (layoutDataItem.id === i.id) {
-            temp.panalUnit = i.unit
-            temp.query = i.chartSeries
-            temp.chartType = i.chartType
-            temp.aggregate = i.aggregate
-            temp.agg_step = i.aggStep
-            temp.lineType = this.lineTypeOption[i.lineType]
-          }
-        })
+        const singleOne = find(this.initialViewData, {id: layoutDataItem.id})
+        if (singleOne) {
+          temp.panalUnit = singleOne.unit
+          temp.query = singleOne.chartSeries
+          temp.chartType = singleOne.chartType
+          temp.aggregate = singleOne.aggregate
+          temp.agg_step = singleOne.aggStep
+          temp.lineType = this.lineTypeOption[singleOne.lineType]
+        }
         resViewData.push(temp)
       })
       return resViewData
@@ -1523,7 +1570,6 @@ export default {
       this.filterLayoutData()
     },
     filterLayoutData() {
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1011')
       if (this.activeGroup === 'ALL') {
         this.layoutData = this.calculateLayout(this.layoutData, this.chartLayoutType)
       } else {
@@ -1545,15 +1591,12 @@ export default {
         }
       }
       this.chartLayoutType = this.confirmLayoutType(this.layoutData)
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1012')
       this.previousChartLayoutType = this.chartLayoutType
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1013')
       this.refreshPannelNow()
       return this.layoutData
     },
     refreshPannelNow() {
       this.$nextTick(() => {
-        window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1010')
         this.refreshNow = !this.refreshNow
       })
     },
@@ -1674,7 +1717,7 @@ export default {
     onGridWindowScroll: debounce(function () {
       this.inWindowChartRefs = []
       this.scrollRefresh = !this.scrollRefresh
-    }, 1000),
+    }, 800),
     resetHasNotRequestStatus() {
       this.hasNotRequestStatus = !this.hasNotRequestStatus
     },
@@ -1705,15 +1748,21 @@ export default {
         }, 1000)
       }
     },
-    handleSingleChartMouseLeave: debounce(function (index){
+    handleSingleChartMouseLeave: debounce(function (e, index){
       const refsName = `chart${index}`
       const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
+      // const chartId = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].elId : ''
+      // const className = `.echarts-custom-tooltip-${chartId}`
+      // const tooltipDom = document.querySelector(className)
+      // const originDom = document.querySelector(`.${refsName}`)
+      // const isOverlayRelated = tooltipDom.contains(e.relatedTarget)
+      // const isStillInOrigin = tooltipDom.contains(e.relatedTarget)
       if (chartInstance) {
         chartInstance.dispatchAction({
           type: 'hideTip'
         })
       }
-    }, 500),
+    }, 5000),
     handleGridWindowMouseLeave: debounce(function () {
       this.inWindowChartRefs.forEach(refsName => {
         const chartInstance = this.$refs[refsName] && this.$refs[refsName][0] ? this.$refs[refsName][0].chartInstance : null
