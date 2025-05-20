@@ -1255,6 +1255,8 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{},
 		LogMonitorTemplateVersion: metricGroupObj.RefTemplateVersion,
 		LogMonitorTemplate:        logMonitorTemplate,
+		AutoCreateDashboard:       metricGroupObj.AutoDashboard == 1,
+		AutoCreateWarn:            metricGroupObj.AutoAlarm == 1,
 		RetCodeStringMap:          []*models.LogMetricStringMapTable{}}
 	for _, row := range logMetricStringMapRows {
 		if row.LogParamName == "code" {
