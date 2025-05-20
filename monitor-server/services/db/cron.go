@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
@@ -14,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
@@ -215,7 +215,7 @@ func cleanAlarmTableJob() {
 
 // StartCheckBusinessConfigMatchCodeCount /** 检查业务配置 匹配的code数是否超过阈值配置,超过最大值的话,则认为配置错误,直接禁用该条业务配置
 func StartCheckBusinessConfigMatchCodeCount() {
-	t := time.NewTicker(time.Minute * 2).C
+	t := time.NewTicker(time.Minute * 10).C
 	for {
 		go checkBusinessConfigMatchCodeCount()
 		<-t
@@ -224,7 +224,7 @@ func StartCheckBusinessConfigMatchCodeCount() {
 
 func checkBusinessConfigMatchCodeCount() {
 	var metricKeyMap = make(map[string]int)
-	var metricServiceGroupMap = make(map[string]string)
+	var metricLogMetricGroupMap = make(map[string]string)
 	var logMetricGroups, subLogMetricGroups, logMetricMonitorGuids []string
 	var logMetricMonitorGuidMap = make(map[string]bool)
 	var logMetricGroupWarnDtoList []*m.LogMetricGroupWarnDto
@@ -249,7 +249,7 @@ func checkBusinessConfigMatchCodeCount() {
 			continue
 		}
 		if len(subLogMetricGroups) > 0 {
-			metricServiceGroupMap[metric] = subLogMetricGroups[0]
+			metricLogMetricGroupMap[subLogMetricGroups[0]] = metric
 		}
 		logMetricGroups = append(logMetricGroups, subLogMetricGroups...)
 	}
@@ -264,43 +264,12 @@ func checkBusinessConfigMatchCodeCount() {
 		if logMetricGroupWarnDto == nil {
 			continue
 		}
+		if v, ok := metricLogMetricGroupMap[logMetricGroup]; ok {
+			logMetricGroupWarnDto.Metric = v
+		}
 		logMetricGroupWarnDto.ServiceGroupDisplayName = GetServiceGroupDisplayName(logMetricGroupWarnDto.ServiceGroup)
 		logMetricGroupWarnDtoList = append(logMetricGroupWarnDtoList, logMetricGroupWarnDto)
 		logMetricMonitorGuidMap[logMetricGroupWarnDto.LogMetricMonitorGuid] = true
-	}
-	// 发送邮件
-	var mailSender *smtp.MailSender
-	var getMailSenderErr error
-	if mailSender, getMailSenderErr = GetMailSender(); getMailSenderErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Try to send custom init fail", zap.Error(getMailSenderErr))
-		return
-	}
-	if mailSender.SSL == false {
-		mailSender.SSL = true
-	}
-	var toMail []string
-	checkEventToMail := os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
-	if smtp.VerifyMailAddress(checkEventToMail) {
-		toMail = append(toMail, checkEventToMail)
-	}
-	deferReceiver := os.Getenv("MONITOR_MAIL_DEFAULT_RECEIVER")
-	if smtp.VerifyMailAddress(deferReceiver) {
-		toMail = append(toMail, deferReceiver)
-	}
-	log.Info(nil, log.LOGGER_APP, "send mail", zap.String("SenderName", mailSender.SenderName), zap.String("SenderMail",
-		mailSender.SenderMail), zap.String("AuthUser", mailSender.AuthUser), zap.String("AuthServer", mailSender.AuthServer),
-		zap.String("AuthPassword", mailSender.AuthPassword), zap.Bool("SSL", mailSender.SSL),
-		zap.Strings("receivers", toMail), zap.Int("alarmLen", len(logMetricGroupWarnDtoList)))
-	if len(toMail) == 0 {
-		log.Warn(nil, log.LOGGER_APP, "send mail receivers is empty")
-		return
-	}
-	for _, dto := range logMetricGroupWarnDtoList {
-		subject := fmt.Sprintf("业务配置【%s】自动关闭通知", dto.LogMetricGroupName)
-		content := fmt.Sprintf("【层级对象%s】【%s】【%s】服务码code识别超过%d条，可能出现大量异常告警，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
-		if sendErr := mailSender.Send(subject, content, toMail); sendErr != nil {
-			log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
-		}
 	}
 	// 过滤掉已经禁用的数据(兜底逻辑)
 	var disableIdsMap = make(map[string]bool)
@@ -325,7 +294,6 @@ func checkBusinessConfigMatchCodeCount() {
 		log.Error(nil, log.LOGGER_APP, "Batch disable log metric fail", zap.Error(err))
 		return
 	}
-
 	// 同步 prometheus数据
 	if len(logMetricMonitorGuidMap) > 0 {
 		logMetricMonitorGuids = ConvertMap2Arr(logMetricMonitorGuidMap)
@@ -340,6 +308,37 @@ func checkBusinessConfigMatchCodeCount() {
 			if err = SyncLogMetricExporterConfig(endpointList); err != nil {
 				log.Error(nil, log.LOGGER_APP, "Sync log metric  exporter config fail", zap.Error(err))
 			}
+		}
+	}
+	// 发送邮件
+	var mailSender *smtp.MailSender
+	var getMailSenderErr error
+	if mailSender, getMailSenderErr = GetMailSender(); getMailSenderErr != nil {
+		log.Error(nil, log.LOGGER_APP, "Try to send custom init fail", zap.Error(getMailSenderErr))
+		return
+	}
+	var toMail []string
+	checkEventToMail := os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
+	if smtp.VerifyMailAddress(checkEventToMail) {
+		toMail = append(toMail, checkEventToMail)
+	}
+	deferReceiver := os.Getenv("MONITOR_MAIL_DEFAULT_RECEIVER")
+	if smtp.VerifyMailAddress(deferReceiver) {
+		toMail = append(toMail, deferReceiver)
+	}
+	log.Info(nil, log.LOGGER_APP, "send mail", zap.String("SenderName", mailSender.SenderName), zap.String("SenderMail",
+		mailSender.SenderMail), zap.String("AuthUser", mailSender.AuthUser), zap.String("AuthServer", mailSender.AuthServer),
+		zap.String("AuthPassword", mailSender.AuthPassword), zap.Bool("SSL", mailSender.SSL),
+		zap.Strings("receivers", toMail), zap.Int("alarmLen", len(logMetricGroupWarnDtoList)))
+	if len(toMail) == 0 {
+		log.Warn(nil, log.LOGGER_APP, "send mail receivers is empty")
+		return
+	}
+	for _, dto := range logMetricGroupWarnDtoList {
+		subject := fmt.Sprintf("业务配置【%s】自动关闭通知", dto.LogMetricGroupName)
+		content := fmt.Sprintf("【层级对象%s】【%s】【%s】服务码code识别超过%d条，可能出现大量异常告警，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
+		if sendErr := mailSender.Send(subject, content, toMail); sendErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
 		}
 	}
 }
