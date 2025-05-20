@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -137,6 +138,10 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 				if v.UpdateUser == "old_data" {
 					continue
 				}
+				// 禁用,直接跳过
+				if strings.ToLower(v.Status) == "disabled" {
+					continue
+				}
 				tmpGroupJob := models.LogMetricGroupNeObj{LogMetricGroup: v.Guid, LogType: v.LogType, JsonRegular: v.JsonRegular, ParamList: []*models.LogMetricParamNeObj{}, MetricConfig: []*models.LogMetricNeObj{}}
 				for _, groupParam := range v.ParamList {
 					tmpGroupParamObj := models.LogMetricParamNeObj{Name: groupParam.Name, JsonKey: groupParam.JsonKey, Regular: groupParam.Regular, StringMap: []*models.LogMetricStringMapNeObj{}}
@@ -167,23 +172,6 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 				}
 				tmpMonitorJob.MetricGroupConfig = append(tmpMonitorJob.MetricGroupConfig, &tmpGroupJob)
 			}
-			//for _, v := range lmMonitorObj.JsonConfigList {
-			//	tmpJsonJob := models.LogMetricJsonNeObj{Regular: v.JsonRegular, Tags: v.Tags, MetricConfig: []*models.LogMetricNeObj{}}
-			//	for _, vv := range v.MetricList {
-			//		tmpMetricJob := models.LogMetricNeObj{Metric: vv.Metric, Key: vv.JsonKey, AggType: vv.AggType, Step: vv.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
-			//		for _, vvv := range vv.StringMap {
-			//			targetFloatValue, _ := strconv.ParseFloat(vvv.TargetValue, 64)
-			//			tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vvv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vvv.TargetValue}
-			//			if vvv.Regulative > 0 {
-			//				tmpStringMapJob.RegEnable = true
-			//				tmpStringMapJob.Regulation = vvv.SourceValue
-			//			}
-			//			tmpMetricJob.StringMap = append(tmpMetricJob.StringMap, &tmpStringMapJob)
-			//		}
-			//		tmpJsonJob.MetricConfig = append(tmpJsonJob.MetricConfig, &tmpMetricJob)
-			//	}
-			//	tmpMonitorJob.JsonConfig = append(tmpMonitorJob.JsonConfig, &tmpJsonJob)
-			//}
 			for _, v := range lmMonitorObj.MetricConfigList {
 				tmpMetricJob := models.LogMetricNeObj{Metric: v.Metric, ValueRegular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
 				for _, vv := range v.StringMap {

@@ -10,8 +10,9 @@
 
 <script>
 // 引入 ECharts 主模块
-import {cloneDeep, isEmpty} from 'lodash'
+import {cloneDeep, isEmpty, hasIn} from 'lodash'
 import {drawPieChart} from '@/assets/config/chart-rely'
+import {dateToTimestamp} from '@/assets/js/utils'
 
 export default {
   name: '',
@@ -24,7 +25,8 @@ export default {
       interval: '',
       noDataType: 'normal', // 该字段为枚举，noConfig (没有配置信息)， noData(没有请求到数据)， normal(有数据正常)
       apiCenter: this.$root.apiCenter,
-      request: this.$root.$httpRequestEntrance.httpRequestEntrance
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      isChartInWindow: null
     }
   },
   props: {
@@ -36,7 +38,13 @@ export default {
   watch: {
     params: {
       handler() {
-        this.isAutoRefresh()
+        this.isChartInWindow = this.calcIsChartInWindow()
+        if (this.isChartInWindow) {
+          this.isAutoRefresh()
+          this.getchartdata()
+        } else {
+          this.clearIntervalInfo()
+        }
       },
       deep: true
     },
@@ -62,6 +70,10 @@ export default {
       }
     },
     getchartdata(type = '') {
+      if (hasIn(this, '$parent.$parent.$parent.isNeedRefresh') && !this.$parent.$parent.$parent.isNeedRefresh) {
+        this.clearIntervalInfo()
+        return
+      }
       this.noDataType = 'normal'
       if (this.chartInfo.chartParams.data.length === 0) {
         this.noDataType = 'noConfig'
@@ -70,9 +82,9 @@ export default {
       this.isAutoRefresh()
       const params = this.chartInfo.chartParams.data
       params.forEach(p => {
-        p.start = this.chartInfo.start
-        p.end = this.chartInfo.end
-        p.time_second = this.chartInfo.time_second,
+        p.start = dateToTimestamp(this.params.dateRange[0])
+        p.end = dateToTimestamp(this.params.dateRange[1])
+        p.time_second = this.params.timeTnterval,
         p.custom_chart_guid = this.chartInfo.elId
       })
       this.elId = this.chartInfo.elId
@@ -113,6 +125,16 @@ export default {
           { isNeedloading: false }
         )
       }
+    },
+    clearIntervalInfo() {
+      clearInterval(this.interval)
+      this.interval = null
+    },
+    calcIsChartInWindow() {
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      return offsetTop <= window.innerHeight && offsetBottom >= 0
     }
   },
   components: {},

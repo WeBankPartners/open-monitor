@@ -96,8 +96,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
-        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy || isInTemplatePage" v-model="auto_create_warn">{{$t('m_auto_create_warn')}}</Checkbox>
+        <Checkbox v-if="isInBusinessConfigAdd || isBaseCustomeTemplateCopy || isInTemplatePage" v-model="auto_create_dashboard">{{$t('m_auto_create_dashboard')}}</Checkbox>
         <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
         <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
@@ -605,6 +605,9 @@ export default {
     isBaseCustomeTemplateAdd() { // 在业务配置页面基于下拉模板新增配置
       return this.actionType === 'add' && this.isLogTemplate && !isEmpty(this.parentGuid)
     },
+    isBaseCustomeAdd() { // 在业务配置页面直接点击新增自定义配置
+      return this.actionType === 'add' && !this.isLogTemplate && !isEmpty(this.parentGuid)
+    },
     isInTemplatePage() { // 在模板配置也新增or修改
       return this.isLogTemplate && isEmpty(this.parentGuid)
     },
@@ -616,13 +619,13 @@ export default {
     },
   },
   methods: {
-    loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
+    async loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
       this.isLogTemplate = isLogTemplate
       this.isfullscreen = true
       this.parentGuid = parentGuid
       this.metricPrefixCode = ''
-      this.auto_create_dashboard = true
-      this.auto_create_warn = true
+      // this.auto_create_dashboard = true
+      // this.auto_create_warn = true
       // actionType add/edit
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
@@ -633,6 +636,7 @@ export default {
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
+        await this.getSystemParams()
         this.configInfo = {
           guid: '',
           log_metric_monitor: '',
@@ -818,7 +822,7 @@ export default {
           tmpData.metric_prefix_code = this.metricPrefixCode
         }
       }
-      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy) {
+      if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy || this.isInTemplatePage) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
         tmpData.auto_create_warn = this.auto_create_warn
       }
@@ -839,7 +843,7 @@ export default {
         this.$Message.success({
           render: h => h('div', { class: 'add-business-config' }, [
             h('div', {class: 'add-business-config-item'}, [
-              h('div', this.$t('m_has_create_dashboard') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_dashboard') + ':'),
               h('div', {
                 domProps: {
                   innerHTML: tipTwo
@@ -847,7 +851,7 @@ export default {
               })
             ]),
             h('div', { class: 'add-business-config-item' }, [
-              h('div', this.$t('m_has_create_warn') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_warn') + ':'),
               h('div', {
                 class: 'create_warn_text',
                 domProps: {
@@ -902,7 +906,10 @@ export default {
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
         }
-        {/* 整理计算类型可选项 */}
+        if (this.isInTemplatePage || this.isBaseCustomeTemplateAdd || this.isBaseCustomeTemplateCopy) {
+          this.auto_create_dashboard = hasIn(this.configInfo, 'auto_create_dashboard') ? this.configInfo.auto_create_dashboard : true
+          this.auto_create_warn = hasIn(this.configInfo, 'auto_create_warn') ? this.configInfo.auto_create_warn : true
+        }
         const param_list = this.configInfo.param_list || []
         param_list.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
@@ -1042,14 +1049,13 @@ export default {
       if (this.view) {
         return true
       }
-      if (this.isInTemplatePage) {
+      if (this.isInTemplatePage || this.isBaseCustomeAdd) {
         return false
       }
       if (!isEmpty(item) && type) {
         return type === 'paramList' ? this.isParamsListItemDisabled(this.templateParamList, item, index) : this.isMetricItemDisabled(this.templateMetricList, item, index)
       }
       return this.isBaseCustomeTemplateEdit || this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateAdd
-
     },
     isParamsListItemDisabled(list, item, index=-2) {
       const compareObj = {
@@ -1072,6 +1078,15 @@ export default {
       }
       const findItem = find(list, compareObj)
       return !isEmpty(findItem) && index === findIndex(list, compareObj)
+    },
+    getSystemParams() {
+      return new Promise(resolve => {
+        this.request('GET', this.apiCenter.getTemplateSystemParams, '', res => {
+          this.auto_create_warn = res.auto_create_warn
+          this.auto_create_dashboard = res.auto_create_dashboard
+          resolve()
+        })
+      })
     }
   },
   components: {
@@ -1127,6 +1142,9 @@ export default {
     flex-direction: row;
     .create_warn_text {
       text-align: left
+    }
+    .add-business-config-item-title {
+      min-width: 80px
     }
   }
 }

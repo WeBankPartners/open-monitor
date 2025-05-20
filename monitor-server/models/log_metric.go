@@ -237,6 +237,21 @@ type LogMetricGroupWithTemplate struct {
 	AutoCreateDashboard       bool                       `json:"auto_create_dashboard"` //自动创建自定义看板
 	LogMonitorTemplate        *LogMonitorTemplateDto     `json:"log_monitor_template"`
 	LogMonitorTemplateVersion string                     `json:"log_monitor_template_version"`
+	Status                    string                     `json:"status"` //状态: disable禁用,enable启用
+}
+
+type UpdateLogMetricGroupStatus struct {
+	LogMetricGroupGuid   string `json:"log_metric_group_guid"`
+	LogMetricMonitorGuid string `json:"log_metric_monitor_guid"`
+	Status               string `json:"status"`
+}
+
+type LogMetricGroupWarnDto struct {
+	LogMetricGroupName      string `json:"log_metric_group_name" xorm:"log_metric_group_name"`
+	Metric                  string `json:"metric" xorm:"metric"`
+	LogMetricMonitorGuid    string `json:"log_metric_monitor_guid" xorm:"log_metric_monitor_guid"`
+	ServiceGroup            string `json:"service_group" xorm:"service_group"`
+	ServiceGroupDisplayName string `json:"service_group_display_name" xorm:"-"`
 }
 
 type LogMetricThreshold struct {

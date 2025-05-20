@@ -1286,3 +1286,9 @@ CREATE TABLE `history_alarm_custom`
 #@v3.5.7-begin@;
 ALTER TABLE custom_dashboard_chart_rel MODIFY COLUMN `group` VARCHAR(500) DEFAULT NULL;
 #@v3.5.7-end@;
+#@v3.5.8-begin@;
+alter table log_monitor_template add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';
+alter table log_monitor_template add column auto_dashboard tinyint(1) default 0 COMMENT '自动生成自定义看板,1表示自动生成';
+alter table log_metric_group add column status varchar(20) default 'enable' COMMENT '是否启用,默认启用';
+alter table alarm modify column alarm_name varchar(150) default null comment '告警名称';
+#@v3.5.8-end@;

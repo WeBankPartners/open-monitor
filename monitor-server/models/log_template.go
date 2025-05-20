@@ -16,6 +16,8 @@ type LogMonitorTemplate struct {
 	UpdateTime       time.Time `json:"-" xorm:"update_time"`
 	UpdateTimeString string    `json:"update_time"`
 	SuccessCode      string    `json:"success_code" xorm:"success_code"`
+	AutoAlarm        int       `json:"auto_alarm" xorm:"auto_alarm"`
+	AutoDashboard    int       `json:"auto_dashboard" xorm:"auto_dashboard"`
 }
 
 type LogMonitorTemplateRole struct {
@@ -101,6 +103,8 @@ type LogMonitorTemplateDto struct {
 	MetricList                []*LogMetricTemplate          `json:"metric_list"`
 	Permission                *LogMonitorTemplatePermission `json:"permission"`
 	LogMonitorTemplateVersion string                        `json:"log_monitor_template_version"`
+	AutoCreateWarn            bool                          `json:"auto_create_warn"`      //自动创建告警
+	AutoCreateDashboard       bool                          `json:"auto_create_dashboard"` //自动创建自定义看板
 }
 
 type LogMonitorTemplatePermission struct {
@@ -143,6 +147,7 @@ type LogMetricGroup struct {
 	RefTemplateVersion string    `json:"log_monitor_template_version" xorm:"ref_template_version"`
 	AutoAlarm          int       `json:"auto_alarm" xorm:"auto_alarm"`
 	AutoDashboard      int       `json:"auto_dashboard" xorm:"auto_dashboard"`
+	Status             string    `json:"status"` // 禁用启用状态 disabled禁用,enable启用
 }
 
 type LogMetricParam struct {

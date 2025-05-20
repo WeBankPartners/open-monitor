@@ -57,6 +57,8 @@ export default {
         if (this.isChartInWindow) {
           this.isAutoRefresh()
           this.getchartdata()
+        } else {
+          this.clearIntervalInfo()
         }
       },
       deep: true
@@ -146,6 +148,7 @@ export default {
     },
     async getchartdata(type = '') {
       if (hasIn(this, '$parent.$parent.$parent.isNeedRefresh') && !this.$parent.$parent.$parent.isNeedRefresh) {
+        this.clearIntervalInfo()
         return
       }
       window.intervalFrom = 'custom-chart'
@@ -181,12 +184,10 @@ export default {
         custom_chart_guid: this.chartInfo.elId,
         start: dateToTimestamp(this.params.dateRange[0]),
         end: dateToTimestamp(this.params.dateRange[1]),
+        time_second: this.params.timeTnterval
       }
       this.elId = this.chartInfo.elId
-      window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1015')
       this.request('POST',this.apiCenter.metricConfigView.api, params, responseData => {
-        this.hasNotRequest = false
-        window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1016')
         if (responseData.legend.length === 0) {
           this.noDataType = 'noData'
         } else {
@@ -201,10 +202,10 @@ export default {
             lineBarSwitch: true,
             chartType: this.chartInfo.chartType,
             params: this.chartInfo.chartParams,
-            chartId: this.chartInfo.elId
+            chartId: this.chartInfo.elId,
+            isNeedClear: this.hasNotRequest // 第一次请求的时候强制刷新
           }
           // this.$nextTick(() => {
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1017')
           window['view-config-selected-line-data'][chartConfig.chartId] = window['view-config-selected-line-data'][chartConfig.chartId] || {}
           const metricList = chartConfig.params.data.map(one => one.metric)
           // 该逻辑是先筛选掉此时window中存在的需要删除的数据
@@ -255,10 +256,6 @@ export default {
             }
           })
           this.chartInstance = readyToDraw(this, responseData, this.chartIndex, chartConfig)
-          window.viewTimeStepArr.push(+new Date() - window.startTimeStep + '$1018')
-          if (window.viewTimeStepArr.length > 30) {
-            window.viewTimeStepArr.length = 30
-          }
           this.scrollHandle()
           if (this.chartInstance) {
             this.chartInstance.on('legendselectchanged', params => {
@@ -275,6 +272,7 @@ export default {
           }
           // })
         }
+        this.hasNotRequest = false
       }, { isNeedloading: false })
     },
     onMouseLeaveContent() {

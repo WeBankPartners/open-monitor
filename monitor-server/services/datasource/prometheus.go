@@ -168,8 +168,11 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 	if query.PieAggType != "new" {
 		useNewValue = false
 	}
-	//log.Debug(nil, log.LOGGER_APP,"buildPieData", zap.String("pieAggType", query.PieAggType), log.JsonObj("dataList", dataList))
 	for _, otr := range dataList {
+		// 饼图自定义图标处理
+		if query.ServiceConfiguration == "custom" {
+			otr.Metric = ResetPrometheusMetricMap(otr.Metric)
+		}
 		var tmpNameList []string
 		for k, v := range otr.Metric {
 			// 标签黑名单
@@ -488,13 +491,6 @@ func QueryLogKeywordData(keywordMode string) (result map[string]float64, err err
 }
 
 func QueryPromSeries(promQL string) (result []map[string]string, err error) {
-	//if strings.Contains(promQL, "$") {
-	//	re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
-	//	fetchTag := re.FindAll([]byte(promQL), -1)
-	//	for _, vv := range fetchTag {
-	//		promQL = strings.Replace(promQL, string(vv), "=~\".*\"", -1)
-	//	}
-	//}
 	promQL = getPromQlMainExpr(promQL)
 	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/series", promDS.Host))
 	if urlParseErr != nil {
@@ -584,6 +580,9 @@ func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.Prom
 
 // ResetPrometheusMetricMap 重置 Prometheus返回的metric
 func ResetPrometheusMetricMap(tagMap map[string]string) map[string]string {
+	if len(tagMap) == 0 {
+		tagMap = make(map[string]string)
+	}
 	// 此处查询指标 对应的业务配置,如果是自定义业务配置, tags内容: tags="test_service_code=addUser,test_retcode=200",需要做特殊解析处理
 	if tagMap["tags"] != "" {
 		strArr := strings.Split(tagMap["tags"], ",")

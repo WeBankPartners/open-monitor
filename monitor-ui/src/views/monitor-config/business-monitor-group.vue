@@ -804,23 +804,47 @@ export default {
         },
         {
           title: this.$t('m_table_action'),
-          width: 150,
+          width: 180,
           key: 'index',
           fixed: 'right',
           render: (h, params) => (
             <div style='display: flex'>
               <Tooltip placement="top" transfer content={this.$t('m_copy')}>
-                <Button size="small" class="mr-1" type="success" on-click={() => this.copySingleItem(params.row)}>
+                <Button class="mr-1" size="small" type="success" on-click={() => this.copySingleItem(params.row)}>
                   <Icon type="md-document" size="16"></Icon>
                 </Button>
               </Tooltip>
               <Tooltip placement="top" transfer content={this.$t('m_button_edit')}>
-                <Button size="small" class="mr-1" type="primary" on-click={() => {
+                <Button class="mr-1" size="small" type="primary" on-click={() => {
                   this.editRuleItem(params.row)
                 }}>
                   <Icon type="md-create" size="16"></Icon>
                 </Button>
               </Tooltip>
+
+              {params.row.status === 'disabled' ? (
+                <Tooltip placement="top" transfer content={this.$t('m_alarm_open')}>
+                  <Button class="mr-1" size="small" type="success" on-click={() => {
+                    this.onEnableAlarm(params.row)
+                  }}>
+                    <Icon type="md-unlock" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              ) : (<Poptip
+                confirm
+                title={this.$t('m_disabled_confirm_tip')}
+                placement="left-end"
+                transfer={true}
+                on-on-ok={() => {
+                  this.onDisabledSingleConfirmed(params.row)
+                }}>
+                <Tooltip placement="top" transfer content={this.$t('m_disable')}>
+                  <Button class="mr-1" size="small" type="error">
+                    <Icon type="md-lock" size="16" />
+                  </Button>
+                </Tooltip>
+              </Poptip>
+              )}
               <Poptip
                 confirm
                 title={this.$t('m_delConfirm_tip')}
@@ -1218,7 +1242,7 @@ export default {
       this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
     },
     reloadMetricData() {
-      this.getDetail(this.targetId)
+      this.getDetail(this.targetId, '', false)
     },
     singleAddF(rowData) {
       this.cancelReg()
@@ -1447,7 +1471,7 @@ export default {
         }, {isNeedloading: true})
       })
     },
-    async getDetail(targetId, metricKey) {
+    async getDetail(targetId, metricKey = '', isNeedChangeCollapse = true) {
       if (isEmpty(this.allTemplateList)) {
         this.getMonitorTemplateList()
       }
@@ -1456,7 +1480,9 @@ export default {
           this.metricKey = metricKey
           this.logFileCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
         } else {
-          this.logFileCollapseValue = ['0']
+          if (isNeedChangeCollapse) {
+            this.logFileCollapseValue = ['0']
+          }
         }
         this.targetId = targetId
         await this.getLogKeyWordDetail()
@@ -1530,6 +1556,25 @@ export default {
     },
     returnLatestToken() {
       return (window.Request ? 'Bearer ' + getPlatFormToken() : getToken()) || null
+    },
+    async onDisabledSingleConfirmed(data) {
+      await this.updateSingleDisabled(data, 'disabled')
+      this.getDetail(this.targetId, '', false)
+    },
+    async onEnableAlarm(data) {
+      await this.updateSingleDisabled(data, 'enable')
+      this.getDetail(this.targetId, '', false)
+    },
+    updateSingleDisabled(data, status) {
+      const params = {
+        log_metric_group_guid: data.guid,
+        log_metric_monitor_guid: data.log_metric_monitor,
+        status
+      }
+      return new Promise(async resolve => {
+        await this.request('PUT', this.apiCenter.disabledSingleAlarm, params)
+        resolve()
+      })
     }
   },
   components: {

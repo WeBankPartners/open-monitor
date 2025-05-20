@@ -321,8 +321,8 @@ export default {
       this.view = actionType === 'view'
       this.businessConfig.log_monitor_template_guid = templateGuid
       this.businessConfig.log_metric_monitor_guid = parentGuid
-      this.auto_create_warn = true
-      this.auto_create_dashboard = true
+      // this.auto_create_warn = true
+      // this.auto_create_dashboard = true
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -377,6 +377,8 @@ export default {
     getTemplateDetail(guid) {
       const api = this.apiCenter.getConfigDetailByGuid + guid
       this.request('GET', api, {}, resp => {
+        this.auto_create_dashboard = hasIn(resp, 'auto_create_dashboard') ? resp.auto_create_dashboard : true
+        this.auto_create_warn = hasIn(resp, 'auto_create_warn') ? resp.auto_create_warn : true
         this.processConfigInfo(resp)
         Object.assign(this.businessConfig.retcode_string_map[0], JSON.parse(resp.success_code))
       })
@@ -389,6 +391,8 @@ export default {
         if (this.actionType === 'copy') {
           this.businessConfig.name += '1'
           this.businessConfig.metric_prefix_code += '1'
+          this.auto_create_dashboard = hasIn(this.businessConfig, 'auto_create_dashboard') ? this.businessConfig.auto_create_dashboard : true
+          this.auto_create_warn = hasIn(this.businessConfig, 'auto_create_warn') ? this.businessConfig.auto_create_warn : true
         }
         this.configInfo.log_monitor_template_version = resp.log_monitor_template_version
 
@@ -503,7 +507,7 @@ export default {
         this.$Message.success({
           render: h => h('div', { class: 'add-business-config' }, [
             h('div', {class: 'add-business-config-item'}, [
-              h('div', this.$t('m_has_create_dashboard') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_dashboard') + ':'),
               h('div', {
                 domProps: {
                   innerHTML: tipTwo
@@ -511,7 +515,7 @@ export default {
               })
             ]),
             h('div', { class: 'add-business-config-item' }, [
-              h('div', this.$t('m_has_create_warn') + ':'),
+              h('div', { class: 'add-business-config-item-title' }, this.$t('m_has_create_warn') + ':'),
               h('div', {
                 class: 'create_warn_text',
                 domProps: {
@@ -660,6 +664,9 @@ export default {
     flex-direction: row;
     .create_warn_text {
       text-align: left
+    }
+    .add-business-config-item-title {
+      min-width: 80px;
     }
   }
 }

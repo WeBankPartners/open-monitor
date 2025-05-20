@@ -23,7 +23,7 @@ func (ms *MailSender) Init() error {
 	if ms.AuthServer == "" || ms.SenderMail == "" {
 		return fmt.Errorf("Mail server and sender can not empty ")
 	}
-	if !verifyMailAddress(ms.SenderMail) {
+	if !VerifyMailAddress(ms.SenderMail) {
 		return fmt.Errorf("Sender mail:%s validate fail ", ms.SenderMail)
 	}
 	if !strings.Contains(ms.AuthServer, ":") {
@@ -49,7 +49,7 @@ func (ms *MailSender) Send(subject, content string, addressee []string) error {
 		return fmt.Errorf("Mail addressee can not empty ")
 	}
 	for _, to := range addressee {
-		if !verifyMailAddress(to) {
+		if !VerifyMailAddress(to) {
 			err = fmt.Errorf("Mail:%s validate fail ", to)
 			break
 		}
@@ -178,7 +178,7 @@ func mailQQMessage(addressee []string, subject, content, senderName, senderMail 
 	return buff.Bytes()
 }
 
-func verifyMailAddress(mailString string) bool {
+func VerifyMailAddress(mailString string) bool {
 	reg := regexp.MustCompile(`\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`)
 	return reg.MatchString(mailString)
 }

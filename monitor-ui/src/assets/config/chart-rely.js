@@ -158,6 +158,10 @@ export const drawChart = function (that,config,userConfig, elId) {
   // 基于准备好的dom，初始化echarts实例
   const myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
+  // 最新的参数，假如isNeedClear为true, 则需要重新刷新
+  if (finalConfig.isNeedClear) {
+    myChart.clear()
+  }
   // if (finalConfig.clear) {
   //   myChart.clear()
   // }
@@ -227,7 +231,7 @@ export const drawChart = function (that,config,userConfig, elId) {
           keys.forEach(key => {
             res = res + `<div style="color:#5384FF">${key}</div>`
             titleSet[key].forEach(item => {
-              res = res+`<div><div style=' display: inline-block;width: 10px; 
+              res = res+`<div class='chart-single-tips'><div style=' display: inline-block;width: 10px; 
                 height: 10px;border: 1px solid transparent;border-radius:50%;
                 background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${item.metric}
                 </div>`

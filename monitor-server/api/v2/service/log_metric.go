@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -189,7 +190,7 @@ func CreateLogMetricJson(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -219,7 +220,7 @@ func UpdateLogMetricJson(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -235,7 +236,7 @@ func DeleteLogMetricJson(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		if logMetricMonitor != "" {
-			err = syncLogMetricMonitorConfig(logMetricMonitor)
+			err = SyncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -275,7 +276,7 @@ func CreateLogMetricConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -302,7 +303,7 @@ func UpdateLogMetricConfig(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -318,7 +319,7 @@ func DeleteLogMetricConfig(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		if logMetricMonitor != "" {
-			err = syncLogMetricMonitorConfig(logMetricMonitor)
+			err = SyncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -330,11 +331,11 @@ func DeleteLogMetricConfig(c *gin.Context) {
 	}
 }
 
-func syncLogMetricMonitorConfig(logMetricMonitor string) error {
-	endpointList := []string{}
+func SyncLogMetricMonitorConfig(logMetricMonitor string) error {
+	var endpointList []string
 	endpointRel := db.ListLogMetricEndpointRel(logMetricMonitor)
 	for _, v := range endpointRel {
-		if v.TargetEndpoint != "" {
+		if v.SourceEndpoint != "" {
 			endpointList = append(endpointList, v.SourceEndpoint)
 		}
 	}
@@ -652,6 +653,23 @@ func getError(metric, rangeConfig string) error {
 	return fmt.Errorf("metric: %s alarm config:%+v illegal", metric, rangeConfig)
 }
 
+func GetLogMonitorTemplateSysParamsConfig(c *gin.Context) {
+	var paramMap = make(map[string]bool)
+	autoCreateWarn := os.Getenv("MONITOR_AUTO_CREATE_WARN")
+	if strings.ToLower(autoCreateWarn) == "yes" || strings.ToLower(autoCreateWarn) == "y" {
+		paramMap["auto_create_warn"] = true
+	} else {
+		paramMap["auto_create_warn"] = false
+	}
+	autoCreateDashboard := os.Getenv("MONITOR_AUTO_CREATE_DASHBOARD")
+	if strings.ToLower(autoCreateDashboard) == "yes" || strings.ToLower(autoCreateDashboard) == "y" {
+		paramMap["auto_create_dashboard"] = true
+	} else {
+		paramMap["auto_create_dashboard"] = false
+	}
+	middleware.ReturnSuccessData(c, paramMap)
+}
+
 func UpdateLogMonitorTemplate(c *gin.Context) {
 	var param models.LogMonitorTemplateDto
 	if err := c.ShouldBindJSON(&param); err != nil {
@@ -758,7 +776,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
+	if err = SyncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
 		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		return
 	}
@@ -795,13 +813,32 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
 			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
+}
+
+func UpdateLogMetricGroupStatus(c *gin.Context) {
+	var param models.UpdateLogMetricGroupStatus
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := db.UpdateLogMetricGroupStatus(param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = SyncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
+	if err != nil {
+		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func DeleteLogMetricGroup(c *gin.Context) {
@@ -811,7 +848,7 @@ func DeleteLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		if logMetricMonitor != "" {
-			err = syncLogMetricMonitorConfig(logMetricMonitor)
+			err = SyncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -912,7 +949,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if err = syncLogMetricMonitorConfig(param.LogMetricMonitor); err != nil {
+	if err = SyncLogMetricMonitorConfig(param.LogMetricMonitor); err != nil {
 		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		return
 	}
@@ -986,7 +1023,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = SyncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
 		} else {

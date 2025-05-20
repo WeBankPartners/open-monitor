@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/go-common-lib/pcre"
@@ -1254,6 +1255,8 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{},
 		LogMonitorTemplateVersion: metricGroupObj.RefTemplateVersion,
 		LogMonitorTemplate:        logMonitorTemplate,
+		AutoCreateDashboard:       metricGroupObj.AutoDashboard == 1,
+		AutoCreateWarn:            metricGroupObj.AutoAlarm == 1,
 		RetCodeStringMap:          []*models.LogMetricStringMapTable{}}
 	for _, row := range logMetricStringMapRows {
 		if row.LogParamName == "code" {
@@ -1309,6 +1312,9 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	if param.AutoCreateDashboard {
 		autoDashboard = 1
 	}
+	if param.Status == "" {
+		param.Status = "enable"
+	}
 	result = &models.CreateLogMetricGroupDto{AlarmList: make([]string, 0)}
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
@@ -1346,9 +1352,9 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 	}
 	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,metric_prefix_code,log_type,log_metric_monitor,log_monitor_template,create_user," +
-		"create_time,update_user,update_time,template_snapshot,ref_template_version,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		"create_time,update_user,update_time,template_snapshot,ref_template_version,auto_alarm,auto_dashboard,status) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		param.LogMetricGroupGuid, param.Name, param.MetricPrefixCode, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator,
-		nowTime, operator, nowTime, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard,
+		nowTime, operator, nowTime, templateSnapshot, refTemplateVersion, autoAlarm, autoDashboard, param.Status,
 	}})
 	sucRetCode, createMapActions := getCreateLogMetricGroupMapAction(param, nowTime)
 	actions = append(actions, createMapActions...)
@@ -1440,10 +1446,63 @@ func UpdateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	return
 }
 
+func UpdateLogMetricGroupStatus(param models.UpdateLogMetricGroupStatus, operator string) (err error) {
+	_, err = x.Exec("update log_metric_group set update_user=?,update_time=?,status=? where guid=?", operator, time.Now(), param.Status, param.LogMetricGroupGuid)
+	return
+}
+
+func BatchQueryDisabledLogMetricGroupStatus(ids []string) (disableIdsMap map[string]bool, err error) {
+	var list []string
+	if len(ids) == 0 {
+		err = errors.New("no IDs provided")
+		return
+	}
+	disableIdsMap = make(map[string]bool)
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	sql := fmt.Sprintf("select guid from  log_metric_group  WHERE guid IN (%s) and status = 'disabled'", strings.Join(placeholders, ", "))
+	// 创建一个足够大的 args 切片
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	if err = x.SQL(sql, args...).Find(&list); err != nil {
+		return
+	}
+	for _, guid := range list {
+		disableIdsMap[guid] = true
+	}
+	return
+}
+
+func BatchDisableLogMetricGroupStatus(ids []string) (err error) {
+	if len(ids) == 0 {
+		return errors.New("no IDs provided")
+	}
+
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	sql := fmt.Sprintf("UPDATE log_metric_group SET update_time=?, status=? WHERE guid IN (%s)", strings.Join(placeholders, ", "))
+	// 创建一个足够大的 args 切片
+	args := make([]interface{}, len(ids)+3)
+	args[0] = sql
+	args[1] = time.Now()
+	args[2] = "disabled"
+	for i, id := range ids {
+		args[i+3] = id
+	}
+	_, err = x.Exec(args...)
+	return
+}
+
 func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, operator string) (actions []*Action, err error) {
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-		param.Name, operator, nowTime, param.LogMetricGroupGuid,
+	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,update_user=?,update_time=?,status=? where guid=?", Param: []interface{}{
+		param.Name, operator, nowTime, param.Status, param.LogMetricGroupGuid,
 	}})
 	var logMetricStringMapRows []*models.LogMetricStringMapTable
 	err = x.SQL("select source_value,target_value,value_type from log_metric_string_map where log_metric_group=?", param.LogMetricGroupGuid).Find(&logMetricStringMapRows)
@@ -1703,6 +1762,8 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	result.UpdateTimeString = result.UpdateTime.Format(models.DatetimeFormat)
 	result.AutoAlarm = metricGroupObj.AutoAlarm
 	result.AutoDashboard = metricGroupObj.AutoDashboard
+	result.AutoCreateWarn = metricGroupObj.AutoAlarm == 1
+	result.AutoCreateDashboard = metricGroupObj.AutoDashboard == 1
 	logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(logMetricGroupGuid)
 	if getStringMapErr != nil {
 		err = getStringMapErr
@@ -2155,5 +2216,17 @@ func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *
 		ColorGroup:       config.ColorGroup,
 		FullMetric:       config.FullMetric,
 	}
+	return
+}
+
+func GetLogMetricMonitorServiceGroups() []string {
+	var serviceGroups []string
+	x.SQL("select distinct service_group from log_metric_monitor").Find(&serviceGroups)
+	return serviceGroups
+}
+
+func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarnDto, err error) {
+	dto = &models.LogMetricGroupWarnDto{}
+	_, err = x.SQL("select lmg.name as 'log_metric_group_name',lmg.log_metric_monitor as 'log_metric_monitor_guid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(dto)
 	return
 }

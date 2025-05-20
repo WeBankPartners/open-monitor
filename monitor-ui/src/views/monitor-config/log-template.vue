@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import {debounce, isEmpty} from 'lodash'
+import {debounce, isEmpty, hasIn} from 'lodash'
 import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
@@ -249,6 +249,8 @@ export default {
       updateUserOptions: [],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      auto_create_dashboard: true,
+      auto_create_warn: true
     }
   },
   computed: {
@@ -259,6 +261,7 @@ export default {
   mounted() {
     this.getTemplateList()
     this.getUpdateUserOptions()
+    this.getSystemParams()
   },
   methods: {
     getTemplateList() {
@@ -369,6 +372,12 @@ export default {
       // const api = '/monitor/api/v2/service/log_metric/log_monitor_template/options'
       this.request('GET', this.apiCenter.logMonitorTemplateOptions, '', res => {
         this.updateUserOptions = res
+      })
+    },
+    getSystemParams() {
+      this.request('GET', this.apiCenter.getTemplateSystemParams, '', res => {
+        this.auto_create_dashboard = hasIn(res, 'auto_create_dashboard') ? res.auto_create_dashboard : true
+        this.auto_create_warn = hasIn(res, 'auto_create_warn') ? res.auto_create_warn : true
       })
     }
   },

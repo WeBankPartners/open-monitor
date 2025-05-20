@@ -60,7 +60,9 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 	}
 	logMonitorTemplateRow.CreateTimeString = logMonitorTemplateRow.CreateTime.Format(models.DatetimeFormat)
 	logMonitorTemplateRow.UpdateTimeString = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeFormat)
-	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{}}
+	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{},
+		ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{},
+		AutoCreateWarn: logMonitorTemplateRow.AutoAlarm == 1, AutoCreateDashboard: logMonitorTemplateRow.AutoDashboard == 1}
 	result.LogMonitorTemplateVersion = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeDigitFormat)
 	if result.CalcResult != "" {
 		if err = json.Unmarshal([]byte(result.CalcResult), result.CalcResultObj); err != nil {
@@ -151,9 +153,17 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	if param.Guid == "" {
 		param.Guid = "lmt_" + guid.CreateGuid()
 	}
+	param.AutoAlarm = 0
+	if param.AutoCreateWarn {
+		param.AutoAlarm = 1
+	}
+	param.AutoDashboard = 0
+	if param.AutoCreateDashboard {
+		param.AutoDashboard = 1
+	}
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time,success_code) values (?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode,
+	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time,success_code,auto_alarm,auto_dashboard) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime, param.SuccessCode, param.AutoAlarm, param.AutoDashboard,
 	}})
 	logParamGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, logParamObj := range param.ParamList {
@@ -191,14 +201,22 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 }
 
 func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, operator string) (actions []*Action, affectEndpoints []string, err error) {
+	param.AutoAlarm = 0
+	if param.AutoCreateWarn {
+		param.AutoAlarm = 1
+	}
+	param.AutoDashboard = 0
+	if param.AutoCreateDashboard {
+		param.AutoDashboard = 1
+	}
 	existLogMonitorObj, getExistDataErr := GetLogMonitorTemplate(param.Guid)
 	if getExistDataErr != nil {
 		err = fmt.Errorf("get exist log monitor data fail,%s ", getExistDataErr.Error())
 		return
 	}
 	nowTime := time.Now()
-	actions = append(actions, &Action{Sql: "update log_monitor_template set name=?,json_regular=?,demo_log=?,calc_result=?,update_user=?,update_time=?,success_code=? where guid=?", Param: []interface{}{
-		param.Name, param.JsonRegular, param.DemoLog, param.CalcResult, operator, nowTime, param.SuccessCode, param.Guid,
+	actions = append(actions, &Action{Sql: "update log_monitor_template set name=?,json_regular=?,demo_log=?,calc_result=?,update_user=?,update_time=?,success_code=?,auto_alarm=?,auto_dashboard=? where guid=?", Param: []interface{}{
+		param.Name, param.JsonRegular, param.DemoLog, param.CalcResult, operator, nowTime, param.SuccessCode, param.AutoAlarm, param.AutoDashboard, param.Guid,
 	}})
 	logParamGuidList := guid.CreateGuidList(len(param.ParamList))
 	for i, logParamObj := range param.ParamList {

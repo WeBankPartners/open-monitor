@@ -1,9 +1,9 @@
 <template>
   <div class="alarm-card-collapse">
     <Collapse v-model="expandCollapse">
-      <Panel v-for="(item, alarmIndex) in collapseData"
-             :key="alarmIndex"
-             :name="alarmIndex + ''"
+      <Panel v-for="item in collapseData"
+             :key="item.id"
+             :name="item.id + ''"
       >
         <template>
           <img
@@ -28,7 +28,7 @@
             @click="e => addParams('priority', item.s_priority, e)"
           />
           <template v-if="item.alarm_name">
-            <Tooltip :content="item.alarm_name" max-width="300" >
+            <Tooltip :content="item.alarm_name" max-width="600" >
               <div class="custom-title">
                 <span class="custom-title-text">{{item.alarm_name}}</span>
                 <img
@@ -263,9 +263,9 @@ export default {
     isCollapseExpandAll(val) {
       this.expandCollapse = []
       if (val) {
-        for (let i=0; i<50; i++) {
-          this.expandCollapse.push(i + '')
-        }
+        this.collapseData.forEach(item => {
+          this.expandCollapse.push(item.id + '')
+        })
       }
     }
   },
@@ -361,10 +361,12 @@ export default {
       this.expandCollapse = []
     },
     expandAllCollapse() {
-      this.expandCollapse = []
-      for (let i=0; i<50; i++) {
-        this.expandCollapse.push(i + '')
-      }
+      this.$nextTick(() => {
+        this.expandCollapse = []
+        this.collapseData.forEach(item => {
+          this.expandCollapse.push(item.id + '')
+        })
+      })
     }
   },
   components: {
