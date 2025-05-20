@@ -906,7 +906,7 @@ export default {
         if (this.isBaseCustomeTemplateAdd) {
           this.configInfo.name = ''
         }
-        if (this.isInTemplatePage || this.isBaseCustomeTemplateAdd) {
+        if (this.isInTemplatePage || this.isBaseCustomeTemplateAdd || this.isBaseCustomeTemplateCopy) {
           this.auto_create_dashboard = hasIn(this.configInfo, 'auto_create_dashboard') ? this.configInfo.auto_create_dashboard : true
           this.auto_create_warn = hasIn(this.configInfo, 'auto_create_warn') ? this.configInfo.auto_create_warn : true
         }
