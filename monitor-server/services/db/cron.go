@@ -298,6 +298,9 @@ func checkBusinessConfigMatchCodeCount() {
 		log.Error(nil, log.LOGGER_APP, "Try to send custom init fail", zap.Error(getMailSenderErr))
 		return
 	}
+	if mailSender.SSL == false {
+		mailSender.SSL = true
+	}
 	var toMail []string
 	checkEventToMail := os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
 	if smtp.VerifyMailAddress(checkEventToMail) {
