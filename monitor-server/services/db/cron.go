@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
@@ -291,22 +291,6 @@ func checkBusinessConfigMatchCodeCount() {
 		log.Error(nil, log.LOGGER_APP, "Batch disable log metric fail", zap.Error(err))
 		return
 	}
-	// 同步 prometheus数据
-	if len(logMetricMonitorGuidMap) > 0 {
-		logMetricMonitorGuids = ConvertMap2Arr(logMetricMonitorGuidMap)
-		for _, guid := range logMetricMonitorGuids {
-			var endpointList []string
-			endpointRel := ListLogMetricEndpointRel(guid)
-			for _, v := range endpointRel {
-				if v.SourceEndpoint != "" {
-					endpointList = append(endpointList, v.SourceEndpoint)
-				}
-			}
-			if err = SyncLogMetricExporterConfig(endpointList); err != nil {
-				log.Error(nil, log.LOGGER_APP, "Sync log metric  exporter config fail", zap.Error(err))
-			}
-		}
-	}
 	// 发送邮件
 	var mailSender *smtp.MailSender
 	var getMailSenderErr error
@@ -336,6 +320,22 @@ func checkBusinessConfigMatchCodeCount() {
 		content := fmt.Sprintf("【层级对象%s】【%s】【%s】服务码code识别超过%d条，可能出现大量异常告警，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
 		if sendErr := mailSender.Send(subject, content, toMail); sendErr != nil {
 			log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
+		}
+	}
+	// 同步 prometheus数据
+	if len(logMetricMonitorGuidMap) > 0 {
+		logMetricMonitorGuids = ConvertMap2Arr(logMetricMonitorGuidMap)
+		for _, guid := range logMetricMonitorGuids {
+			var endpointList []string
+			endpointRel := ListLogMetricEndpointRel(guid)
+			for _, v := range endpointRel {
+				if v.SourceEndpoint != "" {
+					endpointList = append(endpointList, v.SourceEndpoint)
+				}
+			}
+			if err = SyncLogMetricExporterConfig(endpointList); err != nil {
+				log.Error(nil, log.LOGGER_APP, "Sync log metric  exporter config fail", zap.Error(err))
+			}
 		}
 	}
 }
