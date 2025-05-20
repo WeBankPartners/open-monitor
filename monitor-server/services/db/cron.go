@@ -256,21 +256,6 @@ func checkBusinessConfigMatchCodeCount() {
 	if len(logMetricGroups) == 0 {
 		return
 	}
-	for _, logMetricGroup := range logMetricGroups {
-		if logMetricGroupWarnDto, err = GetLogMetricGroupDto(logMetricGroup); err != nil {
-			log.Error(nil, log.LOGGER_APP, "Get log metric fail", zap.Error(err))
-			continue
-		}
-		if logMetricGroupWarnDto == nil {
-			continue
-		}
-		if v, ok := metricLogMetricGroupMap[logMetricGroup]; ok {
-			logMetricGroupWarnDto.Metric = v
-		}
-		logMetricGroupWarnDto.ServiceGroupDisplayName = GetServiceGroupDisplayName(logMetricGroupWarnDto.ServiceGroup)
-		logMetricGroupWarnDtoList = append(logMetricGroupWarnDtoList, logMetricGroupWarnDto)
-		logMetricMonitorGuidMap[logMetricGroupWarnDto.LogMetricMonitorGuid] = true
-	}
 	// 过滤掉已经禁用的数据(兜底逻辑)
 	var disableIdsMap = make(map[string]bool)
 	if disableIdsMap, err = BatchQueryDisabledLogMetricGroupStatus(logMetricGroups); err != nil {
@@ -287,6 +272,21 @@ func checkBusinessConfigMatchCodeCount() {
 	}
 	if len(logMetricGroups) == 0 {
 		return
+	}
+	for _, logMetricGroup := range logMetricGroups {
+		if logMetricGroupWarnDto, err = GetLogMetricGroupDto(logMetricGroup); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Get log metric fail", zap.Error(err))
+			continue
+		}
+		if logMetricGroupWarnDto == nil {
+			continue
+		}
+		if v, ok := metricLogMetricGroupMap[logMetricGroup]; ok {
+			logMetricGroupWarnDto.Metric = v
+		}
+		logMetricGroupWarnDto.ServiceGroupDisplayName = GetServiceGroupDisplayName(logMetricGroupWarnDto.ServiceGroup)
+		logMetricGroupWarnDtoList = append(logMetricGroupWarnDtoList, logMetricGroupWarnDto)
+		logMetricMonitorGuidMap[logMetricGroupWarnDto.LogMetricMonitorGuid] = true
 	}
 	log.Info(nil, log.LOGGER_APP, "start do disable log_metric_group", zap.Strings("logMetricGroups", logMetricGroups))
 	// 更新状态
