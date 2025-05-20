@@ -1762,6 +1762,8 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	result.UpdateTimeString = result.UpdateTime.Format(models.DatetimeFormat)
 	result.AutoAlarm = metricGroupObj.AutoAlarm
 	result.AutoDashboard = metricGroupObj.AutoDashboard
+	result.AutoCreateWarn = metricGroupObj.AutoAlarm == 1
+	result.AutoCreateDashboard = metricGroupObj.AutoDashboard == 1
 	logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(logMetricGroupGuid)
 	if getStringMapErr != nil {
 		err = getStringMapErr
