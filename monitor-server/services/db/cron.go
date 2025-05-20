@@ -336,8 +336,8 @@ func checkBusinessConfigMatchCodeCount() {
 	}
 	for _, dto := range logMetricGroupWarnDtoList {
 		subject := fmt.Sprintf("Business configuration 【%s】 auto-close notification", dto.LogMetricGroupName)
-		content := fmt.Sprintf("The service code recognition for the hierarchical object %s, %s, %s has exceeded %d entries. This may result in a large number of abnormal alerts. The system has automatically shut down. Please fix the alert configuration first and then re-enable the alerts.", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
-		content += fmt.Sprintf("\n\n\n【层级对象%s】【%s】【%s】服务码code识别超过%d条，可能出现大量异常告警，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
+		content := fmt.Sprintf("The service code recognition for the hierarchical object 【%s】, 【%s】, 【%s】 has exceeded %d entries. This may result in a large number of abnormal alerts. The system has automatically shut down. Please fix the alert configuration first and then re-enable the alerts.", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
+		//content += fmt.Sprintf("\n\n\n【层级对象%s】【%s】【%s】服务码code识别超过%d条，可能出现大量异常告警，系统已自动关闭，请先修复告警配置之后再打开告警", dto.ServiceGroupDisplayName, dto.LogMetricGroupName, dto.Metric, maxCount)
 		if sendErr := mailSender.Send(subject, content, toMail); sendErr != nil {
 			log.Error(nil, log.LOGGER_APP, "Try to send custom alarm mail fail", zap.Error(sendErr))
 		}
