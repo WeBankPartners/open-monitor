@@ -1242,7 +1242,7 @@ export default {
       this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
     },
     reloadMetricData() {
-      this.getDetail(this.targetId)
+      this.getDetail(this.targetId, '', false)
     },
     singleAddF(rowData) {
       this.cancelReg()
@@ -1471,7 +1471,7 @@ export default {
         }, {isNeedloading: true})
       })
     },
-    async getDetail(targetId, metricKey) {
+    async getDetail(targetId, metricKey = '', isNeedChangeCollapse = true) {
       if (isEmpty(this.allTemplateList)) {
         this.getMonitorTemplateList()
       }
@@ -1480,7 +1480,9 @@ export default {
           this.metricKey = metricKey
           this.logFileCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
         } else {
-          this.logFileCollapseValue = ['0']
+          if (isNeedChangeCollapse) {
+            this.logFileCollapseValue = ['0']
+          }
         }
         this.targetId = targetId
         await this.getLogKeyWordDetail()
@@ -1557,11 +1559,11 @@ export default {
     },
     async onDisabledSingleConfirmed(data) {
       await this.updateSingleDisabled(data, 'disabled')
-      this.getDetail(this.targetId)
+      this.getDetail(this.targetId, '', false)
     },
     async onEnableAlarm(data) {
       await this.updateSingleDisabled(data, 'enable')
-      this.getDetail(this.targetId)
+      this.getDetail(this.targetId, '', false)
     },
     updateSingleDisabled(data, status) {
       const params = {

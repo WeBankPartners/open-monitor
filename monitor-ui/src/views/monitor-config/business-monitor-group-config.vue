@@ -391,6 +391,8 @@ export default {
         if (this.actionType === 'copy') {
           this.businessConfig.name += '1'
           this.businessConfig.metric_prefix_code += '1'
+          this.auto_create_dashboard = hasIn(this.businessConfig, 'auto_create_dashboard') ? this.businessConfig.auto_create_dashboard : true
+          this.auto_create_warn = hasIn(this.businessConfig, 'auto_create_warn') ? this.businessConfig.auto_create_warn : true
         }
         this.configInfo.log_monitor_template_version = resp.log_monitor_template_version
 
