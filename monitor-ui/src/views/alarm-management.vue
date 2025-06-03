@@ -787,7 +787,7 @@ export default {
   margin-bottom: 24px;
 
   .title-form  {
-    padding: 10px 18px;
+    padding: 10px 10px;
     flex: auto;
     border-radius: 4px;
     border: 2px solid #f2f3f7;
@@ -809,9 +809,8 @@ export default {
       display: flex;
       align-items: center;
       li {
-        // color: #7E8086;
         font-size: 12px;
-        margin-right: 25px;
+        margin-right: 4px;
       }
     }
   }
