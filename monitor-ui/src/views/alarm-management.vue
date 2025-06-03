@@ -748,7 +748,7 @@ export default {
 }
 .sort-rule-select {
   margin-right: 10px;
-  width: 120px;
+  width: 120px !important;
   .ivu-select-selected-value {
     color: #116EF9;
   }
