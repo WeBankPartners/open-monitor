@@ -358,6 +358,7 @@ export default {
     display: flex;
     overflow-x: auto;
     max-width: 98vw;
+    overflow-y: hidden;
   }
 }
 
