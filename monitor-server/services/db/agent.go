@@ -354,17 +354,31 @@ func unionList(param, exist, split string) string {
 	return strings.Join(existList, split)
 }
 
-func SearchRecursivePanel(search string) []*m.OptionModel {
-	options := []*m.OptionModel{}
+// 查询所有类型
+func SearchRecursivePanelAll(search string) []*m.OptionModel {
+	var options []*m.OptionModel
 	var prt []*m.PanelRecursiveTable
 	if search == "." {
 		search = ""
 	}
 	search = `%` + search + `%`
-	sql := `SELECT * FROM panel_recursive WHERE display_name LIKE  ? limit 100`
-	x.SQL(sql, search).Find(&prt)
+	x.SQL(`SELECT * FROM panel_recursive WHERE display_name LIKE  ? limit 100`, search).Find(&prt)
 	for _, v := range prt {
-		//options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
+		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType, AppObject: v.Guid})
+	}
+	return options
+}
+
+// 按类型过滤
+func SearchRecursivePanelByType(search, optionTypeName string) []*m.OptionModel {
+	var options []*m.OptionModel
+	var prt []*m.PanelRecursiveTable
+	if search == "." {
+		search = ""
+	}
+	search = `%` + search + `%`
+	x.SQL(`SELECT * FROM panel_recursive WHERE display_name LIKE ? AND obj_type=? limit 100`, search, optionTypeName).Find(&prt)
+	for _, v := range prt {
 		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType, AppObject: v.Guid})
 	}
 	return options

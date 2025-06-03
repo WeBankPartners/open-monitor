@@ -287,7 +287,8 @@ func GetDbPromMetric(endpoint, metric, legend string) (error, string) {
 	return err, promQL
 }
 
-func SearchHost(endpoint string) (error, []*m.OptionModel) {
+// 查询所有类型
+func SearchHostAll(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
@@ -300,7 +301,25 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 		if host.ExportType == "node" {
 			host.ExportType = "host"
 		}
-		//options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType), Id:host.Id})
+		options = append(options, &m.OptionModel{OptionText: host.Guid, OptionValue: host.Guid, OptionType: host.ExportType, Id: host.Id})
+	}
+	return err, options
+}
+
+// 按类型过滤
+func SearchHostByType(endpoint, optionTypeName string) (error, []*m.OptionModel) {
+	var options []*m.OptionModel
+	var hosts []*m.EndpointTable
+	endpoint = `%` + endpoint + `%`
+	err := x.SQL("SELECT * FROM endpoint WHERE guid LIKE ? AND export_type=? order by export_type,ip LIMIT 100", endpoint, optionTypeName).Find(&hosts)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "Search host fail", zap.Error(err))
+		return err, options
+	}
+	for _, host := range hosts {
+		if host.ExportType == "node" {
+			host.ExportType = "host"
+		}
 		options = append(options, &m.OptionModel{OptionText: host.Guid, OptionValue: host.Guid, OptionType: host.ExportType, Id: host.Id})
 	}
 	return err, options
@@ -1093,4 +1112,43 @@ func GetDashboardPanelList(endpointType, searchMetric string) m.PanelResult {
 	}
 	returnObj.PanelList = result
 	return returnObj
+}
+
+// SearchHostDistinct 查询 endpoint 某个字段的去重集合，不加 limit，只查一个字段
+func SearchHostDistinct(field string) ([]string, error) {
+	if field == "" {
+		return nil, fmt.Errorf("field is empty")
+	}
+	var result []string
+	sql := fmt.Sprintf("SELECT DISTINCT %s FROM endpoint", field)
+	err := x.SQL(sql).Find(&result)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "SearchHostDistinct fail", zap.Error(err))
+		return nil, err
+	}
+	return result, nil
+}
+
+// SearchHostDistinctField 查询 endpoint 表 export_type 字段的去重集合，不加 limit
+func SearchHostDistinctField() ([]string, error) {
+	var result []string
+	sql := "SELECT DISTINCT export_type FROM endpoint"
+	err := x.SQL(sql).Find(&result)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "SearchHostDistinctField fail", zap.Error(err))
+		return nil, err
+	}
+	return result, nil
+}
+
+// SearchRecursivePanelDistinctField 查询 panel_recursive 表 obj_type 字段的去重集合，不加 limit
+func SearchRecursivePanelDistinctField() ([]string, error) {
+	var result []string
+	sql := "SELECT DISTINCT obj_type FROM panel_recursive"
+	err := x.SQL(sql).Find(&result)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "SearchRecursivePanelDistinctField fail", zap.Error(err))
+		return nil, err
+	}
+	return result, nil
 }
