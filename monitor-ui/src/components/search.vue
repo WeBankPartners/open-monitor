@@ -40,12 +40,12 @@
         </li>
         <template v-if="!is_mom_yoy">
           <li class="search-li">
-            <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
+            <Select filterable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
               <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </li>
           <li class="search-li">
-            <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
+            <Select filterable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
               <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </li>
