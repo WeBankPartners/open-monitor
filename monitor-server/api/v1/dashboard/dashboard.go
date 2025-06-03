@@ -476,8 +476,8 @@ func MainSearch(c *gin.Context) {
 	var endpointResult, panelResult []*m.OptionModel
 	var err error
 	if optionTypeName == "all" {
-		err, endpointResult = db.SearchHostAll(search)
-		panelResult = db.SearchRecursivePanelAll(search)
+		err, endpointResult = db.SearchHost(search)
+		panelResult = db.SearchRecursivePanel(search)
 	} else {
 		err, endpointResult = db.SearchHostByType(search, optionTypeName)
 		panelResult = db.SearchRecursivePanelByType(search, optionTypeName)

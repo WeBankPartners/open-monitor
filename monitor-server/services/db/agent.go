@@ -355,7 +355,7 @@ func unionList(param, exist, split string) string {
 }
 
 // 查询所有类型
-func SearchRecursivePanelAll(search string) []*m.OptionModel {
+func SearchRecursivePanel(search string) []*m.OptionModel {
 	var options []*m.OptionModel
 	var prt []*m.PanelRecursiveTable
 	if search == "." {

@@ -288,7 +288,7 @@ func GetDbPromMetric(endpoint, metric, legend string) (error, string) {
 }
 
 // 查询所有类型
-func SearchHostAll(endpoint string) (error, []*m.OptionModel) {
+func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
