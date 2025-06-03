@@ -318,5 +318,6 @@
     "newPanelHost": "/monitor/api/v1/dashboard/new/panel/${id}",
     "getDashboardTags": "/monitor/api/v1/dashboard/tags",
     "getTemplateSystemParams": "/monitor/api/v2/service/log_metric/log_monitor_template/system_params/config",
-    "disabledSingleAlarm": "/monitor/api/v2/service/log_metric/log_metric_group/status"
+    "disabledSingleAlarm": "/monitor/api/v2/service/log_metric/log_metric_group/status",
+    "getOptionTypeNameList": "/monitor/api/v1/dashboard/option_type_name_list"
 }

@@ -52,6 +52,13 @@ import Search from '@/components/search'
 import Charts from '@/components/charts'
 import Recursive from '@/views/recursive-view/recursive'
 import MaxChart from '@/components/max-chart'
+
+export const custom_api_enum = [
+  {
+    getOptionTypeNameList: 'get'
+  }
+]
+
 const alarmLevelMap = {
   low: {
     label: 'm_low',
