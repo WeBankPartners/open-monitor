@@ -748,7 +748,7 @@ export default {
 }
 .sort-rule-select {
   margin-right: 10px;
-  width: 180px;
+  width: 120px;
   .ivu-select-selected-value {
     color: #116EF9;
   }
@@ -810,7 +810,7 @@ export default {
       align-items: center;
       li {
         font-size: 12px;
-        margin-right: 4px;
+        margin-right: 12px;
       }
     }
   }
