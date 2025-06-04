@@ -46,6 +46,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/panels", Method: http.MethodGet, HandlerFunc: dashboard.GetPanels, ApiCode: "dashboard_panels"},
 		&handlerFuncObj{Url: "/dashboard/tags", Method: http.MethodGet, HandlerFunc: dashboard.GetTags, ApiCode: "dashboard_tags"},
 		&handlerFuncObj{Url: "/dashboard/search", Method: http.MethodGet, HandlerFunc: dashboard.MainSearch, ApiCode: "dashboard_search"},
+		&handlerFuncObj{Url: "/dashboard/option_type_name_list", Method: http.MethodGet, HandlerFunc: dashboard.OptionTypeNameList, ApiCode: "dashboard_option_type_name_list"},
 		&handlerFuncObj{Url: "/dashboard/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetChartData, ApiCode: "dashboard_chart"},
 		&handlerFuncObj{Url: "/dashboard/comparison_chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetComparisonChartData, ApiCode: "dashboard_comparison"},
 		&handlerFuncObj{Url: "/dashboard/config/chart/title", Method: http.MethodPost, HandlerFunc: dashboard.UpdateChartsTitle, ApiCode: "dashboard_config"},

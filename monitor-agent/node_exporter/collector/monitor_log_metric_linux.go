@@ -7,13 +7,15 @@ import (
 	"regexp"
 
 	//"github.com/dlclark/regexp2"
+	"io/ioutil"
+	"net/http"
+	"reflect"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
 	"github.com/prometheus/client_golang/prometheus"
-	"io/ioutil"
-	"net/http"
-	"reflect"
+
 	//"regexp"
 	"os/exec"
 	"strconv"
@@ -301,6 +303,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 	if re == nil {
 		return
 	}
+	lineText = strings.TrimSpace(lineText)
 	mat := re.MatcherString(lineText, 0)
 	if mat != nil {
 		for i := 0; i <= mat.Groups(); i++ {

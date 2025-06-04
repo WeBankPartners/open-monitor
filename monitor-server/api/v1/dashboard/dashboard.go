@@ -456,52 +456,84 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 }
 
 // @Summary 主页面接口 : 模糊搜索
-// @Description 模糊搜索
+// @Description 模糊搜索，支持按optionTypeName类型过滤。optionTypeName来源于OptionTypeNameList接口返回值。
 // @Produce  json
 // @Param search query string true "放弃search_col,直接把用户输入拼到url后面请求"
 // @Param limit query string false "数量限制"
+// @Param optionTypeName query string false "类型过滤，OptionTypeNameList接口返回值之一，all为全部"
 // @Success 200
 // @Router /api/v1/dashboard/search [get]
 func MainSearch(c *gin.Context) {
-	endpoint := c.Query("search")
-	//limit := c.Query("limit")
-	if endpoint == "" {
+	search := c.Query("search")
+	optionTypeName := c.Query("optionTypeName")
+	if search == "" {
 		mid.ReturnParamEmptyError(c, "search")
 		return
 	}
-	tmpFlag := false
-	if strings.Contains(endpoint, `:`) {
-		endpoint = strings.Split(endpoint, `:`)[1]
-		tmpFlag = true
+	if optionTypeName == "" {
+		optionTypeName = "all"
 	}
-	err, result := db.SearchHost(endpoint)
+	var endpointResult, panelResult []*m.OptionModel
+	var err error
+	if optionTypeName == "all" {
+		err, endpointResult = db.SearchHost(search)
+		panelResult = db.SearchRecursivePanel(search)
+	} else {
+		err, endpointResult = db.SearchHostByType(search, optionTypeName)
+		panelResult = db.SearchRecursivePanelByType(search, optionTypeName)
+	}
 	if err != nil {
 		mid.ReturnQueryTableError(c, "endpoint", err)
 		return
 	}
-	for _, v := range result {
+	for _, v := range endpointResult {
 		v.OptionTypeName = v.OptionType
 	}
-	sysResult := db.SearchRecursivePanel(endpoint)
-	for _, v := range sysResult {
-		result = append(result, v)
+	for _, v := range panelResult {
+		endpointResult = append(endpointResult, v)
 	}
-	if tmpFlag {
+	if strings.Contains(search, `:`) {
+		searchVal := strings.Split(search, `:`)[1]
+
 		var tmpResult []*m.OptionModel
-		for _, v := range result {
-			if v.OptionText == c.Query("search") {
+		for _, v := range endpointResult {
+			if v.OptionText == searchVal {
 				tmpResult = append(tmpResult, v)
 				break
 			}
 		}
 		if len(tmpResult) > 0 {
-			result = tmpResult
+			endpointResult = tmpResult
 		}
 	}
 	var sortOptionList m.OptionModelSortList
-	sortOptionList = append(sortOptionList, result...)
+	sortOptionList = append(sortOptionList, endpointResult...)
 	sort.Sort(sortOptionList)
 	mid.ReturnSuccessData(c, sortOptionList)
+}
+
+// @Router /api/v1/dashboard/option_type_name_list [get]
+func OptionTypeNameList(c *gin.Context) {
+	hostTypes, _ := db.SearchHostDistinctField()
+	sysTypes, _ := db.SearchRecursivePanelDistinctField()
+	typeNameSet := make(map[string]struct{})
+	for _, v := range hostTypes {
+		if v != "" {
+			typeNameSet[v] = struct{}{}
+		}
+	}
+	for _, v := range sysTypes {
+		if v != "" {
+			typeNameSet[v] = struct{}{}
+		}
+	}
+	var typeNameList []string
+	for k := range typeNameSet {
+		typeNameList = append(typeNameList, k)
+	}
+	sort.Strings(typeNameList)
+	typeNameList = append([]string{"all"}, typeNameList...)
+	mid.ReturnSuccessData(c, typeNameList)
 }
 
 func GetPromMetric(c *gin.Context) {

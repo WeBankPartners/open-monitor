@@ -1,73 +1,91 @@
 <template>
-  <div class="" style="display:inline-block">
-    <ul class="search-ul">
-      <li class="search-li">
-        <Select
-          style="width:300px;"
-          v-model="endpoint"
-          filterable
-          clearable
-          remote
-          ref="select"
-          :disabled="endpointExternal"
-          :placeholder="$t('m_requestMoreData')"
-          @on-query-change="debounceGetEndpointList"
-          @on-change="updateData"
+  <div>
+    <div class="select-tag-radio">
+      <RadioGroup v-model="selectedType"
+                  type="button"
+                  size="small"
+                  @on-change="onSelectedTypeChange"
+      >
+        <Radio v-for="(tag, idx) in allTypeList"
+               :label="tag"
+               :key="idx"
+               :disabled="endpointExternal"
         >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
-            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
-            {{option.option_text}}
-          </Option>
-          <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
-        </Select>
-      </li>
-      <template v-if="!is_mom_yoy">
+          {{ tag }}
+        </Radio>
+      </RadioGroup>
+    </div>
+
+    <div style="display:inline-block">
+      <ul class="search-ul">
         <li class="search-li">
-          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
-            <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          <Select
+            style="width:300px;"
+            v-model="endpoint"
+            filterable
+            clearable
+            remote
+            ref="select"
+            :disabled="endpointExternal"
+            :placeholder="$t('m_requestMoreData')"
+            @on-query-change="debounceGetEndpointList"
+            @on-change="updateData"
+          >
+            <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
+              <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>
+              {{option.option_text}}
+            </Option>
+            <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
           </Select>
         </li>
+        <template v-if="!is_mom_yoy">
+          <li class="search-li">
+            <Select filterable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig()">
+              <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </li>
+          <li class="search-li">
+            <Select filterable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
+              <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </li>
+          <li class="search-li view-pannal-date-picker">
+            <DatePicker
+              type="datetimerange"
+              :value="dateRange"
+              split-panels
+              @on-change="datePick"
+              @on-ok="onDatePickOk"
+              @on-open-change="onDatePickChange"
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              :placeholder="$t('m_placeholder_datePicker')"
+              style="width: 320px"
+            ></DatePicker>
+          </li>
+        </template>
+        <template v-else>
+          <li class="search-li">
+            <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_datePicker')" style="width: 250px"></DatePicker>
+          </li>
+          <li class="search-li">
+            <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 250px"></DatePicker>
+          </li>
+        </template>
         <li class="search-li">
-          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig()" :placeholder="$t('m_placeholder_refresh')">
-            <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-        </li>
-        <li class="search-li view-pannal-date-picker">
-          <DatePicker
-            type="datetimerange"
-            :value="dateRange"
-            split-panels
-            @on-change="datePick"
-            @on-ok="onDatePickOk"
-            @on-open-change="onDatePickChange"
-            format="yyyy-MM-dd HH:mm:ss"
-            placement="bottom-start"
-            :placeholder="$t('m_placeholder_datePicker')"
-            style="width: 320px"
-          ></DatePicker>
-        </li>
-      </template>
-      <template v-else>
-        <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_datePicker')" style="width: 250px"></DatePicker>
+          <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 250px"></DatePicker>
+          <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
         </li>
-      </template>
-      <li class="search-li">
-        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
-      </li>
-      <li class="search-li">
-        <Button type="primary" @click="getChartsConfig()">{{$t('m_button_search')}}</Button>
-      </li>
-      <li class="search-li">
-        <Button v-if="isShow && endpointObject && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
-      </li>
-      <li class="search-li">
-        <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
-      </li>
-    </ul>
+        <li class="search-li">
+          <Button v-if="isShow && endpointObject && endpointObject.id !== -1 && !endpointExternal" @click="changeRoute">{{$t('m_button_endpointManagement')}}</Button>
+        </li>
+        <li class="search-li">
+          <Button v-if="isShow && !endpointExternal" @click="historyAlarm">{{$t('m_button_historicalAlert')}}</Button>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -103,6 +121,8 @@ export default {
       endpointExternal: false,
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      selectedType: 'all',
+      allTypeList: []
     }
   },
   computed: {
@@ -127,6 +147,7 @@ export default {
   },
   async mounted() {
     await this.getEndpointList('.')
+    this.getAllSelectedTypeList()
     const jumpCallData = JSON.parse(localStorage.getItem('jumpCallData'))
     localStorage.removeItem('jumpCallData')
     let outerData = jumpCallData || this.$route.params
@@ -206,7 +227,8 @@ export default {
         const params = {
           search: query,
           page: 1,
-          size: 1000
+          size: 1000,
+          optionTypeName: this.selectedType
         }
         await this.request('GET', this.apiCenter.resourceSearch.api, params, responseData => {
           this.endpointList = responseData
@@ -302,6 +324,14 @@ export default {
     },
     historyAlarm() {
       this.$parent.historyAlarm(this.endpointObject)
+    },
+    onSelectedTypeChange() {
+      this.getEndpointList('.')
+    },
+    getAllSelectedTypeList() {
+      this.request('GET', this.apiCenter.getOptionTypeNameList, {}, responseData => {
+        this.allTypeList = responseData
+      })
     }
   },
   components: {
@@ -317,4 +347,19 @@ export default {
   .search-ul>li:not(:first-child) {
     padding-left: 12px;
   }
+  .select-tag-radio {
+    margin-top: 5px;
+    margin-bottom: 15px;
+  }
+</style>
+<style lang="less">
+.select-tag-radio {
+  .ivu-radio-group {
+    display: flex;
+    overflow-x: auto;
+    max-width: 98vw;
+    overflow-y: hidden;
+  }
+}
+
 </style>
