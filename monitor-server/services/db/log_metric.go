@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/go-common-lib/pcre"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/dlclark/regexp2"
 	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 func GetLogMetricByServiceGroup(serviceGroup, metricKey string) (result models.LogMetricQueryObj, err error) {
@@ -737,6 +738,7 @@ func pcreMatchSubString(re *pcre.Regexp, lineText string) (matchString string) {
 	if re == nil {
 		return
 	}
+	lineText = strings.TrimSpace(lineText)
 	mat := re.MatcherString(lineText, 0)
 	if mat != nil {
 		for i := 0; i <= mat.Groups(); i++ {
