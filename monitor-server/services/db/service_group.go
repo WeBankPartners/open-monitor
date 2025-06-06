@@ -165,7 +165,7 @@ func displayGlobalServiceGroup() {
 			log.Info(nil, log.LOGGER_APP, "globalServiceGroupMap", zap.String("k", k))
 		}
 	}
-	log.Info(nil, log.LOGGER_APP, "service_group", zap.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
+	log.Debug(nil, log.LOGGER_APP, "service_group", zap.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 }
 
 func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, err error) {
