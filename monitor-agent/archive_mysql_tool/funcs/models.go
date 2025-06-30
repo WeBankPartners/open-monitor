@@ -151,6 +151,7 @@ func (a ArchiveFiveRowObj) CalcArchiveTable() ArchiveTable {
 }
 
 type JobRecordTable struct {
-	Id     int    `json:"id"`
-	HostIp string `json:"host_ip"`
+	Id      int    `json:"id" xorm:"id"`
+	JobTime string `json:"job_time" xorm:"job_time"`
+	HostIp  string `json:"host_ip" xorm:"host_ip"`
 }

@@ -2,14 +2,15 @@ package funcs
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
+	"github.com/go-xorm/xorm"
 )
 
 var (
@@ -112,20 +113,21 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	}
 	gErrMessage := ""
 	for sqlIndex, v := range sqlList {
-		var tmpErr error
-		for i := 0; i < 3; i++ {
-			//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
-			_, err := mysqlEngine.Exec(v)
-			if err != nil {
-				tmpErr = err
-			} else {
-				tmpErr = nil
-				break
-			}
-			if i < 2 {
-				time.Sleep(time.Duration(retryWaitSecond) * time.Second)
-			}
-		}
+		// var tmpErr error
+		_, tmpErr := mysqlEngine.Exec(v)
+		// for i := 0; i < 3; i++ {
+		// 	//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
+		// 	_, err := mysqlEngine.Exec(v)
+		// 	if err != nil {
+		// 		tmpErr = err
+		// 	} else {
+		// 		tmpErr = nil
+		// 		break
+		// 	}
+		// 	if i < 2 {
+		// 		time.Sleep(time.Duration(retryWaitSecond) * time.Second)
+		// 	}
+		// }
 		if tmpErr != nil {
 			log.Printf("Exec sql error:%s sql:%s \n", tmpErr.Error(), v)
 			tmpErrorString := tmpErr.Error()
@@ -254,27 +256,28 @@ func renameFiveToOne(oldTable, newTable string) error {
 }
 
 func initJobRecordTable() error {
-	_, err := mysqlEngine.Exec("CREATE TABLE IF NOT EXISTS `job_record` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`host_ip` VARCHAR(255) NOT NULL,`update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  PRIMARY KEY (`id`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8")
+	_, err := mysqlEngine.Exec("CREATE TABLE IF NOT EXISTS `job_record` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`job_time` VARCHAR(64) unique not null,`host_ip` VARCHAR(255) NOT NULL,`update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  PRIMARY KEY (`id`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8")
 	if err != nil {
 		err = fmt.Errorf("init job_record table error: %v", err)
 	}
 	return err
 }
 
-func checkJobState() bool {
+func checkJobState(jobId string) bool {
 	ipInt, _ := strconv.Atoi(strings.Replace(hostIp, ".", "", -1))
 	rand.Seed(time.Now().UnixNano() + int64(ipInt))
-	waitSecond := rand.Intn(100)
+	waitSecond := rand.Intn(10)
 	log.Printf("host:%s run wait job %d second...\n", hostIp, waitSecond)
 	time.Sleep(time.Duration(waitSecond) * time.Second)
 	var jobTables []*JobRecordTable
-	mysqlEngine.SQL(fmt.Sprintf("SELECT * FROM job_record WHERE update_at>'%s'", time.Unix(time.Now().Unix()-120, 0).Format("2006-01-02 15:04:05"))).Find(&jobTables)
+	mysqlEngine.SQL(fmt.Sprintf("SELECT * FROM job_record WHERE job_time='%s'", jobId)).Find(&jobTables)
 	if len(jobTables) > 0 {
 		return false
 	}
-	_, err := mysqlEngine.Exec(fmt.Sprintf("INSERT INTO job_record(host_ip,update_at) VALUE ('%s','%s')", hostIp, time.Now().Format("2006-01-02 15:04:05")))
+	_, err := mysqlEngine.Exec(fmt.Sprintf("INSERT INTO job_record(job_time,host_ip,update_at) VALUE ('%s','%s','%s')", jobId, hostIp, time.Now().Format("2006-01-02 15:04:05")))
 	if err != nil {
 		log.Printf("update job_record table with host:%s error: %v \n", hostIp, err)
+		return false
 	}
 	return true
 }
