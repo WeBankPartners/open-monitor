@@ -39,7 +39,7 @@ func StartCronJob() {
 		go func() {
 			jobId := time.Now().Add(-1 * time.Hour).Format("2006-01-02_15")
 			if checkJobState(jobId) {
-				CreateJob("")
+				CreateJob(jobId)
 				time.Sleep(10 * time.Minute)
 				ArchiveFromMysql(0)
 			}
