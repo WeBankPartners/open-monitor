@@ -585,14 +585,24 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_suc_rate" {
-		// 使用clamp_min函数防除零，更简洁高效
-		result = fmt.Sprintf("100*(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code)/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))",
+		// 使用clamp_min函数防除零，添加or 0确保在没有成功请求时返回0%而不是空值
+		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or on() vector(0))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))",
 			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
-		// 使用clamp_min函数防除零，直接计算失败率
-		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)-sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))",
+		// 使用clamp_min函数防除零，添加or 0确保在没有成功请求时成功请求数为0，失败率为100%
+		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)-(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or on() vector(0)))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))",
 			models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+	}
+	if metric == "req_costtime_avg" {
+		// 成功请求平均耗时，仅计算成功的请求耗时，没有成功请求时返回0
+		result = fmt.Sprintf("(sum(%s{key=\"%sreq_costtime_avg\",agg=\"sum\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or on() vector(0))/(sum(%s{key=\"%sreq_costtime_avg\",agg=\"count\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or on() vector(1))",
+			models.LogMetricName, metricPrefix, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, serviceGroup, sucRetCode)
+	}
+	if metric == "req_costtime_max" {
+		// 成功请求最大耗时，仅计算成功的请求耗时，没有成功请求时返回0
+		result = fmt.Sprintf("max(%s{key=\"%sreq_costtime_max\",agg=\"max\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or on() vector(0)",
+			models.LogMetricName, metricPrefix, serviceGroup, sucRetCode)
 	}
 	return
 }
