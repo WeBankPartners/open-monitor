@@ -34,6 +34,10 @@ type EndpointNewTable struct {
 	UpdateTime      time.Time `json:"update_time" xorm:"update_time"`
 }
 
+func (EndpointNewTable) TableName() string {
+	return "endpoint_new"
+}
+
 type EndpointExtendParamObj struct {
 	Enable        bool   `json:"-"`
 	Ip            string `json:"ip,omitempty"`
