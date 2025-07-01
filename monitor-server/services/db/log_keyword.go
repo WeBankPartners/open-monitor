@@ -614,7 +614,12 @@ func doLogKeywordMonitorJob() {
 				zap.Bool("inActiveWindow", activeWindowResult))
 
 			if existAlarm.Status == "firing" || !activeWindowResult {
-				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob updating existing alarm", zap.String("key", key))
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob updating existing alarm",
+					zap.String("key", key),
+					zap.Int("existingAlarmId", existAlarm.AlarmId),
+					zap.String("existingStatus", existAlarm.Status),
+					zap.Float64("oldValue", oldValue),
+					zap.Float64("newValue", newValue))
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
@@ -639,15 +644,23 @@ func doLogKeywordMonitorJob() {
 			//if config.NotifyEnable > 0 {
 			//	notifyMap[key] = config.ServiceGroup
 			//}
-			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob creating alarm",
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob creating new alarm",
 				zap.String("key", key),
 				zap.String("priority", config.Priority),
 				zap.Float64("startValue", newValue),
-				zap.String("alarmName", config.Name))
+				zap.String("alarmName", config.Name),
+				zap.String("targetEndpoint", config.TargetEndpoint),
+				zap.String("logKeywordConfigGuid", config.LogKeywordConfigGuid))
 
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
+			newAlarm := &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid}
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob new alarm object",
+				zap.String("key", key),
+				zap.Int("alarmId", int(newAlarm.Id)), // Should be 0 for new alarms
+				zap.String("status", newAlarm.Status),
+				zap.String("sMetric", newAlarm.SMetric))
+			addAlarmRows = append(addAlarmRows, newAlarm)
 		}
 	}
 
@@ -657,10 +670,27 @@ func doLogKeywordMonitorJob() {
 		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob no alarms to add, exiting")
 		return
 	}
-	for _, v := range addAlarmRows {
+	for i, v := range addAlarmRows {
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob processing alarm",
+			zap.Int("index", i),
+			zap.Int("alarmId", int(v.Id)),
+			zap.String("tags", v.Tags),
+			zap.String("endpoint", v.Endpoint),
+			zap.String("status", v.Status),
+			zap.String("alarmStrategy", v.AlarmStrategy))
+
 		if tmpErr := doLogKeywordDBAction(v); tmpErr != nil {
-			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail", zap.String("tags", v.Tags), zap.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail",
+				zap.Int("index", i),
+				zap.Int("alarmId", int(v.Id)),
+				zap.String("tags", v.Tags),
+				zap.String("endpoint", v.Endpoint),
+				zap.Error(tmpErr))
 		} else {
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction success",
+				zap.Int("index", i),
+				zap.Int("alarmId", int(v.Id)),
+				zap.String("tags", v.Tags))
 			if v.Id <= 0 {
 				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
 					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify disable,ignore", zap.String("logKeywordConfig", v.AlarmStrategy))
@@ -810,38 +840,83 @@ func ImportLogAndDbKeyword(param *models.LogKeywordServiceGroupObj, operator str
 }
 
 func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction start",
+		zap.Int("alarmId", int(alarmObj.Id)),
+		zap.String("endpoint", alarmObj.Endpoint),
+		zap.String("status", alarmObj.Status),
+		zap.String("sMetric", alarmObj.SMetric),
+		zap.String("tags", alarmObj.Tags),
+		zap.String("alarmStrategy", alarmObj.AlarmStrategy))
+
 	session := x.NewSession()
 	if err = session.Begin(); err != nil {
+		log.Error(nil, log.LOGGER_APP, "doLogKeywordDBAction session begin fail", zap.Error(err))
 		return
 	}
 	defer func() {
 		if err != nil {
 			session.Rollback()
+			log.Error(nil, log.LOGGER_APP, "doLogKeywordDBAction transaction rollback", zap.Error(err))
 		} else {
 			session.Commit()
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction transaction commit success")
 		}
 		session.Close()
 	}()
 	if alarmObj.Id > 0 {
-		_, err = session.Exec("UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
-		if err != nil {
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction update mode",
+			zap.Int("alarmId", int(alarmObj.Id)),
+			zap.String("endTime", alarmObj.End.Format(models.DatetimeFormat)))
+
+		// Update alarm table first
+		alarmUpdateResult, updateErr := session.Exec("UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
+		if updateErr != nil {
+			log.Error(nil, log.LOGGER_APP, "doLogKeywordDBAction update alarm table fail", zap.Error(updateErr))
+			err = updateErr
 			return
 		}
+		alarmAffectRows, _ := alarmUpdateResult.RowsAffected()
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction alarm table update result", zap.Int64("affectRows", alarmAffectRows))
+
+		// Check if record exists in log_keyword_alarm table before update
+		var existingRecordCount int
+		if alarmObj.SMetric == "db_keyword_monitor" {
+			session.SQL("SELECT count(*) FROM db_keyword_alarm WHERE alarm_id=?", alarmObj.Id).Get(&existingRecordCount)
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction db_keyword_alarm existing record check",
+				zap.Int("alarmId", int(alarmObj.Id)),
+				zap.Int("existingCount", existingRecordCount))
+		} else {
+			session.SQL("SELECT count(*) FROM log_keyword_alarm WHERE alarm_id=?", alarmObj.Id).Get(&existingRecordCount)
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction log_keyword_alarm existing record check",
+				zap.Int("alarmId", int(alarmObj.Id)),
+				zap.Int("existingCount", existingRecordCount))
+		}
+
 		var execResult sql.Result
 		var execErr error
 		if alarmObj.SMetric == "db_keyword_monitor" {
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction updating db_keyword_alarm table")
 			execResult, execErr = session.Exec("UPDATE db_keyword_alarm SET content=?,end_value=?,updated_time=? WHERE alarm_id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
 		} else {
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction updating log_keyword_alarm table")
 			execResult, execErr = session.Exec("UPDATE log_keyword_alarm SET content=?,end_value=?,updated_time=? WHERE alarm_id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
 		}
 		if execErr != nil {
+			log.Error(nil, log.LOGGER_APP, "doLogKeywordDBAction keyword alarm table update execute fail", zap.Error(execErr))
 			err = execErr
 		} else {
 			affectRowNum, affectRowErr := execResult.RowsAffected()
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordDBAction keyword alarm table update result",
+				zap.Int64("affectRows", affectRowNum),
+				zap.Error(affectRowErr))
 			if affectRowErr != nil {
 				err = fmt.Errorf("update log keyword alarm table tail,get affect row result error:%s ", affectRowErr.Error())
 				return
 			} else if affectRowNum <= 0 {
+				log.Warn(nil, log.LOGGER_APP, "doLogKeywordDBAction keyword alarm table update affected 0 rows",
+					zap.Int("alarmId", int(alarmObj.Id)),
+					zap.String("tags", alarmObj.Tags),
+					zap.Int("existingRecordCount", existingRecordCount))
 				err = fmt.Errorf("update log keyword alarm table fail,affect row 0 with alarm_id=%d ", alarmObj.Id)
 			}
 		}
