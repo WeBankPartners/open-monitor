@@ -397,15 +397,27 @@ func StartLogKeywordMonitorCronJob() {
 }
 
 func doLogKeywordMonitorJob() {
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob started")
+
 	http.DefaultClient.CloseIdleConnections()
 	dataMap, err := datasource.QueryLogKeywordData("log")
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Check log keyword break with get prometheus data", zap.Error(err))
 		return
 	}
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob prometheus data", zap.Int("dataMapCount", len(dataMap)))
+
 	if len(dataMap) == 0 {
-		log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob break with dataMap empty")
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob break with dataMap empty")
 		return
+	}
+	// 输出所有 prometheus 数据，特别关注 keyword=uri 的数据
+	for key, value := range dataMap {
+		if strings.Contains(key, "keyword:uri") || strings.Contains(key, "keyword:query") {
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob prometheus key data",
+				zap.String("key", key),
+				zap.Float64("value", value))
+		}
 	}
 
 	// 1. 分批查 log_keyword_monitor
@@ -429,6 +441,7 @@ func doLogKeywordMonitorJob() {
 			log.Error(nil, log.LOGGER_APP, "Query log_keyword_monitor fail", zap.Error(err))
 			return
 		}
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob query monitors", zap.Int("monitorsCount", len(monitors)), zap.String("lastGuid", lastGuid))
 		if len(monitors) == 0 {
 			break
 		}
@@ -443,6 +456,8 @@ func doLogKeywordMonitorJob() {
 			log.Error(nil, log.LOGGER_APP, "Query log_keyword_config fail", zap.Error(err))
 			return
 		}
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob query configs", zap.Int("configsCount", len(configs)))
+
 		// 3. 查 log_keyword_endpoint_rel
 		var endpointRels []*models.LogKeywordEndpointRelTable
 		err = x.In("log_keyword_monitor", monitorGuids).Find(&endpointRels)
@@ -450,6 +465,7 @@ func doLogKeywordMonitorJob() {
 			log.Error(nil, log.LOGGER_APP, "Query log_keyword_endpoint_rel fail", zap.Error(err))
 			return
 		}
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob query endpoint relations", zap.Int("endpointRelsCount", len(endpointRels)))
 		sourceEndpointGuids := make([]string, 0)
 		for _, rel := range endpointRels {
 			if rel.SourceEndpoint != "" {
@@ -514,8 +530,10 @@ func doLogKeywordMonitorJob() {
 			break
 		}
 	}
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob assembled configs", zap.Int("logKeywordConfigsCount", len(logKeywordConfigs)))
+
 	if len(logKeywordConfigs) == 0 {
-		log.Debug(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
+		log.Info(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
 		return
 	}
 	var alarmTable []*models.LogKeywordAlarmTable
@@ -536,6 +554,9 @@ func doLogKeywordMonitorJob() {
 	//notifyMap := make(map[string]string)
 	nowTime := time.Now()
 	notifyConfigMap := make(map[string]int)
+
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob start processing configs", zap.Int("existingAlarmCount", len(alarmMap)))
+
 	for _, config := range logKeywordConfigs {
 		if config.LogKeywordConfigGuid == "" {
 			continue
@@ -545,14 +566,27 @@ func doLogKeywordMonitorJob() {
 		}
 		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", config.SourceEndpoint, config.TargetEndpoint, config.LogPath, config.Keyword)
 		newValue, oldValue = 0, 0
+
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob processing config",
+			zap.String("configGuid", config.LogKeywordConfigGuid),
+			zap.String("keyword", config.Keyword),
+			zap.String("sourceEndpoint", config.SourceEndpoint),
+			zap.String("targetEndpoint", config.TargetEndpoint),
+			zap.String("logPath", config.LogPath),
+			zap.String("activeWindow", config.ActiveWindow),
+			zap.String("generatedKey", key))
+
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob found prometheus data",
+				zap.String("key", key),
+				zap.Float64("value", newValue))
 		} else {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig", zap.String("key", key))
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore config - no prometheus data", zap.String("key", key))
 			continue
 		}
 		if newValue == 0 {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig with empty value", zap.String("key", key))
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore config - value is zero", zap.String("key", key))
 			continue
 		}
 		addFlag := false
@@ -562,30 +596,65 @@ func doLogKeywordMonitorJob() {
 			} else {
 				oldValue = existAlarm.StartValue
 			}
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob found existing alarm",
+				zap.String("key", key),
+				zap.String("status", existAlarm.Status),
+				zap.Float64("oldValue", oldValue),
+				zap.Float64("newValue", newValue))
+
 			if newValue == oldValue {
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob skip - value unchanged", zap.String("key", key))
 				continue
 			}
-			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
+
+			activeWindowResult := InActiveWindowList(config.ActiveWindow)
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob active window check",
+				zap.String("key", key),
+				zap.String("activeWindow", config.ActiveWindow),
+				zap.Bool("inActiveWindow", activeWindowResult))
+
+			if existAlarm.Status == "firing" || !activeWindowResult {
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob updating existing alarm", zap.String("key", key))
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob will create new alarm for existing key", zap.String("key", key))
 				addFlag = true
 			}
 		} else {
-			if InActiveWindowList(config.ActiveWindow) {
+			activeWindowResult := InActiveWindowList(config.ActiveWindow)
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob no existing alarm",
+				zap.String("key", key),
+				zap.String("activeWindow", config.ActiveWindow),
+				zap.Bool("inActiveWindow", activeWindowResult))
+
+			if activeWindowResult {
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob will create new alarm", zap.String("key", key))
 				addFlag = true
+			} else {
+				log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob skip - not in active window", zap.String("key", key))
 			}
 		}
 		if addFlag {
 			//if config.NotifyEnable > 0 {
 			//	notifyMap[key] = config.ServiceGroup
 			//}
+			log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob creating alarm",
+				zap.String("key", key),
+				zap.String("priority", config.Priority),
+				zap.Float64("startValue", newValue),
+				zap.String("alarmName", config.Name))
+
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
 			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
 		}
 	}
+
+	log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob finished processing configs", zap.Int("addAlarmRowsCount", len(addAlarmRows)))
+
 	if len(addAlarmRows) == 0 {
+		log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob no alarms to add, exiting")
 		return
 	}
 	for _, v := range addAlarmRows {
