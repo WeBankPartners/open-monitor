@@ -585,9 +585,10 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_suc_rate" {
-		// 使用clamp_min防除零，基于实际标签值的成功率计算表达式
-		result = fmt.Sprintf("100*sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"})/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}),1)",
-			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+		// 修改成功率计算：当请求数为0时返回1，否则返回实际成功率
+		// 使用absent函数：absent(sum(请求数) > 0)在请求数<=0时返回1，请求数>0时返回空
+		result = fmt.Sprintf("100*sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"})/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}),1) + absent(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) > 0)",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
 		// 使用clamp_min防除零，基于实际标签值的失败率计算表达式
