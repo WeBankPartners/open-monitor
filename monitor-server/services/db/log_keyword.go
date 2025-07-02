@@ -407,8 +407,113 @@ func doLogKeywordMonitorJob() {
 		log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob break with dataMap empty")
 		return
 	}
-	var logKeywordConfigs []*models.LogKeywordCronJobQuery
-	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t2.content,t2.name,t2.guid as log_keyword_config_guid,t2.active_window,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
+
+	// 1. 分批查 log_keyword_monitor
+	var (
+		logKeywordConfigs []*models.LogKeywordCronJobQuery
+		batchSize         = 500
+		lastGuid          = ""
+	)
+	for {
+		var monitors []*models.LogKeywordMonitorTable
+		monitorSql := "select guid,service_group,log_path,monitor_type from log_keyword_monitor"
+		var monitorArgs []interface{}
+		if lastGuid != "" {
+			monitorSql += " where guid > ?"
+			monitorArgs = append(monitorArgs, lastGuid)
+		}
+		monitorSql += " order by guid limit ?"
+		monitorArgs = append(monitorArgs, batchSize)
+		err = x.SQL(monitorSql, monitorArgs...).Find(&monitors)
+		if err != nil {
+			log.Error(nil, log.LOGGER_APP, "Query log_keyword_monitor fail", zap.Error(err))
+			return
+		}
+		if len(monitors) == 0 {
+			break
+		}
+		monitorGuids := make([]string, 0, len(monitors))
+		for _, m := range monitors {
+			monitorGuids = append(monitorGuids, m.Guid)
+		}
+		// 2. 查 log_keyword_config
+		var configs []*models.LogKeywordConfigTable
+		err = x.In("log_keyword_monitor", monitorGuids).Find(&configs)
+		if err != nil {
+			log.Error(nil, log.LOGGER_APP, "Query log_keyword_config fail", zap.Error(err))
+			return
+		}
+		// 3. 查 log_keyword_endpoint_rel
+		var endpointRels []*models.LogKeywordEndpointRelTable
+		err = x.In("log_keyword_monitor", monitorGuids).Find(&endpointRels)
+		if err != nil {
+			log.Error(nil, log.LOGGER_APP, "Query log_keyword_endpoint_rel fail", zap.Error(err))
+			return
+		}
+		sourceEndpointGuids := make([]string, 0)
+		for _, rel := range endpointRels {
+			if rel.SourceEndpoint != "" {
+				sourceEndpointGuids = append(sourceEndpointGuids, rel.SourceEndpoint)
+			}
+		}
+		// 4. 查 endpoint_new
+		var endpoints []*models.EndpointNewTable
+		if len(sourceEndpointGuids) > 0 {
+			err = x.In("guid", sourceEndpointGuids).Find(&endpoints)
+			if err != nil {
+				log.Error(nil, log.LOGGER_APP, "Query endpoint_new fail", zap.Error(err))
+				return
+			}
+		}
+		// 5. 组装数据
+		configMap := make(map[string][]*models.LogKeywordConfigTable)
+		for _, c := range configs {
+			configMap[c.LogKeywordMonitor] = append(configMap[c.LogKeywordMonitor], c)
+		}
+		relMap := make(map[string][]*models.LogKeywordEndpointRelTable)
+		for _, r := range endpointRels {
+			relMap[r.LogKeywordMonitor] = append(relMap[r.LogKeywordMonitor], r)
+		}
+		endpointMap := make(map[string]*models.EndpointNewTable)
+		for _, e := range endpoints {
+			endpointMap[e.Guid] = e
+		}
+		for _, m := range monitors {
+			for _, c := range configMap[m.Guid] {
+				for _, r := range relMap[m.Guid] {
+					if r.SourceEndpoint == "" {
+						continue
+					}
+					endpoint := endpointMap[r.SourceEndpoint]
+					var agentAddress string
+					if endpoint != nil {
+						agentAddress = endpoint.AgentAddress
+					}
+					logKeywordConfigs = append(logKeywordConfigs, &models.LogKeywordCronJobQuery{
+						Guid:                 m.Guid,
+						ServiceGroup:         m.ServiceGroup,
+						LogPath:              m.LogPath,
+						MonitorType:          m.MonitorType,
+						Keyword:              c.Keyword,
+						NotifyEnable:         c.NotifyEnable,
+						Priority:             c.Priority,
+						Content:              c.Content,
+						Name:                 c.Name,
+						LogKeywordConfigGuid: c.Guid,
+						ActiveWindow:         c.ActiveWindow,
+						SourceEndpoint:       r.SourceEndpoint,
+						TargetEndpoint:       r.TargetEndpoint,
+						AgentAddress:         agentAddress,
+					})
+				}
+			}
+		}
+		// 分批处理，记录最后一条 guid
+		lastGuid = monitors[len(monitors)-1].Guid
+		if len(monitors) < batchSize {
+			break
+		}
+	}
 	if len(logKeywordConfigs) == 0 {
 		log.Debug(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
 		return

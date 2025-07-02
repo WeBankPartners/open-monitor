@@ -750,12 +750,12 @@ func CreateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err = db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
-		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
+		err = models.GetMessageMap(c).LogGroupNameDuplicateError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
+		err := models.GetMessageMap(c).LogGroupNameIllegalError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -796,12 +796,12 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName(param.LogMetricGroupGuid, param.Name, param.LogMetricMonitorGuid); err != nil {
-		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
+		err = models.GetMessageMap(c).LogGroupNameDuplicateError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
+		err := models.GetMessageMap(c).LogGroupNameIllegalError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -885,7 +885,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	if param.LogMetricMonitor != "" && param.MetricPrefixCode != "" {
-		if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricGroup.LogMetricMonitor); err != nil {
+		if prefixMap, err = db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitor); err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
@@ -902,7 +902,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		}
 		for _, v := range param.MetricList {
 			if _, existFlag := existMetricMap[v.Metric]; existFlag {
-				err = fmt.Errorf(models.GetMessageMap(c).MetricDuplicateError.Error(), v.Metric)
+				err = models.GetMessageMap(c).MetricDuplicateError.WithParam(v.Metric)
 				break
 			} else {
 				existMetricMap[v.Metric] = param.MonitorType
@@ -931,12 +931,12 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
-		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
+		err = models.GetMessageMap(c).LogGroupNameDuplicateError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
+		err := models.GetMessageMap(c).LogGroupNameIllegalError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -990,12 +990,12 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		}
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
-		err = fmt.Errorf(models.GetMessageMap(c).LogGroupNameDuplicateError.Error(), param.Name)
+		err = models.GetMessageMap(c).LogGroupNameDuplicateError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf(models.GetMessageMap(c).LogGroupNameIllegalError.Error(), param.Name)
+		err := models.GetMessageMap(c).LogGroupNameIllegalError.WithParam(param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -1008,7 +1008,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	for _, v := range param.MetricList {
 		if existLogMetricGroup, existFlag := existMetricMap[v.Metric]; existFlag {
 			if existLogMetricGroup != "" && existLogMetricGroup != param.Guid {
-				err = fmt.Errorf(models.GetMessageMap(c).MetricDuplicateError.Error(), v.Metric)
+				err = models.GetMessageMap(c).MetricDuplicateError.WithParam(v.Metric)
 				break
 			}
 		} else {

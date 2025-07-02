@@ -10,6 +10,10 @@ type LogKeywordMonitorTable struct {
 	UpdateTime   string `json:"update_time"`
 }
 
+func (LogKeywordMonitorTable) TableName() string {
+	return "log_keyword_monitor"
+}
+
 type LogKeywordConfigTable struct {
 	Guid              string     `json:"guid" xorm:"guid"`
 	LogKeywordMonitor string     `json:"log_keyword_monitor" xorm:"log_keyword_monitor"`
@@ -26,11 +30,19 @@ type LogKeywordConfigTable struct {
 	UpdateUser        string     `json:"update_user" xorm:"update_user"`
 }
 
+func (LogKeywordConfigTable) TableName() string {
+	return "log_keyword_config"
+}
+
 type LogKeywordEndpointRelTable struct {
 	Guid              string `json:"guid"`
 	LogKeywordMonitor string `json:"log_keyword_monitor"`
 	SourceEndpoint    string `json:"source_endpoint"`
 	TargetEndpoint    string `json:"target_endpoint"`
+}
+
+func (LogKeywordEndpointRelTable) TableName() string {
+	return "log_keyword_endpoint_rel"
 }
 
 type LogKeywordServiceGroupObj struct {

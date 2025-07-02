@@ -25,8 +25,18 @@ func handleCustomJob(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		returnJson(r, w, err, nil)
 	} else {
-		CreateJob(dateString)
+		go handleDayJob(dateString)
 		returnJson(r, w, err, "start 1min job success")
+	}
+}
+
+func handleDayJob(dayString string) {
+	for i := 0; i < 24; i++ {
+		jobId := fmt.Sprintf("%s_%d", dayString, i)
+		if i < 10 {
+			jobId = fmt.Sprintf("%s_0%d", dayString, i)
+		}
+		CreateJob(jobId)
 	}
 }
 

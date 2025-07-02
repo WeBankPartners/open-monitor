@@ -10,6 +10,7 @@ import (
 )
 
 var jobChannelList chan ArchiveActionList
+var archiveTime int64 = 3600
 
 func StartCronJob() {
 	concurrentInsertNum = 50
@@ -30,49 +31,54 @@ func StartCronJob() {
 	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
-	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
-	subSecond := t.Unix() + 86410 - time.Now().Unix()
+	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s :00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02 15")))
+	subSecond := t.Unix() + archiveTime + 10 - time.Now().Unix()
 	time.Sleep(time.Duration(subSecond) * time.Second)
-	c := time.NewTicker(24 * time.Hour).C
+	c := time.NewTicker(1 * time.Hour).C
 	for {
 		go func() {
-			if checkJobState() {
-				CreateJob("")
-				time.Sleep(10 * time.Minute)
-				ArchiveFromMysql(0)
+			jobId := time.Now().Add(-1 * time.Hour).Format("2006-01-02_15")
+			if checkJobState(jobId) {
+				CreateJob(jobId)
+				// time.Sleep(10 * time.Minute)
+				// ArchiveFromMysql(0)
 			}
 		}()
 		<-c
 	}
 }
 
-func CreateJob(dateString string) {
+// jobId -> 2025-06-30_10
+func CreateJob(jobId string) {
+	log.Printf("start CreateJob %s \n", jobId)
+	log.Printf("start InitMonitorMetricMap %s \n", jobId)
 	err := InitMonitorMetricMap()
 	if err != nil {
-		log.Printf("start to create job,init monitor metric map error: %v \n", err)
+		log.Printf("fail InitMonitorMetricMap,init monitor metric map error: %v \n", err)
 		return
 	}
+	log.Printf("end InitMonitorMetricMap %s \n", jobId)
 	var start, end int64
-	if dateString == "" {
-		t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
-		start = t.Unix() - 86400
+	if jobId == "" {
+		t, _ := time.Parse("2006-01-02_15:04:05 MST", fmt.Sprintf("%s:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02_15")))
+		start = t.Unix() - archiveTime
 		end = t.Unix()
-		dateString = time.Unix(start, 0).Format("2006-01-02")
 	} else {
-		t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
+		t, err := time.Parse("2006-01-02_15:04:05 MST", fmt.Sprintf("%s:00:00 "+DefaultLocalTimeZone, jobId))
 		if err != nil {
 			log.Printf("dateString validate fail,must format like 2006-01-02 \n")
 			return
 		}
 		start = t.Unix()
-		end = t.Unix() + 86400
+		end = t.Unix() + archiveTime
 	}
-	log.Printf("start cron job %s \n", dateString)
+	log.Printf("start createTable start:%s end:%s \n", time.Unix(start, 0).Format("2006-01-02_15:04:05"), time.Unix(end, 0).Format("2006-01-02_15:04:05"))
 	err, tableName := createTable(start, false)
 	if err != nil {
 		log.Printf("try to create table:%s error:%v \n", tableName, err)
 		return
 	}
+	log.Printf("end createTable %s \n", jobId)
 	unitCount := 0
 	actionParamObjLength := maxUnitNum * Config().Prometheus.MaxHttpOpen
 	var actionParamList []*ArchiveActionList
