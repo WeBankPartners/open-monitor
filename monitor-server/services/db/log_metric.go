@@ -585,17 +585,24 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_suc_rate" {
-		//result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
-		//	models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
-		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) > 0 or (sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) + 1))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code) > 0 or (sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code) + 1)))",
-			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+		// 使用总请求数的标签维度，没有请求时返回100%避免告警，有请求时计算实际成功率
+		result = fmt.Sprintf("(100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or 0)/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))) or (100 * absent(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)))",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
-		//result = fmt.Sprintf("100-100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
-		//	models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
-		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code) > 0 or (sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code) + 1)))",
-			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
-
+		// 使用总请求数的标签维度，确保在没有成功请求时失败率为100%而不是空值
+		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)-(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or (0 * sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code))))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code), 1))",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+	}
+	if metric == "req_costtime_avg" {
+		// 成功请求平均耗时，仅计算成功的请求耗时，没有成功请求时返回0，使用总请求数的标签维度
+		result = fmt.Sprintf("(sum(%s{key=\"%sreq_costtime_avg\",agg=\"sum\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or (0 * sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)))/(sum(%s{key=\"%sreq_costtime_avg\",agg=\"count\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or (0 * sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code) + 1))",
+			models.LogMetricName, metricPrefix, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+	}
+	if metric == "req_costtime_max" {
+		// 成功请求最大耗时，仅计算成功的请求耗时，没有成功请求时返回0，使用总请求数的标签维度
+		result = fmt.Sprintf("max(%s{key=\"%sreq_costtime_max\",agg=\"max\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code) or (0 * sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code))",
+			models.LogMetricName, metricPrefix, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	return
 }
@@ -1355,7 +1362,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		if param.MetricPrefixCode != "" {
 			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
 		}
-		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_fail_count_detail" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" || v.Metric == "req_costtime_avg" || v.Metric == "req_costtime_max" {
 			promExpr = getLogMetricRatePromExpr(v.Metric, param.MetricPrefixCode, v.AggType, serviceGroup, sucRetCode)
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
