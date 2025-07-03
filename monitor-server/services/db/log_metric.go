@@ -585,10 +585,10 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_suc_rate" {
-		// 使用最简单稳定的条件逻辑：有请求时计算实际成功率，无请求时返回100%
-		// 逻辑：(有请求时的成功率) + (无请求时的100%)，两者只有一个生效
-		result = fmt.Sprintf("(100*(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) or vector(0))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0), 1))*bool((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0)) > 0) + 100*bool((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0)) == 0)",
-			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+		// 使用稳定的算术表达式替代absent函数：当请求数为0时返回100%，否则返回实际成功率
+		// 逻辑：实际成功率 + 无请求时的100%补偿，两部分只有一个生效
+		result = fmt.Sprintf("100*sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"})/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}),1) + 100*((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or 0) == 0)",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
 		// 使用clamp_min防除零，基于实际标签值的失败率计算表达式
