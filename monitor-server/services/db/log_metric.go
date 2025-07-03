@@ -532,15 +532,8 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime, o
 	if param.ServiceGroup == "" || param.MonitorType == "" {
 		param.ServiceGroup, param.MonitorType = GetLogMetricServiceGroup(param.LogMetricMonitor)
 	}
-	// 对于比率指标，使用专门的函数生成表达式
-	var promExpr string
-	if param.Metric == "req_suc_rate" || param.Metric == "req_fail_rate" || param.Metric == "req_suc_count" || param.Metric == "req_fail_count" || param.Metric == "req_fail_count_detail" {
-		promExpr = getLogMetricRatePromExpr(param.Metric, "", param.AggType, param.ServiceGroup, "success")
-	} else {
-		promExpr = getLogMetricExprByAggType(param.Metric, param.AggType, param.ServiceGroup, []string{})
-	}
 	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?)",
-		Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, promExpr, param.ServiceGroup,
+		Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getLogMetricExprByAggType(param.Metric, param.AggType, param.ServiceGroup, []string{}), param.ServiceGroup,
 			models.MetricWorkspaceService, nowTime, param.Guid, nowTime, operator, operator}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
@@ -592,12 +585,10 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		return
 	}
 	if metric == "req_suc_rate" {
-		// 使用稳定的 or 逻辑替代不稳定的 absent() 函数
-		// 逻辑：分子使用成功数或无请求时为1，分母使用总请求数或无请求时为1
-		// 有请求时：实际成功数/总请求数 = 实际成功率
-		// 无请求时：1/1 = 100%
-		result = fmt.Sprintf("100*(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) or (sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) < 1))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or 1)",
-			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
+		// 使用最简单稳定的条件逻辑：有请求时计算实际成功率，无请求时返回100%
+		// 逻辑：(有请求时的成功率) + (无请求时的100%)，两者只有一个生效
+		result = fmt.Sprintf("(100*(sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) or vector(0))/clamp_min(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0), 1))*bool((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0)) > 0) + 100*bool((sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) or vector(0)) == 0)",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
 		// 使用clamp_min防除零，基于实际标签值的失败率计算表达式
@@ -627,14 +618,7 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, operator, 
 			serviceGroup, _ := GetLogMetricServiceGroup(param.LogMetricMonitor)
 			oldMetricGuid := fmt.Sprintf("%s__%s", logMetricConfigTable[0].Metric, serviceGroup)
 			newMetricGuid := fmt.Sprintf("%s__%s", param.Metric, serviceGroup)
-			// 对于比率指标，使用专门的函数生成表达式
-			var promExpr string
-			if param.Metric == "req_suc_rate" || param.Metric == "req_fail_rate" || param.Metric == "req_suc_count" || param.Metric == "req_fail_count" || param.Metric == "req_fail_count_detail" {
-				promExpr = getLogMetricRatePromExpr(param.Metric, "", param.AggType, serviceGroup, "success")
-			} else {
-				promExpr = getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup, []string{})
-			}
-			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, promExpr, operator, nowTime, oldMetricGuid}})
+			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup, []string{}), operator, nowTime, oldMetricGuid}})
 			var alarmStrategyTable []*models.AlarmStrategyTable
 			x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 			if len(alarmStrategyTable) > 0 {
@@ -1147,15 +1131,8 @@ func getUpdateLogMetricConfigByImport(inputLogMetric, existLogMetric *models.Log
 	if existLogMetric.Metric != inputLogMetric.Metric || existLogMetric.AggType != inputLogMetric.AggType {
 		oldMetricGuid := fmt.Sprintf("%s__%s", existLogMetric.Metric, inputLogMetric.ServiceGroup)
 		newMetricGuid := fmt.Sprintf("%s__%s", inputLogMetric.Metric, inputLogMetric.ServiceGroup)
-		// 对于比率指标，使用专门的函数生成表达式
-		var promExpr string
-		if inputLogMetric.Metric == "req_suc_rate" || inputLogMetric.Metric == "req_fail_rate" || inputLogMetric.Metric == "req_suc_count" || inputLogMetric.Metric == "req_fail_count" || inputLogMetric.Metric == "req_fail_count_detail" {
-			promExpr = getLogMetricRatePromExpr(inputLogMetric.Metric, "", inputLogMetric.AggType, inputLogMetric.ServiceGroup, "success")
-		} else {
-			promExpr = getLogMetricExprByAggType(inputLogMetric.Metric, inputLogMetric.AggType, inputLogMetric.ServiceGroup, []string{})
-		}
 		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=? where guid=?",
-			Param: []interface{}{newMetricGuid, inputLogMetric.Metric, promExpr, operator, nowTime, oldMetricGuid}})
+			Param: []interface{}{newMetricGuid, inputLogMetric.Metric, getLogMetricExprByAggType(inputLogMetric.Metric, inputLogMetric.AggType, inputLogMetric.ServiceGroup, []string{}), operator, nowTime, oldMetricGuid}})
 		var alarmStrategyTable []*models.AlarmStrategyTable
 		x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 		if len(alarmStrategyTable) > 0 {
@@ -2081,15 +2058,9 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			if len(inputMetricObj.TagConfigList) > 0 {
 				tmpTagList = []string{"tags"}
 			}
-			// 对于比率指标，使用专门的函数生成表达式
-			var promExpr string
-			if inputMetricObj.Metric == "req_suc_rate" || inputMetricObj.Metric == "req_fail_rate" || inputMetricObj.Metric == "req_suc_count" || inputMetricObj.Metric == "req_fail_count" || inputMetricObj.Metric == "req_fail_count_detail" {
-				promExpr = getLogMetricRatePromExpr(inputMetricObj.Metric, "", inputMetricObj.AggType, serviceGroup, "success")
-			} else {
-				promExpr = getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, tmpTagList)
-			}
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
+				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup,
+					tmpTagList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 		} else {
 			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
@@ -2101,15 +2072,8 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				if len(inputMetricObj.TagConfigList) > 0 {
 					tmpTagList = []string{"tags"}
 				}
-				// 对于比率指标，使用专门的函数生成表达式
-				var promExpr string
-				if inputMetricObj.Metric == "req_suc_rate" || inputMetricObj.Metric == "req_fail_rate" || inputMetricObj.Metric == "req_suc_count" || inputMetricObj.Metric == "req_fail_count" || inputMetricObj.Metric == "req_fail_count_detail" {
-					promExpr = getLogMetricRatePromExpr(inputMetricObj.Metric, "", inputMetricObj.AggType, serviceGroup, "success")
-				} else {
-					promExpr = getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, tmpTagList)
-				}
 				actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=?,log_metric_group=? where guid=?",
-					Param: []interface{}{newMetricGuid, inputMetricObj.Metric, promExpr, operator, nowTime, param.Guid, oldMetricGuid}})
+					Param: []interface{}{newMetricGuid, inputMetricObj.Metric, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, tmpTagList), operator, nowTime, param.Guid, oldMetricGuid}})
 				var alarmStrategyTable []*models.AlarmStrategyTable
 				x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 				if len(alarmStrategyTable) > 0 {
