@@ -90,7 +90,7 @@ cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
 /bin/cp -f base.yml rules/
-nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
+cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 mkdir -p logs
 #nohup ./ping_exporter > logs/app.log 2>&1 &
