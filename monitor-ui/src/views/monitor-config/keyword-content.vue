@@ -208,6 +208,7 @@
           <span>{{$t('m_tableKey_path')}}:</span>
           <Input :disabled="!isEditState" style="width: 640px" v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
+        <span v-if="!this.addAndEditModal.isAdd && isSystemConfigurationTipsShow" style="color: red">{{$t('m_recommended_system_configuration_tips')}}</span>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
@@ -985,6 +986,7 @@ export default {
       actionType: '',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      isSystemConfigurationTipsShow: false
     }
   },
   computed: {
@@ -1040,7 +1042,6 @@ export default {
     // other config
     editF(rowData) {
       this.service_group = rowData.service_group
-      this.getEndpoint(rowData.monitor_type, 'host')
       this.cancelAddAndEdit()
       this.addAndEditModal.isAdd = false
       this.addAndEditModal.addRow = rowData
@@ -1048,7 +1049,8 @@ export default {
       this.addAndEditModal.dataConfig.service_group = rowData.service_group
       this.addAndEditModal.dataConfig.monitor_type = rowData.monitor_type
       this.addAndEditModal.dataConfig.log_path = rowData.log_path
-      this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
+      this.addAndEditModal.dataConfig.endpoint_rel = cloneDeep(rowData.endpoint_rel)
+      this.getEndpoint(rowData.monitor_type, 'host')
       this.addAndEditModal.isShow = true
     },
     saveFileDetail(item) {
@@ -1166,8 +1168,13 @@ export default {
       }
     },
     async getEndpoint(val, type) {
-      this.addAndEditModal.dataConfig.endpoint_rel = []
-      await this.getDefaultConfig(val, type)
+      if (isEmpty(this.addAndEditModal.dataConfig.endpoint_rel)) {
+        this.addAndEditModal.dataConfig.endpoint_rel = []
+        this.isSystemConfigurationTipsShow = true
+        await this.getDefaultConfig(val, type)
+      } else {
+        this.isSystemConfigurationTipsShow = false
+      }
       const sourceApi = this.apiCenter.getEndpointsByType + '/' + (this.isEditState ? this.targetId : this.service_group) + '/endpoint/' + type
       this.request('GET', sourceApi, '', responseData => {
         this.sourceEndpoints = responseData

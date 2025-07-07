@@ -37,7 +37,7 @@
               <Input
                 v-model.trim="metricPrefixCode"
                 maxlength="15"
-                :disabled="!isAdd || view"
+                :disabled="isOperationBoxDisabled()"
                 show-word-limit
                 :placeholder="$t('m_metric_code_placeholder')"
                 style="width:96%"
@@ -1050,6 +1050,9 @@ export default {
         return true
       }
       if (this.isInTemplatePage || this.isBaseCustomeAdd) {
+        return false
+      }
+      if (!this.isInTemplatePage && !this.templateGuid) {
         return false
       }
       if (!isEmpty(item) && type) {

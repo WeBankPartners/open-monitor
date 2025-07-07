@@ -571,6 +571,7 @@
   "m_copy_success": "复制成功",
   "m_repeated_value": "重复值",
   "m_disable": "禁用",
-  "m_disabled_confirm_tip": "确认将该条数据禁用"
+  "m_disabled_confirm_tip": "确认将该条数据禁用",
+  "m_recommended_system_configuration_tips": "以下映射是系统推荐，需要【保存】才能生效"
 }
 
