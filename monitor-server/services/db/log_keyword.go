@@ -519,7 +519,7 @@ func doLogKeywordMonitorJob() {
 		return
 	}
 	var alarmTable []*models.LogKeywordAlarmTable
-	err = x.SQL("select * from log_keyword_alarm").Find(&alarmTable)
+	err = x.SQL("select * from log_keyword_alarm order by id desc").Find(&alarmTable)
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Check log keyword break with query exist closed alarm fail", zap.Error(err))
 		return
@@ -533,7 +533,6 @@ func doLogKeywordMonitorJob() {
 	}
 	var addAlarmRows []*models.AlarmTable
 	var newValue, oldValue float64
-	//notifyMap := make(map[string]string)
 	nowTime := time.Now()
 	notifyConfigMap := make(map[string]int)
 	for _, config := range logKeywordConfigs {
@@ -563,9 +562,13 @@ func doLogKeywordMonitorJob() {
 				oldValue = existAlarm.StartValue
 			}
 			if newValue == oldValue {
-				if v, existKey := previousResult[key]; existKey && newValue > v {
+				if v, existKey := previousResult[key]; existKey && (newValue > v || (newValue == v && previousResult[key+"_reset"] == 1)) {
 					// 说明数据被重置过了 也需要告警
-					log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset", zap.String("key", key))
+					log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset detected",
+						zap.String("key", key),
+						zap.Float64("newValue", newValue),
+						zap.Float64("oldValue", oldValue),
+						zap.Float64("previousValue", v))
 				} else {
 					continue
 				}
