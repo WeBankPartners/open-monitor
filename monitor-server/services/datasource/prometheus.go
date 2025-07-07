@@ -456,14 +456,15 @@ func QueryPromQLMetric(promQl, address string, start, end int64) (metricList []s
 }
 
 // QueryLogKeywordData keywordMode -> log | db
-func QueryLogKeywordData(keywordMode string) (result map[string]float64, err error) {
+func QueryLogKeywordData(keywordMode string) (result, previousResult map[string]float64, err error) {
 	result = make(map[string]float64)
+	previousResult = make(map[string]float64)
 	queryQl := "node_log_monitor_count_total"
 	if keywordMode == "db" {
 		queryQl = "db_keyword_value"
 	}
 	nowTime := time.Now().Unix()
-	queryResult, queryErr := QueryPrometheusRange(queryQl, nowTime-10, nowTime, 10)
+	queryResult, queryErr := QueryPrometheusRange(queryQl, nowTime-30, nowTime, 10)
 	if queryErr != nil {
 		err = queryErr
 		return
@@ -485,6 +486,11 @@ func QueryLogKeywordData(keywordMode string) (result map[string]float64, err err
 		if len(otr.Values) > 0 {
 			tmpValue, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
 		}
+		// previousResult 存储30s内最久之前数据
+		if _, ok := previousResult[key]; !ok {
+			previousResult[key] = tmpValue
+		}
+		// result 存储最近最新数据
 		result[key] = tmpValue
 	}
 	return

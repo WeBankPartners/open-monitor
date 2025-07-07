@@ -398,7 +398,7 @@ func StartLogKeywordMonitorCronJob() {
 
 func doLogKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
-	dataMap, err := datasource.QueryLogKeywordData("log")
+	dataMap, previousResult, err := datasource.QueryLogKeywordData("log")
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Check log keyword break with get prometheus data", zap.Error(err))
 		return
@@ -548,11 +548,11 @@ func doLogKeywordMonitorJob() {
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig", zap.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig", zap.String("key", key))
 			continue
 		}
 		if newValue == 0 {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore lgoKeywordConfig with empty value", zap.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig with empty value", zap.String("key", key))
 			continue
 		}
 		addFlag := false
@@ -563,7 +563,12 @@ func doLogKeywordMonitorJob() {
 				oldValue = existAlarm.StartValue
 			}
 			if newValue == oldValue {
-				continue
+				if v, existKey := previousResult[key]; existKey && newValue > v {
+					// 说明数据被重置过了 也需要告警
+					log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset", zap.String("key", key))
+				} else {
+					continue
+				}
 			}
 			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
@@ -577,9 +582,6 @@ func doLogKeywordMonitorJob() {
 			}
 		}
 		if addFlag {
-			//if config.NotifyEnable > 0 {
-			//	notifyMap[key] = config.ServiceGroup
-			//}
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
 			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
