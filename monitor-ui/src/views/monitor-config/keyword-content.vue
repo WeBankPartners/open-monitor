@@ -1105,7 +1105,7 @@ export default {
     fillingFormData(rowData) {
       for (const key in this.formData) {
         if (hasIn(rowData, key)) {
-          Vue.set(this.formData, key, rowData[key])
+          Vue.set(this.formData, key, cloneDeep(rowData[key]))
         }
       }
       this.formData.notify = isEmpty(this.formData.notify) ? cloneDeep(initNotify) : this.formData.notify
