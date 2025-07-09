@@ -19,6 +19,7 @@
           size="small"
           :columns="alarmItemTableColumns"
           :data="tableItem.tableData"
+          :span-method="e => handleMergeSpan(e, tableIndex)"
         />
         <div class="alarm-tips" style="margin-top:16px">
           <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
@@ -1207,6 +1208,7 @@ export default {
         this.request('POST', this.apiCenter.alarmStrategyQuery, params, responseData => {
           this.$emit('feedbackInfo', responseData.length === 0)
           const allConfigDetail = responseData
+
           allConfigDetail.forEach((item, alarmIndex) => {
             const strategy = item.strategy || []
             const tempTableData = strategy.map(s => {
@@ -1246,19 +1248,19 @@ export default {
     cancelModal() {
       this.closeAddEditModal()
     },
-    // handleMergeSpan({ row, rowIndex, columnIndex }, index) {
-    //   if ([6,7,8,11].includes(columnIndex)) {
-    //     return
-    //   }
-    //   const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
-    //   const spanMap = mergeSpanMap[row.guid]
-    //   if (rowIndex === spanMap.startRowIndex) {
-    //     return [spanMap.colSpan,1]
-    //   }
-    //   if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
-    //     return [0,0]
-    //   }
-    // },
+    handleMergeSpan({ row, rowIndex, columnIndex }, index) {
+      if ([6,7,8,11].includes(columnIndex)) {
+        return
+      }
+      const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap
+      const spanMap = mergeSpanMap[row.guid]
+      if (rowIndex === spanMap.startRowIndex) {
+        return [spanMap.colSpan,1]
+      }
+      if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
+        return [0,0]
+      }
+    },
     findTagsByMetric(metricId) {
       // const api = '/monitor/api/v2/metric/tag/value-list'
       const params = {

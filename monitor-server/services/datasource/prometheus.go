@@ -456,14 +456,15 @@ func QueryPromQLMetric(promQl, address string, start, end int64) (metricList []s
 }
 
 // QueryLogKeywordData keywordMode -> log | db
-func QueryLogKeywordData(keywordMode string) (result map[string]float64, err error) {
+func QueryLogKeywordData(keywordMode string) (result, previousResult map[string]float64, err error) {
 	result = make(map[string]float64)
+	previousResult = make(map[string]float64)
 	queryQl := "node_log_monitor_count_total"
 	if keywordMode == "db" {
 		queryQl = "db_keyword_value"
 	}
 	nowTime := time.Now().Unix()
-	queryResult, queryErr := QueryPrometheusRange(queryQl, nowTime-10, nowTime, 10)
+	queryResult, queryErr := QueryPrometheusRange(queryQl, nowTime-30, nowTime, 10)
 	if queryErr != nil {
 		err = queryErr
 		return
@@ -481,11 +482,43 @@ func QueryLogKeywordData(keywordMode string) (result map[string]float64, err err
 	}
 	for _, otr := range queryResult.Result {
 		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", otr.Metric["e_guid"], otr.Metric["t_guid"], otr.Metric["file"], otr.Metric["keyword"])
-		tmpValue := float64(0)
+		firstValue := float64(0)
+		lastestValue := float64(0)
 		if len(otr.Values) > 0 {
-			tmpValue, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+			var sdata m.DataSort
+			for _, v := range otr.Values {
+				tmpTime := v[0].(float64) * 1000
+				tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
+				sdata = append(sdata, []float64{tmpTime, tmpValue})
+			}
+			sort.Sort(sdata)
+			firstValue = sdata[0][1]
+			lastestValue = sdata[len(sdata)-1][1]
+
+			// 检测30s内counter数据是否有减少情况，表示有重置
+			hasReset := false
+			if len(sdata) > 1 {
+				var prevValue float64
+				for i, v := range sdata {
+					// 从第二个数据点开始比较
+					if i > 0 && v[1] < prevValue {
+						hasReset = true
+						break
+					}
+					prevValue = v[1]
+				}
+			}
+
+			previousResult[key+"_reset"] = 0
+			// 设置重置标记
+			if hasReset {
+				previousResult[key+"_reset"] = 1
+			}
 		}
-		result[key] = tmpValue
+		// previousResult 存储30s内最久之前数据
+		previousResult[key] = firstValue
+		// result 存储最近最新数据
+		result[key] = lastestValue
 	}
 	return
 }

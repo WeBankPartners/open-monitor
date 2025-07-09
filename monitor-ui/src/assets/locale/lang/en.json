@@ -571,5 +571,6 @@
   "m_copy_success": "Copy Success",
   "m_repeated_value": "Repeated Value",
   "m_disable": "Disabled",
-  "m_disabled_confirm_tip": "Confirm To Disable Data"
+  "m_disabled_confirm_tip": "Confirm To Disable Data",
+  "m_recommended_system_configuration_tips": "The following mapping is recommended by the system and needs to be saved to take effect"
 }

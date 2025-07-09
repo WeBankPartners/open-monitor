@@ -275,7 +275,7 @@ func StartDbKeywordMonitorCronJob() {
 
 func doDbKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
-	dataMap, err := datasource.QueryLogKeywordData("db")
+	dataMap, previousResult, err := datasource.QueryLogKeywordData("db")
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Check log keyword break with get prometheus data", zap.Error(err))
 		return
@@ -333,7 +333,12 @@ func doDbKeywordMonitorJob() {
 			}
 			log.Debug(nil, log.LOGGER_APP, "doDbKeywordMonitorJob match exist alarm", zap.String("key", key), zap.Float64("newValue", newValue), zap.Float64("oldValue", oldValue), zap.String("status", existAlarm.Status))
 			if newValue == oldValue {
-				continue
+				if v, existKey := previousResult[key]; existKey && newValue > v {
+					// 说明数据被重置过了 也需要告警
+					log.Info(nil, log.LOGGER_APP, "doDbKeywordMonitorJob Counter reset", zap.String("key", key))
+				} else {
+					continue
+				}
 			}
 			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
 				getLastRowObj := models.DbLastKeywordDto{KeywordGuid: config.Guid, Endpoint: config.TargetEndpoint}
@@ -352,9 +357,6 @@ func doDbKeywordMonitorJob() {
 			}
 		}
 		if addFlag {
-			//if config.NotifyEnable > 0 {
-			//	notifyMap[key] = config.ServiceGroup
-			//}
 			alarmContent := config.Content
 			if alarmContent != "" {
 				alarmContent = alarmContent + "<br/>"

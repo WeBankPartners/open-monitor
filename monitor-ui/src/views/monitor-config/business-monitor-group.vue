@@ -1124,7 +1124,7 @@ export default {
       this.addAndEditModal.dataConfig.service_group = rowData.service_group
       this.addAndEditModal.dataConfig.monitor_type = rowData.monitor_type
       this.addAndEditModal.dataConfig.log_path = rowData.log_path
-      this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
+      this.addAndEditModal.dataConfig.endpoint_rel = cloneDeep(rowData.endpoint_rel)
       this.addAndEditModal.isShow = true
     },
     updateReg(reg) {
