@@ -704,6 +704,10 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 		if !addFlag {
 			continue
 		}
+		if !checkPathLegal(paramObj.Path) {
+			level.Warn(monitorLogger).Log("log metric checkPathLegal:", fmt.Sprintf("serviceGroup:%s,path:%s", paramObj.ServiceGroup, paramObj.Path))
+			continue
+		}
 		// add config
 		newLogMetricObj := logMetricMonitorNeObj{Path: paramObj.Path, ServiceGroup: paramObj.ServiceGroup, Lock: new(sync.RWMutex)}
 		newLogMetricObj.new(paramObj)
@@ -1213,4 +1217,15 @@ func listMatchLogPath(inputPath string) (result []string) {
 		}
 	}
 	return
+}
+
+func checkPathLegal(path string) bool {
+	if strings.HasSuffix(path, "/") {
+		return false
+	}
+	re := regexp.MustCompile(`^\/([\w|\.|\-|\*]+\/?)+$`)
+	if re.MatchString(path) {
+		return true
+	}
+	return false
 }
