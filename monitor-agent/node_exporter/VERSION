@@ -53,3 +53,6 @@ Fix cpu high && change file watch mode
 
 v3.5.3.1
 Fix process name with upper letters 
+
+v3.6.2.4
+Add log path validation

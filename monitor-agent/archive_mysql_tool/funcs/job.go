@@ -33,6 +33,7 @@ func StartCronJob() {
 	go consumeJob()
 	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s :00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02 15")))
 	subSecond := t.Unix() + archiveTime + 10 - time.Now().Unix()
+	log.Printf("StartCronJob wait second: %d, targetUnix:%d archiveUnix:%d nowUnix:%d \n", subSecond, t.Unix(), archiveTime, time.Now().Unix())
 	time.Sleep(time.Duration(subSecond) * time.Second)
 	c := time.NewTicker(1 * time.Hour).C
 	for {

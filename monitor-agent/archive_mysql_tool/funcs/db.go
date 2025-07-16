@@ -113,21 +113,21 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	}
 	gErrMessage := ""
 	for sqlIndex, v := range sqlList {
-		// var tmpErr error
-		_, tmpErr := mysqlEngine.Exec(v)
-		// for i := 0; i < 3; i++ {
-		// 	//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
-		// 	_, err := mysqlEngine.Exec(v)
-		// 	if err != nil {
-		// 		tmpErr = err
-		// 	} else {
-		// 		tmpErr = nil
-		// 		break
-		// 	}
-		// 	if i < 2 {
-		// 		time.Sleep(time.Duration(retryWaitSecond) * time.Second)
-		// 	}
-		// }
+		var tmpErr error
+		// _, tmpErr := mysqlEngine.Exec(v)
+		for i := 0; i < 3; i++ {
+			//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
+			_, err := mysqlEngine.Exec(v)
+			if err != nil {
+				tmpErr = err
+			} else {
+				tmpErr = nil
+				break
+			}
+			if i < 2 {
+				time.Sleep(time.Duration(retryWaitSecond) * time.Second)
+			}
+		}
 		if tmpErr != nil {
 			log.Printf("Exec sql error:%s sql:%s \n", tmpErr.Error(), v)
 			tmpErrorString := tmpErr.Error()
