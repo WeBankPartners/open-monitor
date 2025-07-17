@@ -34,9 +34,21 @@ func InitDbEngine(databaseName string) (err error) {
 	if err != nil {
 		log.Printf("init mysql fail with connect: %s error: %v \n", connectStr, err)
 	} else {
-		mysqlEngine.SetMaxIdleConns(Config().Mysql.MaxIdle)
-		mysqlEngine.SetMaxOpenConns(Config().Mysql.MaxOpen)
-		mysqlEngine.SetConnMaxLifetime(time.Duration(Config().Mysql.Timeout) * time.Second)
+		maxOpen := Config().Mysql.MaxOpen
+		maxIdle := Config().Mysql.MaxIdle
+		timeout := Config().Mysql.Timeout
+		if maxOpen <= 0 {
+			maxOpen = 150
+		}
+		if maxIdle <= 0 {
+			maxIdle = 100
+		}
+		if timeout <= 0 {
+			timeout = 60
+		}
+		mysqlEngine.SetMaxIdleConns(maxIdle)
+		mysqlEngine.SetMaxOpenConns(maxOpen)
+		mysqlEngine.SetConnMaxLifetime(time.Duration(timeout) * time.Second)
 		mysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
