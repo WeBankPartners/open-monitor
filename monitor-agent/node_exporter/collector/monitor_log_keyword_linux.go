@@ -3,15 +3,16 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/hpcloud/tail"
-	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/hpcloud/tail"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type logMonitorCollector struct {
@@ -355,6 +356,10 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 			}
 		}
 		if exist {
+			continue
+		}
+		if !checkPathLegal(inputParam.Path) {
+			level.Warn(monitorLogger).Log("log keyword checkPathLegal:", fmt.Sprintf("serviceGroup:%s,path:%s", inputParam.Keywords, inputParam.Path))
 			continue
 		}
 		// Add collector

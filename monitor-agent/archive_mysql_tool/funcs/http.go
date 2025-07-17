@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,16 @@ func InitHttpHandles() {
 
 func handleCustomJob(w http.ResponseWriter, r *http.Request) {
 	dateString := r.FormValue("date")
+	if strings.Contains(dateString, "_") {
+		_, err := time.Parse("2006-01-02_15:04:05 MST", fmt.Sprintf("%s:00:00 "+DefaultLocalTimeZone, dateString))
+		if err != nil {
+			returnJson(r, w, err, nil)
+		} else {
+			go CreateJob(dateString)
+			returnJson(r, w, err, "start 1min job success")
+		}
+		return
+	}
 	_, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
 	if err != nil {
 		returnJson(r, w, err, nil)
