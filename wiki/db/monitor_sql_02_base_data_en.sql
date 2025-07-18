@@ -1292,3 +1292,6 @@ alter table log_monitor_template add column auto_dashboard tinyint(1) default 0 
 alter table log_metric_group add column status varchar(20) default 'enable' COMMENT '是否启用,默认启用';
 alter table alarm modify column alarm_name varchar(150) default null comment '告警名称';
 #@v3.5.8-end@;
+#@v3.6.4-begin@;
+alter table role_new add disable tinyint(4) COMMENT '角色禁用:0表示启用,1表示禁用';
+#@v3.6.4-end@;

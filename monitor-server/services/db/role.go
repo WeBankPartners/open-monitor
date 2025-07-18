@@ -42,41 +42,48 @@ func SyncCoreRoleList() {
 		log.Warn(nil, log.LOGGER_APP, "Get core role key fail with no data")
 		return
 	}
-	var tableData, insertData, updateData []*models.RoleNewTable
-	x.SQL("SELECT * FROM role_new").Find(&tableData)
+	var tableData []*models.RoleNewTable
+	err = x.SQL("SELECT guid,display_name,email,disable FROM role_new").Find(&tableData)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "Get role new table data fail", zap.Error(err))
+		return
+	}
+	// 1. 先禁用本地所有不在平台返回列表中的角色
+	platformGuids := make(map[string]struct{})
 	for _, v := range result.Data {
-		var existFlag, updateFlag bool
-		for _, vv := range tableData {
-			if vv.Guid == v.Name {
+		platformGuids[v.Name] = struct{}{}
+	}
+	for _, local := range tableData {
+		if _, ok := platformGuids[local.Guid]; !ok && local.Disable == 0 {
+			_, err = x.SQL("UPDATE role_new SET disable=1,update_time=? WHERE guid=?", time.Now().Format("2006-01-02 15:04:05"), local.Guid)
+			if err != nil {
+				log.Error(nil, log.LOGGER_APP, "Disable role new fail", zap.Error(err), zap.String("guid", local.Guid))
+			}
+		}
+	}
+	// 2. 插入/更新平台返回的角色（disable=0）
+	for _, v := range result.Data {
+		var existFlag bool
+		for _, local := range tableData {
+			if local.Guid == v.Name {
 				existFlag = true
-				if vv.DisplayName != v.DisplayName || vv.Email != v.Email {
-					updateFlag = true
+				if local.DisplayName != v.DisplayName || local.Email != v.Email || local.Disable == 1 {
+					_, err = x.SQL("UPDATE role_new SET display_name=?,email=?,disable=0,update_time=? WHERE guid=?", v.DisplayName, v.Email, time.Now().Format("2006-01-02 15:04:05"), v.Name)
+					if err != nil {
+						log.Error(nil, log.LOGGER_APP, "Update role new fail", zap.Error(err), zap.String("guid", v.Name))
+					}
 				}
 				break
 			}
 		}
 		if !existFlag {
-			insertData = append(insertData, &models.RoleNewTable{Guid: v.Name, DisplayName: v.DisplayName, Email: v.Email})
-			continue
-		}
-		if updateFlag {
-			updateData = append(updateData, &models.RoleNewTable{Guid: v.Name, DisplayName: v.DisplayName, Email: v.Email})
-		}
-	}
-	nowTime := time.Now().Format(models.DatetimeFormat)
-	var actions []*Action
-	for _, v := range insertData {
-		actions = append(actions, &Action{Sql: "insert into role_new(guid,display_name,email,update_time) value (?,?,?,?)", Param: []interface{}{v.Guid, v.DisplayName, v.Email, nowTime}})
-	}
-	for _, v := range updateData {
-		actions = append(actions, &Action{Sql: "update role_new set display_name=?,email=?,update_time=? where guid=?", Param: []interface{}{v.DisplayName, v.Email, nowTime, v.Guid}})
-	}
-	if len(actions) > 0 {
-		err = Transaction(actions)
-		if err != nil {
-			log.Error(nil, log.LOGGER_APP, "Sync core role fail", zap.Error(err))
+			_, err = x.SQL("INSERT INTO role_new (guid,display_name,email,disable,update_time) VALUES (?,?,?,?,?)", v.Name, v.DisplayName, v.Email, 0, time.Now().Format("2006-01-02 15:04:05"))
+			if err != nil {
+				log.Error(nil, log.LOGGER_APP, "Insert role new fail", zap.Error(err), zap.String("guid", v.Name))
+			}
 		}
 	}
+	log.Debug(nil, log.LOGGER_APP, "Sync role list end")
 }
 
 func ExistRoles() bool {

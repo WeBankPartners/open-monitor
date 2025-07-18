@@ -236,15 +236,15 @@ func ListRole(search string, page, size int) (err error, data m.TableData) {
 	var count []int
 	var whereSql string
 	if search != "" {
-		whereSql = "where (name LIKE '%" + search + "%' OR display_name LIKE '%" + search + "%') AND disable=0 "
+		whereSql = "where (guid LIKE '%" + search + "%' OR display_name LIKE '%" + search + "%') "
 	} else {
 		whereSql = "where disable=0 "
 	}
-	err = x.SQL("SELECT id,name,display_name,email FROM role " + whereSql + fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
-	x.SQL("SELECT count(1) num FROM role " + whereSql).Find(&count)
+	err = x.SQL("SELECT guid as id,guid as name,display_name,email FROM role_new WHERE disable=0 " + whereSql + fmt.Sprintf(" ORDER BY guid LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
+	x.SQL("SELECT count(1) num FROM role_new  " + whereSql).Find(&count)
 	if len(roles) > 0 {
 		for _, v := range roles {
-			v.CreatedString = v.Created.Format(m.DatetimeFormat)
+			v.CreatedString = time.Now().Format(m.DatetimeFormat)
 		}
 		data.Data = roles
 	} else {
@@ -261,16 +261,16 @@ func ListRole(search string, page, size int) (err error, data m.TableData) {
 }
 
 func ListManageRole(roles []string) (result []*m.RoleTable, err error) {
-	var roleList []*m.RoleTable
+	var roleList []*m.RoleNewTable
 	result = []*m.RoleTable{}
-	if err = x.SQL("SELECT id,name,display_name FROM role where disable=0").Find(&roleList); err != nil {
+	if err = x.SQL("SELECT guid,display_name FROM role_new WHERE disable=0").Find(&roleList); err != nil {
 		return
 	}
 	if len(roles) > 0 && len(roleList) > 0 {
 		for _, roleTable := range roleList {
 			for _, role := range roles {
-				if roleTable.Name == role {
-					result = append(result, roleTable)
+				if roleTable.Guid == role {
+					result = append(result, &m.RoleTable{Id: 0, Name: roleTable.Guid, DisplayName: roleTable.DisplayName})
 				}
 			}
 		}
@@ -377,7 +377,7 @@ func SyncCoreRole() {
 		actions = append(actions, &Action{Sql: fmt.Sprintf("INSERT INTO role(name,display_name) VALUE ('%s','%s')", v.Name, v.DisplayName)})
 	}
 	for _, v := range updateData {
-		actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE role SET display_name='%s',disable=0 WHERE name='%s'", v.DisplayName, v.Name)})
+		actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE role SET display_name='%s',email='%s',disable=0 WHERE name='%s'", v.DisplayName, v.Email, v.Name)})
 	}
 	for _, v := range deleteData {
 		actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE role SET disable=1 WHERE name='%s'", v.Name)})
@@ -611,7 +611,7 @@ func GetRoleMap() (roleMap map[string]string) {
 	SyncCoreRoleList()
 	roleMap = make(map[string]string)
 	var roleTable []*m.RoleNewTable
-	x.SQL("select * from role_new").Find(&roleTable)
+	x.SQL("select * from role_new WHERE disable=0").Find(&roleTable)
 	for _, v := range roleTable {
 		roleMap[v.Guid] = v.Email
 	}
@@ -637,7 +637,7 @@ func CheckRoleList(param string) string {
 		tmpMap[v] = 0
 	}
 	var roleTable []*m.RoleNewTable
-	x.SQL("select guid from role_new").Find(&roleTable)
+	x.SQL("select guid from role_new WHERE disable=0").Find(&roleTable)
 	for k, _ := range tmpMap {
 		var tableData []*m.RoleTable
 		x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)

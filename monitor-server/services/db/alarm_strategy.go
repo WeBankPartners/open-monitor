@@ -1095,9 +1095,9 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 	result.Subject, result.Content = getNotifyMessage(&alarmObj)
 	var roles []*models.RoleNewTable
 	if notifyObj.ServiceGroup != "" {
-		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notifyObj.ServiceGroup).Find(&roles)
+		x.SQL("select guid,email from role_new where disable=0 and guid in (select `role` from service_group_role_rel where service_group=?)", notifyObj.ServiceGroup).Find(&roles)
 	} else {
-		x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+		x.SQL("select guid,email,phone from `role_new` where disable=0 and guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
 	}
 	var email, phone, role []string
 	emailExistMap := make(map[string]int)
@@ -1137,12 +1137,12 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	var toAddress, roleList, tmpToAddress []string
 	var queryRoleErr error
 	if notify.ServiceGroup != "" {
-		queryRoleErr = x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
+		queryRoleErr = x.SQL("select guid,email from role_new where disable=0 and guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
 	} else {
 		if len(notify.AffectServiceGroup) > 0 {
-			queryRoleErr = x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=? union select `role` from service_group_role_rel where service_group in ('"+strings.Join(notify.AffectServiceGroup, "','")+"'))", notify.Guid).Find(&roles)
+			queryRoleErr = x.SQL("select guid,email from `role_new` where disable=0 and guid in (select `role` from notify_role_rel where notify=? union select `role` from service_group_role_rel where service_group in ('"+strings.Join(notify.AffectServiceGroup, "','")+"'))", notify.Guid).Find(&roles)
 		} else {
-			queryRoleErr = x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+			queryRoleErr = x.SQL("select guid,email from `role_new` where disable=0 and guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
 		}
 	}
 	if queryRoleErr != nil {
