@@ -138,11 +138,13 @@ export default {
         this.endpointObject = {}
       }
     },
-    async isShow() {
-      this.clearEndpoint = []
-      this.$parent.showCharts = false
-      this.$parent.showRecursive = false
-      await this.getEndpointList('.')
+    async isShow(val) {
+      if (!val) {
+        this.clearEndpoint = []
+        this.$parent.showCharts = false
+        this.$parent.showRecursive = false
+        await this.getEndpointList('.')
+      }
     }
   },
   async mounted() {
@@ -219,8 +221,9 @@ export default {
       this.compareSecondDate = data
     },
     debounceGetEndpointList: debounce(function (query) {
-      const finalQuery = query ? query : '.'
-      this.getEndpointList(finalQuery)
+      if (query) {
+        this.getEndpointList(query)
+      }
     }, 500),
     async getEndpointList(query = '.') {
       return new Promise(async resolve => {
