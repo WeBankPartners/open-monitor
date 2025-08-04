@@ -968,7 +968,7 @@ export default {
       this.currentAlarmListIndex = rowData.alarmListIndex
       this.selectedData = rowData
       const api = this.getMetricListPath(rowData)
-      this.request('GET', api, '', responseData => {
+      this.request('GET', api, '', async responseData => {
         this.modelConfig.metricList = responseData
         this.modelConfig.isAdd = false
         this.modelConfig.modalTitle = 'm_button_edit',
@@ -1234,7 +1234,8 @@ export default {
         this.totalPageConfig = []
       }
     },
-    onAddIconClick() {
+    async onAddIconClick() {
+      await this.getInitialTags()
       const metricItem = Object.assign({}, cloneDeep(initFormData.conditions[0]), {
         metric: this.modelConfig.metricList[0].guid,
         tags: cloneDeep(this.initialTags),
