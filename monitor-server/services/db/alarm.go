@@ -2035,8 +2035,8 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.NotifyEnable = alarmConditionObj.NotifyEnable
 			alarmRow.NotifyId = alarmConditionObj.NotifyId
 			alarmRow.NotifyDelay = alarmConditionObj.NotifyDelay
-			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-				alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
+			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+				0, alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
 			if insertErr != nil {
 				err = fmt.Errorf("insert alarm fail,%s ", insertErr.Error())
 				return
