@@ -3,13 +3,14 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"net/http"
-	"strings"
 )
 
 func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
@@ -126,6 +127,9 @@ func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFile
 		}
 		if v.MonitorType == "ping" || v.MonitorType == "telnet" || v.MonitorType == "http" {
 			if v.AgentAddress == "" {
+				continue
+			}
+			if v.Ip != "" && strings.Contains(v.AgentAddress, v.Ip) {
 				continue
 			}
 		}

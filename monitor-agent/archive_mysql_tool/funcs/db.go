@@ -34,9 +34,21 @@ func InitDbEngine(databaseName string) (err error) {
 	if err != nil {
 		log.Printf("init mysql fail with connect: %s error: %v \n", connectStr, err)
 	} else {
-		mysqlEngine.SetMaxIdleConns(Config().Mysql.MaxIdle)
-		mysqlEngine.SetMaxOpenConns(Config().Mysql.MaxOpen)
-		mysqlEngine.SetConnMaxLifetime(time.Duration(Config().Mysql.Timeout) * time.Second)
+		maxOpen := Config().Mysql.MaxOpen
+		maxIdle := Config().Mysql.MaxIdle
+		timeout := Config().Mysql.Timeout
+		if maxOpen <= 0 {
+			maxOpen = 150
+		}
+		if maxIdle <= 0 {
+			maxIdle = 100
+		}
+		if timeout <= 0 {
+			timeout = 60
+		}
+		mysqlEngine.SetMaxIdleConns(maxIdle)
+		mysqlEngine.SetMaxOpenConns(maxOpen)
+		mysqlEngine.SetConnMaxLifetime(time.Duration(timeout) * time.Second)
 		mysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
@@ -113,21 +125,21 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	}
 	gErrMessage := ""
 	for sqlIndex, v := range sqlList {
-		// var tmpErr error
-		_, tmpErr := mysqlEngine.Exec(v)
-		// for i := 0; i < 3; i++ {
-		// 	//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
-		// 	_, err := mysqlEngine.Exec(v)
-		// 	if err != nil {
-		// 		tmpErr = err
-		// 	} else {
-		// 		tmpErr = nil
-		// 		break
-		// 	}
-		// 	if i < 2 {
-		// 		time.Sleep(time.Duration(retryWaitSecond) * time.Second)
-		// 	}
-		// }
+		var tmpErr error
+		// _, tmpErr := mysqlEngine.Exec(v)
+		for i := 0; i < 3; i++ {
+			//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
+			_, err := mysqlEngine.Exec(v)
+			if err != nil {
+				tmpErr = err
+			} else {
+				tmpErr = nil
+				break
+			}
+			if i < 2 {
+				time.Sleep(time.Duration(retryWaitSecond) * time.Second)
+			}
+		}
 		if tmpErr != nil {
 			log.Printf("Exec sql error:%s sql:%s \n", tmpErr.Error(), v)
 			tmpErrorString := tmpErr.Error()

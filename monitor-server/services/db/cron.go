@@ -48,6 +48,26 @@ func callCronJob(param *m.CornJobObj) {
 	}
 }
 
+// 获取并分割邮箱字符串
+func splitMailAddresses(envVar string) []string {
+	raw := os.Getenv(envVar)
+	if raw == "" {
+		return nil
+	}
+	// 按逗号或分号分割
+	parts := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == ',' || r == ';'
+	})
+	var result []string
+	for _, addr := range parts {
+		addr = strings.TrimSpace(addr)
+		if addr != "" {
+			result = append(result, addr)
+		}
+	}
+	return result
+}
+
 func StartCheckCron() {
 	checkEventKey = os.Getenv("MONITOR_CHECK_EVENT_KEY")
 	if checkEventKey == "" {
@@ -55,7 +75,8 @@ func StartCheckCron() {
 		return
 	}
 	checkEventToMail = os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
-	if checkEventToMail == "" {
+	checkEventToMailList := splitMailAddresses(checkEventToMail)
+	if len(checkEventToMailList) == 0 {
 		log.Info(nil, log.LOGGER_APP, "Start check cron fail,to mail is empty,please check env MONITOR_CHECK_EVENT_TO_MAIL")
 		return
 	}
@@ -93,7 +114,7 @@ func StartCheckCron() {
 		log.Warn(nil, log.LOGGER_APP, "Invalidate interval setting,must like 1、10、30、60、120、180...60*n")
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "Start check cron with event", zap.String("key", checkEventKey), zap.String("to", checkEventToMail), zap.Int("interval_min", intervalMin), zap.String("monitor_ip", monitorSelfIp))
+	log.Info(nil, log.LOGGER_APP, "Start check cron with event", zap.String("key", checkEventKey), zap.Strings("to", checkEventToMailList), zap.Int("interval_min", intervalMin), zap.String("monitor_ip", monitorSelfIp))
 	t, _ := time.Parse("2006-01-02 15:04:05 MST", timeStartValue)
 	if timeSubValue == 1800 {
 		if time.Now().Unix() > t.Unix()+timeSubValue {
@@ -318,13 +339,17 @@ func checkBusinessConfigMatchCodeCount() {
 		return
 	}
 	var toMail []string
-	checkEventToMail := os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
-	if smtp.VerifyMailAddress(checkEventToMail) {
-		toMail = append(toMail, checkEventToMail)
+	checkEventToMailList := splitMailAddresses("MONITOR_CHECK_EVENT_TO_MAIL")
+	for _, addr := range checkEventToMailList {
+		if smtp.VerifyMailAddress(addr) {
+			toMail = append(toMail, addr)
+		}
 	}
-	deferReceiver := os.Getenv("MONITOR_MAIL_DEFAULT_RECEIVER")
-	if smtp.VerifyMailAddress(deferReceiver) {
-		toMail = append(toMail, deferReceiver)
+	deferReceiverList := splitMailAddresses("MONITOR_MAIL_DEFAULT_RECEIVER")
+	for _, addr := range deferReceiverList {
+		if smtp.VerifyMailAddress(addr) {
+			toMail = append(toMail, addr)
+		}
 	}
 	log.Info(nil, log.LOGGER_APP, "send mail", zap.String("SenderName", mailSender.SenderName), zap.String("SenderMail",
 		mailSender.SenderMail), zap.String("AuthUser", mailSender.AuthUser), zap.String("AuthServer", mailSender.AuthServer),

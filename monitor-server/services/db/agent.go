@@ -274,6 +274,38 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable, operator string) error {
 	return err
 }
 
+func UpdateRecursivePanelWithRetry(param m.PanelRecursiveTable, operator string) error {
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		err := UpdateRecursivePanel(param, operator)
+		if err == nil {
+			return nil
+		}
+
+		// 检查是否是死锁错误
+		if strings.Contains(err.Error(), "Deadlock found") || strings.Contains(err.Error(), "try restarting transaction") {
+			log.Warn(nil, log.LOGGER_APP, "Deadlock detected, retrying...",
+				zap.String("guid", param.Guid),
+				zap.Int("attempt", i+1),
+				zap.String("error", err.Error()))
+
+			// 递增延迟重试，避免立即重试
+			delay := time.Duration(i+1) * 100 * time.Millisecond
+			time.Sleep(delay)
+			continue
+		}
+
+		// 非死锁错误直接返回
+		return err
+	}
+
+	// 达到最大重试次数
+	log.Error(nil, log.LOGGER_APP, "Max retries exceeded for deadlock",
+		zap.String("guid", param.Guid),
+		zap.Int("maxRetries", maxRetries))
+	return fmt.Errorf("max retries exceeded for deadlock, guid: %s", param.Guid)
+}
+
 func UpdateRecursiveEndpoint(guid, operator string, endpoint []string) error {
 	var prt []*m.PanelRecursiveTable
 	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", guid).Find(&prt)
