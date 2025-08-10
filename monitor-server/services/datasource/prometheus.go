@@ -117,8 +117,22 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		var sdata m.DataSort
 		for _, v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
-			tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
-			//tmpValue,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
+			tmpValueStr := v[1].(string)
+
+			// 处理 NaN 值
+			var tmpValue float64
+			if tmpValueStr == "NaN" || tmpValueStr == "nan" {
+				// 对于成功率指标，NaN 时返回 100（避免告警）
+				if strings.Contains(query.Metric[0], "req_suc_rate") {
+					tmpValue = 100.0
+				} else {
+					// 其他指标 NaN 时跳过该数据点
+					continue
+				}
+			} else {
+				tmpValue, _ = strconv.ParseFloat(tmpValueStr, 64)
+			}
+
 			sdata = append(sdata, []float64{tmpTime, tmpValue})
 		}
 		sort.Sort(sdata)
@@ -214,13 +228,34 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		if len(otr.Values) > 0 {
 			if useNewValue {
 				// 取最新值
-				pieObj.Value, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+				tmpValueStr := otr.Values[len(otr.Values)-1][1].(string)
+				if tmpValueStr == "NaN" || tmpValueStr == "nan" {
+					// 对于成功率指标，NaN 时返回 100（避免告警）
+					if strings.Contains(query.Metric[0], "req_suc_rate") {
+						pieObj.Value = 100.0
+					} else {
+						pieObj.Value = 0.0
+					}
+				} else {
+					pieObj.Value, _ = strconv.ParseFloat(tmpValueStr, 64)
+				}
 				pieObj.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", pieObj.Value), 64)
 			} else {
 				// 按合并规则取值
 				var valueDataList []float64
 				for _, v := range otr.Values {
-					tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
+					tmpValueStr := v[1].(string)
+					var tmpValue float64
+					if tmpValueStr == "NaN" || tmpValueStr == "nan" {
+						// 对于成功率指标，NaN 时返回 100（避免告警）
+						if strings.Contains(query.Metric[0], "req_suc_rate") {
+							tmpValue = 100.0
+						} else {
+							tmpValue = 0.0
+						}
+					} else {
+						tmpValue, _ = strconv.ParseFloat(tmpValueStr, 64)
+					}
 					valueDataList = append(valueDataList, tmpValue)
 				}
 				pieObj.SourceValue = valueDataList
