@@ -123,7 +123,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 			var tmpValue float64
 			if tmpValueStr == "NaN" || tmpValueStr == "nan" {
 				// 对于成功率指标，NaN 时返回 100（避免告警）
-				if strings.Contains(query.Metric[0], "req_suc_rate") {
+				if strings.HasSuffix(query.Metric[0], "req_suc_rate") {
 					tmpValue = 100.0
 				} else {
 					// 其他指标 NaN 时跳过该数据点
