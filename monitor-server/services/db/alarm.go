@@ -1948,12 +1948,29 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
 	var alarmConditionRows []*m.AlarmCondition
-	err = x.SQL("select guid,status,metric,crc_hash,tags from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
+	err = x.SQL("select guid,status,metric,crc_hash,tags,alarm_strategy from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
 		return
 	}
+	log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions query existing conditions",
+		zap.String("currentCrc", alarmConditionObj.AlarmConditionCrcHash),
+		zap.Strings("configCrcList", configCrcList),
+		zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy),
+		zap.String("endpoint", alarmConditionObj.Endpoint),
+		zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy),
+		zap.Int("foundConditions", len(alarmConditionRows)))
+
 	for _, row := range alarmConditionRows {
+		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions processing existing condition",
+			zap.String("rowGuid", row.Guid),
+			zap.String("rowCrcHash", row.CrcHash),
+			zap.String("rowStatus", row.Status),
+			zap.String("rowTags", row.Tags),
+			zap.String("currentTags", alarmConditionObj.Tags),
+			zap.String("currentAlarmStrategy", alarmConditionObj.AlarmStrategy),
+			zap.String("rowAlarmStrategy", row.AlarmStrategy))
+
 		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
 			// 相同crc策略
 			if row.Tags != alarmConditionObj.Tags {
@@ -1968,6 +1985,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		conditionGuidList = append(conditionGuidList, row.Guid)
 		conditionMetricList = append(conditionMetricList, row.Metric)
 	}
+	log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions alarmConditionObj", log.JsonObj("alarmConditionObj", alarmConditionObj))
 	if alarmConditionObj.AlarmConditionGuid != "" {
 		var alarmConditionRelRows []*m.AlarmConditionRel
 		err = x.SQL("select alarm,alarm_condition from alarm_condition_rel where alarm_condition=? and alarm in (select id from alarm where status='firing' and alarm_strategy=?)", alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy).Find(&alarmConditionRelRows)
@@ -2009,7 +2027,13 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
 			return
 		}
-		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), zap.Strings("configCrcList", configCrcList))
+		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions final check",
+			log.JsonObj("alarmCrcMap", alarmCrcMap),
+			zap.Strings("configCrcList", configCrcList),
+			zap.Int("alarmCrcMapLen", len(alarmCrcMap)),
+			zap.Int("configCrcListLen", len(configCrcList)),
+			zap.Bool("shouldTrigger", len(alarmCrcMap) >= len(configCrcList)),
+			zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy))
 		if len(alarmCrcMap) >= len(configCrcList) {
 			// 如果条件都满足
 			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
