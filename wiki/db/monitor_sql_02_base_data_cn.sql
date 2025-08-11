@@ -1292,4 +1292,5 @@ alter table alarm modify column alarm_name varchar(150) default null comment '�
 #@v3.5.8-end@;
 #@v3.6.5-begin@;
 alter table alarm modify column endpoint_tags varchar(128) default null COMMENT '对象标签';
+alter table alarm_condition modify column expr varchar(2000) default null COMMENT '指标表达式';
 #@v3.6.5-end@;
