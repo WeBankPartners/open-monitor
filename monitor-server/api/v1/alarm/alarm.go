@@ -725,28 +725,25 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
 	}
-
-	// 使用新的直接执行方法，避免大事务锁竞争问题
-	err = db.CloseAlarmDirect(param)
+	var actions []*db.Action
+	actions, err = db.CloseAlarm(param)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-
-	// 处理自定义告警关闭
 	customActions, getCustomErr := db.CloseOpenAlarm(param)
 	if getCustomErr != nil {
 		mid.ReturnHandleError(c, getCustomErr.Error(), getCustomErr)
 		return
 	}
-	if len(customActions) > 0 {
-		err = db.Transaction(customActions)
-		if err != nil {
-			mid.ReturnHandleError(c, err.Error(), err)
-			return
-		}
+	actions = append(actions, customActions...)
+	if len(actions) > 0 {
+		err = db.Transaction(actions)
 	}
-
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
+	}
 	mid.ReturnSuccess(c)
 }
 

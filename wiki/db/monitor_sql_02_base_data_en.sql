@@ -1294,4 +1294,6 @@ alter table alarm modify column alarm_name varchar(150) default null comment '�
 #@v3.5.8-end@;
 #@v3.6.5-begin@;
 alter table alarm_condition modify column expr varchar(2000) default null COMMENT '指标表达式';
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm (alarm);
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
 #@v3.6.5-end@;
