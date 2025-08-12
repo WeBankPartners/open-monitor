@@ -137,29 +137,15 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 			operation = "same"
 		}
 	} else {
-		return alarm, fmt.Errorf("Accept alert status:%s illegal! ", alarm.Status)
+		return alarm, fmt.Errorf("Accept alert strategyGuid:%s,status:%s illegal! ", strategyGuid, alarm.Status)
 	}
-	//if existAlarm.Status != "" {
-	//	if existAlarm.Status == "firing" {
-	//		if alarm.Status == "firing" {
-	//			operation = "same"
-	//		} else {
-	//			operation = "resolve"
-	//		}
-	//	} else if existAlarm.Status == "ok" {
-	//		if alarm.Status == "resolved" {
-	//			operation = "same"
-	//		}
-	//	} else if existAlarm.Status == "closed" {
-	//		if alarm.Status == "resolved" {
-	//			operation = "same"
-	//		}
-	//	}
-	//}
+
 	if operation == "same" {
+		log.Debug(nil, log.LOGGER_APP, "Accept alert msg ,firing repeat,do nothing!", log.JsonObj("alarm", alarm))
 		return alarm, fmt.Errorf("Accept alert msg ,firing repeat,do nothing! ")
 	}
 	if operation == "add" && param.Status == "resolved" {
+		log.Debug(nil, log.LOGGER_APP, "Accept alert msg ,cat not add resolved,do nothing!", log.JsonObj("alarm", alarm))
 		return alarm, fmt.Errorf("Accept alert msg ,cat not add resolved,do nothing! ")
 	}
 	if operation == "resolve" {
@@ -178,37 +164,6 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.Start = nowTime
 	}
 	return
-}
-
-func checkIsInActiveWindow(input string) bool {
-	if input == "" {
-		return true
-	}
-	timeSplit := strings.Split(input, "-")
-	if len(timeSplit) != 2 {
-		log.Error(nil, log.LOGGER_APP, "Active window illegal", zap.String("input", input))
-		return false
-	}
-	nowTime := time.Now()
-	dayPrefix := nowTime.Format("2006-01-02")
-	st, sErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", dayPrefix, timeSplit[0]), time.Local)
-	if sErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Active window start illegal", zap.String("start", timeSplit[0]))
-		return false
-	}
-	endString := timeSplit[1] + ":00"
-	if strings.HasSuffix(timeSplit[1], "59") {
-		endString = timeSplit[1] + ":59"
-	}
-	et, eErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", dayPrefix, endString), time.Local)
-	if eErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Active window end illegal", zap.String("end", timeSplit[1]))
-		return false
-	}
-	if nowTime.Unix() >= st.Unix() && nowTime.Unix() <= et.Unix() {
-		return true
-	}
-	return false
 }
 
 func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetricObj) (result m.EndpointNewTable, err error) {
