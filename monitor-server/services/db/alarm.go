@@ -2348,3 +2348,168 @@ func HttpGet(url, userToken string) (byteArr []byte, err error) {
 	defer resp.Body.Close()
 	return
 }
+
+// CloseAlarmDirect 直接执行小事务的告警关闭方法
+func CloseAlarmDirect(param m.AlarmCloseParam) error {
+	var alarmRows []*m.AlarmTable
+	var queryFilterList []string
+	var queryFilterParam []interface{}
+	if param.Id > 0 {
+		queryFilterList = append(queryFilterList, "id=?")
+		queryFilterParam = append(queryFilterParam, param.Id)
+	} else {
+		if len(param.Priority) > 0 {
+			filterSql, filterParam := createListParams(param.Priority, "")
+			queryFilterList = append(queryFilterList, "s_priority in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.Metric) > 0 {
+			filterSql, filterParam := createListParams(param.Metric, "")
+			queryFilterList = append(queryFilterList, "s_metric in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.Endpoint) > 0 {
+			filterSql, filterParam := createListParams(param.Endpoint, "")
+			queryFilterList = append(queryFilterList, "endpoint in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+		if len(param.AlarmName) > 0 {
+			filterSql, filterParam := createListParams(param.AlarmName, "")
+			queryFilterList = append(queryFilterList, "alarm_name in ("+filterSql+")")
+			queryFilterParam = append(queryFilterParam, filterParam...)
+		}
+	}
+	if len(queryFilterList) == 0 {
+		return fmt.Errorf("close filter can not empty")
+	}
+	err := x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and "+strings.Join(queryFilterList, " and "), queryFilterParam...).Find(&alarmRows)
+	if err != nil {
+		return fmt.Errorf("query alarm table fail,%s ", err.Error())
+	}
+
+	// 记录已成功关闭的告警ID，用于补偿
+	var successAlarmIds []int
+	// 记录已删除的 alarm_firing 记录，用于回滚时恢复
+	var deletedFiringRecords []map[string]interface{}
+
+	// 分批处理，减少锁持有时间
+	for _, v := range alarmRows {
+		// 事务1：更新告警状态
+		alarmActions := []*Action{
+			&Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}},
+		}
+		if v.SMetric == "log_monitor" {
+			alarmActions = append(alarmActions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+		if v.SMetric == "db_keyword_monitor" {
+			alarmActions = append(alarmActions, &Action{Sql: "update db_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+		if err = Transaction(alarmActions); err != nil {
+			return fmt.Errorf("update alarm status fail: %v", err)
+		}
+		successAlarmIds = append(successAlarmIds, v.Id)
+
+		// 事务2：更新告警条件（如果存在）
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			conditionActions := []*Action{
+				&Action{Sql: "UPDATE alarm_condition ac INNER JOIN alarm_condition_rel acr ON ac.guid = acr.alarm_condition SET ac.STATUS='closed',ac.end=NOW() WHERE acr.alarm=?", Param: []interface{}{v.Id}},
+			}
+			if err = Transaction(conditionActions); err != nil {
+				// 补偿：回滚已成功的操作
+				rollbackSuccessAlarmsDirect(successAlarmIds, deletedFiringRecords)
+				return fmt.Errorf("update alarm condition fail: %v", err)
+			}
+		}
+
+		// 事务3：删除告警触发记录（先备份数据）
+		// 先查询要删除的记录
+		var firingRecords []map[string]interface{}
+		err = x.SQL("SELECT * FROM alarm_firing WHERE alarm_id=?", v.Id).Find(&firingRecords)
+		if err != nil {
+			log.Error(nil, log.LOGGER_APP, "Failed to query alarm_firing records", zap.Int("alarmId", v.Id), zap.Error(err))
+		} else {
+			// 备份删除的记录
+			deletedFiringRecords = append(deletedFiringRecords, firingRecords...)
+		}
+
+		// 执行删除操作
+		firingActions := []*Action{
+			&Action{Sql: "delete from alarm_firing where alarm_id=?", Param: []interface{}{v.Id}},
+		}
+		if err = Transaction(firingActions); err != nil {
+			// 补偿：回滚已成功的操作
+			rollbackSuccessAlarmsDirect(successAlarmIds, deletedFiringRecords)
+			return fmt.Errorf("delete alarm firing fail: %v", err)
+		}
+	}
+	return nil
+}
+
+// 补偿函数：回滚已成功关闭的告警（直接执行版本）
+func rollbackSuccessAlarmsDirect(alarmIds []int, deletedFiringRecords []map[string]interface{}) {
+	if len(alarmIds) == 0 {
+		return
+	}
+
+	log.Warn(nil, log.LOGGER_APP, "Rolling back successfully closed alarms", zap.Ints("alarmIds", alarmIds))
+
+	// 回滚所有相关表
+	for _, alarmId := range alarmIds {
+		// 1. 回滚 alarm 表状态
+		alarmRollbackActions := []*Action{
+			&Action{Sql: "UPDATE alarm SET STATUS='firing',end=NULL WHERE id=?", Param: []interface{}{alarmId}},
+		}
+		if err := Transaction(alarmRollbackActions); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Failed to rollback alarm status", zap.Int("alarmId", alarmId), zap.Error(err))
+		}
+
+		// 2. 回滚 log_keyword_alarm 表（如果存在）
+		logKeywordRollbackActions := []*Action{
+			&Action{Sql: "update log_keyword_alarm set status='firing',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{alarmId}},
+		}
+		if err := Transaction(logKeywordRollbackActions); err != nil {
+			// 忽略错误，因为可能不存在该记录
+			log.Debug(nil, log.LOGGER_APP, "Failed to rollback log_keyword_alarm (may not exist)", zap.Int("alarmId", alarmId), zap.Error(err))
+		}
+
+		// 3. 回滚 db_keyword_alarm 表（如果存在）
+		dbKeywordRollbackActions := []*Action{
+			&Action{Sql: "update db_keyword_alarm set status='firing',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{alarmId}},
+		}
+		if err := Transaction(dbKeywordRollbackActions); err != nil {
+			// 忽略错误，因为可能不存在该记录
+			log.Debug(nil, log.LOGGER_APP, "Failed to rollback db_keyword_alarm (may not exist)", zap.Int("alarmId", alarmId), zap.Error(err))
+		}
+
+		// 4. 回滚 alarm_condition 表（如果存在关联记录）
+		conditionRollbackActions := []*Action{
+			&Action{Sql: "UPDATE alarm_condition ac INNER JOIN alarm_condition_rel acr ON ac.guid = acr.alarm_condition SET ac.STATUS='firing',ac.end=NULL WHERE acr.alarm=?", Param: []interface{}{alarmId}},
+		}
+		if err := Transaction(conditionRollbackActions); err != nil {
+			// 忽略错误，因为可能不存在该记录
+			log.Debug(nil, log.LOGGER_APP, "Failed to rollback alarm_condition (may not exist)", zap.Int("alarmId", alarmId), zap.Error(err))
+		}
+	}
+
+	// 5. 恢复已删除的 alarm_firing 记录
+	if len(deletedFiringRecords) > 0 {
+		log.Info(nil, log.LOGGER_APP, "Restoring deleted alarm_firing records", zap.Int("count", len(deletedFiringRecords)))
+		for _, record := range deletedFiringRecords {
+			// 构建恢复 SQL（这里需要根据实际的表结构来构建）
+			// 由于 alarm_firing 表结构可能比较复杂，这里提供一个通用的恢复方法
+			restoreActions := []*Action{
+				&Action{Sql: "INSERT INTO alarm_firing (alarm_id, metric, expr, cond, last, priority, content, start_value, start, end_value, end, close_type, close_msg, close_user, custom_message, endpoint_tags, unique_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					Param: []interface{}{
+						record["alarm_id"], record["metric"], record["expr"], record["cond"],
+						record["last"], record["priority"], record["content"], record["start_value"],
+						record["start"], record["end_value"], record["end"], record["close_type"],
+						record["close_msg"], record["close_user"], record["custom_message"],
+						record["endpoint_tags"], record["unique_hash"],
+					}},
+			}
+			if err := Transaction(restoreActions); err != nil {
+				log.Error(nil, log.LOGGER_APP, "Failed to restore alarm_firing record", zap.Any("record", record), zap.Error(err))
+			}
+		}
+	}
+}
