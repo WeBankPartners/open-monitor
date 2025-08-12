@@ -223,15 +223,15 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		result.Guid = param.Labels["e_guid"]
 	} else if param.Labels["instance"] != "" && param.Labels["instance"] != "127.0.0.1:8181" {
 		result.AgentAddress = param.Labels["instance"]
-		//if result.AgentAddress == "127.0.0.1:8181" {
-		//	if param.Labels["service_group"] != "" {
-		//		result = m.EndpointNewTable{Guid: "sg__" + param.Labels["service_group"]}
-		//		return
-		//	}
-		//}
-		//if strings.Contains(result.AgentAddress, "9100") {
-		//	result.MonitorType = "host"
-		//}
+		if param.Labels["strategy_guid"] != "" {
+			endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
+			if tmpErr != nil {
+				return result, fmt.Errorf("alert labels have no endpoint_group:%s message ", strategyObj.EndpointGroup)
+			}
+			// 设置 monitorType
+			result.MonitorType = endpointGroupObj.MonitorType
+		}
+
 	} else if param.Labels["strategy_guid"] != "" {
 		endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
 		if tmpErr != nil {

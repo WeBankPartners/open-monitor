@@ -965,6 +965,7 @@ export default {
         param_list: this.configInfo.param_list
       }
       this.request('POST', this.apiCenter.standardLogRegexMatch, params, responseData => {
+        const cacheIsNumericValue = cloneDeep(this.isNumericValue)
         this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {
@@ -972,7 +973,7 @@ export default {
           this.isNumericValue = cloneDeep(this.isNumericValue)
         })
         this.configInfo.metric_list.forEach((item, index) => {
-          if (!this.isOperationBoxDisabled(item, 'metricList', index)) {
+          if (!this.isOperationBoxDisabled(item, 'metricList', index) && cacheIsNumericValue[item.log_param_name] !== this.isNumericValue[item.log_param_name]) {
             item.agg_type = ''
           }
         })

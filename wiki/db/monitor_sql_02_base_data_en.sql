@@ -1292,3 +1292,8 @@ alter table log_monitor_template add column auto_dashboard tinyint(1) default 0 
 alter table log_metric_group add column status varchar(20) default 'enable' COMMENT '是否启用,默认启用';
 alter table alarm modify column alarm_name varchar(150) default null comment '告警名称';
 #@v3.5.8-end@;
+#@v3.6.5-begin@;
+alter table alarm_condition modify column expr varchar(2000) default null COMMENT '指标表达式';
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm (alarm);
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
+#@v3.6.5-end@;
