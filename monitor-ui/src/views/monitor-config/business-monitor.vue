@@ -6,7 +6,7 @@
         v-model="type"
         type="button"
         button-style="solid"
-        @on-change="typeChange(true)"
+        @on-change="typeChange"
         style="margin-right: 5px"
       >
         <Radio label="group">{{ $t('m_field_resourceLevel') }}</Radio>
@@ -24,7 +24,7 @@
           metricKey = ''
           search()
         }"
-        @on-clear="typeChange(false)"
+        @on-clear="typeChange"
         @on-open-change="onSelectOpenChange"
       >
         <Option v-for="(option, index) in targetOptions"
@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import {debounce} from 'lodash'
+import {debounce, isEmpty} from 'lodash'
 import endpointManagement from './business-monitor-endpoint.vue'
 import groupManagement from './business-monitor-group.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -103,27 +103,22 @@ export default {
       apiCenter: this.$root.apiCenter,
     }
   },
-
-  mounted() {
-    this.getTargrtList()
-  },
   beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    typeChange(needDefaultTarget) {
+    typeChange() {
       this.metricKey = ''
       this.clearTargrt()
-      this.getTargrtList(needDefaultTarget)
       this.selectKey = +new Date() + ''
     },
-    getTargrtList(needDefaultTarget = true) {
+    getTargrtList() {
+      if (!isEmpty(this.targetOptions)) {
+        return
+      }
       const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
       this.request('GET', api, '', responseData => {
         this.targetOptions = responseData || []
-        if (this.targetOptions.length > 0 && needDefaultTarget) {
-          this.targrtId = this.targetOptions[0].guid
-        }
         this.search()
       }, {isNeedloading: false})
     },
@@ -147,7 +142,7 @@ export default {
     },
     onSelectOpenChange(open) {
       if (open) {
-        this.getTargrtList(false)
+        this.getTargrtList()
       }
     }
   },

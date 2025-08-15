@@ -4,7 +4,7 @@
       <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
         <div v-if="!isEditState" class="content-header mb-2 mt-3">
           <div class="use-underline-title header-title mr-4">
-            {{ !isEmpty(single.logFile) ? single.logFile.display_name : (!isEmpty(single.database) ? single.database.display_name : '')}}
+            {{ !isEmpty(single) ? single.display_name : ''}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
@@ -20,8 +20,8 @@
           </Button>
         </div>
 
-        <Collapse v-model="keywordCollapseValue" v-if="!isEmpty(single.logFile) && !isEmpty(single.logFile.config)">
-          <Panel v-for="(item, index) in single.logFile.config"
+        <Collapse v-model="keywordCollapseValue" v-if="!isEmpty(single) && !isEmpty(single.config)">
+          <Panel v-for="(item, index) in single.config"
                  :key="index"
                  :name="index + ''"
           >
@@ -145,10 +145,10 @@
             </div>
 
             <Table
-              v-if='!isEmpty(single.database)'
+              v-if='!isEmpty(single) && !isEmpty(single.dbConfig)'
               size="small"
               :columns="dataBaseTableColumns"
-              :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+              :data="single.dbConfig"
             />
             <div v-else class='no-data-class'>{{$t('m_table_noDataTip')}}</div>
           </div>
@@ -451,7 +451,7 @@
 
 <script>
 import {
-  cloneDeep, isEmpty, hasIn, map, uniq, find, filter
+  cloneDeep, isEmpty, hasIn, find
 } from 'lodash'
 import Vue from 'vue'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
@@ -1000,19 +1000,20 @@ export default {
   mounted() {
     this.MODALHEIGHT = document.body.scrollHeight - 300
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.getFlowsAndRolesOptions()
   },
   methods: {
     getFlowsAndRolesOptions() {
-      this.request('GET', this.apiCenter.eventCallbackList, '', responseData => {
-        this.allFlows = responseData
-      })
-      this.request('GET', this.apiCenter.userRoleList, '', responseData => {
-        this.allRoles = responseData.data.map(_ => ({
-          ..._,
-          value: _.id
-        }))
-      })
+      if (isEmpty(this.allFlows) && isEmpty(this.allRoles)) {
+        this.request('GET', this.apiCenter.eventCallbackList, '', responseData => {
+          this.allFlows = responseData
+        })
+        this.request('GET', this.apiCenter.userRoleList, '', responseData => {
+          this.allRoles = responseData.data.map(_ => ({
+            ..._,
+            value: _.id
+          }))
+        })
+      }
     },
     mgmtConfigDetail(val) {
       let res = {
@@ -1240,6 +1241,7 @@ export default {
       })
     },
     async getDetail(targetId, alarmName = this.alarmName) {
+      this.getFlowsAndRolesOptions()
       if (targetId) {
         if (this.alarmName !== alarmName) {
           this.keywordCollapseValue = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -1249,7 +1251,6 @@ export default {
         }
         this.targetId = targetId
         await this.getLogKeyWordDetail()
-        await this.getDataBaseDetail()
         this.processAllInfo()
       } else {
         this.logAndDataBaseAllDetail = []
@@ -1257,16 +1258,7 @@ export default {
     },
     processAllInfo() {
       this.logAndDataBaseAllDetail = []
-      const allDetail = [...cloneDeep(this.allLogFileData), ...cloneDeep(this.allDataBaseDataInfo)]
-      const allGuid = uniq(map(allDetail, 'guid')) || []
-
-      allGuid.forEach(guid => {
-        const tempInfo = {
-          logFile: filter(this.allLogFileData, item => item.guid === guid)[0],
-          database: filter(this.allDataBaseDataInfo, item => item.guid === guid)[0]
-        }
-        this.logAndDataBaseAllDetail.push(tempInfo)
-      })
+      this.logAndDataBaseAllDetail = cloneDeep(this.allLogFileData)
       this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
     },
     getLogKeyWordDetail() {
@@ -1285,24 +1277,6 @@ export default {
             })
           })
           resolve(this.allLogFileData)
-        })
-      })
-    },
-    getDataBaseDetail() {
-      return new Promise(resolve => {
-        this.request('GET', this.apiCenter.getDbKeywordList, {
-          type: this.keywordType,
-          guid: this.targetId,
-          alarmName: this.alarmName
-        }, res => {
-          const detail = isEmpty(res) ? [] : res
-          detail.forEach(item => {
-            !isEmpty(item.config) && item.config.forEach(one => {
-              one.dataBaseGuid = item.guid
-            })
-          })
-          Vue.set(this, 'allDataBaseDataInfo', detail)
-          resolve(this.allDataBaseDataInfo)
         })
       })
     },

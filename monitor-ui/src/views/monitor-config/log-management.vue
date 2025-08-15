@@ -88,7 +88,7 @@
 
 <script>
 import axios from 'axios'
-import {debounce} from 'lodash'
+import {debounce, isEmpty} from 'lodash'
 import {baseURL_config} from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import keywordContent from './keyword-content.vue'
@@ -125,7 +125,6 @@ export default {
   },
   async mounted() {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
-    this.getTargrtList()
   },
   computed: {
     uploadUrl() {
@@ -137,17 +136,22 @@ export default {
   },
   methods: {
     typeChange() {
-      this.getTargrtList()
+      this.clearTargrt()
       this.selectKey = +new Date() + ''
     },
-    getTargrtList(type = 'init') {
+    clearTargrt() {
+      this.targetOptions = []
+      this.targetId = ''
+      this.alarmName = ''
+      this.showTargetManagement = false
+    },
+    getTargrtList() {
+      if (!isEmpty(this.targetOptions)){
+        return
+      }
       const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
       this.request('GET', api, '', responseData => {
         this.targetOptions = responseData
-        if (type === 'init') {
-          this.targetId = this.targetOptions[0].guid
-          this.search()
-        }
       }, {isNeedloading: false})
     },
     search() {
@@ -212,7 +216,7 @@ export default {
     },
     onSelectOpenChange(open) {
       if (open) {
-        this.getTargrtList('')
+        this.getTargrtList()
       }
     },
     onFeedbackInfo(allData) {
