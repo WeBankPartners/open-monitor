@@ -20,6 +20,7 @@
           ref="select"
           @on-clear="onTargetIdClear"
           @on-change="searchTableDetail"
+          @on-open-change="onSelectOpenChange"
         >
           <Option v-for="(option, index) in targetOptions"
                   :value="option.option_value"
@@ -108,9 +109,7 @@
 </template>
 
 <script>
-import isEmpty from 'lodash/isEmpty'
-import debounce from 'lodash/debounce'
-import cloneDeep from 'lodash/cloneDeep'
+import {isEmpty, debounce, cloneDeep} from 'lodash'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -170,7 +169,6 @@ export default {
   mounted() {
     this.token = this.returnLatestToken()
     this.getTargetOptionsSearch = ''
-    this.initTargetByType()
   },
   beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -178,13 +176,6 @@ export default {
   methods: {
     feedbackInfo(val) {
       this.dataEmptyTip = val
-    },
-    async initTargetByType() {
-      await this.getTargetOptions()
-      if (!isEmpty(this.targetOptions)) {
-        this.targetId = this.targetOptions[0].option_value
-        this.searchTableDetail()
-      }
     },
     async exportThreshold() {
       this.token = await this.refreshToken()
@@ -239,11 +230,13 @@ export default {
     },
     typeChange() {
       this.alarmName = ''
-      // this.clearTargrt()
-      this.initTargetByType()
+      this.clearTargrt()
       this.selectKey = +new Date() + ''
     },
     getTargetOptions() {
+      if (!isEmpty(this.targetOptions)) {
+        return
+      }
       return new Promise(resolve => {
         const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${this.getTargetOptionsSearch}`
         this.request('GET', api, '', responseData => {
@@ -254,10 +247,10 @@ export default {
       })
     },
     clearTargrt() {
-      // this.targetOptions = []
-      // this.targetId = ''
-      // this.showTargetManagement = false
-      // this.getTargetOptionsSearch = ''
+      this.targetOptions = []
+      this.targetId = ''
+      this.showTargetManagement = false
+      this.getTargetOptionsSearch = ''
     },
     searchTableDetail() {
       if (this.targetId) {
@@ -296,6 +289,11 @@ export default {
     async handleBeforeUpload() {
       this.token = await this.refreshToken()
       return true
+    },
+    onSelectOpenChange(open) {
+      if (open) {
+        this.getTargetOptions()
+      }
     }
   },
   components: {

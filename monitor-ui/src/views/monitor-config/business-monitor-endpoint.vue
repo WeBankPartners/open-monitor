@@ -1,10 +1,10 @@
 <template>
   <div class=" ">
-    <section v-if='!isEmpty(logAndDataBaseAllDetail)' style="margin-top: 16px;">
-      <div v-for="(single, i) in logAndDataBaseAllDetail" :key="i">
+    <section v-if='!isEmpty(allPageContentData)' style="margin-top: 16px;">
+      <div v-for="(single, i) in allPageContentData" :key="i">
         <div class="content-header">
           <div class="use-underline-title mr-4">
-            {{ !isEmpty(single.logFile) ? single.logFile.display_name : (!isEmpty(single.database) ? single.database.display_name : '')}}
+            {{ !isEmpty(single) ? single.display_name : ''}}
             <span class="underline"></span>
           </div>
           <Tag color="blue">{{ $t('m_field_resourceLevel') }}</Tag>
@@ -15,8 +15,8 @@
             <span class="underline"></span>
           </div>
         </div>
-        <Collapse v-model="single.logFile.logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
-          <Panel v-for="(item, index) in single.logFile.config"
+        <Collapse v-model="single.logFileCollapseValue" v-if='!isEmpty(single) && !isEmpty(single.config)'>
+          <Panel v-for="(item, index) in single.config"
                  :key="index"
                  :name="index + ''"
           >
@@ -56,7 +56,7 @@
         <Table
           size="small"
           :columns="dataBaseTableColumns"
-          :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+          :data="!isEmpty(single) && !isEmpty(single.db_config) ? single.db_config : []"
         />
       </div>
     </section>
@@ -235,9 +235,7 @@
 </template>
 
 <script>
-import {
-  map, isEmpty, uniq, cloneDeep, filter
-} from 'lodash'
+import {map, isEmpty} from 'lodash'
 import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 
@@ -512,7 +510,6 @@ export default {
       ],
       dataBaseTableData: [],
       isEmpty,
-      logAndDataBaseAllDetail: [],
       metricKey: '',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
@@ -618,35 +615,8 @@ export default {
         this.metricKey = metricKey
       }
       this.targetId = targetId
-      await this.getDbDetail()
       await this.getLogKeyWordDetail()
-      this.processAllInfo()
-    },
-    processAllInfo() {
-      this.logAndDataBaseAllDetail = []
-      const allDetail = [...cloneDeep(this.allPageContentData), ...cloneDeep(this.dataBaseTableData)]
-      const allGuid = uniq(map(allDetail, 'guid')) || []
-
-      allGuid.forEach(guid => {
-        const tempInfo = {
-          logFile: filter(this.allPageContentData, item => item.guid === guid)[0],
-          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
-        }
-        this.logAndDataBaseAllDetail.push(tempInfo)
-      })
-      this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
-    },
-    getDbDetail() {
-      return new Promise(resolve => {
-        let api = this.apiCenter.getTargetDbDetail + '/endpoint/' + this.targetId
-        if (this.metricKey) {
-          api += `?metricKey=${this.metricKey}`
-        }
-        this.request('GET', api, '', responseData => {
-          this.dataBaseTableData = responseData
-          resolve(this.dataBaseTableData)
-        }, {isNeedloading: false})
-      })
+      this.$emit('feedbackInfo', this.allPageContentData)
     }
   },
   mounted() {

@@ -56,8 +56,8 @@
         </div>
 
         <div>
-          <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
-            <Panel v-for="(item, index) in single.logFile.config"
+          <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single) && !isEmpty(single.config)'>
+            <Panel v-for="(item, index) in single.config"
                    :key="index"
                    :name="index + ''"
             >
@@ -83,6 +83,7 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
+                    @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
                       parentGuid = item.guid;
@@ -147,7 +148,7 @@
             class="log-file-table"
             size="small"
             :columns="dataBaseTableColumns"
-            :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+            :data="!isEmpty(single) && !isEmpty(single.db_config) ? single.db_config : []"
           />
         </div>
       </div>
@@ -502,9 +503,8 @@
 
 <script>
 import {
-  uniq, filter, cloneDeep, map, isEmpty
+  cloneDeep, map, isEmpty
 } from 'lodash'
-// import Vue from 'vue'
 import { getPlatFormToken, getToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
@@ -1099,7 +1099,6 @@ export default {
       this.$Message.success(this.$t('m_tips_success'))
       this.dbModelConfig.isShow = false
       this.getDetail(this.targetId)
-      this.getDbDetail(this.targetId)
     },
     cancelDb() {
       this.dbModelConfig.isShow = false
@@ -1472,9 +1471,6 @@ export default {
       })
     },
     async getDetail(targetId, metricKey = '', isNeedChangeCollapse = true) {
-      if (isEmpty(this.allTemplateList)) {
-        this.getMonitorTemplateList()
-      }
       if (targetId) {
         if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
           this.metricKey = metricKey
@@ -1486,7 +1482,6 @@ export default {
         }
         this.targetId = targetId
         await this.getLogKeyWordDetail()
-        await this.getDbDetail()
         this.processAllInfo()
       } else {
         this.logAndDataBaseAllDetail = []
@@ -1494,34 +1489,8 @@ export default {
     },
     processAllInfo() {
       this.logAndDataBaseAllDetail = []
-      const allDetail = [...cloneDeep(this.logFileDetail), ...cloneDeep(this.dataBaseTableData)]
-      const allGuid = uniq(map(allDetail, 'guid')) || []
-
-      allGuid.forEach(guid => {
-        const tempInfo = {
-          logFile: filter(this.logFileDetail, item => item.guid === guid)[0],
-          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
-        }
-        this.logAndDataBaseAllDetail.push(tempInfo)
-      })
+      this.logAndDataBaseAllDetail = cloneDeep(this.logFileDetail)
       this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
-    },
-    getDbDetail() {
-      return new Promise(resolve => {
-        let api = this.$root.apiCenter.getTargetDbDetail + '/group/' + this.targetId
-        if (this.metricKey) {
-          api += `?metricKey=${this.metricKey}`
-        }
-        this.request('GET', api, '', responseData => {
-          if (Array.isArray(responseData)) {
-            this.dataBaseTableData = responseData
-          } else {
-            this.dataBaseTableData = [responseData]
-          }
-          // this.dataBaseTableData = responseData
-          resolve(this.dataBaseTableData)
-        }, {isNeedloading: false})
-      })
     },
     // 新增自定指标指标
     addByCustom(item) {
@@ -1575,6 +1544,11 @@ export default {
         await this.request('PUT', this.apiCenter.disabledSingleAlarm, params)
         resolve()
       })
+    },
+    onTemplateListVisibleChange(visible) {
+      if (visible && isEmpty(this.allTemplateList)) {
+        this.getMonitorTemplateList()
+      }
     }
   },
   components: {
