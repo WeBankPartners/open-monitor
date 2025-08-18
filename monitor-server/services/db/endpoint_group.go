@@ -2,10 +2,10 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
-	"strings"
 	"time"
 )
 
