@@ -533,11 +533,12 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 	if endpointGroup == "" {
 		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
 	}
-	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile start", zap.String("endpointGroup", endpointGroup), zap.Bool("withoutReloadConfig", withoutReloadConfig))
 	endpointGroupObj, err := GetSimpleEndpointGroup(endpointGroup)
 	if err != nil {
-		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - GetSimpleEndpointGroup failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
-		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
+		// 降级：如果 endpoint_group 不存在，直接删除对应的规则文件
+		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - GetSimpleEndpointGroup failed, fallback to RemovePrometheusRuleFile", zap.String("endpointGroup", endpointGroup), zap.Error(err))
+		RemovePrometheusRuleFile(endpointGroup, false)
+		return nil
 	}
 	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile", zap.String("endpointGroup", endpointGroup))
 	ruleFileName := "g_" + endpointGroup
@@ -546,21 +547,18 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroupObj.MonitorType, endpointGroup).Find(&endpointList)
 	} else {
 		serviceGroupGuidList, _ := fetchGlobalServiceGroupChildGuidList(endpointGroupObj.ServiceGroup)
-		log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - serviceGroup found", zap.String("endpointGroup", endpointGroup), zap.String("serviceGroup", endpointGroupObj.ServiceGroup), zap.Strings("serviceGroupGuidList", serviceGroupGuidList))
 		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"'))", endpointGroupObj.MonitorType).Find(&endpointList)
 	}
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - query endpoint failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		return err
 	}
-	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - endpointList found", zap.String("endpointGroup", endpointGroup), zap.Int("endpointCount", len(endpointList)))
 	// 获取strategy
 	strategyList, monitorEngineStrategyList, getStrategyErr := getAlarmStrategyWithExprNew(endpointGroup)
 	if getStrategyErr != nil {
 		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - getAlarmStrategyWithExprNew failed", zap.String("endpointGroup", endpointGroup), zap.Error(getStrategyErr))
 		return getStrategyErr
 	}
-	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - strategy query result", zap.String("endpointGroup", endpointGroup), zap.Int("strategyCount", len(strategyList)), zap.Int("monitorEngineStrategyCount", len(monitorEngineStrategyList)))
 	log.Debug(nil, log.LOGGER_APP, "SyncPrometheusRuleFile alarm strategy data", log.JsonObj("strategyList", strategyList))
 	// 区分cluster，分别下发
 	var clusterList []string
@@ -582,12 +580,9 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 			clusterEndpointMap[tmpCluster.Id] = []*models.EndpointNewTable{}
 		}
 	}
-	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - cluster processing", zap.String("endpointGroup", endpointGroup), zap.Strings("clusterList", clusterList))
 	for _, cluster := range clusterList {
-		log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - processing cluster", zap.String("endpointGroup", endpointGroup), zap.String("cluster", cluster))
 		guidExpr, addressExpr, ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
 		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, copyStrategyListNew(strategyList))
-		log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - rule file config generated", zap.String("endpointGroup", endpointGroup), zap.String("cluster", cluster), zap.String("ruleFileName", ruleFileConfig.Name), zap.Int("rulesCount", len(ruleFileConfig.Rules)))
 		if cluster == "default" || cluster == "" {
 			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{WithoutReloadConfig: withoutReloadConfig, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 		} else {
@@ -602,30 +597,23 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 			UpdateAlarmStrategyMetricExpr(monitorEngineStrategy)
 		}
 	}
-	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile end", zap.String("endpointGroup", endpointGroup))
 	return err
 }
 
 func RemovePrometheusRuleFile(endpointGroup string, fromPeer bool) {
-	log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile start", zap.String("endpointGroup", endpointGroup), zap.Bool("fromPeer", fromPeer))
 	ruleFileName := "g_" + endpointGroup
 	var clusterTable []*models.ClusterTable
 	x.SQL("select id from cluster").Find(&clusterTable)
-	log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile - found clusters", zap.String("endpointGroup", endpointGroup), zap.Int("clusterCount", len(clusterTable)))
 	for _, cluster := range clusterTable {
-		log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile - processing cluster", zap.String("endpointGroup", endpointGroup), zap.String("cluster", cluster.Id))
 		if cluster.Id == "default" || cluster.Id == "" {
-			log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile - syncing local rule config", zap.String("endpointGroup", endpointGroup), zap.String("cluster", cluster.Id), zap.String("ruleFileName", ruleFileName))
 			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer, EndpointGroup: endpointGroup, Name: ruleFileName, Rules: []*models.RFRule{}})
 		} else {
-			log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile - syncing remote rule config", zap.String("endpointGroup", endpointGroup), zap.String("cluster", cluster.Id), zap.String("ruleFileName", ruleFileName))
 			tmpErr := SyncRemoteRuleConfigFile(cluster.Id, models.RFClusterRequestObj{Name: ruleFileName, Rules: []*models.RFRule{}})
 			if tmpErr != nil {
 				log.Error(nil, log.LOGGER_APP, "Remove remote cluster rule file fail", zap.String("cluster", cluster.Id), zap.Error(tmpErr))
 			}
 		}
 	}
-	log.Info(nil, log.LOGGER_APP, "RemovePrometheusRuleFile end", zap.String("endpointGroup", endpointGroup))
 }
 
 func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
@@ -635,7 +623,6 @@ func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrat
 }
 
 func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStrategyList []*models.AlarmStrategyMetricObj, err error) {
-	log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew start", zap.String("endpointGroup", endpointGroup))
 	var strategyRows []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&strategyRows)
 	if err != nil {
@@ -643,7 +630,6 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 		err = fmt.Errorf("query alarm strategy table fail with endpointGroup:%s ,err:%s ", endpointGroup, err.Error())
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - strategyRows query result", zap.String("endpointGroup", endpointGroup), zap.Int("strategyRowsCount", len(strategyRows)))
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
 	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t1.log_type,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type',t1.monitor_engine from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
@@ -651,7 +637,6 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 		err = fmt.Errorf("query alarm strategy metric with endpointGroup:%s fail,%s ", endpointGroup, err.Error())
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - strategyMetricRows query result", zap.String("endpointGroup", endpointGroup), zap.Int("strategyMetricRowsCount", len(strategyMetricRows)))
 	if len(strategyMetricRows) == 0 {
 		result = strategyRows
 		log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - no strategyMetricRows, returning strategyRows", zap.String("endpointGroup", endpointGroup), zap.Int("resultCount", len(result)))
@@ -730,7 +715,6 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 			}
 		}
 	}
-	log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew end", zap.String("endpointGroup", endpointGroup), zap.Int("resultCount", len(result)), zap.Int("monitorEngineStrategyListCount", len(monitorEngineStrategyList)))
 	return
 }
 

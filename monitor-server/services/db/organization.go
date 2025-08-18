@@ -171,7 +171,6 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")
 		}
-		log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation start", zap.String("guid", param.Guid))
 		x.SQL("SELECT guid,display_name,parent FROM panel_recursive").Find(&tableData)
 		if len(tableData) == 0 {
 			return fmt.Errorf("guid:%s can not find any record", param.Guid)
@@ -187,20 +186,17 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				guidList = append(guidList, k)
 			}
 		}
-		log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - guidList", zap.String("guid", param.Guid), zap.Strings("guidList", guidList))
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		// 删除业务配置列表-数据库
 		if dbMetricMonitorList, err = GetDbMetricByServiceGroup(param.Guid, ""); err != nil {
 			return err
 		}
 		if len(dbMetricMonitorList) > 0 {
-			log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - dbMetricMonitorList found", zap.String("guid", param.Guid), zap.Int("count", len(dbMetricMonitorList)))
 			for _, obj := range dbMetricMonitorList {
 				if subDbMetricList, subEndpointGroup := GetDeleteDbMetricActions(obj.Guid); len(subDbMetricList) > 0 {
 					actions = append(actions, subDbMetricList...)
 					if len(subEndpointGroup) > 0 {
 						endpointGroup = append(endpointGroup, subEndpointGroup...)
-						log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - added endpointGroup from dbMetric", zap.String("guid", param.Guid), zap.Strings("subEndpointGroup", subEndpointGroup))
 					}
 				}
 			}
@@ -210,7 +206,6 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			return
 		}
 		if len(logMetricMonitorList) > 0 {
-			log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - logMetricMonitorList found", zap.String("guid", param.Guid), zap.Int("count", len(logMetricMonitorList)))
 			for _, logMetricMonitor := range logMetricMonitorList {
 				delLogMetricMonitorActions, subHost, affectEndpointGroup = getDeleteLogMetricMonitor(logMetricMonitor.Guid)
 				if len(delLogMetricMonitorActions) > 0 {
@@ -218,7 +213,6 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				}
 				if len(affectEndpointGroup) > 0 {
 					endpointGroup = append(endpointGroup, affectEndpointGroup...)
-					log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - added endpointGroup from logMetric", zap.String("guid", param.Guid), zap.Strings("affectEndpointGroup", affectEndpointGroup))
 				}
 				if len(subHost) > 0 {
 					affectHost = append(affectHost, subHost...)
@@ -232,7 +226,6 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			return
 		}
 		if len(metricList) > 0 {
-			log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - metricList found", zap.String("guid", param.Guid), zap.Int("count", len(metricList)))
 			// 删除同环比 指标
 			for _, metric := range metricList {
 				tmpActions, tmpEndpointGroup := getMetricComparisonDeleteAction(metric.Guid)
@@ -245,16 +238,12 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				actions = append(actions, tmpActions...)
 				if len(affectEndpointGroup) > 0 {
 					endpointGroup = append(endpointGroup, affectEndpointGroup...)
-					log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - added endpointGroup from metric", zap.String("guid", param.Guid), zap.Strings("affectEndpointGroup", affectEndpointGroup))
 				}
 			}
 		}
-		log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - before getDeleteServiceGroupAction", zap.String("guid", param.Guid), zap.Strings("endpointGroup", endpointGroup))
 		actions = append(actions, getDeleteServiceGroupAction(param.Guid, guidList)...)
-		log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - before Transaction", zap.String("guid", param.Guid), zap.Int("actionsCount", len(actions)))
 		err = Transaction(actions)
 		if err == nil {
-			log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - Transaction success", zap.String("guid", param.Guid))
 			DeleteServiceWithChildConfig(param.Guid)
 			deleteGlobalServiceGroupNode(param.Guid)
 			if len(affectHost) > 0 {
@@ -264,18 +253,22 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				}
 			}
 			if len(endpointGroup) > 0 {
-				log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - start SyncPrometheusRuleFile", zap.String("guid", param.Guid), zap.Strings("endpointGroup", endpointGroup))
-				for _, v := range endpointGroup {
-					log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - calling SyncPrometheusRuleFile", zap.String("guid", param.Guid), zap.String("endpointGroup", v))
-					// 在调用SyncPrometheusRuleFile之前，检查alarm_strategy表中是否还有数据
-					var alarmStrategyCount int
-					x.SQL("select count(*) as count from alarm_strategy where endpoint_group=?", v).Get(&alarmStrategyCount)
-					log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - alarm_strategy count before SyncPrometheusRuleFile", zap.String("guid", param.Guid), zap.String("endpointGroup", v), zap.Int("alarmStrategyCount", alarmStrategyCount))
+				// 去重 endpointGroup，避免重复调用
+				endpointGroupSet := make(map[string]struct{})
+				var endpointGroupUnique []string
+				for _, eg := range endpointGroup {
+					if eg == "" {
+						continue
+					}
+					if _, ok := endpointGroupSet[eg]; ok {
+						continue
+					}
+					endpointGroupSet[eg] = struct{}{}
+					endpointGroupUnique = append(endpointGroupUnique, eg)
+				}
+				for _, v := range endpointGroupUnique {
 					SyncPrometheusRuleFile(v, false)
 				}
-				log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - finished SyncPrometheusRuleFile", zap.String("guid", param.Guid))
-			} else {
-				log.Info(nil, log.LOGGER_APP, "UpdateOrganization delete operation - no endpointGroup to sync", zap.String("guid", param.Guid))
 			}
 		} else {
 			log.Error(nil, log.LOGGER_APP, "UpdateOrganization delete operation - Transaction failed", zap.String("guid", param.Guid), zap.Error(err))
