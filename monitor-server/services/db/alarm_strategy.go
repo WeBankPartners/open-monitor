@@ -535,7 +535,10 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 	}
 	endpointGroupObj, err := GetSimpleEndpointGroup(endpointGroup)
 	if err != nil {
-		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
+		// 降级：如果 endpoint_group 不存在，直接删除对应的规则文件
+		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - GetSimpleEndpointGroup failed, fallback to RemovePrometheusRuleFile", zap.String("endpointGroup", endpointGroup), zap.Error(err))
+		RemovePrometheusRuleFile(endpointGroup, false)
+		return nil
 	}
 	log.Info(nil, log.LOGGER_APP, "SyncPrometheusRuleFile", zap.String("endpointGroup", endpointGroup))
 	ruleFileName := "g_" + endpointGroup
@@ -547,11 +550,13 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"'))", endpointGroupObj.MonitorType).Find(&endpointList)
 	}
 	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - query endpoint failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		return err
 	}
 	// 获取strategy
 	strategyList, monitorEngineStrategyList, getStrategyErr := getAlarmStrategyWithExprNew(endpointGroup)
 	if getStrategyErr != nil {
+		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - getAlarmStrategyWithExprNew failed", zap.String("endpointGroup", endpointGroup), zap.Error(getStrategyErr))
 		return getStrategyErr
 	}
 	log.Debug(nil, log.LOGGER_APP, "SyncPrometheusRuleFile alarm strategy data", log.JsonObj("strategyList", strategyList))
@@ -621,17 +626,20 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 	var strategyRows []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&strategyRows)
 	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - query alarm_strategy failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		err = fmt.Errorf("query alarm strategy table fail with endpointGroup:%s ,err:%s ", endpointGroup, err.Error())
 		return
 	}
 	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
 	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t1.log_type,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type',t1.monitor_engine from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
 	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - query alarm_strategy_metric failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		err = fmt.Errorf("query alarm strategy metric with endpointGroup:%s fail,%s ", endpointGroup, err.Error())
 		return
 	}
 	if len(strategyMetricRows) == 0 {
 		result = strategyRows
+		log.Info(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - no strategyMetricRows, returning strategyRows", zap.String("endpointGroup", endpointGroup), zap.Int("resultCount", len(result)))
 		return
 	}
 	strategyRowMap := make(map[string]*models.AlarmStrategyMetricObj)
@@ -656,12 +664,14 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 	var tagRows []*models.AlarmStrategyTag
 	err = x.SQL("select * from alarm_strategy_tag where alarm_strategy_metric in ("+filterSql+")", filterParams...).Find(&tagRows)
 	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - query alarm_strategy_tag failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		err = fmt.Errorf("query alarm strategy tag fail,%s ", err.Error())
 		return
 	}
 	var tagValueRows []*models.AlarmStrategyTagValue
 	err = x.SQL("select * from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in ("+filterSql+"))", filterParams...).Find(&tagValueRows)
 	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "getAlarmStrategyWithExprNew - query alarm_strategy_tag_value failed", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		err = fmt.Errorf("query alarm strategy tag value fail,%s ", err.Error())
 		return
 	}
