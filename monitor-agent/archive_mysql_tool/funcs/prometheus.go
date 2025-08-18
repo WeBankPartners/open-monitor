@@ -110,20 +110,25 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 			// 快速检查 NaN 和 inf 值
 			if (len(tmpValueStr) == 3 && (tmpValueStr == "NaN" || tmpValueStr == "nan" || tmpValueStr == "inf")) ||
 				(len(tmpValueStr) == 4 && tmpValueStr == "-inf") {
-				continue
-			}
-
-			// 安全解析数值
-			defer func() {
-				if r := recover(); r != nil {
-					fmt.Printf("Panic in archive prometheus parseFloat: value=%s, panic=%v\n", tmpValueStr, r)
+				// 对于成功率指标，NaN/inf 时返回 100（避免告警）
+				if strings.HasSuffix(param.Metric, "req_suc_rate") {
+					tmpV = 100.0
+				} else {
+					continue
 				}
-			}()
+			} else {
+				// 安全解析数值
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Printf("Panic in archive prometheus parseFloat: value=%s, panic=%v\n", tmpValueStr, r)
+					}
+				}()
 
-			var err error
-			tmpV, err = strconv.ParseFloat(tmpValueStr, 64)
-			if err != nil {
-				continue
+				var err error
+				tmpV, err = strconv.ParseFloat(tmpValueStr, 64)
+				if err != nil {
+					continue
+				}
 			}
 
 			tmpValues = append(tmpValues, []float64{vv[0].(float64), tmpV})
