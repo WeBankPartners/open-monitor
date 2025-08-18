@@ -536,7 +536,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 	endpointGroupObj, err := GetSimpleEndpointGroup(endpointGroup)
 	if err != nil {
 		// 降级：如果 endpoint_group 不存在，直接删除对应的规则文件
-		log.Error(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - GetSimpleEndpointGroup failed, fallback to RemovePrometheusRuleFile", zap.String("endpointGroup", endpointGroup), zap.Error(err))
+		log.Warn(nil, log.LOGGER_APP, "SyncPrometheusRuleFile - GetSimpleEndpointGroup failed, fallback to RemovePrometheusRuleFile", zap.String("endpointGroup", endpointGroup), zap.Error(err))
 		RemovePrometheusRuleFile(endpointGroup, false)
 		return nil
 	}
