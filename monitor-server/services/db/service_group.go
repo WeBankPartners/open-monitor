@@ -314,6 +314,7 @@ func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err 
 func getDeleteServiceGroupAction(serviceGroupGuid string, subNodeList []string) (actions []*Action) {
 	serviceGroupRWMutex.Lock()
 	defer serviceGroupRWMutex.Unlock()
+	log.Info(nil, log.LOGGER_APP, "getDeleteServiceGroupAction start", zap.String("serviceGroupGuid", serviceGroupGuid), zap.Strings("subNodeList", subNodeList))
 	var guidList []string
 	if len(subNodeList) > 0 {
 		guidList = subNodeList
@@ -323,10 +324,13 @@ func getDeleteServiceGroupAction(serviceGroupGuid string, subNodeList []string) 
 			guidList = sNode.FetchChildGuid()
 		}
 	}
+	log.Info(nil, log.LOGGER_APP, "getDeleteServiceGroupAction - guidList", zap.String("serviceGroupGuid", serviceGroupGuid), zap.Strings("guidList", guidList))
 	guidFilterString := strings.Join(guidList, "','")
 	var endpointGroup []*models.EndpointGroupTable
 	x.SQL(fmt.Sprintf("select guid from endpoint_group where service_group in ('%s')", guidFilterString)).Find(&endpointGroup)
+	log.Info(nil, log.LOGGER_APP, "getDeleteServiceGroupAction - found endpointGroup", zap.String("serviceGroupGuid", serviceGroupGuid), zap.Int("endpointGroupCount", len(endpointGroup)))
 	for _, v := range endpointGroup {
+		log.Info(nil, log.LOGGER_APP, "getDeleteServiceGroupAction - processing endpointGroup", zap.String("serviceGroupGuid", serviceGroupGuid), zap.String("endpointGroupGuid", v.Guid))
 		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
 	}
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from endpoint_service_rel where service_group in ('%s')", guidFilterString)})
@@ -334,6 +338,7 @@ func getDeleteServiceGroupAction(serviceGroupGuid string, subNodeList []string) 
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify_role_rel where notify in (select guid from notify where service_group in ('%s'))", guidFilterString)})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify where service_group in ('%s')", guidFilterString)})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", guidFilterString)})
+	log.Info(nil, log.LOGGER_APP, "getDeleteServiceGroupAction end", zap.String("serviceGroupGuid", serviceGroupGuid), zap.Int("actionsCount", len(actions)))
 	return actions
 }
 

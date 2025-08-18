@@ -2,8 +2,10 @@ package db
 
 import (
 	"fmt"
-	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -62,9 +64,14 @@ func UpdateEndpointGroup(param *models.EndpointGroupTable, operator string) erro
 }
 
 func DeleteEndpointGroup(endpointGroupGuid string) (err error) {
+	log.Info(nil, log.LOGGER_APP, "DeleteEndpointGroup start", zap.String("endpointGroupGuid", endpointGroupGuid))
 	err = Transaction(getDeleteEndpointGroupAction(endpointGroupGuid))
 	if err == nil {
+		log.Info(nil, log.LOGGER_APP, "DeleteEndpointGroup - Transaction success, calling RemovePrometheusRuleFile", zap.String("endpointGroupGuid", endpointGroupGuid))
 		RemovePrometheusRuleFile(endpointGroupGuid, false)
+		log.Info(nil, log.LOGGER_APP, "DeleteEndpointGroup - RemovePrometheusRuleFile completed", zap.String("endpointGroupGuid", endpointGroupGuid))
+	} else {
+		log.Error(nil, log.LOGGER_APP, "DeleteEndpointGroup - Transaction failed", zap.String("endpointGroupGuid", endpointGroupGuid), zap.Error(err))
 	}
 	return err
 }
@@ -144,15 +151,18 @@ func GetSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable, err
 }
 
 func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) {
+	log.Info(nil, log.LOGGER_APP, "getDeleteEndpointGroupAction start", zap.String("endpointGroupGuid", endpointGroupGuid))
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from  alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)))", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy where endpoint_group=?", Param: []interface{}{endpointGroupGuid}})
+	log.Info(nil, log.LOGGER_APP, "getDeleteEndpointGroupAction - will delete alarm_strategy", zap.String("endpointGroupGuid", endpointGroupGuid))
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
+	log.Info(nil, log.LOGGER_APP, "getDeleteEndpointGroupAction end", zap.String("endpointGroupGuid", endpointGroupGuid), zap.Int("actionsCount", len(actions)))
 	return actions
 }
 
