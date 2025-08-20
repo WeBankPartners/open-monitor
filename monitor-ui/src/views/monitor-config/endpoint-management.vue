@@ -104,7 +104,7 @@
       <div slot="endpointReject">
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_field_type')}}:</label>
-          <Select filterable clearable :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
+          <Select filterable clearable :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.type" @on-change="typeChange" style="width: 513px">
             <Option v-for="item in endpointRejectModel.endpointType" :label="item.label" :value="item.value" :key="item.value">
               {{item.label}}
             </Option>
@@ -112,7 +112,7 @@
         </div>
         <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-          <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode">
+          <Select filterable clearable v-model="endpointRejectModel.addRow.step" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type) || isReviewMode" style="width: 513px">
             <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
               {{item.label}}
             </Option>
@@ -120,7 +120,7 @@
         </div>
         <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type)) && ['0', '1'].includes(systemType)">
           <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
-          <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd || isReviewMode" v-model="endpointRejectModel.addRow.name" name="name" :class="{'red-border': veeErrors.has('name')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
         </div>
@@ -131,13 +131,13 @@
         <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
           <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('m_button_username')}}:</label>
-            <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" :disabled="isReviewMode" name="user" :class="{'red-border': veeErrors.has('user')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" :disabled="isReviewMode" name="user" :class="{'red-border': veeErrors.has('user')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('m_button_password')}}:</label>
-            <input v-validate="'required'" v-model="endpointRejectModel.addRow.password" :disabled="isReviewMode" name="password" :class="{'red-border': veeErrors.has('password')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.password" :disabled="isReviewMode" name="password" :class="{'red-border': veeErrors.has('password')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('password')" class="is-danger">{{ veeErrors.first('password')}}</label>
           </div>
@@ -145,26 +145,26 @@
         <section v-if="endpointRejectModel.addRow.type === 'http'">
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">Method:</label>
-            <input v-validate="'required'" v-model="endpointRejectModel.addRow.method" :disabled="isReviewMode" name="method" :class="{'red-border': veeErrors.has('method')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.method" :disabled="isReviewMode" name="method" :class="{'red-border': veeErrors.has('method')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('method')" class="is-danger">{{ veeErrors.first('method')}}</label>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">URL:</label>
-            <input v-validate="'required'" v-model="endpointRejectModel.addRow.url" :disabled="isReviewMode" name="url" :class="{'red-border': veeErrors.has('url')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" v-model="endpointRejectModel.addRow.url" :disabled="isReviewMode" name="url" :class="{'red-border': veeErrors.has('url')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('url')" class="is-danger">{{ veeErrors.first('url')}}</label>
           </div>
         </section>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
           <label class="col-md-2 label-name">exporter_type: </label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.exporter_type" :disabled="isReviewMode" name="exporter_type" :class="{'red-border': veeErrors.has('exporter_type')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <input v-validate="'required'" v-model="endpointRejectModel.addRow.exporter_type" :disabled="isReviewMode" name="exporter_type" :class="{'red-border': veeErrors.has('exporter_type')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
           <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
-          <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" :disabled="isReviewMode" name="port" :class="{'red-border': veeErrors.has('port')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" :disabled="isReviewMode" name="port" :class="{'red-border': veeErrors.has('port')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>
@@ -174,32 +174,32 @@
         </div>
         <div v-if="endpointRejectModel.addRow.exporter">
           <label class="col-md-2 label-name">{{$t('m_exporter_address')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('m_exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-7 form-control model-input c-dark" />
+          <input v-validate="'required'" :placeholder="$t('m_exporter_address_placeholder')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{'red-border': veeErrors.has('export_address')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
         </div>
         <template v-if="endpointRejectModel.addRow.type === 'process'">
           <div>
             <label class="col-md-2 label-name">{{$t('m_processName')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('m_processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" :placeholder="$t('m_processName')" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{'red-border': veeErrors.has('process_name')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
           </div>
           <div>
             <label class="col-md-2 label-name">{{$t('m_processTags')}}:</label>
-            <input :placeholder="$t('m_processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input :placeholder="$t('m_processTags')" v-model="endpointRejectModel.addRow.tags" :disabled="isReviewMode" type="text" class="col-md-9 form-control model-input c-dark" />
           </div>
         </template>
         <template>
           <div v-if="endpointRejectModel.addRow.type !== 'process'">
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode || disabledIp" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-7 form-control model-input c-dark" />
+            <input v-validate="'required'" :placeholder="$t('m_field_ip')" :disabled="isReviewMode || disabledIp" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{'red-border': veeErrors.has('ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
             <label class="required-tip">*</label>
             <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
           </div>
           <div v-else>
             <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
-            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode || disabledIp" @on-change="changeIp" @on-open-change="getIpList()" style="width:338px">
+            <Select filterable v-model="endpointRejectModel.addRow.ip" :disabled="isReviewMode || disabledIp" @on-change="changeIp" @on-open-change="getIpList()" style="width: 513px">
               <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
                 {{item.guid}}
               </Option>
@@ -488,6 +488,7 @@ export default {
         modalId: 'add_object_Modal',
         modalTitle: 'm_button_add',
         isAdd: true,
+        modalStyle: 'min-width:700px',
         config: [{
           name: 'advancedConfig',
           type: 'slot'
@@ -518,6 +519,7 @@ export default {
         modalTitle: this.$t('m_field_endpoint'),
         supportStep: true,
         isAdd: true,
+        modalStyle: 'min-width:700px',
         modalFooter: [],
         saveFunc: 'endpointRejectSave',
         config: [{
@@ -562,6 +564,7 @@ export default {
         modalId: 'process_config_model',
         modalTitle: 'm_button_processConfiguration',
         isAdd: true,
+        modalStyle: 'min-width:700px',
         saveFunc: 'processConfigSave',
         config: [{
           name: 'processConfig',
