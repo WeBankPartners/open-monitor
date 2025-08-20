@@ -1038,7 +1038,7 @@ func getLastFromExpr(expr string) string {
 	return last
 }
 
-func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
+func CloseAlarm(param m.AlarmCloseParam, operator string) (actions []*Action, err error) {
 	var alarmRows []*m.AlarmTable
 	var queryFilterList []string
 	var queryFilterParam []interface{}
@@ -1077,7 +1077,7 @@ func CloseAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 		return
 	}
 	for _, v := range alarmRows {
-		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
+		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',close_type='manual',close_user=?,end=NOW() WHERE id=?", Param: []interface{}{operator, v.Id}})
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
 		}
@@ -1333,7 +1333,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	return result
 }
 
-func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
+func CloseOpenAlarm(param m.AlarmCloseParam, operator string) (actions []*Action, err error) {
 	var query []*m.OpenAlarmObj
 	containsCustomMetric := false
 	for _, v := range param.Metric {
@@ -1370,8 +1370,8 @@ func CloseOpenAlarm(param m.AlarmCloseParam) (actions []*Action, err error) {
 			for _, vv := range subQueryList {
 				tmpIds += fmt.Sprintf("%d,", vv.Id)
 				actions = append(actions, &Action{Sql: "INSERT INTO history_alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id," +
-					"use_umg_policy,alert_way,custom_message,alarm_total,create_at) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{vv.AlertInfo, vv.AlertIp, vv.AlertLevel, vv.AlertObj, vv.AlertTitle,
-					vv.AlertReciver, vv.RemarkInfo, vv.SubSystemId, vv.UseUmgPolicy, vv.AlertWay, vv.CustomMessage, vv.AlarmTotal, vv.CreateAt}})
+					"use_umg_policy,alert_way,custom_message,alarm_total,create_at,close_user) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{vv.AlertInfo, vv.AlertIp, vv.AlertLevel, vv.AlertObj, vv.AlertTitle,
+					vv.AlertReciver, vv.RemarkInfo, vv.SubSystemId, vv.UseUmgPolicy, vv.AlertWay, vv.CustomMessage, vv.AlarmTotal, vv.CreateAt, operator}})
 			}
 			tmpIds = tmpIds[:len(tmpIds)-1]
 			actions = append(actions, &Action{Sql: fmt.Sprintf("delete from  alarm_custom WHERE id in (%s)", tmpIds), Param: []interface{}{}})

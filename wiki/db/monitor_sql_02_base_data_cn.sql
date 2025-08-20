@@ -1295,3 +1295,7 @@ alter table alarm_condition modify column expr varchar(2000) default null COMMEN
 ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm (alarm);
 ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
 #@v3.6.5-end@;
+#@v3.6.7-begin@;
+alter table history_alarm_custom add column close_user varchar(50) default null comment '告警关闭人';
+#@v3.6.7-end@;
+

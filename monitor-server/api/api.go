@@ -264,7 +264,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/strategy/workflow", Method: http.MethodGet, HandlerFunc: alarmv2.ListAlarmStrategyWorkFlow, ApiCode: "alarm_strategy_workflow"},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPost, HandlerFunc: alarmv2.CreateAlarmStrategy, ApiCode: "alarm_strategy_create"},
 		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateAlarmStrategy, ApiCode: "alarm_strategy_update"},
-		&handlerFuncObj{Url: "/alarm/strategy/:strategyGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy, ApiCode: "alarm_strategy_delete_by_strategy_guid"},
+		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy, ApiCode: "alarm_strategy_delete"},
 		&handlerFuncObj{Url: "/alarm/event/callback/list", Method: http.MethodGet, HandlerFunc: alarmv2.ListCallbackEvent, ApiCode: "alarm_event_callback_list"},
 		&handlerFuncObj{Url: "/alarm/strategy/export/:queryType/:guid", Method: http.MethodGet, HandlerFunc: alarmv2.ExportAlarmStrategy, ApiCode: "alarm_strategy_export_by_query_type_and_guid"},
 		&handlerFuncObj{Url: "/alarm/strategy/import/:queryType/:guid", Method: http.MethodPost, HandlerFunc: alarmv2.ImportAlarmStrategy, ApiCode: "alarm_strategy_import_by_query_type_and_guid"},

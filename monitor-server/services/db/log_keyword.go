@@ -331,7 +331,7 @@ func UpdateLogKeyword(param, existData *models.LogKeywordConfigTable, operator s
 	}
 	if existData.Name != param.Name || existData.Keyword != param.Keyword || existData.Priority != param.Priority {
 		// 关键信息改了，把已有告警关闭
-		closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(param.Guid)
+		closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(param.Guid, operator)
 		if tmpErr != nil {
 			err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
 			return
@@ -344,7 +344,7 @@ func UpdateLogKeyword(param, existData *models.LogKeywordConfigTable, operator s
 	return
 }
 
-func getLogKeywordCloseAlarmActions(logKeywordConfigGuid string) (actions []*Action, err error) {
+func getLogKeywordCloseAlarmActions(logKeywordConfigGuid, operator string) (actions []*Action, err error) {
 	var logKeywordAlarmRows []*models.LogKeywordAlarmTable
 	err = x.SQL("select id,alarm_id from log_keyword_alarm where log_keyword_config=? and status='firing'", logKeywordConfigGuid).Find(&logKeywordAlarmRows)
 	if err != nil {
@@ -353,7 +353,7 @@ func getLogKeywordCloseAlarmActions(logKeywordConfigGuid string) (actions []*Act
 	}
 	for _, row := range logKeywordAlarmRows {
 		if row.AlarmId > 0 {
-			closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
+			closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId}, operator)
 			if tmpErr != nil {
 				err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
 				return
@@ -366,9 +366,9 @@ func getLogKeywordCloseAlarmActions(logKeywordConfigGuid string) (actions []*Act
 	return
 }
 
-func DeleteLogKeyword(logKeywordConfigGuid string) (err error) {
+func DeleteLogKeyword(logKeywordConfigGuid, operator string) (err error) {
 	var actions []*Action
-	closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(logKeywordConfigGuid)
+	closeAlarmActions, tmpErr := getLogKeywordCloseAlarmActions(logKeywordConfigGuid, operator)
 	if tmpErr != nil {
 		err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
 		return

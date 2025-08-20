@@ -190,7 +190,7 @@ func DeleteLogKeyword(c *gin.Context) {
 		middleware.ReturnValidateError(c, getExistErr.Error())
 		return
 	}
-	err := db.DeleteLogKeyword(logKeywordConfigGuid)
+	err := db.DeleteLogKeyword(logKeywordConfigGuid, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {

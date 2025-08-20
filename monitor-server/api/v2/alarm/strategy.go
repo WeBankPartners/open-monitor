@@ -135,18 +135,40 @@ func validateStrategyCondition(strategyList []*models.StrategyConditionObj) (err
 }
 
 func DeleteAlarmStrategy(c *gin.Context) {
-	strategyGuid := c.Param("strategyGuid")
-	endpointGroup, err := db.DeleteAlarmStrategy(strategyGuid)
+	// 统一使用 JSON 方式，支持单个和批量删除
+	var requestBody struct {
+		StrategyGuids []string `json:"strategyGuids" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		middleware.ReturnValidateError(c, "Invalid request body: "+err.Error())
+		return
+	}
+
+	if len(requestBody.StrategyGuids) == 0 {
+		middleware.ReturnValidateError(c, "strategyGuids cannot be empty")
+		return
+	}
+
+	// 调用批量删除方法（支持单个和批量）
+	endpointGroups, err := db.DeleteAlarmStrategyBatch(requestBody.StrategyGuids)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = db.SyncPrometheusRuleFile(endpointGroup, false)
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		} else {
-			middleware.ReturnSuccess(c)
+		return
+	}
+
+	// 同步所有受影响的 endpointGroups 的 Prometheus 规则文件
+	for _, endpointGroup := range endpointGroups {
+		if endpointGroup != "" {
+			err = db.SyncPrometheusRuleFile(endpointGroup, false)
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+				return
+			}
 		}
 	}
+
+	middleware.ReturnSuccess(c)
 }
 
 func ExportAlarmStrategy(c *gin.Context) {

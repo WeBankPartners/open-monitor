@@ -172,7 +172,7 @@ func UpdateDBKeywordConfig(param *models.DbKeywordConfigObj, operator string) (e
 		}
 		for _, row := range dbKeywordAlarmRows {
 			if row.AlarmId > 0 {
-				closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId})
+				closeAlarmActions, tmpErr := CloseAlarm(models.AlarmCloseParam{Id: row.AlarmId}, operator)
 				if tmpErr != nil {
 					err = fmt.Errorf("try to get close alarm actions fail,%s ", tmpErr.Error())
 					return

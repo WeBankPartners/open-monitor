@@ -705,12 +705,12 @@ func CloseAlarm(c *gin.Context) {
 		return
 	}
 	var actions []*db.Action
-	actions, err = db.CloseAlarm(param)
+	actions, err = db.CloseAlarm(param, mid.GetOperateUser(c))
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	customActions, getCustomErr := db.CloseOpenAlarm(param)
+	customActions, getCustomErr := db.CloseOpenAlarm(param, mid.GetOperateUser(c))
 	if getCustomErr != nil {
 		mid.ReturnHandleError(c, getCustomErr.Error(), getCustomErr)
 		return

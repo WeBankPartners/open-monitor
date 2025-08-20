@@ -203,6 +203,44 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 	return
 }
 
+func GetServiceGroupEndpointListWithFilter(search, monitorType string) (result []*models.ServiceGroupEndpointListObj, err error) {
+	result = []*models.ServiceGroupEndpointListObj{}
+
+	// 构建查询条件
+	var conditions []string
+	var params []interface{}
+
+	// 添加 monitor_type 过滤
+	if monitorType != "" {
+		conditions = append(conditions, "monitor_type=?")
+		params = append(params, monitorType)
+	}
+
+	// 添加 guid 模糊搜索
+	if search != "" {
+		conditions = append(conditions, "guid like ?")
+		params = append(params, "%"+search+"%")
+	}
+
+	// 构建 SQL 语句
+	sql := "select guid,monitor_type from endpoint_new"
+	if len(conditions) > 0 {
+		sql += " where " + strings.Join(conditions, " and ")
+	}
+	sql += " order by update_time desc limit 200"
+
+	var endpointTable []*models.EndpointNewTable
+	err = x.SQL(sql, params...).Find(&endpointTable)
+	if err != nil {
+		return
+	}
+
+	for _, v := range endpointTable {
+		result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid, Type: v.MonitorType})
+	}
+	return
+}
+
 func getCreateServiceGroupAction(param *models.ServiceGroupTable, operator string) (actions []*Action) {
 	if param.Parent == "" {
 		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time,update_user) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime, operator}})

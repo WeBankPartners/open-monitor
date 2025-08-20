@@ -245,6 +245,38 @@ func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string, err error) 
 	return
 }
 
+// DeleteAlarmStrategies 批量删除告警策略
+func DeleteAlarmStrategies(strategyGuids []string) (endpointGroups []string, err error) {
+	if len(strategyGuids) == 0 {
+		return
+	}
+
+	var allActions []*Action
+	endpointGroups = []string{}
+
+	// 收集所有需要删除的策略的 actions 和 endpointGroups
+	for _, strategyGuid := range strategyGuids {
+		var delAlarmStrategyActions []*Action
+		var endpointGroup string
+		if delAlarmStrategyActions, endpointGroup, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+			return
+		}
+		allActions = append(allActions, delAlarmStrategyActions...)
+		if endpointGroup != "" {
+			endpointGroups = append(endpointGroups, endpointGroup)
+		}
+	}
+
+	// 执行批量删除事务
+	err = Transaction(allActions)
+	return
+}
+
+// DeleteAlarmStrategyBatch 兼容方法：支持单个或批量删除
+func DeleteAlarmStrategyBatch(strategyGuids []string) (endpointGroups []string, err error) {
+	return DeleteAlarmStrategies(strategyGuids)
+}
+
 func GetDeleteAlarmStrategyActions(strategyGuid string) (delAlarmStrategyActions []*Action, endpointGroup string, err error) {
 	delAlarmStrategyActions = []*Action{}
 	var strategyTable []*models.AlarmStrategyTable

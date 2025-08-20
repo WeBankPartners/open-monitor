@@ -20,12 +20,19 @@ func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *m
 	}
 	if len(alarmSplit) == 3 {
 		if alarmSplit[2] == "custom_alarm_guid" {
-			queryRows, _ := x.QueryString("SELECT id FROM alarm_custom WHERE id=?", alarmId)
-			if len(queryRows) == 0 {
-				err = fmt.Errorf("Can not find custom alarm with id:%s ", input.AlarmId)
-				return
-			}
-			_, err = x.Exec("UPDATE alarm_custom SET closed=1,custom_message=?,closed_at=NOW() WHERE id=?", input.Message, alarmId)
+			// 直接使用事务处理：写入历史表并删除原记录
+			var actions []*Action
+			// 先查询记录并写入 history_alarm_custom 表
+			actions = append(actions, &Action{Sql: "INSERT INTO history_alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id," +
+				"use_umg_policy,alert_way,custom_message,alarm_total,create_at,close_user) " +
+				"SELECT alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id," +
+				"use_umg_policy,alert_way,?,alarm_total,create_at,'system' FROM alarm_custom WHERE id=?", Param: []interface{}{input.Message, alarmId}})
+
+			// 删除 alarm_custom 记录
+			actions = append(actions, &Action{Sql: "DELETE FROM alarm_custom WHERE id=?", Param: []interface{}{alarmId}})
+
+			// 执行事务
+			err = Transaction(actions)
 			return
 		}
 	}
