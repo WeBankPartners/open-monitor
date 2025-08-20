@@ -28,6 +28,7 @@ type PrometheusQueryParam struct {
 	Start  int64                 `json:"start"`
 	End    int64                 `json:"end"`
 	PromQl string                `json:"prom_ql"`
+	Metric string                `json:"metric"`
 	Data   []*PrometheusQueryObj `json:"data"`
 }
 

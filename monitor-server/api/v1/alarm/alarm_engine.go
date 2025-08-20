@@ -168,7 +168,32 @@ func buildMonitorEngineAlarm(alarmStrategyMetric *models.AlarmStrategyMetric, co
 		firingNonMatch := false
 		var startValue, endValue float64
 		for _, v := range queryObj.Values {
-			tmpValue, tmpParseErr := strconv.ParseFloat(v[1].(string), 64)
+			tmpValueStr := v[1].(string)
+
+			// 处理 NaN 值 - 添加异常过滤
+			var tmpValue float64
+			var tmpParseErr error
+
+			// 安全检查：确保输入参数不为空
+			if tmpValueStr == "" {
+				continue
+			}
+
+			// 快速检查 NaN 和 inf 值
+			if (len(tmpValueStr) == 3 && (tmpValueStr == "NaN" || tmpValueStr == "nan" || tmpValueStr == "inf")) ||
+				(len(tmpValueStr) == 4 && tmpValueStr == "-inf") {
+				continue
+			}
+
+			// 安全解析数值
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error(nil, log.LOGGER_APP, "Panic in alarm engine parseFloat", zap.String("value", tmpValueStr), zap.Any("panic", r))
+				}
+			}()
+
+			tmpValue, tmpParseErr = strconv.ParseFloat(tmpValueStr, 64)
+
 			if tmpParseErr == nil {
 				if !compareFloatValue(tmpValue, threshold, condition) {
 					firingNonMatch = true
