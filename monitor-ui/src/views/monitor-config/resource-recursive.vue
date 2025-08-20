@@ -10,9 +10,9 @@
     >
       <template slot="content">
         <Form ref="addPanalForm"
-          :model="currentData"
-          label-position="left"
-          :label-width="80"
+              :model="currentData"
+              label-position="left"
+              :label-width="80"
         >
           <FormItem required :label="$t('m_field_guid')">
             <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
