@@ -536,6 +536,20 @@ func doLogKeywordMonitorJob() {
 	nowTime := time.Now()
 	notifyConfigMap := make(map[string]int)
 	for _, config := range logKeywordConfigs {
+		// 调试：处理每条关键字配置，尽量带出告警名称与关键字
+		log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob processing",
+			zap.String("configGuid", config.LogKeywordConfigGuid),
+			zap.String("alarmName", config.Name),
+			zap.String("keyword", config.Keyword),
+			zap.String("logPath", config.LogPath),
+			zap.String("serviceGroup", config.ServiceGroup),
+			zap.String("sourceEndpoint", config.SourceEndpoint),
+			zap.String("targetEndpoint", config.TargetEndpoint),
+			zap.String("monitorType", config.MonitorType),
+			zap.String("agentAddress", config.AgentAddress),
+			zap.String("activeWindow", config.ActiveWindow),
+			zap.Int("notifyEnable", config.NotifyEnable),
+		)
 		if config.LogKeywordConfigGuid == "" {
 			continue
 		}
@@ -547,15 +561,32 @@ func doLogKeywordMonitorJob() {
 		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
 		} else {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig", zap.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig",
+				zap.String("key", key),
+				zap.String("alarmName", config.Name),
+				zap.String("keyword", config.Keyword),
+			)
 			continue
 		}
 		if newValue == 0 {
-			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig with empty value", zap.String("key", key))
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob ignore logKeywordConfig with empty value",
+				zap.String("key", key),
+				zap.String("alarmName", config.Name),
+				zap.String("keyword", config.Keyword),
+				zap.Float64("newValue", newValue),
+			)
 			continue
 		}
 		addFlag := false
 		if existAlarm, b := alarmMap[key]; b {
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob exist alarm",
+				zap.String("alarmName", config.Name),
+				zap.String("keyword", config.Keyword),
+				zap.Int("alarmId", existAlarm.AlarmId),
+				zap.String("status", existAlarm.Status),
+				zap.Float64("startValue", existAlarm.StartValue),
+				zap.Float64("endValue", existAlarm.EndValue),
+			)
 			if existAlarm.EndValue > 0 {
 				oldValue = existAlarm.EndValue
 			} else {
@@ -574,7 +605,7 @@ func doLogKeywordMonitorJob() {
 				}
 			}
 			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
-				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
+				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
 				addFlag = true
@@ -585,9 +616,16 @@ func doLogKeywordMonitorJob() {
 			}
 		}
 		if addFlag {
+			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob add alarm",
+				zap.String("alarmName", config.Name),
+				zap.String("keyword", config.Keyword),
+				zap.String("tags", key),
+				zap.Float64("newValue", newValue),
+				zap.String("targetEndpoint", config.TargetEndpoint),
+			)
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
+			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
 		}
 	}
 	if len(addAlarmRows) == 0 {
@@ -595,28 +633,33 @@ func doLogKeywordMonitorJob() {
 	}
 	for _, v := range addAlarmRows {
 		if tmpErr := doLogKeywordDBAction(v); tmpErr != nil {
-			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail", zap.String("tags", v.Tags), zap.Error(tmpErr))
+			log.Error(nil, log.LOGGER_APP, "Update log keyword alarm table fail", zap.String("tags", v.Tags), zap.String("alarmName", v.AlarmName), zap.Error(tmpErr))
 		} else {
 			if v.Id <= 0 {
 				if _, b := notifyConfigMap[v.AlarmStrategy]; !b {
-					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify disable,ignore", zap.String("logKeywordConfig", v.AlarmStrategy))
+					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify disable,ignore", zap.String("logKeywordConfig", v.AlarmStrategy), zap.String("alarmName", v.AlarmName))
 					continue
 				}
 				tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
 				if tmpAlarmObj.Id <= 0 {
-					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify fail,query alarm with tags fail", zap.String("tags", v.Tags))
+					log.Warn(nil, log.LOGGER_APP, "Log keyword monitor notify fail,query alarm with tags fail", zap.String("tags", v.Tags), zap.String("alarmName", v.AlarmName))
 					continue
 				}
 				tmpNotifyRow, getNotifyErr := getLogKeywordAlarmNotify(v.AlarmStrategy)
 				if getNotifyErr != nil {
-					log.Error(nil, log.LOGGER_APP, "doLogKeywordMonitorJob get alarm notify fail", zap.String("logKeywordConfigGuid", v.AlarmStrategy), zap.Int("alarmId", tmpAlarmObj.Id), zap.Error(getNotifyErr))
+					log.Error(nil, log.LOGGER_APP, "doLogKeywordMonitorJob get alarm notify fail", zap.String("logKeywordConfigGuid", v.AlarmStrategy), zap.Int("alarmId", tmpAlarmObj.Id), zap.String("alarmName", v.AlarmName), zap.Error(getNotifyErr))
 					continue
 				}
 				if tmpNotifyRow.ProcCallbackMode == models.AlarmNotifyManualMode && tmpNotifyRow.ProcCallbackKey != "" {
 					if _, execErr := x.Exec("update alarm set notify_id=? where id=?", tmpNotifyRow.Guid, tmpAlarmObj.Id); execErr != nil {
-						log.Error(nil, log.LOGGER_APP, "update alarm table notify id fail", zap.Int("alarmId", tmpAlarmObj.Id), zap.Error(execErr))
+						log.Error(nil, log.LOGGER_APP, "update alarm table notify id fail", zap.Int("alarmId", tmpAlarmObj.Id), zap.String("alarmName", v.AlarmName), zap.Error(execErr))
 					}
 				}
+				log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob notify",
+					zap.Int("alarmId", tmpAlarmObj.Id),
+					zap.String("alarmName", v.AlarmName),
+					zap.String("logKeywordConfigGuid", v.AlarmStrategy),
+				)
 				notifyAction(tmpNotifyRow, &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 			}
 		}
@@ -636,7 +679,7 @@ func getSimpleAlarmByLogKeywordTags(tags string) (result models.AlarmTable) {
 	return
 }
 
-func getLogKeywordLastRow(address, path, keyword string) string {
+func getLogKeywordLastRow(address, path, keyword, alarmName string) string {
 	var result string
 	if address == "" || path == "" || keyword == "" {
 		return result
@@ -645,13 +688,13 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	postData, _ := json.Marshal(param)
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_keyword/rows", address), strings.NewReader(string(postData)))
 	if err != nil {
-		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,new request error", zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,new request error", zap.String("alarmName", alarmName), zap.String("keyword", keyword), zap.String("path", path), zap.String("address", address), zap.Error(err))
 		return result
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response error", zap.Error(respErr))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response error", zap.String("alarmName", alarmName), zap.String("keyword", keyword), zap.String("path", path), zap.String("address", address), zap.Error(respErr))
 		return result
 	}
 	var responseData models.LogKeywordRowsHttpResult
@@ -659,11 +702,11 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 	resp.Body.Close()
 	err = json.Unmarshal(respBytes, &responseData)
 	if err != nil {
-		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response data json unmarshal error", zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response data json unmarshal error", zap.String("alarmName", alarmName), zap.String("keyword", keyword), zap.String("path", path), zap.String("address", address), zap.Error(err))
 		return result
 	}
 	if responseData.Status != "ok" {
-		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response status error", zap.String("status", responseData.Status), zap.String("message", responseData.Message))
+		log.Error(nil, log.LOGGER_APP, "Get log keyword rows fail,response status error", zap.String("alarmName", alarmName), zap.String("keyword", keyword), zap.String("path", path), zap.String("address", address), zap.String("status", responseData.Status), zap.String("message", responseData.Message))
 		return result
 	}
 	for _, v := range responseData.Data {
