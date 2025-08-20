@@ -5,14 +5,14 @@
     <BaseDrawer
       :title="$t('m_resourceLevel_levelMsg')"
       :visible.sync="isEditPanal"
-      :realWidth="800"
+      :realWidth="1000"
       :scrollable="true"
     >
       <template slot="content">
         <Form ref="addPanalForm"
-              :model="currentData"
-              label-position="left"
-              :label-width="80"
+          :model="currentData"
+          label-position="left"
+          :label-width="80"
         >
           <FormItem required :label="$t('m_field_guid')">
             <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
@@ -33,7 +33,7 @@
     <!-- 关联角色 -->
     <BaseDrawer
       :visible.sync="isAssociatedRole"
-      :realWidth="800"
+      :realWidth="1000"
       :scrollable="true"
       :title="$t('m_resourceLevel_associatedRole')"
     >
@@ -55,7 +55,7 @@
     <!-- 关联对象 -->
     <BaseDrawer
       :visible.sync="isAssociatedObject"
-      realWidth="800"
+      :realWidth="1000"
       :scrollable="true"
       :title="$t('m_resourceLevel_associatedObject')"
     >
@@ -67,7 +67,7 @@
               filterable
               clearable
               multiple
-              style="width:300px"
+              style="width:500px"
               :placeholder="$t('m_requestMoreData')"
               :remote-method="getAllObject"
             >
@@ -106,7 +106,7 @@
     <!-- 告警回调 -->
     <BaseDrawer
       :visible.sync="isAlarmCallback"
-      realWidth="800"
+      :realWidth="1000"
       :scrollable="true"
       :title="$t('m_resourceLevel_alarmCallback')"
     >
@@ -182,7 +182,7 @@
         </div>
       </div>
     </Modal> -->
-    <Modal v-model="confirmModal.isShowConfirmModal" width="900">
+    <Modal v-model="confirmModal.isShowConfirmModal" width="1000">
       <div>
         <Icon :size="28" :color="'#f90'" type="md-help-circle" />
         <span class="confirm-msg">{{ $t('m_delConfirm_title') }}</span>

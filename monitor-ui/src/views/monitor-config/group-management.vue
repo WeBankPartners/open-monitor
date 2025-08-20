@@ -107,6 +107,7 @@ export default {
       modelConfig: {
         modalId: 'add_edit_Modal',
         modalTitle: 'm_field_group',
+        modalStyle: 'min-width: 700px',
         isAdd: true,
         config: [
           {
@@ -156,7 +157,7 @@ export default {
         modalId: 'endpoint_Modal',
         modalTitle: 'm_tableKey_endpoint',
         saveFunc: 'managementEndpoint',
-        modalStyle: 'min-width:900px',
+        modalStyle: 'min-width: 1000px',
         isAdd: true,
         config: [
           {
@@ -168,8 +169,8 @@ export default {
         endpointOptions: [],
         titles: [this.$t('m_value_to_be_selected'), this.$t('m_selected_value')],
         listStyle: {
-          width: '400px',
-          height: '400px'
+          width: '450px',
+          height: '450px'
         }
       },
       authorizationModel: {

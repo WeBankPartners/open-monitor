@@ -98,6 +98,7 @@
       v-model="showServiceGroup"
       :fullscreen="isfullscreen"
       footer-hide
+      :width="800"
       :title="$t('m_field_resourceLevel')"
     >
       <div slot="header" class="custom-modal-header">

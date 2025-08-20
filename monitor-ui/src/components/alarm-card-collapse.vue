@@ -1,10 +1,7 @@
 <template>
   <div class="alarm-card-collapse">
     <Collapse v-model="expandCollapse">
-      <Panel v-for="item in collapseData"
-             :key="item.id"
-             :name="item.id + ''"
-      >
+      <Panel v-for="item in collapseData" :key="item.id" :name="item.id + ''">
         <template>
           <img
             v-if="item.s_priority === 'high'"

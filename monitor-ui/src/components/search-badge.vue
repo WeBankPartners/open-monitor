@@ -286,7 +286,7 @@ export default ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 400px
+  width: 600px
 }
 .drop-down-content > div {
   width: 80%;
