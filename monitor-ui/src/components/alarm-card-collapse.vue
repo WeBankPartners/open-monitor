@@ -63,7 +63,11 @@
                 <div slot="content" style="white-space: normal;padding:12px">
                   <p>{{ $t('m_tableKey_description') }}: {{ item.notify_message }}</p>
                 </div>
-                <img v-if="item.notify_id !== ''" @click="goToNotify(item)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
+                <img v-if="item.notify_id !== ''"
+                     @click="goToNotify(item)"
+                     style="vertical-align: super;padding:0px 8px;cursor:pointer; margin-bottom: -7px"
+                     src="../assets/img/icon_start_flow.png"
+                />
               </Poptip>
               <Tooltip :content="$t('m_menu_endpointView')">
                 <Icon
@@ -201,6 +205,18 @@
         </template>
       </Panel>
     </Collapse>
+    <Modal
+      v-model="isShowStartFlow"
+      :title="$t('m_initiate_orchestration')"
+      @on-ok="confirmStartFlow"
+      @on-cancel="isShowStartFlow = false"
+    >
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red;text-align: left;">{{startFlowTip}}</p>
+        </div>
+      </div>
+    </Modal>
     <Modal
       v-model="showEndpointView"
       :mask-closable="false"
