@@ -757,6 +757,22 @@ func DeleteServiceConfig(serviceGroup string) {
 			log.Error(nil, log.LOGGER_APP, "Try to DeleteLogKeywordMonitor fail", zap.Error(tmpErr))
 		}
 	}
+
+	// Remove dbKeyword config
+	var dbKeywordTable []*models.DbKeywordMonitor
+	x.SQL("select guid from db_keyword_monitor where service_group=?", serviceGroup).Find(&dbKeywordTable)
+	for _, v := range dbKeywordTable {
+		tmpErr := DeleteDBKeywordConfig(v.Guid)
+		if tmpErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Try to DeleteDbKeywordConfig fail", zap.Error(tmpErr))
+		}
+	}
+	if len(dbKeywordTable) > 0 {
+		err := SyncDbMetric(false)
+		if err != nil {
+			log.Error(nil, log.LOGGER_APP, "Try to SyncDbMetric fail", zap.Error(err))
+		}
+	}
 }
 
 func getUpdateServiceGroupNotifyActions(serviceGroup, firingCallback, recoverCallback string, roleList []string) (actions []*Action) {
