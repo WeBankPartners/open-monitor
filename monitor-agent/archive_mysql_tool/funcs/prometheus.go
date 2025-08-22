@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	gTransport *http.Transport
-	prometheusAddress string
+	gTransport         *http.Transport
+	prometheusAddress  string
 	prometheusQueryUrl string
-	queryStep int
+	queryStep          int
 )
 
 func InitHttpTransport() error {
@@ -45,24 +45,24 @@ func InitHttpTransport() error {
 		return fmt.Errorf("init prometheus http config fail,idle > open? ")
 	}
 	gTransport = &http.Transport{
-		MaxConnsPerHost: maxOpen,
+		MaxConnsPerHost:     maxOpen,
 		MaxIdleConnsPerHost: maxIdle,
-		IdleConnTimeout: time.Duration(timeout)*time.Second,
+		IdleConnTimeout:     time.Duration(timeout) * time.Second,
 	}
 	return nil
 }
 
 func getPrometheusData(param *PrometheusQueryParam) error {
-	requestUrl,_ := url.Parse(prometheusQueryUrl)
+	requestUrl, _ := url.Parse(prometheusQueryUrl)
 	urlParams := url.Values{}
 	urlParams.Set("start", fmt.Sprintf("%d", param.Start))
 	urlParams.Set("end", fmt.Sprintf("%d", param.End))
 	urlParams.Set("step", fmt.Sprintf("%d", queryStep))
 	urlParams.Set("query", param.PromQl)
 	requestUrl.RawQuery = urlParams.Encode()
-	req,_ := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
 	req.Header.Set("Content-Type", "application/json")
-	resp,err := gTransport.RoundTrip(req)
+	resp, err := gTransport.RoundTrip(req)
 	if err != nil {
 		return fmt.Errorf("http request error, %v \n", err)
 	}
@@ -72,7 +72,7 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 		}
 		return fmt.Errorf("http response status %d \n", resp.StatusCode)
 	}
-	bodyBytes,err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("http read body error, %v \n", err)
@@ -85,19 +85,52 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 	if result.Status != "success" {
 		return fmt.Errorf("prometheus response status=%s \n", result.Status)
 	}
-	for _,v := range result.Data.Result {
-		tmpResultObj := PrometheusQueryObj{Start:param.Start, End:param.End}
+	for _, v := range result.Data.Result {
+		tmpResultObj := PrometheusQueryObj{Start: param.Start, End: param.End}
 		var tmpValues [][]float64
 		var tmpTagSortList DefaultSortList
-		for kk,vv := range v.Metric {
+		for kk, vv := range v.Metric {
 			if !isIgnoreTag(kk) {
-				tmpTagSortList = append(tmpTagSortList, &DefaultSortObj{Key:kk, Value:vv})
+				tmpTagSortList = append(tmpTagSortList, &DefaultSortObj{Key: kk, Value: vv})
 			}
 		}
 		sort.Sort(tmpTagSortList)
 		tmpResultObj.Metric = tmpTagSortList
-		for _,vv := range v.Values {
-			tmpV,_ := strconv.ParseFloat(vv[1].(string), 64)
+		for _, vv := range v.Values {
+			tmpValueStr := vv[1].(string)
+
+			// 处理 NaN 值 - 添加异常过滤
+			var tmpV float64
+
+			// 安全检查：确保输入参数不为空
+			if tmpValueStr == "" {
+				continue
+			}
+
+			// 快速检查 NaN 和 inf 值
+			if (len(tmpValueStr) == 3 && (tmpValueStr == "NaN" || tmpValueStr == "nan" || tmpValueStr == "inf")) ||
+				(len(tmpValueStr) == 4 && tmpValueStr == "-inf") {
+				// 对于成功率指标，NaN/inf 时返回 100（避免告警）
+				if strings.HasSuffix(param.Metric, "req_suc_rate") {
+					tmpV = 100.0
+				} else {
+					continue
+				}
+			} else {
+				// 安全解析数值
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Printf("Panic in archive prometheus parseFloat: value=%s, panic=%v\n", tmpValueStr, r)
+					}
+				}()
+
+				var err error
+				tmpV, err = strconv.ParseFloat(tmpValueStr, 64)
+				if err != nil {
+					continue
+				}
+			}
+
 			tmpValues = append(tmpValues, []float64{vv[0].(float64), tmpV})
 		}
 		tmpResultObj.Values = tmpValues
@@ -108,7 +141,7 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 
 func isIgnoreTag(tag string) bool {
 	flag := false
-	for _,v := range Config().Prometheus.IgnoreTags {
+	for _, v := range Config().Prometheus.IgnoreTags {
 		if v == tag {
 			flag = true
 			break

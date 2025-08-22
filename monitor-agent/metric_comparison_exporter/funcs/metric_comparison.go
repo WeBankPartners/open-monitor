@@ -408,7 +408,35 @@ func QueryPrometheusData(param *models.PrometheusQueryParam) (resultList []*mode
 			sort.Sort(tmpTagSortList)
 			tmpResultObj.Metric = tmpTagSortList
 			for _, vv := range v.Values {
-				tmpV, _ := strconv.ParseFloat(vv[1].(string), 64)
+				tmpValueStr := vv[1].(string)
+
+				// 处理 NaN 值 - 添加异常过滤
+				var tmpV float64
+
+				// 安全检查：确保输入参数不为空
+				if tmpValueStr == "" {
+					continue
+				}
+
+				// 快速检查 NaN 和 inf 值
+				if (len(tmpValueStr) == 3 && (tmpValueStr == "NaN" || tmpValueStr == "nan" || tmpValueStr == "inf")) ||
+					(len(tmpValueStr) == 4 && tmpValueStr == "-inf") {
+					continue
+				}
+
+				// 安全解析数值
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Printf("Panic in metric comparison parseFloat: value=%s, panic=%v\n", tmpValueStr, r)
+					}
+				}()
+
+				var err error
+				tmpV, err = strconv.ParseFloat(tmpValueStr, 64)
+				if err != nil {
+					continue
+				}
+
 				tmpValues = append(tmpValues, []float64{vv[0].(float64), tmpV})
 			}
 			tmpResultObj.Values = tmpValues

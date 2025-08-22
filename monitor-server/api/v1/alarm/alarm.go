@@ -101,7 +101,31 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.AlarmName = strategyObj.Name
 	}
 	var alertValue float64
-	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
+	alertValueStr := summaryList[len(summaryList)-1]
+
+	// 处理 NaN 值 - 添加异常过滤
+	if alertValueStr == "" {
+		alertValue = 0.0
+	} else {
+		// 快速检查 NaN 和 inf 值
+		if (len(alertValueStr) == 3 && (alertValueStr == "NaN" || alertValueStr == "nan" || alertValueStr == "inf")) ||
+			(len(alertValueStr) == 4 && alertValueStr == "-inf") {
+			alertValue = 0.0
+		} else {
+			// 安全解析数值
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error(nil, log.LOGGER_APP, "Panic in alarm parseFloat", zap.String("value", alertValueStr), zap.Any("panic", r))
+				}
+			}()
+
+			var err error
+			alertValue, err = strconv.ParseFloat(alertValueStr, 64)
+			if err != nil {
+				alertValue = 0.0
+			}
+		}
+	}
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
 	if param.Labels["strategy_id"] == "" && strategyGuid == "" {
 		return alarm, fmt.Errorf("labels strategy_id and strategy_guid is empty ")

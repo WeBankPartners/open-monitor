@@ -253,10 +253,25 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 				}
 			}
 			if len(endpointGroup) > 0 {
-				for _, v := range endpointGroup {
+				// 去重 endpointGroup，避免重复调用
+				endpointGroupSet := make(map[string]struct{})
+				var endpointGroupUnique []string
+				for _, eg := range endpointGroup {
+					if eg == "" {
+						continue
+					}
+					if _, ok := endpointGroupSet[eg]; ok {
+						continue
+					}
+					endpointGroupSet[eg] = struct{}{}
+					endpointGroupUnique = append(endpointGroupUnique, eg)
+				}
+				for _, v := range endpointGroupUnique {
 					SyncPrometheusRuleFile(v, false)
 				}
 			}
+		} else {
+			log.Error(nil, log.LOGGER_APP, "UpdateOrganization delete operation - Transaction failed", zap.String("guid", param.Guid), zap.Error(err))
 		}
 	}
 	return err
