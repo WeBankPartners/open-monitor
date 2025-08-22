@@ -27,20 +27,22 @@
         @on-clear="typeChange"
         @on-open-change="onSelectOpenChange"
       >
-        <Option v-for="(option, index) in targetOptions"
-                :value="option.guid"
-                :key="index"
-                :label="option.display_name"
+        <Option
+          v-for="(option, index) in targetOptions"
+          :value="option.guid"
+          :key="index"
+          :label="option.display_name"
         >
           <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
       </Select>
-      <Input v-model.trim="metricKey"
-             :placeholder="$t('m_enter_indicator_key_tips')"
-             clearable
-             style="width:250px; margin-left: 5px"
-             @on-change='search'
+      <Input
+        v-model.trim="metricKey"
+        :placeholder="$t('m_enter_indicator_key_tips')"
+        clearable
+        style="width:250px; margin-left: 5px"
+        @on-change='search'
       />
       <span style="font-size: 14px; cursor: pointer;" @click="openDoc">
         <i
