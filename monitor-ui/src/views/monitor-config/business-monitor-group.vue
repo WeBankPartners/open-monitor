@@ -20,9 +20,10 @@
             </Button>
             <template  slot='list'>
               <DropdownMenu>
-                <DropdownItem v-for="(item, index) in importTypeOptions"
-                              :name="item.value"
-                              :key="index"
+                <DropdownItem
+                  v-for="(item, index) in importTypeOptions"
+                  :name="item.value"
+                  :key="index"
                 >
                   {{ $t(item.name) }}
                 </DropdownItem>
@@ -57,9 +58,10 @@
 
         <div>
           <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single) && !isEmpty(single.config)'>
-            <Panel v-for="(item, index) in single.config"
-                   :key="index"
-                   :name="index + ''"
+            <Panel
+              v-for="(item, index) in single.config"
+              :key="index"
+              :name="index + ''"
             >
               <div class="log-file-collapse-content">
                 <div>
@@ -96,10 +98,11 @@
                     </Button>
                     <template slot='list'>
                       <DropdownMenu>
-                        <DropdownItem v-for="(option, key) in allTemplateList"
-                                      :name="key"
-                                      :key="key"
-                                      :disabled="option.disabled"
+                        <DropdownItem
+                          v-for="(option, key) in allTemplateList"
+                          :name="key"
+                          :key="key"
+                          :disabled="option.disabled"
                         >
                           {{option.name}}
                         </DropdownItem>
@@ -192,18 +195,18 @@
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input style="width: 640px" v-model.trim="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 800px" v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:830px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_type_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 380px" :placeholder="$t('m_type_object')">
+                <Select v-model="item.target_endpoint" style="width: 386px" :placeholder="$t('m_type_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_host_object')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 380px" :placeholder="$t('m_host_object')">
+                <Select v-model="item.source_endpoint" style="width: 386px" :placeholder="$t('m_host_object')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
