@@ -19,6 +19,8 @@
         filterable
         clearable
         remote
+        :remote-method="handleRemoteTarget"
+        :loading="loading"
         ref="select"
         @on-change="() => {
           metricKey = ''
@@ -27,20 +29,22 @@
         @on-clear="typeChange"
         @on-open-change="onSelectOpenChange"
       >
-        <Option v-for="(option, index) in targetOptions"
-                :value="option.guid"
-                :key="index"
-                :label="option.display_name"
+        <Option
+          v-for="(option, index) in targetOptions"
+          :value="option.guid"
+          :key="index"
+          :label="option.display_name"
         >
           <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
       </Select>
-      <Input v-model.trim="metricKey"
-             :placeholder="$t('m_enter_indicator_key_tips')"
-             clearable
-             style="width:250px; margin-left: 5px"
-             @on-change='search'
+      <Input
+        v-model.trim="metricKey"
+        :placeholder="$t('m_enter_indicator_key_tips')"
+        clearable
+        style="width:250px; margin-left: 5px"
+        @on-change='search'
       />
       <span style="font-size: 14px; cursor: pointer;" @click="openDoc">
         <i
@@ -95,6 +99,7 @@ export default {
       type: 'group',
       targrtId: '',
       targetOptions: [],
+      loading: false,
       showTargetManagement: false,
       metricKey: '',
       isDataEmpty: false,
@@ -107,20 +112,31 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
+    handleRemoteTarget: debounce(function (query) {
+      this.getTargrtList(query)
+    }, 500),
     typeChange() {
       this.metricKey = ''
       this.clearTargrt()
       this.selectKey = +new Date() + ''
     },
-    getTargrtList() {
-      if (!isEmpty(this.targetOptions)) {
+    getTargrtList(query) {
+      if (!isEmpty(this.targetOptions) && !query) {
         return
       }
+      const params = {
+        monitorType: '',
+        query: 'Y',
+        search: query || ''
+      }
+      this.loading = true
       const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.request('GET', api, '', responseData => {
+      this.request('GET', api, params, responseData => {
         this.targetOptions = responseData || []
-        this.search()
-      }, {isNeedloading: false})
+        this.loading = false
+      }, {isNeedloading: false}, () => {
+        this.loading = false
+      })
     },
     clearTargrt() {
       this.targetOptions = []

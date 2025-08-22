@@ -327,12 +327,12 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     async getServeGroup() {
-      await this.request('GET', this.apiCenter.getTargetByEndpointGroup, '', res => {
-        this.modelConfig.v_select_configs.service_group = res.map(item => ({
-          label: item.display_name,
-          value: item.guid
-        }))
-      })
+      // await this.request('GET', this.apiCenter.getTargetByEndpointGroup, '', res => {
+      //   this.modelConfig.v_select_configs.service_group = res.map(item => ({
+      //     label: item.display_name,
+      //     value: item.guid
+      //   }))
+      // })
     },
     addPost() {
       const params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)

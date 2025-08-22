@@ -11,12 +11,20 @@
         v-model="serviceGroup"
         filterable
         clearable
+        remote
+        :remote-method="handleRemoteServiceGroup"
+        :loading="loading"
         @on-change="() => {
           metric = ''
           onFilterChange()
         }"
       >
-        <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="'[' + option.type + '] ' + option.display_name" :key="index">
+        <Option
+          v-for="(option, index) in recursiveOptions"
+          :value="option.guid"
+          :label="'[' + option.type + '] ' + option.display_name"
+          :key="index"
+        >
           <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
           {{option.display_name}}
         </Option>
@@ -137,6 +145,7 @@ export default {
       token: null,
       monitorType: 'process',
       serviceGroup: '',
+      loading: false,
       recursiveOptions: [],
       maxHeight: 500,
       tableData: [],
@@ -446,17 +455,23 @@ export default {
         this.$emit('totalCount', response, this.metricType)
       }, {isNeedloading: false})
     },
-    getRecursiveList() {
-      // const api = this.apiCenter.getTargetByEndpoint + '/group'
-      return this.request(
-        'GET',
-        this.apiCenter.getTargetByEndpointGroup,
-        '',
-        responseData => {
-          this.recursiveOptions = responseData || []
-        },
-        { isNeedloading: false }
-      )
+    handleRemoteServiceGroup: debounce(function (query) {
+      this.getRecursiveList(query)
+    }, 500),
+    getRecursiveList(query) {
+      const params = {
+        monitorType: '',
+        query: 'Y',
+        search: query || ''
+      }
+      this.loading = true
+      const api = this.apiCenter.getTargetByEndpoint + '/group'
+      this.request('GET', api, params, responseData => {
+        this.recursiveOptions = responseData || []
+        this.loading = false
+      }, {isNeedloading: false}, () => {
+        this.loading = false
+      })
     },
     exportData() {
       const api = `${this.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}&comparison=${this.metricType === 'originalMetrics' ? 'N' : 'Y'}`

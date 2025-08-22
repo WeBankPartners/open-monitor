@@ -18,14 +18,18 @@
           filterable
           clearable
           ref="select"
+          remote
+          :remote-method="handleRemoteTarget"
+          :loading="loading"
           @on-clear="onTargetIdClear"
           @on-change="searchTableDetail"
           @on-open-change="onSelectOpenChange"
         >
-          <Option v-for="(option, index) in targetOptions"
-                  :value="option.option_value"
-                  :label="option.option_text"
-                  :key="index"
+          <Option
+            v-for="(option, index) in targetOptions"
+            :value="option.option_value"
+            :label="option.option_text"
+            :key="index"
           >
             <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow>
             {{option.option_text}}
@@ -109,11 +113,11 @@
 </template>
 
 <script>
-import {isEmpty, debounce, cloneDeep} from 'lodash'
+import { debounce, cloneDeep } from 'lodash'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
-import {baseURL_config} from '@/assets/js/baseURL'
+import { baseURL_config } from '@/assets/js/baseURL'
 import axios from 'axios'
 
 export const custom_api_enum = [
@@ -150,10 +154,10 @@ export default {
       ],
       targetId: '',
       targetOptions: [],
+      loading: false,
       showTargetManagement: false,
       thresholdTypes: ['group', 'endpoint', 'service'],
       dataEmptyTip: false,
-      getTargetOptionsSearch: '',
       alarmName: '', // 告警名称
       onlyShowCreated: 'all', // me用户创建 all所有
       selectKey: '',
@@ -168,7 +172,6 @@ export default {
   },
   mounted() {
     this.token = this.returnLatestToken()
-    this.getTargetOptionsSearch = ''
   },
   beforeDestroy() {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -233,24 +236,27 @@ export default {
       this.clearTargrt()
       this.selectKey = +new Date() + ''
     },
-    getTargetOptions() {
-      if (!isEmpty(this.targetOptions)) {
-        return
-      }
+    handleRemoteTarget: debounce(function (query) {
+      this.getTargetOptions(query)
+    }, 500),
+    getTargetOptions(query) {
       return new Promise(resolve => {
-        const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${this.getTargetOptionsSearch}`
+        const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=${query || ''}`
+        this.loading = true
         this.request('GET', api, '', responseData => {
           this.targetOptions = cloneDeep(responseData)
           window.targetOptions = this.targetOptions
+          this.loading = false
           resolve(this.targetOptions)
-        }, {isNeedloading: false})
+        }, {isNeedloading: false}, () => {
+          this.loading = false
+        })
       })
     },
     clearTargrt() {
       this.targetOptions = []
       this.targetId = ''
       this.showTargetManagement = false
-      this.getTargetOptionsSearch = ''
     },
     searchTableDetail() {
       if (this.targetId) {

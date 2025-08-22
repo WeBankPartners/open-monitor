@@ -1,3 +1,4 @@
+<!--关键字配置-->
 <template>
   <div class="log-management">
     <div class='log-management-top'>
@@ -18,6 +19,8 @@
         filterable
         clearable
         remote
+        :remote-method="handleRemoteTarget"
+        :loading="loading"
         ref="select"
         @on-clear="onTargetIdClear"
         @on-change="onFilterChange"
@@ -110,6 +113,7 @@ export default {
       type: 'group',
       targetId: '',
       targetOptions: [],
+      loading: false,
       showTargetManagement: false,
       typeMap: {
         group: 'service',
@@ -135,6 +139,9 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
+    handleRemoteTarget: debounce(function (query) {
+      this.getTargrtList(query)
+    }, 500),
     typeChange() {
       this.clearTargrt()
       this.selectKey = +new Date() + ''
@@ -145,14 +152,23 @@ export default {
       this.alarmName = ''
       this.showTargetManagement = false
     },
-    getTargrtList() {
-      if (!isEmpty(this.targetOptions)){
+    getTargrtList(query) {
+      if (!isEmpty(this.targetOptions) && !query) {
         return
       }
+      const params = {
+        monitorType: '',
+        query: 'Y',
+        search: query || ''
+      }
+      this.loading = true
       const api = this.apiCenter.getTargetByEndpoint + '/' + this.type
-      this.request('GET', api, '', responseData => {
-        this.targetOptions = responseData
-      }, {isNeedloading: false})
+      this.request('GET', api, params, responseData => {
+        this.targetOptions = responseData || []
+        this.loading = false
+      }, {isNeedloading: false}, () => {
+        this.loading = false
+      })
     },
     search() {
       if (this.targetId) {
