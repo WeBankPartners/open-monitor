@@ -175,7 +175,7 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 	}
 	searchText = "%" + searchText + "%"
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select * from service_group where guid like ?", searchText).Find(&serviceGroupTable)
+	err = x.SQL("select * from service_group where guid like ? or name like ?", searchText, searchText).Find(&serviceGroupTable)
 	if err != nil {
 		return
 	}

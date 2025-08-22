@@ -266,6 +266,10 @@ func ListStrategyQueryOptions(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	// 限制返回结果数量为前100条
+	if len(data) > 100 {
+		data = data[:100]
+	}
 	for _, v := range data {
 		v.OptionTypeName = v.OptionType
 	}

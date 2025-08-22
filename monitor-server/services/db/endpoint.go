@@ -163,7 +163,7 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	}
 	searchText = "%" + searchText + "%"
 	var endpointTable []*models.EndpointNewTable
-	err = x.SQL("select guid,monitor_type from endpoint_new where guid like ?", searchText).Find(&endpointTable)
+	err = x.SQL("select guid,monitor_type from endpoint_new where guid like ? or name like ?", searchText, searchText).Find(&endpointTable)
 	if err != nil {
 		return
 	}
