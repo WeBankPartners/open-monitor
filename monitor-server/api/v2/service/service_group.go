@@ -10,10 +10,10 @@ func GetServiceGroupEndpointList(c *gin.Context) {
 	searchType := c.Param("searchType")
 	query := c.Query("query")
 	monitorType := c.Query("monitorType")
+	search := c.Query("search")
 
 	// 如果 query 等于 "Y" 且 searchType 为 "endpoint"，支持模糊搜索和 monitor_type 过滤
 	if query == "Y" && searchType == "endpoint" {
-		search := c.Query("search")
 		result, err := db.GetServiceGroupEndpointListWithFilter(search, monitorType)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)

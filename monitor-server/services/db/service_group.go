@@ -211,23 +211,26 @@ func GetServiceGroupEndpointListWithFilter(search, monitorType string) (result [
 	var params []interface{}
 
 	// 添加 monitor_type 过滤
-	if monitorType != "" {
+	if monitorType != "" && monitorType != "all" {
 		conditions = append(conditions, "monitor_type=?")
 		params = append(params, monitorType)
 	}
 
-	// 添加 guid 模糊搜索
+	// 增强模糊搜索 - 支持多字段搜索
 	if search != "" {
-		conditions = append(conditions, "guid like ?")
-		params = append(params, "%"+search+"%")
+		// 支持在 guid, name, ip, endpoint_address 等字段中进行模糊搜索
+		searchCondition := "(guid LIKE ? OR name LIKE ? OR ip LIKE ? OR endpoint_address LIKE ?)"
+		searchParam := "%" + search + "%"
+		conditions = append(conditions, searchCondition)
+		params = append(params, searchParam, searchParam, searchParam, searchParam)
 	}
 
 	// 构建 SQL 语句
-	sql := "select guid,monitor_type from endpoint_new"
+	sql := "SELECT guid, monitor_type, name, ip, endpoint_address FROM endpoint_new"
 	if len(conditions) > 0 {
-		sql += " where " + strings.Join(conditions, " and ")
+		sql += " WHERE " + strings.Join(conditions, " AND ")
 	}
-	sql += " order by update_time desc limit 200"
+	sql += " ORDER BY update_time DESC LIMIT 100"
 
 	var endpointTable []*models.EndpointNewTable
 	err = x.SQL(sql, params...).Find(&endpointTable)
@@ -236,7 +239,16 @@ func GetServiceGroupEndpointListWithFilter(search, monitorType string) (result [
 	}
 
 	for _, v := range endpointTable {
-		result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid, Type: v.MonitorType})
+		// 优先使用 name 字段作为显示名称，如果为空则使用 guid
+		displayName := v.Guid
+		if v.Name != "" {
+			displayName = v.Name
+		}
+		result = append(result, &models.ServiceGroupEndpointListObj{
+			Guid:        v.Guid, 
+			DisplayName: displayName, 
+			Type:        v.MonitorType,
+		})
 	}
 	return
 }
