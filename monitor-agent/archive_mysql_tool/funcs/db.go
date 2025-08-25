@@ -49,7 +49,7 @@ func getDbConnectionStats(engine *xorm.Engine) *DbConnectionStats {
 	stats := engine.DB().Stats()
 	return &DbConnectionStats{
 		MaxOpen:           stats.MaxOpenConnections,
-		MaxIdle:           stats.MaxIdle,
+		MaxIdle:           Config().Mysql.MaxIdle, // 从配置中获取
 		Open:              stats.OpenConnections,
 		InUse:             stats.InUse,
 		Idle:              stats.Idle,
