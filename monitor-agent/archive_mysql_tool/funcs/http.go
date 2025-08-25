@@ -16,6 +16,7 @@ func InitHttpHandles() {
 	http.Handle("/archive/v1/1m/job", http.HandlerFunc(handleCustomJob))
 	http.Handle("/archive/v1/5m/job", http.HandlerFunc(handleFiveMinJob))
 	http.Handle("/archive/v1/status/db", http.HandlerFunc(handleDbStatus))
+	http.Handle("/archive/v1/health/db", http.HandlerFunc(handleDbHealth))
 	listenPort := fmt.Sprintf(":%d", Config().Http.Port)
 	log.Printf("listening %s ...\n", listenPort)
 	http.ListenAndServe(listenPort, nil)
@@ -101,6 +102,18 @@ func handleDbStatus(w http.ResponseWriter, r *http.Request) {
 	// 获取监控数据库状态
 	if monitorMysqlEngine != nil {
 		response.MonitorDB = getDbConnectionStats(monitorMysqlEngine, false)
+	}
+
+	returnJson(r, w, nil, response)
+}
+
+func handleDbHealth(w http.ResponseWriter, r *http.Request) {
+	// 执行健康检查
+	checkConnectionPoolHealth()
+
+	response := map[string]string{
+		"message":   "Database health check completed, check logs for details",
+		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	returnJson(r, w, nil, response)

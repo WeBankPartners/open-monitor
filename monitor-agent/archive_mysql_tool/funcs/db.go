@@ -93,6 +93,14 @@ func logDbConnectionStats(engine *xorm.Engine, dbName string, lastStats *DbConne
 		warningLevel, dbName, currentStats.Open, currentStats.MaxOpen, currentStats.InUse, currentStats.Idle,
 		currentStats.WaitCount, currentStats.WaitDuration)
 
+	// 记录连接池使用效率
+	if currentStats.Open > 0 {
+		usageRate := float64(currentStats.InUse) / float64(currentStats.Open) * 100
+		idleRate := float64(currentStats.Idle) / float64(currentStats.Open) * 100
+		log.Printf("[%s] Connection Pool Efficiency - Usage: %.1f%%, Idle: %.1f%%, WaitRate: %.2f%%",
+			dbName, usageRate, idleRate, float64(currentStats.WaitCount)/float64(currentStats.Open)*100)
+	}
+
 	// 如果有上次统计，记录变化
 	if lastStats != nil {
 		openDiff := currentStats.Open - lastStats.Open
@@ -102,6 +110,17 @@ func logDbConnectionStats(engine *xorm.Engine, dbName string, lastStats *DbConne
 		if openDiff != 0 || inUseDiff != 0 || waitCountDiff != 0 {
 			log.Printf("[%s] DB Connection Changes - Open: %+d, InUse: %+d, WaitCount: %+d",
 				dbName, openDiff, inUseDiff, waitCountDiff)
+		}
+
+		// 检查连接复用情况
+		if currentStats.MaxIdleClosed > lastStats.MaxIdleClosed {
+			closedDiff := currentStats.MaxIdleClosed - lastStats.MaxIdleClosed
+			log.Printf("[%s] Connection Pool - %d idle connections closed due to max_idle limit", dbName, closedDiff)
+		}
+
+		if currentStats.MaxLifetimeClosed > lastStats.MaxLifetimeClosed {
+			lifetimeDiff := currentStats.MaxLifetimeClosed - lastStats.MaxLifetimeClosed
+			log.Printf("[%s] Connection Pool - %d connections closed due to max_lifetime limit", dbName, lifetimeDiff)
 		}
 	}
 
@@ -424,9 +443,69 @@ func StartDbConnectionMonitor() {
 				if monitorMysqlEngine != nil {
 					lastMonitorConnStats = logDbConnectionStats(monitorMysqlEngine, "MonitorDB", lastMonitorConnStats)
 				}
+
+				// 每5分钟进行一次健康检查
+				if time.Now().Minute()%5 == 0 && time.Now().Second() < 30 {
+					checkConnectionPoolHealth()
+				}
 			}
 		}
 	}()
 
 	log.Println("Database connection monitor started - checking every 30 seconds")
+}
+
+// 连接池健康检查
+func checkConnectionPoolHealth() {
+	if mysqlEngine == nil {
+		log.Println("Health Check: mysqlEngine is nil")
+		return
+	}
+
+	stats := mysqlEngine.DB().Stats()
+
+	log.Printf("=== Connection Pool Health Check ===")
+	log.Printf("MaxOpen: %d, Current Open: %d", stats.MaxOpenConnections, stats.OpenConnections)
+	log.Printf("InUse: %d, Idle: %d", stats.InUse, stats.Idle)
+	log.Printf("WaitCount: %d, WaitDuration: %v", stats.WaitCount, stats.WaitDuration)
+	log.Printf("MaxIdleClosed: %d, MaxLifetimeClosed: %d", stats.MaxIdleClosed, stats.MaxLifetimeClosed)
+
+	// 健康状态评估
+	healthIssues := []string{}
+
+	// 检查连接数使用率
+	if stats.OpenConnections > 0 {
+		usageRate := float64(stats.InUse) / float64(stats.OpenConnections) * 100
+		if usageRate < 10 && stats.OpenConnections >= stats.MaxOpenConnections {
+			healthIssues = append(healthIssues, "Low usage but all connections occupied - potential connection leak")
+		}
+	}
+
+	// 检查等待情况
+	if stats.WaitCount > 0 {
+		avgWaitTime := stats.WaitDuration / time.Duration(stats.WaitCount)
+		if avgWaitTime > 100*time.Millisecond {
+			healthIssues = append(healthIssues, fmt.Sprintf("High average wait time: %v", avgWaitTime))
+		}
+	}
+
+	// 检查连接关闭情况
+	if stats.MaxIdleClosed > 0 {
+		healthIssues = append(healthIssues, fmt.Sprintf("Idle connections closed: %d", stats.MaxIdleClosed))
+	}
+
+	if stats.MaxLifetimeClosed > 0 {
+		healthIssues = append(healthIssues, fmt.Sprintf("Lifetime connections closed: %d", stats.MaxLifetimeClosed))
+	}
+
+	// 输出健康状态
+	if len(healthIssues) == 0 {
+		log.Printf("Connection pool health: GOOD")
+	} else {
+		log.Printf("Connection pool health: ISSUES DETECTED")
+		for _, issue := range healthIssues {
+			log.Printf("  - %s", issue)
+		}
+	}
+	log.Printf("===================================")
 }
