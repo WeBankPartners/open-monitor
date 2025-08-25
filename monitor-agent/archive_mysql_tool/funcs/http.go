@@ -95,12 +95,12 @@ func handleDbStatus(w http.ResponseWriter, r *http.Request) {
 
 	// 获取归档数据库状态
 	if mysqlEngine != nil {
-		response.ArchiveDB = getDbConnectionStats(mysqlEngine)
+		response.ArchiveDB = getDbConnectionStats(mysqlEngine, true)
 	}
 
 	// 获取监控数据库状态
 	if monitorMysqlEngine != nil {
-		response.MonitorDB = getDbConnectionStats(monitorMysqlEngine)
+		response.MonitorDB = getDbConnectionStats(monitorMysqlEngine, false)
 	}
 
 	returnJson(r, w, nil, response)

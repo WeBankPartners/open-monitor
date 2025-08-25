@@ -41,15 +41,23 @@ var (
 )
 
 // 获取数据库连接统计信息
-func getDbConnectionStats(engine *xorm.Engine) *DbConnectionStats {
+func getDbConnectionStats(engine *xorm.Engine, isArchiveDB bool) *DbConnectionStats {
 	if engine == nil {
 		return nil
 	}
 
 	stats := engine.DB().Stats()
+
+	var maxIdle int
+	if isArchiveDB {
+		maxIdle = Config().Mysql.MaxIdle
+	} else {
+		maxIdle = Config().Monitor.Mysql.MaxIdle
+	}
+
 	return &DbConnectionStats{
 		MaxOpen:           stats.MaxOpenConnections,
-		MaxIdle:           Config().Mysql.MaxIdle, // 从配置中获取
+		MaxIdle:           maxIdle,
 		Open:              stats.OpenConnections,
 		InUse:             stats.InUse,
 		Idle:              stats.Idle,
@@ -66,7 +74,8 @@ func logDbConnectionStats(engine *xorm.Engine, dbName string, lastStats *DbConne
 		return nil
 	}
 
-	currentStats := getDbConnectionStats(engine)
+	isArchiveDB := (dbName == "ArchiveDB")
+	currentStats := getDbConnectionStats(engine, isArchiveDB)
 	if currentStats == nil {
 		return nil
 	}
