@@ -47,6 +47,10 @@ func main() {
 		log.Printf("init prometheus http transport pool fail : %v \n", err)
 		return
 	}
+
+	// 启动数据库连接监控
+	funcs.StartDbConnectionMonitor()
+
 	go funcs.InitHttpHandles()
 	funcs.StartCronJob()
 }

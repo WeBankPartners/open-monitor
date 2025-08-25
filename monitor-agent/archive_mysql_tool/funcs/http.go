@@ -15,6 +15,7 @@ func InitHttpHandles() {
 	}
 	http.Handle("/archive/v1/1m/job", http.HandlerFunc(handleCustomJob))
 	http.Handle("/archive/v1/5m/job", http.HandlerFunc(handleFiveMinJob))
+	http.Handle("/archive/v1/status/db", http.HandlerFunc(handleDbStatus))
 	listenPort := fmt.Sprintf(":%d", Config().Http.Port)
 	log.Printf("listening %s ...\n", listenPort)
 	http.ListenAndServe(listenPort, nil)
@@ -78,4 +79,29 @@ func returnJson(r *http.Request, w http.ResponseWriter, err error, result interf
 	w.WriteHeader(http.StatusOK)
 	d, _ := json.Marshal(response)
 	w.Write(d)
+}
+
+// 数据库状态响应结构体
+type DbStatusResponse struct {
+	ArchiveDB *DbConnectionStats `json:"archive_db,omitempty"`
+	MonitorDB *DbConnectionStats `json:"monitor_db,omitempty"`
+	Timestamp string             `json:"timestamp"`
+}
+
+func handleDbStatus(w http.ResponseWriter, r *http.Request) {
+	response := DbStatusResponse{
+		Timestamp: time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	// 获取归档数据库状态
+	if mysqlEngine != nil {
+		response.ArchiveDB = getDbConnectionStats(mysqlEngine)
+	}
+
+	// 获取监控数据库状态
+	if monitorMysqlEngine != nil {
+		response.MonitorDB = getDbConnectionStats(monitorMysqlEngine)
+	}
+
+	returnJson(r, w, nil, response)
 }

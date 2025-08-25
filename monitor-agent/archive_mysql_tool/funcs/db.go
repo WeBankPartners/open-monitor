@@ -13,6 +13,19 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
+// 数据库连接统计结构体
+type DbConnectionStats struct {
+	MaxOpen           int
+	MaxIdle           int
+	Open              int
+	InUse             int
+	Idle              int
+	WaitCount         int64
+	WaitDuration      time.Duration
+	MaxIdleClosed     int64
+	MaxLifetimeClosed int64
+}
+
 var (
 	mysqlEngine         *xorm.Engine
 	monitorMysqlEngine  *xorm.Engine
@@ -22,7 +35,69 @@ var (
 	concurrentInsertNum int
 	retryWaitSecond     int
 	jobTimeout          int
+	// 添加连接监控相关变量
+	lastArchiveConnStats *DbConnectionStats
+	lastMonitorConnStats *DbConnectionStats
 )
+
+// 获取数据库连接统计信息
+func getDbConnectionStats(engine *xorm.Engine) *DbConnectionStats {
+	if engine == nil {
+		return nil
+	}
+
+	stats := engine.DB().Stats()
+	return &DbConnectionStats{
+		MaxOpen:           stats.MaxOpenConnections,
+		MaxIdle:           stats.MaxIdle,
+		Open:              stats.OpenConnections,
+		InUse:             stats.InUse,
+		Idle:              stats.Idle,
+		WaitCount:         stats.WaitCount,
+		WaitDuration:      stats.WaitDuration,
+		MaxIdleClosed:     stats.MaxIdleClosed,
+		MaxLifetimeClosed: stats.MaxLifetimeClosed,
+	}
+}
+
+// 记录数据库连接统计日志
+func logDbConnectionStats(engine *xorm.Engine, dbName string, lastStats *DbConnectionStats) *DbConnectionStats {
+	if engine == nil {
+		return nil
+	}
+
+	currentStats := getDbConnectionStats(engine)
+	if currentStats == nil {
+		return nil
+	}
+
+	// 检查连接数是否接近或超过限制
+	warningLevel := ""
+	if currentStats.Open >= currentStats.MaxOpen*90/100 {
+		warningLevel = "WARNING: "
+	} else if currentStats.Open >= currentStats.MaxOpen*80/100 {
+		warningLevel = "ATTENTION: "
+	}
+
+	// 记录当前连接状态
+	log.Printf("%s[%s] DB Connection Stats - Open: %d/%d, InUse: %d, Idle: %d, WaitCount: %d, WaitDuration: %v",
+		warningLevel, dbName, currentStats.Open, currentStats.MaxOpen, currentStats.InUse, currentStats.Idle,
+		currentStats.WaitCount, currentStats.WaitDuration)
+
+	// 如果有上次统计，记录变化
+	if lastStats != nil {
+		openDiff := currentStats.Open - lastStats.Open
+		inUseDiff := currentStats.InUse - lastStats.InUse
+		waitCountDiff := currentStats.WaitCount - lastStats.WaitCount
+
+		if openDiff != 0 || inUseDiff != 0 || waitCountDiff != 0 {
+			log.Printf("[%s] DB Connection Changes - Open: %+d, InUse: %+d, WaitCount: %+d",
+				dbName, openDiff, inUseDiff, waitCountDiff)
+		}
+	}
+
+	return currentStats
+}
 
 func InitDbEngine(databaseName string) (err error) {
 	if databaseName == "" {
@@ -53,6 +128,10 @@ func InitDbEngine(databaseName string) (err error) {
 		mysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
+
+		// 记录初始连接统计
+		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", nil)
+
 		if !strings.HasPrefix(databaseName, Config().Mysql.DatabasePrefix) {
 			err = ChangeDatabase("")
 		} else {
@@ -84,6 +163,9 @@ func ResetDbEngine() {
 		mysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
+
+		// 记录重置后的连接统计
+		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", nil)
 	}
 	log.Println("Reset db engine done! ")
 }
@@ -102,6 +184,10 @@ func InitMonitorDbEngine() (err error) {
 		monitorMysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		monitorMysqlEngine.SetMapper(core.SnakeMapper{})
+
+		// 记录监控数据库连接统计
+		lastMonitorConnStats = logDbConnectionStats(monitorMysqlEngine, "MonitorDB", nil)
+
 		log.Println("init monitor mysql success ")
 	}
 	return err
@@ -110,6 +196,9 @@ func InitMonitorDbEngine() (err error) {
 func insertMysql(rows []*ArchiveTable, tableName string) error {
 	startTime := time.Now()
 	log.Printf("start insert mysql table:%s,row num:%d,concurrentInsertNum:%d \n", tableName, len(rows), concurrentInsertNum)
+
+	// 记录插入前的连接统计
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
 	var sqlList []string
 	var rowCountList []int
 	tmpCount := 0
@@ -154,8 +243,14 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	}
 	if gErrMessage == "" {
 		log.Printf("done insert mysql table:%s,row num:%d,use time:%.3f s \n", tableName, len(rows), time.Now().Sub(startTime).Seconds())
+
+		// 记录插入后的连接统计
+		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
 		return nil
 	} else {
+		// 记录错误时的连接统计
+		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
 		return fmt.Errorf(gErrMessage)
 	}
 }
@@ -300,4 +395,29 @@ func checkJobState(jobId string) bool {
 func transUnixTime(input int64) (output string) {
 	output = time.Unix(input, 0).Format("2006-01-02 15:04:05")
 	return
+}
+
+// 启动数据库连接监控
+func StartDbConnectionMonitor() {
+	go func() {
+		ticker := time.NewTicker(30 * time.Second) // 每30秒检查一次
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				// 监控归档数据库连接
+				if mysqlEngine != nil {
+					lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+				}
+
+				// 监控监控数据库连接
+				if monitorMysqlEngine != nil {
+					lastMonitorConnStats = logDbConnectionStats(monitorMysqlEngine, "MonitorDB", lastMonitorConnStats)
+				}
+			}
+		}
+	}()
+
+	log.Println("Database connection monitor started - checking every 30 seconds")
 }

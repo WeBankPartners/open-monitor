@@ -118,6 +118,11 @@ func consumeJob() {
 		if len(param) == 0 {
 			continue
 		}
+
+		// 记录任务开始前的连接统计
+		if mysqlEngine != nil {
+			lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+		}
 		tmpUnixCount := 0
 		var concurrentJobList []ArchiveActionList
 		tmpJobList := ArchiveActionList{}
@@ -148,6 +153,12 @@ func consumeJob() {
 		endTime := time.Now()
 		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
 		log.Printf("done with consume job,use time: %.3f ms", useTime)
+
+		// 记录任务结束后的连接统计
+		if mysqlEngine != nil {
+			lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+		}
+
 		if int(endTime.Sub(startTime).Seconds()) >= jobTimeout {
 			log.Println("job timeout,try to reset db connection ")
 			ResetDbEngine()
