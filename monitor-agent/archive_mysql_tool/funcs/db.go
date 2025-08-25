@@ -131,6 +131,18 @@ func InitDbEngine(databaseName string) (err error) {
 	if databaseName == "" {
 		databaseName = "mysql"
 	}
+
+	// 关闭旧的连接引擎
+	if mysqlEngine != nil {
+		log.Printf("InitDbEngine - Closing old engine for database: %s", databaseSelect)
+		err := mysqlEngine.Close()
+		if err != nil {
+			log.Printf("InitDbEngine - Error closing old engine: %v", err)
+		}
+		// 等待连接关闭
+		time.Sleep(1 * time.Second)
+	}
+
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
 	mysqlEngine, err = xorm.NewEngine("mysql", connectStr)
@@ -335,7 +347,17 @@ func ChangeDatabase(year string) error {
 		log.Printf("create database error -> %v \n", err)
 		return err
 	}
+
+	// 记录切换数据库前的连接统计
+	log.Printf("ChangeDatabase - Before switching to %s", databaseName)
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
 	err = InitDbEngine(databaseName)
+
+	// 记录切换数据库后的连接统计
+	log.Printf("ChangeDatabase - After switching to %s", databaseName)
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
 	return err
 }
 
@@ -508,4 +530,38 @@ func checkConnectionPoolHealth() {
 		}
 	}
 	log.Printf("===================================")
+}
+
+// 重置连接池（紧急情况使用）
+func ResetConnectionPool() {
+	if mysqlEngine == nil {
+		log.Println("ResetConnectionPool: mysqlEngine is nil")
+		return
+	}
+
+	log.Printf("=== Emergency Connection Pool Reset ===")
+
+	// 记录重置前的状态
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
+	// 关闭当前引擎
+	err := mysqlEngine.Close()
+	if err != nil {
+		log.Printf("ResetConnectionPool - Error closing engine: %v", err)
+	}
+
+	// 等待连接完全关闭
+	time.Sleep(2 * time.Second)
+
+	// 重新初始化引擎
+	err = InitDbEngine(databaseSelect)
+	if err != nil {
+		log.Printf("ResetConnectionPool - Error reinitializing engine: %v", err)
+		return
+	}
+
+	// 记录重置后的状态
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
+	log.Printf("=== Connection Pool Reset Completed ===")
 }
