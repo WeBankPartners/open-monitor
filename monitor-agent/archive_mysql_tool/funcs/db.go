@@ -28,6 +28,18 @@ func InitDbEngine(databaseName string) (err error) {
 	if databaseName == "" {
 		databaseName = "mysql"
 	}
+
+	// 关闭旧的连接引擎
+	if mysqlEngine != nil {
+		log.Printf("InitDbEngine - Closing old engine for database: %s", databaseSelect)
+		err := mysqlEngine.Close()
+		if err != nil {
+			log.Printf("InitDbEngine - Error closing old engine: %v", err)
+		}
+		// 等待连接关闭
+		time.Sleep(1 * time.Second)
+	}
+
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
 	mysqlEngine, err = xorm.NewEngine("mysql", connectStr)
