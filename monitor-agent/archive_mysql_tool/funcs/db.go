@@ -135,12 +135,21 @@ func InitDbEngine(databaseName string) (err error) {
 	// 关闭旧的连接引擎
 	if mysqlEngine != nil {
 		log.Printf("InitDbEngine - Closing old engine for database: %s", databaseSelect)
+
+		// 记录关闭前的连接状态
+		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
 		err := mysqlEngine.Close()
 		if err != nil {
 			log.Printf("InitDbEngine - Error closing old engine: %v", err)
 		}
-		// 等待连接关闭
-		time.Sleep(1 * time.Second)
+
+		// 等待连接完全关闭
+		log.Printf("InitDbEngine - Waiting for connections to close...")
+		time.Sleep(2 * time.Second)
+
+		// 清空连接统计
+		lastArchiveConnStats = nil
 	}
 
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
@@ -172,11 +181,12 @@ func InitDbEngine(databaseName string) (err error) {
 		// 记录初始连接统计
 		lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", nil)
 
-		if !strings.HasPrefix(databaseName, Config().Mysql.DatabasePrefix) {
-			err = ChangeDatabase("")
-		} else {
-			databaseSelect = databaseName
-			log.Printf("init mysql %s success \n", databaseSelect)
+		// 修复：移除递归调用，直接设置数据库名
+		databaseSelect = databaseName
+		log.Printf("init mysql %s success \n", databaseSelect)
+
+		// 只有在归档数据库时才初始化job_record表
+		if strings.HasPrefix(databaseName, Config().Mysql.DatabasePrefix) {
 			err = initJobRecordTable()
 		}
 	}
@@ -339,20 +349,30 @@ func ChangeDatabase(year string) error {
 		year = time.Now().Format("2006")
 	}
 	databaseName := Config().Mysql.DatabasePrefix + year
+
+	// 修复：如果已经是目标数据库，直接返回，避免不必要的切换
 	if databaseName == databaseSelect {
+		log.Printf("ChangeDatabase - Already connected to %s, skipping", databaseName)
 		return nil
-	}
-	_, err := mysqlEngine.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`", databaseName))
-	if err != nil {
-		log.Printf("create database error -> %v \n", err)
-		return err
 	}
 
 	// 记录切换数据库前的连接统计
 	log.Printf("ChangeDatabase - Before switching to %s", databaseName)
 	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
 
+	// 先创建数据库（如果不存在）
+	_, err := mysqlEngine.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`", databaseName))
+	if err != nil {
+		log.Printf("create database error -> %v \n", err)
+		return err
+	}
+
+	// 切换到新数据库
 	err = InitDbEngine(databaseName)
+	if err != nil {
+		log.Printf("ChangeDatabase - Failed to switch to %s: %v", databaseName, err)
+		return err
+	}
 
 	// 记录切换数据库后的连接统计
 	log.Printf("ChangeDatabase - After switching to %s", databaseName)
@@ -466,6 +486,12 @@ func StartDbConnectionMonitor() {
 					lastMonitorConnStats = logDbConnectionStats(monitorMysqlEngine, "MonitorDB", lastMonitorConnStats)
 				}
 
+				// 检查是否需要自动重置
+				if shouldAutoReset() {
+					log.Printf("=== AUTO RESET TRIGGERED ===")
+					go autoResetConnectionPool()
+				}
+
 				// 每5分钟进行一次健康检查
 				if time.Now().Minute()%5 == 0 && time.Now().Second() < 30 {
 					checkConnectionPoolHealth()
@@ -494,20 +520,23 @@ func checkConnectionPoolHealth() {
 
 	// 健康状态评估
 	healthIssues := []string{}
+	needAutoReset := false
 
-	// 检查连接数使用率
+	// 检查连接泄漏（自动重置条件1）
 	if stats.OpenConnections > 0 {
 		usageRate := float64(stats.InUse) / float64(stats.OpenConnections) * 100
 		if usageRate < 10 && stats.OpenConnections >= stats.MaxOpenConnections {
 			healthIssues = append(healthIssues, "Low usage but all connections occupied - potential connection leak")
+			needAutoReset = true
 		}
 	}
 
-	// 检查等待情况
-	if stats.WaitCount > 0 {
+	// 检查等待情况（自动重置条件2）
+	if stats.WaitCount > 50 {
 		avgWaitTime := stats.WaitDuration / time.Duration(stats.WaitCount)
 		if avgWaitTime > 100*time.Millisecond {
 			healthIssues = append(healthIssues, fmt.Sprintf("High average wait time: %v", avgWaitTime))
+			needAutoReset = true
 		}
 	}
 
@@ -527,6 +556,12 @@ func checkConnectionPoolHealth() {
 		log.Printf("Connection pool health: ISSUES DETECTED")
 		for _, issue := range healthIssues {
 			log.Printf("  - %s", issue)
+		}
+
+		// 自动重置连接池
+		if needAutoReset {
+			log.Printf("=== AUTO RESET TRIGGERED ===")
+			go autoResetConnectionPool()
 		}
 	}
 	log.Printf("===================================")
@@ -564,4 +599,66 @@ func ResetConnectionPool() {
 	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
 
 	log.Printf("=== Connection Pool Reset Completed ===")
+}
+
+// 自动重置连接池
+func autoResetConnectionPool() {
+	log.Printf("=== AUTO RESET CONNECTION POOL STARTED ===")
+
+	// 记录重置前的状态
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
+	// 关闭当前引擎
+	err := mysqlEngine.Close()
+	if err != nil {
+		log.Printf("AutoReset - Error closing engine: %v", err)
+	}
+
+	// 等待连接完全关闭
+	log.Printf("AutoReset - Waiting for connections to close...")
+	time.Sleep(3 * time.Second)
+
+	// 重新初始化引擎
+	err = InitDbEngine(databaseSelect)
+	if err != nil {
+		log.Printf("AutoReset - Error reinitializing engine: %v", err)
+		return
+	}
+
+	// 记录重置后的状态
+	lastArchiveConnStats = logDbConnectionStats(mysqlEngine, "ArchiveDB", lastArchiveConnStats)
+
+	log.Printf("=== AUTO RESET CONNECTION POOL COMPLETED ===")
+}
+
+// 检查是否需要自动重置
+func shouldAutoReset() bool {
+	if mysqlEngine == nil {
+		return false
+	}
+
+	stats := mysqlEngine.DB().Stats()
+
+	// 条件1：连接数达到最大值但使用率为0（连接泄漏）
+	if stats.OpenConnections >= stats.MaxOpenConnections && stats.InUse == 0 {
+		log.Printf("AutoReset condition 1 met: all connections occupied but none in use")
+		return true
+	}
+
+	// 条件2：等待连接数过多
+	if stats.WaitCount > 50 {
+		log.Printf("AutoReset condition 2 met: too many wait requests (%d)", stats.WaitCount)
+		return true
+	}
+
+	// 条件3：平均等待时间过长
+	if stats.WaitCount > 0 {
+		avgWaitTime := stats.WaitDuration / time.Duration(stats.WaitCount)
+		if avgWaitTime > 200*time.Millisecond {
+			log.Printf("AutoReset condition 3 met: high average wait time (%v)", avgWaitTime)
+			return true
+		}
+	}
+
+	return false
 }
