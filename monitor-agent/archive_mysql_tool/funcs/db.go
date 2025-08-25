@@ -46,6 +46,7 @@ func InitDbEngine(databaseName string) (err error) {
 		if timeout <= 0 {
 			timeout = 60
 		}
+		log.Printf("InitDbEngine - Setting MySQL connection pool - MaxOpen: %d, MaxIdle: %d, Timeout: %d", maxOpen, maxIdle, timeout)
 		mysqlEngine.SetMaxIdleConns(maxIdle)
 		mysqlEngine.SetMaxOpenConns(maxOpen)
 		mysqlEngine.SetConnMaxLifetime(time.Duration(timeout) * time.Second)
@@ -76,6 +77,7 @@ func ResetDbEngine() {
 	if err != nil {
 		log.Printf("init mysql fail with connect: %s error: %v \n", connectStr, err)
 	} else {
+		log.Printf("ResetDbEngine - Setting MySQL connection pool - MaxOpen: %d, MaxIdle: %d, Timeout: %d", Config().Mysql.MaxOpen, Config().Mysql.MaxIdle, Config().Mysql.Timeout)
 		mysqlEngine.SetMaxIdleConns(Config().Mysql.MaxIdle)
 		mysqlEngine.SetMaxOpenConns(Config().Mysql.MaxOpen)
 		mysqlEngine.SetConnMaxLifetime(time.Duration(Config().Mysql.Timeout) * time.Second)
@@ -93,6 +95,7 @@ func InitMonitorDbEngine() (err error) {
 	if err != nil {
 		log.Printf("init monitor mysql fail with connect: %s error: %v \n", connectStr, err)
 	} else {
+		log.Printf("InitMonitorDbEngine - Setting Monitor MySQL connection pool - MaxOpen: %d, MaxIdle: %d, Timeout: %d", Config().Monitor.Mysql.MaxOpen, Config().Monitor.Mysql.MaxIdle, Config().Monitor.Mysql.Timeout)
 		monitorMysqlEngine.SetMaxIdleConns(Config().Monitor.Mysql.MaxIdle)
 		monitorMysqlEngine.SetMaxOpenConns(Config().Monitor.Mysql.MaxOpen)
 		monitorMysqlEngine.SetConnMaxLifetime(time.Duration(Config().Monitor.Mysql.Timeout) * time.Second)

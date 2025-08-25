@@ -19,8 +19,8 @@ type MysqlConfig struct {
 	Password       string `json:"password"`
 	DataBase       string `json:"database"`
 	DatabasePrefix string `json:"database_prefix"`
-	MaxOpen        int    `json:"maxOpen"`
-	MaxIdle        int    `json:"maxIdle"`
+	MaxOpen        int    `json:"max_open"`
+	MaxIdle        int    `json:"max_idle"`
 	Timeout        int    `json:"timeout"`
 }
 
