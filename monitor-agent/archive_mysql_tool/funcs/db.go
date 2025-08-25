@@ -35,7 +35,7 @@ type ConnectionTrendPoint struct {
 	OpenConnections  int
 	InUseConnections int
 	IdleConnections  int
-	WaitCount        int
+	WaitCount        int64
 	WaitDuration     time.Duration
 	UsageRate        float64
 	ReuseRate        float64
