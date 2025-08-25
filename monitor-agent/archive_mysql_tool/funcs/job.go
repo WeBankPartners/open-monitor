@@ -134,6 +134,7 @@ func consumeJob() {
 			concurrentJobList = append(concurrentJobList, tmpJobList)
 		}
 		log.Printf("start consume job,length:%d ,concurrent:%d \n", len(param), len(concurrentJobList))
+
 		startTime := time.Now()
 		wg := sync.WaitGroup{}
 		for _, job := range concurrentJobList {
@@ -148,6 +149,7 @@ func consumeJob() {
 		endTime := time.Now()
 		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
 		log.Printf("done with consume job,use time: %.3f ms", useTime)
+
 		if int(endTime.Sub(startTime).Seconds()) >= jobTimeout {
 			log.Println("job timeout,try to reset db connection ")
 			ResetDbEngine()
@@ -160,6 +162,10 @@ func checkJobStatus() {
 	time.Sleep(2 * time.Second)
 	for {
 		log.Printf("job channel list length --> %d \n", len(jobChannelList))
+
+		// 定期打印数据库连接状态（监控用）
+		PrintDBConnectionStatsConditional("ArchiveDB-Status", false)
+
 		if len(jobChannelList) == 0 {
 			log.Printf("archive job done \n")
 			break
