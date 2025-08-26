@@ -31,6 +31,10 @@ func StartCronJob() {
 	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
+
+	// 启动数据库连接池监控
+	go startDBConnectionMonitor()
+
 	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s :00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02 15")))
 	subSecond := t.Unix() + archiveTime + 10 - time.Now().Unix()
 	log.Printf("StartCronJob wait second: %d, targetUnix:%d archiveUnix:%d nowUnix:%d \n", subSecond, t.Unix(), archiveTime, time.Now().Unix())
@@ -287,5 +291,27 @@ func ArchiveFromMysql(tableUnixTime int64) {
 	err = renameFiveToOne(oldTableName, newTableName)
 	if err != nil {
 		log.Printf("archive 5 min job,rename %s to %s error: %v \n", oldTableName, newTableName, err)
+	}
+}
+
+// startDBConnectionMonitor 启动数据库连接池监控
+// 在每小时的第10分钟打印数据库连接池统计信息
+func startDBConnectionMonitor() {
+	log.Printf("DB Connection Monitor started - will print stats at minute 10 of every hour")
+
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			// 在每小时的第10分钟打印数据库连接池统计
+			if now.Minute() == 10 {
+				log.Printf("=== Hourly DB Connection Stats Check (Minute 10) ===")
+				PrintDBConnectionStatsConditional("ArchiveDB-Hourly", true)
+				log.Printf("=== End Hourly DB Connection Stats Check ===")
+			}
+		}
 	}
 }
