@@ -291,10 +291,28 @@ func ArchiveFromMysql(tableUnixTime int64) {
 }
 
 // startDBConnectionMonitor 启动数据库连接池监控
-// 每小时第10分钟必须打印，其他10分钟根据条件判断
+// 对齐到时钟的每10分钟整点执行，每小时第10分钟必须打印，其他时间根据条件判断
 func startDBConnectionMonitor() {
-	log.Printf("DB Connection Monitor started - will print stats at minute 10 of every hour, and conditionally at other 10-minute intervals")
+	log.Printf("DB Connection Monitor started - will print stats at clock-aligned 10-minute intervals")
 
+	// 计算到下一个10分钟整点的等待时间
+	now := time.Now()
+	nextMinute := ((now.Minute() / 10) + 1) * 10
+	if nextMinute >= 60 {
+		nextMinute = 0
+	}
+
+	// 计算等待时间
+	waitDuration := time.Duration(nextMinute-now.Minute()) * time.Minute
+	if waitDuration <= 0 {
+		waitDuration = 10 * time.Minute
+	}
+
+	// 等待到下一个10分钟整点
+	log.Printf("Waiting %v to align with next 10-minute interval", waitDuration)
+	time.Sleep(waitDuration)
+
+	// 启动定时器，每10分钟执行一次
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
@@ -302,16 +320,19 @@ func startDBConnectionMonitor() {
 		select {
 		case <-ticker.C:
 			now := time.Now()
-			isMinute10 := now.Minute() == 10
+			currentMinute := now.Minute()
 
-			if isMinute10 {
-				// 每小时第10分钟必须打印
-				log.Printf("=== Hourly DB Connection Stats Check (Minute 10) ===")
-				PrintDBConnectionStatsConditional("ArchiveDB-Hourly", true)
-				log.Printf("=== End Hourly DB Connection Stats Check ===")
-			} else {
-				// 其他10分钟根据条件判断是否打印
-				PrintDBConnectionStatsConditional("ArchiveDB-Regular", false)
+			// 检查是否是每10分钟的整点（0, 10, 20, 30, 40, 50）
+			if currentMinute%10 == 0 {
+				if currentMinute == 10 {
+					// 每小时第10分钟必须打印
+					log.Printf("=== Hourly DB Connection Stats Check (Minute 10) ===")
+					PrintDBConnectionStatsConditional("ArchiveDB-Hourly", true)
+					log.Printf("=== End Hourly DB Connection Stats Check ===")
+				} else {
+					// 其他10分钟整点（0, 20, 30, 40, 50）根据条件判断是否打印
+					PrintDBConnectionStatsConditional("ArchiveDB-Regular", false)
+				}
 			}
 		}
 	}
