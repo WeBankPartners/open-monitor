@@ -196,7 +196,7 @@ func archiveAction(param ArchiveActionList) {
 	}
 	var err error
 	var rowData []*ArchiveTable
-	for i, v := range param {
+	for _, v := range param {
 		tmpPrometheusParam := PrometheusQueryParam{Start: v.Start, End: v.End, PromQl: v.PromQl, Metric: v.Metric}
 		err = getPrometheusData(&tmpPrometheusParam)
 		if err != nil {
