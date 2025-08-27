@@ -31,6 +31,10 @@ func StartCronJob() {
 	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
+
+	// 启动数据库连接池监控
+	go startDBConnectionMonitor()
+
 	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s :00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02 15")))
 	subSecond := t.Unix() + archiveTime + 10 - time.Now().Unix()
 	log.Printf("StartCronJob wait second: %d, targetUnix:%d archiveUnix:%d nowUnix:%d \n", subSecond, t.Unix(), archiveTime, time.Now().Unix())
@@ -134,6 +138,7 @@ func consumeJob() {
 			concurrentJobList = append(concurrentJobList, tmpJobList)
 		}
 		log.Printf("start consume job,length:%d ,concurrent:%d \n", len(param), len(concurrentJobList))
+
 		startTime := time.Now()
 		wg := sync.WaitGroup{}
 		for _, job := range concurrentJobList {
@@ -148,6 +153,7 @@ func consumeJob() {
 		endTime := time.Now()
 		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
 		log.Printf("done with consume job,use time: %.3f ms", useTime)
+
 		if int(endTime.Sub(startTime).Seconds()) >= jobTimeout {
 			log.Println("job timeout,try to reset db connection ")
 			ResetDbEngine()
@@ -160,6 +166,7 @@ func checkJobStatus() {
 	time.Sleep(2 * time.Second)
 	for {
 		log.Printf("job channel list length --> %d \n", len(jobChannelList))
+
 		if len(jobChannelList) == 0 {
 			log.Printf("archive job done \n")
 			break
@@ -190,7 +197,6 @@ func archiveAction(param ArchiveActionList) {
 	var err error
 	var rowData []*ArchiveTable
 	for i, v := range param {
-		log.Printf("start build archive row data,index:%d \n", i)
 		tmpPrometheusParam := PrometheusQueryParam{Start: v.Start, End: v.End, PromQl: v.PromQl, Metric: v.Metric}
 		err = getPrometheusData(&tmpPrometheusParam)
 		if err != nil {
@@ -281,5 +287,32 @@ func ArchiveFromMysql(tableUnixTime int64) {
 	err = renameFiveToOne(oldTableName, newTableName)
 	if err != nil {
 		log.Printf("archive 5 min job,rename %s to %s error: %v \n", oldTableName, newTableName, err)
+	}
+}
+
+// startDBConnectionMonitor 启动数据库连接池监控
+// 每小时第10分钟必须打印，其他10分钟根据条件判断
+func startDBConnectionMonitor() {
+	log.Printf("DB Connection Monitor started - will print stats at minute 10 of every hour, and conditionally at other 10-minute intervals")
+
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			isMinute10 := now.Minute() == 10
+
+			if isMinute10 {
+				// 每小时第10分钟必须打印
+				log.Printf("=== Hourly DB Connection Stats Check (Minute 10) ===")
+				PrintDBConnectionStatsConditional("ArchiveDB-Hourly", true)
+				log.Printf("=== End Hourly DB Connection Stats Check ===")
+			} else {
+				// 其他10分钟根据条件判断是否打印
+				PrintDBConnectionStatsConditional("ArchiveDB-Regular", false)
+			}
+		}
 	}
 }
