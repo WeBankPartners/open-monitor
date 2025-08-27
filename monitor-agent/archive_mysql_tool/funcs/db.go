@@ -29,6 +29,11 @@ var (
 	connectionTrendData []ConnectionTrendPoint
 )
 
+const (
+	// WaitCountThreshold 等待连接数阈值，超过此值才触发打印
+	WaitCountThreshold = 500
+)
+
 // ConnectionTrendPoint 连接趋势数据点
 type ConnectionTrendPoint struct {
 	Timestamp        time.Time
@@ -346,12 +351,12 @@ func PrintDBConnectionStatsConditional(prefix string, forcePrint bool) {
 	// 只在以下情况打印详细日志：
 	// 1. 强制打印（forcePrint=true）
 	// 2. 连接使用率超过80%
-	// 3. 有等待连接的情况
+	// 3. 等待连接数超过阈值（默认10）
 	// 4. 连接数接近最大值
 	shouldPrint := forcePrint
 	if !shouldPrint && stats.MaxOpenConnections > 0 {
 		usageRate := float64(stats.OpenConnections) / float64(stats.MaxOpenConnections)
-		shouldPrint = usageRate > 0.8 || stats.WaitCount > 0 || stats.OpenConnections >= stats.MaxOpenConnections-2
+		shouldPrint = usageRate > 0.8 || stats.WaitCount > WaitCountThreshold || stats.OpenConnections >= stats.MaxOpenConnections-2
 	}
 
 	if shouldPrint {

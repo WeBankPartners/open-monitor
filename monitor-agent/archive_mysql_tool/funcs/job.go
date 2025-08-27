@@ -167,9 +167,6 @@ func checkJobStatus() {
 	for {
 		log.Printf("job channel list length --> %d \n", len(jobChannelList))
 
-		// 定期打印数据库连接状态（监控用）
-		PrintDBConnectionStatsConditional("ArchiveDB-Status", false)
-
 		if len(jobChannelList) == 0 {
 			log.Printf("archive job done \n")
 			break
@@ -295,22 +292,27 @@ func ArchiveFromMysql(tableUnixTime int64) {
 }
 
 // startDBConnectionMonitor 启动数据库连接池监控
-// 在每小时的第10分钟打印数据库连接池统计信息
+// 每小时第10分钟必须打印，其他10分钟根据条件判断
 func startDBConnectionMonitor() {
-	log.Printf("DB Connection Monitor started - will print stats at minute 10 of every hour")
+	log.Printf("DB Connection Monitor started - will print stats at minute 10 of every hour, and conditionally at other 10-minute intervals")
 
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
 			now := time.Now()
-			// 在每小时的第10分钟打印数据库连接池统计
-			if now.Minute() == 10 {
+			isMinute10 := now.Minute() == 10
+
+			if isMinute10 {
+				// 每小时第10分钟必须打印
 				log.Printf("=== Hourly DB Connection Stats Check (Minute 10) ===")
 				PrintDBConnectionStatsConditional("ArchiveDB-Hourly", true)
 				log.Printf("=== End Hourly DB Connection Stats Check ===")
+			} else {
+				// 其他10分钟根据条件判断是否打印
+				PrintDBConnectionStatsConditional("ArchiveDB-Regular", false)
 			}
 		}
 	}
