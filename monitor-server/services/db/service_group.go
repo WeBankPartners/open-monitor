@@ -175,7 +175,7 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 	}
 	searchText = "%" + searchText + "%"
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select * from service_group where guid like ? or name like ?", searchText, searchText).Find(&serviceGroupTable)
+	err = x.SQL("select * from service_group where guid like ? or display_name like ?", searchText, searchText).Find(&serviceGroupTable)
 	if err != nil {
 		return
 	}
@@ -248,6 +248,50 @@ func GetServiceGroupEndpointListWithFilter(search, monitorType string) (result [
 			Guid:        v.Guid, 
 			DisplayName: displayName, 
 			Type:        v.MonitorType,
+		})
+	}
+	return
+}
+
+func GetServiceGroupEndpointListWithFilterForGroup(search, serviceType string) (result []*models.ServiceGroupEndpointListObj, err error) {
+	result = []*models.ServiceGroupEndpointListObj{}
+
+	// 构建查询条件
+	var conditions []string
+	var params []interface{}
+
+	// 添加 service_type 过滤
+	if serviceType != "" && serviceType != "all" {
+		conditions = append(conditions, "service_type=?")
+		params = append(params, serviceType)
+	}
+
+	// 增强模糊搜索 - 支持在 guid 和 display_name 字段中进行模糊搜索
+	if search != "" {
+		searchCondition := "(guid LIKE ? OR display_name LIKE ?)"
+		searchParam := "%" + search + "%"
+		conditions = append(conditions, searchCondition)
+		params = append(params, searchParam, searchParam)
+	}
+
+	// 构建 SQL 语句
+	sql := "SELECT guid, display_name, service_type FROM service_group"
+	if len(conditions) > 0 {
+		sql += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	sql += " ORDER BY update_time DESC LIMIT 100"
+
+	var serviceGroupTable []*models.ServiceGroupTable
+	err = x.SQL(sql, params...).Find(&serviceGroupTable)
+	if err != nil {
+		return
+	}
+
+	for _, v := range serviceGroupTable {
+		result = append(result, &models.ServiceGroupEndpointListObj{
+			Guid:        v.Guid, 
+			DisplayName: v.DisplayName, 
+			Type:        v.ServiceType,
 		})
 	}
 	return
