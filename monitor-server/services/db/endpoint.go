@@ -161,14 +161,32 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	if searchText == "." {
 		searchText = ""
 	}
-	searchText = "%" + searchText + "%"
+	
 	var endpointTable []*models.EndpointNewTable
-	err = x.SQL("select guid,monitor_type from endpoint_new where guid like ?", searchText).Find(&endpointTable)
+	if searchText == "" {
+		// 如果没有搜索词，返回前100条数据
+		err = x.SQL("select guid,monitor_type,name from endpoint_new order by update_time desc limit 100").Find(&endpointTable)
+	} else {
+		// 支持多字段模糊搜索：option_text(guid), option_value(guid), option_type_name(monitor_type)
+		searchText = "%" + searchText + "%"
+		err = x.SQL("select guid,monitor_type,name from endpoint_new where guid like ? or monitor_type like ? order by update_time desc limit 100", searchText, searchText).Find(&endpointTable)
+	}
+	
 	if err != nil {
 		return
 	}
 	for _, v := range endpointTable {
-		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.Guid, OptionType: v.MonitorType, OptionTypeName: v.MonitorType})
+		// 优先使用 name 字段作为 option_text，如果为空则使用 guid
+		optionText := v.Guid
+		if v.Name != "" {
+			optionText = v.Name
+		}
+		result = append(result, &models.OptionModel{
+			OptionValue:    v.Guid,
+			OptionText:     optionText,
+			OptionType:     v.MonitorType,
+			OptionTypeName: v.MonitorType,
+		})
 	}
 	return
 }

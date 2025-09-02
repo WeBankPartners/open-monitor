@@ -132,13 +132,6 @@ export default {
             disabled: false,
             type: 'select'
           }
-          // {
-          //   label: 'm_field_resourceLevel',
-          //   value: 'service_group',
-          //   option: 'service_group',
-          //   disabled: false,
-          //   type: 'select'
-          // }
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           display_name: null,
@@ -317,7 +310,6 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.getServeGroup()
       await this.request('GET', this.apiCenter.getEndpointType, params, res => {
         this.modelConfig.v_select_configs.monitor_type = res.map(item => ({
           label: item,
@@ -325,14 +317,6 @@ export default {
         }))
       })
       this.$root.JQ('#add_edit_Modal').modal('show')
-    },
-    async getServeGroup() {
-      // await this.request('GET', this.apiCenter.getTargetByEndpointGroup, '', res => {
-      //   this.modelConfig.v_select_configs.service_group = res.map(item => ({
-      //     label: item.display_name,
-      //     value: item.guid
-      //   }))
-      // })
     },
     addPost() {
       const params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
@@ -361,7 +345,6 @@ export default {
         page: 1,
         size: 10000,
       }
-      await this.getServeGroup()
       await this.request('GET', this.apiCenter.getEndpointType, params, res => {
         this.modelConfig.v_select_configs.monitor_type = res.map(item => ({
           label: item,

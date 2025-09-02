@@ -19,7 +19,7 @@
         filterable
         clearable
         remote
-        :remote-method="handleRemoteTarget"
+        @on-query-change="handleRemoteTarget"
         :loading="loading"
         ref="select"
         @on-clear="onTargetIdClear"
@@ -91,8 +91,8 @@
 
 <script>
 import axios from 'axios'
-import {debounce, isEmpty} from 'lodash'
-import {baseURL_config} from '@/assets/js/baseURL'
+import { debounce } from 'lodash'
+import { baseURL_config } from '@/assets/js/baseURL'
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import keywordContent from './keyword-content.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -141,7 +141,7 @@ export default {
   methods: {
     handleRemoteTarget: debounce(function (query) {
       this.getTargrtList(query)
-    }, 500),
+    }, 1000),
     typeChange() {
       this.clearTargrt()
       this.selectKey = +new Date() + ''
@@ -153,9 +153,6 @@ export default {
       this.showTargetManagement = false
     },
     getTargrtList(query) {
-      if (!isEmpty(this.targetOptions) && !query) {
-        return
-      }
       const params = {
         monitorType: '',
         query: 'Y',
@@ -232,7 +229,7 @@ export default {
     },
     onSelectOpenChange(open) {
       if (open) {
-        this.getTargrtList()
+        this.getTargrtList('')
       }
     },
     onFeedbackInfo(allData) {

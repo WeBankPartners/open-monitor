@@ -118,14 +118,32 @@ func ListEndpointGroupOptions(searchText string) (result []*models.OptionModel, 
 	if searchText == "." {
 		searchText = ""
 	}
-	searchText = "%" + searchText + "%"
+	
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,monitor_type from endpoint_group where service_group is null and (guid like ?)", searchText).Find(&endpointGroupTable)
+	if searchText == "" {
+		// 如果没有搜索词，返回前100条数据
+		err = x.SQL("select guid,monitor_type,display_name from endpoint_group where service_group is null order by update_time desc limit 100").Find(&endpointGroupTable)
+	} else {
+		// 支持多字段模糊搜索：option_text(display_name), option_value(guid), option_type_name(monitor_type)
+		searchText = "%" + searchText + "%"
+		err = x.SQL("select guid,monitor_type,display_name from endpoint_group where service_group is null and (guid like ? or display_name like ? or monitor_type like ?) order by update_time desc limit 100", searchText, searchText, searchText).Find(&endpointGroupTable)
+	}
+	
 	if err != nil {
 		return
 	}
 	for _, v := range endpointGroupTable {
-		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.Guid, OptionType: v.MonitorType, OptionTypeName: v.MonitorType})
+		// 优先使用 display_name 字段作为 option_text，如果为空则使用 guid
+		optionText := v.Guid
+		if v.DisplayName != "" {
+			optionText = v.DisplayName
+		}
+		result = append(result, &models.OptionModel{
+			OptionValue:    v.Guid,
+			OptionText:     optionText,
+			OptionType:     v.MonitorType,
+			OptionTypeName: v.MonitorType,
+		})
 	}
 	return
 }

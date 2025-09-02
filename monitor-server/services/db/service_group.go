@@ -173,14 +173,27 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 	if searchText == "." {
 		searchText = ""
 	}
-	searchText = "%" + searchText + "%"
+	
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select * from service_group where guid like ?", searchText).Find(&serviceGroupTable)
+	if searchText == "" {
+		// 如果没有搜索词，返回前100条数据
+		err = x.SQL("select * from service_group order by update_time desc limit 100").Find(&serviceGroupTable)
+	} else {
+		// 支持多字段模糊搜索：option_text(display_name), option_value(guid), option_type_name(service_type)
+		searchText = "%" + searchText + "%"
+		err = x.SQL("select * from service_group where guid like ? or display_name like ? or service_type like ? order by update_time desc limit 100", searchText, searchText, searchText).Find(&serviceGroupTable)
+	}
+	
 	if err != nil {
 		return
 	}
 	for _, v := range serviceGroupTable {
-		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
+		result = append(result, &models.OptionModel{
+			OptionValue:    v.Guid,
+			OptionText:     v.DisplayName,
+			OptionType:     v.ServiceType,
+			OptionTypeName: v.ServiceType,
+		})
 	}
 	return
 }

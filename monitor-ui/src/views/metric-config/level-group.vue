@@ -12,7 +12,7 @@
         filterable
         clearable
         remote
-        :remote-method="handleRemoteServiceGroup"
+        @on-query-change="handleRemoteServiceGroup"
         :loading="loading"
         @on-change="() => {
           metric = ''
@@ -22,7 +22,7 @@
         <Option
           v-for="(option, index) in recursiveOptions"
           :value="option.guid"
-          :label="'[' + option.type + '] ' + option.display_name"
+          :label="option.display_name"
           :key="index"
         >
           <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow>
@@ -457,7 +457,7 @@ export default {
     },
     handleRemoteServiceGroup: debounce(function (query) {
       this.getRecursiveList(query)
-    }, 500),
+    }, 1000),
     getRecursiveList(query) {
       const params = {
         monitorType: '',

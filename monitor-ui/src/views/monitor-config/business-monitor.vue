@@ -19,7 +19,7 @@
         filterable
         clearable
         remote
-        :remote-method="handleRemoteTarget"
+        @on-query-change="handleRemoteTarget"
         :loading="loading"
         ref="select"
         @on-change="() => {
@@ -81,7 +81,7 @@
 </template>
 
 <script>
-import {debounce, isEmpty} from 'lodash'
+import { debounce } from 'lodash'
 import endpointManagement from './business-monitor-endpoint.vue'
 import groupManagement from './business-monitor-group.vue'
 import TagShow from '@/components/Tag-show.vue'
@@ -114,16 +114,13 @@ export default {
   methods: {
     handleRemoteTarget: debounce(function (query) {
       this.getTargrtList(query)
-    }, 500),
+    }, 1000),
     typeChange() {
       this.metricKey = ''
       this.clearTargrt()
       this.selectKey = +new Date() + ''
     },
     getTargrtList(query) {
-      if (!isEmpty(this.targetOptions) && !query) {
-        return
-      }
       const params = {
         monitorType: '',
         query: 'Y',
@@ -158,7 +155,8 @@ export default {
     },
     onSelectOpenChange(open) {
       if (open) {
-        this.getTargrtList()
+        // 当打开下拉框时，如果没有搜索词，则传入空字符串进行查询
+        this.getTargrtList('')
       }
     }
   },

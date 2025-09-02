@@ -250,7 +250,7 @@ func ListStrategyQueryOptions(c *gin.Context) {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
 	if searchType == "" {
-		middleware.ReturnParamEmptyError(c, "type and search")
+		middleware.ReturnParamEmptyError(c, "type")
 		return
 	}
 	var err error

@@ -19,7 +19,7 @@
           clearable
           ref="select"
           remote
-          :remote-method="handleRemoteTarget"
+          @on-query-change="handleRemoteTarget"
           :loading="loading"
           @on-clear="onTargetIdClear"
           @on-change="searchTableDetail"
@@ -298,7 +298,7 @@ export default {
     },
     onSelectOpenChange(open) {
       if (open) {
-        this.getTargetOptions()
+        this.getTargetOptions('')
       }
     }
   },

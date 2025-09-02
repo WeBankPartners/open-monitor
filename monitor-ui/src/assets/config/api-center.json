@@ -253,7 +253,6 @@
     "metricListCount": "/monitor/api/v2/monitor/metric/list/count",
     "metricComparisonList": "/monitor/api/v2/monitor/metric_comparison/list",
     "comparisonMetricItem": "/monitor/api/v1/dashboard/new/comparison_metric/${id}",
-    "getTargetByEndpointGroup": "/monitor/api/v2/service_endpoint/search/group",
     "parameterMetricTemplate": "/monitor/api/v2/sys/parameter/metric_template",
     "dashboardComparisonChart": "/monitor/api/v1/dashboard/comparison_chart",
     "getEndpointsByTypeByType": "/monitor/api/v2/service/service_group/${id}/endpoint/${type}",
