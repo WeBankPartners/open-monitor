@@ -226,7 +226,7 @@ func GetServiceGroupEndpointListWithFilter(search, monitorType string) (result [
 	}
 
 	// 构建 SQL 语句
-	sql := "SELECT guid, monitor_type, name, ip, endpoint_address FROM endpoint_new"
+	sql := "SELECT guid, monitor_type, name, ip, endpoint_address, update_time FROM endpoint_new"
 	if len(conditions) > 0 {
 		sql += " WHERE " + strings.Join(conditions, " AND ")
 	}
@@ -275,7 +275,7 @@ func GetServiceGroupEndpointListWithFilterForGroup(search, serviceType string) (
 	}
 
 	// 构建 SQL 语句
-	sql := "SELECT guid, display_name, service_type FROM service_group"
+	sql := "SELECT guid, display_name, service_type, update_time FROM service_group"
 	if len(conditions) > 0 {
 		sql += " WHERE " + strings.Join(conditions, " AND ")
 	}
