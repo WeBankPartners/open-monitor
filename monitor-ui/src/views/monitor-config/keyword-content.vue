@@ -268,7 +268,7 @@
         <div class="file-log-form">
           <Form ref="formData" :model="formData" :rules="ruleValidate" :label-width="130">
             <FormItem :label="$t('m_alarmName')" prop="name">
-              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="50" show-word-limit />
+              <Input v-model.trim="formData.name" :disabled="!isEditState" :maxlength="150" show-word-limit />
             </FormItem>
             <FormItem v-if="isLogFile" :label="$t('m_field_log')" prop="keyword">
               <Input v-model.trim="formData.keyword" :disabled="!isEditState"></Input>
