@@ -2,15 +2,16 @@ package db
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os/exec"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"os/exec"
-	"strings"
-	"time"
 )
 
 func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTable, err error) {
@@ -164,7 +165,7 @@ func recoverPrometheusConfig(name string) {
 }
 
 func StartCronSyncKubernetesPod(interval int) {
-	t := time.NewTicker(time.Duration(interval*10) * time.Second).C
+	t := time.NewTicker(time.Duration(interval*120) * time.Second).C
 	for {
 		<-t
 		go SyncPodToEndpoint()

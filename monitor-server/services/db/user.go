@@ -5,15 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
 	"golang.org/x/net/context/ctxhttp"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func AddUser(user m.UserTable) error {
@@ -295,7 +296,7 @@ func StartCronJob() {
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
 	go StartCheckBusinessConfigMatchCodeCount()
-	//go StartCronSyncKubernetesPod(intervalSec)
+	go StartCronSyncKubernetesPod(intervalSec)
 	go StartCleanAlarmTable()
 }
 
