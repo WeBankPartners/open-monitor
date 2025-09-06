@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"github.com/WeBankPartners/open-monitor/monitor-server/vendor/github.com/WeBankPartners/go-common-lib/guid"
 	"go.uber.org/zap"
 )
 
