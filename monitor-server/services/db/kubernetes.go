@@ -11,6 +11,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/open-monitor/monitor-server/vendor/github.com/WeBankPartners/go-common-lib/guid"
 	"go.uber.org/zap"
 )
 
@@ -167,8 +168,8 @@ func recoverPrometheusConfig(name string) {
 func StartCronSyncKubernetesPod(interval int) {
 	t := time.NewTicker(time.Duration(120) * time.Second).C
 	for {
-		go SyncPodToEndpoint()
 		<-t
+		go SyncPodToEndpoint()
 	}
 }
 
@@ -216,17 +217,17 @@ func SyncPodToEndpoint() bool {
 			}
 		}
 	}
-	log.Debug(nil, log.LOGGER_APP, "kubernetes series", log.JsonObj("endpointTables", endpointTables))
+	log.Debug(nil, log.LOGGER_APP, "kubernetes endpointTables", log.JsonObj("endpointTables", endpointTables))
 	if len(endpointTables) > 0 {
 		result = true
 		var tmpGuidList []string
 		endpointSql := "insert into endpoint(guid,name,ip,export_type,step,os_type) values "
-		newEndpointSql := "insert into endpoint_new(guid,name,ip,monitor_type,step,tags,create_user,update_user) values "
+		newEndpointSql := "insert into endpoint_new(guid,name,ip,monitor_type,step,tags,create_user,update_user,cluster) values "
 		for i, v := range endpointTables {
 			tmpGuidList = append(tmpGuidList, v.Guid)
 			log.Info(nil, log.LOGGER_APP, "add kubernetes pod endpoint", zap.String("guid", v.Guid))
 			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
-			newEndpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s','system','system')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
+			newEndpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s','system','system','default')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			if i < len(endpointTables)-1 {
 				endpointSql += ","
 				newEndpointSql += ","
@@ -250,14 +251,22 @@ func SyncPodToEndpoint() bool {
 					log.Error(nil, log.LOGGER_APP, "Try to update endpoint group fail", zap.String("sql", insertEndpointGrpSql), zap.Error(err))
 				}
 			}
+			if len(tmpGuidList) > 0 {
+				for _, tmpGuid := range tmpGuidList {
+					_, err = x.Exec("INSERT INTO endpoint_group_rel (guid,endpoint,endpoint_group) values (?,?,'default_pod_group')", guid.CreateGuid(), tmpGuid)
+					if err != nil {
+						log.Error(nil, log.LOGGER_APP, "Try to insert endpoint group fail", zap.String("endpointGuid", tmpGuid), zap.Error(err))
+					}
+				}
+			}
 		}
 	}
 	log.Debug(nil, log.LOGGER_APP, "kubernetes series", log.JsonObj("kubernetesEndpointTables", kubernetesEndpointTables))
 	if len(kubernetesEndpointTables) > 0 {
 		result = true
-		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid) values "
+		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) values "
 		for i, v := range kubernetesEndpointTables {
-			keRelSql += fmt.Sprintf("(%d,'%s','%s')", v.KuberneteId, v.EndpointGuid, v.PodGuid)
+			keRelSql += fmt.Sprintf("(%d,'%s','%s','default')", v.KuberneteId, v.EndpointGuid, v.PodGuid)
 			if i < len(kubernetesEndpointTables)-1 {
 				keRelSql += ","
 			}
