@@ -165,10 +165,10 @@ func recoverPrometheusConfig(name string) {
 }
 
 func StartCronSyncKubernetesPod(interval int) {
-	t := time.NewTicker(time.Duration(interval*120) * time.Second).C
+	t := time.NewTicker(time.Duration(120) * time.Second).C
 	for {
-		<-t
 		go SyncPodToEndpoint()
+		<-t
 	}
 }
 
@@ -191,6 +191,7 @@ func SyncPodToEndpoint() bool {
 		var tmpKubernetesEndpointTables []*m.KubernetesEndpointRelTable
 		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=?", v.Id).Find(&tmpKubernetesEndpointTables)
 		tmpApiServerIp := v.ApiServer[:strings.Index(v.ApiServer, ":")]
+		log.Debug(nil, log.LOGGER_APP, "kubernetes series", log.JsonObj("series", series))
 		for _, vv := range series {
 			tmpPodName := vv.Name
 			if strings.HasPrefix(tmpPodName, "pod=") {
@@ -215,6 +216,7 @@ func SyncPodToEndpoint() bool {
 			}
 		}
 	}
+	log.Debug(nil, log.LOGGER_APP, "kubernetes series", log.JsonObj("endpointTables", endpointTables))
 	if len(endpointTables) > 0 {
 		result = true
 		var tmpGuidList []string
@@ -250,6 +252,7 @@ func SyncPodToEndpoint() bool {
 			}
 		}
 	}
+	log.Debug(nil, log.LOGGER_APP, "kubernetes series", log.JsonObj("kubernetesEndpointTables", kubernetesEndpointTables))
 	if len(kubernetesEndpointTables) > 0 {
 		result = true
 		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid) values "
