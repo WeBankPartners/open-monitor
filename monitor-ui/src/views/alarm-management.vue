@@ -102,7 +102,7 @@
             @on-ok="deleteConfirmModal()"
           >
             <Button
-              :disabled="!isRealTimeAlarm || isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint)) || resultData.length === 0"
+              :disabled="!isRealTimeAlarm || isEmpty(filters) || (isEmpty(filters.priority) && isEmpty(filters.alarm_name) && isEmpty(filters.metric) && isEmpty(filters.endpoint) && isEmpty(filters.query)) || resultData.length === 0"
             >
               {{$t('m_batch_close')}}
             </Button>
