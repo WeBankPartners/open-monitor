@@ -250,7 +250,7 @@ export default {
     },
     async getChartsConfig(endpointObj) {
       if (!isEmpty(endpointObj) && endpointObj.option_name) {
-        await this.getEndpointList()
+        await this.getEndpointList(endpointObj.option_name)
         this.endpointObject = find(this.endpointList, {option_text: endpointObj.option_name})
         this.endpoint = this.endpointObject.option_value
       }
