@@ -1295,3 +1295,6 @@ alter table alarm_condition modify column expr varchar(2000) default null COMMEN
 ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm (alarm);
 ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
 #@v3.6.5-end@;
+#@v3.6.6-begin@;
+alter table custom_chart_series modify column metric_guid varchar(128) default NULL COMMENT '指标Id';
+#@v3.6.6-end@;
