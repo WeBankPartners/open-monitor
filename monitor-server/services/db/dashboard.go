@@ -957,6 +957,15 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 		}
 		// 仅选择必要列，减少网络传输与反序列化开销；改为流式迭代，避免一次性加载全部行
 		sqlStr := fmt.Sprintf("SELECT tags,unix_time,`avg` AS `value` FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)
+		// 当 tagLength 尚未确定且是第一天时，先做一次轻量检查：若存在多个不同的 tags，则将 tagLength 置为 2
+		if tagLength <= 1 && i == 0 {
+			var tagList []string
+			preCheckSql := fmt.Sprintf("SELECT tags FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d GROUP BY tags LIMIT 2", v, endpoint, metric, tmpStart, tmpEnd)
+			_ = archiveMysql.SQL(preCheckSql).Find(&tagList)
+			if len(tagList) >= 2 {
+				tagLength = 2
+			}
+		}
 		startAt := time.Now()
 		rows, err := archiveMysql.SQL(sqlStr).Rows(new(m.ArchiveQueryTable))
 		if err != nil {
