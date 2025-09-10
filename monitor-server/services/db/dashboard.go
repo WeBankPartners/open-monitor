@@ -955,39 +955,67 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 				continue
 			}
 		}
-		var tableData []*m.ArchiveQueryTable
+		// 分页查询，避免一次性加载全部行
 		sqlStr := fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)
 		startAt := time.Now()
-		err := archiveMysql.SQL(sqlStr).Find(&tableData)
+		totalRows := 0
+		page := 1
+		pageSize := 1000
+		// 仅分页拉取，组装在循环后统一处理
+		var allRows []*m.ArchiveQueryTable
+		for {
+			pageStart := time.Now()
+			var tableData []*m.ArchiveQueryTable
+			offset := (page - 1) * pageSize
+			pageSql := fmt.Sprintf("%s ORDER BY unix_time ASC LIMIT %d OFFSET %d", sqlStr, pageSize, offset)
+			err := archiveMysql.SQL(pageSql).Find(&tableData)
+			if err != nil {
+				if strings.Contains(err.Error(), "doesn't exist") {
+					log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
+				} else {
+					log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s error", v), zap.Error(err))
+				}
+				break
+			}
+			if len(tableData) == 0 {
+				break
+			}
+			allRows = append(allRows, tableData...)
+			totalRows += len(tableData)
+			log.Info(nil, log.LOGGER_APP, "archive page query",
+				zap.String("table", fmt.Sprintf("archive_%s", v)),
+				zap.Int("page", page),
+				zap.Int("page_size", pageSize),
+				zap.Int("rows", len(tableData)),
+				zap.Float64("cost", time.Since(pageStart).Seconds()),
+			)
+			if len(tableData) < pageSize {
+				break
+			}
+			page++
+		}
 		log.Info(nil, log.LOGGER_APP, "archive sql query",
 			zap.String("table", fmt.Sprintf("archive_%s", v)),
 			zap.Float64("cost", time.Since(startAt).Seconds()),
 			zap.String("sql", sqlStr),
-			zap.Int("rows", len(tableData)),
+			zap.Int("rows", totalRows),
 		)
-		if err != nil {
-			if strings.Contains(err.Error(), "doesn't exist") {
-				log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
-			} else {
-				log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s error", v), zap.Error(err))
-			}
-			continue
-		}
-		if len(tableData) == 0 {
+		if totalRows == 0 {
 			log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s empty", v))
 			continue
 		}
+		// 在统一组装前判断是否需要扩展 tagLength
 		if tagLength <= 1 && i == 0 {
-			tmpTagString := tableData[0].Tags
-			for _, vv := range tableData {
+			tmpTagString := allRows[0].Tags
+			for _, vv := range allRows {
 				if vv.Tags != tmpTagString {
 					tagLength = 2
 					break
 				}
 			}
 		}
-		for _, rowData := range tableData {
-			// 使用 query.TagValues 进行过滤
+		// 统一处理累计的数据
+		for _, rowData := range allRows {
 			if !filterByTagValues(rowData.Tags, query.TagValues) {
 				continue
 			}
