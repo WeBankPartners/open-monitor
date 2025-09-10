@@ -956,7 +956,15 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 			}
 		}
 		var tableData []*m.ArchiveQueryTable
-		err := archiveMysql.SQL(fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)).Find(&tableData)
+		sqlStr := fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)
+		startAt := time.Now()
+		err := archiveMysql.SQL(sqlStr).Find(&tableData)
+		log.Info(nil, log.LOGGER_APP, "archive sql query",
+			zap.String("table", fmt.Sprintf("archive_%s", v)),
+			zap.Float64("cost", time.Since(startAt).Seconds()),
+			zap.String("sql", sqlStr),
+			zap.Int("rows", len(tableData)),
+		)
 		if err != nil {
 			if strings.Contains(err.Error(), "doesn't exist") {
 				log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
