@@ -1297,4 +1297,5 @@ ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
 #@v3.6.5-end@;
 #@v3.6.6-begin@;
 alter table custom_chart_series modify column metric_guid varchar(128) default NULL COMMENT '指标Id';
+update metric set prom_expr='node_filesystem_files_free{instance="$address",mountpoint ="/"} / node_filesystem_files{instance="$address",mountpoint ="/"} * 100' where guid='file_handler_free_percent__host';
 #@v3.6.6-end@;

@@ -26,6 +26,7 @@ type QueryMonitorData struct {
 	PieDisplayTag        string    `json:"pie_display_tag"`
 	ComparisonFlag       string    `json:"comparison_flag"`
 	ServiceConfiguration string    `json:"service_configuration"` // 业务配置, custom 表示自定义
+	TagValues            []*TagDto `json:"TagValues"`
 }
 
 type PrometheusParam struct {

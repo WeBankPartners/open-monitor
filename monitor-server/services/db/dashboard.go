@@ -979,10 +979,9 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 			}
 		}
 		for _, rowData := range tableData {
-			if tag != "" {
-				if !strings.Contains(rowData.Tags, tag) {
-					continue
-				}
+			// 使用 query.TagValues 进行过滤
+			if !filterByTagValues(rowData.Tags, query.TagValues) {
+				continue
 			}
 			if _, b := recordNameMap[rowData.Tags]; !b {
 				if _, b := recordTagMap[rowData.Tags]; !b {
@@ -1151,4 +1150,55 @@ func SearchRecursivePanelDistinctField() ([]string, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+// filterByTagValues 根据 TagValues 过滤数据
+// archiveTags 格式: agg="count",code="monitor_agent_kubernetes_cluster_update",key="test20250901195_req_count",service_group="gateway_log",retcode="success"
+// tagValues 包含 TagName 和 Equal (in/notin) 以及 TagValue 数组
+func filterByTagValues(archiveTags string, tagValues []*m.TagDto) bool {
+	if len(tagValues) == 0 {
+		return true // 没有过滤条件，返回 true
+	}
+
+	// 解析 archiveTags 为 map
+	archiveTagMap := getKVMapFromArchiveTags(archiveTags)
+
+	// 检查每个 TagValue 条件
+	for _, tagValue := range tagValues {
+		if tagValue.TagName == "" || len(tagValue.TagValue) == 0 {
+			continue // 跳过空的过滤条件
+		}
+
+		// 获取 archiveTags 中对应 TagName 的值
+		archiveValue, exists := archiveTagMap[tagValue.TagName]
+		if !exists {
+			// 如果 archiveTags 中没有这个 TagName，根据 Equal 类型判断
+			if tagValue.Equal == "in" {
+				return false // in 类型要求必须存在，不存在则过滤掉
+			}
+			continue // notin 类型不存在则通过
+		}
+
+		// 检查 archiveValue 是否在 TagValue 列表中
+		found := false
+		for _, expectedValue := range tagValue.TagValue {
+			if archiveValue == expectedValue {
+				found = true
+				break
+			}
+		}
+
+		// 根据 Equal 类型判断是否通过
+		if tagValue.Equal == "in" {
+			if !found {
+				return false // in 类型要求必须匹配其中一个值
+			}
+		} else if tagValue.Equal == "notin" {
+			if found {
+				return false // notin 类型要求不能匹配任何值
+			}
+		}
+	}
+
+	return true // 所有条件都通过
 }
