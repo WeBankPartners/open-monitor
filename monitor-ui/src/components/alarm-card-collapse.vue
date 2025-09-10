@@ -101,7 +101,7 @@
             </div>
             <ul>
               <li>
-                <label class="card-label" v-html="$t('m_tableKey_content')"></label>
+                <label class="card-label" v-html="$t('m_notify_content')"></label>
                 <div class="card-content">
                   <div style="display:flex;align-items:center;width:100%;">
                     <div class="ellipsis">
