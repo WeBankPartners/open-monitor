@@ -945,7 +945,7 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 				continue
 			}
 		}
-		if i == len(dateList)-1 {
+		if i == len(v)-1 {
 			tmpEnd = query.End
 		} else {
 			tmpT, err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, v))
@@ -955,63 +955,54 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 				continue
 			}
 		}
-		// 仅选择必要列，减少网络传输与反序列化开销；改为流式迭代，避免一次性加载全部行
-		sqlStr := fmt.Sprintf("SELECT tags,unix_time,`avg` AS `value` FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)
-		// 当 tagLength 尚未确定且是第一天时，先做一次轻量检查：若存在多个不同的 tags，则将 tagLength 置为 2
-		if tagLength <= 1 && i == 0 {
-			var tagList []string
-			preCheckSql := fmt.Sprintf("SELECT tags FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d GROUP BY tags LIMIT 2", v, endpoint, metric, tmpStart, tmpEnd)
-			_ = archiveMysql.SQL(preCheckSql).Find(&tagList)
-			if len(tagList) >= 2 {
-				tagLength = 2
-			}
-		}
+		var tableData []*m.ArchiveQueryTable
+		sqlStr := fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v, endpoint, metric, tmpStart, tmpEnd)
 		startAt := time.Now()
-		rows, err := archiveMysql.SQL(sqlStr).Rows(new(m.ArchiveQueryTable))
-		if err != nil {
-			log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s error", v), zap.Error(err))
-			continue
-		}
-		processed := 0
-		for rows.Next() {
-			var row m.ArchiveQueryTable
-			if err = rows.Scan(&row); err != nil {
-				continue
-			}
-			// 使用 query.TagValues 进行过滤
-			if !filterByTagValues(row.Tags, query.TagValues) {
-				continue
-			}
-			if _, b := recordNameMap[row.Tags]; !b {
-				if _, b := recordTagMap[row.Tags]; !b {
-					recordTagMap[row.Tags] = getKVMapFromArchiveTags(row.Tags)
-				}
-				recordNameMap[row.Tags] = datasource.GetSerialName(query, recordTagMap[row.Tags], tagLength, query.CustomDashboard)
-			}
-			tmpRowName := recordNameMap[row.Tags]
-			if _, b := resultMap[tmpRowName]; !b {
-				resultMap[tmpRowName] = m.DataSort{[]float64{float64(row.UnixTime) * 1000, row.Value}}
-			} else {
-				resultMap[tmpRowName] = append(resultMap[tmpRowName], []float64{float64(row.UnixTime) * 1000, row.Value})
-			}
-			processed++
-		}
-		rows.Close()
+		err := archiveMysql.SQL(sqlStr).Find(&tableData)
 		log.Info(nil, log.LOGGER_APP, "archive sql query",
 			zap.String("table", fmt.Sprintf("archive_%s", v)),
 			zap.Float64("cost", time.Since(startAt).Seconds()),
 			zap.String("sql", sqlStr),
-			zap.Int("rows", processed),
-			zap.Int64("start", tmpStart),
-			zap.Int64("end", tmpEnd),
+			zap.Int("rows", len(tableData)),
 		)
-		if processed == 0 {
+		if err != nil {
 			if strings.Contains(err.Error(), "doesn't exist") {
 				log.Debug(nil, log.LOGGER_APP, fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
 			} else {
-				log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s empty", v))
+				log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s error", v), zap.Error(err))
 			}
 			continue
+		}
+		if len(tableData) == 0 {
+			log.Info(nil, log.LOGGER_APP, fmt.Sprintf("query archive table:archive_%s empty", v))
+			continue
+		}
+		if tagLength <= 1 && i == 0 {
+			tmpTagString := tableData[0].Tags
+			for _, vv := range tableData {
+				if vv.Tags != tmpTagString {
+					tagLength = 2
+					break
+				}
+			}
+		}
+		for _, rowData := range tableData {
+			// 使用 query.TagValues 进行过滤
+			if !filterByTagValues(rowData.Tags, query.TagValues) {
+				continue
+			}
+			if _, b := recordNameMap[rowData.Tags]; !b {
+				if _, b := recordTagMap[rowData.Tags]; !b {
+					recordTagMap[rowData.Tags] = getKVMapFromArchiveTags(rowData.Tags)
+				}
+				recordNameMap[rowData.Tags] = datasource.GetSerialName(query, recordTagMap[rowData.Tags], tagLength, query.CustomDashboard)
+			}
+			tmpRowName := recordNameMap[rowData.Tags]
+			if _, b := resultMap[tmpRowName]; !b {
+				resultMap[tmpRowName] = m.DataSort{[]float64{float64(rowData.UnixTime) * 1000, rowData.Value}}
+			} else {
+				resultMap[tmpRowName] = append(resultMap[tmpRowName], []float64{float64(rowData.UnixTime) * 1000, rowData.Value})
+			}
 		}
 	}
 	for k, v := range resultMap {
