@@ -55,7 +55,7 @@
                 }
               }"
             >
-              <Option v-for="(name, index) in filtersAlarmNameOptions" :label="name" :value="name" :key="index">
+              <Option class="alarm-option-item" v-for="(name, index) in filtersAlarmNameOptions" :label="name" :value="name" :key="index">
                 {{name}}
               </Option>
             </Select>
@@ -291,6 +291,12 @@ export default ({
 .drop-down-content > div {
   width: 80%;
   margin: 10px auto
+}
+.alarm-option-item {
+  max-width: 500px;              /* 固定宽度（或 max-width） */
+  white-space: nowrap;       /* 禁止换行 */
+  overflow: hidden;          /* 隐藏超出部分 */
+  text-overflow: ellipsis
 }
 
 </style>

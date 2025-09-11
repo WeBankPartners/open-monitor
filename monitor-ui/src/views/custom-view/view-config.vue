@@ -981,14 +981,16 @@ export default {
     resizeEvent(i, newH, newW, newHPx, newWPx){
       resizeEvent(this, i, newH, newW, newHPx, newWPx)
     },
-    submitPanelInfo() {
+    submitPanelInfo(needRefresh = true) {
       return new Promise(resolve => {
         if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
           this.saveAuthType = 'board'
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions)
         } else {
           this.request('PUT', this.apiCenter.template.deleteV2, this.processPannelParams(), () => {
-            this.refreshPannelNow()
+            if (needRefresh) {
+              this.refreshPannelNow()
+            }
             resolve()
           })
         }
@@ -1026,7 +1028,7 @@ export default {
     // #region 组管理
     async selectGroup(item) {
       if (this.isEditStatus) {
-        await this.submitPanelInfo() // 保存完毕后切换
+        await this.submitPanelInfo(false) // 保存完毕后切换
         this.$Message.success(this.$t('m_save_success'))
       }
       this.activeGroup = item
