@@ -683,11 +683,11 @@ export default {
       alarmItemTableColumns: [
         {
           title: this.$t('m_alarmName'),
-          width: 250,
+          width: 280,
           key: 'name',
           render: (h, params) => params.row.name ? (<div style='display: flex; align-items:center'>
             {params.row.log_metric_group ? <Tag class='auto-tag-style' color='green'>auto</Tag> : <div></div>}
-            <Tooltip class='table-alarm-name' placement="right" max-width="400" content={params.row.name}>
+            <Tooltip class={params.row.log_metric_group ? 'table-alarm-name' : 'notag-table-alarm-name'} placement="right" max-width="400" content={params.row.name}>
               {params.row.name || '-'}
             </Tooltip>
           </div>) : (<div>-</div>)
@@ -769,7 +769,7 @@ export default {
         {
           title: this.$t('m_tableKey_metricName'),
           key: 'metric_name',
-          minWidth: 300
+          width: 250
         },
         {
           title: this.$t('m_field_threshold'),
@@ -1372,7 +1372,15 @@ export default {
 // }
 .table-alarm-name {
   .ivu-tooltip-rel {
-    width: 170px;
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+.notag-table-alarm-name {
+  .ivu-tooltip-rel {
+    width: 250px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

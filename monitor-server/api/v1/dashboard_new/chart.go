@@ -553,6 +553,11 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
+		for _, chartQuery := range param.Data {
+			if len(query.Metric) > 0 && chartQuery.Metric == query.Metric[0] {
+				query.TagValues = chartQuery.Tags
+			}
+		}
 		if archiveQueryFlag {
 			// Query db archive data
 			tmpErr, tmpStep, tmpSerials := db.GetArchiveData(query, param.Aggregate)
@@ -582,7 +587,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 					tmpSerialDataStart := int64(tmpSerials[0].Data[0][0]) / 1000
 					// 如果查出来的数据时间和查询时间对不上，说明缺了一些数据，尝试从归档数据中去查
 					if tmpSerialDataStart > (param.Start + 120) {
-						_, _, tmpArchiveSerials := db.GetArchiveData(&models.QueryMonitorData{Start: query.Start, End: tmpSerialDataStart, Endpoint: query.Endpoint, Metric: query.Metric, Legend: query.Legend, CompareLegend: query.CompareLegend, SameEndpoint: query.SameEndpoint}, param.Aggregate)
+						_, _, tmpArchiveSerials := db.GetArchiveData(&models.QueryMonitorData{Start: query.Start, End: tmpSerialDataStart, Endpoint: query.Endpoint, Metric: query.Metric, Legend: query.Legend, CompareLegend: query.CompareLegend, SameEndpoint: query.SameEndpoint, TagValues: query.TagValues}, param.Aggregate)
 						for _, tmpSerial := range tmpArchiveSerials {
 							if len(tmpSerial.Data) > 0 {
 								param.Aggregate = "none"
@@ -596,7 +601,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 					}
 				}
 			} else {
-				tmpErr, tmpStep, tmpSerials := db.GetArchiveData(&models.QueryMonitorData{Start: query.Start, End: query.End, Endpoint: query.Endpoint, Metric: query.Metric, Legend: query.Legend, CompareLegend: query.CompareLegend, SameEndpoint: query.SameEndpoint}, param.Aggregate)
+				tmpErr, tmpStep, tmpSerials := db.GetArchiveData(&models.QueryMonitorData{Start: query.Start, End: query.End, Endpoint: query.Endpoint, Metric: query.Metric, Legend: query.Legend, CompareLegend: query.CompareLegend, SameEndpoint: query.SameEndpoint, TagValues: query.TagValues}, param.Aggregate)
 				if tmpErr != nil {
 					err = tmpErr
 					break

@@ -40,7 +40,7 @@
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
             <Select  filterable clearable v-model="templatePl" :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)" @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
-              <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
+              <Option v-for="(item, index) in metricTemplate" :value="item.prom_expr" :key="index">{{ item.name }}</Option>
             </Select>
           </FormItem>
           <!--采集数据-->
@@ -79,7 +79,7 @@
               filterable
               clearable
               v-model="metricConfigData.endpoint"
-              @on-change="handleEndPointChange"
+              @on-select="handleEndPointSelect"
             >
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.name || item.guid }}</Option>
             </Select>
@@ -351,6 +351,19 @@ export default {
         myChart.clear()
       }
       if (!val) {
+        return
+      }
+      this.getChartData()
+    },
+    handleEndPointSelect(item) {
+      if (this.metricConfigData.endpoint !== item.value) {
+        this.metricConfigData.endpoint = item.value
+      }
+      if (this.echartId) {
+        const myChart = echarts.init(document.getElementById(this.echartId))
+        myChart.clear()
+      }
+      if (!item) {
         return
       }
       this.getChartData()
