@@ -99,6 +99,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
     childBreadcrumb: { 'zh-CN': '远程同步', 'en-US': 'Remote Sync'}
   },
+  'adminConfig/prometheusLogs': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': 'Prometheus日志', 'en-US': 'Prometheus Logs'}
+  }
 }
 window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
