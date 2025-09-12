@@ -28,7 +28,7 @@ func PrometheusRaw(c *gin.Context) {
 			middleware.ReturnHandleError(c, "prometheus query", err)
 			return
 		}
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 		return
 	}
 
@@ -46,7 +46,7 @@ func PrometheusRaw(c *gin.Context) {
 			middleware.ReturnHandleError(c, "prometheus query_range", err)
 			return
 		}
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 		return
 	}
 
