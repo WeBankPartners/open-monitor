@@ -22,28 +22,32 @@
                 <DatePicker
                   v-if="timeMode === 'point'"
                   v-model="searchForm.time"
-                  type="date"
-                  placeholder="请选择日期"
-                  style="width: 200px"
-                  format="yyyy-MM-dd"
+                  type="datetime"
+                  placeholder="请选择日期时间"
+                  style="width: 220px"
+                  format="yyyy-MM-dd HH:mm:ss"
                   @on-change="onTimeChange"
                 />
                 <template v-if="timeMode === 'range'">
+                  <div class="quick-range-select">
+                    <Select
+                      v-model="quickRangeValue"
+                      style="width: 120px"
+                      @on-change="onQuickRangeChange"
+                    >
+                      <Option value="10">10s</Option>
+                      <Option value="60">1分钟</Option>
+                      <Option value="1800">半小时</Option>
+                      <Option value="7200">2小时</Option>
+                    </Select>
+                  </div>
                   <DatePicker
-                    v-model="searchForm.start"
-                    type="date"
-                    placeholder="请选择开始日期"
-                    style="width: 200px; margin-right: 10px"
-                    format="yyyy-MM-dd"
-                    @on-change="onStartTimeChange"
-                  />
-                  <DatePicker
-                    v-model="searchForm.end"
-                    type="date"
-                    placeholder="请选择结束日期"
-                    style="width: 200px"
-                    format="yyyy-MM-dd"
-                    @on-change="onEndTimeChange"
+                    v-model="searchForm.range"
+                    type="datetimerange"
+                    placeholder="请选择时间范围（最多2小时）"
+                    style="width: 460px"
+                    format="yyyy-MM-dd HH:mm:ss"
+                    @on-change="onRangeChange"
                   />
                 </template>
               </div>
@@ -64,26 +68,7 @@
     </div>
 
     <div class="log-results" v-if="logData.length > 0">
-      <div class="log-list">
-        <div
-          v-for="(log, index) in logData"
-          :key="index"
-          class="log-item"
-        >
-          <div class="log-content">
-            <div class="json-viewer">
-              <div class="json-header">
-                <!-- <span class="json-title">JSON数据</span> -->
-                <!-- <Button size="small" @click="copyJson(log.metric)" type="text">
-                  <Icon type="ios-copy" />
-                  复制
-                </Button> -->
-              </div>
-              <pre class="json-content" v-html="formatJsonWithSyntaxHighlight(log.metric)"></pre>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Table :columns="tableColumns" :data="logData" border />
       <!-- 分页组件 -->
       <div class="pagination-wrapper" v-if="pagination.total > 0">
         <Page
@@ -91,8 +76,8 @@
           :total="pagination.total"
           :page-size="pagination.pageSize"
           :page-size-opts="[50, 100, 200, 500]"
-          :show-total="pagination.showTotal"
           :show-sizer="true"
+          :show-total="true"
           :show-elevator="true"
           @on-change="onPageChange"
           @on-page-size-change="onPageSizeChange"
@@ -105,10 +90,25 @@
       <Icon type="ios-document-outline" size="48" />
       <p>暂无数据</p>
     </div>
+
+    <!-- 二级弹框：显示 values 详情 -->
+    <Modal
+      v-model="showValuesModal"
+      title="数据详情"
+      :mask-closable="true"
+      :closable="true"
+      :footer-hide="true"
+      width="700"
+    >
+      <div class="values-modal-content">
+        <pre class="json-content">{{ valuesModalText }}</pre>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script>
+import dayjs from 'dayjs'
 export default {
   name: 'PrometheusLogs',
   data() {
@@ -119,36 +119,107 @@ export default {
       searchForm: {
         query: '',
         time: '',
-        start: '',
-        end: ''
+        range: []
       },
       logData: [],
       allLogData: [], // 存储所有原始数据
       pagination: {
         current: 1,
         pageSize: 100,
-        total: 0,
-        showTotal: (total, range) => `共 ${total} 条记录，当前显示第 ${range[0]}-${range[1]} 条`
+        total: 0
       },
+      tableColumns: [
+        {
+          type: 'expand',
+          width: 80,
+          render: (h, params) => (
+            <div class="expand-row">
+              <div class="expand-col-left">
+                <div class="json-viewer">
+                  <pre
+                    class="json-content"
+                    domPropsInnerHTML={this.formatJsonWithSyntaxHighlight(params.row.metric)}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        },
+        {
+          title: '日志字段',
+          key: 'metric',
+          ellipsis: true,
+          tooltip: true,
+          render: (h, params) => (
+            <span>{ this.getPreview(params.row.metric) }</span>
+          )
+        },
+        {
+          title: '数据预览',
+          key: 'values',
+          ellipsis: true,
+          width: 300,
+          tooltip: true,
+          render: (h, params) => (
+            <span>
+              { this.getValuesPreview(this.timeMode === 'point' ? params.row.value : params.row.values) }
+              { this.timeMode !== 'point' && <Button type="text" size="small" onClick={() => this.openValuesModal(params.row.values)} style="margin-left: 8px; color: #409EFF;">
+                查看
+              </Button>}
+            </span>
+          )
+        }
+      ],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      showValuesModal: false,
+      valuesModalText: '',
+      quickRangeValue: ''
     }
   },
   methods: {
+    onQuickRangeChange(value) {
+      if (!value) {
+        return
+      }
+      const seconds = Number(value)
+      if (Number.isNaN(seconds)) {
+        return
+      }
+      this.setQuickRange(seconds)
+    },
+    setQuickRange(seconds) {
+      const end = dayjs()
+      const start = end.subtract(seconds, 'second')
+      this.searchForm.range = [start.toDate(), end.toDate()]
+    },
+    openValuesModal(values) {
+      this.valuesModalText = this.formatValuesAsText(values)
+      this.showValuesModal = true
+    },
+    getColumnWidth(key) {
+      try {
+        const col = this.tableColumns.find(c => c.key === key)
+        return col && col.width ? Number(col.width) : undefined
+      } catch (e) {
+        return undefined
+      }
+    },
     onTimeModeChange() {
       // 切换时间模式时清空时间相关字段
       this.searchForm.time = ''
-      this.searchForm.start = ''
-      this.searchForm.end = ''
+      this.searchForm.range = []
+      // 切换到时间范围时，默认选择并应用 10s
+      if (this.timeMode === 'range') {
+        this.quickRangeValue = '10'
+        this.setQuickRange(10)
+      }
     },
     onTimeChange(time) {
       this.searchForm.time = time
     },
-    onStartTimeChange(time) {
-      this.searchForm.start = time
-    },
-    onEndTimeChange(time) {
-      this.searchForm.end = time
+    onRangeChange(range) {
+      this.searchForm.range = range
     },
     async searchLogs() {
       if (!this.searchForm.query.trim()) {
@@ -165,15 +236,26 @@ export default {
         if (this.timeMode === 'point') {
           // 时间点模式：传递time字段
           if (this.searchForm.time) {
-            params.time = new Date(this.searchForm.time).getTime() / 1000
+            params.time = dayjs(this.searchForm.time).unix()
           }
         } else if (this.timeMode === 'range') {
-          // 时间范围模式：传递start和end字段
-          if (this.searchForm.start) {
-            params.start = new Date(this.searchForm.start).getTime() / 1000
-          }
-          if (this.searchForm.end) {
-            params.end = new Date(this.searchForm.end).getTime() / 1000
+          // 时间范围模式：传递start和end字段（校验不超过2小时）
+          if (Array.isArray(this.searchForm.range) && this.searchForm.range.length === 2) {
+            const start = dayjs(this.searchForm.range[0])
+            const end = dayjs(this.searchForm.range[1])
+            if (!start.isValid() || !end.isValid()) {
+              this.$Message.error('请选择合法的时间范围')
+              this.loading = false
+              return
+            }
+            const diffHours = end.diff(start, 'hour', true)
+            if (diffHours > 2) {
+              this.$Message.error('时间范围不能超过2小时')
+              this.loading = false
+              return
+            }
+            params.start = start.unix()
+            params.end = end.unix()
           }
         }
         this.request('GET', this.apiCenter.getPrometheusLogs, params, response => {
@@ -198,8 +280,7 @@ export default {
       this.searchForm = {
         query: '',
         time: '',
-        start: '',
-        end: ''
+        range: []
       }
       this.allLogData = []
       this.logData = []
@@ -224,29 +305,45 @@ export default {
       this.pagination.current = 1
       this.updateDisplayData()
     },
-    formatTimestamp(timestamp) {
-      if (!timestamp) {
+    // 将 values 数组格式化为可阅读文本，时间为 YYYY-MM-DD HH:mm:ss
+    formatValuesAsText(values) {
+      if (!Array.isArray(values) || values.length === 0) {
+        // 兼容只返回单点 value 的情况
+        return this.formatSingleValueAsText(values)
+      }
+      try {
+        return values
+          .map(item => {
+            const ts = Array.isArray(item) ? item[0] : undefined
+            const val = Array.isArray(item) ? item[1] : ''
+            const timeStr = this.formatTimeFromSeconds(ts)
+            return `${timeStr}  ${val}`
+          })
+          .join('\n')
+      } catch (e) {
         return ''
       }
-      const date = new Date(timestamp * 1000)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
     },
-    formatJson(data) {
-      if (typeof data === 'string') {
-        try {
-          return JSON.stringify(JSON.parse(data), null, 2)
-        } catch (e) {
-          return data
+    // 预览首条 values 内容（合并时间与数值）
+    getValuesPreview(values) {
+      if (Array.isArray(values) && values.length > 0) {
+        const first = values[0]
+        if (Array.isArray(first)) {
+          const ts = Array.isArray(first) ? first[0] : undefined
+          const val = Array.isArray(first) ? first[1] : ''
+          const timeStr = this.formatTimeFromSeconds(ts)
+          return `${timeStr}  ${val}`
         }
+        // 兼容只有单点 value 的情况
+        return this.formatSingleValueAsText(values)
       }
-      return JSON.stringify(data, null, 2)
+    },
+    // 兼容只有单点 value 字段时的展示
+    formatSingleValueAsText(valueField) {
+      const ts = valueField[0]
+      const val = valueField[1]
+      const timeStr = this.formatTimeFromSeconds(ts)
+      return `${timeStr}  ${val}`
     },
     formatJsonWithSyntaxHighlight(data) {
       let jsonString
@@ -260,6 +357,38 @@ export default {
         jsonString = JSON.stringify(data, null, 2)
       }
       return this.syntaxHighlight(jsonString)
+    },
+    getPreview(data) {
+      try {
+        let text = ''
+        if (typeof data === 'string') {
+          // If it's already a JSON string, try to compact it
+          try {
+            const obj = JSON.parse(data)
+            text = JSON.stringify(obj)
+          } catch (e) {
+            text = data
+          }
+        } else {
+          text = JSON.stringify(data)
+        }
+        if (text.length > 200) {
+          return text.slice(0, 200) + '...'
+        }
+        return text
+      } catch (e) {
+        return ''
+      }
+    },
+    formatTimeFromSeconds(seconds) {
+      if (!seconds && seconds !== 0) {
+        return ''
+      }
+      const value = Number(seconds)
+      if (Number.isNaN(value)) {
+        return ''
+      }
+      return dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss')
     },
     syntaxHighlight(json) {
       const escapedJson = this.escapeHtml(json)
@@ -287,36 +416,6 @@ export default {
         '"': '&quot;'
       }
       return text.replace(/[&<>"']/g, m => map[m])
-    },
-    copyJson(data) {
-      const jsonString = this.formatJson(data)
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(jsonString).then(() => {
-          this.$Message.success('复制成功')
-        })
-          .catch(() => {
-            this.fallbackCopyTextToClipboard(jsonString)
-          })
-      } else {
-        this.fallbackCopyTextToClipboard(jsonString)
-      }
-    },
-    fallbackCopyTextToClipboard(text) {
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.top = '0'
-      textArea.style.left = '0'
-      textArea.style.position = 'fixed'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      try {
-        document.execCommand('copy')
-        this.$Message.success('复制成功')
-      } catch (err) {
-        this.$Message.error('复制失败')
-      }
-      document.body.removeChild(textArea)
     }
   }
 }
@@ -361,6 +460,14 @@ export default {
   margin-left: 10px;
 }
 
+.quick-range {
+  margin-left: 8px;
+}
+
+.quick-range-select {
+  margin-right: 8px;
+}
+
 .log-results {
   background: #fff;
   border-radius: 6px;
@@ -369,79 +476,15 @@ export default {
   margin-top: -10px;
 }
 
-.result-header {
-  background: #f8f9fa;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.pagination-wrapper {
+  padding: 5px 15px;
+  text-align: center;
+  border-top: 1px solid #f1f3f4;
+  background: #fff;
 }
 
-.result-header h3 {
+.pagination {
   margin: 0;
-  color: #495057;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.result-count {
-  color: #6c757d;
-  font-size: 14px;
-}
-
- .log-list {
-   height: calc(100vh - 210px);
-   overflow-y: auto;
- }
-
- .pagination-wrapper {
-   padding: 5px 15px;
-   text-align: center;
-   border-top: 1px solid #f1f3f4;
-   background: #fff;
- }
-
- .pagination {
-   margin: 0;
- }
-
-.log-item {
-  border-bottom: 1px solid #f1f3f4;
-  transition: background-color 0.2s;
-}
-
-.log-item:hover {
-  background-color: #f8f9fa;
-}
-
-.log-item:last-child {
-  border-bottom: none;
-}
-
-.log-header {
-  padding: 12px 20px;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.log-index {
-  font-weight: 600;
-  color: #495057;
-  font-size: 14px;
-}
-
-.log-timestamp {
-  color: #6c757d;
-  font-size: 12px;
-  font-family: 'Courier New', monospace;
-}
-
-.log-content {
-  padding: 15px 20px;
 }
 
 .json-viewer {
@@ -449,6 +492,25 @@ export default {
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
+}
+
+.expand-row {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.expand-col-left {
+  width: 800px;
+}
+
+.expand-col-right {
+  width: 280px;
+}
+
+.values-modal-content {
+  max-height: 70vh;
+  overflow: auto;
 }
 
 .json-header {
