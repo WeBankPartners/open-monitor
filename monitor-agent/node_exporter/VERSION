@@ -56,3 +56,6 @@ Fix process name with upper letters
 
 v3.6.2.4
 Add log path validation
+
+v3.6.8.3
+Update log dir with wildcard character

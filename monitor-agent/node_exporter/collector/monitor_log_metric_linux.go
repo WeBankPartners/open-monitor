@@ -1193,27 +1193,24 @@ func getFileLastUpdatedTime(filePath string) (unixTime int64, err error) {
 }
 
 func listMatchLogPath(inputPath string) (result []string) {
-	var dirPath, fileName string
+	var fileName string
 	if lastPathIndex := strings.LastIndex(inputPath, "/"); lastPathIndex >= 0 {
-		dirPath = inputPath[:lastPathIndex+1]
 		fileName = inputPath[lastPathIndex+1:]
 	}
 	if fileName == "" {
-		level.Error(monitorLogger).Log("msg", fmt.Sprintf("log path illgal : %s ", inputPath))
+		fmt.Printf("log path illgal : %s \n", inputPath)
 		return
 	}
-	fileName = strings.ReplaceAll(fileName, ".", "\\.")
-	fileName = strings.ReplaceAll(fileName, "*", ".*")
-	cmdString := fmt.Sprintf("ls %s |grep \"^%s$\"", dirPath, fileName)
+	cmdString := fmt.Sprintf("ls -1 %s", inputPath)
 	cmd := exec.Command("bash", "-c", cmdString)
 	b, err := cmd.Output()
 	if err != nil {
-		level.Error(monitorLogger).Log("msg", fmt.Sprintf("list log path:%s fail : %v ", cmdString, err))
+		fmt.Printf("list log path:%s fail : %v \n", cmdString, err)
 		return
 	}
 	for _, row := range strings.Split(string(b), "\n") {
 		if row != "" {
-			result = append(result, dirPath+row)
+			result = append(result, row)
 		}
 	}
 	return
