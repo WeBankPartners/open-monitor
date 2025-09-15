@@ -1300,4 +1300,15 @@ alter table custom_chart_series modify column metric_guid varchar(128) default N
 update metric set prom_expr='node_filesystem_files_free{instance="$address",mountpoint ="/"} / node_filesystem_files{instance="$address",mountpoint ="/"} * 100' where guid='file_handler_free_percent__host';
 alter table log_keyword_config modify column name varchar(150) default NULL COMMENT '告警名称';
 alter table db_keyword_monitor modify column name varchar(150) default NULL COMMENT '告警名称';
+
+ALTER TABLE `main_dashboard` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_dashboard_chart_rel` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart_series` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart_permission` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart_series_config` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart_series_tag` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+ALTER TABLE `custom_chart_series_tagvalue` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+CREATE UNIQUE INDEX uk_alarm_custom_unique ON alarm_custom (alert_title, alert_ip, alert_level, alert_obj, closed);
 #@v3.6.8-end@;
