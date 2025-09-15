@@ -1,62 +1,64 @@
 <template>
   <div class="prometheus-logs-container">
     <div class="search-form">
-      <Form :model="searchForm" :label-width="0" inline>
+      <Form :model="searchForm" :label-width="0">
         <FormItem label="">
           <Input
             v-model="searchForm.query"
             placeholder="请输入查询参数"
-            style="width: 800px"
+            type="textarea"
+            :autosize="{minRows: 1, maxRows: 5}"
             clearable
           />
         </FormItem>
         <FormItem label="">
-          <RadioGroup v-model="timeMode" @on-change="onTimeModeChange">
-            <Radio label="point">时间点</Radio>
-            <Radio label="range">时间范围</Radio>
-          </RadioGroup>
-        </FormItem>
-        <FormItem v-if="timeMode === 'point'" label="">
-          <DatePicker
-            v-model="searchForm.time"
-            type="date"
-            placeholder="请选择日期"
-            style="width: 200px"
-            format="yyyy-MM-dd"
-            @on-change="onTimeChange"
-          />
-        </FormItem>
-        <template v-if="timeMode === 'range'">
-          <FormItem label="">
-            <DatePicker
-              v-model="searchForm.start"
-              type="date"
-              placeholder="请选择开始日期"
-              style="width: 200px"
-              format="yyyy-MM-dd"
-              @on-change="onStartTimeChange"
-            />
-          </FormItem>
-          <FormItem label="">
-            <DatePicker
-              v-model="searchForm.end"
-              type="date"
-              placeholder="请选择结束日期"
-              style="width: 200px"
-              format="yyyy-MM-dd"
-              @on-change="onEndTimeChange"
-            />
-          </FormItem>
-        </template>
-        <FormItem>
-          <Button type="primary" @click="searchLogs" :loading="loading">
-            <Icon type="ios-search" />
-            搜索
-          </Button>
-          <Button @click="resetForm" style="margin-left: 8px">
-            <Icon type="ios-refresh" />
-            重置
-          </Button>
+          <div class="time-controls-row">
+            <div class="time-controls">
+              <RadioGroup v-model="timeMode" @on-change="onTimeModeChange" type="button" button-style="solid">
+                <Radio label="point">时间点</Radio>
+                <Radio label="range">时间范围</Radio>
+              </RadioGroup>
+              <div class="date-pickers">
+                <DatePicker
+                  v-if="timeMode === 'point'"
+                  v-model="searchForm.time"
+                  type="date"
+                  placeholder="请选择日期"
+                  style="width: 200px"
+                  format="yyyy-MM-dd"
+                  @on-change="onTimeChange"
+                />
+                <template v-if="timeMode === 'range'">
+                  <DatePicker
+                    v-model="searchForm.start"
+                    type="date"
+                    placeholder="请选择开始日期"
+                    style="width: 200px; margin-right: 10px"
+                    format="yyyy-MM-dd"
+                    @on-change="onStartTimeChange"
+                  />
+                  <DatePicker
+                    v-model="searchForm.end"
+                    type="date"
+                    placeholder="请选择结束日期"
+                    style="width: 200px"
+                    format="yyyy-MM-dd"
+                    @on-change="onEndTimeChange"
+                  />
+                </template>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <Button type="primary" @click="searchLogs" :loading="loading">
+                <Icon type="ios-search" />
+                搜索
+              </Button>
+              <Button @click="resetForm" style="margin-left: 8px">
+                <Icon type="ios-refresh" />
+                重置
+              </Button>
+            </div>
+          </div>
         </FormItem>
       </Form>
     </div>
@@ -325,6 +327,38 @@ export default {
   padding: 10px;
   background: #fff;
   min-height: 100vh;
+}
+
+.search-form {
+  margin-bottom: 20px;
+}
+
+.search-form .ivu-form-item {
+  margin-bottom: 16px;
+}
+
+.search-form .ivu-input {
+  width: 100% !important;
+  resize: none;
+}
+
+.time-controls-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.time-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-right: 20px;
+}
+
+.date-pickers {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
 }
 
 .log-results {
