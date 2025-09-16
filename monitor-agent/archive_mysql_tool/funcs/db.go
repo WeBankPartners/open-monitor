@@ -214,7 +214,7 @@ func createTable(start int64, isFiveArchive bool) (err error, tableName string) 
 	if isFiveArchive {
 		tableDate = tableDate + "_5m"
 	}
-	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(1024) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,`sum` DOUBLE NOT NULL DEFAULT 0,`create_time` VARCHAR(64) DEFAULT NULL,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
+	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(1024) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,`sum` DOUBLE NOT NULL DEFAULT 0,`create_time` VARCHAR(64) DEFAULT NULL,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci", tableName, tableDate, tableDate)
 	_, err = mysqlEngine.Exec(createSql)
 	if err != nil {
 		log.Printf("create table %s error: %v \n", tableName, err)
@@ -309,7 +309,7 @@ func renameFiveToOne(oldTable, newTable string) error {
 }
 
 func initJobRecordTable() error {
-	_, err := mysqlEngine.Exec("CREATE TABLE IF NOT EXISTS `job_record` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`job_time` VARCHAR(64) unique not null,`host_ip` VARCHAR(255) NOT NULL,`update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  PRIMARY KEY (`id`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8")
+	_, err := mysqlEngine.Exec("CREATE TABLE IF NOT EXISTS `job_record` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`job_time` VARCHAR(64) unique not null,`host_ip` VARCHAR(255) NOT NULL,`update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  PRIMARY KEY (`id`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4")
 	if err != nil {
 		err = fmt.Errorf("init job_record table error: %v", err)
 	}

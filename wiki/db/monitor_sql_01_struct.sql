@@ -15,7 +15,7 @@ CREATE TABLE `button` (
   `refresh_button` int(10) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `dashboard_button_index` (`group_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `chart`;
 
@@ -35,7 +35,7 @@ CREATE TABLE `chart` (
   `legend` varchar(50) DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `dashboard_chart_index` (`group_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `dashboard`;
 
@@ -55,7 +55,7 @@ CREATE TABLE `dashboard` (
   `panels_param` varchar(50) DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `dashboard_type_index` (`dashboard_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `endpoint`;
 
@@ -76,7 +76,7 @@ CREATE TABLE `endpoint` (
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `monitor_endpoint_guid` (`guid`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `endpoint_metric`;
 
@@ -86,7 +86,7 @@ CREATE TABLE `endpoint_metric` (
   `metric` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `monitor_endpoint_metric` (`endpoint_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `option`;
 
@@ -97,7 +97,7 @@ CREATE TABLE `option` (
   `option_value` varchar(100) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `dashboard_option_index` (`group_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `panel`;
 
@@ -112,7 +112,7 @@ CREATE TABLE `panel` (
   `auto_display` int(11) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `dashboard_panel_index` (`group_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `prom_metric`;
 
@@ -123,7 +123,7 @@ CREATE TABLE `prom_metric` (
   `prom_ql` varchar(500) NOT NULL DEFAULT '',
   `prom_main` varchar(255) DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `search`;
 
@@ -135,7 +135,7 @@ CREATE TABLE `search` (
   `refresh_panels` tinyint(1) NOT NULL DEFAULT '0',
   `refresh_message` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `alarm`;
 
@@ -160,7 +160,7 @@ CREATE TABLE `alarm` (
   `close_user` VARCHAR(50),
   PRIMARY KEY (`id`),
   UNIQUE KEY `alarm_unique_index` (`strategy_id`,`endpoint`,`status`,`tags`,`start`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `grp`;
 
@@ -174,7 +174,7 @@ CREATE TABLE `grp` (
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `tpl`;
 
@@ -192,7 +192,7 @@ CREATE TABLE `tpl` (
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `grp_endpoint`;
 
@@ -200,7 +200,7 @@ CREATE TABLE `grp_endpoint` (
   `grp_id` INT(11) UNSIGNED NOT NULL,
   `endpoint_id` INT(11) UNSIGNED NOT NULL,
   UNIQUE KEY `idx_grp_endpoint` (`grp_id`,`endpoint_id`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `strategy`;
 
@@ -216,7 +216,7 @@ CREATE TABLE `strategy` (
   `config_type` varchar(50) default 'default',
   PRIMARY KEY (`id`),
   KEY `idx_strategy_tpl_id` (`tpl_id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `log_monitor`;
 
@@ -226,7 +226,7 @@ CREATE TABLE `log_monitor` (
   `path` VARCHAR(255) NOT NULL,
   `keyword` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `maintain`;
 
@@ -238,7 +238,7 @@ CREATE TABLE `maintain` (
   `maintain_user` VARCHAR(50) NOT NULL,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `custom_dashboard`;
 
@@ -253,14 +253,14 @@ CREATE TABLE `custom_dashboard` (
   `create_at` DATETIME DEFAULT NULL,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `process_monitor` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `endpoint_id` INT(11) NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `business_monitor` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -268,7 +268,7 @@ CREATE TABLE `business_monitor` (
   `path` VARCHAR(100) NOT NULL,
   `owner_endpoint` varchar(255) DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `alarm_custom` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -284,7 +284,7 @@ CREATE TABLE `alarm_custom` (
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `closed_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `user` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -298,7 +298,7 @@ CREATE TABLE `user` (
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_user_name` (`name`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `role` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -310,14 +310,14 @@ CREATE TABLE `role` (
   `creator` VARCHAR(255) DEFAULT '',
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `rel_role_user` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_id` INT(10) UNSIGNED NOT NULL,
   `user_id` INT(10) UNSIGNED NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `panel_recursive` (
   `guid` VARCHAR(50) NOT NULL,
@@ -334,14 +334,14 @@ CREATE TABLE `panel_recursive` (
   `obj_type` varchar(50) DEFAULT 'object',
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `rel_role_grp` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `role_id` int(10) unsigned NOT NULL,
   `grp_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `endpoint_telnet` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -350,7 +350,7 @@ CREATE TABLE `endpoint_telnet` (
   `note` VARCHAR(255) DEFAULT '',
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `endpoint_http` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -359,7 +359,7 @@ CREATE TABLE `endpoint_http` (
   `url` VARCHAR(255) DEFAULT '',
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `agent_manager` (
   `endpoint_guid` VARCHAR(255) NOT NULL,
@@ -371,4 +371,4 @@ CREATE TABLE `agent_manager` (
   `config_file` VARCHAR(255) DEFAULT '',
   `bin_path` VARCHAR(255) DEFAULT '',
   PRIMARY KEY (`endpoint_guid`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;

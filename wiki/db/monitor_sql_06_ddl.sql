@@ -21,4 +21,4 @@ CREATE TABLE `history_alarm_custom`
     `alarm_total` int(11) DEFAULT '1' COMMENT '告警次数',
     PRIMARY KEY (`id`),
     index `update_at_index` (`update_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
