@@ -37,8 +37,10 @@
                     >
                       <Option value="10">10s</Option>
                       <Option value="60">1min</Option>
+                      <Option value="300">5min</Option>
+                      <Option value="900">15min</Option>
                       <Option value="1800">30min</Option>
-                      <Option value="7200">2hour</Option>
+                      <Option value="3600">1hour</Option>
                     </Select>
                   </div>
                   <DatePicker
@@ -115,7 +117,7 @@ export default {
       searched: false,
       timeMode: 'point', // 时间模式：'point' 时间点，'range' 时间范围
       searchForm: {
-        query: 'node_log_metric_monitor_value{}',
+        query: 'node_log_metric_monitor_value{key=""}',
         time: '',
         range: []
       },
@@ -164,12 +166,12 @@ export default {
             // 优先使用 values 字段，如果没有则使用 value 字段
             const data = isMultiple ? params.row.values : params.row.value
             return (
-              <span>
+              <div style="display: flex; justify-content: space-between;">
                 <span domPropsInnerHTML={this.getValuesPreview(data)} />
                 { isMultiple && <Button type="text" size="small" onClick={() => this.openValuesModal(data)} style="margin-left: 8px; color: #409EFF;">
                   { this.$t('m_button_view') }
                 </Button>}
-              </span>
+              </div>
             )
           }
         }
@@ -230,6 +232,34 @@ export default {
         this.$Message.warning(this.$t('m_query_placeholder'))
         return
       }
+      // 检查特定查询条件的时间范围限制
+      if (['node_log_metric_monitor_value{}', 'node_log_metric_monitor_value'].includes(this.searchForm.query.trim())) {
+        if (this.timeMode === 'point') {
+          // 时间点模式：检查是否选择了时间
+          if (!this.searchForm.time) {
+            this.$Message.warning(this.$t('m_select_datetime'))
+            return
+          }
+        } else if (this.timeMode === 'range') {
+          // 时间范围模式：检查时间范围是否超过10分钟
+          if (!Array.isArray(this.searchForm.range) || this.searchForm.range.length !== 2) {
+            this.$Message.warning(this.$t('m_select_datetime'))
+            return
+          }
+          const start = dayjs(this.searchForm.range[0])
+          const end = dayjs(this.searchForm.range[1])
+          if (!start.isValid() || !end.isValid()) {
+            this.$Message.error(this.$t('m_select_valid_time_range'))
+            return
+          }
+          const diffMinutes = end.diff(start, 'minute', true)
+          if (diffMinutes > 10) {
+            this.$Message.warning('当前时间范围较大，请补充查询条件')
+            return
+          }
+        }
+      }
+
       // 时间必填校验
       if (this.timeMode === 'point') {
         if (!this.searchForm.time) {
@@ -243,7 +273,6 @@ export default {
         }
       }
       this.loading = true
-      this.searched = true
       try {
         const params = {
           query: this.searchForm.query
@@ -262,8 +291,8 @@ export default {
             return
           }
           const diffHours = end.diff(start, 'hour', true)
-          if (diffHours > 2) {
-            this.$Message.error(this.$t('m_time_range_cannot_exceed_2_hours'))
+          if (diffHours > 1) {
+            this.$Message.error(this.$t('m_time_range_cannot_exceed_1_hours'))
             this.loading = false
             return
           }
@@ -275,6 +304,7 @@ export default {
           this.pagination.total = this.allLogData.length
           this.pagination.current = 1
           this.updateDisplayData()
+          this.searched = true
           this.$Message.success(this.$t('m_success'))
         })
       } catch (error) {
@@ -283,6 +313,7 @@ export default {
         this.allLogData = []
         this.logData = []
         this.pagination.total = 0
+        this.searched = true
       } finally {
         this.loading = false
       }
@@ -323,13 +354,21 @@ export default {
         // 兼容只返回单点 value 的情况
         return this.formatSingleValueAsText(values)
       }
+      // 格式化数值，最多显示8位数字
+      const formatValue = val => {
+        const valStr = val.toString()
+        if (valStr.length > 8) {
+          return valStr.substring(0, 8) + '...'
+        }
+        return valStr
+      }
       try {
         return values
           .map(item => {
             const ts = Array.isArray(item) ? item[0] : undefined
             const val = Array.isArray(item) ? item[1] : ''
             const timeStr = this.formatTimeFromSeconds(ts)
-            return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
+            return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${formatValue(val)}</span>`
           })
           .join('\n')
       } catch (e) {
@@ -344,7 +383,15 @@ export default {
           const ts = Array.isArray(first) ? first[0] : undefined
           const val = Array.isArray(first) ? first[1] : ''
           const timeStr = this.formatTimeFromSeconds(ts)
-          return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
+          // 格式化数值，最多显示8位数字
+          const formatValue = val => {
+            const valStr = val.toString()
+            if (valStr.length > 8) {
+              return valStr.substring(0, 8) + '...'
+            }
+            return valStr
+          }
+          return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${formatValue(val)}</span>`
         }
         // 兼容只有单点 value 的情况
         return this.formatSingleValueAsText(values)
@@ -355,7 +402,15 @@ export default {
       const ts = valueField[0]
       const val = valueField[1]
       const timeStr = this.formatTimeFromSeconds(ts)
-      return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
+      // 格式化数值，最多显示8位数字
+      const formatValue = val => {
+        const valStr = val.toString()
+        if (valStr.length > 8) {
+          return valStr.substring(0, 8) + '...'
+        }
+        return valStr
+      }
+      return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${formatValue(val)}</span>`
     },
     formatJsonWithSyntaxHighlight(data) {
       let jsonString
