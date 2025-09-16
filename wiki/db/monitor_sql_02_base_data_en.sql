@@ -251,7 +251,7 @@ CREATE TABLE `snmp_exporter` (
   `modules` varchar(255) default 'if_mib',
   `create_at` datetime,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 CREATE TABLE `snmp_endpoint_rel` (
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `snmp_exporter` varchar(255) NOT NULL,
@@ -284,7 +284,7 @@ CREATE TABLE `cluster` (
   `display_name` varchar(255),
   `remote_agent_address` varchar(255),
   `prom_address` varchar(255)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 insert into cluster value ('default','default','','');
 #@v1.11.5.2-end@;
 
@@ -899,7 +899,7 @@ CREATE TABLE `alarm_condition` (
                                    KEY `alarm_condition_endpoint_idx` (`endpoint`),
                                    KEY `alarm_condition_metric_idx` (`metric`),
                                    KEY `alarm_condition_status_idx` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `alarm_condition_rel` (
                                        `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
@@ -1190,7 +1190,7 @@ CREATE TABLE `alarm_firing` (
     KEY `alarm_firing_priority_idx` (`priority`),
     KEY `alarm_firing_name` (`alarm_name`),
     KEY `alarm_firing_alarm_id` (`alarm_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 alter table log_monitor_template add column success_code varchar(200) default null COMMENT '成功码';
 alter table log_metric_template add column color_group varchar(32) default null COMMENT '默认色系';

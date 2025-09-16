@@ -76,7 +76,7 @@ CREATE TABLE `endpoint` (
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `monitor_endpoint_guid` (`guid`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `endpoint_metric`;
 
@@ -160,7 +160,7 @@ CREATE TABLE `alarm` (
   `close_user` VARCHAR(50),
   PRIMARY KEY (`id`),
   UNIQUE KEY `alarm_unique_index` (`strategy_id`,`endpoint`,`status`,`tags`,`start`)
-) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `grp`;
 
@@ -371,4 +371,4 @@ CREATE TABLE `agent_manager` (
   `config_file` VARCHAR(255) DEFAULT '',
   `bin_path` VARCHAR(255) DEFAULT '',
   PRIMARY KEY (`endpoint_guid`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
