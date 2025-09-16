@@ -579,10 +579,10 @@
   "m_time_point": "时间点",
   "m_time_range": "时间范围",
   "m_select_datetime": "请选择日期时间",
-  "m_select_time_range_tips": "请选择时间范围（最多2小时）",
+  "m_select_time_range_tips": "请选择时间范围（最多1小时）",
   "m_data_details": "数据详情",
   "m_data_preview": "数据预览",
-  "m_time_range_cannot_exceed_2_hours": "时间范围不能超过2小时",
+  "m_time_range_cannot_exceed_1_hours": "时间范围不能超过1小时",
   "m_select_valid_time_range": "请选择合法的时间范围"
 }
 
