@@ -117,7 +117,7 @@ export default {
       searched: false,
       timeMode: 'point', // 时间模式：'point' 时间点，'range' 时间范围
       searchForm: {
-        query: '',
+        query: 'node_log_metric_monitor_value{}',
         time: '',
         range: []
       },
@@ -162,7 +162,7 @@ export default {
           tooltip: true,
           render: (h, params) => (
             <span>
-              { this.getValuesPreview(this.timeMode === 'point' ? params.row.value : params.row.values) }
+              <span domPropsInnerHTML={this.getValuesPreview(this.timeMode === 'point' ? params.row.value : params.row.values)} />
               { this.timeMode !== 'point' && <Button type="text" size="small" onClick={() => this.openValuesModal(params.row.values)} style="margin-left: 8px; color: #409EFF;">
                 查看
               </Button>}
@@ -317,7 +317,7 @@ export default {
             const ts = Array.isArray(item) ? item[0] : undefined
             const val = Array.isArray(item) ? item[1] : ''
             const timeStr = this.formatTimeFromSeconds(ts)
-            return `${timeStr}  ${val}`
+            return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
           })
           .join('\n')
       } catch (e) {
@@ -332,7 +332,7 @@ export default {
           const ts = Array.isArray(first) ? first[0] : undefined
           const val = Array.isArray(first) ? first[1] : ''
           const timeStr = this.formatTimeFromSeconds(ts)
-          return `${timeStr}  ${val}`
+          return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
         }
         // 兼容只有单点 value 的情况
         return this.formatSingleValueAsText(values)
@@ -343,7 +343,7 @@ export default {
       const ts = valueField[0]
       const val = valueField[1]
       const timeStr = this.formatTimeFromSeconds(ts)
-      return `${timeStr}  ${val}`
+      return `${timeStr}<span style="margin-left: 15px; color: #ff8c00;">${val}</span>`
     },
     formatJsonWithSyntaxHighlight(data) {
       let jsonString
