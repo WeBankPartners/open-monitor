@@ -1303,5 +1303,10 @@ update metric set prom_expr='node_filesystem_files_free{instance="$address",moun
 alter table log_keyword_config modify column name varchar(150) default NULL COMMENT '告警名称';
 alter table db_keyword_monitor modify column name varchar(150) default NULL COMMENT '告警名称';
 
-CREATE UNIQUE INDEX uk_alarm_custom_unique ON alarm_custom (alert_title, alert_ip, alert_level, alert_obj, closed);
+-- 添加标题 hash值
+ALTER TABLE alarm_custom ADD COLUMN title_hash VARCHAR(64) DEFAULT '';
+-- 第二步：为历史数据填充哈希值
+UPDATE alarm_custom SET title_hash = SHA2(alert_title, 256) WHERE title_hash = '' OR title_hash IS NULL;
+-- 第三步：创建唯一索引
+CREATE UNIQUE INDEX uk_alarm_custom_unique ON alarm_custom (title_hash,alert_ip(50),alert_level,alert_obj(50),closed);
 #@v3.6.8-end@;
