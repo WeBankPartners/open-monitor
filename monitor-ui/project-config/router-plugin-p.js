@@ -81,6 +81,10 @@ const routerP = [
   {
     path: "/adminConfig/remoteSync",
     name: "/adminConfig/remoteSync"
+  },
+  {
+    path: "/adminConfig/prometheusLogs",
+    name: "/adminConfig/prometheusLogs"
   }
 ];
 

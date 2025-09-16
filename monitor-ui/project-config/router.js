@@ -257,6 +257,14 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/admin-config/other/remote-sync")
+            },
+            {
+              path: "prometheusLogs",
+              name: "prometheusLogs",
+              title: "Prometheus日志",
+              meta: {},
+              component: () =>
+                import("@/views/admin-config/other/prometheus-logs")
             }
           ]
         }
