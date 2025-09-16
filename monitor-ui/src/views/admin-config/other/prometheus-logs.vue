@@ -101,7 +101,7 @@
       width="700"
     >
       <div class="values-modal-content">
-        <pre class="json-content">{{ valuesModalText }}</pre>
+        <pre class="json-content" v-html="valuesModalText"></pre>
       </div>
     </Modal>
   </div>
@@ -160,14 +160,20 @@ export default {
           ellipsis: true,
           width: 300,
           tooltip: true,
-          render: (h, params) => (
-            <span>
-              <span domPropsInnerHTML={this.getValuesPreview(this.timeMode === 'point' ? params.row.value : params.row.values)} />
-              { this.timeMode !== 'point' && <Button type="text" size="small" onClick={() => this.openValuesModal(params.row.values)} style="margin-left: 8px; color: #409EFF;">
-                查看
-              </Button>}
-            </span>
-          )
+          render: (h, params) => {
+            // 判断后端返回的字段类型
+            const isMultiple = Object.prototype.hasOwnProperty.call(params.row, 'values')
+            // 优先使用 values 字段，如果没有则使用 value 字段
+            const data = isMultiple ? params.row.values : params.row.value
+            return (
+              <span>
+                <span domPropsInnerHTML={this.getValuesPreview(data)} />
+                { isMultiple && <Button type="text" size="small" onClick={() => this.openValuesModal(data)} style="margin-left: 8px; color: #409EFF;">
+                  查看
+                </Button>}
+              </span>
+            )
+          }
         }
       ],
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
