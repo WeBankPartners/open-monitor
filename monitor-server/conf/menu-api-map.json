@@ -273,6 +273,16 @@
         "method": "post"
       },
       {
+        "key": "alarmProblemList",
+        "url": "/monitor/api/v1/alarm/problem/page",
+        "method": "post"
+      },
+      {
+        "key": "alarmProblemOptions",
+        "url": "/monitor/api/v1/alarm/problem/options",
+        "method": "post"
+      },
+      {
         "key": "startNotify",
         "url": "/monitor/api/v1/alarm/problem/notify",
         "method": "post"
@@ -288,6 +298,11 @@
         "method": "get"
       },
       {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
+        "method": "get"
+      },
+      {
         "key": "mainConfig.api",
         "url": "/monitor/api/v1/dashboard/main",
         "method": "get"
@@ -295,6 +310,11 @@
       {
         "key": "resourceSearch.api",
         "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
         "method": "get"
       },
       {
@@ -313,6 +333,11 @@
         "method": "get"
       },
       {
+        "key": "getDashboardTags",
+        "url": "/monitor/api/v1/dashboard/tags",
+        "method": "get"
+      },
+      {
         "key": "metricConfigView.api",
         "url": "/monitor/api/v1/dashboard/chart",
         "method": "post"
@@ -325,11 +350,6 @@
       {
         "key": "metricConfigView.api",
         "url": "/monitor/api/v1/dashboard/chart",
-        "method": "post"
-      },
-      {
-        "key": "alarmProblemList",
-        "url": "/monitor/api/v1/alarm/problem/page",
         "method": "post"
       },
       {
@@ -353,6 +373,11 @@
         "method": "get"
       },
       {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
+        "method": "get"
+      },
+      {
         "key": "mainConfig.api",
         "url": "/monitor/api/v1/dashboard/main",
         "method": "get"
@@ -360,6 +385,11 @@
       {
         "key": "resourceSearch.api",
         "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
         "method": "get"
       },
       {
@@ -375,6 +405,11 @@
       {
         "key": "getTagDetail",
         "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "getDashboardTags",
+        "url": "/monitor/api/v1/dashboard/tags",
         "method": "get"
       },
       {
@@ -408,11 +443,6 @@
         "method": "post"
       },
       {
-        "key": "alarmProblemList",
-        "url": "/monitor/api/v1/alarm/problem/page",
-        "method": "post"
-      },
-      {
         "key": "alarmManagement.close.api",
         "url": "/monitor/api/v1/alarm/problem/close",
         "method": "post"
@@ -438,6 +468,11 @@
         "method": "get"
       },
       {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
+        "method": "get"
+      },
+      {
         "key": "mainConfig.api",
         "url": "/monitor/api/v1/dashboard/main",
         "method": "get"
@@ -445,6 +480,11 @@
       {
         "key": "resourceSearch.api",
         "url": "/monitor/api/v1/dashboard/search",
+        "method": "get"
+      },
+      {
+        "key": "getOptionTypeNameList",
+        "url": "/monitor/api/v1/dashboard/option_type_name_list",
         "method": "get"
       },
       {
@@ -460,6 +500,11 @@
       {
         "key": "getTagDetail",
         "url": "/monitor/api/v1/${id}",
+        "method": "get"
+      },
+      {
+        "key": "getDashboardTags",
+        "url": "/monitor/api/v1/dashboard/tags",
         "method": "get"
       },
       {
@@ -495,6 +540,11 @@
       {
         "key": "alarmProblemHistory",
         "url": "/monitor/api/v1/alarm/problem/history",
+        "method": "post"
+      },
+      {
+        "key": "startNotify",
+        "url": "/monitor/api/v1/alarm/problem/notify",
         "method": "post"
       }
     ]
@@ -833,6 +883,11 @@
         "method": "post"
       },
       {
+        "key": "getTemplateSystemParams",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/system_params/config",
+        "method": "get"
+      },
+      {
         "key": "logTemplateConfig",
         "url": "/monitor/api/v2/service/log_metric/log_monitor_template",
         "method": "post"
@@ -933,6 +988,11 @@
         "method": "put"
       },
       {
+        "key": "disabledSingleAlarm",
+        "url": "/monitor/api/v2/service/log_metric/log_metric_group/status",
+        "method": "put"
+      },
+      {
         "key": "saveTargetDbById",
         "url": "/monitor/api/v2/service/db_metric/${id}",
         "method": "delete"
@@ -995,6 +1055,11 @@
       {
         "key": "logMonitorTemplateOptions",
         "url": "/monitor/api/v2/service/log_metric/log_monitor_template/options",
+        "method": "get"
+      },
+      {
+        "key": "getTemplateSystemParams",
+        "url": "/monitor/api/v2/service/log_metric/log_monitor_template/system_params/config",
         "method": "get"
       },
       {
@@ -1090,11 +1155,6 @@
       {
         "key": "getLogKeywordList",
         "url": "/monitor/api/v2/service/log_keyword/list",
-        "method": "get"
-      },
-      {
-        "key": "getDbKeywordList",
-        "url": "/monitor/api/v2/service/db_keyword/list",
         "method": "get"
       },
       {
@@ -1781,6 +1841,11 @@
         "key": "remoteWrite",
         "url": "/monitor/api/v2/config/remote/write",
         "method": "put"
+      },
+      {
+        "key": "getPrometheusLogs",
+        "url": "/monitor/api/v2/prometheus/raw",
+        "method": "get"
       }
     ]
   }

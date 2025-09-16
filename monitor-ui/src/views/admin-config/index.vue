@@ -58,6 +58,11 @@ export default {
               title: this.$t('m_remote_sync'),
               path: '/adminConfig/remoteSync',
               name: '2-2'
+            },
+            {
+              title: this.$t('m_prometheus_logs'),
+              path: '/adminConfig/prometheusLogs',
+              name: '2-3'
             }
           ]
         }

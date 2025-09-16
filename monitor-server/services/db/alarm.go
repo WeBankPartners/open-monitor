@@ -1212,10 +1212,12 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		if len(v.AlertInfo) > 1024 {
 			v.AlertInfo = v.AlertInfo[:1024]
 		}
+		// 计算 alert_title 的哈希值用于唯一性判断
+		titleHash := fmt.Sprintf("%x", sha256.Sum256([]byte(v.AlertTitle)))
 		var customAlarmId int
 		var query []*m.AlarmCustomTable
-		//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
-		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0 ", v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Find(&query)
+		// 兼容历史数据：同时查询 title_hash 和 alert_title
+		x.SQL("SELECT * FROM alarm_custom WHERE (title_hash=? OR (title_hash='' AND alert_title=?)) AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0 ", titleHash, v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Find(&query)
 		if v.AlertLevel == "0" {
 			if len(query) > 0 {
 				tmpIds := ""
@@ -1233,29 +1235,44 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				continue
 			}
 		} else {
-			if len(query) > 0 {
-				// 由于存在历史重复数据,没法用 ON DUPLICATE KEY UPDATE
-				for _, vv := range query {
-					_, cErr := x.Exec("update alarm_custom set update_at = CURRENT_TIMESTAMP,alarm_total = ? where id=?", vv.AlarmTotal+1, vv.Id)
-					if cErr != nil {
-						log.Error(nil, log.LOGGER_APP, "Update custom alarm total fail", zap.Error(cErr))
-					}
-				}
-				continue
-			}
+			// 使用 ON DUPLICATE KEY UPDATE 处理并发相同数据
 			alertLevel, _ = strconv.Atoi(v.AlertLevel)
 			subSystemId, _ = strconv.Atoi(v.SubSystemId)
-			insertResult, execErr := x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way) VALUE (?,?,?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay)
+			insertResult, execErr := x.Exec(`
+				INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way,alarm_total,title_hash) 
+				VALUES (?,?,?,?,?,?,?,?,?,?,1,?)
+				ON DUPLICATE KEY UPDATE 
+					alarm_total = alarm_total + 1,
+					update_at = CURRENT_TIMESTAMP,
+					alert_info = VALUES(alert_info),
+					alert_reciver = VALUES(alert_reciver),
+					remark_info = VALUES(remark_info),
+					use_umg_policy = VALUES(use_umg_policy),
+					alert_way = VALUES(alert_way)
+			`, v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay, titleHash)
+
 			if execErr != nil {
 				err = execErr
 				log.Error(nil, log.LOGGER_APP, "Save open alarm error", zap.Error(err))
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
+
+			// 获取记录ID
 			lastInsertId, _ := insertResult.LastInsertId()
-			customAlarmId = int(lastInsertId)
-			log.Info(nil, log.LOGGER_APP, "insert custom alarm row donw", zap.Int("id", customAlarmId))
-			//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
+			if lastInsertId > 0 {
+				// 新插入的记录
+				customAlarmId = int(lastInsertId)
+				log.Info(nil, log.LOGGER_APP, "insert custom alarm row done", zap.Int("id", customAlarmId))
+			} else {
+				// 更新了现有记录，需要查询获取ID
+				var existingAlarm m.AlarmCustomTable
+				_, err = x.SQL("SELECT id FROM alarm_custom WHERE (title_hash=? OR (title_hash='' AND alert_title=?)) AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0", titleHash, v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Get(&existingAlarm)
+				if err == nil {
+					customAlarmId = existingAlarm.Id
+					log.Info(nil, log.LOGGER_APP, "update custom alarm row done", zap.Int("id", customAlarmId))
+				}
+			}
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
 			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {

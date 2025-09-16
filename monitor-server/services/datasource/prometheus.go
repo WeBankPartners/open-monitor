@@ -664,6 +664,73 @@ func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.Prom
 	return
 }
 
+// QueryPrometheusRangeRaw calls Prometheus query_range and returns the raw decoded JSON
+func QueryPrometheusRangeRaw(promQL string, start, end, step int64) (result map[string]interface{}, err error) {
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	urlParams := url.Values{}
+	urlParams.Set("start", strconv.FormatInt(start, 10))
+	urlParams.Set("end", strconv.FormatInt(end, 10))
+	urlParams.Set("step", strconv.FormatInt(step, 10))
+	urlParams.Set("query", promQL)
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
+	return
+}
+
+// QueryPrometheusInstantRaw calls Prometheus query and returns the raw decoded JSON
+// timeParam can be empty; if provided, it is passed as-is to Prometheus (supports fractional seconds)
+func QueryPrometheusInstantRaw(promQL string, timeParam string) (result map[string]interface{}, err error) {
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	urlParams := url.Values{}
+	urlParams.Set("query", promQL)
+	if strings.TrimSpace(timeParam) != "" {
+		urlParams.Set("time", timeParam)
+	}
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
+	return
+}
+
 // ResetPrometheusMetricMap 重置 Prometheus返回的metric
 func ResetPrometheusMetricMap(tagMap map[string]string) map[string]string {
 	if len(tagMap) == 0 {

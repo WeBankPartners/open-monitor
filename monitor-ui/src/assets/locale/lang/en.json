@@ -573,5 +573,15 @@
   "m_disable": "Disabled",
   "m_disabled_confirm_tip": "Confirm To Disable Data",
   "m_recommended_system_configuration_tips": "The following mapping is recommended by the system and needs to be saved to take effect",
-  "m_notify_content": "Content"
+  "m_notify_content": "Content",
+  "m_prometheus_logs": "Prometheus Logs",
+  "m_query_placeholder": "Please Enter Query Parameters",
+  "m_time_point": "Time Point",
+  "m_time_range": "Time Range",
+  "m_select_datetime": "Please Select Date Time",
+  "m_select_time_range_tips": "Please Select Time Range(Max 2 Hours)",
+  "m_data_details": "Data Details",
+  "m_data_preview": "Data Preview",
+  "m_time_range_cannot_exceed_2_hours": "Time Range Cannot Exceed 2 Hours",
+  "m_select_valid_time_range": "Please Select Valid Time Range"
 }

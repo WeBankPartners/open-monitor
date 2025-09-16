@@ -319,5 +319,6 @@
     "getDashboardTags": "/monitor/api/v1/dashboard/tags",
     "getTemplateSystemParams": "/monitor/api/v2/service/log_metric/log_monitor_template/system_params/config",
     "disabledSingleAlarm": "/monitor/api/v2/service/log_metric/log_metric_group/status",
-    "getOptionTypeNameList": "/monitor/api/v1/dashboard/option_type_name_list"
+    "getOptionTypeNameList": "/monitor/api/v1/dashboard/option_type_name_list",
+    "getPrometheusLogs": "/monitor/api/v2/prometheus/raw"
 }

@@ -110,7 +110,8 @@ const menuPathMap = {
     "src/views/admin-config/basic/board-config",
     "src/views/admin-config/basic/metric-config",
     "src/views/admin-config/other/exporter",
-    "src/views/admin-config/other/remote-sync"
+    "src/views/admin-config/other/remote-sync",
+    "src/views/admin-config/other/prometheus-logs"
   ]
 }
 

@@ -337,6 +337,8 @@ func init() {
 		&handlerFuncObj{Url: "/trans-export/dashboard/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetDashboard, ApiCode: "trans_export_dashboard_batch"},
 		&handlerFuncObj{Url: "/trans-export/service_group/batch", Method: http.MethodPost, HandlerFunc: alarm.BatchGetServiceGroup, ApiCode: "trans_export_service_group_batch"},
 		&handlerFuncObj{Url: "/trans-export/config/type/batch", Method: http.MethodPost, HandlerFunc: monitor.BatchGetTypeConfigList, ApiCode: "trans_export_config_type_batch"},
+		// prometheus raw proxy
+		&handlerFuncObj{Url: "/prometheus/raw", Method: http.MethodGet, HandlerFunc: monitor.PrometheusRaw, ApiCode: "prometheus_raw"},
 	)
 }
 

@@ -227,7 +227,7 @@ module.exports = {
             }
         ],
         "no-console": [
-            "error",
+            "warn",
             {
                 "allow": [
                     "error",
