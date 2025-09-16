@@ -5,7 +5,7 @@
         <FormItem label="">
           <Input
             v-model="searchForm.query"
-            placeholder="请输入查询参数"
+            :placeholder="$t('m_query_placeholder')"
             type="textarea"
             :autosize="{minRows: 1, maxRows: 5}"
             clearable
@@ -15,15 +15,15 @@
           <div class="time-controls-row">
             <div class="time-controls">
               <RadioGroup v-model="timeMode" @on-change="onTimeModeChange" type="button" button-style="solid">
-                <Radio label="point">时间点</Radio>
-                <Radio label="range">时间范围</Radio>
+                <Radio label="point">{{ $t('m_time_point') }}</Radio>
+                <Radio label="range">{{ $t('m_time_range') }}</Radio>
               </RadioGroup>
               <div class="date-pickers">
                 <DatePicker
                   v-if="timeMode === 'point'"
                   v-model="searchForm.time"
                   type="datetime"
-                  placeholder="请选择日期时间"
+                  :placeholder="$t('m_select_datetime')"
                   style="width: 220px"
                   format="yyyy-MM-dd HH:mm:ss"
                   @on-change="onTimeChange"
@@ -36,15 +36,15 @@
                       @on-change="onQuickRangeChange"
                     >
                       <Option value="10">10s</Option>
-                      <Option value="60">1分钟</Option>
-                      <Option value="1800">半小时</Option>
-                      <Option value="7200">2小时</Option>
+                      <Option value="60">1min</Option>
+                      <Option value="1800">30min</Option>
+                      <Option value="7200">2hour</Option>
                     </Select>
                   </div>
                   <DatePicker
                     v-model="searchForm.range"
                     type="datetimerange"
-                    placeholder="请选择时间范围（最多2小时）"
+                    :placeholder="$t('m_select_time_range_tips')"
                     style="width: 460px"
                     format="yyyy-MM-dd HH:mm:ss"
                     @on-change="onRangeChange"
@@ -55,11 +55,11 @@
             <div class="action-buttons">
               <Button type="primary" @click="searchLogs" :loading="loading">
                 <Icon type="ios-search" />
-                搜索
+                {{ $t('m_button_search') }}
               </Button>
               <Button @click="resetForm" style="margin-left: 8px">
                 <Icon type="ios-refresh" />
-                重置
+                {{ $t('m_reset') }}
               </Button>
             </div>
           </div>
@@ -88,13 +88,11 @@
 
     <div class="no-data" v-else-if="!loading && searched">
       <Icon type="ios-document-outline" size="48" />
-      <p>暂无数据</p>
+      <p>{{ $t('m_noData') }}</p>
     </div>
-
-    <!-- 二级弹框：显示 values 详情 -->
     <Modal
       v-model="showValuesModal"
-      title="数据详情"
+      :title="$t('m_data_details')"
       :mask-closable="true"
       :closable="true"
       :footer-hide="true"
@@ -146,7 +144,7 @@ export default {
           )
         },
         {
-          title: '日志字段',
+          title: this.$t('m_log'),
           key: 'metric',
           ellipsis: true,
           tooltip: true,
@@ -155,7 +153,7 @@ export default {
           )
         },
         {
-          title: '数据预览',
+          title: this.$t('m_data_preview'),
           key: 'values',
           ellipsis: true,
           width: 300,
@@ -169,7 +167,7 @@ export default {
               <span>
                 <span domPropsInnerHTML={this.getValuesPreview(data)} />
                 { isMultiple && <Button type="text" size="small" onClick={() => this.openValuesModal(data)} style="margin-left: 8px; color: #409EFF;">
-                  查看
+                  { this.$t('m_button_view') }
                 </Button>}
               </span>
             )
@@ -229,8 +227,20 @@ export default {
     },
     async searchLogs() {
       if (!this.searchForm.query.trim()) {
-        this.$Message.warning('请输入查询参数')
+        this.$Message.warning(this.$t('m_query_placeholder'))
         return
+      }
+      // 时间必填校验
+      if (this.timeMode === 'point') {
+        if (!this.searchForm.time) {
+          this.$Message.warning(this.$t('m_select_datetime'))
+          return
+        }
+      } else if (this.timeMode === 'range') {
+        if (!Array.isArray(this.searchForm.range) || this.searchForm.range.length !== 2) {
+          this.$Message.warning(this.$t('m_select_datetime'))
+          return
+        }
       }
       this.loading = true
       this.searched = true
@@ -241,39 +251,35 @@ export default {
         // 根据时间模式添加不同的时间参数
         if (this.timeMode === 'point') {
           // 时间点模式：传递time字段
-          if (this.searchForm.time) {
-            params.time = dayjs(this.searchForm.time).unix()
-          }
+          params.time = dayjs(this.searchForm.time).unix()
         } else if (this.timeMode === 'range') {
           // 时间范围模式：传递start和end字段（校验不超过2小时）
-          if (Array.isArray(this.searchForm.range) && this.searchForm.range.length === 2) {
-            const start = dayjs(this.searchForm.range[0])
-            const end = dayjs(this.searchForm.range[1])
-            if (!start.isValid() || !end.isValid()) {
-              this.$Message.error('请选择合法的时间范围')
-              this.loading = false
-              return
-            }
-            const diffHours = end.diff(start, 'hour', true)
-            if (diffHours > 2) {
-              this.$Message.error('时间范围不能超过2小时')
-              this.loading = false
-              return
-            }
-            params.start = start.unix()
-            params.end = end.unix()
+          const start = dayjs(this.searchForm.range[0])
+          const end = dayjs(this.searchForm.range[1])
+          if (!start.isValid() || !end.isValid()) {
+            this.$Message.error(this.$t('m_select_valid_time_range'))
+            this.loading = false
+            return
           }
+          const diffHours = end.diff(start, 'hour', true)
+          if (diffHours > 2) {
+            this.$Message.error(this.$t('m_time_range_cannot_exceed_2_hours'))
+            this.loading = false
+            return
+          }
+          params.start = start.unix()
+          params.end = end.unix()
         }
         this.request('GET', this.apiCenter.getPrometheusLogs, params, response => {
           this.allLogData = response.data.result || []
           this.pagination.total = this.allLogData.length
           this.pagination.current = 1
           this.updateDisplayData()
-          this.$Message.success('搜索成功')
+          this.$Message.success(this.$t('m_success'))
         })
       } catch (error) {
         console.error('Search logs error:', error)
-        this.$Message.error('搜索失败')
+        this.$Message.error(this.$t('m_fail'))
         this.allLogData = []
         this.logData = []
         this.pagination.total = 0
