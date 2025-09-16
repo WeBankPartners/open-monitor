@@ -11,7 +11,7 @@ CREATE TABLE `db_keyword_alarm` (
     `updated_time` datetime DEFAULT null COMMENT '更新时间',
     PRIMARY KEY (`id`),
     KEY `idx_log_keyword_alarm_id` (`alarm_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 alter table log_keyword_alarm add column log_keyword_config varchar(64) default null;
 alter table custom_chart_series_config modify column series_name varchar(512) default null;
@@ -45,7 +45,7 @@ CREATE TABLE `alarm_firing` (
     KEY `alarm_firing_priority_idx` (`priority`),
     KEY `alarm_firing_name` (`alarm_name`),
     KEY `alarm_firing_alarm_id` (`alarm_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 
 alter table log_metric_config add column auto_alarm tinyint(1) default 0 COMMENT '自动告警,1表示自动告警';

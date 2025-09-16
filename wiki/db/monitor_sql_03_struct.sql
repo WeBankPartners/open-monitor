@@ -23,7 +23,7 @@ CREATE TABLE `log_keyword_notify_rel` (
           `log_keyword_config` varchar(64) DEFAULT NULL COMMENT '业务关键字配置',
           `notify` varchar(64) NOT NULL COMMENT '通知表',
           PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `db_keyword_monitor` (
       `guid` varchar(64) NOT NULL COMMENT '唯一标识',
@@ -41,7 +41,7 @@ CREATE TABLE `db_keyword_monitor` (
       `create_time` datetime DEFAULT NULL COMMENT '创建时间',
       `update_time` datetime DEFAULT NULL COMMENT '更新时间',
       PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `db_keyword_endpoint_rel` (
            `guid` varchar(64) NOT NULL COMMENT '唯一标识',
@@ -49,14 +49,14 @@ CREATE TABLE `db_keyword_endpoint_rel` (
            `source_endpoint` varchar(160) DEFAULT NULL COMMENT '源对象',
            `target_endpoint` varchar(160) DEFAULT NULL COMMENT '目标对象',
            PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `db_keyword_notify_rel` (
          `guid` varchar(64) NOT NULL COMMENT '唯一标识',
          `db_keyword_monitor` varchar(64) NOT NULL COMMENT '数据库关键字监控',
          `notify` varchar(64) NOT NULL COMMENT '通知表',
          PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 alter table log_keyword_monitor add column create_time varchar(32) default null;
 alter table log_keyword_monitor add column create_user varchar(64) default null;
