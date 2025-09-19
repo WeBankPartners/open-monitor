@@ -171,7 +171,7 @@
       v-model="showRemarkModal"
     >
       <div>
-        <Input v-model="modelConfig.addRow.message" type="textarea" placeholder="" />
+        <Input v-model="modelConfig.addRow.message" type="textarea" :rows="6" placeholder="" />
       </div>
       <div slot="footer">
         <Button :disabled="modelConfig.addRow.message === ''" type="primary" @click="remarkAlarm">{{$t('m_button_save')}}</Button>

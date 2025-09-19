@@ -748,12 +748,8 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 	if len(alarms) == 0 {
 		return alarms
 	}
-	//var rowAffected int64
 	for _, v := range alarms {
-		//rowAffected = 0
-		//var action Action
-		//var cErr error
-		//var execResult sql.Result
+
 		calcAlarmUniqueFlag(&v.AlarmTable)
 		if v.MultipleConditionFlag {
 			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
@@ -768,29 +764,6 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 			} else {
 				successAlarms = append(successAlarms, v)
 			}
-			//if v.Id > 0 {
-			//	action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
-			//	execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
-			//} else {
-			//	action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-			//	execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
-			//}
-			//if cErr != nil {
-			//	log.Error(nil, log.LOGGER_APP, "Update alarm fail", log.JsonObj("alarm", v), zap.Error(cErr))
-			//} else {
-			//	rowAffected, _ = execResult.RowsAffected()
-			//	if rowAffected > 0 {
-			//		if v.Id <= 0 {
-			//			lastInsertId, _ := execResult.LastInsertId()
-			//			if lastInsertId > 0 {
-			//				v.Id = int(lastInsertId)
-			//			}
-			//		}
-			//		successAlarms = append(successAlarms, v)
-			//	} else {
-			//		log.Warn(nil, log.LOGGER_APP, "Update alarm done but not any rows affected", log.JsonObj("alarm", v))
-			//	}
-			//}
 		}
 	}
 	return successAlarms
@@ -1239,10 +1212,12 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		if len(v.AlertInfo) > 1024 {
 			v.AlertInfo = v.AlertInfo[:1024]
 		}
+		// 计算 alert_title 的哈希值用于唯一性判断
+		titleHash := fmt.Sprintf("%x", sha256.Sum256([]byte(v.AlertTitle)))
 		var customAlarmId int
 		var query []*m.AlarmCustomTable
-		//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
-		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0 ", v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Find(&query)
+		// 兼容历史数据：同时查询 title_hash 和 alert_title
+		x.SQL("SELECT * FROM alarm_custom WHERE (title_hash=? OR (title_hash='' AND alert_title=?)) AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0 ", titleHash, v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Find(&query)
 		if v.AlertLevel == "0" {
 			if len(query) > 0 {
 				tmpIds := ""
@@ -1260,29 +1235,44 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				continue
 			}
 		} else {
-			if len(query) > 0 {
-				// 由于存在历史重复数据,没法用 ON DUPLICATE KEY UPDATE
-				for _, vv := range query {
-					_, cErr := x.Exec("update alarm_custom set update_at = CURRENT_TIMESTAMP,alarm_total = ? where id=?", vv.AlarmTotal+1, vv.Id)
-					if cErr != nil {
-						log.Error(nil, log.LOGGER_APP, "Update custom alarm total fail", zap.Error(cErr))
-					}
-				}
-				continue
-			}
+			// 使用 ON DUPLICATE KEY UPDATE 处理并发相同数据
 			alertLevel, _ = strconv.Atoi(v.AlertLevel)
 			subSystemId, _ = strconv.Atoi(v.SubSystemId)
-			insertResult, execErr := x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way) VALUE (?,?,?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay)
+			insertResult, execErr := x.Exec(`
+				INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id,use_umg_policy,alert_way,alarm_total,title_hash) 
+				VALUES (?,?,?,?,?,?,?,?,?,?,1,?)
+				ON DUPLICATE KEY UPDATE 
+					alarm_total = alarm_total + 1,
+					update_at = CURRENT_TIMESTAMP,
+					alert_info = VALUES(alert_info),
+					alert_reciver = VALUES(alert_reciver),
+					remark_info = VALUES(remark_info),
+					use_umg_policy = VALUES(use_umg_policy),
+					alert_way = VALUES(alert_way)
+			`, v.AlertInfo, v.AlertIp, alertLevel, v.AlertObj, v.AlertTitle, v.AlertReciver, v.RemarkInfo, subSystemId, v.UseUmgPolicy, v.AlertWay, titleHash)
+
 			if execErr != nil {
 				err = execErr
 				log.Error(nil, log.LOGGER_APP, "Save open alarm error", zap.Error(err))
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
+
+			// 获取记录ID
 			lastInsertId, _ := insertResult.LastInsertId()
-			customAlarmId = int(lastInsertId)
-			log.Info(nil, log.LOGGER_APP, "insert custom alarm row donw", zap.Int("id", customAlarmId))
-			//x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
+			if lastInsertId > 0 {
+				// 新插入的记录
+				customAlarmId = int(lastInsertId)
+				log.Info(nil, log.LOGGER_APP, "insert custom alarm row done", zap.Int("id", customAlarmId))
+			} else {
+				// 更新了现有记录，需要查询获取ID
+				var existingAlarm m.AlarmCustomTable
+				_, err = x.SQL("SELECT id FROM alarm_custom WHERE (title_hash=? OR (title_hash='' AND alert_title=?)) AND alert_ip=? AND alert_level=? AND alert_obj=? AND closed=0", titleHash, v.AlertTitle, v.AlertIp, v.AlertLevel, v.AlertObj).Get(&existingAlarm)
+				if err == nil {
+					customAlarmId = existingAlarm.Id
+					log.Info(nil, log.LOGGER_APP, "update custom alarm row done", zap.Int("id", customAlarmId))
+				}
+			}
 		}
 		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
 			if mailAlarmObj, buildMailAlarmErr := getCustomAlarmEvent(customAlarmId); buildMailAlarmErr != nil {
@@ -1927,7 +1917,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	var strategyMetricRows []*m.AlarmStrategyMetric
 	err = x.SQL("select guid,alarm_strategy,metric,`condition`,`last`,crc_hash from alarm_strategy_metric where alarm_strategy=?", alarmConditionObj.AlarmStrategy).Find(&strategyMetricRows)
 	if err != nil {
-		err = fmt.Errorf("query alarm strategy metric table fail,%s ", err.Error())
+		err = fmt.Errorf("query alarm strategy:%s metric table fail,%s ", alarmConditionObj.AlarmStrategy, err.Error())
 		return
 	}
 	if len(strategyMetricRows) == 0 {
@@ -1948,12 +1938,29 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
 	var alarmConditionRows []*m.AlarmCondition
-	err = x.SQL("select guid,status,metric,crc_hash,tags from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
+	err = x.SQL("select guid,status,metric,crc_hash,tags,alarm_strategy from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
 	if err != nil {
-		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
+		err = fmt.Errorf("query alarm condition table fail,alarm_strategy:%s,err:%s ", alarmConditionObj.AlarmStrategy, err.Error())
 		return
 	}
+	log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions query existing conditions",
+		zap.String("currentCrc", alarmConditionObj.AlarmConditionCrcHash),
+		zap.Strings("configCrcList", configCrcList),
+		zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy),
+		zap.String("endpoint", alarmConditionObj.Endpoint),
+		zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy),
+		zap.Int("foundConditions", len(alarmConditionRows)))
+
 	for _, row := range alarmConditionRows {
+		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions processing existing condition",
+			zap.String("rowGuid", row.Guid),
+			zap.String("rowCrcHash", row.CrcHash),
+			zap.String("rowStatus", row.Status),
+			zap.String("rowTags", row.Tags),
+			zap.String("currentTags", alarmConditionObj.Tags),
+			zap.String("currentAlarmStrategy", alarmConditionObj.AlarmStrategy),
+			zap.String("rowAlarmStrategy", row.AlarmStrategy))
+
 		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
 			// 相同crc策略
 			if row.Tags != alarmConditionObj.Tags {
@@ -1968,11 +1975,12 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		conditionGuidList = append(conditionGuidList, row.Guid)
 		conditionMetricList = append(conditionMetricList, row.Metric)
 	}
+	log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions alarmConditionObj", log.JsonObj("alarmConditionObj", alarmConditionObj))
 	if alarmConditionObj.AlarmConditionGuid != "" {
 		var alarmConditionRelRows []*m.AlarmConditionRel
 		err = x.SQL("select alarm,alarm_condition from alarm_condition_rel where alarm_condition=? and alarm in (select id from alarm where status='firing' and alarm_strategy=?)", alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy).Find(&alarmConditionRelRows)
 		if err != nil {
-			err = fmt.Errorf("query alarm condition ref fail,%s ", err.Error())
+			err = fmt.Errorf("query alarm condition ref fail,alarm_strategy:%s,err:%s ", alarmConditionObj.AlarmStrategy, err.Error())
 			return
 		}
 		actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET status=?,end_value=?,end=? WHERE guid=? AND status='firing'", Param: []interface{}{
@@ -2006,10 +2014,16 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		_, err = session.Exec("INSERT INTO alarm_condition(guid,alarm_strategy,endpoint,status,metric,expr,cond,`last`,priority,crc_hash,tags,start_value,`start`,unique_hash) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 			alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, time.Now().Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
 		if err != nil {
-			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
+			err = fmt.Errorf("insert alarm_condition fail,alarm_strategy:%s,err:%s ", alarmConditionObj.AlarmStrategy, err.Error())
 			return
 		}
-		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), zap.Strings("configCrcList", configCrcList))
+		log.Debug(nil, log.LOGGER_APP, "UpdateAlarmWithConditions final check",
+			log.JsonObj("alarmCrcMap", alarmCrcMap),
+			zap.Strings("configCrcList", configCrcList),
+			zap.Int("alarmCrcMapLen", len(alarmCrcMap)),
+			zap.Int("configCrcListLen", len(configCrcList)),
+			zap.Bool("shouldTrigger", len(alarmCrcMap) >= len(configCrcList)),
+			zap.String("alarmStrategy", alarmConditionObj.AlarmStrategy))
 		if len(alarmCrcMap) >= len(configCrcList) {
 			// 如果条件都满足
 			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
@@ -2038,12 +2052,12 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 				0, alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
 			if insertErr != nil {
-				err = fmt.Errorf("insert alarm fail,%s ", insertErr.Error())
+				err = fmt.Errorf("insert alarm fail,alarm_strategy:%s,err:%s", alarmConditionObj.AlarmStrategy, insertErr.Error())
 				return
 			}
 			alarmInsertId, _ := insertAlarmResult.LastInsertId()
 			if alarmInsertId <= 0 {
-				err = fmt.Errorf("insert alarm fail with get last insert id fail")
+				err = fmt.Errorf("insert alarm fail with get last insert id fail,alarm_strategy:%s", alarmConditionObj.AlarmStrategy)
 				return
 			}
 			alarmRow.Id = int(alarmInsertId)

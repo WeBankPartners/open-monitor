@@ -101,7 +101,31 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.AlarmName = strategyObj.Name
 	}
 	var alertValue float64
-	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
+	alertValueStr := summaryList[len(summaryList)-1]
+
+	// 处理 NaN 值 - 添加异常过滤
+	if alertValueStr == "" {
+		alertValue = 0.0
+	} else {
+		// 快速检查 NaN 和 inf 值
+		if (len(alertValueStr) == 3 && (alertValueStr == "NaN" || alertValueStr == "nan" || alertValueStr == "inf")) ||
+			(len(alertValueStr) == 4 && alertValueStr == "-inf") {
+			alertValue = 0.0
+		} else {
+			// 安全解析数值
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error(nil, log.LOGGER_APP, "Panic in alarm parseFloat", zap.String("value", alertValueStr), zap.Any("panic", r))
+				}
+			}()
+
+			var err error
+			alertValue, err = strconv.ParseFloat(alertValueStr, 64)
+			if err != nil {
+				alertValue = 0.0
+			}
+		}
+	}
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
 	if param.Labels["strategy_id"] == "" && strategyGuid == "" {
 		return alarm, fmt.Errorf("labels strategy_id and strategy_guid is empty ")
@@ -137,29 +161,15 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 			operation = "same"
 		}
 	} else {
-		return alarm, fmt.Errorf("Accept alert status:%s illegal! ", alarm.Status)
+		return alarm, fmt.Errorf("Accept alert strategyGuid:%s,status:%s illegal! ", strategyGuid, alarm.Status)
 	}
-	//if existAlarm.Status != "" {
-	//	if existAlarm.Status == "firing" {
-	//		if alarm.Status == "firing" {
-	//			operation = "same"
-	//		} else {
-	//			operation = "resolve"
-	//		}
-	//	} else if existAlarm.Status == "ok" {
-	//		if alarm.Status == "resolved" {
-	//			operation = "same"
-	//		}
-	//	} else if existAlarm.Status == "closed" {
-	//		if alarm.Status == "resolved" {
-	//			operation = "same"
-	//		}
-	//	}
-	//}
+
 	if operation == "same" {
+		log.Debug(nil, log.LOGGER_APP, "Accept alert msg ,firing repeat,do nothing!", log.JsonObj("alarm", alarm))
 		return alarm, fmt.Errorf("Accept alert msg ,firing repeat,do nothing! ")
 	}
 	if operation == "add" && param.Status == "resolved" {
+		log.Debug(nil, log.LOGGER_APP, "Accept alert msg ,cat not add resolved,do nothing!", log.JsonObj("alarm", alarm))
 		return alarm, fmt.Errorf("Accept alert msg ,cat not add resolved,do nothing! ")
 	}
 	if operation == "resolve" {
@@ -180,37 +190,6 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	return
 }
 
-func checkIsInActiveWindow(input string) bool {
-	if input == "" {
-		return true
-	}
-	timeSplit := strings.Split(input, "-")
-	if len(timeSplit) != 2 {
-		log.Error(nil, log.LOGGER_APP, "Active window illegal", zap.String("input", input))
-		return false
-	}
-	nowTime := time.Now()
-	dayPrefix := nowTime.Format("2006-01-02")
-	st, sErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", dayPrefix, timeSplit[0]), time.Local)
-	if sErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Active window start illegal", zap.String("start", timeSplit[0]))
-		return false
-	}
-	endString := timeSplit[1] + ":00"
-	if strings.HasSuffix(timeSplit[1], "59") {
-		endString = timeSplit[1] + ":59"
-	}
-	et, eErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", dayPrefix, endString), time.Local)
-	if eErr != nil {
-		log.Error(nil, log.LOGGER_APP, "Active window end illegal", zap.String("end", timeSplit[1]))
-		return false
-	}
-	if nowTime.Unix() >= st.Unix() && nowTime.Unix() <= et.Unix() {
-		return true
-	}
-	return false
-}
-
 func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetricObj) (result m.EndpointNewTable, err error) {
 	result = m.EndpointNewTable{}
 	if param.Labels["process_guid"] != "" {
@@ -223,15 +202,15 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		result.Guid = param.Labels["e_guid"]
 	} else if param.Labels["instance"] != "" && param.Labels["instance"] != "127.0.0.1:8181" {
 		result.AgentAddress = param.Labels["instance"]
-		//if result.AgentAddress == "127.0.0.1:8181" {
-		//	if param.Labels["service_group"] != "" {
-		//		result = m.EndpointNewTable{Guid: "sg__" + param.Labels["service_group"]}
-		//		return
-		//	}
-		//}
-		//if strings.Contains(result.AgentAddress, "9100") {
-		//	result.MonitorType = "host"
-		//}
+		if param.Labels["strategy_guid"] != "" {
+			endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
+			if tmpErr != nil {
+				return result, fmt.Errorf("alert labels have no endpoint_group:%s message ", strategyObj.EndpointGroup)
+			}
+			// 设置 monitorType
+			result.MonitorType = endpointGroupObj.MonitorType
+		}
+
 	} else if param.Labels["strategy_guid"] != "" {
 		endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
 		if tmpErr != nil {

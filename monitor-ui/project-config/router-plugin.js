@@ -24,6 +24,7 @@ import groupBoard from "@/views/admin-config/basic/board-config";
 import adminMetric from '@/views/admin-config/basic/metric-config';
 import exporter from "@/views/admin-config/other/exporter";
 import remoteSync from "@/views/admin-config/other/remote-sync";
+import prometheusLogs from "@/views/admin-config/other/prometheus-logs";
 import index from "@/views/index";
 
 const router = [
@@ -216,6 +217,13 @@ const router = [
         title: "remoteSync",
         meta: {},
         component: remoteSync
+      },
+      {
+        path: "prometheusLogs",
+        name: "prometheusLogs",
+        title: "Prometheus日志",
+        meta: {},
+        component: prometheusLogs
       }
     ]
   }

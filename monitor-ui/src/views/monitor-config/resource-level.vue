@@ -69,6 +69,7 @@ export default {
       modelConfig: {
         modalId: 'add_panel_Modal',
         modalTitle: 'm_button_add',
+        modalStyle: 'min-width: 700px',
         isAdd: true,
         config: [
           {

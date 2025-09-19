@@ -413,6 +413,7 @@ type AlarmCustomTable struct {
 	AlertWay      string    `json:"alert_way"`
 	CustomMessage string    `json:"custom_message"`
 	AlarmTotal    int       `json:"alarm_total"`
+	TitleHash     string    `json:"title_hash"`
 	UpdateAt      time.Time `json:"update_at"`
 	CreateAt      time.Time `json:"create_at"`
 }

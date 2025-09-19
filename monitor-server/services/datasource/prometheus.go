@@ -19,6 +19,45 @@ import (
 
 var promDS DataSourceParam
 
+// parsePrometheusValue 处理 Prometheus 查询结果中的 NaN 值
+func parsePrometheusValue(valueStr string, query *m.QueryMonitorData) (float64, bool) {
+	// 安全检查：确保输入参数不为空
+	if valueStr == "" {
+		return 0, false
+	}
+
+	// 安全检查：确保 query 不为空
+	if query == nil {
+		return 0, false
+	}
+
+	// 快速检查 NaN 和 inf 值
+	if (len(valueStr) == 3 && (valueStr == "NaN" || valueStr == "nan" || valueStr == "inf")) ||
+		(len(valueStr) == 4 && valueStr == "-inf") {
+		// 对于成功率指标，NaN/inf 时返回 100（避免告警）
+		if len(query.Metric) > 0 && strings.HasSuffix(query.Metric[0], "req_suc_rate") {
+			return 100.0, true
+		} else {
+			// 其他指标 NaN/inf 时跳过该数据点
+			return 0, false
+		}
+	}
+
+	// 正常解析数值 - 添加异常处理
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error(nil, log.LOGGER_APP, "Panic in parsePrometheusValue", zap.String("value", valueStr), zap.Any("panic", r))
+		}
+	}()
+
+	value, err := strconv.ParseFloat(valueStr, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return value, true
+}
+
 func InitPrometheusDatasource() {
 	t := time.Now()
 	cfg := *m.Config().Datasource.Servers[0]
@@ -29,8 +68,9 @@ func InitPrometheusDatasource() {
 var PieLegendBlackName = []string{"job", "instance", "__name__", "e_guid"}
 
 func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
-	log.Debug(nil, log.LOGGER_APP, "prometheus data query", log.JsonObj("queryParam", query))
-	serials := []*m.SerialModel{}
+	startTime := time.Now()
+	log.Debug(nil, log.LOGGER_APP, "prometheus data query start", log.JsonObj("queryParam", query))
+	var serials []*m.SerialModel
 	urlParams := url.Values{}
 	hostAddress := promDS.Host
 	if query.Cluster != "" && query.Cluster != "default" {
@@ -117,14 +157,27 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		var sdata m.DataSort
 		for _, v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
-			tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
-			//tmpValue,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
+			tmpValueStr := v[1].(string)
+
+			// 处理 NaN 值
+			tmpValue, valid := parsePrometheusValue(tmpValueStr, query)
+			if !valid {
+				continue // 跳过无效的数据点
+			}
 			sdata = append(sdata, []float64{tmpTime, tmpValue})
 		}
 		sort.Sort(sdata)
 		serial.Data = sdata
 		serials = append(serials, &serial)
 	}
+
+	// 记录查询耗时
+	elapsed := time.Since(startTime)
+	log.Debug(nil, log.LOGGER_APP, "prometheus data query completed",
+		zap.Duration("total_time", elapsed),
+		zap.Int("total_series", len(data.Data.Result)),
+		zap.Int("valid_series", len(serials)))
+
 	return serials
 }
 
@@ -214,27 +267,23 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		if len(otr.Values) > 0 {
 			if useNewValue {
 				// 取最新值
-				pieObj.Value, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+				tmpValueStr := otr.Values[len(otr.Values)-1][1].(string)
+				pieObj.Value, _ = parsePrometheusValue(tmpValueStr, query)
 				pieObj.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", pieObj.Value), 64)
 			} else {
 				// 按合并规则取值
 				var valueDataList []float64
 				for _, v := range otr.Values {
-					tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
-					valueDataList = append(valueDataList, tmpValue)
+					tmpValueStr := v[1].(string)
+					tmpValue, valid := parsePrometheusValue(tmpValueStr, query)
+					if valid {
+						valueDataList = append(valueDataList, tmpValue)
+					}
 				}
 				pieObj.SourceValue = valueDataList
 				pieObj.Value = m.CalcData(valueDataList, query.PieAggType)
 			}
 		}
-		//log.Info(nil, log.LOGGER_APP, "buildPidData otr", zap.String("name", pieObj.Name), zap.Float64("value", pieObj.Value))
-		//if existPie, ok := pieMap[pieObj.Name]; ok {
-		//	existPie.Value = m.CalcData([]float64{existPie.Value, pieObj.Value}, query.PieAggType)
-		//	continue
-		//} else {
-		//	pieMap[pieObj.Name] = &pieObj
-		//}
-		//log.Info(nil, log.LOGGER_APP, "buildPidData otr append", zap.String("name", pieObj.Name))
 		pieData.Legend = append(pieData.Legend, pieObj.Name)
 		pieData.Data = append(pieData.Data, &pieObj)
 	}
@@ -474,7 +523,8 @@ func QueryLogKeywordData(keywordMode string) (result, previousResult map[string]
 			key := fmt.Sprintf("service_group:%s^db_keyword_guid:%s^t_endpoint:%s", otr.Metric["service_group"], otr.Metric["db_keyword_guid"], otr.Metric["t_endpoint"])
 			tmpValue := float64(0)
 			if len(otr.Values) > 0 {
-				tmpValue, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+				tmpValueStr := otr.Values[len(otr.Values)-1][1].(string)
+				tmpValue, _ = parsePrometheusValue(tmpValueStr, &m.QueryMonitorData{})
 			}
 			result[key] = tmpValue
 		}
@@ -488,8 +538,11 @@ func QueryLogKeywordData(keywordMode string) (result, previousResult map[string]
 			var sdata m.DataSort
 			for _, v := range otr.Values {
 				tmpTime := v[0].(float64) * 1000
-				tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
-				sdata = append(sdata, []float64{tmpTime, tmpValue})
+				tmpValueStr := v[1].(string)
+				tmpValue, valid := parsePrometheusValue(tmpValueStr, &m.QueryMonitorData{})
+				if valid {
+					sdata = append(sdata, []float64{tmpTime, tmpValue})
+				}
 			}
 			sort.Sort(sdata)
 			firstValue = sdata[0][1]
@@ -608,6 +661,73 @@ func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.Prom
 		return result, fmt.Errorf("Query prometheus data fail,status:%s ", data.Status)
 	}
 	result = &data.Data
+	return
+}
+
+// QueryPrometheusRangeRaw calls Prometheus query_range and returns the raw decoded JSON
+func QueryPrometheusRangeRaw(promQL string, start, end, step int64) (result map[string]interface{}, err error) {
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	urlParams := url.Values{}
+	urlParams.Set("start", strconv.FormatInt(start, 10))
+	urlParams.Set("end", strconv.FormatInt(end, 10))
+	urlParams.Set("step", strconv.FormatInt(step, 10))
+	urlParams.Set("query", promQL)
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
+	return
+}
+
+// QueryPrometheusInstantRaw calls Prometheus query and returns the raw decoded JSON
+// timeParam can be empty; if provided, it is passed as-is to Prometheus (supports fractional seconds)
+func QueryPrometheusInstantRaw(promQL string, timeParam string) (result map[string]interface{}, err error) {
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	urlParams := url.Values{}
+	urlParams.Set("query", promQL)
+	if strings.TrimSpace(timeParam) != "" {
+		urlParams.Set("time", timeParam)
+	}
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
 	return
 }
 

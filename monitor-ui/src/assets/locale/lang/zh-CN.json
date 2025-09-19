@@ -572,6 +572,17 @@
   "m_repeated_value": "重复值",
   "m_disable": "禁用",
   "m_disabled_confirm_tip": "确认将该条数据禁用",
-  "m_recommended_system_configuration_tips": "以下映射是系统推荐，需要【保存】才能生效"
+  "m_recommended_system_configuration_tips": "以下映射是系统推荐，需要【保存】才能生效",
+  "m_notify_content": "通知内容",
+  "m_prometheus_logs": "Prometheus日志",
+  "m_query_placeholder": "请输入查询参数",
+  "m_time_point": "时间点",
+  "m_time_range": "时间范围",
+  "m_select_datetime": "请选择日期时间",
+  "m_select_time_range_tips": "请选择时间范围（最多1小时）",
+  "m_data_details": "数据详情",
+  "m_data_preview": "数据预览",
+  "m_time_range_cannot_exceed_1_hours": "时间范围不能超过1小时",
+  "m_select_valid_time_range": "请选择合法的时间范围"
 }
 

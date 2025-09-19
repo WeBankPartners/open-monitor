@@ -20,9 +20,10 @@
             </Button>
             <template  slot='list'>
               <DropdownMenu>
-                <DropdownItem v-for="(item, index) in importTypeOptions"
-                              :name="item.value"
-                              :key="index"
+                <DropdownItem
+                  v-for="(item, index) in importTypeOptions"
+                  :name="item.value"
+                  :key="index"
                 >
                   {{ $t(item.name) }}
                 </DropdownItem>
@@ -56,10 +57,11 @@
         </div>
 
         <div>
-          <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single.logFile) && !isEmpty(single.logFile.config)'>
-            <Panel v-for="(item, index) in single.logFile.config"
-                   :key="index"
-                   :name="index + ''"
+          <Collapse v-model="logFileCollapseValue" v-if='!isEmpty(single) && !isEmpty(single.config)'>
+            <Panel
+              v-for="(item, index) in single.config"
+              :key="index"
+              :name="index + ''"
             >
               <div class="log-file-collapse-content">
                 <div>
@@ -83,6 +85,7 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
+                    @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
                       parentGuid = item.guid;
@@ -95,10 +98,11 @@
                     </Button>
                     <template slot='list'>
                       <DropdownMenu>
-                        <DropdownItem v-for="(option, key) in allTemplateList"
-                                      :name="key"
-                                      :key="key"
-                                      :disabled="option.disabled"
+                        <DropdownItem
+                          v-for="(option, key) in allTemplateList"
+                          :name="key"
+                          :key="key"
+                          :disabled="option.disabled"
                         >
                           {{option.name}}
                         </DropdownItem>
@@ -147,7 +151,7 @@
             class="log-file-table"
             size="small"
             :columns="dataBaseTableColumns"
-            :data="!isEmpty(single.database) && !isEmpty(single.database.config) ? single.database.config : []"
+            :data="!isEmpty(single) && !isEmpty(single.db_config) ? single.db_config : []"
           />
         </div>
       </div>
@@ -157,20 +161,20 @@
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
       :mask-closable="false"
-      :width="730"
+      :width="900"
     >
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
         <div>
           <span>{{$t('m_field_type')}}:</span>
-          <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 640px">
+          <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 800px">
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
-        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:830px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
               <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
-                <Input v-model.trim="item.path" style="width: 620px" :placeholder="$t('m_tableKey_logPath')" />
+                <Input v-model.trim="item.path" style="width: 760px" :placeholder="$t('m_tableKey_logPath')" />
               </Tooltip>
               <Button
                 v-if="addAndEditModal.isAdd"
@@ -185,24 +189,24 @@
             @click="addEmptyItem('path')"
             type="success"
             size="small"
-            style="width:650px"
+            style="width:800px"
             long
           >{{ $t('m_button_add') }}{{$t('m_tableKey_logPath')}}</Button>
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('m_tableKey_path')}}:</span>
-          <Input style="width: 640px" v-model.trim="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 800px" v-model.trim="addAndEditModal.dataConfig.log_path" />
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:830px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_type_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_type_object')">
+                <Select v-model="item.target_endpoint" style="width: 386px" :placeholder="$t('m_type_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_host_object')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_host_object')">
+                <Select v-model="item.source_endpoint" style="width: 386px" :placeholder="$t('m_host_object')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
@@ -218,7 +222,7 @@
             @click="addEmptyItem('relate')"
             type="success"
             size="small"
-            style="width:650px"
+            style="width:800px"
             long
           >{{$t('m_addStringMap')}}</Button>
         </div>
@@ -231,7 +235,7 @@
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
-      width="840"
+      width="1040"
       :mask-closable="false"
     >
       <div :style="{'max-height': MODALHEIGHT + 'px', overflow: 'auto'}">
@@ -502,9 +506,8 @@
 
 <script>
 import {
-  uniq, filter, cloneDeep, map, isEmpty
+  cloneDeep, map, isEmpty
 } from 'lodash'
-// import Vue from 'vue'
 import { getPlatFormToken, getToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
@@ -1099,7 +1102,6 @@ export default {
       this.$Message.success(this.$t('m_tips_success'))
       this.dbModelConfig.isShow = false
       this.getDetail(this.targetId)
-      this.getDbDetail(this.targetId)
     },
     cancelDb() {
       this.dbModelConfig.isShow = false
@@ -1472,9 +1474,6 @@ export default {
       })
     },
     async getDetail(targetId, metricKey = '', isNeedChangeCollapse = true) {
-      if (isEmpty(this.allTemplateList)) {
-        this.getMonitorTemplateList()
-      }
       if (targetId) {
         if ((metricKey || metricKey === '') && this.metricKey !== metricKey) {
           this.metricKey = metricKey
@@ -1486,7 +1485,6 @@ export default {
         }
         this.targetId = targetId
         await this.getLogKeyWordDetail()
-        await this.getDbDetail()
         this.processAllInfo()
       } else {
         this.logAndDataBaseAllDetail = []
@@ -1494,34 +1492,8 @@ export default {
     },
     processAllInfo() {
       this.logAndDataBaseAllDetail = []
-      const allDetail = [...cloneDeep(this.logFileDetail), ...cloneDeep(this.dataBaseTableData)]
-      const allGuid = uniq(map(allDetail, 'guid')) || []
-
-      allGuid.forEach(guid => {
-        const tempInfo = {
-          logFile: filter(this.logFileDetail, item => item.guid === guid)[0],
-          database: filter(this.dataBaseTableData, item => item.guid === guid)[0]
-        }
-        this.logAndDataBaseAllDetail.push(tempInfo)
-      })
+      this.logAndDataBaseAllDetail = cloneDeep(this.logFileDetail)
       this.$emit('feedbackInfo', this.logAndDataBaseAllDetail)
-    },
-    getDbDetail() {
-      return new Promise(resolve => {
-        let api = this.$root.apiCenter.getTargetDbDetail + '/group/' + this.targetId
-        if (this.metricKey) {
-          api += `?metricKey=${this.metricKey}`
-        }
-        this.request('GET', api, '', responseData => {
-          if (Array.isArray(responseData)) {
-            this.dataBaseTableData = responseData
-          } else {
-            this.dataBaseTableData = [responseData]
-          }
-          // this.dataBaseTableData = responseData
-          resolve(this.dataBaseTableData)
-        }, {isNeedloading: false})
-      })
     },
     // 新增自定指标指标
     addByCustom(item) {
@@ -1575,6 +1547,11 @@ export default {
         await this.request('PUT', this.apiCenter.disabledSingleAlarm, params)
         resolve()
       })
+    },
+    onTemplateListVisibleChange(visible) {
+      if (visible && isEmpty(this.allTemplateList)) {
+        this.getMonitorTemplateList()
+      }
     }
   },
   components: {

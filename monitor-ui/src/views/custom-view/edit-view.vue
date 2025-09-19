@@ -397,8 +397,10 @@ export default {
                         style="maxWidth: 180px"
                         value={i.tagValue}
                         on-on-change={v => {
-                          Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
-                          this.updateAllColorLine(params.index)
+                          if (i.tagValue && v && JSON.stringify(i.tagValue) !== JSON.stringify(v)) {
+                            Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
+                            this.updateAllColorLine(params.index)
+                          }
                         }}
                         filterable
                         multiple
