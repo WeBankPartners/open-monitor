@@ -51,7 +51,7 @@
                 v-model="param.value"
                 @on-open-change="getCollectedMetric"
                 @on-change="changeCollectedMetric(param)"
-                :disabled="metricConfigData.metric_type === 'business' || viewOnly"
+                :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)"
                 filterable
                 clearable
                 :key="param.label"
@@ -59,7 +59,7 @@
                 class="select-dropdown"
               >
                 <Option
-                  style="white-space: normal;"
+                  style="white-space: normal; max-width: 700px"
                   v-for="(item, itemIndex) in collectedMetricOptions"
                   :value="item.option_value"
                   :key="item.option_value + itemIndex"
