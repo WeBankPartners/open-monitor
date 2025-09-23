@@ -50,20 +50,34 @@ func InitMonitorMetricMap() error {
 	if len(serviceMetricList) > 0 {
 		MonitorObjList = append(MonitorObjList, serviceMetricList...)
 	}
+	log.Printf("[MonitorObjList] total objects: %d", len(MonitorObjList))
+	for _, obj := range MonitorObjList {
+		if obj == nil {
+			continue
+		}
+		metricCount := 0
+		if obj.Metrics != nil {
+			metricCount = len(obj.Metrics)
+		}
+		log.Printf("[MonitorObjList] endpoint=%s metric_count=%d", obj.Endpoint, metricCount)
+	}
 	return nil
 }
 
 func getMonitorServiceMetricMap() (endpointMetricMap map[string][]*MonitorPromMetricTable, serviceMetricList []*MonitorArchiveObj) {
 	endpointMetricMap = make(map[string][]*MonitorPromMetricTable)
 	var serviceMetricTable []*MonitorMetricTable
+	log.Printf("[ServiceMetric] start load service metrics ...")
 	err := monitorMysqlEngine.SQL("select guid,metric,monitor_type,prom_expr,service_group from metric where service_group is not null").Find(&serviceMetricTable)
 	if err != nil {
 		log.Printf("get service metric table fail,%s \n", err.Error())
 		return
 	}
 	if len(serviceMetricTable) == 0 {
+		log.Printf("[ServiceMetric] no rows in metric where service_group is not null")
 		return
 	}
+	log.Printf("[ServiceMetric] loaded %d service metrics", len(serviceMetricTable))
 	serviceMetricMap := make(map[string][]*MonitorPromMetricTable)
 	serviceEndpointTypeMap := make(map[string][]*MonitorEndpointTable)
 	for _, v := range serviceMetricTable {
@@ -77,6 +91,8 @@ func getMonitorServiceMetricMap() (endpointMetricMap map[string][]*MonitorPromMe
 					continue
 				}
 				serviceEndpointTypeMap[tmpStKey] = tmpEndpointTable
+				// keep summary only
+				log.Printf("[ServiceMetric] endpoints found: %d for key=%s", len(tmpEndpointTable), tmpStKey)
 			}
 			if len(serviceEndpointTypeMap[tmpStKey]) > 0 {
 				for _, tmpEndpoint := range serviceEndpointTypeMap[tmpStKey] {
@@ -93,6 +109,8 @@ func getMonitorServiceMetricMap() (endpointMetricMap map[string][]*MonitorPromMe
 						endpointMetricMap[tmpEndpoint.Guid] = []*MonitorPromMetricTable{&tmpMetricObj}
 					}
 				}
+			} else {
+				log.Printf("[ServiceMetric][WARN] no endpoints matched for service_group=%s monitor_type=%s; metrics for this pair will be skipped", v.ServiceGroup, v.MonitorType)
 			}
 			continue
 		}
@@ -114,6 +132,9 @@ func getMonitorServiceMetricMap() (endpointMetricMap map[string][]*MonitorPromMe
 	}
 	for k, v := range serviceMetricMap {
 		serviceMetricList = append(serviceMetricList, &MonitorArchiveObj{Endpoint: k, Metrics: v})
+		// summary per group
+		log.Printf("[ServiceMetric] add service group metrics endpoint=%s metric_count=%d", k, len(v))
 	}
+	log.Printf("[ServiceMetric] build done: endpointMetricMap(%d endpoints), serviceMetricList(%d groups)", len(endpointMetricMap), len(serviceMetricList))
 	return
 }
