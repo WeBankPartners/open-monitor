@@ -194,7 +194,7 @@
                   </Col>
 
                   <Col span="4">
-                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item, itemIndex) || (!item.matchingResult && item.regulative === 1)" style="width:90%"></Input>
+                  <Input v-model.trim="item.target_value" :disabled="view || retcodeItemDisabled(item, itemIndex)" style="width:90%"></Input>
                   </Col>
                   <Col span="2">
                   <span style="line-height: 32px;">{{ $t('m_' + item.value_type) }}</span>
