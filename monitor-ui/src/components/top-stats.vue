@@ -3,7 +3,7 @@
     <div class="left">
       <div class="metics-metal">
         <div class="col">
-          <div class="title">{{ $t("m_realTimeAlarm") }}</div>
+          <div class="title">{{ $attrs.ltitle }}</div>
           <img class="time-icon" src="../assets/img/icon_rltm.png" />
         </div>
       </div>

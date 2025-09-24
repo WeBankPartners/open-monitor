@@ -111,7 +111,12 @@
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('m_todayAlarm')" :noData="noData" />
+      <top-stats :ltitle="alarmType === 'realTime' ? $t('m_realTimeAlarm') : $t('m_alarmHistory')"
+        :lstats="leftStats" 
+        :rstats="rightStats" 
+        :rtitle="$t('m_todayAlarm')" 
+        :noData="noData" 
+      />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
