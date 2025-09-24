@@ -498,9 +498,9 @@ func GetAlarms(cond m.QueryAlarmCondition) (error, []*m.AlarmProblemQuery) {
 	if !cond.AlarmTable.End.IsZero() {
 		whereSql += fmt.Sprintf(" and end<='%s' ", cond.AlarmTable.End.Format(m.DatetimeFormat))
 	}
-	//  支持 告警任意搜索,但是只能搜索不关闭的告警
+	//  支持 告警任意搜索
 	if strings.TrimSpace(cond.Query) != "" {
-		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		whereSql += " and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
 		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query),
 			fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query), fmt.Sprintf("%%%s%%", cond.Query)}...)
 	}
@@ -1749,7 +1749,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	}
 	//  支持 告警任意搜索,但是只能搜索不关闭的告警
 	if strings.TrimSpace(param.Query) != "" {
-		whereSql += " and status <> 'closed' and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
+		whereSql += " and (endpoint like ? or s_metric like ? or alarm_name like ? or content like ? or s_priority like ?)"
 		params = append(params, []interface{}{fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query),
 			fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query), fmt.Sprintf("%%%s%%", param.Query)}...)
 	}
