@@ -111,7 +111,7 @@
 
                   <Col span="4">
                   <Input
-                    :disabled="view || (!item.matchingResult && item.regulative === 1)"
+                    :disabled="view"
                     v-model.trim="item.target_value"
                     style="width:90%"
                   >
