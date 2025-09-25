@@ -112,10 +112,10 @@
     </div>
     <div class="data-stats-container">
       <top-stats :ltitle="alarmType === 'realTime' ? $t('m_realTimeAlarm') : $t('m_alarmHistory')"
-        :lstats="leftStats" 
-        :rstats="rightStats" 
-        :rtitle="$t('m_todayAlarm')" 
-        :noData="noData" 
+                 :lstats="leftStats"
+                 :rstats="rightStats"
+                 :rtitle="$t('m_todayAlarm')"
+                 :noData="noData"
       />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
@@ -725,6 +725,7 @@ export default {
     },
     onAlarmTypeChange() {
       this.resetSearchParams()
+      this.getTodayAlarm()
       if (isEmpty(this.filters)) {
         this.getAlarm()
       } else {
