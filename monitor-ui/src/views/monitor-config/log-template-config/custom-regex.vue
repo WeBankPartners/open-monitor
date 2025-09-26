@@ -1053,7 +1053,7 @@ export default {
       if (this.isInTemplatePage || this.isBaseCustomeAdd) {
         return false
       }
-      if (!this.isInTemplatePage && !this.templateGuid) {
+      if ((this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateEdit) && !this.templateGuid) {
         return false
       }
       if (!isEmpty(item) && type) {
