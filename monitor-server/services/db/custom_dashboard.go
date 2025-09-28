@@ -14,6 +14,21 @@ import (
 	"time"
 )
 
+// makeInClauseFromStrings builds a SQL IN clause placeholder string like "(?, ?, ?)" and the corresponding args.
+// It assumes the caller has validated that values is non-empty.
+func makeInClauseFromStrings(values []string) (string, []interface{}) {
+	if len(values) == 0 {
+		return "(?)", []interface{}{""}
+	}
+	placeholders := make([]string, len(values))
+	args := make([]interface{}, len(values))
+	for i, v := range values {
+		placeholders[i] = "?"
+		args[i] = v
+	}
+	return "(" + strings.Join(placeholders, ",") + ")", args
+}
+
 func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, operator string, roles []string) (pageInfo models.PageInfo, list []*models.CustomDashboardTable, err error) {
 	var params []interface{}
 	var ids []string
@@ -853,4 +868,535 @@ func convertLineTypeIntToString(lineType int) string {
 		return "bar"
 	}
 	return ""
+}
+
+// SyncDashboardForCodeChanges updates dashboard charts under a log_metric_group when
+// code tag values are renamed, deleted, or added. This function is safe to call when no dashboards exist.
+func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string) (err error) {
+	var dashboardInfo models.CustomDashboardTable
+	if _, err = x.SQL("select id,panel_groups from custom_dashboard where log_metric_group=? limit 1", logMetricGroupGuid).Get(&dashboardInfo); err != nil {
+		return
+	}
+	dashboardId := dashboardInfo.Id
+
+	var chartRows []models.CustomChart
+	if err = x.SQL("select guid,name,public from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartRows); err != nil {
+		return err
+	}
+
+	// build actions
+	var actions []*Action
+
+	// Handle renames
+	for oldVal, newVal := range codeRenames {
+		matchedAny := false
+		for _, ch := range chartRows {
+			idx := strings.LastIndex(ch.Name, "-")
+			if idx > 0 {
+				prefix := ch.Name[:idx]
+				suffix := ch.Name[idx:]
+				if strings.Contains(prefix, oldVal) {
+					newPrefix := strings.Replace(prefix, oldVal, newVal, -1)
+					newName := newPrefix + suffix
+					actions = append(actions, &Action{Sql: "update custom_chart set name=? where guid=?", Param: []interface{}{newName, ch.Guid}})
+					matchedAny = true
+				}
+			}
+		}
+
+		// 2) series config series_name by id
+		var seriesCfgRows []models.CustomChartSeriesConfig
+		if err = x.SQL("select guid,series_name from custom_chart_series_config where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?))", logMetricGroupGuid).Find(&seriesCfgRows); err != nil {
+			return err
+		}
+		for _, cfg := range seriesCfgRows {
+			if cfg.SeriesName == oldVal {
+				actions = append(actions, &Action{Sql: "update custom_chart_series_config set series_name=? where guid=?", Param: []interface{}{newVal, cfg.Guid}})
+				matchedAny = true
+				continue
+			}
+			needle := "{code=" + oldVal + "}"
+			if strings.Contains(cfg.SeriesName, needle) {
+				newSeriesName := strings.Replace(cfg.SeriesName, needle, "{code="+newVal+"}", -1)
+				actions = append(actions, &Action{Sql: "update custom_chart_series_config set series_name=? where guid=?", Param: []interface{}{newSeriesName, cfg.Guid}})
+				matchedAny = true
+			}
+		}
+
+		var codeTagRows []models.CustomChartSeriesTag
+		if err = x.SQL("select guid from custom_chart_series_tag where name='code' and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?))", logMetricGroupGuid).Find(&codeTagRows); err != nil {
+			return err
+		}
+		if len(codeTagRows) > 0 {
+			var codeTagIds []string
+			for _, tr := range codeTagRows {
+				codeTagIds = append(codeTagIds, tr.Guid)
+			}
+			inPh, inArgs := makeInClauseFromStrings(codeTagIds)
+			sql := "update custom_chart_series_tagvalue set value=? where dashboard_chart_tag in " + inPh + " and value=?"
+			params := append([]interface{}{newVal}, inArgs...)
+			params = append(params, oldVal)
+			actions = append(actions, &Action{Sql: sql, Param: params})
+			matchedAny = true
+		}
+
+		if !matchedAny {
+			log.Warn(nil, log.LOGGER_APP, "no rename match in SyncDashboardForCodeChanges", zap.String("lmg", logMetricGroupGuid), zap.String("old", oldVal), zap.String("new", newVal))
+		}
+	}
+
+	// Handle deletes: delete charts that exclusively represent this code
+	for _, delCode := range codeDeletes {
+		// 1) locate charts for this code, but exclude other-charts
+		var delChatIds []string
+		for _, ch := range chartRows {
+			// Only delete dedicated charts for this code, not other-charts
+			if !strings.HasPrefix(ch.Name, constOther+"-") && strings.Contains(ch.Name, delCode) {
+				delChatIds = append(delChatIds, ch.Guid)
+			}
+		}
+		if len(delChatIds) == 0 {
+			continue
+		}
+
+		//  图表如果被别的看板引用,则不能删除，需要报错
+		for _, chartId := range delChatIds {
+			var refCount int
+			x.SQL("select count(1) from custom_dashboard_chart_rel where dashboard_chart=? and custom_dashboard not in (?)", chartId, dashboardId).Get(&refCount)
+			if refCount > 0 {
+				return fmt.Errorf("can not delete public chart %s referenced by other dashboards for code %s", chartId, delCode)
+			}
+			deleteActions, err := GetDeleteCustomDashboardChart(chartId)
+			if err != nil {
+				return err
+			}
+			actions = append(actions, deleteActions...)
+		}
+	}
+
+	// Adjust "other-" charts
+	// 1) identify other charts in this group
+	var otherChartIds []string
+	for _, ch := range chartRows {
+		if strings.HasPrefix(ch.Name, constOther+"-") {
+			otherChartIds = append(otherChartIds, ch.Guid)
+		}
+	}
+	log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges other-charts found", zap.String("lmg", logMetricGroupGuid), zap.Strings("otherChartIds", otherChartIds), zap.Strings("codeDeletes", codeDeletes), zap.Strings("codesAdded", codesAdded))
+	if len(otherChartIds) > 0 {
+		// 2) series under other charts
+		var otherSeriesIds []string
+		inPhCharts, inArgsCharts := makeInClauseFromStrings(otherChartIds)
+		if err = x.SQL("select guid from custom_chart_series where dashboard_chart in "+inPhCharts, inArgsCharts...).Find(&otherSeriesIds); err != nil {
+			return err
+		}
+		// 3) code tag ids under those series
+		var otherCodeTagIds []string
+		if len(otherSeriesIds) > 0 {
+			inPhSeries, inArgsSeries := makeInClauseFromStrings(otherSeriesIds)
+			if err = x.SQL("select guid from custom_chart_series_tag where name='code' and dashboard_chart_config in "+inPhSeries, inArgsSeries...).Find(&otherCodeTagIds); err != nil {
+				return err
+			}
+		}
+		if len(otherCodeTagIds) > 0 {
+			inPhTags, inArgsTags := makeInClauseFromStrings(otherCodeTagIds)
+			log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges updating other-charts NotIn list", zap.String("lmg", logMetricGroupGuid), zap.Strings("otherCodeTagIds", otherCodeTagIds), zap.Strings("codesAdded", codesAdded), zap.Strings("codeDeletes", codeDeletes))
+
+			// remove newly added codes from NotIn list of other-charts
+			for _, c := range codesAdded {
+				params := append([]interface{}{c}, inArgsTags...)
+				params = append(params, c)
+				actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) select t.guid,? from custom_chart_series_tag t where t.guid in " + inPhTags + " and not exists (select 1 from custom_chart_series_tagvalue v where v.dashboard_chart_tag=t.guid and v.value=?)", Param: params})
+				log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges adding code to other-charts NotIn", zap.String("code", c))
+			}
+			// add deleted codes back to NotIn of other-charts
+			for _, c := range codeDeletes {
+				actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in " + inPhTags + " and value=?", Param: append(inArgsTags, c)})
+				log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges removing code from other-charts NotIn", zap.String("code", c))
+			}
+		} else {
+			log.Warn(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges no other-charts code tags found", zap.String("lmg", logMetricGroupGuid))
+		}
+	}
+
+	// 看板分组更新
+	{
+		panelGroupsStr := dashboardInfo.PanelGroups
+		// parse current groups
+		groupSet := make(map[string]bool)
+		var groups []string
+		if strings.TrimSpace(panelGroupsStr) != "" {
+			for _, g := range strings.Split(panelGroupsStr, ",") {
+				g = strings.TrimSpace(g)
+				if g == "" {
+					continue
+				}
+				if !groupSet[g] {
+					groupSet[g] = true
+					groups = append(groups, g)
+				}
+			}
+		}
+		// ensure other exists but handle at the end
+		delete(groupSet, constOther)
+		var filtered []string
+		for _, g := range groups {
+			if g != constOther {
+				filtered = append(filtered, g)
+			}
+		}
+		// apply deletes
+		for _, c := range codeDeletes {
+			delete(groupSet, c)
+		}
+		// rebuild from set (excluding deleted)
+		filtered = filtered[:0]
+		for _, g := range groups {
+			if g != constOther && groupSet[g] {
+				filtered = append(filtered, g)
+			}
+		}
+		// apply adds
+		for _, c := range codesAdded {
+			if !groupSet[c] {
+				groupSet[c] = true
+				filtered = append(filtered, c)
+			}
+		}
+		// append other at the end always
+		filtered = append(filtered, constOther)
+		newPanelGroups := strings.Join(filtered, ",")
+		if newPanelGroups != panelGroupsStr {
+			// update dashboard panel_groups and audit update user/time
+			now := time.Now().Format(models.DatetimeFormat)
+			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{newPanelGroups, operator, now, dashboardId}})
+		}
+	}
+
+	// Recalculate chart coordinates for all charts in this dashboard
+	// Get all charts for this log_metric_group
+	var allChartRows []models.CustomChart
+	if err = x.SQL("select guid,name from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&allChartRows); err != nil {
+		return err
+	}
+
+	// Group charts by their code and sort by metric type to ensure correct order
+	codeToCharts := make(map[string][]models.CustomChart)
+	for _, chart := range allChartRows {
+		// Extract code from chart name (format: code-metric/serviceGroup)
+		parts := strings.Split(chart.Name, "-")
+		if len(parts) > 0 {
+			code := parts[0]
+			codeToCharts[code] = append(codeToCharts[code], chart)
+		}
+	}
+
+	// Sort charts within each code group by metric type (req_count, req_suc_rate, req_costtime_avg)
+	for code, charts := range codeToCharts {
+		sort.Slice(charts, func(i, j int) bool {
+			// Extract metric from chart name and sort by priority
+			metricI := extractMetricFromChartName(charts[i].Name)
+			metricJ := extractMetricFromChartName(charts[j].Name)
+
+			// Define sort order: req_count (0), req_suc_rate (1), req_costtime_avg (2)
+			orderI := getMetricSortOrder(metricI)
+			orderJ := getMetricSortOrder(metricJ)
+			return orderI < orderJ
+		})
+		codeToCharts[code] = charts
+	}
+
+	// Get current panel_groups to determine order
+	var currentPanelGroups string
+	x.SQL("select panel_groups from custom_dashboard where id=?", dashboardId).Get(&currentPanelGroups)
+
+	// Parse panel_groups to get the order
+	var orderedCodes []string
+	if strings.TrimSpace(currentPanelGroups) != "" {
+		for _, g := range strings.Split(currentPanelGroups, ",") {
+			g = strings.TrimSpace(g)
+			if g != "" {
+				orderedCodes = append(orderedCodes, g)
+			}
+		}
+	}
+
+	// Recalculate coordinates for ALL chart groups when there are any changes
+	// This ensures proper layout after code deletions, additions, or renames
+	if len(codeRenames) > 0 || len(codeDeletes) > 0 || len(codesAdded) > 0 {
+		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges recalculating ALL chart coordinates due to changes",
+			zap.String("lmg", logMetricGroupGuid),
+			zap.Int("renameCount", len(codeRenames)),
+			zap.Int("deleteCount", len(codeDeletes)),
+			zap.Int("addCount", len(codesAdded)))
+
+		chartIndex := 0
+		for _, code := range orderedCodes {
+			if charts, exists := codeToCharts[code]; exists {
+				// Each code has 3 charts: requests, success rate, avg cost time
+				// GroupDisplayConfig follows the same pattern as creation:
+				// - First chart (requests): calcDisplayConfig(0)
+				// - Second chart (success rate): calcDisplayConfig(1)
+				// - Third chart (avg cost time): calcDisplayConfig(1)
+				for i, chart := range charts {
+					displayConfig := calcDisplayConfig(chartIndex*3 + i)
+					displayConfigBytes, _ := json.Marshal(displayConfig)
+
+					// GroupDisplayConfig calculation matches creation logic
+					var groupDisplayConfig models.DisplayConfig
+					if i == 0 {
+						// First chart (requests): GroupDisplayConfig = calcDisplayConfig(0)
+						groupDisplayConfig = calcDisplayConfig(0)
+					} else {
+						// Second and third charts: GroupDisplayConfig = calcDisplayConfig(1)
+						groupDisplayConfig = calcDisplayConfig(1)
+					}
+					groupDisplayConfigBytes, _ := json.Marshal(groupDisplayConfig)
+
+					actions = append(actions, &Action{
+						Sql:   "update custom_dashboard_chart_rel set display_config=?, group_display_config=? where dashboard_chart=?",
+						Param: []interface{}{string(displayConfigBytes), string(groupDisplayConfigBytes), chart.Guid},
+					})
+				}
+				chartIndex++
+			}
+		}
+	}
+
+	// Handle additions: create new charts for added codes
+	if len(codesAdded) > 0 {
+		// Create charts for each added code using autoGenerateCustomDashboard logic
+		// Find the position of each added code in the final panel_groups order
+		for _, code := range codesAdded {
+			// Find the index of this code in the orderedCodes
+			codeIndex := -1
+			for i, orderedCode := range orderedCodes {
+				if orderedCode == code {
+					codeIndex = i
+					break
+				}
+			}
+			if codeIndex == -1 {
+				// This shouldn't happen, but fallback to end
+				codeIndex = len(orderedCodes) - 1
+			}
+
+			chartActions, err := createChartForCode(logMetricGroupGuid, code, operator, dashboardId, codeIndex)
+			if err != nil {
+				return err
+			}
+			actions = append(actions, chartActions...)
+		}
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges recalculated chart coordinates",
+		zap.String("lmg", logMetricGroupGuid),
+		zap.Strings("orderedCodes", orderedCodes),
+		zap.Int("totalCharts", len(allChartRows)))
+
+	if len(actions) == 0 {
+		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges no actions to execute", zap.String("lmg", logMetricGroupGuid))
+		return nil
+	}
+
+	// Log all SQL actions before execution
+	log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges executing SQL actions",
+		zap.String("lmg", logMetricGroupGuid),
+		zap.Int("actionCount", len(actions)),
+		zap.Strings("codeRenames", func() []string {
+			var result []string
+			for old, new := range codeRenames {
+				result = append(result, fmt.Sprintf("%s->%s", old, new))
+			}
+			return result
+		}()),
+		zap.Strings("codeDeletes", codeDeletes),
+		zap.Strings("codesAdded", codesAdded))
+
+	// Print all SQL statements and parameters
+	for i, action := range actions {
+		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges SQL execution",
+			zap.String("lmg", logMetricGroupGuid),
+			zap.Int("actionIndex", i+1),
+			zap.String("sql", action.Sql),
+			zap.Any("params", action.Param))
+	}
+
+	return Transaction(actions)
+}
+
+// createChartForCode creates charts for a specific code using autoGenerateCustomDashboard logic
+func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId int, chartIndex int) ([]*Action, error) {
+	var actions []*Action
+
+	// Get group context: prefix, monitor, service group & display
+	var metricPrefixCode, logMetricMonitor string
+	x.SQL("select metric_prefix_code,log_metric_monitor from log_metric_group where guid=?", logMetricGroupGuid).Get(&metricPrefixCode, &logMetricMonitor)
+	var serviceGroup, monitorType string
+	x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", logMetricMonitor).Get(&serviceGroup, &monitorType)
+	var serviceGroupDisplay string
+	x.SQL("select display_name from service_group where guid=?", serviceGroup).Get(&serviceGroupDisplay)
+	if serviceGroupDisplay == "" {
+		serviceGroupDisplay = serviceGroup
+	}
+
+	now := time.Now().Format(models.DatetimeFormat)
+
+	buildMetric := func(base string) string {
+		if strings.TrimSpace(metricPrefixCode) == "" {
+			return base
+		}
+		return metricPrefixCode + "_" + base
+	}
+
+	generateMetricGuid := func(metric, serviceGroup string) string {
+		return fmt.Sprintf("%s__%s", metric, serviceGroup)
+	}
+
+	// Chart 1: requests (two series) - 请求量+失败量 柱状图
+	chartId1 := guid.CreateGuid()
+	chartName1 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constReqCount), serviceGroupDisplay)
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		chartId1, dashboardId, 1, chartName1, "bar", "bar", "sum", 60, "", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+	// Calculate display config for chart 1 (requests)
+	displayConfig1 := calcDisplayConfig(chartIndex*3 + 0)
+	displayConfig1Bytes, _ := json.Marshal(displayConfig1)
+	groupDisplayConfig1 := calcDisplayConfig(0)
+	groupDisplayConfig1Bytes, _ := json.Marshal(groupDisplayConfig1)
+
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		guid.CreateGuid(), dashboardId, chartId1, code, string(displayConfig1Bytes), operator, operator, now, now, string(groupDisplayConfig1Bytes)}})
+
+	// Get service group info for proper endpoint and color configuration
+	var serviceGroupTable models.ServiceGroupTable
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(&serviceGroupTable)
+
+	// Generate series name and color config for req_count
+	seriesName1 := fmt.Sprintf("%s:%s{code=%s}", buildMetric(constReqCount), serviceGroupDisplay, code)
+	series1 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{series1, chartId1, serviceGroup, serviceGroup, serviceGroupDisplay, monitorType, buildMetric(constReqCount), "#1a94bc", "", serviceGroupTable.ServiceType, "business", generateMetricGuid(buildMetric(constReqCount), serviceGroup)}})
+
+	// Add series config for req_count
+	config1 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{config1, series1, fmt.Sprintf("code=%s", code), "#1a94bc", seriesName1}})
+
+	tag1 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag1, series1, constCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag1, code}})
+
+	// Generate series name and color config for req_fail_count
+	seriesName2 := fmt.Sprintf("%s:%s{code=%s}", buildMetric(constReqFailCount), serviceGroupDisplay, code)
+	series2 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{series2, chartId1, serviceGroup, serviceGroup, serviceGroupDisplay, monitorType, buildMetric(constReqFailCount), "#ff6b6b", "", serviceGroupTable.ServiceType, "business", generateMetricGuid(buildMetric(constReqFailCount), serviceGroup)}})
+
+	// Add series config for req_fail_count
+	config2 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{config2, series2, fmt.Sprintf("code=%s", code), "#ff6b6b", seriesName2}})
+
+	tag2 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag2, series2, constCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag2, code}})
+
+	// Chart 2: success rate - 成功率
+	chartId2 := guid.CreateGuid()
+	chartName2 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constReqSucCount), serviceGroupDisplay)
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		chartId2, dashboardId, 1, chartName2, "line", "line", "none", 60, "%", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+	// Calculate display config for chart 2 (success rate)
+	displayConfig2 := calcDisplayConfig(chartIndex*3 + 1)
+	displayConfig2Bytes, _ := json.Marshal(displayConfig2)
+	groupDisplayConfig2 := calcDisplayConfig(1)
+	groupDisplayConfig2Bytes, _ := json.Marshal(groupDisplayConfig2)
+
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		guid.CreateGuid(), dashboardId, chartId2, code, string(displayConfig2Bytes), operator, operator, now, now, string(groupDisplayConfig2Bytes)}})
+
+	// Generate series name and color config for req_suc_count
+	seriesName3 := fmt.Sprintf("%s:%s{code=%s}", buildMetric(constReqSucCount), serviceGroupDisplay, code)
+	series3 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{series3, chartId2, serviceGroup, serviceGroup, serviceGroupDisplay, monitorType, buildMetric(constReqSucCount), "#52c41a", "", serviceGroupTable.ServiceType, "business", generateMetricGuid(buildMetric(constReqSucCount), serviceGroup)}})
+
+	// Add series config for req_suc_count
+	config3 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{config3, series3, fmt.Sprintf("code=%s", code), "#52c41a", seriesName3}})
+
+	tag3 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag3, series3, constCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag3, code}})
+
+	// Chart 3: avg costtime - 平均耗时
+	chartId3 := guid.CreateGuid()
+	chartName3 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constConstTimeAvg), serviceGroupDisplay)
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		chartId3, dashboardId, 1, chartName3, "line", "line", "none", 60, "ms", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+	// Calculate display config for chart 3 (avg cost time)
+	displayConfig3 := calcDisplayConfig(chartIndex*3 + 2)
+	displayConfig3Bytes, _ := json.Marshal(displayConfig3)
+	groupDisplayConfig3 := calcDisplayConfig(1)
+	groupDisplayConfig3Bytes, _ := json.Marshal(groupDisplayConfig3)
+
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time,group_display_config) values(?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		guid.CreateGuid(), dashboardId, chartId3, code, string(displayConfig3Bytes), operator, operator, now, now, string(groupDisplayConfig3Bytes)}})
+
+	// Generate series name and color config for req_costtime_avg
+	seriesName4 := fmt.Sprintf("%s:%s{code=%s,retcode=%s}", buildMetric(constConstTimeAvg), serviceGroupDisplay, code, constSuccess)
+	series4 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{series4, chartId3, serviceGroup, serviceGroup, serviceGroupDisplay, monitorType, buildMetric(constConstTimeAvg), "#fa8c16", "", serviceGroupTable.ServiceType, "business", generateMetricGuid(buildMetric(constConstTimeAvg), serviceGroup)}})
+
+	// Add series config for req_costtime_avg
+	config4 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{config4, series4, fmt.Sprintf("code=%s,retcode=%s", code, constSuccess), "#fa8c16", seriesName4}})
+
+	tag4 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag4, series4, constCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag4, code}})
+
+	return actions, nil
+}
+
+// SyncAlarmStrategyForCodeChanges function moved to log_metric.go
+
+// extractMetricFromChartName extracts metric name from chart name
+// Format: code-metricPrefixCode_metric/serviceGroup
+// Returns the metric part (e.g., "req_count", "req_suc_rate", "req_costtime_avg")
+func extractMetricFromChartName(chartName string) string {
+	// Split by "-" to get code and metric part
+	parts := strings.Split(chartName, "-")
+	if len(parts) < 2 {
+		return ""
+	}
+
+	// Get the metric part (everything after the first "-")
+	metricPart := parts[1]
+
+	// Split by "/" to remove service group
+	metricParts := strings.Split(metricPart, "/")
+	if len(metricParts) == 0 {
+		return ""
+	}
+
+	// Extract metric from metricPrefixCode_metric format
+	metricWithPrefix := metricParts[0]
+	// Find the last "_" to separate prefix from metric
+	lastUnderscore := strings.LastIndex(metricWithPrefix, "_")
+	if lastUnderscore == -1 {
+		return metricWithPrefix
+	}
+
+	return metricWithPrefix[lastUnderscore+1:]
+}
+
+// getMetricSortOrder returns sort order for metrics
+// req_count=0, req_suc_rate=1, req_costtime_avg=2
+func getMetricSortOrder(metric string) int {
+	switch metric {
+	case constReqCount:
+		return 0
+	case constReqSuccessRate:
+		return 1
+	case constConstTimeAvg:
+		return 2
+	default:
+		return 999 // Unknown metrics go to the end
+	}
 }

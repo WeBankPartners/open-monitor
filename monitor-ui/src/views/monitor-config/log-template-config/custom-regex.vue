@@ -819,8 +819,8 @@ export default {
             delete tmpData.success_code
           }
           tmpData.log_metric_monitor = this.parentGuid
-          tmpData.metric_prefix_code = this.metricPrefixCode
         }
+        tmpData.metric_prefix_code = this.metricPrefixCode
       }
       if (this.isInBusinessConfigAdd || this.isBaseCustomeTemplateCopy || this.isInTemplatePage) {
         tmpData.auto_create_dashboard = this.auto_create_dashboard
@@ -1053,7 +1053,7 @@ export default {
       if (this.isInTemplatePage || this.isBaseCustomeAdd) {
         return false
       }
-      if (!this.isInTemplatePage && !this.templateGuid) {
+      if ((this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateEdit) && !this.templateGuid) {
         return false
       }
       if (!isEmpty(item) && type) {
