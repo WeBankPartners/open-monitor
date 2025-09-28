@@ -611,9 +611,10 @@ func generateSimpleChartSeries(serviceGroup, monitorType, metricPrefixCode strin
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	metricGuid := metric.Metric
+	fullMetricName := metric.Metric
 	if metricPrefixCode != "" {
 		metricGuid = metricPrefixCode + "_" + metricGuid
-		metric.Metric = metricPrefixCode + "_" + metric.Metric
+		fullMetricName = metricPrefixCode + "_" + metric.Metric
 	}
 	dto := &models.CustomChartSeriesDto{
 		Endpoint:     serviceGroup,
@@ -623,7 +624,7 @@ func generateSimpleChartSeries(serviceGroup, monitorType, metricPrefixCode strin
 		ColorGroup:   metric.ColorGroup,
 		MetricType:   "business",
 		MetricGuid:   generateMetricGuid(metricGuid, serviceGroup),
-		Metric:       metric.Metric,
+		Metric:       fullMetricName,
 		Tags:         make([]*models.TagDto, 0),
 	}
 	if serviceGroupTable != nil {

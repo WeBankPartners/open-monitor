@@ -158,7 +158,7 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')"
+      :title="isEditState ? (addAndEditModal.isAdd ? $t('m_button_add') : $t('m_button_edit')) : $t('m_button_view')"
       :mask-closable="false"
       :width="900"
     >
@@ -257,7 +257,7 @@
       </div>
     </Modal>
     <BaseDrawer
-      :title="isAddState ? $t('m_add') : $t('m_button_edit')"
+      :title="isEditState ? (isAddState ? $t('m_add') : $t('m_button_edit')) : $t('m_button_view')"
       :visible.sync="isTableChangeFormShow"
       :realWidth="1000"
       :scrollable="true"

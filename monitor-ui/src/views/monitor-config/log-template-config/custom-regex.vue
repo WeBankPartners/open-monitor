@@ -37,7 +37,7 @@
               <Input
                 v-model.trim="metricPrefixCode"
                 maxlength="15"
-                :disabled="isOperationBoxDisabled()"
+                :disabled="isOperationBoxDisabled() || isBaseCustomeTemplateAndNoTemplateEdit"
                 show-word-limit
                 :placeholder="$t('m_metric_code_placeholder')"
                 style="width:96%"
@@ -52,6 +52,7 @@
                 :rows="15"
                 style="width: 96%"
                 :disabled="isOperationBoxDisabled()"
+                @on-blur="onDemoLogBlur"
               />
               <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
                 {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
@@ -171,6 +172,7 @@ export default {
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
+          width: 150,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -192,6 +194,7 @@ export default {
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
+          width: 350,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -217,6 +220,7 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
+          minWidth: 100,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -238,6 +242,7 @@ export default {
           title: this.$t('m_match_value_pure'),
           ellipsis: true,
           tooltip: true,
+          minWidth: 100,
           key: 'string_map',
           render: (h, params) => {
             const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',') || ''
@@ -617,6 +622,9 @@ export default {
     isBaseCustomeTemplateCopy() { // 在业务配置页面复制
       return this.actionType === 'copy' && !this.isLogTemplate && !isEmpty(this.parentGuid)
     },
+    isBaseCustomeTemplateAndNoTemplateEdit() { // 在业务配置页面编辑没有模板的
+      return this.actionType === 'edit' && !this.isLogTemplate && !isEmpty(this.parentGuid) && isEmpty(this.templateGuid)
+    },
   },
   methods: {
     async loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
@@ -948,25 +956,20 @@ export default {
         return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       }
     },
-    generateBackstageTrial() {
+    generateBackstageTrial(needTips = true) {
       if (this.configInfo.demo_log === '') {
         this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
         return
       }
-      {/* const hasDuplicatesParamList = this.configInfo.param_list.some((element, index) => {
-        return this.configInfo.param_list.findIndex((item) => item.name === element.name) !== index
-      })
-      if (hasDuplicatesParamList) {
-        this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
-        return true
-      } */}
       const params = {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
       }
       this.request('POST', this.apiCenter.standardLogRegexMatch, params, responseData => {
         const cacheIsNumericValue = cloneDeep(this.isNumericValue)
-        this.$Message.success(this.$t('m_success'))
+        if (needTips) {
+          this.$Message.success(this.$t('m_success'))
+        }
         this.configInfo.param_list = responseData || []
         responseData.forEach(item => {
           Vue.set(this.isNumericValue, item.name, !this.isNumericString(item.demo_match_value))
@@ -1091,6 +1094,9 @@ export default {
           resolve()
         })
       })
+    },
+    onDemoLogBlur() {
+      this.generateBackstageTrial(false)
     }
   },
   components: {
