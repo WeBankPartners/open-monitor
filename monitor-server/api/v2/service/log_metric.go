@@ -816,7 +816,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	}
 
 	// Delegate update and dashboard/alarm synchronization to db layer
-	if err := db.UpdateLogMetricGroupWithDashboardAndAlarm(&param, middleware.GetOperateUser(c)); err != nil {
+	if err := db.UpdateLogMetricGroupWithDashboardAndAlarm(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}

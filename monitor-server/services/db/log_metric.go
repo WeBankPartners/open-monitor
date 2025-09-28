@@ -941,7 +941,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 				}
 			}
 			if matchMetricGroupObj.Guid != "" {
-				tmpMetricGroupActions, tmpAffect, tmpErr := getUpdateLogMetricGroupByImport(inputMetricGroup, operator)
+				tmpMetricGroupActions, tmpAffect, tmpErr := getUpdateLogMetricGroupByImport(inputMetricGroup, operator, roles)
 				if tmpErr != nil {
 					err = tmpErr
 					return
@@ -1066,7 +1066,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 	return
 }
 
-func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string) (actions []*Action, affectEndpointGroups []string, err error) {
+func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, roles []string) (actions []*Action, affectEndpointGroups []string, err error) {
 	if metricGroup.LogMonitorTemplate != "" {
 		tmpCreateParam := models.LogMetricGroupWithTemplate{
 			LogMetricGroupGuid:     metricGroup.Guid,
@@ -1085,7 +1085,7 @@ func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 			}
 		}
 		// directly perform update with dashboard sync
-		if err = UpdateLogMetricGroupWithDashboardAndAlarm(&tmpCreateParam, operator); err != nil {
+		if err = UpdateLogMetricGroupWithDashboardAndAlarm(&tmpCreateParam, operator, roles); err != nil {
 			return
 		}
 		// no direct actions because we executed update; return empty actions
@@ -2215,7 +2215,7 @@ func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarn
 // UpdateLogMetricGroupWithDashboardAndAlarm wraps UpdateLogMetricGroup and, when auto_dashboard is enabled,
 // computes code string_map diffs (add/rename/delete) and synchronizes dashboards accordingly.
 // When auto_alarm is enabled, it will also (reserved) sync alarm strategies in future.
-func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (err error) {
 	// load old code string_map for diff
 	var oldMaps []*models.LogMetricStringMapTable
 	x.SQL("select guid,log_param_name,value_type,source_value,regulative,target_value from log_metric_string_map where log_metric_group=?", param.LogMetricGroupGuid).Find(&oldMaps)
@@ -2228,10 +2228,7 @@ func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithT
 	// check auto flags
 	var autoDashboard, autoAlarm int
 	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&autoDashboard, &autoAlarm)
-	if autoAlarm == 1 {
-		// TODO: sync alarm strategies for code changes (reserved)
-	}
-	if autoDashboard != 1 {
+	if autoDashboard != 1 && autoAlarm != 1 {
 		return nil
 	}
 	// diffs
@@ -2281,13 +2278,271 @@ func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithT
 		}
 	}
 	if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
-		if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
-			return err
+		if autoDashboard == 1 {
+			if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
+				return err
+			}
+		}
+		if autoAlarm == 1 {
+			if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
+				return err
+			}
 		}
 	}
 	// perform core update
 	if err = UpdateLogMetricGroup(param, operator); err != nil {
 		return err
+	}
+	return nil
+}
+
+// SyncAlarmStrategyForCodeChanges synchronizes alarm strategies when codes are added, renamed, or deleted
+func SyncAlarmStrategyForCodeChanges(param *models.LogMetricGroupWithTemplate, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string, roles []string) (err error) {
+	var actions []*Action
+
+	// Get existing alarm strategies for this log_metric_group
+	var existingStrategies []models.AlarmStrategyTable
+	if err = x.SQL("select guid,name,metric from alarm_strategy where log_metric_group=?", param.LogMetricGroupGuid).Find(&existingStrategies); err != nil {
+		return err
+	}
+
+	// Get log metric group info for context (query to ensure data consistency)
+	var metricPrefixCode, logMetricMonitor, logMonitorTemplateGuid string
+	x.SQL("select metric_prefix_code,log_metric_monitor,log_monitor_template from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&metricPrefixCode, &logMetricMonitor, &logMonitorTemplateGuid)
+	var serviceGroup, monitorType string
+	x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", logMetricMonitor).Get(&serviceGroup, &monitorType)
+
+	// Get service group info and display name (consistent with autoGenerateAlarmStrategy)
+	var serviceGroupTable models.ServiceGroupTable
+	var displayServiceGroup = serviceGroup
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(&serviceGroupTable)
+	if serviceGroupTable.DisplayName != "" {
+		displayServiceGroup = serviceGroupTable.DisplayName
+	}
+
+	// Get service group roles for alarm notifications
+	serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+
+	// Handle roles fallback logic (same as autoGenerateAlarmStrategy)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges service group roles",
+		zap.String("serviceGroup", serviceGroup),
+		zap.Strings("roles", serviceGroupsRoles))
+
+	// Get endpoint group for this service group
+	var endpointGroup string
+	var endpointGroupMonitorType string
+
+	// Use the logic from autoGenerateAlarmStrategy to get endpoint group
+	if serviceGroup != "" && monitorType != "" {
+		var endpointGroupIds []string
+		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
+			return err
+		}
+		if len(endpointGroupIds) > 0 {
+			endpointGroup = endpointGroupIds[0]
+		}
+	}
+
+	// Fallback: if no endpoint group found with service_group and monitor_type,
+	// try to find one with service_group only, but this should be avoided
+	if endpointGroup == "" {
+		log.Warn(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges no endpoint group found with service_group and monitor_type",
+			zap.String("serviceGroup", serviceGroup),
+			zap.String("monitorType", monitorType))
+		// Don't use fallback as it may select wrong endpoint_group
+		// Instead, we should create a proper endpoint_group or skip alarm creation
+		return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+	}
+
+	// Handle roles fallback logic (same as autoGenerateAlarmStrategy)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges service group roles",
+		zap.String("serviceGroup", serviceGroup),
+		zap.Strings("roles", serviceGroupsRoles))
+	if endpointGroup == "" {
+		// If no endpoint group exists for this service group, we need to create one or use a default
+		// For now, we'll skip creating alarm strategies if no endpoint group exists
+		log.Warn(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges no endpoint group found for service group", zap.String("serviceGroup", serviceGroup))
+		return nil
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges found endpoint group",
+		zap.String("serviceGroup", serviceGroup),
+		zap.String("endpointGroup", endpointGroup),
+		zap.String("monitorType", endpointGroupMonitorType))
+
+	// Get retcode success value
+	var retCodeStringMapRows []*models.LogMetricStringMapTable
+	x.SQL("select * from log_metric_string_map where log_metric_group=? and log_param_name='retcode'", param.LogMetricGroupGuid).Find(&retCodeStringMapRows)
+	sucCode := getRetCodeSuccessCode(retCodeStringMapRows)
+
+	// Get log monitor template to get metric list
+	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(logMonitorTemplateGuid)
+	if getErr != nil {
+		return fmt.Errorf("failed to get log monitor template: %v", getErr)
+	}
+
+	// Get auto alarm metric list using template's metric list
+	autoAlarmMetricList := getAutoAlarmMetricList(logMonitorTemplateObj.MetricList, serviceGroup, metricPrefixCode)
+
+	// Handle code additions
+	for _, code := range codesAdded {
+		for _, alarmMetric := range autoAlarmMetricList {
+			if !alarmMetric.AutoWarn {
+				continue
+			}
+
+			// Create alarm strategy for the new code
+			alarmStrategy := &models.GroupStrategyObj{
+				NotifyList: make([]*models.NotifyObj, 0),
+				Conditions: make([]*models.StrategyConditionObj, 0),
+			}
+
+			// Generate alarm strategy name following autoGenerateAlarmStrategy logic
+			alarmStrategy.Name = fmt.Sprintf("%s-%s%s%s%s", code, generateMetricGuidDisplayName(metricPrefixCode, alarmMetric.Metric, displayServiceGroup), alarmMetric.Operator, alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
+			alarmStrategy.Priority = "high"
+			alarmStrategy.NotifyEnable = 1
+			alarmStrategy.ActiveWindow = "00:00-23:59"
+			// Set EndpointGroup to the found endpoint group
+			alarmStrategy.EndpointGroup = endpointGroup
+			alarmStrategy.LogMetricGroup = &param.LogMetricGroupGuid
+			alarmStrategy.Metric = alarmMetric.MetricId
+			alarmStrategy.MetricName = alarmMetric.Metric
+			alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategy.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+
+			// Add notification configuration
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
+
+			// Add metric tags
+			metricTags := make([]*models.MetricTag, 0)
+			for _, tag := range alarmMetric.TagConfig {
+				if tag == constCode {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName:  constCode,
+						Equal:    ConstEqualIn,
+						TagValue: []string{code},
+					})
+				} else if tag == constRetCode && (strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) || strings.HasSuffix(alarmMetric.Metric, constConstTimeMax)) {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName:  constRetCode,
+						Equal:    ConstEqualIn,
+						TagValue: []string{sucCode},
+					})
+				} else {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName: tag,
+					})
+				}
+			}
+
+			alarmStrategy.Conditions = append(alarmStrategy.Conditions, &models.StrategyConditionObj{
+				Metric:     alarmMetric.MetricId,
+				MetricName: alarmMetric.Metric,
+				Condition:  fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold),
+				Last:       fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit),
+				Tags:       metricTags,
+			})
+			alarmStrategy.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
+			alarmStrategy.Last = fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit)
+
+			// Generate actions for creating alarm strategy
+			now := time.Now().Format(models.DatetimeFormat)
+			if subActions, createErr := getCreateAlarmStrategyActions(alarmStrategy, now, operator); createErr != nil {
+				return createErr
+			} else {
+				actions = append(actions, subActions...)
+			}
+		}
+	}
+
+	// Handle code renames - update existing alarm strategies
+	for oldCode, newCode := range codeRenames {
+		// Update alarm strategy names and code tags
+		for _, strategy := range existingStrategies {
+			// Check if this strategy is for the old code (name starts with oldCode-)
+			if strings.HasPrefix(strategy.Name, oldCode+"-") {
+				newName := strings.Replace(strategy.Name, oldCode+"-", newCode+"-", 1)
+				actions = append(actions, &Action{
+					Sql:   "update alarm_strategy set name=? where guid=?",
+					Param: []interface{}{newName, strategy.Guid},
+				})
+
+				// Update code tag values in alarm_strategy_tag_value
+				actions = append(actions, &Action{
+					Sql:   "update alarm_strategy_tag_value set value=? where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{newCode, strategy.Guid, oldCode},
+				})
+			}
+		}
+	}
+
+	// Handle code deletions
+	for _, delCode := range codeDeletes {
+		// Delete alarm strategies for the deleted code
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, delCode+"-") {
+				// Delete alarm strategy and all related records
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy where guid=?",
+					Param: []interface{}{strategy.Guid},
+				})
+			}
+		}
+
+		// Update other alarm strategies to remove the deleted code from NotIn list
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Remove the deleted code from other strategies' NotIn list
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{strategy.Guid, delCode},
+				})
+			}
+		}
+	}
+
+	// Handle other alarm strategies for code renames
+	for oldCode, newCode := range codeRenames {
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Update code in other strategies' NotIn list: remove old code, add new code
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{strategy.Guid, oldCode},
+				})
+				actions = append(actions, &Action{
+					Sql:   "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and t.name='code' and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)",
+					Param: []interface{}{newCode, strategy.Guid, newCode},
+				})
+			}
+		}
+	}
+
+	// Handle other alarm strategies for code additions
+	if len(codesAdded) > 0 {
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Add new codes to other strategies' NotIn list
+				for _, code := range codesAdded {
+					actions = append(actions, &Action{
+						Sql:   "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and t.name='code' and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)",
+						Param: []interface{}{code, strategy.Guid, code},
+					})
+				}
+			}
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
 	}
 	return nil
 }

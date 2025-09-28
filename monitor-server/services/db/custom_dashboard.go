@@ -1255,7 +1255,7 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 
 	// Chart 1: requests (two series) - 请求量+失败量 柱状图
 	chartId1 := guid.CreateGuid()
-	chartName1 := fmt.Sprintf("%s-%s_%s/%s", code, buildMetric(constReqCount), serviceGroupDisplay)
+	chartName1 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constReqCount), serviceGroupDisplay)
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chartId1, dashboardId, 1, chartName1, "bar", "bar", "sum", 60, "", operator, operator, now, now, "one", "", logMetricGroupGuid}})
 	// Calculate display config for chart 1 (requests)
@@ -1354,6 +1354,8 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 	return actions, nil
 }
 
+// SyncAlarmStrategyForCodeChanges function moved to log_metric.go
+
 // extractMetricFromChartName extracts metric name from chart name
 // Format: code-metricPrefixCode_metric/serviceGroup
 // Returns the metric part (e.g., "req_count", "req_suc_rate", "req_costtime_avg")
@@ -1388,11 +1390,11 @@ func extractMetricFromChartName(chartName string) string {
 // req_count=0, req_suc_rate=1, req_costtime_avg=2
 func getMetricSortOrder(metric string) int {
 	switch metric {
-	case "req_count":
+	case constReqCount:
 		return 0
-	case "req_suc_rate":
+	case constReqSuccessRate:
 		return 1
-	case "req_costtime_avg":
+	case constConstTimeAvg:
 		return 2
 	default:
 		return 999 // Unknown metrics go to the end
