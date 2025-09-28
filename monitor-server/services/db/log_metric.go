@@ -2035,6 +2035,21 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 
 	// 7. 如果启用了自动告警，添加告警创建操作
 	if autoAlarm == 1 {
+		// 获取 endpoint_group
+		var endpointGroup string
+		serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
+		var endpointGroupIds []string
+		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
+			return err
+		}
+		if len(endpointGroupIds) > 0 {
+			endpointGroup = endpointGroupIds[0]
+		}
+
+		if endpointGroup == "" {
+			return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+		}
+
 		createAlarmActions, _, createErr := autoGenerateSimpleAlarmStrategy(models.AutoSimpleAlarmStrategyParam{
 			LogMetricGroupGuid: param.Guid,
 			ServiceGroup:       param.ServiceGroup,
@@ -2044,6 +2059,8 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 			Operator:           operator,
 			AutoCreateWarn:     true,
 			LogType:            models.LogMonitorCustomType,
+			EndpointGroup:      endpointGroup,
+			ErrMsgObj:          nil, // 更新操作不需要错误消息对象
 		})
 		if createErr != nil {
 			err = createErr
