@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -1979,17 +1980,170 @@ func ValidateLogMetricGroupName(guid, name, logMetricMonitor string) (err error)
 	return
 }
 
-func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string) (err error) {
+func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string) (err error) {
+	// 1. 检查是否启用了自动看板和告警
+	var autoDashboard, autoAlarm int
+	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.Guid).Get(&autoDashboard, &autoAlarm)
+
+	// 2. 获取现有配置用于变更检测
+	existLogGroupData, getExistErr := GetLogMetricCustomGroup(param.Guid)
+	if getExistErr != nil {
+		return getExistErr
+	}
+
+	// 3. 检测指标变更
+	metricRenames := make(map[string]string)
+	var metricDeletes, metricsAdded []string
+
+	// 构建现有指标映射
+	existMetricMap := make(map[string]*models.LogMetricConfigDto)
+	for _, existMetric := range existLogGroupData.MetricList {
+		existMetricMap[existMetric.Metric] = existMetric
+	}
+
+	// 构建新指标映射
+	newMetricMap := make(map[string]*models.LogMetricConfigDto)
+	for _, newMetric := range param.MetricList {
+		newMetricMap[newMetric.Metric] = newMetric
+	}
+
+	// 检测重命名和删除
+	for metricName, existMetric := range existMetricMap {
+		if newMetric, exists := newMetricMap[metricName]; exists {
+			// 指标存在，检查是否有变更
+			if existMetric.DisplayName != newMetric.DisplayName ||
+				existMetric.AggType != newMetric.AggType ||
+				existMetric.AutoAlarm != newMetric.AutoAlarm {
+				// 指标有变更，视为重命名（这里简化处理）
+				metricRenames[metricName] = metricName
+			}
+		} else {
+			// 指标被删除
+			metricDeletes = append(metricDeletes, metricName)
+		}
+	}
+
+	// 检测新增
+	for metricName := range newMetricMap {
+		if _, exists := existMetricMap[metricName]; !exists {
+			// 新增指标
+			metricsAdded = append(metricsAdded, metricName)
+		}
+	}
+
+	// 4. 检测 string_map 变更（任意业务参数作为标签的变更）
+	// 找出作为标签使用的参数名集合（来自指标的 TagConfigList）
+	tagParamNames := make(map[string]bool)
+	for _, m := range param.MetricList {
+		for _, tagName := range m.TagConfigList {
+			tagParamNames[tagName] = true
+		}
+	}
+
+	// 针对每个标签参数，分别计算 renames/deletes/adds 并在后续分别同步
+	perTagRenames := make(map[string]map[string]string)
+	perTagDeletes := make(map[string][]string)
+	perTagAdds := make(map[string][]string)
+
+	// 先构建旧、新的 param 映射：paramName -> string_map 列表
+	existParamMap := make(map[string][]*models.LogMetricStringMapTable)
+	for _, p := range existLogGroupData.ParamList {
+		existParamMap[p.Name] = p.StringMap
+	}
+	newParamMap := make(map[string][]*models.LogMetricStringMapTable)
+	for _, p := range param.ParamList {
+		newParamMap[p.Name] = p.StringMap
+	}
+
+	for tagName := range tagParamNames {
+		oldList := existParamMap[tagName]
+		newList := newParamMap[tagName]
+		oldMap := make(map[string]*models.LogMetricStringMapTable)
+		newMap := make(map[string]*models.LogMetricStringMapTable)
+		for _, sm := range oldList {
+			oldMap[sm.TargetValue] = sm
+		}
+		for _, sm := range newList {
+			newMap[sm.TargetValue] = sm
+		}
+		renames := make(map[string]string)
+		var deletes, adds []string
+		for val, osm := range oldMap {
+			if nsm, ok := newMap[val]; ok {
+				if osm.SourceValue != nsm.SourceValue || osm.Regulative != nsm.Regulative {
+					renames[val] = val
+				}
+			} else {
+				deletes = append(deletes, val)
+			}
+		}
+		for val := range newMap {
+			if _, ok := oldMap[val]; !ok {
+				adds = append(adds, val)
+			}
+		}
+		perTagRenames[tagName] = renames
+		perTagDeletes[tagName] = deletes
+		perTagAdds[tagName] = adds
+	}
+
+	// 6. 如果启用了自动看板，同步看板变更
+	if autoDashboard == 1 {
+		// 同步指标变更
+		if len(metricRenames) > 0 || len(metricDeletes) > 0 || len(metricsAdded) > 0 {
+			if syncErr := SyncSimpleDashboardForMetricChanges(param, metricRenames, metricDeletes, metricsAdded, operator, roles); syncErr != nil {
+				return syncErr
+			}
+		}
+		// 同步标签变更（逐标签参数）
+		for tagName, ren := range perTagRenames {
+			dels := perTagDeletes[tagName]
+			adds := perTagAdds[tagName]
+			if len(ren) > 0 || len(dels) > 0 || len(adds) > 0 {
+				if syncErr := SyncSimpleDashboardForTagChanges(param, tagName, ren, dels, adds, operator, roles); syncErr != nil {
+					return syncErr
+				}
+			}
+		}
+	}
+
+	// 7. 如果启用了自动告警，同步告警策略变更（含开关/阈值）
+	if autoAlarm == 1 {
+		// 同步指标变更
+		if len(metricRenames) > 0 || len(metricDeletes) > 0 || len(metricsAdded) > 0 {
+			if syncErr := SyncSimpleAlarmStrategyForMetricChanges(param, metricRenames, metricDeletes, metricsAdded, operator, roles); syncErr != nil {
+				return syncErr
+			}
+		}
+		// 同步标签变更（逐标签参数）
+		for tagName, ren := range perTagRenames {
+			dels := perTagDeletes[tagName]
+			adds := perTagAdds[tagName]
+			if len(ren) > 0 || len(dels) > 0 || len(adds) > 0 {
+				if syncErr := SyncSimpleAlarmStrategyForTagChanges(param, tagName, ren, dels, adds, operator, roles); syncErr != nil {
+					return syncErr
+				}
+			}
+		}
+		// 检测开关与阈值变更
+		if syncErr := SyncSimpleAlarmStrategyForThresholdChanges(param, operator, roles, existMetricMap, newMetricMap); syncErr != nil {
+			return syncErr
+		}
+	}
+
+	//  执行基础数据更新
 	var actions []*Action
 	var affectEndpointGroup []string
 	actions, affectEndpointGroup, err = getUpdateLogMetricCustomGroupActions(param, operator)
 	if err != nil {
 		return
 	}
+
+	// 7. 执行所有操作
 	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
-			SyncPrometheusRuleFile(v, false)
+			_ = SyncPrometheusRuleFile(v, false)
 		}
 	}
 	return
@@ -2092,6 +2246,634 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		}
 	}
 	return
+}
+
+// SyncSimpleDashboardForMetricChanges 同步简单看板的指标变更
+func SyncSimpleDashboardForMetricChanges(param *models.LogMetricGroupObj, metricRenames map[string]string, metricDeletes []string, metricsAdded []string, operator string, roles []string) (err error) {
+	// 检查是否启用了自动看板
+	var autoDashboard int
+	x.SQL("select auto_dashboard from log_metric_group where guid=?", param.Guid).Get(&autoDashboard)
+	if autoDashboard != 1 {
+		return nil
+	}
+
+	// 获取服务组信息
+	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
+	serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	var actions []*Action
+
+	// 获取现有看板信息
+	var dashboardRows []*models.CustomDashboardTable
+	if err = x.SQL("select id,name,panel_groups from custom_dashboard where log_metric_group=?", param.Guid).Find(&dashboardRows); err != nil {
+		return err
+	}
+
+	if len(dashboardRows) == 0 {
+		return nil // 没有看板，无需同步
+	}
+
+	dashboardId := dashboardRows[0].Id
+
+	// 获取现有图表
+	var allChartRows []*models.CustomDashboardChartRel
+	if err = x.SQL("select guid,dashboard_chart,display_config,group_display_config from custom_dashboard_chart_rel where custom_dashboard=?", dashboardId).Find(&allChartRows); err != nil {
+		return err
+	}
+
+	// 获取图表名称映射
+	chartNameMap := make(map[string]string)
+	for _, chart := range allChartRows {
+		if chart.DashboardChart != nil {
+			var chartName string
+			x.SQL("select name from custom_dashboard_chart where guid=?", *chart.DashboardChart).Get(&chartName)
+			chartNameMap[chart.Guid] = chartName
+		}
+	}
+
+	// 按指标名称排序（保持与创建时一致的顺序）
+	sort.Slice(allChartRows, func(i, j int) bool {
+		metricI := extractMetricFromChartName(chartNameMap[allChartRows[i].Guid])
+		metricJ := extractMetricFromChartName(chartNameMap[allChartRows[j].Guid])
+		return getMetricSortOrder(metricI) < getMetricSortOrder(metricJ)
+	})
+
+	// 处理指标重命名
+	for oldMetric, newMetric := range metricRenames {
+		for _, chart := range allChartRows {
+			chartName := chartNameMap[chart.Guid]
+			if strings.Contains(chartName, oldMetric) {
+				newName := strings.Replace(chartName, oldMetric, newMetric, 1)
+				// 更新图表名称
+				if chart.DashboardChart != nil {
+					actions = append(actions, &Action{
+						Sql:   "update custom_dashboard_chart set name=? where guid=?",
+						Param: []interface{}{newName, *chart.DashboardChart},
+					})
+				}
+			}
+		}
+	}
+
+	// 处理指标删除
+	for _, delMetric := range metricDeletes {
+		for _, chart := range allChartRows {
+			chartName := chartNameMap[chart.Guid]
+			if strings.Contains(chartName, delMetric) {
+				actions = append(actions, &Action{
+					Sql:   "delete from custom_dashboard_chart_rel where guid=?",
+					Param: []interface{}{chart.Guid},
+				})
+			}
+		}
+	}
+
+	// 处理指标新增
+	for i, metric := range metricsAdded {
+		// 查找对应的指标配置
+		var metricConfig *models.LogMetricConfigDto
+		for _, m := range param.MetricList {
+			if m.Metric == metric {
+				metricConfig = m
+				break
+			}
+		}
+		if metricConfig == nil {
+			continue
+		}
+
+		// 创建新图表
+		chartIndex := len(allChartRows) + i
+		chartParam := &models.CustomChartDto{
+			Public:          true,
+			SourceDashboard: int(dashboardId),
+			Name:            fmt.Sprintf("%s_%s/%s", param.MetricPrefixCode, metric, serviceGroup),
+			ChartTemplate:   "one",
+			ChartType:       "line",
+			LineType:        "line",
+			Aggregate:       "none",
+			AggStep:         60,
+			ChartSeries:     []*models.CustomChartSeriesDto{},
+			DisplayConfig:   calcDisplayConfig(chartIndex),
+			LogMetricGroup:  &param.Guid,
+		}
+
+		// 生成图表系列
+		chartParam.ChartSeries = append(chartParam.ChartSeries, generateSimpleChartSeries(serviceGroup, monitorType, param.MetricPrefixCode, metricConfig))
+
+		// 创建图表操作
+		subChartActions := handleAutoCreateChart(chartParam, int64(dashboardId), serviceGroupsRoles, serviceGroupsRoles[0], operator)
+		if len(subChartActions) > 0 {
+			actions = append(actions, subChartActions...)
+		}
+	}
+
+	// 重新计算所有图表的坐标
+	if len(metricRenames) > 0 || len(metricDeletes) > 0 || len(metricsAdded) > 0 {
+		// 获取更新后的所有图表
+		var updatedChartRows []*models.CustomDashboardChartRel
+		if err = x.SQL("select guid,dashboard_chart,display_config,group_display_config from custom_dashboard_chart_rel where custom_dashboard=?", dashboardId).Find(&updatedChartRows); err != nil {
+			return err
+		}
+
+		// 获取更新后的图表名称映射
+		updatedChartNameMap := make(map[string]string)
+		for _, chart := range updatedChartRows {
+			if chart.DashboardChart != nil {
+				var chartName string
+				x.SQL("select name from custom_dashboard_chart where guid=?", *chart.DashboardChart).Get(&chartName)
+				updatedChartNameMap[chart.Guid] = chartName
+			}
+		}
+
+		// 按指标名称排序
+		sort.Slice(updatedChartRows, func(i, j int) bool {
+			metricI := extractMetricFromChartName(updatedChartNameMap[updatedChartRows[i].Guid])
+			metricJ := extractMetricFromChartName(updatedChartNameMap[updatedChartRows[j].Guid])
+			return getMetricSortOrder(metricI) < getMetricSortOrder(metricJ)
+		})
+
+		// 重新计算坐标
+		for i, chart := range updatedChartRows {
+			newDisplayConfig := calcDisplayConfig(i)
+			newGroupDisplayConfig := calcDisplayConfig(i)
+
+			displayConfigBytes, _ := json.Marshal(newDisplayConfig)
+			groupDisplayConfigBytes, _ := json.Marshal(newGroupDisplayConfig)
+
+			actions = append(actions, &Action{
+				Sql:   "update custom_dashboard_chart_rel set display_config=?,group_display_config=? where guid=?",
+				Param: []interface{}{string(displayConfigBytes), string(groupDisplayConfigBytes), chart.Guid},
+			})
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleAlarmStrategyForMetricChanges 同步简单告警策略的指标变更
+func SyncSimpleAlarmStrategyForMetricChanges(param *models.LogMetricGroupObj, metricRenames map[string]string, metricDeletes []string, metricsAdded []string, operator string, roles []string) (err error) {
+	// 检查是否启用了自动告警
+	var autoAlarm int
+	x.SQL("select auto_alarm from log_metric_group where guid=?", param.Guid).Get(&autoAlarm)
+	if autoAlarm != 1 {
+		return nil
+	}
+
+	// 获取服务组信息
+	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
+	serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	// 获取 endpoint_group
+	var endpointGroup string
+	var endpointGroupIds []string
+	if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
+		return err
+	}
+	if len(endpointGroupIds) > 0 {
+		endpointGroup = endpointGroupIds[0]
+	}
+
+	if endpointGroup == "" {
+		return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+	}
+
+	// 获取服务组显示名
+	var serviceGroupTable models.ServiceGroupTable
+	var displayServiceGroup = serviceGroup
+	if _, err = x.SQL("select guid,display_name,service_type from service_group where guid=?", serviceGroup).Get(&serviceGroupTable); err == nil {
+		if serviceGroupTable.DisplayName != "" {
+			displayServiceGroup = serviceGroupTable.DisplayName
+		}
+	}
+
+	var actions []*Action
+
+	// 处理指标重命名
+	for oldMetric, newMetric := range metricRenames {
+		// 查找对应的告警策略
+		var alarmStrategies []models.AlarmStrategyTable
+		oldMetricGuid := generateMetricGuid(oldMetric, serviceGroup)
+		if err = x.SQL("select guid,name,metric from alarm_strategy where log_metric_group=? and metric=?", param.Guid, oldMetricGuid).Find(&alarmStrategies); err != nil {
+			continue
+		}
+
+		for _, strategy := range alarmStrategies {
+			// 更新告警策略名称
+			newName := strings.Replace(strategy.Name, oldMetric, newMetric, 1)
+			actions = append(actions, &Action{
+				Sql:   "update alarm_strategy set name=? where guid=?",
+				Param: []interface{}{newName, strategy.Guid},
+			})
+
+			// 更新指标
+			newMetricGuid := generateMetricGuid(newMetric, serviceGroup)
+			actions = append(actions, &Action{
+				Sql:   "update alarm_strategy set metric=? where guid=?",
+				Param: []interface{}{newMetricGuid, strategy.Guid},
+			})
+		}
+	}
+
+	// 处理指标删除
+	for _, delMetric := range metricDeletes {
+		delMetricGuid := generateMetricGuid(delMetric, serviceGroup)
+		actions = append(actions, &Action{
+			Sql:   "delete from alarm_strategy where log_metric_group=? and metric=?",
+			Param: []interface{}{param.Guid, delMetricGuid},
+		})
+	}
+
+	// 处理指标新增
+	for _, metric := range metricsAdded {
+		// 查找对应的指标配置
+		var metricConfig *models.LogMetricConfigDto
+		for _, m := range param.MetricList {
+			if m.Metric == metric {
+				metricConfig = m
+				break
+			}
+		}
+		if metricConfig == nil || !metricConfig.AutoAlarm {
+			continue
+		}
+
+		// 创建告警策略
+		alarmStrategy := &models.GroupStrategyObj{
+			NotifyList: make([]*models.NotifyObj, 0),
+			Conditions: make([]*models.StrategyConditionObj, 0),
+		}
+
+		// 解析阈值配置
+		threshold := &models.ThresholdConfig{}
+		if metricConfig.RangeConfig != nil {
+			b, _ := json.Marshal(metricConfig.RangeConfig)
+			_ = json.Unmarshal(b, threshold)
+		}
+		if threshold.Operator == "" {
+			threshold.Operator = ">="
+		}
+		if threshold.Time == "" {
+			threshold.Time = "60"
+		}
+		if threshold.TimeUnit == "" {
+			threshold.TimeUnit = "s"
+		}
+		// 生成告警策略名称（使用简单生成逻辑的格式）
+		alarmStrategy.Name = fmt.Sprintf("%s%s%s%s", generateMetricGuidDisplayName(param.MetricPrefixCode, metric, displayServiceGroup), threshold.Operator, threshold.Threshold, getAlarmMetricUnit(metric))
+		alarmStrategy.Priority = "medium"
+		alarmStrategy.NotifyEnable = 1
+		alarmStrategy.ActiveWindow = "00:00-23:59"
+		alarmStrategy.EndpointGroup = endpointGroup
+		alarmStrategy.LogMetricGroup = &param.Guid
+		alarmStrategy.Metric = generateMetricGuid(metric, serviceGroup)
+		alarmStrategy.MetricName = metric
+		alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategy.Name, threshold.Time, threshold.TimeUnit)
+
+		// 添加通知配置
+		alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
+		alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
+
+		// 添加指标阈值
+		metricTags := make([]*models.MetricTag, 0)
+		for _, tag := range metricConfig.TagConfigList {
+			metricTags = append(metricTags, &models.MetricTag{
+				TagName: tag,
+				Equal:   ConstEqualIn,
+			})
+		}
+
+		alarmStrategy.Conditions = append(alarmStrategy.Conditions, &models.StrategyConditionObj{
+			Metric:     alarmStrategy.Metric,
+			MetricName: metric,
+			Condition:  fmt.Sprintf("%s%s", threshold.Operator, threshold.Threshold),
+			Last:       fmt.Sprintf("%s%s", threshold.Time, threshold.TimeUnit),
+			Tags:       metricTags,
+			LogType:    models.LogMonitorCustomType,
+		})
+		alarmStrategy.Condition = fmt.Sprintf("%s%s", threshold.Operator, threshold.Threshold)
+		alarmStrategy.Last = fmt.Sprintf("%s%s", threshold.Time, threshold.TimeUnit)
+
+		// 生成创建告警策略的操作
+		now := time.Now().Format(models.DatetimeFormat)
+		subActions, createErr := getCreateAlarmStrategyActions(alarmStrategy, now, operator)
+		if createErr != nil {
+			return createErr
+		}
+		if len(subActions) > 0 {
+			actions = append(actions, subActions...)
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleAlarmStrategyForThresholdChanges 同步简单告警策略的阈值与开关变更
+func SyncSimpleAlarmStrategyForThresholdChanges(param *models.LogMetricGroupObj, operator string, roles []string, existMetricMap, newMetricMap map[string]*models.LogMetricConfigDto) (err error) {
+	// 检查是否启用了自动告警
+	var autoAlarm int
+	x.SQL("select auto_alarm from log_metric_group where guid=?", param.Guid).Get(&autoAlarm)
+	if autoAlarm != 1 {
+		return nil
+	}
+
+	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
+	serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+	// endpoint_group
+	var endpointGroupIds []string
+	var endpointGroup string
+	if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
+		return err
+	}
+	if len(endpointGroupIds) > 0 {
+		endpointGroup = endpointGroupIds[0]
+	}
+	if endpointGroup == "" {
+		return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+	}
+
+	var actions []*Action
+
+	// 1) 关闭告警：true -> false
+	for name, oldCfg := range existMetricMap {
+		if newCfg, ok := newMetricMap[name]; ok {
+			if oldCfg.AutoAlarm && !newCfg.AutoAlarm {
+				metricGuid := generateMetricGuid(name, serviceGroup)
+				actions = append(actions, &Action{Sql: "delete from alarm_strategy where log_metric_group=? and metric=?", Param: []interface{}{param.Guid, metricGuid}})
+			}
+		}
+	}
+
+	// 2) 开启告警：false -> true（按简单逻辑创建）
+	for name, newCfg := range newMetricMap {
+		if oldCfg, ok := existMetricMap[name]; ok {
+			if !oldCfg.AutoAlarm && newCfg.AutoAlarm {
+				// 复用新增逻辑
+				if err = SyncSimpleAlarmStrategyForMetricChanges(param, map[string]string{}, []string{}, []string{name}, operator, roles); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	// 3) 阈值变更（operator/threshold/time/timeUnit）
+	for name, newCfg := range newMetricMap {
+		if oldCfg, ok := existMetricMap[name]; ok {
+			if newCfg.AutoAlarm { // 仅当开启时才需要更新
+				// 解析旧
+				oldTh := &models.ThresholdConfig{}
+				if oldCfg.RangeConfig != nil {
+					b, _ := json.Marshal(oldCfg.RangeConfig)
+					_ = json.Unmarshal(b, oldTh)
+				}
+				// 解析新
+				newTh := &models.ThresholdConfig{}
+				if newCfg.RangeConfig != nil {
+					b, _ := json.Marshal(newCfg.RangeConfig)
+					_ = json.Unmarshal(b, newTh)
+				}
+				if oldTh.Operator != newTh.Operator || oldTh.Threshold != newTh.Threshold || oldTh.Time != newTh.Time || oldTh.TimeUnit != newTh.TimeUnit {
+					// 更新 alarm_strategy_metric 的 condition/last
+					metricGuid := generateMetricGuid(name, serviceGroup)
+					var strategyRows []models.AlarmStrategyTable
+					if err = x.SQL("select guid,name from alarm_strategy where log_metric_group=? and metric=?", param.Guid, metricGuid).Find(&strategyRows); err != nil {
+						return err
+					}
+					for _, row := range strategyRows {
+						// 更新名称
+						newName := fmt.Sprintf("%s%s%s%s", generateMetricGuidDisplayName(param.MetricPrefixCode, name, serviceGroup), newTh.Operator, newTh.Threshold, getAlarmMetricUnit(name))
+						actions = append(actions, &Action{Sql: "update alarm_strategy set name=? where guid=?", Param: []interface{}{newName, row.Guid}})
+						// 更新条件
+						condition := fmt.Sprintf("%s%s", newTh.Operator, newTh.Threshold)
+						last := fmt.Sprintf("%s%s", newTh.Time, newTh.TimeUnit)
+						actions = append(actions, &Action{Sql: "update alarm_strategy_metric set `condition`=?,`last`=? where alarm_strategy=?", Param: []interface{}{condition, last, row.Guid}})
+					}
+				}
+			}
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleDashboardForCodeChanges 同步简单看板的 code 标签变更
+func SyncSimpleDashboardForCodeChanges(param *models.LogMetricGroupObj, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string, roles []string) (err error) {
+	// 检查是否启用了自动看板
+	var autoDashboard int
+	x.SQL("select auto_dashboard from log_metric_group where guid=?", param.Guid).Get(&autoDashboard)
+	if autoDashboard != 1 {
+		return nil
+	}
+
+	// 获取现有看板信息
+	var dashboardRows []*models.CustomDashboardTable
+	if err = x.SQL("select id,name,panel_groups from custom_dashboard where log_metric_group=?", param.Guid).Find(&dashboardRows); err != nil {
+		return err
+	}
+
+	if len(dashboardRows) == 0 {
+		return nil // 没有看板，无需同步
+	}
+
+	var actions []*Action
+
+	// 处理 code 重命名 - 更新图表系列配置中的 code 标签值
+	for oldCode, newCode := range codeRenames {
+		// 更新 custom_chart_series_config 中的 series_name
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart_series_config set series_name=? where series_name=? and dashboard_chart in (select guid from custom_chart where log_metric_group=?)",
+			Param: []interface{}{newCode, oldCode, param.Guid},
+		})
+
+		// 更新 custom_chart_series_tagvalue 中的 code 标签值
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart_series_tagvalue set value=? where value=? and dashboard_chart_tag in (select guid from custom_chart_series_tag where name='code' and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?)))",
+			Param: []interface{}{newCode, oldCode, param.Guid},
+		})
+	}
+
+	// 处理 code 删除 - 删除相关的图表系列配置
+	for _, delCode := range codeDeletes {
+		// 删除包含该 code 的图表系列配置
+		actions = append(actions, &Action{
+			Sql:   "delete from custom_chart_series_config where series_name=? and dashboard_chart in (select guid from custom_chart where log_metric_group=?)",
+			Param: []interface{}{delCode, param.Guid},
+		})
+
+		// 删除相关的 code 标签值
+		actions = append(actions, &Action{
+			Sql:   "delete from custom_chart_series_tagvalue where value=? and dashboard_chart_tag in (select guid from custom_chart_series_tag where name='code' and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?)))",
+			Param: []interface{}{delCode, param.Guid},
+		})
+	}
+
+	// 处理 code 新增 - 为新增的 code 创建图表系列配置
+	if len(codesAdded) > 0 {
+		// 获取服务组信息
+		serviceGroup, _ := GetLogMetricServiceGroup(param.LogMetricMonitor)
+		serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+		if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+			serviceGroupsRoles = roles[:1]
+		}
+
+		// 为每个新增的 code 创建图表系列配置
+		for _, code := range codesAdded {
+			// 获取该 log_metric_group 的所有图表
+			var chartRows []*models.CustomChart
+			if err = x.SQL("select guid from custom_chart where log_metric_group=?", param.Guid).Find(&chartRows); err != nil {
+				return err
+			}
+
+			for _, chart := range chartRows {
+				// 获取图表的系列配置
+				var seriesRows []*models.CustomChartSeries
+				if err = x.SQL("select guid from custom_chart_series where dashboard_chart=?", chart.Guid).Find(&seriesRows); err != nil {
+					continue
+				}
+
+				for _, series := range seriesRows {
+					// 为新的 code 创建系列配置
+					seriesConfigGuid := "csc_" + guid.CreateGuid()
+					actions = append(actions, &Action{
+						Sql:   "insert into custom_chart_series_config(guid,dashboard_chart_series,series_name,color) values (?,?,?,?)",
+						Param: []interface{}{seriesConfigGuid, series.Guid, code, "#1f77b4"},
+					})
+
+					// 创建 code 标签
+					tagGuid := "cst_" + guid.CreateGuid()
+					actions = append(actions, &Action{
+						Sql:   "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values (?,?,?,?)",
+						Param: []interface{}{tagGuid, series.Guid, "code", "in"},
+					})
+
+					// 创建标签值
+					tagValueGuid := "cstv_" + guid.CreateGuid()
+					actions = append(actions, &Action{
+						Sql:   "insert into custom_chart_series_tagvalue(guid,dashboard_chart_tag,value) values (?,?,?)",
+						Param: []interface{}{tagValueGuid, tagGuid, code},
+					})
+				}
+			}
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleDashboardForTagChanges 同步简单看板的通用标签变更（tagName 可为任意业务参数）
+func SyncSimpleDashboardForTagChanges(param *models.LogMetricGroupObj, tagName string, valueRenames map[string]string, valueDeletes []string, valuesAdded []string, operator string, roles []string) (err error) {
+	// 重用与 code 相同的 SQL，只是限定 name=?
+	var actions []*Action
+	for oldVal, newVal := range valueRenames {
+		actions = append(actions, &Action{Sql: "update custom_chart_series_config set series_name=? where series_name=? and dashboard_chart in (select guid from custom_chart where log_metric_group=?)", Param: []interface{}{newVal, oldVal, param.Guid}})
+		actions = append(actions, &Action{Sql: "update custom_chart_series_tagvalue set value=? where value=? and dashboard_chart_tag in (select guid from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?)))", Param: []interface{}{newVal, oldVal, tagName, param.Guid}})
+	}
+	for _, delVal := range valueDeletes {
+		actions = append(actions, &Action{Sql: "delete from custom_chart_series_config where series_name=? and dashboard_chart in (select guid from custom_chart where log_metric_group=?)", Param: []interface{}{delVal, param.Guid}})
+		actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where value=? and dashboard_chart_tag in (select guid from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?)))", Param: []interface{}{delVal, tagName, param.Guid}})
+	}
+	if len(valuesAdded) > 0 {
+		// 给现有系列补充标签值即可，不新增图表
+		for _, addVal := range valuesAdded {
+			actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) select t.guid,? from custom_chart_series_tag t where t.name=? and t.dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?)) and not exists (select 1 from custom_chart_series_tagvalue v where v.dashboard_chart_tag=t.guid and v.value=?)", Param: []interface{}{addVal, tagName, param.Guid, addVal}})
+		}
+	}
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleAlarmStrategyForCodeChanges 同步简单告警策略的 code 标签变更
+func SyncSimpleAlarmStrategyForCodeChanges(param *models.LogMetricGroupObj, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string, roles []string) (err error) {
+	// 检查是否启用了自动告警
+	var autoAlarm int
+	x.SQL("select auto_alarm from log_metric_group where guid=?", param.Guid).Get(&autoAlarm)
+	if autoAlarm != 1 {
+		return nil
+	}
+
+	// 获取现有告警策略
+	var existingStrategies []models.AlarmStrategyTable
+	if err = x.SQL("select guid,name,metric from alarm_strategy where log_metric_group=?", param.Guid).Find(&existingStrategies); err != nil {
+		return err
+	}
+
+	var actions []*Action
+
+	// 处理 code 重命名 - 仅更新告警策略中 code 标签值（不新增/删除策略）
+	for oldCode, newCode := range codeRenames {
+		for _, strategy := range existingStrategies {
+			actions = append(actions, &Action{
+				Sql:   "update alarm_strategy_tag_value set value=? where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+				Param: []interface{}{newCode, strategy.Guid, oldCode},
+			})
+		}
+	}
+
+	// 处理 code 删除 - 仅删除相关的 code 标签值（不删除策略）
+	for _, delCode := range codeDeletes {
+		for _, strategy := range existingStrategies {
+			actions = append(actions, &Action{
+				Sql:   "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+				Param: []interface{}{strategy.Guid, delCode},
+			})
+		}
+	}
+
+	// 处理 code 新增 - 仅为已有策略的 code 标签插入值（不新增策略）
+	if len(codesAdded) > 0 {
+		for _, code := range codesAdded {
+			actions = append(actions, &Action{
+				Sql:   "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where log_metric_group=?)) and t.name='code' and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)",
+				Param: []interface{}{code, param.Guid, code},
+			})
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
+}
+
+// SyncSimpleAlarmStrategyForTagChanges 同步简单告警策略的通用标签值变更（tagName 任意）
+func SyncSimpleAlarmStrategyForTagChanges(param *models.LogMetricGroupObj, tagName string, valueRenames map[string]string, valueDeletes []string, valuesAdded []string, operator string, roles []string) (err error) {
+	var actions []*Action
+	for oldVal, newVal := range valueRenames {
+		actions = append(actions, &Action{Sql: "update alarm_strategy_tag_value set value=? where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where log_metric_group=?)) and name=?) and value=?", Param: []interface{}{newVal, param.Guid, tagName, oldVal}})
+	}
+	for _, delVal := range valueDeletes {
+		actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where log_metric_group=?)) and name=?) and value=?", Param: []interface{}{param.Guid, tagName, delVal}})
+	}
+	for _, addVal := range valuesAdded {
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy in (select guid from alarm_strategy where log_metric_group=?)) and t.name=? and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)", Param: []interface{}{addVal, param.Guid, tagName, addVal}})
+	}
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
 }
 
 func GetServiceGroupMetricMap(serviceGroup string) (existMetricMap map[string]string, err error) {

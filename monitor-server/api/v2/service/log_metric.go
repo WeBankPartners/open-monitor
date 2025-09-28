@@ -1025,7 +1025,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnError(c, err, http.StatusOK)
 		return
 	}
-	err = db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	err = db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
