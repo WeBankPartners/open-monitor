@@ -97,6 +97,12 @@
                       <Icon type="ios-link" size="16" />
                     </Button>
                     <template slot='list'>
+                      <Input v-model.trim="templateFilterString"
+                             clearable
+                             style="width: 350px; margin: 15px"
+                             :placeholder="$t('m_template_filter')"
+                             @on-change="onTemplateFilterChange"
+                      />
                       <DropdownMenu>
                         <DropdownItem
                           v-for="(option, key) in allTemplateList"
@@ -938,6 +944,7 @@ export default {
       importType: 'yes',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      templateFilterString: ''
     }
   },
   computed: {
@@ -1549,9 +1556,28 @@ export default {
       })
     },
     onTemplateListVisibleChange(visible) {
+      this.templateFilterString = ''
       if (visible && isEmpty(this.allTemplateList)) {
         this.getMonitorTemplateList()
       }
+      if (visible && !isEmpty(this.allTemplateList)) {
+        this.onTemplateFilterChange()
+      }
+    },
+    onTemplateFilterChange() {
+      this.allTemplateList = [{
+        name: this.$t('m_standard_json'),
+        value: 'm_standard_json',
+        disabled: true
+      }, ...this.templateList.json_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1), {
+        name: this.$t('m_standard_regex'),
+        value: 'm_standard_regex',
+        disabled: true
+      }, ...this.templateList.regular_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1), {
+        name: this.$t('m_custom_regex'),
+        value: 'm_custom_regex',
+        disabled: true
+      }, ...this.templateList.custom_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1)]
     }
   },
   components: {
