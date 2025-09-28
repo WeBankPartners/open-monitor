@@ -220,7 +220,7 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
-          width: 100,
+          minWidth: 100,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -242,6 +242,7 @@ export default {
           title: this.$t('m_match_value_pure'),
           ellipsis: true,
           tooltip: true,
+          minWidth: 100,
           key: 'string_map',
           render: (h, params) => {
             const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',') || ''

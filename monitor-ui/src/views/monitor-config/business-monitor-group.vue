@@ -85,6 +85,7 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
+                    stop-propagation
                     @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
