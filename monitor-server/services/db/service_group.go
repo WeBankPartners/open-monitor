@@ -862,6 +862,5 @@ func GetLatestServiceGroupUpdateTime() (updateTime int64, err error) {
 		}
 		updateTime = t.Unix()
 	}
-	log.Debug(nil, log.LOGGER_APP, "GetLatestServiceGroupUpdateTime", zap.Int64("latestUpdateTime", updateTime), zap.Int64("serviceGroupLatestUpdateTime", serviceGroupLatestUpdateTime))
 	return updateTime, nil
 }

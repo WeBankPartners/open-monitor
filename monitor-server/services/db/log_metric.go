@@ -1084,7 +1084,12 @@ func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		actions, err = getUpdateLogMetricGroupActions(&tmpCreateParam, operator)
+		// directly perform update with dashboard sync
+		if err = UpdateLogMetricGroupWithDashboardAndAlarm(&tmpCreateParam, operator); err != nil {
+			return
+		}
+		// no direct actions because we executed update; return empty actions
+		return []*Action{}, []string{}, nil
 	} else {
 		actions, affectEndpointGroups, err = getUpdateLogMetricCustomGroupActions(metricGroup, operator)
 	}
@@ -2161,14 +2166,6 @@ func getServiceGroupMetricMap(serviceGroup string) (metricGuidMap map[string]str
 	return
 }
 
-func convertLogMetricConfigTable2DtoList(logMetricConfigList []*models.LogMetricConfigTable) (list []*models.LogMetricConfigDto) {
-	list = []*models.LogMetricConfigDto{}
-	for _, config := range logMetricConfigList {
-		list = append(list, convertLogMetricConfigTable2Dto(config))
-	}
-	return list
-}
-
 func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *models.LogMetricConfigDto) {
 	if config.TagConfig != "" && len(config.TagConfigList) == 0 {
 		config.TagConfigList = strings.Split(config.TagConfig, ",")
@@ -2213,4 +2210,84 @@ func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarn
 	dto = &models.LogMetricGroupWarnDto{}
 	_, err = x.SQL("select lmg.name as 'log_metric_group_name',lmg.log_metric_monitor as 'log_metric_monitor_guid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(dto)
 	return
+}
+
+// UpdateLogMetricGroupWithDashboardAndAlarm wraps UpdateLogMetricGroup and, when auto_dashboard is enabled,
+// computes code string_map diffs (add/rename/delete) and synchronizes dashboards accordingly.
+// When auto_alarm is enabled, it will also (reserved) sync alarm strategies in future.
+func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+	// load old code string_map for diff
+	var oldMaps []*models.LogMetricStringMapTable
+	x.SQL("select guid,log_param_name,value_type,source_value,regulative,target_value from log_metric_string_map where log_metric_group=?", param.LogMetricGroupGuid).Find(&oldMaps)
+	oldCode := make(map[string]*models.LogMetricStringMapTable)
+	for _, v := range oldMaps {
+		if v.LogParamName == "code" {
+			oldCode[v.Guid] = v
+		}
+	}
+	// check auto flags
+	var autoDashboard, autoAlarm int
+	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&autoDashboard, &autoAlarm)
+	if autoAlarm == 1 {
+		// TODO: sync alarm strategies for code changes (reserved)
+	}
+	if autoDashboard != 1 {
+		return nil
+	}
+	// diffs
+	newByGuid := make(map[string]*models.LogMetricStringMapTable)
+	for _, v := range param.CodeStringMap {
+		newByGuid[v.Guid] = v
+	}
+	var adds []string
+	renames := make(map[string]string)
+	var deletes []string
+	for guidKey, ov := range oldCode {
+		if nv, ok := newByGuid[guidKey]; ok {
+			if ov.TargetValue != nv.TargetValue {
+				renames[ov.TargetValue] = nv.TargetValue
+			}
+		} else {
+			found := false
+			for _, nv := range param.CodeStringMap {
+				if (nv.LogParamName == "code" || nv.LogParamName == "") && nv.ValueType == ov.ValueType && nv.SourceValue == ov.SourceValue && nv.Regulative == ov.Regulative {
+					found = true
+					if ov.TargetValue != nv.TargetValue {
+						renames[ov.TargetValue] = nv.TargetValue
+					}
+					break
+				}
+			}
+			if !found {
+				deletes = append(deletes, ov.TargetValue)
+			}
+		}
+	}
+	oldTargets := make(map[string]bool)
+	for _, ov := range oldCode {
+		oldTargets[ov.TargetValue] = true
+	}
+	// Exclude pure renames from adds: collect all new target values coming from renames
+	renamedNewTargets := make(map[string]bool)
+	for _, newV := range renames {
+		renamedNewTargets[newV] = true
+	}
+	for _, nv := range param.CodeStringMap {
+		if nv.LogParamName != "code" {
+			nv.LogParamName = "code"
+		}
+		if !oldTargets[nv.TargetValue] && !renamedNewTargets[nv.TargetValue] {
+			adds = append(adds, nv.TargetValue)
+		}
+	}
+	if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
+		if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
+			return err
+		}
+	}
+	// perform core update
+	if err = UpdateLogMetricGroup(param, operator); err != nil {
+		return err
+	}
+	return nil
 }

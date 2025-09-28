@@ -810,17 +810,22 @@ func UpdateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
 		return
 	}
-	err := db.UpdateLogMetricGroup(&param, middleware.GetOperateUser(c))
-	if err != nil {
-		middleware.ReturnHandleError(c, err.Error(), err)
-	} else {
-		err = SyncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
-		if err != nil {
-			middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+	if middleware.IsIllegalTargetValueCode(param.RetCodeStringMap) {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("target_value code repeat"))
+		return
 	}
+
+	// Delegate update and dashboard/alarm synchronization to db layer
+	if err := db.UpdateLogMetricGroupWithDashboardAndAlarm(&param, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+
+	if err := SyncLogMetricMonitorConfig(param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnError(c, models.GetMessageMap(c).SaveDoneButSyncFail, http.StatusOK)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func UpdateLogMetricGroupStatus(c *gin.Context) {
