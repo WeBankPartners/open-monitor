@@ -107,6 +107,13 @@ func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 	if err != nil {
 		return err
 	}
+	// If deregistering a process monitor endpoint, sync node_exporter process config for the host
+	// to ensure removed processes are cleared from agent-side cache/config immediately.
+	if endpointObj.ExportType == "process" {
+		if syncErr := db.SyncNodeExporterProcessConfig(endpointObj.Ip, []*m.EndpointNewTable{}, false); syncErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Sync process config after deregister fail", zap.Error(syncErr), zap.String("ip", endpointObj.Ip))
+		}
+	}
 	if endpointObj.ExportType == "snmp" {
 		err = db.SnmpEndpointDelete(endpointObj.Guid)
 	}
