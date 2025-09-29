@@ -2014,6 +2014,30 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 
 	// 6. 如果启用了自动看板，添加看板创建操作
 	if autoDashboard == 1 {
+		// 获取 ServiceGroupsRoles，使用与 getCreateLogMetricCustomGroupActions 相同的逻辑
+		var serviceGroupsRoles []string
+
+		// 如果 param.LogMetricMonitor 不为空，通过 log_metric_monitor 获取
+		if param.LogMetricMonitor != "" {
+			var logMetricMonitor = &models.LogMetricMonitorTable{}
+			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
+				return err
+			}
+			if logMetricMonitor != nil {
+				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+			}
+		}
+
+		// 如果 serviceGroupsRoles 为空，使用 param.ServiceGroup
+		if len(serviceGroupsRoles) == 0 {
+			serviceGroupsRoles = getServiceGroupRoles(param.ServiceGroup)
+		}
+
+		// 如果 serviceGroupsRoles 为空且 roles 不为空，使用 roles 作为兜底
+		if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+			serviceGroupsRoles = roles[:1]
+		}
+
 		createDashboardActions, _, _, createErr := autoGenerateSimpleCustomDashboard(models.AutoSimpleCreateDashboardParam{
 			LogMetricGroupGuid:  param.Guid,
 			ServiceGroup:        param.ServiceGroup,
@@ -2021,7 +2045,7 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 			MetricPrefixCode:    param.MetricPrefixCode,
 			MetricList:          param.MetricList,
 			AutoCreateDashboard: true,
-			ServiceGroupsRoles:  roles,
+			ServiceGroupsRoles:  serviceGroupsRoles,
 			Operator:            operator,
 		})
 		if createErr != nil {
@@ -2035,27 +2059,70 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 
 	// 7. 如果启用了自动告警，添加告警创建操作
 	if autoAlarm == 1 {
-		// 获取 endpoint_group
+		// 获取 ServiceGroupsRoles，使用与 getCreateLogMetricCustomGroupActions 相同的逻辑
+		var serviceGroupsRoles []string
 		var endpointGroup string
-		serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitor)
-		var endpointGroupIds []string
-		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
-			return err
+
+		// 如果 param.LogMetricMonitor 不为空，通过 log_metric_monitor 获取
+		if param.LogMetricMonitor != "" {
+			var logMetricMonitor = &models.LogMetricMonitorTable{}
+			var endpointGroupIds []string
+			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
+				return err
+			}
+			if logMetricMonitor != nil {
+				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
+				if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
+					return err
+				}
+				if len(endpointGroupIds) > 0 {
+					endpointGroup = endpointGroupIds[0]
+				}
+			}
 		}
-		if len(endpointGroupIds) > 0 {
-			endpointGroup = endpointGroupIds[0]
+
+		// 如果 endpointGroup 为空，使用 param.ServiceGroup
+		if strings.TrimSpace(endpointGroup) == "" {
+			var endpointGroupIds []string
+			serviceGroupsRoles = getServiceGroupRoles(param.ServiceGroup)
+			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", param.ServiceGroup, param.MonitorType).Find(&endpointGroupIds); err != nil {
+				return err
+			}
+			if len(endpointGroupIds) > 0 {
+				endpointGroup = endpointGroupIds[0]
+			}
+		}
+
+		// 如果 serviceGroupsRoles 为空且 roles 不为空，使用 roles 作为兜底
+		if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+			serviceGroupsRoles = roles[:1]
 		}
 
 		if endpointGroup == "" {
-			return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+			return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", param.ServiceGroup, param.MonitorType)
+		}
+
+		// 确定正确的 ServiceGroup，与 getCreateLogMetricCustomGroupActions 保持一致
+		var serviceGroup string
+		if param.LogMetricMonitor != "" {
+			var logMetricMonitor = &models.LogMetricMonitorTable{}
+			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
+				return err
+			}
+			if logMetricMonitor != nil {
+				serviceGroup = logMetricMonitor.ServiceGroup
+			}
+		}
+		if serviceGroup == "" {
+			serviceGroup = param.ServiceGroup
 		}
 
 		createAlarmActions, _, createErr := autoGenerateSimpleAlarmStrategy(models.AutoSimpleAlarmStrategyParam{
 			LogMetricGroupGuid: param.Guid,
-			ServiceGroup:       param.ServiceGroup,
+			ServiceGroup:       serviceGroup,
 			MetricPrefixCode:   param.MetricPrefixCode,
 			MetricList:         param.MetricList,
-			ServiceGroupsRoles: roles,
+			ServiceGroupsRoles: serviceGroupsRoles,
 			Operator:           operator,
 			AutoCreateWarn:     true,
 			LogType:            models.LogMonitorCustomType,
