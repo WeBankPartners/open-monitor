@@ -612,7 +612,8 @@ func generateSimpleChartSeries(serviceGroup, monitorType, metricPrefixCode strin
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
 	metricGuid := metric.Metric
 	fullMetricName := metric.Metric
-	if metricPrefixCode != "" {
+	// 检查 metric.Metric 是否已经包含了 metricPrefixCode，避免重复添加
+	if metricPrefixCode != "" && !strings.HasPrefix(metric.Metric, metricPrefixCode+"_") {
 		metricGuid = metricPrefixCode + "_" + metricGuid
 		fullMetricName = metricPrefixCode + "_" + metric.Metric
 	}

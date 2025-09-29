@@ -1594,8 +1594,9 @@ func getDeleteLogMetricGroupCoreActions(logMetricGroupGuid string, includeBusine
 		}
 	}
 
-	// 3. 删除关联的指标数据（只有在删除告警或看板时才需要）
-	if metricGroupObj.AutoAlarm == 1 || metricGroupObj.AutoDashboard == 1 {
+	// 4. 最后删除业务配置相关数据（可选）
+	if includeBusinessConfig {
+		//  删除关联的指标数据
 		serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 		var existMetricRows []*models.LogMetricConfigDto
 		if metricGroupObj.LogMonitorTemplate != "" {
@@ -1623,10 +1624,7 @@ func getDeleteLogMetricGroupCoreActions(logMetricGroupGuid string, includeBusine
 			actions = append(actions, deleteMetricActions...)
 			affectEndpointGroup = append(affectEndpointGroup, endpointGroups...)
 		}
-	}
 
-	// 4. 最后删除业务配置相关数据（可选）
-	if includeBusinessConfig {
 		actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 		actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 		actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
@@ -2140,9 +2138,14 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 
 	// 8. 执行所有操作（原子性事务 - 要么全部成功，要么全部回滚）
 	if len(allActions) > 0 {
+		log.Info(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup executing actions", zap.Int("actionCount", len(allActions)))
 		if err = Transaction(allActions); err != nil {
+			log.Error(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup transaction failed", zap.Error(err))
 			return
 		}
+		log.Info(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup transaction completed successfully")
+	} else {
+		log.Warn(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup no actions to execute")
 	}
 
 	// 9. 同步 Prometheus 规则文件
@@ -2215,6 +2218,11 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		inputMetricObj.TagConfig = string(tmpTagListBytes)
 		if inputMetricObj.Guid == "" {
 			tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
+			// 处理 MetricPrefixCode，与新建逻辑保持一致
+			fullMetricName := inputMetricObj.Metric
+			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
+				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
+			}
 			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime,
 			}})
@@ -2223,21 +2231,26 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				tmpTagList = []string{"tags"}
 			}
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup,
+				Param: []interface{}{fmt.Sprintf("%s__%s", fullMetricName, serviceGroup), fullMetricName, monitorType, getLogMetricExprByAggType(fullMetricName, inputMetricObj.AggType, serviceGroup,
 					tmpTagList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 		} else {
+			// 处理 MetricPrefixCode，与新建逻辑保持一致
+			fullMetricName := inputMetricObj.Metric
+			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
+				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
+			}
 			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
 			}})
 			if existMetricObj, ok := existMetricDataMap[inputMetricObj.Guid]; ok {
 				oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
-				newMetricGuid := fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup)
+				newMetricGuid := fmt.Sprintf("%s__%s", fullMetricName, serviceGroup)
 				tmpTagList := []string{}
 				if len(inputMetricObj.TagConfigList) > 0 {
 					tmpTagList = []string{"tags"}
 				}
 				actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=?,log_metric_group=? where guid=?",
-					Param: []interface{}{newMetricGuid, inputMetricObj.Metric, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, tmpTagList), operator, nowTime, param.Guid, oldMetricGuid}})
+					Param: []interface{}{newMetricGuid, fullMetricName, getLogMetricExprByAggType(fullMetricName, inputMetricObj.AggType, serviceGroup, tmpTagList), operator, nowTime, param.Guid, oldMetricGuid}})
 				var alarmStrategyTable []*models.AlarmStrategyTable
 				x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 				if len(alarmStrategyTable) > 0 {
@@ -2249,6 +2262,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			}
 		}
 	}
+	log.Info(nil, log.LOGGER_APP, "getUpdateLogMetricCustomGroupActions generated actions", zap.Int("actionCount", len(actions)))
 	return
 }
 
