@@ -1508,6 +1508,54 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 	}
 	actions = append(actions, updateMapActions...)
+	// Ensure 'other' panel group is always placed at the end for all related dashboards
+	if reorderActions, reorderErr := ensureOtherPanelGroupLastActions(param.LogMetricGroupGuid, operator); reorderErr == nil {
+		actions = append(actions, reorderActions...)
+	} else {
+		// Ignore reorder error, do not block main update path
+		log.Warn(nil, log.LOGGER_APP, "Skip ensure other panel group last due to error", zap.Error(reorderErr))
+	}
+	return
+}
+
+// ensureOtherPanelGroupLastActions builds update actions to force 'other' to be at the end of panel_groups
+func ensureOtherPanelGroupLastActions(logMetricGroupGuid, operator string) (actions []*Action, err error) {
+	const otherCode = "other"
+	type boardRow struct {
+		Id          int    `json:"id"`
+		PanelGroups string `json:"panel_groups"`
+	}
+	var boards []boardRow
+	if err = x.SQL("select id, panel_groups from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&boards); err != nil {
+		return
+	}
+	now := time.Now().Format(models.DatetimeFormat)
+	for _, b := range boards {
+		pg := strings.TrimSpace(b.PanelGroups)
+		if pg == "" {
+			continue
+		}
+		var reordered []string
+		hasOther := false
+		for _, g := range strings.Split(pg, ",") {
+			g = strings.TrimSpace(g)
+			if g == "" {
+				continue
+			}
+			if strings.EqualFold(g, otherCode) {
+				hasOther = true
+				continue
+			}
+			reordered = append(reordered, g)
+		}
+		if hasOther {
+			reordered = append(reordered, otherCode)
+		}
+		newPG := strings.Join(reordered, ",")
+		if newPG != pg {
+			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id= ?", Param: []interface{}{newPG, operator, now, b.Id}})
+		}
+	}
 	return
 }
 
@@ -1524,118 +1572,90 @@ func DeleteLogMetricGroup(logMetricGroupGuid string) (logMetricMonitorGuid strin
 	return
 }
 
-// getDeleteLogMetricGroupDashboardAndAlarmActions 删除业务配置关联的看板和告警（不删除业务配置本身）
-func getDeleteLogMetricGroupDashboardAndAlarmActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, err error) {
-	coreActions, coreAffectEndpointGroup, _, coreErr := getDeleteLogMetricGroupCoreActions(logMetricGroupGuid, false)
-	if coreErr != nil {
-		err = coreErr
-		return
-	}
-	actions = coreActions
-	affectEndpointGroup = coreAffectEndpointGroup
-	return
-}
-
-// getDeleteLogMetricGroupCoreActions 删除业务配置的核心删除逻辑（公用方法）
-func getDeleteLogMetricGroupCoreActions(logMetricGroupGuid string, includeBusinessConfig bool) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
+func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
+	var delAlarmStrategyActions, delDashboardActions, delChartActions []*Action
 	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
 	if getGroupErr != nil {
 		err = getGroupErr
 		return
 	}
 	logMetricMonitorGuid = metricGroupObj.LogMetricMonitor
+	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
 
-	// 1. 先删除告警（根据业务配置的自动创建开关决定）
-	if metricGroupObj.AutoAlarm == 1 {
-		// 删除阈值告警
-		var strategyGuids []string
-		if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
-			return
-		}
-		if len(strategyGuids) > 0 {
-			for _, strategyGuid := range strategyGuids {
-				if delAlarmStrategyActions, _, alarmErr := GetDeleteAlarmStrategyActions(strategyGuid); alarmErr != nil {
-					err = alarmErr
-					return
-				} else if len(delAlarmStrategyActions) > 0 {
-					actions = append(actions, delAlarmStrategyActions...)
-				}
+	// 删除阈值
+	var strategyGuids []string
+	if err = x.SQL("select guid from alarm_strategy where log_metric_group=?", logMetricGroupGuid).Find(&strategyGuids); err != nil {
+		return
+	}
+	if len(strategyGuids) > 0 {
+		for _, strategyGuid := range strategyGuids {
+			if delAlarmStrategyActions, _, err = GetDeleteAlarmStrategyActions(strategyGuid); err != nil {
+				return
+			}
+			if len(delAlarmStrategyActions) > 0 {
+				actions = append(actions, delAlarmStrategyActions...)
 			}
 		}
 	}
-
-	// 2. 再删除看板（根据业务配置的自动创建开关决定）
-	if metricGroupObj.AutoDashboard == 1 {
-		// 删除看板&图表
-		var dashboardIds []int
-		var chartIds []string
-		if err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&dashboardIds); err != nil {
-			return
-		}
-		if err = x.SQL("select guid from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartIds); err != nil {
-			return
-		}
-		if len(dashboardIds) > 0 {
-			for _, boardId := range dashboardIds {
-				if delDashboardActions := GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
-					actions = append(actions, delDashboardActions...)
-				}
-			}
-		}
-		if len(chartIds) > 0 {
-			for _, chartId := range chartIds {
-				if delChartActions, chartErr := GetDeleteCustomDashboardChart(chartId); chartErr != nil {
-					err = chartErr
-					return
-				} else if len(delChartActions) > 0 {
-					actions = append(actions, delChartActions...)
-				}
+	// 删除看板&图表
+	var dashboardIds []int
+	var chartIds []string
+	if err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&dashboardIds); err != nil {
+		return
+	}
+	if err = x.SQL("select guid from custom_chart where log_metric_group=?", logMetricGroupGuid).Find(&chartIds); err != nil {
+		return
+	}
+	if len(dashboardIds) > 0 {
+		for _, boardId := range dashboardIds {
+			if delDashboardActions = GetDeleteCustomDashboardByIdActions(boardId); len(delDashboardActions) > 0 {
+				actions = append(actions, delDashboardActions...)
 			}
 		}
 	}
-
-	// 4. 最后删除业务配置相关数据（可选）
-	if includeBusinessConfig {
-		//  删除关联的指标数据
-		serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
-		var existMetricRows []*models.LogMetricConfigDto
-		if metricGroupObj.LogMonitorTemplate != "" {
-			logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
-			if getTemplateErr != nil {
-				err = getTemplateErr
+	if len(chartIds) > 0 {
+		for _, chartId := range chartIds {
+			if delChartActions, err = GetDeleteCustomDashboardChart(chartId); err != nil {
 				return
 			}
-			for _, v := range logMonitorTemplateObj.MetricList {
-				existMetricRows = append(existMetricRows, v.TransToLogMetric())
+			if len(delChartActions) > 0 {
+				actions = append(actions, delChartActions...)
 			}
-		} else {
-			logMetricGroupObj, getLogGroupErr := GetLogMetricCustomGroup(logMetricGroupGuid)
-			if getLogGroupErr != nil {
-				err = getLogGroupErr
-				return
-			}
-			existMetricRows = logMetricGroupObj.MetricList
 		}
-		for _, existMetric := range existMetricRows {
-			if metricGroupObj.MetricPrefixCode != "" {
-				existMetric.Metric = metricGroupObj.MetricPrefixCode + "_" + existMetric.Metric
-			}
-			deleteMetricActions, endpointGroups := getDeleteLogMetricActions(existMetric.Metric, serviceGroup)
-			actions = append(actions, deleteMetricActions...)
-			affectEndpointGroup = append(affectEndpointGroup, endpointGroups...)
-		}
+	}
+	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
 
-		actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-		actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-		actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
-		actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
+	// 查找关联的指标并删除
+	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
+	var existMetricRows []*models.LogMetricConfigDto
+	if metricGroupObj.LogMonitorTemplate != "" {
+		logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
+		if getTemplateErr != nil {
+			err = getTemplateErr
+			return
+		}
+		for _, v := range logMonitorTemplateObj.MetricList {
+			existMetricRows = append(existMetricRows, v.TransToLogMetric())
+		}
+	} else {
+		logMetricGroupObj, getLogGroupErr := GetLogMetricCustomGroup(logMetricGroupGuid)
+		if getLogGroupErr != nil {
+			err = getLogGroupErr
+			return
+		}
+		existMetricRows = logMetricGroupObj.MetricList
+	}
+	for _, existMetric := range existMetricRows {
+		if metricGroupObj.MetricPrefixCode != "" {
+			existMetric.Metric = metricGroupObj.MetricPrefixCode + "_" + existMetric.Metric
+		}
+		deleteMetricActions, endpointGroups := getDeleteLogMetricActions(existMetric.Metric, serviceGroup)
+		actions = append(actions, deleteMetricActions...)
+		affectEndpointGroup = append(affectEndpointGroup, endpointGroups...)
 	}
 	return
-}
-
-// getDeleteLogMetricGroupActions 删除业务配置（包含业务配置本身）
-func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Action, affectEndpointGroup []string, logMetricMonitorGuid string, err error) {
-	return getDeleteLogMetricGroupCoreActions(logMetricGroupGuid, true)
 }
 
 func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, affectEndpointGroup []string) {
@@ -1979,180 +1999,19 @@ func ValidateLogMetricGroupName(guid, name, logMetricMonitor string) (err error)
 	return
 }
 
-func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string, roles []string) (err error) {
-	// 1. 检查自动创建开关
-	var autoDashboard, autoAlarm int
-	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.Guid).Get(&autoDashboard, &autoAlarm)
-
-	// 2. 收集所有操作到一个事务中
-	var allActions []*Action
-	var allAffectEndpointGroup []string
-
-	// 3. 如果启用了自动看板或告警，添加删除操作（复用现有逻辑，但不删除业务配置）
-	if autoDashboard == 1 || autoAlarm == 1 {
-		deleteActions, deleteAffectEndpointGroup, deleteErr := getDeleteLogMetricGroupDashboardAndAlarmActions(param.Guid)
-		if deleteErr != nil {
-			err = deleteErr
-			return
-		}
-		if len(deleteActions) > 0 {
-			allActions = append(allActions, deleteActions...)
-			allAffectEndpointGroup = append(allAffectEndpointGroup, deleteAffectEndpointGroup...)
-		}
-	}
-
-	// 5. 添加基础数据更新操作
-	updateActions, updateAffectEndpointGroup, updateErr := getUpdateLogMetricCustomGroupActions(param, operator)
-	if updateErr != nil {
-		err = updateErr
+func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string) (err error) {
+	var actions []*Action
+	var affectEndpointGroup []string
+	actions, affectEndpointGroup, err = getUpdateLogMetricCustomGroupActions(param, operator)
+	if err != nil {
 		return
 	}
-	allActions = append(allActions, updateActions...)
-	allAffectEndpointGroup = append(allAffectEndpointGroup, updateAffectEndpointGroup...)
-
-	// 6. 如果启用了自动看板，添加看板创建操作
-	if autoDashboard == 1 {
-		// 获取 ServiceGroupsRoles，使用与 getCreateLogMetricCustomGroupActions 相同的逻辑
-		var serviceGroupsRoles []string
-
-		// 如果 param.LogMetricMonitor 不为空，通过 log_metric_monitor 获取
-		if param.LogMetricMonitor != "" {
-			var logMetricMonitor = &models.LogMetricMonitorTable{}
-			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
-				return err
-			}
-			if logMetricMonitor != nil {
-				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
-			}
-		}
-
-		// 如果 serviceGroupsRoles 为空，使用 param.ServiceGroup
-		if len(serviceGroupsRoles) == 0 {
-			serviceGroupsRoles = getServiceGroupRoles(param.ServiceGroup)
-		}
-
-		// 如果 serviceGroupsRoles 为空且 roles 不为空，使用 roles 作为兜底
-		if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
-			serviceGroupsRoles = roles[:1]
-		}
-
-		createDashboardActions, _, _, createErr := autoGenerateSimpleCustomDashboard(models.AutoSimpleCreateDashboardParam{
-			LogMetricGroupGuid:  param.Guid,
-			ServiceGroup:        param.ServiceGroup,
-			MonitorType:         param.MonitorType,
-			MetricPrefixCode:    param.MetricPrefixCode,
-			MetricList:          param.MetricList,
-			AutoCreateDashboard: true,
-			ServiceGroupsRoles:  serviceGroupsRoles,
-			Operator:            operator,
-		})
-		if createErr != nil {
-			err = createErr
-			return
-		}
-		if len(createDashboardActions) > 0 {
-			allActions = append(allActions, createDashboardActions...)
+	err = Transaction(actions)
+	if err == nil {
+		for _, v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
 		}
 	}
-
-	// 7. 如果启用了自动告警，添加告警创建操作
-	if autoAlarm == 1 {
-		// 获取 ServiceGroupsRoles，使用与 getCreateLogMetricCustomGroupActions 相同的逻辑
-		var serviceGroupsRoles []string
-		var endpointGroup string
-
-		// 如果 param.LogMetricMonitor 不为空，通过 log_metric_monitor 获取
-		if param.LogMetricMonitor != "" {
-			var logMetricMonitor = &models.LogMetricMonitorTable{}
-			var endpointGroupIds []string
-			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
-				return err
-			}
-			if logMetricMonitor != nil {
-				serviceGroupsRoles = getServiceGroupRoles(logMetricMonitor.ServiceGroup)
-				if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", logMetricMonitor.ServiceGroup, logMetricMonitor.MonitorType).Find(&endpointGroupIds); err != nil {
-					return err
-				}
-				if len(endpointGroupIds) > 0 {
-					endpointGroup = endpointGroupIds[0]
-				}
-			}
-		}
-
-		// 如果 endpointGroup 为空，使用 param.ServiceGroup
-		if strings.TrimSpace(endpointGroup) == "" {
-			var endpointGroupIds []string
-			serviceGroupsRoles = getServiceGroupRoles(param.ServiceGroup)
-			if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", param.ServiceGroup, param.MonitorType).Find(&endpointGroupIds); err != nil {
-				return err
-			}
-			if len(endpointGroupIds) > 0 {
-				endpointGroup = endpointGroupIds[0]
-			}
-		}
-
-		// 如果 serviceGroupsRoles 为空且 roles 不为空，使用 roles 作为兜底
-		if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
-			serviceGroupsRoles = roles[:1]
-		}
-
-		if endpointGroup == "" {
-			return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", param.ServiceGroup, param.MonitorType)
-		}
-
-		// 确定正确的 ServiceGroup，与 getCreateLogMetricCustomGroupActions 保持一致
-		var serviceGroup string
-		if param.LogMetricMonitor != "" {
-			var logMetricMonitor = &models.LogMetricMonitorTable{}
-			if _, err = x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", param.LogMetricMonitor).Get(logMetricMonitor); err != nil {
-				return err
-			}
-			if logMetricMonitor != nil {
-				serviceGroup = logMetricMonitor.ServiceGroup
-			}
-		}
-		if serviceGroup == "" {
-			serviceGroup = param.ServiceGroup
-		}
-
-		createAlarmActions, _, createErr := autoGenerateSimpleAlarmStrategy(models.AutoSimpleAlarmStrategyParam{
-			LogMetricGroupGuid: param.Guid,
-			ServiceGroup:       serviceGroup,
-			MetricPrefixCode:   param.MetricPrefixCode,
-			MetricList:         param.MetricList,
-			ServiceGroupsRoles: serviceGroupsRoles,
-			Operator:           operator,
-			AutoCreateWarn:     true,
-			LogType:            models.LogMonitorCustomType,
-			EndpointGroup:      endpointGroup,
-			ErrMsgObj:          nil, // 更新操作不需要错误消息对象
-		})
-		if createErr != nil {
-			err = createErr
-			return
-		}
-		if len(createAlarmActions) > 0 {
-			allActions = append(allActions, createAlarmActions...)
-		}
-	}
-
-	// 8. 执行所有操作（原子性事务 - 要么全部成功，要么全部回滚）
-	if len(allActions) > 0 {
-		log.Info(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup executing actions", zap.Int("actionCount", len(allActions)))
-		if err = Transaction(allActions); err != nil {
-			log.Error(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup transaction failed", zap.Error(err))
-			return
-		}
-		log.Info(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup transaction completed successfully")
-	} else {
-		log.Warn(nil, log.LOGGER_APP, "UpdateLogMetricCustomGroup no actions to execute")
-	}
-
-	// 9. 同步 Prometheus 规则文件
-	for _, v := range allAffectEndpointGroup {
-		_ = SyncPrometheusRuleFile(v, false)
-	}
-
 	return
 }
 
@@ -2455,11 +2314,13 @@ func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithT
 				return err
 			}
 		}
-		if autoAlarm == 1 {
-			if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
-				return err
-			}
-		}
+		/*
+			    // NY要求只更新看板,不更新阈值告警
+				 if autoAlarm == 1 {
+					if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
+						return err
+					}
+				}*/
 	}
 	// perform core update
 	if err = UpdateLogMetricGroup(param, operator); err != nil {
