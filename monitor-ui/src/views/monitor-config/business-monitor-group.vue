@@ -102,6 +102,8 @@
                              clearable
                              style="width: 350px; margin: 15px"
                              :placeholder="$t('m_template_filter')"
+                             @mousedown.native.stop
+                             @touchstart.native.stop
                              @on-change="onTemplateFilterChange"
                       />
                       <DropdownMenu>
