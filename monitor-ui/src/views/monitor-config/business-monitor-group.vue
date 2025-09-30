@@ -86,6 +86,7 @@
                     :key="index"
                     class="chart-option-menu"
                     stop-propagation
+                    transfer
                     @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
