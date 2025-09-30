@@ -85,8 +85,6 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
-                    stop-propagation
-                    transfer
                     @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
@@ -103,9 +101,12 @@
                              clearable
                              style="width: 350px; margin: 15px"
                              :placeholder="$t('m_template_filter')"
-                             @mousedown.native.stop
-                             @touchstart.native.stop
                              @on-change="onTemplateFilterChange"
+                             @mousedown.native="(e) => e.stopPropagation()"
+                             @touchstart.native="(e) => e.stopPropagation()"
+                             @click.native="(e) => e.stopPropagation()"
+                             @compositionstart.native="(e) => e.stopImmediatePropagation()"
+                             @compositionend.native="(e) => e.stopImmediatePropagation()"
                       />
                       <DropdownMenu>
                         <DropdownItem
@@ -948,7 +949,8 @@ export default {
       importType: 'yes',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
-      templateFilterString: ''
+      templateFilterString: '',
+      dropdownVisible: false
     }
   },
   computed: {
