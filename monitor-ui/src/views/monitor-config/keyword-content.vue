@@ -1301,7 +1301,7 @@ export default {
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.dataBaseGuid = rowData.guid
+      this.dataBaseGuid = rowData.service_group
       this.getSqlSourceOptions(rowData.monitor_type)
       this.isTableChangeFormShow = true
     },
@@ -1312,7 +1312,7 @@ export default {
       this.currentEditType = 'database'
       this.resetDrawerForm()
       this.fillingFormData(rowData)
-      this.dataBaseGuid = rowData.guid
+      this.dataBaseGuid = rowData.service_group
       this.getSqlSourceOptions(rowData.monitor_type)
       this.formData.name += '1'
       this.formData.guid = ''
