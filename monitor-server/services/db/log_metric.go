@@ -2008,6 +2008,7 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 		return
 	}
 
+	/* 自定义告警更新更新对应看板逻辑 开启前需要测试验证下
 	// Add dashboard sync actions if auto_dashboard is enabled
 	if param.AutoCreateDashboard {
 		dashboardSyncActions, syncErr := getCustomLogMetricGroupDashboardSyncActions(param, operator)
@@ -2017,7 +2018,7 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 		}
 		actions = append(actions, dashboardSyncActions...)
 	}
-
+	*/
 	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
