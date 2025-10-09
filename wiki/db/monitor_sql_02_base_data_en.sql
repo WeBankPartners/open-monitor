@@ -1312,4 +1312,6 @@ CREATE UNIQUE INDEX uk_alarm_custom_unique ON alarm_custom (title_hash,alert_ip(
 #@v3.6.8-end@;
 #@v3.7.1-begin@;
 ALTER TABLE alarm_condition modify column expr text default null comment '指标表达式';
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm (alarm);
+ALTER TABLE alarm_condition_rel ADD INDEX idx_alarm_condition (alarm_condition);
 #@v3.7.1-end@;
