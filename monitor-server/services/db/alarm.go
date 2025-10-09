@@ -2074,11 +2074,49 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 
 func GetAlarmDetailList(alarmId int) (alarmDetailList []*m.AlarmDetailData, err error) {
 	alarmDetailList = []*m.AlarmDetailData{}
-	//filterSql, filterParam := createListParams(alarmConditionGuidList, "")
-	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t1.tags,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in (select alarm_condition from alarm_condition_rel where alarm=?)", alarmId).Find(&alarmDetailList)
+
+	// 第一步：查询 alarm_condition_rel 表，使用 idx_alarm 索引
+	var alarmConditionGuids []string
+	err = x.SQL("select alarm_condition from alarm_condition_rel where alarm=?", alarmId).Find(&alarmConditionGuids)
 	if err != nil {
-		err = fmt.Errorf("GetAlarmDetailList -> query alarm condition table fail,%s ", err.Error())
+		err = fmt.Errorf("GetAlarmDetailList -> query alarm_condition_rel table fail,%s ", err.Error())
 		return
+	}
+
+	if len(alarmConditionGuids) == 0 {
+		return alarmDetailList, nil
+	}
+
+	// 第二步：查询 alarm_condition 表，使用主键索引
+	var alarmConditions []*m.AlarmCondition
+	placeholders := strings.Repeat("?,", len(alarmConditionGuids))
+	placeholders = placeholders[:len(placeholders)-1] // 去掉最后的逗号
+
+	params := make([]interface{}, len(alarmConditionGuids))
+	for i, guid := range alarmConditionGuids {
+		params[i] = guid
+	}
+
+	err = x.SQL(fmt.Sprintf("select metric,cond,`last`,`start`,start_value,`end`,end_value,tags from alarm_condition where guid in (%s)", placeholders), params...).Find(&alarmConditions)
+	if err != nil {
+		err = fmt.Errorf("GetAlarmDetailList -> query alarm_condition table fail,%s ", err.Error())
+		return
+	}
+
+	// 第三步：组装结果
+	for _, ac := range alarmConditions {
+		alarmDetail := &m.AlarmDetailData{
+			Metric:     ac.Metric,
+			Cond:       ac.Cond,
+			Last:       ac.Last,
+			Start:      ac.Start,
+			StartValue: ac.StartValue,
+			End:        ac.End,
+			EndValue:   ac.EndValue,
+			Tags:       ac.Tags,
+			MetricName: ac.Metric,
+		}
+		alarmDetailList = append(alarmDetailList, alarmDetail)
 	}
 	return
 }
