@@ -2077,11 +2077,6 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		inputMetricObj.TagConfig = string(tmpTagListBytes)
 		if inputMetricObj.Guid == "" {
 			tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
-			// 处理 MetricPrefixCode，与新建逻辑保持一致
-			fullMetricName := inputMetricObj.Metric
-			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
-				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
-			}
 			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,color_group,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime,
 			}})
@@ -2090,26 +2085,21 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				tmpTagList = []string{"tags"}
 			}
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{fmt.Sprintf("%s__%s", fullMetricName, serviceGroup), fullMetricName, monitorType, getLogMetricExprByAggType(fullMetricName, inputMetricObj.AggType, serviceGroup,
+				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup,
 					tmpTagList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 		} else {
-			// 处理 MetricPrefixCode，与新建逻辑保持一致
-			fullMetricName := inputMetricObj.Metric
-			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
-				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
-			}
 			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,color_group=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime, inputMetricObj.Guid,
 			}})
 			if existMetricObj, ok := existMetricDataMap[inputMetricObj.Guid]; ok {
 				oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
-				newMetricGuid := fmt.Sprintf("%s__%s", fullMetricName, serviceGroup)
+				newMetricGuid := fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup)
 				tmpTagList := []string{}
 				if len(inputMetricObj.TagConfigList) > 0 {
 					tmpTagList = []string{"tags"}
 				}
 				actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=?,log_metric_group=? where guid=?",
-					Param: []interface{}{newMetricGuid, fullMetricName, getLogMetricExprByAggType(fullMetricName, inputMetricObj.AggType, serviceGroup, tmpTagList), operator, nowTime, param.Guid, oldMetricGuid}})
+					Param: []interface{}{newMetricGuid, inputMetricObj.Metric, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, tmpTagList), operator, nowTime, param.Guid, oldMetricGuid}})
 				var alarmStrategyTable []*models.AlarmStrategyTable
 				x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 				if len(alarmStrategyTable) > 0 {
