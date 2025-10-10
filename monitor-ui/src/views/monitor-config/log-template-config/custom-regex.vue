@@ -37,7 +37,7 @@
               <Input
                 v-model.trim="metricPrefixCode"
                 maxlength="15"
-                :disabled="isOperationBoxDisabled() || isBaseCustomeTemplateAndNoTemplateEdit"
+                :disabled="isMetricPrefixDisabled()"
                 show-word-limit
                 :placeholder="$t('m_metric_code_placeholder')"
                 style="width:96%"
@@ -1048,6 +1048,21 @@ export default {
           })
         })
       }
+    },
+    isMetricPrefixDisabled() {
+      if (this.view) {
+        return true
+      }
+      if (this.isBaseCustomeTemplateAndNoTemplateEdit) {
+        return true
+      }
+      if (this.isBaseCustomeTemplateCopy || this.isBaseCustomeTemplateAdd) {
+        return false
+      }
+      if (this.isBaseCustomeTemplateEdit) {
+        return true
+      }
+      return false
     },
     isOperationBoxDisabled(item, type = 'paramList', index=-2) {
       if (this.view) {
