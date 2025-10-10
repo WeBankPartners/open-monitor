@@ -107,7 +107,7 @@
                              @on-change="onTemplateFilterChange"
                       />
                       <DropdownMenu>
-                        <div style="max-height: 300px; overflow-y: auto;">
+                        <div style="max-height: 215px; overflow-y: auto;">
                           <DropdownItem
                             v-for="(option, key) in allTemplateList"
                             :name="key"
