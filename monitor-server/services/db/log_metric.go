@@ -1799,7 +1799,9 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
 		row.FullMetric = row.Metric
-		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" && len(row.Metric) > len(metricGroupObj.MetricPrefixCode) {
+		// 只有当指标名称确实以指标前缀代码开头时，才去掉前缀
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" &&
+			strings.HasPrefix(row.Metric, metricGroupObj.MetricPrefixCode+"_") {
 			row.Metric = row.Metric[len(metricGroupObj.MetricPrefixCode)+1:]
 		}
 		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
@@ -2627,70 +2629,72 @@ func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithT
 	// check auto flags
 	var autoDashboard, autoAlarm int
 	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&autoDashboard, &autoAlarm)
-	if autoDashboard != 1 && autoAlarm != 1 {
-		return nil
-	}
-	// diffs
-	newByGuid := make(map[string]*models.LogMetricStringMapTable)
-	for _, v := range param.CodeStringMap {
-		newByGuid[v.Guid] = v
-	}
-	var adds []string
-	renames := make(map[string]string)
-	var deletes []string
-	for guidKey, ov := range oldCode {
-		if nv, ok := newByGuid[guidKey]; ok {
-			if ov.TargetValue != nv.TargetValue {
-				renames[ov.TargetValue] = nv.TargetValue
-			}
-		} else {
-			found := false
-			for _, nv := range param.CodeStringMap {
-				if (nv.LogParamName == "code" || nv.LogParamName == "") && nv.ValueType == ov.ValueType && nv.SourceValue == ov.SourceValue && nv.Regulative == ov.Regulative {
-					found = true
-					if ov.TargetValue != nv.TargetValue {
-						renames[ov.TargetValue] = nv.TargetValue
+
+	// 只有当auto_dashboard 才同步看板
+	if autoDashboard == 1 {
+		// diffs
+		newByGuid := make(map[string]*models.LogMetricStringMapTable)
+		for _, v := range param.CodeStringMap {
+			newByGuid[v.Guid] = v
+		}
+		var adds []string
+		renames := make(map[string]string)
+		var deletes []string
+		for guidKey, ov := range oldCode {
+			if nv, ok := newByGuid[guidKey]; ok {
+				if ov.TargetValue != nv.TargetValue {
+					renames[ov.TargetValue] = nv.TargetValue
+				}
+			} else {
+				found := false
+				for _, nv := range param.CodeStringMap {
+					if (nv.LogParamName == "code" || nv.LogParamName == "") && nv.ValueType == ov.ValueType && nv.SourceValue == ov.SourceValue && nv.Regulative == ov.Regulative {
+						found = true
+						if ov.TargetValue != nv.TargetValue {
+							renames[ov.TargetValue] = nv.TargetValue
+						}
+						break
 					}
-					break
+				}
+				if !found {
+					deletes = append(deletes, ov.TargetValue)
 				}
 			}
-			if !found {
-				deletes = append(deletes, ov.TargetValue)
+		}
+		oldTargets := make(map[string]bool)
+		for _, ov := range oldCode {
+			oldTargets[ov.TargetValue] = true
+		}
+		// Exclude pure renames from adds: collect all new target values coming from renames
+		renamedNewTargets := make(map[string]bool)
+		for _, newV := range renames {
+			renamedNewTargets[newV] = true
+		}
+		for _, nv := range param.CodeStringMap {
+			if nv.LogParamName != "code" {
+				nv.LogParamName = "code"
+			}
+			if !oldTargets[nv.TargetValue] && !renamedNewTargets[nv.TargetValue] {
+				adds = append(adds, nv.TargetValue)
 			}
 		}
-	}
-	oldTargets := make(map[string]bool)
-	for _, ov := range oldCode {
-		oldTargets[ov.TargetValue] = true
-	}
-	// Exclude pure renames from adds: collect all new target values coming from renames
-	renamedNewTargets := make(map[string]bool)
-	for _, newV := range renames {
-		renamedNewTargets[newV] = true
-	}
-	for _, nv := range param.CodeStringMap {
-		if nv.LogParamName != "code" {
-			nv.LogParamName = "code"
-		}
-		if !oldTargets[nv.TargetValue] && !renamedNewTargets[nv.TargetValue] {
-			adds = append(adds, nv.TargetValue)
-		}
-	}
-	if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
-		if autoDashboard == 1 {
-			if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
-				return err
+		if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
+			if autoDashboard == 1 {
+				if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
+					return err
+				}
 			}
+			/*
+				    // NY要求只更新看板,不更新阈值告警
+					 if autoAlarm == 1 {
+						if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
+							return err
+						}
+					}*/
 		}
-		/*
-			    // NY要求只更新看板,不更新阈值告警
-				 if autoAlarm == 1 {
-					if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
-						return err
-					}
-				}*/
 	}
-	// perform core update
+
+	// 无论auto_dashboard和auto_alarm是否开启，都要执行核心更新操作
 	if err = UpdateLogMetricGroup(param, operator); err != nil {
 		return err
 	}

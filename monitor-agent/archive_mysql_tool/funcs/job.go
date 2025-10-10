@@ -44,12 +44,22 @@ func StartCronJob() {
 				CreateJob(jobId)
 			}
 		}()
-		// 任务启动后 15 秒打印一次忙时快照（强制输出）
+		// 启动SQL插入活动监控，每30秒检查一次并在有活动时打印统计
 		go func() {
-			time.Sleep(15 * time.Second)
-			log.Printf("=== DB Connection Stats Snapshot After JobStart ===")
-			PrintDBConnectionStatsConditional("ArchiveDB-StartBurst", true)
-			log.Printf("=== End Snapshot ===")
+			ticker := time.NewTicker(10 * time.Second)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					// 检查是否有SQL插入活动
+					if isInsertingActive {
+						log.Printf("=== DB Connection Stats Snapshot (SQL Activity Detected) ===")
+						PrintDBConnectionStatsConditional("ArchiveDB-SQLActivity")
+						log.Printf("=== End Snapshot ===")
+					}
+				}
+			}
 		}()
 		<-c
 	}
@@ -146,7 +156,6 @@ func consumeJob() {
 		for _, job := range concurrentJobList {
 			wg.Add(1)
 			go func(jobList ArchiveActionList, tmpWg *sync.WaitGroup) {
-				//archiveAction(jobList)
 				archiveTimeoutAction(jobList)
 				tmpWg.Done()
 			}(job, &wg)
@@ -154,7 +163,7 @@ func consumeJob() {
 		wg.Wait()
 		endTime := time.Now()
 		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
-		log.Printf("done with consume job,use time: %.3f ms", useTime)
+		log.Printf("[prometheusArchive]done with consume job,use time: %.3f ms", useTime)
 
 		if int(endTime.Sub(startTime).Seconds()) >= jobTimeout {
 			log.Println("job timeout,try to reset db connection ")
