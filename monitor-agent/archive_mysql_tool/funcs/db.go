@@ -25,6 +25,8 @@ var (
 	jobTimeout          int
 
 	connectionTrendData []ConnectionTrendPoint
+	// 上次连接统计信息
+	lastConnectionStats sql.DBStats
 	// 插入活动标记，用于外部性能日志控制
 	isInsertingActive bool
 )

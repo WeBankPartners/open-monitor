@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -69,7 +70,7 @@ func (w *dateRollingWriter) cleanupOldFiles() {
 		return
 	}
 	cutoff := time.Now().Add(-time.Duration(w.retentionDays) * 24 * time.Hour)
-	entries, err := os.ReadDir(w.dir)
+	entries, err := ioutil.ReadDir(w.dir)
 	if err != nil {
 		return
 	}
