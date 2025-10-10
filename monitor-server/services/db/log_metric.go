@@ -2082,8 +2082,8 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
 				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
 			}
-			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime,
+			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,color_group,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime,
 			}})
 			tmpTagList := []string{}
 			if len(inputMetricObj.TagConfigList) > 0 {
@@ -2098,8 +2098,8 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
 				fullMetricName = param.MetricPrefixCode + "_" + inputMetricObj.Metric
 			}
-			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
+			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,color_group=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
+				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime, inputMetricObj.Guid,
 			}})
 			if existMetricObj, ok := existMetricDataMap[inputMetricObj.Guid]; ok {
 				oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
