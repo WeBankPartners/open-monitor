@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -2006,6 +2007,18 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	if err != nil {
 		return
 	}
+
+	/* 自定义告警更新更新对应看板逻辑 开启前需要测试验证下
+	// Add dashboard sync actions if auto_dashboard is enabled
+	if param.AutoCreateDashboard {
+		dashboardSyncActions, syncErr := getCustomLogMetricGroupDashboardSyncActions(param, operator)
+		if syncErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Failed to generate dashboard sync actions for custom log metric group", zap.Error(syncErr), zap.String("guid", param.Guid))
+			return syncErr
+		}
+		actions = append(actions, dashboardSyncActions...)
+	}
+	*/
 	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
@@ -2113,6 +2126,371 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	}
 	log.Info(nil, log.LOGGER_APP, "getUpdateLogMetricCustomGroupActions generated actions", zap.Int("actionCount", len(actions)))
 	return
+}
+
+// getCustomLogMetricGroupDashboardSyncActions generates actions to sync dashboard when custom log metric group is updated
+func getCustomLogMetricGroupDashboardSyncActions(param *models.LogMetricGroupObj, operator string) (actions []*Action, err error) {
+	// Get existing data for comparison
+	existData, getErr := GetLogMetricCustomGroup(param.Guid)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+
+	// Calculate metric changes by comparing existing vs new metric list
+	var metricsAdded []models.LogMetricConfigDto
+	var metricsDeleted []models.LogMetricConfigDto
+	var metricsModified []models.LogMetricConfigDto
+
+	// Build maps for comparison
+	existMetricMap := make(map[string]*models.LogMetricConfigDto) // metric name -> metric
+	newMetricMap := make(map[string]*models.LogMetricConfigDto)   // metric name -> metric
+
+	for _, metric := range existData.MetricList {
+		existMetricMap[metric.Metric] = metric
+	}
+
+	for _, metric := range param.MetricList {
+		newMetricMap[metric.Metric] = metric
+	}
+
+	// Find added and modified metrics
+	for metricName, newMetric := range newMetricMap {
+		if existMetric, exists := existMetricMap[metricName]; exists {
+			// Check if metric was modified (display name, agg type, log_param_name etc.)
+			if existMetric.AggType != newMetric.AggType || existMetric.LogParamName != newMetric.LogParamName ||
+				!compareTagConfigList(existMetric.TagConfigList, newMetric.TagConfigList) {
+				metricsModified = append(metricsModified, *newMetric)
+			}
+		} else {
+			// New metric
+			metricsAdded = append(metricsAdded, *newMetric)
+		}
+	}
+
+	// Find deleted metrics
+	for metricName, existMetric := range existMetricMap {
+		if _, exists := newMetricMap[metricName]; !exists {
+			metricsDeleted = append(metricsDeleted, *existMetric)
+		}
+	}
+
+	// Sync dashboard if there are changes
+	if len(metricsAdded) > 0 || len(metricsDeleted) > 0 || len(metricsModified) > 0 {
+		syncActions, syncErr := syncCustomDashboardForMetricChanges(param.Guid, metricsAdded, metricsDeleted, metricsModified, param.MetricPrefixCode, operator)
+		if syncErr != nil {
+			err = syncErr
+			return
+		}
+		actions = append(actions, syncActions...)
+
+		// 1) 处理 tag_config 的增删（按每个被修改的 metric）
+		// 规则：新增 key -> 为该组相关图表下的每个 series 新增一条 tag 记录（equal 默认 in）；
+		//      删除 key -> 删除对应 tag 记录及其 tag_value 记录
+		// 先获取当前组对应的 dashboardId
+		var dashboardId int
+		_, _ = x.SQL("select id from custom_dashboard where log_metric_group=?", param.Guid).Get(&dashboardId)
+
+		// 计算展示用的 ServiceGroup 名称
+		displayServiceGroupName := existData.ServiceGroup
+		var sg models.ServiceGroupTable
+		if existData.ServiceGroup != "" {
+			x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", existData.ServiceGroup).Get(&sg)
+			if sg.DisplayName != "" {
+				displayServiceGroupName = sg.DisplayName
+			}
+		}
+		for _, newMetric := range metricsModified {
+			oldMetric := existMetricMap[newMetric.Metric]
+			if oldMetric == nil {
+				continue
+			}
+			// 计算该 metric 的图表名称
+			chartNameForMetric := fmt.Sprintf("%s_%s/%s", param.MetricPrefixCode, newMetric.Metric, displayServiceGroupName)
+			// 计算差集
+			oldSet := make(map[string]bool)
+			newSet := make(map[string]bool)
+			for _, k := range oldMetric.TagConfigList {
+				oldSet[k] = true
+			}
+			for _, k := range newMetric.TagConfigList {
+				newSet[k] = true
+			}
+			// 删除的 keys
+			for k := range oldSet {
+				if !newSet[k] {
+					// 删除 tag_value
+					actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag_value where dashboard_chart_tag in (select guid from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?)))",
+						Param: []interface{}{k, param.Guid, chartNameForMetric}})
+					// 删除 tag
+					actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+						Param: []interface{}{k, param.Guid, chartNameForMetric}})
+				}
+			}
+			// 新增的 keys
+			for k := range newSet {
+				if !oldSet[k] {
+					// 为所有相关 series 新增 tag（equal 默认 in）
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) select ?, s.guid, ?, ? from custom_chart_series s where s.dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?)",
+						Param: []interface{}{guid.CreateGuid(), k, "in", param.Guid, chartNameForMetric}})
+				}
+			}
+		}
+
+		// 2) 处理 param_list.string_map 值变更对 series_config 的回溯替换
+		// 规则：仅当该 param 被 metric_list[*].log_param_name 使用时，针对 old->new 的 target_value 逐一 REPLACE
+		// 构建：paramName -> (source_value -> target_value)
+		oldParamMap := make(map[string]map[string]string)
+		newParamMap := make(map[string]map[string]string)
+		for _, p := range existData.ParamList {
+			m := make(map[string]string)
+			for _, sm := range p.StringMap {
+				m[sm.SourceValue] = sm.TargetValue
+			}
+			oldParamMap[p.Name] = m
+		}
+		for _, p := range param.ParamList {
+			m := make(map[string]string)
+			for _, sm := range p.StringMap {
+				m[sm.SourceValue] = sm.TargetValue
+			}
+			newParamMap[p.Name] = m
+		}
+		// 计算被使用的 param 名称集合
+		usedParam := make(map[string]bool)
+		for _, m := range param.MetricList {
+			if m.LogParamName != "" {
+				usedParam[m.LogParamName] = true
+			}
+		}
+		// 遍历变化
+		for pname := range usedParam {
+			oldKV := oldParamMap[pname]
+			newKV := newParamMap[pname]
+			if oldKV == nil || newKV == nil {
+				continue
+			}
+			for src, oldTarget := range oldKV {
+				if newTarget, ok := newKV[src]; ok && newTarget != oldTarget {
+					// 统一替换 tags 与 series_name 中的值片段： pname=oldTarget -> pname=newTarget
+					actions = append(actions, &Action{Sql: "update custom_chart_series_config set tags=REPLACE(tags, CONCAT(?, '=' , ?), CONCAT(?, '=' , ?)), series_name=REPLACE(series_name, CONCAT(?, '=' , ?), CONCAT(?, '=' , ?)) where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?))",
+						Param: []interface{}{pname, oldTarget, pname, newTarget, pname, oldTarget, pname, newTarget, param.Guid}})
+				}
+			}
+		}
+	}
+
+	return
+}
+
+// compareTagConfigList compares two tag config lists for equality
+func compareTagConfigList(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// syncCustomDashboardForMetricChanges handles dashboard synchronization for custom log metric group metric changes
+func syncCustomDashboardForMetricChanges(logMetricGroupGuid string, metricsAdded, metricsDeleted, metricsModified []models.LogMetricConfigDto,
+	metricPrefixCode, operator string) (actions []*Action, err error) {
+
+	// Get existing dashboard
+	var dashboardId int
+	if _, err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Get(&dashboardId); err != nil {
+		return
+	}
+	if dashboardId == 0 {
+		// No dashboard exists, nothing to sync
+		return
+	}
+
+	// Get service group info
+	serviceGroup, monitorType := GetLogMetricServiceGroup(logMetricGroupGuid)
+
+	// Get service group display name
+	var serviceGroupTable models.ServiceGroupTable
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(&serviceGroupTable)
+	displayServiceGroup := serviceGroup
+	if serviceGroupTable.DisplayName != "" {
+		displayServiceGroup = serviceGroupTable.DisplayName
+	}
+
+	now := time.Now()
+
+	// Prepare dashboard roles for chart creation via handleAutoCreateChart
+	var roleRelList []*models.CustomDashBoardRoleRel
+	var useRoles []string
+	var mgmtRole string
+	if dashboardId > 0 {
+		if roleRelList, err = QueryCustomDashboardRoleRelByCustomDashboard(dashboardId); err != nil {
+			return
+		}
+		if len(roleRelList) > 0 {
+			for _, r := range roleRelList {
+				if r.Permission == string(models.PermissionMgmt) {
+					mgmtRole = r.RoleId
+				} else if r.Permission == string(models.PermissionUse) {
+					useRoles = append(useRoles, r.RoleId)
+				}
+			}
+		}
+	}
+
+	// Handle deleted metrics - remove corresponding charts
+	for _, metric := range metricsDeleted {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+		actions = append(actions, &Action{
+			Sql:   "delete from custom_chart where log_metric_group=? and name=?",
+			Param: []interface{}{logMetricGroupGuid, chartName},
+		})
+	}
+
+	// Handle added metrics - create new charts
+	for _, metric := range metricsAdded {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+
+		// Check if chart already exists
+		var existingChartId string
+		x.SQL("select guid from custom_chart where log_metric_group=? and name=?", logMetricGroupGuid, chartName).Get(&existingChartId)
+		if existingChartId != "" {
+			continue // Chart already exists
+		}
+
+		// Get current chart count for display config calculation
+		var chartCount int
+		x.SQL("select count(*) from custom_chart where log_metric_group=?", logMetricGroupGuid).Get(&chartCount)
+
+		// Create new chart params, align with autoGenerateSimpleCustomDashboard
+		chartParam := &models.CustomChartDto{
+			Public:          true,
+			SourceDashboard: dashboardId,
+			Name:            chartName,
+			ChartTemplate:   "one",
+			ChartType:       "line",
+			LineType:        "line",
+			Aggregate:       "none",
+			AggStep:         60,
+			ChartSeries:     []*models.CustomChartSeriesDto{},
+			DisplayConfig:   calcDisplayConfigForCustom(chartCount),
+			LogMetricGroup:  &logMetricGroupGuid,
+		}
+
+		// Generate chart series using the same logic as generateSimpleChartSeries
+		chartParam.ChartSeries = append(chartParam.ChartSeries, generateCustomChartSeries(serviceGroup, monitorType, metricPrefixCode, &metric))
+
+		// Create chart via handleAutoCreateChart to keep logic consistent with creation flow
+		subChartActions := handleAutoCreateChart(chartParam, int64(dashboardId), useRoles, mgmtRole, operator)
+		if len(subChartActions) > 0 {
+			actions = append(actions, subChartActions...)
+		}
+	}
+
+	// Handle modified metrics - update existing charts
+	for _, metric := range metricsModified {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+
+		// Update chart display name if it changed
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart set name=?, update_user=?, update_time=? where log_metric_group=? and name=?",
+			Param: []interface{}{chartName, operator, now, logMetricGroupGuid, chartName},
+		})
+
+		// Update chart series with new metric info
+		fullMetricName := metric.Metric
+		if metricPrefixCode != "" && !strings.HasPrefix(metric.Metric, metricPrefixCode+"_") {
+			fullMetricName = metricPrefixCode + "_" + metric.Metric
+		}
+
+		// Update series metric and prom_expr
+		promExpr := getLogMetricExprByAggType(fullMetricName, metric.AggType, serviceGroup, []string{"tags"})
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart_series set metric=?, prom_expr=?, display_name=?, legend=?, update_user=?, update_time=? where custom_chart in (select guid from custom_chart where log_metric_group=? and name=?)",
+			Param: []interface{}{fullMetricName, promExpr, metric.DisplayName, metric.DisplayName, operator, now, logMetricGroupGuid, chartName},
+		})
+
+		// If log_param_name changed, unify replace in series_config.tags/series_name and series_tag.name
+		var oldLogParamName string
+		x.SQL("select log_param_name from log_metric_config where log_metric_group=? and metric=?", logMetricGroupGuid, metric.Metric).Get(&oldLogParamName)
+		if oldLogParamName != "" && oldLogParamName != metric.LogParamName {
+			// Update custom_chart_series_config tags and series_name via dashboard_chart path
+			actions = append(actions, &Action{Sql: "update custom_chart_series_config set tags=REPLACE(tags, CONCAT(?, '='), CONCAT(?, '=')), series_name=REPLACE(series_name, CONCAT('{', ?, '='), CONCAT('{', ?, '=')) where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+				Param: []interface{}{oldLogParamName, metric.LogParamName, oldLogParamName, metric.LogParamName, dashboardId, chartName}})
+			// Update custom_chart_series_tag name via dashboard_chart path
+			actions = append(actions, &Action{Sql: "update custom_chart_series_tag set name=? where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+				Param: []interface{}{metric.LogParamName, oldLogParamName, dashboardId, chartName}})
+		}
+	}
+
+	// Recalculate and unify layout at the end when there are any changes
+	if (len(metricsAdded) + len(metricsDeleted) + len(metricsModified)) > 0 {
+		var chartIds []string
+		if err = x.SQL("select guid from custom_chart where source_dashboard=? order by name", dashboardId).Find(&chartIds); err != nil {
+			return
+		}
+		for idx, chartId := range chartIds {
+			cfg := calcDisplayConfigForCustom(idx)
+			cfgBytes, _ := json.Marshal(cfg)
+			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set display_config=? where custom_dashboard=? and dashboard_chart=?", Param: []interface{}{string(cfgBytes), dashboardId, chartId}})
+		}
+	}
+
+	return
+}
+
+// generateCustomChartSeries generates chart series for custom metrics (similar to generateSimpleChartSeries)
+func generateCustomChartSeries(serviceGroup, monitorType, metricPrefixCode string, metric *models.LogMetricConfigDto) *models.CustomChartSeriesDto {
+	var serviceGroupTable = &models.ServiceGroupTable{}
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
+
+	metricGuid := metric.Metric
+	fullMetricName := metric.Metric
+	// Check if metric.Metric already contains metricPrefixCode, avoid duplicate addition
+	if metricPrefixCode != "" && !strings.HasPrefix(metric.Metric, metricPrefixCode+"_") {
+		metricGuid = metricPrefixCode + "_" + metricGuid
+		fullMetricName = metricPrefixCode + "_" + metric.Metric
+	}
+
+	dto := &models.CustomChartSeriesDto{
+		Endpoint:     serviceGroup,
+		ServiceGroup: serviceGroup,
+		EndpointName: serviceGroup,
+		MonitorType:  monitorType,
+		ColorGroup:   metric.ColorGroup,
+		MetricType:   "business",
+		MetricGuid:   generateMetricGuid(metricGuid, serviceGroup),
+		Metric:       fullMetricName,
+		Tags:         make([]*models.TagDto, 0),
+	}
+
+	if serviceGroupTable != nil {
+		dto.EndpointName = serviceGroupTable.DisplayName
+		dto.EndpointType = serviceGroupTable.ServiceType
+	}
+
+	if len(metric.TagConfigList) > 0 {
+		dto.Tags = append(dto.Tags, &models.TagDto{TagName: "code", Equal: "in"})
+	}
+
+	return dto
+}
+
+// handleCustomChartCreation handles the creation of custom charts and series
+// handleCustomChartCreation 已废弃：更新场景改为复用 handleAutoCreateChart，统一落库到 custom_dashboard_chart_rel
+
+// calcDisplayConfigForCustom generates display config for custom charts (similar to calcDisplayConfig)
+func calcDisplayConfigForCustom(index int) models.DisplayConfig {
+	item := models.DisplayConfig{}
+	item.W = 4
+	item.H = 7
+	item.X = float64((index % 3) * 4)
+	item.Y = math.Floor(float64(index/3)) * 7
+	return item
 }
 
 func GetServiceGroupMetricMap(serviceGroup string) (existMetricMap map[string]string, err error) {
