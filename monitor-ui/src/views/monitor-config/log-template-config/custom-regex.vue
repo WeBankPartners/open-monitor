@@ -478,7 +478,7 @@ export default {
           render: (h, params) =>
             (
               <i-switch value={params.row.auto_alarm}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index) || this.isBaseCustomeTemplateEdit}
                 on-on-change={val => {
                   if (!val) {
                     Vue.set(this.configInfo.metric_list[params.index], 'range_config', cloneDeep(initRangeConfigMap))
@@ -497,7 +497,7 @@ export default {
             ? (
               <Select
                 value={params.row.range_config.operator}
-                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
+                disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index) || this.isBaseCustomeTemplateEdit}
                 on-on-change={v => {
                   this.configInfo.metric_list[params.index].range_config.operator = v
                 }}
@@ -520,7 +520,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.threshold}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index) || this.isBaseCustomeTemplateEdit}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.threshold = v.target.value
               }}
@@ -536,7 +536,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Input
               value={params.row.range_config.time}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index) || this.isBaseCustomeTemplateEdit}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time = v.target.value
               }}
@@ -552,7 +552,7 @@ export default {
           render: (h, params) => params.row.auto_alarm ? (
             <Select
               value={params.row.range_config.time_unit}
-              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index)}
+              disabled={this.isOperationBoxDisabled(params.row, 'metricList', params.index) || this.isBaseCustomeTemplateEdit}
               on-on-change={v => {
                 this.configInfo.metric_list[params.index].range_config.time_unit = v
               }}
@@ -1018,6 +1018,9 @@ export default {
     addComputeMetrics() {
       const item = cloneDeep(initMetricItem)
       item.color_group = getRandomColor()
+      if (this.isBaseCustomeTemplateEdit) {
+        item.auto_alarm = false
+      }
       this.configInfo.metric_list.push(item)
     },
     // #endregion
