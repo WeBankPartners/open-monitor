@@ -1098,7 +1098,7 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		if newPanelGroupStr != panelGroupsStr {
 			// update dashboard panel_groups and audit update user/time
 			now := time.Now().Format(models.DatetimeFormat)
-			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{orderedCodes, operator, now, dashboardId}})
+			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{newPanelGroupStr, operator, now, dashboardId}})
 			log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges updating panel groups",
 				zap.String("lmg", logMetricGroupGuid),
 				zap.String("oldGroups", panelGroupsStr),
