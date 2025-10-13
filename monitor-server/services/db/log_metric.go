@@ -2680,7 +2680,8 @@ func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithT
 		}
 		if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
 			if autoDashboard == 1 {
-				if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator); err != nil {
+				var sucCode = getRetCodeSuccessCode(param.RetCodeStringMap)
+				if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator, sucCode); err != nil {
 					return err
 				}
 			}

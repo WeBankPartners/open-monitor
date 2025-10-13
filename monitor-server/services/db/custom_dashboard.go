@@ -872,7 +872,7 @@ func convertLineTypeIntToString(lineType int) string {
 
 // SyncDashboardForCodeChanges updates dashboard charts under a log_metric_group when
 // code tag values are renamed, deleted, or added. This function is safe to call when no dashboards exist.
-func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string) (err error) {
+func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator, sucCode string) (err error) {
 	var dashboardInfo models.CustomDashboardTable
 	if _, err = x.SQL("select id,panel_groups from custom_dashboard where log_metric_group=? limit 1", logMetricGroupGuid).Get(&dashboardInfo); err != nil {
 		return
@@ -1045,6 +1045,21 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 				filtered = append(filtered, g)
 			}
 		}
+
+		// apply renames - 处理分组名称的重命名
+		for oldVal, newVal := range codeRenames {
+			for i, g := range filtered {
+				if g == oldVal {
+					filtered[i] = newVal
+					log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges updating panel group name",
+						zap.String("lmg", logMetricGroupGuid),
+						zap.String("oldGroup", oldVal),
+						zap.String("newGroup", newVal))
+					break
+				}
+			}
+		}
+
 		// apply deletes
 		for _, c := range codeDeletes {
 			delete(groupSet, c)
@@ -1070,6 +1085,10 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 			// update dashboard panel_groups and audit update user/time
 			now := time.Now().Format(models.DatetimeFormat)
 			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{newPanelGroups, operator, now, dashboardId}})
+			log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges updating panel groups",
+				zap.String("lmg", logMetricGroupGuid),
+				zap.String("oldGroups", panelGroupsStr),
+				zap.String("newGroups", newPanelGroups))
 		}
 	}
 
@@ -1121,49 +1140,10 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		}
 	}
 
-	// Recalculate coordinates for ALL chart groups when there are any changes
-	// This ensures proper layout after code deletions, additions, or renames
-	if len(codeRenames) > 0 || len(codeDeletes) > 0 || len(codesAdded) > 0 {
-		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges recalculating ALL chart coordinates due to changes",
-			zap.String("lmg", logMetricGroupGuid),
-			zap.Int("renameCount", len(codeRenames)),
-			zap.Int("deleteCount", len(codeDeletes)),
-			zap.Int("addCount", len(codesAdded)))
-
-		chartIndex := 0
-		for _, code := range orderedCodes {
-			if charts, exists := codeToCharts[code]; exists {
-				// Each code has 3 charts: requests, success rate, avg cost time
-				// GroupDisplayConfig follows the same pattern as creation:
-				// - First chart (requests): calcDisplayConfig(0)
-				// - Second chart (success rate): calcDisplayConfig(1)
-				// - Third chart (avg cost time): calcDisplayConfig(1)
-				for i, chart := range charts {
-					displayConfig := calcDisplayConfig(chartIndex*3 + i)
-					displayConfigBytes, _ := json.Marshal(displayConfig)
-
-					// GroupDisplayConfig calculation matches creation logic
-					var groupDisplayConfig models.DisplayConfig
-					if i == 0 {
-						// First chart (requests): GroupDisplayConfig = calcDisplayConfig(0)
-						groupDisplayConfig = calcDisplayConfig(0)
-					} else {
-						// Second and third charts: GroupDisplayConfig = calcDisplayConfig(1)
-						groupDisplayConfig = calcDisplayConfig(1)
-					}
-					groupDisplayConfigBytes, _ := json.Marshal(groupDisplayConfig)
-
-					actions = append(actions, &Action{
-						Sql:   "update custom_dashboard_chart_rel set display_config=?, group_display_config=? where dashboard_chart=?",
-						Param: []interface{}{string(displayConfigBytes), string(groupDisplayConfigBytes), chart.Guid},
-					})
-				}
-				chartIndex++
-			}
-		}
-	}
-
 	// Handle additions: create new charts for added codes
+	// 收集新增图表的 GUID 信息，用于后续坐标重新计算
+	var newChartsByCode = make(map[string][]models.CustomChart)
+
 	if len(codesAdded) > 0 {
 		// Create charts for each added code using autoGenerateCustomDashboard logic
 		// Find the position of each added code in the final panel_groups order
@@ -1181,11 +1161,87 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 				codeIndex = len(orderedCodes) - 1
 			}
 
-			chartActions, err := createChartForCode(logMetricGroupGuid, code, operator, dashboardId, codeIndex)
+			chartActions, createdCharts, err := createChartForCode(logMetricGroupGuid, code, operator, dashboardId, codeIndex, sucCode)
 			if err != nil {
 				return err
 			}
 			actions = append(actions, chartActions...)
+
+			// 直接使用 createChartForCode 返回的图表信息
+			newChartsByCode[code] = createdCharts
+		}
+	}
+
+	// 最后统一重新计算所有图表的坐标（包括新增的图表）
+	// 这确保了所有图表（包括新增的图表）都有正确的坐标
+	if len(codeRenames) > 0 || len(codeDeletes) > 0 || len(codesAdded) > 0 {
+		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges recalculating ALL chart coordinates after all changes",
+			zap.String("lmg", logMetricGroupGuid),
+			zap.Int("renameCount", len(codeRenames)),
+			zap.Int("deleteCount", len(codeDeletes)),
+			zap.Int("addCount", len(codesAdded)))
+
+		// 构建最终的图表映射，包含所有图表（现有 + 新增）
+		finalCodeToCharts := make(map[string][]models.CustomChart)
+
+		// 1. 先添加现有的图表（排除被删除的）
+		for code, charts := range codeToCharts {
+			// 检查这个代码是否被删除了
+			isDeleted := false
+			for _, deletedCode := range codeDeletes {
+				if code == deletedCode {
+					isDeleted = true
+					break
+				}
+			}
+			if !isDeleted {
+				finalCodeToCharts[code] = charts
+			}
+		}
+
+		// 2. 添加新增的图表
+		// 使用之前收集的新增图表信息
+		for _, code := range codesAdded {
+			if newCharts, exists := newChartsByCode[code]; exists {
+				finalCodeToCharts[code] = newCharts
+			}
+		}
+
+		// 按 metric type 排序每个代码组的图表
+		for code, charts := range finalCodeToCharts {
+			sort.Slice(charts, func(i, j int) bool {
+				metricI := extractMetricFromChartName(charts[i].Name)
+				metricJ := extractMetricFromChartName(charts[j].Name)
+				orderI := getMetricSortOrder(metricI)
+				orderJ := getMetricSortOrder(metricJ)
+				return orderI < orderJ
+			})
+			finalCodeToCharts[code] = charts
+		}
+
+		// 按 orderedCodes 顺序重新计算所有图表的坐标
+		chartIndex := 0
+		for _, code := range orderedCodes {
+			if charts, exists := finalCodeToCharts[code]; exists {
+				for i, chart := range charts {
+					displayConfig := calcDisplayConfig(chartIndex*3 + i)
+					displayConfigBytes, _ := json.Marshal(displayConfig)
+
+					var groupDisplayConfig models.DisplayConfig
+					if i == 0 {
+						groupDisplayConfig = calcDisplayConfig(0)
+					} else {
+						groupDisplayConfig = calcDisplayConfig(1)
+					}
+					groupDisplayConfigBytes, _ := json.Marshal(groupDisplayConfig)
+
+					actions = append(actions, &Action{
+						Sql:   "update custom_dashboard_chart_rel set display_config=?, group_display_config=? where dashboard_chart=?",
+						Param: []interface{}{string(displayConfigBytes), string(groupDisplayConfigBytes), chart.Guid},
+					})
+				}
+				chartIndex++
+			}
 		}
 	}
 
@@ -1199,35 +1255,13 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		return nil
 	}
 
-	// Log all SQL actions before execution
-	log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges executing SQL actions",
-		zap.String("lmg", logMetricGroupGuid),
-		zap.Int("actionCount", len(actions)),
-		zap.Strings("codeRenames", func() []string {
-			var result []string
-			for old, new := range codeRenames {
-				result = append(result, fmt.Sprintf("%s->%s", old, new))
-			}
-			return result
-		}()),
-		zap.Strings("codeDeletes", codeDeletes),
-		zap.Strings("codesAdded", codesAdded))
-
-	// Print all SQL statements and parameters
-	for i, action := range actions {
-		log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges SQL execution",
-			zap.String("lmg", logMetricGroupGuid),
-			zap.Int("actionIndex", i+1),
-			zap.String("sql", action.Sql),
-			zap.Any("params", action.Param))
-	}
-
 	return Transaction(actions)
 }
 
 // createChartForCode creates charts for a specific code using autoGenerateCustomDashboard logic
-func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId int, chartIndex int) ([]*Action, error) {
+func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId, chartIndex int, sucCode string) ([]*Action, []models.CustomChart, error) {
 	var actions []*Action
+	var createdCharts []models.CustomChart
 
 	// Get group context: prefix, monitor, service group & display
 	var metricPrefixCode, logMetricMonitor string
@@ -1258,6 +1292,12 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 	chartName1 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constReqCount), serviceGroupDisplay)
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chartId1, dashboardId, 1, chartName1, "bar", "bar", "sum", 60, "", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+
+	// 收集创建的图表信息
+	createdCharts = append(createdCharts, models.CustomChart{
+		Guid: chartId1,
+		Name: chartName1,
+	})
 	// Calculate display config for chart 1 (requests)
 	displayConfig1 := calcDisplayConfig(chartIndex*3 + 0)
 	displayConfig1Bytes, _ := json.Marshal(displayConfig1)
@@ -1302,6 +1342,12 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 	chartName2 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constReqSucCount), serviceGroupDisplay)
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chartId2, dashboardId, 1, chartName2, "line", "line", "none", 60, "%", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+
+	// 收集创建的图表信息
+	createdCharts = append(createdCharts, models.CustomChart{
+		Guid: chartId2,
+		Name: chartName2,
+	})
 	// Calculate display config for chart 2 (success rate)
 	displayConfig2 := calcDisplayConfig(chartIndex*3 + 1)
 	displayConfig2Bytes, _ := json.Marshal(displayConfig2)
@@ -1329,6 +1375,12 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 	chartName3 := fmt.Sprintf("%s-%s/%s", code, buildMetric(constConstTimeAvg), serviceGroupDisplay)
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type,log_metric_group) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chartId3, dashboardId, 1, chartName3, "line", "line", "none", 60, "ms", operator, operator, now, now, "one", "", logMetricGroupGuid}})
+
+	// 收集创建的图表信息
+	createdCharts = append(createdCharts, models.CustomChart{
+		Guid: chartId3,
+		Name: chartName3,
+	})
 	// Calculate display config for chart 3 (avg cost time)
 	displayConfig3 := calcDisplayConfig(chartIndex*3 + 2)
 	displayConfig3Bytes, _ := json.Marshal(displayConfig3)
@@ -1350,8 +1402,10 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId i
 	tag4 := guid.CreateGuid()
 	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag4, series4, constCode, ConstEqualIn}})
 	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag4, code}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag4, series4, constRetCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag4, sucCode}})
 
-	return actions, nil
+	return actions, createdCharts, nil
 }
 
 // SyncAlarmStrategyForCodeChanges function moved to log_metric.go
