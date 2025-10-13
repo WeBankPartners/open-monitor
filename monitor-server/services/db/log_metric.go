@@ -1631,7 +1631,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 	var existMetricRows []*models.LogMetricConfigDto
-	if metricGroupObj.LogMonitorTemplate != "" {
+	if metricGroupObj.LogMonitorTemplate != "" && metricGroupObj.LogType != "custom" {
 		logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
 		if getTemplateErr != nil {
 			err = getTemplateErr
@@ -1641,6 +1641,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 			existMetricRows = append(existMetricRows, v.TransToLogMetric())
 		}
 	} else {
+		//  自定义业务配置不管是不是模版创建,都走自己去查询指标,因为就算从模版创建也能新增指标
 		logMetricGroupObj, getLogGroupErr := GetLogMetricCustomGroup(logMetricGroupGuid)
 		if getLogGroupErr != nil {
 			err = getLogGroupErr
