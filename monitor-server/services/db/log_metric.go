@@ -2088,6 +2088,9 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		}
 	}
 	for i, inputMetricObj := range param.MetricList {
+		if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
+			inputMetricObj.Metric = param.MetricPrefixCode + "_" + inputMetricObj.Metric
+		}
 		tmpTagListBytes, _ := json.Marshal(inputMetricObj.TagConfigList)
 		inputMetricObj.TagConfig = string(tmpTagListBytes)
 		if inputMetricObj.Guid == "" {

@@ -400,6 +400,7 @@ func autoGenerateSimpleCustomDashboard(dashboardParam models.AutoSimpleCreateDas
 		if len(subDashboardActions) > 0 {
 			actions = append(actions, subDashboardActions...)
 		}
+		customDashboard = dashboard.Name
 		// 2. 新增图表
 		for index, metric := range dashboardParam.MetricList {
 			chartParam := &models.CustomChartDto{
