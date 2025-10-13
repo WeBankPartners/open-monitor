@@ -940,6 +940,9 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 			matchedAny = true
 		}
 
+		// 同步更新看板关系表中的分组字段（group），确保与 panel_groups 与图表名称前缀一致
+		actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set `group`=? where custom_dashboard=? and `group`=?", Param: []interface{}{newVal, dashboardId, oldVal}})
+
 		if !matchedAny {
 			log.Warn(nil, log.LOGGER_APP, "no rename match in SyncDashboardForCodeChanges", zap.String("lmg", logMetricGroupGuid), zap.String("old", oldVal), zap.String("new", newVal))
 		}
@@ -1018,6 +1021,9 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 			log.Warn(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges no other-charts code tags found", zap.String("lmg", logMetricGroupGuid))
 		}
 	}
+	// 排序code,影响图表坐标
+	var orderedCodes []string
+	var newPanelGroupStr string
 
 	// 看板分组更新
 	{
@@ -1087,15 +1093,16 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		}
 		// append other at the end always
 		filtered = append(filtered, constOther)
-		newPanelGroups := strings.Join(filtered, ",")
-		if newPanelGroups != panelGroupsStr {
+		orderedCodes = filtered
+		newPanelGroupStr = strings.Join(filtered, ",")
+		if newPanelGroupStr != panelGroupsStr {
 			// update dashboard panel_groups and audit update user/time
 			now := time.Now().Format(models.DatetimeFormat)
-			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{newPanelGroups, operator, now, dashboardId}})
+			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id=?", Param: []interface{}{orderedCodes, operator, now, dashboardId}})
 			log.Debug(nil, log.LOGGER_APP, "SyncDashboardForCodeChanges updating panel groups",
 				zap.String("lmg", logMetricGroupGuid),
 				zap.String("oldGroups", panelGroupsStr),
-				zap.String("newGroups", newPanelGroups))
+				zap.String("newGroups", newPanelGroupStr))
 		}
 	}
 
@@ -1132,21 +1139,10 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		codeToCharts[code] = charts
 	}
 
-	// Get current panel_groups to determine order
-	var currentPanelGroups string
-	x.SQL("select panel_groups from custom_dashboard where id=?", dashboardId).Get(&currentPanelGroups)
-
-	// Parse panel_groups to get the order
-	var orderedCodes []string
-	if strings.TrimSpace(currentPanelGroups) != "" {
-		for _, g := range strings.Split(currentPanelGroups, ",") {
-			g = strings.TrimSpace(g)
-			if g != "" {
-				orderedCodes = append(orderedCodes, g)
-			}
-		}
+	// 如果为空,表里面数据兜底
+	if len(orderedCodes) == 0 {
+		orderedCodes = strings.Split(dashboardInfo.PanelGroups, ",")
 	}
-
 	// Handle additions: create new charts for added codes
 	// 收集新增图表的 GUID 信息，用于后续坐标重新计算
 	var newChartsByCode = make(map[string][]models.CustomChart)
@@ -1155,20 +1151,9 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		// Create charts for each added code using autoGenerateCustomDashboard logic
 		// Find the position of each added code in the final panel_groups order
 		for _, code := range codesAdded {
-			// Find the index of this code in the orderedCodes
-			codeIndex := -1
-			for i, orderedCode := range orderedCodes {
-				if orderedCode == code {
-					codeIndex = i
-					break
-				}
-			}
-			if codeIndex == -1 {
-				// This shouldn't happen, but fallback to end
-				codeIndex = len(orderedCodes) - 1
-			}
-
-			chartActions, createdCharts, err := createChartForCode(logMetricGroupGuid, code, operator, dashboardId, codeIndex, sucCode)
+			// Find the index of this code in the newPanelGroups
+			// 这里 chartIndex=0,后面会统一更新图表坐标(还涉及到删除图表,需要后面统一更新)
+			chartActions, createdCharts, err := createChartForCode(logMetricGroupGuid, code, operator, dashboardId, 0, sucCode)
 			if err != nil {
 				return err
 			}
@@ -1227,19 +1212,12 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 		}
 
 		// 按 orderedCodes 顺序重新计算所有图表的坐标
-		chartIndex := 0
-		for _, code := range orderedCodes {
+		for index, code := range orderedCodes {
 			if charts, exists := finalCodeToCharts[code]; exists {
-				for i, chart := range charts {
-					displayConfig := calcDisplayConfig(chartIndex*3 + i)
+				for j, chart := range charts {
+					displayConfig := calcDisplayConfig(index*3 + j)
 					displayConfigBytes, _ := json.Marshal(displayConfig)
-
-					var groupDisplayConfig models.DisplayConfig
-					if i == 0 {
-						groupDisplayConfig = calcDisplayConfig(0)
-					} else {
-						groupDisplayConfig = calcDisplayConfig(1)
-					}
+					groupDisplayConfig := calcDisplayConfig(j)
 					groupDisplayConfigBytes, _ := json.Marshal(groupDisplayConfig)
 
 					actions = append(actions, &Action{
@@ -1247,7 +1225,6 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 						Param: []interface{}{string(displayConfigBytes), string(groupDisplayConfigBytes), chart.Guid},
 					})
 				}
-				chartIndex++
 			}
 		}
 	}
