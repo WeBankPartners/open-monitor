@@ -1060,21 +1060,28 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 			}
 		}
 
-		// apply deletes
+		// apply deletes - 从 filtered 中删除被删除的分组
 		for _, c := range codeDeletes {
-			delete(groupSet, c)
-		}
-		// rebuild from set (excluding deleted)
-		filtered = filtered[:0]
-		for _, g := range groups {
-			if g != constOther && groupSet[g] {
-				filtered = append(filtered, g)
+			for i, g := range filtered {
+				if g == c {
+					// 从 filtered 中删除这个分组
+					filtered = append(filtered[:i], filtered[i+1:]...)
+					break
+				}
 			}
 		}
-		// apply adds
+
+		// apply adds - 添加新的分组
 		for _, c := range codesAdded {
-			if !groupSet[c] {
-				groupSet[c] = true
+			// 检查是否已经存在
+			exists := false
+			for _, g := range filtered {
+				if g == c {
+					exists = true
+					break
+				}
+			}
+			if !exists {
 				filtered = append(filtered, c)
 			}
 		}
@@ -1402,8 +1409,11 @@ func createChartForCode(logMetricGroupGuid, code, operator string, dashboardId, 
 	tag4 := guid.CreateGuid()
 	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag4, series4, constCode, ConstEqualIn}})
 	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag4, code}})
-	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag4, series4, constRetCode, ConstEqualIn}})
-	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag4, sucCode}})
+
+	// 为 retcode 标签创建新的 GUID
+	tag5 := guid.CreateGuid()
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) values(?,?,?,?)", Param: []interface{}{tag5, series4, constRetCode, ConstEqualIn}})
+	actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tag5, sucCode}})
 
 	return actions, createdCharts, nil
 }
