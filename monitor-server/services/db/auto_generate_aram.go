@@ -280,9 +280,9 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, reqCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, dashboardParam.MetricPrefixCode, codeList, reqCountMetric))
 			// 失败量标签线条
-			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, failCountMetric))
+			chartParam1.ChartSeries = append(chartParam1.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, dashboardParam.MetricPrefixCode, codeList, failCountMetric))
 			subChart1Actions = handleAutoCreateChart(chartParam1, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
 			if len(subChart1Actions) > 0 {
 				actions = append(actions, subChart1Actions...)
@@ -308,7 +308,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
 			// 请求量标签线条
-			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, sucRateMetric))
+			chartParam2.ChartSeries = append(chartParam2.ChartSeries, generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, dashboardParam.MetricPrefixCode, codeList, sucRateMetric))
 			subChart2Actions = handleAutoCreateChart(chartParam2, newDashboardId, dashboardParam.ServiceGroupsRoles, dashboardParam.ServiceGroupsRoles[0], dashboardParam.Operator)
 			if len(subChart2Actions) > 0 {
 				actions = append(actions, subChart2Actions...)
@@ -333,7 +333,7 @@ func autoGenerateCustomDashboard(dashboardParam models.AutoCreateDashboardParam)
 				Group:              code,
 				LogMetricGroup:     &dashboardParam.LogMetricGroupGuid,
 			}
-			chartSeries := generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, codeList, costTimeAvgMetric)
+			chartSeries := generateChartSeries(dashboardParam.ServiceGroup, dashboardParam.MonitorType, code, serviceGroupName, dashboardParam.MetricPrefixCode, codeList, costTimeAvgMetric)
 			// 耗时率 只计算成功请求的耗时率
 			if len(chartSeries.Tags) > 0 {
 				var hasRetCode bool
@@ -555,7 +555,7 @@ func getTargetCodeMap(codeList []*models.LogMetricStringMapTable) []string {
 	return list
 }
 
-func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
+func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName, metricPrefixCode string, codeList []string, metric *models.LogMetricTemplate) *models.CustomChartSeriesDto {
 	var seriesName string
 	var serviceGroupTable = &models.ServiceGroupTable{}
 	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
@@ -593,7 +593,7 @@ func generateChartSeries(serviceGroup, monitorType, code, serviceGroupName strin
 			},
 		}
 		// 平均耗时,只计算成功请求的,线条名称需要加 returnCode
-		if strings.HasPrefix(metric.Metric, constConstTimeAvg) {
+		if strings.HasPrefix(metric.Metric, metricPrefixCode+"_"+constConstTimeAvg) {
 			seriesName = fmt.Sprintf("%s:%s{code=%s,retcode=%s}", metric.Metric, serviceGroupName, code, constSuccess)
 		} else {
 			seriesName = fmt.Sprintf("%s:%s{code=%s}", metric.Metric, serviceGroupName, code)
