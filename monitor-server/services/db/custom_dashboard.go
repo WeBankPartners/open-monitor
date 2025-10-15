@@ -922,7 +922,7 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 			oldPattern := "code=" + oldVal
 			if strings.Contains(cfg.SeriesName, oldPattern) {
 				// 使用正则表达式替换，匹配 code=oldVal 后跟逗号或结束符
-				re := regexp.MustCompile(`code=` + regexp.QuoteMeta(oldVal) + `(?:,|})`)
+				re := regexp.MustCompile(`code=` + regexp.QuoteMeta(oldVal) + `(,|})`)
 				newSeriesName := re.ReplaceAllString(cfg.SeriesName, "code="+newVal+"$1")
 				actions = append(actions, &Action{Sql: "update custom_chart_series_config set series_name=? where guid=?", Param: []interface{}{newSeriesName, cfg.Guid}})
 				matchedAny = true
