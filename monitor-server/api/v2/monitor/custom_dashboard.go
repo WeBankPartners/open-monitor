@@ -382,7 +382,15 @@ func UpdateCustomDashboard(c *gin.Context) {
 		return
 	}
 	if len(param.Charts) > 0 {
+		// 检查所有图表GUID是否存在
 		for _, chart := range param.Charts {
+			if chart.Id != "" {
+				chartObj, _ := db.GetCustomChartById(chart.Id)
+				if chartObj == nil || chartObj.Guid == "" {
+					middleware.ReturnError(c, models.GetMessageMap(c).DashboardChangedError, http.StatusOK)
+					return
+				}
+			}
 			if nameMap[chart.Name] {
 				middleware.ReturnValidateError(c, fmt.Sprintf("chart name:%s repeat", chart.Name))
 				return

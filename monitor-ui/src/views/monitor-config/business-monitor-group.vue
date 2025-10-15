@@ -85,6 +85,7 @@
                     placement="left-start"
                     :key="index"
                     class="chart-option-menu"
+                    trigger="click"
                     @on-visible-change="onTemplateListVisibleChange"
                     @on-click="(index) => {
                       selectedTemp = allTemplateList[index].guid;
@@ -97,15 +98,28 @@
                       <Icon type="ios-link" size="16" />
                     </Button>
                     <template slot='list'>
+                      <Input v-model.trim="templateFilterString"
+                             clearable
+                             style="width: 350px; margin: 15px"
+                             :placeholder="$t('m_template_filter')"
+                             @on-change="onTemplateFilterChange"
+                             @mousedown.native="(e) => e.stopPropagation()"
+                             @touchstart.native="(e) => e.stopPropagation()"
+                             @click.native="(e) => e.stopPropagation()"
+                             @compositionstart.native="(e) => e.stopImmediatePropagation()"
+                             @compositionend.native="(e) => e.stopImmediatePropagation()"
+                      />
                       <DropdownMenu>
-                        <DropdownItem
-                          v-for="(option, key) in allTemplateList"
-                          :name="key"
-                          :key="key"
-                          :disabled="option.disabled"
-                        >
-                          {{option.name}}
-                        </DropdownItem>
+                        <div style="max-height: 215px; overflow-y: auto;">
+                          <DropdownItem
+                            v-for="(option, key) in allTemplateList"
+                            :name="key"
+                            :key="key"
+                            :disabled="option.disabled"
+                          >
+                            {{option.name}}
+                          </DropdownItem>
+                        </div>
                       </DropdownMenu>
                     </template>
                   </Dropdown>
@@ -938,6 +952,8 @@ export default {
       importType: 'yes',
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      templateFilterString: '',
+      dropdownVisible: false
     }
   },
   computed: {
@@ -1549,9 +1565,28 @@ export default {
       })
     },
     onTemplateListVisibleChange(visible) {
+      this.templateFilterString = ''
       if (visible && isEmpty(this.allTemplateList)) {
         this.getMonitorTemplateList()
       }
+      if (visible && !isEmpty(this.allTemplateList)) {
+        this.onTemplateFilterChange()
+      }
+    },
+    onTemplateFilterChange() {
+      this.allTemplateList = [{
+        name: this.$t('m_standard_json'),
+        value: 'm_standard_json',
+        disabled: true
+      }, ...this.templateList.json_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1), {
+        name: this.$t('m_standard_regex'),
+        value: 'm_standard_regex',
+        disabled: true
+      }, ...this.templateList.regular_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1), {
+        name: this.$t('m_custom_regex'),
+        value: 'm_custom_regex',
+        disabled: true
+      }, ...this.templateList.custom_list.filter(item => item.name.indexOf(this.templateFilterString) !== -1)]
     }
   },
   components: {

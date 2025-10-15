@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !nontp
 // +build !nontp
 
 package collector
@@ -52,7 +53,7 @@ type ntpCollector struct {
 }
 
 func init() {
-	registerCollector("ntp", defaultDisabled, NewNtpCollector)
+	registerCollector("ntp", defaultEnabled, NewNtpCollector)
 }
 
 // NewNtpCollector returns a new Collector exposing sanity of local NTP server.
