@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -915,9 +916,14 @@ func SyncDashboardForCodeChanges(logMetricGroupGuid string, codeRenames map[stri
 				matchedAny = true
 				continue
 			}
-			needle := "{code=" + oldVal + "}"
-			if strings.Contains(cfg.SeriesName, needle) {
-				newSeriesName := strings.Replace(cfg.SeriesName, needle, "{code="+newVal+"}", -1)
+			// 支持如下两种格式匹配
+			// {code=error,retcode=success} → {code=newVal,retcode=success}
+			// {code=error} → {code=newVal}
+			oldPattern := "code=" + oldVal
+			if strings.Contains(cfg.SeriesName, oldPattern) {
+				// 使用正则表达式替换，匹配 code=oldVal 后跟逗号或结束符
+				re := regexp.MustCompile(`code=` + regexp.QuoteMeta(oldVal) + `(?:,|})`)
+				newSeriesName := re.ReplaceAllString(cfg.SeriesName, "code="+newVal+"$1")
 				actions = append(actions, &Action{Sql: "update custom_chart_series_config set series_name=? where guid=?", Param: []interface{}{newSeriesName, cfg.Guid}})
 				matchedAny = true
 			}
