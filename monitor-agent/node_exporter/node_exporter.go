@@ -19,7 +19,6 @@ import (
 	"github.com/prometheus/common/promlog/flag"
 	"net/http"
 	"os"
-	"runtime"
 	"sort"
 
 	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
