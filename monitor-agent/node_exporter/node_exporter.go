@@ -136,7 +136,7 @@ func (h *handler) innerHandler(filters ...string) (http.Handler, error) {
 }
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	//runtime.GOMAXPROCS(1)
 	var (
 		listenAddress = kingpin.Flag(
 			"web.listen-address",
