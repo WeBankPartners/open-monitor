@@ -115,10 +115,18 @@ func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 		}
 	}
 	if endpointObj.ExportType == "snmp" {
-		err = db.SnmpEndpointDelete(endpointObj.Guid)
+		if err = db.SnmpEndpointDelete(endpointObj.Guid); err != nil {
+			return err
+		}
 	}
 	if endpointObj.AddressAgent != "" {
-		err = db.UpdateAgentManagerTable(m.EndpointTable{Guid: guid}, "", "", "", "", false)
+		if err = db.UpdateAgentManagerTable(m.EndpointTable{Guid: guid}, "", "", "", "", false); err != nil {
+			return err
+		}
+	}
+	// 删除pod 和集群关系
+	if endpointObj.ExportType == "pod" {
+		err = db.DeleteKubernetesEndpointRelByEndpointId(endpointObj.Guid)
 	}
 	return err
 }

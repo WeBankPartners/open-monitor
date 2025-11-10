@@ -31,6 +31,7 @@ type RegisterParamNew struct {
 	ProxyExporter    string `json:"proxy_exporter"`
 	ProcessName      string `json:"process_name"`
 	Tags             string `json:"tags"`
+	PodName          string `json:"pod_name"`
 }
 
 type RegisterConsulParam struct {

@@ -16,6 +16,17 @@ import (
 	"time"
 )
 
+// ListKubernetesCluster 查询所有 Kubernetes 集群信息
+func ListKubernetesCluster(c *gin.Context) {
+	clusterName := strings.TrimSpace(c.Query("clusterName"))
+	result, err := db.ListKubernetesCluster(clusterName)
+	if err != nil {
+		mid.ReturnServerHandleError(c, err)
+		return
+	}
+	mid.ReturnSuccessData(c, result)
+}
+
 func UpdateKubernetesCluster(c *gin.Context) {
 	var param m.KubernetesClusterParam
 	operation := c.Param("operation")
@@ -110,12 +121,12 @@ type k8sClusterRequestInputObj struct {
 	CallbackParameter string `json:"callbackParameter"`
 	ClusterName       string `json:"clusterName"`
 	Namespace         string `json:"namespace"`
-	Ip                string `json:"ip"`
-	Port              string `json:"port"`
+	ApiServer         string `json:"apiServer"`
 	Token             string `json:"token"`
 	PodName           string `json:"podName"`
 	PodGroup          string `json:"podGroup"`
-	PodMonitorKey     string `json:"podMonitorKey"`
+	PodMonitorKey     string `json:"podMonitorKey"` // endpointGuid,删除时候和更新时候用
+	RealIp            string `json:"realIp"`        // 真实ip,更新时候需要传递过来
 }
 
 func PluginKubernetesCluster(c *gin.Context) {
@@ -163,12 +174,23 @@ func PluginKubernetesCluster(c *gin.Context) {
 
 func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	var err error
+	if strings.TrimSpace(input.ApiServer) == "" {
+		err = fmt.Errorf("Param ApiServer is empty ")
+		return err
+	}
+	strArr := strings.Split(input.ApiServer, ":")
+	if len(strArr) != 2 {
+		err = fmt.Errorf("Param ApiServer is invalid")
+		return err
+	}
+	ip := strArr[0]
+	port := strArr[1]
 	// Validate input param
-	if mid.IsIllegalIp(input.Ip) {
+	if mid.IsIllegalIp(ip) {
 		err = fmt.Errorf("Param ip is illegal ")
 		return err
 	}
-	portInt, _ := strconv.Atoi(input.Port)
+	portInt, _ := strconv.Atoi(port)
 	if portInt <= 0 {
 		err = fmt.Errorf("Param port is illegal ")
 		return err
@@ -180,13 +202,13 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	}
 	currentData, _ := db.ListKubernetesCluster(input.ClusterName)
 	if len(currentData) > 0 {
-		if currentData[0].ClusterName == input.ClusterName && currentData[0].Token == input.Token && fmt.Sprintf("%s:%s", input.Ip, input.Port) == currentData[0].ApiServer {
+		if currentData[0].ClusterName == input.ClusterName && currentData[0].Token == input.Token && input.ApiServer == currentData[0].ApiServer {
 			log.Warn(nil, log.LOGGER_APP, "Plugin k8s cluster add break with same data ")
 			return nil
 		}
-		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: input.Ip, Port: input.Port, Token: input.Token})
+		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token})
 	} else {
-		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: input.Ip, Port: input.Port, Token: input.Token})
+		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token})
 	}
 	db.SyncPodToEndpoint()
 	return err
@@ -231,8 +253,11 @@ func PluginKubernetesPod(c *gin.Context) {
 		tmpMonitorGuidKey := ""
 		if action == "add" {
 			tmpErr, tmpMonitorGuidKey = handleAddKubernetesPod(input)
-		} else {
+		} else if action == "delete" {
 			tmpErr = handleDeleteKubernetesPod(input)
+		} else {
+			// 处理 pod更新,可能会出现 pod的ip漂移。业务配置和关键字映射变更 直接修改映射host就好了
+			tmpErr = handleUpdateKubernetesPod(input)
 		}
 		if tmpErr != nil {
 			log.Error(nil, log.LOGGER_APP, logFuncMessage, zap.String("guid", input.Guid), zap.Error(tmpErr))
@@ -279,8 +304,13 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error, endpoin
 			return err, endpointGuid
 		}
 		if tplId > 0 {
-			//err = alarm.SaveConfigFile(tplId, false)
-			err = db.SyncRuleConfigFile(tplId, []string{}, false)
+			if err = db.SyncRuleConfigFile(tplId, []string{}, false); err != nil {
+				return err, endpointGuid
+			}
+		}
+		// 设置对象和对象组关系
+		if err = db.AddGroupEndpointRel(endpointGuid, input.PodGroup); err != nil {
+			return err, endpointGuid
 		}
 	}
 	return err, endpointGuid
@@ -309,4 +339,37 @@ func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
 		}
 	}
 	return err
+}
+
+// handleUpdateKubernetesPod  目前更新业务配置、指标阈值映射 ip映射就好了
+func handleUpdateKubernetesPod(input k8sClusterRequestInputObj) (err error) {
+	var endpoint *m.EndpointNewTable
+	if endpoint, err = db.GetEndpointByIpAndType(input.RealIp, "host"); err != nil {
+		return
+	}
+	if endpoint == nil {
+		err = fmt.Errorf("pod host endpoint not found")
+		return
+	}
+	// 更新 日志文件业务配置
+	if err = db.UpdateLogMetricSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+		return
+	}
+	// 更新 数据库业务配置
+	if err = db.UpdateDbMetricSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+		return
+	}
+	// 更新 日志文件关键字配置
+	if err = db.UpdateLogKeywordSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+		return
+	}
+	// 更新 数据库关键字配置
+	if err = db.UpdateDbKeywordSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+		return
+	}
+	return
 }

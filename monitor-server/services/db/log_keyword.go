@@ -929,3 +929,8 @@ func getLogKeywordAlarmNotify(logKeywordConfigGuid string) (notifyRow *models.No
 	}
 	return
 }
+
+func UpdateLogKeywordSourceEndpoint(sourceEndpoint, targetEndpoint string) error {
+	_, err := x.Exec("update log_keyword_endpoint_rel set source_endpoint=? where target_endpoint=?", sourceEndpoint, targetEndpoint)
+	return err
+}

@@ -500,3 +500,8 @@ func inActiveWindow(activeWindow string) bool {
 	}
 	return false
 }
+
+func UpdateDbKeywordSourceEndpoint(sourceEndpoint, targetEndpoint string) error {
+	_, err := x.Exec("update db_keyword_endpoint_rel set source_endpoint=? where target_endpoint=?", sourceEndpoint, targetEndpoint)
+	return err
+}

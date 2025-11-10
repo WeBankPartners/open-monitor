@@ -292,3 +292,8 @@ func SyncDbMetric(initFlag bool) error {
 	}
 	return nil
 }
+
+func UpdateDbMetricSourceEndpoint(sourceEndpoint, targetEndpoint string) error {
+	_, err := x.Exec("update db_metric_endpoint_rel set source_endpoint=? where target_endpoint=?", sourceEndpoint, targetEndpoint)
+	return err
+}

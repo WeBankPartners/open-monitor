@@ -90,6 +90,17 @@ func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, operator string
 	return err
 }
 
+func AddGroupEndpointRel(endpointGuid, group string) (err error) {
+	var groupTables []*models.EndpointGroupTable
+	x.SQL("select * from endpoint_group where display_name=?", group).Find(&groupTables)
+	if len(groupTables) == 0 {
+		err = fmt.Errorf("Group:%s can not find,please check group config ", group)
+		return
+	}
+	_, err = x.Exec("insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", guid.CreateGuid(), endpointGuid, group)
+	return err
+}
+
 func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyObj, err error) {
 	result = getNotifyList("", endpointGroupGuid, "")
 	return result, nil

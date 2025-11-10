@@ -69,6 +69,11 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 	return err
 }
 
+func DeleteKubernetesEndpointRelByEndpointId(endpointGuid string) error {
+	_, err := x.Exec("delete from kubernetes_endpoint_rel where endpoint_guid=?", endpointGuid)
+	return err
+}
+
 func InitPrometheusConfigFile() {
 	err := SyncKubernetesConfig()
 	if err != nil {
@@ -303,6 +308,11 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, names
 		_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", cluster.Id, endpointGuid, podGuid, namespace)
 	}
 	return err, id, endpointGuid
+}
+
+func AddKubernetesEndpointRel(kubernetesId, endpointGuid, podGuid string) (err error) {
+	_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid) value (?,?,?)", kubernetesId, endpointGuid, podGuid)
+	return
 }
 
 func DeleteKubernetesPod(podGuid, endpointGuid string) (err error, id int64) {

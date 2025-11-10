@@ -2957,3 +2957,8 @@ func SyncAlarmStrategyForCodeChanges(param *models.LogMetricGroupWithTemplate, c
 	}
 	return nil
 }
+
+func UpdateLogMetricSourceEndpoint(sourceEndpoint, targetEndpoint string) error {
+	_, err := x.Exec("update log_metric_endpoint_rel set source_endpoint=? where target_endpoint=?", sourceEndpoint, targetEndpoint)
+	return err
+}
