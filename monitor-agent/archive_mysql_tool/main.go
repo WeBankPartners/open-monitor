@@ -8,6 +8,9 @@ import (
 )
 
 func main() {
+	// Initialize daily rotating logger first
+	funcs.InitLogger()
+
 	cfgFile := flag.String("c", "default.json", "config file")
 	flag.Parse()
 	err := funcs.InitConfig(*cfgFile)

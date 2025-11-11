@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -96,34 +97,6 @@ func GetLogMetricByEndpoint(endpoint, metricKey string, onlySource bool) (result
 func ListLogMetricEndpointRel(logMetricMonitor string) (result []*models.LogMetricEndpointRelTable) {
 	result = []*models.LogMetricEndpointRelTable{}
 	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMetricMonitor).Find(&result)
-	return result
-}
-
-func ListLogMetricEndpointRelWithServiceGroup(serviceGroup, logMetricMonitor string) (result []*models.LogMetricEndpointRelTable) {
-	result = []*models.LogMetricEndpointRelTable{}
-	if serviceGroup == "" {
-		var logMetricMonitorTable []*models.LogMetricMonitorTable
-		x.SQL("select service_group from log_metric_monitor where guid=?", logMetricMonitor).Find(&logMetricMonitorTable)
-		if len(logMetricMonitorTable) > 0 {
-			serviceGroup = logMetricMonitorTable[0].ServiceGroup
-		} else {
-			return result
-		}
-	}
-	endpointList, _ := ListServiceGroupEndpoint(serviceGroup, "host")
-	var logMetricRelTable []*models.LogMetricEndpointRelTable
-	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMetricMonitor).Find(&logMetricRelTable)
-	endpointRelMap := make(map[string]*models.LogMetricEndpointRelTable)
-	for _, v := range logMetricRelTable {
-		endpointRelMap[v.SourceEndpoint] = v
-	}
-	for _, v := range endpointList {
-		if existRow, b := endpointRelMap[v.Guid]; b {
-			result = append(result, existRow)
-		} else {
-			result = append(result, &models.LogMetricEndpointRelTable{SourceEndpoint: v.Guid})
-		}
-	}
 	return result
 }
 
@@ -582,7 +555,8 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 	}
 	if metric == "req_fail_count" {
 		// 失败数：直接统计 retcode!="success" 的请求数. 失败数=总数-成功数,当接口一开始只有失败请求时候,图表数据出不来
-		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\",retcode!=\"%s\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		// 去掉 retcode 分组，将所有 retcode!="success" 的数据合并为一条
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\",retcode!=\"%s\"}) by (key,agg,service_group,code)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
@@ -941,7 +915,7 @@ func getUpdateLogMetricMonitorByImport(existObj, inputObj *models.LogMetricMonit
 				}
 			}
 			if matchMetricGroupObj.Guid != "" {
-				tmpMetricGroupActions, tmpAffect, tmpErr := getUpdateLogMetricGroupByImport(inputMetricGroup, operator)
+				tmpMetricGroupActions, tmpAffect, tmpErr := getUpdateLogMetricGroupByImport(inputMetricGroup, operator, roles)
 				if tmpErr != nil {
 					err = tmpErr
 					return
@@ -1066,7 +1040,7 @@ func getCreateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 	return
 }
 
-func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string) (actions []*Action, affectEndpointGroups []string, err error) {
+func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, operator string, roles []string) (actions []*Action, affectEndpointGroups []string, err error) {
 	if metricGroup.LogMonitorTemplate != "" {
 		tmpCreateParam := models.LogMetricGroupWithTemplate{
 			LogMetricGroupGuid:     metricGroup.Guid,
@@ -1084,7 +1058,12 @@ func getUpdateLogMetricGroupByImport(metricGroup *models.LogMetricGroupObj, oper
 				tmpCreateParam.RetCodeStringMap = mgParamObj.StringMap
 			}
 		}
-		actions, err = getUpdateLogMetricGroupActions(&tmpCreateParam, operator)
+		// directly perform update with dashboard sync
+		if err = UpdateLogMetricGroupWithDashboardAndAlarm(&tmpCreateParam, operator, roles); err != nil {
+			return
+		}
+		// no direct actions because we executed update; return empty actions
+		return []*Action{}, []string{}, nil
 	} else {
 		actions, affectEndpointGroups, err = getUpdateLogMetricCustomGroupActions(metricGroup, operator)
 	}
@@ -1239,7 +1218,9 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 		LogMonitorTemplate:        logMonitorTemplate,
 		AutoCreateDashboard:       metricGroupObj.AutoDashboard == 1,
 		AutoCreateWarn:            metricGroupObj.AutoAlarm == 1,
-		RetCodeStringMap:          []*models.LogMetricStringMapTable{}}
+		RetCodeStringMap:          []*models.LogMetricStringMapTable{},
+		Status:                    metricGroupObj.Status,
+	}
 	for _, row := range logMetricStringMapRows {
 		if row.LogParamName == "code" {
 			result.CodeStringMap = append(result.CodeStringMap, row)
@@ -1529,6 +1510,54 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 	}
 	actions = append(actions, updateMapActions...)
+	// Ensure 'other' panel group is always placed at the end for all related dashboards
+	if reorderActions, reorderErr := ensureOtherPanelGroupLastActions(param.LogMetricGroupGuid, operator); reorderErr == nil {
+		actions = append(actions, reorderActions...)
+	} else {
+		// Ignore reorder error, do not block main update path
+		log.Warn(nil, log.LOGGER_APP, "Skip ensure other panel group last due to error", zap.Error(reorderErr))
+	}
+	return
+}
+
+// ensureOtherPanelGroupLastActions builds update actions to force 'other' to be at the end of panel_groups
+func ensureOtherPanelGroupLastActions(logMetricGroupGuid, operator string) (actions []*Action, err error) {
+	const otherCode = "other"
+	type boardRow struct {
+		Id          int    `json:"id"`
+		PanelGroups string `json:"panel_groups"`
+	}
+	var boards []boardRow
+	if err = x.SQL("select id, panel_groups from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Find(&boards); err != nil {
+		return
+	}
+	now := time.Now().Format(models.DatetimeFormat)
+	for _, b := range boards {
+		pg := strings.TrimSpace(b.PanelGroups)
+		if pg == "" {
+			continue
+		}
+		var reordered []string
+		hasOther := false
+		for _, g := range strings.Split(pg, ",") {
+			g = strings.TrimSpace(g)
+			if g == "" {
+				continue
+			}
+			if strings.EqualFold(g, otherCode) {
+				hasOther = true
+				continue
+			}
+			reordered = append(reordered, g)
+		}
+		if hasOther {
+			reordered = append(reordered, otherCode)
+		}
+		newPG := strings.Join(reordered, ",")
+		if newPG != pg {
+			actions = append(actions, &Action{Sql: "update custom_dashboard set panel_groups=?, update_user=?, update_at=? where id= ?", Param: []interface{}{newPG, operator, now, b.Id}})
+		}
+	}
 	return
 }
 
@@ -1603,7 +1632,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 	// 查找关联的指标并删除
 	serviceGroup, _ := GetLogMetricServiceGroup(metricGroupObj.LogMetricMonitor)
 	var existMetricRows []*models.LogMetricConfigDto
-	if metricGroupObj.LogMonitorTemplate != "" {
+	if metricGroupObj.LogMonitorTemplate != "" && metricGroupObj.LogType != "custom" {
 		logMonitorTemplateObj, getTemplateErr := GetLogMonitorTemplate(metricGroupObj.LogMonitorTemplate)
 		if getTemplateErr != nil {
 			err = getTemplateErr
@@ -1613,6 +1642,7 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 			existMetricRows = append(existMetricRows, v.TransToLogMetric())
 		}
 	} else {
+		//  自定义业务配置不管是不是模版创建,都走自己去查询指标,因为就算从模版创建也能新增指标
 		logMetricGroupObj, getLogGroupErr := GetLogMetricCustomGroup(logMetricGroupGuid)
 		if getLogGroupErr != nil {
 			err = getLogGroupErr
@@ -1771,7 +1801,9 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
 		row.FullMetric = row.Metric
-		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" && len(row.Metric) > len(metricGroupObj.MetricPrefixCode) {
+		// 只有当指标名称确实以指标前缀代码开头时，才去掉前缀
+		if strings.TrimSpace(metricGroupObj.MetricPrefixCode) != "" &&
+			strings.HasPrefix(row.Metric, metricGroupObj.MetricPrefixCode+"_") {
 			row.Metric = row.Metric[len(metricGroupObj.MetricPrefixCode)+1:]
 		}
 		result.MetricList = append(result.MetricList, convertLogMetricConfigTable2Dto(row))
@@ -1979,6 +2011,18 @@ func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 	if err != nil {
 		return
 	}
+
+	/* 自定义告警更新更新对应看板逻辑 开启前需要测试验证下
+	// Add dashboard sync actions if auto_dashboard is enabled
+	if param.AutoCreateDashboard {
+		dashboardSyncActions, syncErr := getCustomLogMetricGroupDashboardSyncActions(param, operator)
+		if syncErr != nil {
+			log.Error(nil, log.LOGGER_APP, "Failed to generate dashboard sync actions for custom log metric group", zap.Error(syncErr), zap.String("guid", param.Guid))
+			return syncErr
+		}
+		actions = append(actions, dashboardSyncActions...)
+	}
+	*/
 	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
@@ -2046,12 +2090,15 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 		}
 	}
 	for i, inputMetricObj := range param.MetricList {
+		if param.MetricPrefixCode != "" && !strings.HasPrefix(inputMetricObj.Metric, param.MetricPrefixCode+"_") {
+			inputMetricObj.Metric = param.MetricPrefixCode + "_" + inputMetricObj.Metric
+		}
 		tmpTagListBytes, _ := json.Marshal(inputMetricObj.TagConfigList)
 		inputMetricObj.TagConfig = string(tmpTagListBytes)
 		if inputMetricObj.Guid == "" {
 			tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
-			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime,
+			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,color_group,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime,
 			}})
 			tmpTagList := []string{}
 			if len(inputMetricObj.TagConfigList) > 0 {
@@ -2061,8 +2108,8 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup,
 					tmpTagList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 		} else {
-			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
-				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
+			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,color_group=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
+				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), inputMetricObj.ColorGroup, operator, nowTime, inputMetricObj.Guid,
 			}})
 			if existMetricObj, ok := existMetricDataMap[inputMetricObj.Guid]; ok {
 				oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
@@ -2084,7 +2131,373 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			}
 		}
 	}
+	log.Info(nil, log.LOGGER_APP, "getUpdateLogMetricCustomGroupActions generated actions", zap.Int("actionCount", len(actions)))
 	return
+}
+
+// getCustomLogMetricGroupDashboardSyncActions generates actions to sync dashboard when custom log metric group is updated
+func getCustomLogMetricGroupDashboardSyncActions(param *models.LogMetricGroupObj, operator string) (actions []*Action, err error) {
+	// Get existing data for comparison
+	existData, getErr := GetLogMetricCustomGroup(param.Guid)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+
+	// Calculate metric changes by comparing existing vs new metric list
+	var metricsAdded []models.LogMetricConfigDto
+	var metricsDeleted []models.LogMetricConfigDto
+	var metricsModified []models.LogMetricConfigDto
+
+	// Build maps for comparison
+	existMetricMap := make(map[string]*models.LogMetricConfigDto) // metric name -> metric
+	newMetricMap := make(map[string]*models.LogMetricConfigDto)   // metric name -> metric
+
+	for _, metric := range existData.MetricList {
+		existMetricMap[metric.Metric] = metric
+	}
+
+	for _, metric := range param.MetricList {
+		newMetricMap[metric.Metric] = metric
+	}
+
+	// Find added and modified metrics
+	for metricName, newMetric := range newMetricMap {
+		if existMetric, exists := existMetricMap[metricName]; exists {
+			// Check if metric was modified (display name, agg type, log_param_name etc.)
+			if existMetric.AggType != newMetric.AggType || existMetric.LogParamName != newMetric.LogParamName ||
+				!compareTagConfigList(existMetric.TagConfigList, newMetric.TagConfigList) {
+				metricsModified = append(metricsModified, *newMetric)
+			}
+		} else {
+			// New metric
+			metricsAdded = append(metricsAdded, *newMetric)
+		}
+	}
+
+	// Find deleted metrics
+	for metricName, existMetric := range existMetricMap {
+		if _, exists := newMetricMap[metricName]; !exists {
+			metricsDeleted = append(metricsDeleted, *existMetric)
+		}
+	}
+
+	// Sync dashboard if there are changes
+	if len(metricsAdded) > 0 || len(metricsDeleted) > 0 || len(metricsModified) > 0 {
+		syncActions, syncErr := syncCustomDashboardForMetricChanges(param.Guid, metricsAdded, metricsDeleted, metricsModified, param.MetricPrefixCode, operator)
+		if syncErr != nil {
+			err = syncErr
+			return
+		}
+		actions = append(actions, syncActions...)
+
+		// 1) 处理 tag_config 的增删（按每个被修改的 metric）
+		// 规则：新增 key -> 为该组相关图表下的每个 series 新增一条 tag 记录（equal 默认 in）；
+		//      删除 key -> 删除对应 tag 记录及其 tag_value 记录
+		// 先获取当前组对应的 dashboardId
+		var dashboardId int
+		_, _ = x.SQL("select id from custom_dashboard where log_metric_group=?", param.Guid).Get(&dashboardId)
+
+		// 计算展示用的 ServiceGroup 名称
+		displayServiceGroupName := existData.ServiceGroup
+		var sg models.ServiceGroupTable
+		if existData.ServiceGroup != "" {
+			x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", existData.ServiceGroup).Get(&sg)
+			if sg.DisplayName != "" {
+				displayServiceGroupName = sg.DisplayName
+			}
+		}
+		for _, newMetric := range metricsModified {
+			oldMetric := existMetricMap[newMetric.Metric]
+			if oldMetric == nil {
+				continue
+			}
+			// 计算该 metric 的图表名称
+			chartNameForMetric := fmt.Sprintf("%s_%s/%s", param.MetricPrefixCode, newMetric.Metric, displayServiceGroupName)
+			// 计算差集
+			oldSet := make(map[string]bool)
+			newSet := make(map[string]bool)
+			for _, k := range oldMetric.TagConfigList {
+				oldSet[k] = true
+			}
+			for _, k := range newMetric.TagConfigList {
+				newSet[k] = true
+			}
+			// 删除的 keys
+			for k := range oldSet {
+				if !newSet[k] {
+					// 删除 tag_value
+					actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag_value where dashboard_chart_tag in (select guid from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?)))",
+						Param: []interface{}{k, param.Guid, chartNameForMetric}})
+					// 删除 tag
+					actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+						Param: []interface{}{k, param.Guid, chartNameForMetric}})
+				}
+			}
+			// 新增的 keys
+			for k := range newSet {
+				if !oldSet[k] {
+					// 为所有相关 series 新增 tag（equal 默认 in）
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name,equal) select ?, s.guid, ?, ? from custom_chart_series s where s.dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?)",
+						Param: []interface{}{guid.CreateGuid(), k, "in", param.Guid, chartNameForMetric}})
+				}
+			}
+		}
+
+		// 2) 处理 param_list.string_map 值变更对 series_config 的回溯替换
+		// 规则：仅当该 param 被 metric_list[*].log_param_name 使用时，针对 old->new 的 target_value 逐一 REPLACE
+		// 构建：paramName -> (source_value -> target_value)
+		oldParamMap := make(map[string]map[string]string)
+		newParamMap := make(map[string]map[string]string)
+		for _, p := range existData.ParamList {
+			m := make(map[string]string)
+			for _, sm := range p.StringMap {
+				m[sm.SourceValue] = sm.TargetValue
+			}
+			oldParamMap[p.Name] = m
+		}
+		for _, p := range param.ParamList {
+			m := make(map[string]string)
+			for _, sm := range p.StringMap {
+				m[sm.SourceValue] = sm.TargetValue
+			}
+			newParamMap[p.Name] = m
+		}
+		// 计算被使用的 param 名称集合
+		usedParam := make(map[string]bool)
+		for _, m := range param.MetricList {
+			if m.LogParamName != "" {
+				usedParam[m.LogParamName] = true
+			}
+		}
+		// 遍历变化
+		for pname := range usedParam {
+			oldKV := oldParamMap[pname]
+			newKV := newParamMap[pname]
+			if oldKV == nil || newKV == nil {
+				continue
+			}
+			for src, oldTarget := range oldKV {
+				if newTarget, ok := newKV[src]; ok && newTarget != oldTarget {
+					// 统一替换 tags 与 series_name 中的值片段： pname=oldTarget -> pname=newTarget
+					actions = append(actions, &Action{Sql: "update custom_chart_series_config set tags=REPLACE(tags, CONCAT(?, '=' , ?), CONCAT(?, '=' , ?)), series_name=REPLACE(series_name, CONCAT(?, '=' , ?), CONCAT(?, '=' , ?)) where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=?))",
+						Param: []interface{}{pname, oldTarget, pname, newTarget, pname, oldTarget, pname, newTarget, param.Guid}})
+				}
+			}
+		}
+	}
+
+	return
+}
+
+// compareTagConfigList compares two tag config lists for equality
+func compareTagConfigList(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// syncCustomDashboardForMetricChanges handles dashboard synchronization for custom log metric group metric changes
+func syncCustomDashboardForMetricChanges(logMetricGroupGuid string, metricsAdded, metricsDeleted, metricsModified []models.LogMetricConfigDto,
+	metricPrefixCode, operator string) (actions []*Action, err error) {
+
+	// Get existing dashboard
+	var dashboardId int
+	if _, err = x.SQL("select id from custom_dashboard where log_metric_group=?", logMetricGroupGuid).Get(&dashboardId); err != nil {
+		return
+	}
+	if dashboardId == 0 {
+		// No dashboard exists, nothing to sync
+		return
+	}
+
+	// Get service group info
+	serviceGroup, monitorType := GetLogMetricServiceGroup(logMetricGroupGuid)
+
+	// Get service group display name
+	var serviceGroupTable models.ServiceGroupTable
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(&serviceGroupTable)
+	displayServiceGroup := serviceGroup
+	if serviceGroupTable.DisplayName != "" {
+		displayServiceGroup = serviceGroupTable.DisplayName
+	}
+
+	now := time.Now()
+
+	// Prepare dashboard roles for chart creation via handleAutoCreateChart
+	var roleRelList []*models.CustomDashBoardRoleRel
+	var useRoles []string
+	var mgmtRole string
+	if dashboardId > 0 {
+		if roleRelList, err = QueryCustomDashboardRoleRelByCustomDashboard(dashboardId); err != nil {
+			return
+		}
+		if len(roleRelList) > 0 {
+			for _, r := range roleRelList {
+				if r.Permission == string(models.PermissionMgmt) {
+					mgmtRole = r.RoleId
+				} else if r.Permission == string(models.PermissionUse) {
+					useRoles = append(useRoles, r.RoleId)
+				}
+			}
+		}
+	}
+
+	// Handle deleted metrics - remove corresponding charts
+	for _, metric := range metricsDeleted {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+		actions = append(actions, &Action{
+			Sql:   "delete from custom_chart where log_metric_group=? and name=?",
+			Param: []interface{}{logMetricGroupGuid, chartName},
+		})
+	}
+
+	// Handle added metrics - create new charts
+	for _, metric := range metricsAdded {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+
+		// Check if chart already exists
+		var existingChartId string
+		x.SQL("select guid from custom_chart where log_metric_group=? and name=?", logMetricGroupGuid, chartName).Get(&existingChartId)
+		if existingChartId != "" {
+			continue // Chart already exists
+		}
+
+		// Get current chart count for display config calculation
+		var chartCount int
+		x.SQL("select count(*) from custom_chart where log_metric_group=?", logMetricGroupGuid).Get(&chartCount)
+
+		// Create new chart params, align with autoGenerateSimpleCustomDashboard
+		chartParam := &models.CustomChartDto{
+			Public:          true,
+			SourceDashboard: dashboardId,
+			Name:            chartName,
+			ChartTemplate:   "one",
+			ChartType:       "line",
+			LineType:        "line",
+			Aggregate:       "none",
+			AggStep:         60,
+			ChartSeries:     []*models.CustomChartSeriesDto{},
+			DisplayConfig:   calcDisplayConfigForCustom(chartCount),
+			LogMetricGroup:  &logMetricGroupGuid,
+		}
+
+		// Generate chart series using the same logic as generateSimpleChartSeries
+		chartParam.ChartSeries = append(chartParam.ChartSeries, generateCustomChartSeries(serviceGroup, monitorType, metricPrefixCode, &metric))
+
+		// Create chart via handleAutoCreateChart to keep logic consistent with creation flow
+		subChartActions := handleAutoCreateChart(chartParam, int64(dashboardId), useRoles, mgmtRole, operator)
+		if len(subChartActions) > 0 {
+			actions = append(actions, subChartActions...)
+		}
+	}
+
+	// Handle modified metrics - update existing charts
+	for _, metric := range metricsModified {
+		chartName := fmt.Sprintf("%s_%s/%s", metricPrefixCode, metric.Metric, displayServiceGroup)
+
+		// Update chart display name if it changed
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart set name=?, update_user=?, update_time=? where log_metric_group=? and name=?",
+			Param: []interface{}{chartName, operator, now, logMetricGroupGuid, chartName},
+		})
+
+		// Update chart series with new metric info
+		fullMetricName := metric.Metric
+		if metricPrefixCode != "" && !strings.HasPrefix(metric.Metric, metricPrefixCode+"_") {
+			fullMetricName = metricPrefixCode + "_" + metric.Metric
+		}
+
+		// Update series metric and prom_expr
+		promExpr := getLogMetricExprByAggType(fullMetricName, metric.AggType, serviceGroup, []string{"tags"})
+		actions = append(actions, &Action{
+			Sql:   "update custom_chart_series set metric=?, prom_expr=?, display_name=?, legend=?, update_user=?, update_time=? where custom_chart in (select guid from custom_chart where log_metric_group=? and name=?)",
+			Param: []interface{}{fullMetricName, promExpr, metric.DisplayName, metric.DisplayName, operator, now, logMetricGroupGuid, chartName},
+		})
+
+		// If log_param_name changed, unify replace in series_config.tags/series_name and series_tag.name
+		var oldLogParamName string
+		x.SQL("select log_param_name from log_metric_config where log_metric_group=? and metric=?", logMetricGroupGuid, metric.Metric).Get(&oldLogParamName)
+		if oldLogParamName != "" && oldLogParamName != metric.LogParamName {
+			// Update custom_chart_series_config tags and series_name via dashboard_chart path
+			actions = append(actions, &Action{Sql: "update custom_chart_series_config set tags=REPLACE(tags, CONCAT(?, '='), CONCAT(?, '=')), series_name=REPLACE(series_name, CONCAT('{', ?, '='), CONCAT('{', ?, '=')) where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+				Param: []interface{}{oldLogParamName, metric.LogParamName, oldLogParamName, metric.LogParamName, dashboardId, chartName}})
+			// Update custom_chart_series_tag name via dashboard_chart path
+			actions = append(actions, &Action{Sql: "update custom_chart_series_tag set name=? where name=? and dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart in (select guid from custom_chart where log_metric_group=? and name=?))",
+				Param: []interface{}{metric.LogParamName, oldLogParamName, dashboardId, chartName}})
+		}
+	}
+
+	// Recalculate and unify layout at the end when there are any changes
+	if (len(metricsAdded) + len(metricsDeleted) + len(metricsModified)) > 0 {
+		var chartIds []string
+		if err = x.SQL("select guid from custom_chart where source_dashboard=? order by name", dashboardId).Find(&chartIds); err != nil {
+			return
+		}
+		for idx, chartId := range chartIds {
+			cfg := calcDisplayConfigForCustom(idx)
+			cfgBytes, _ := json.Marshal(cfg)
+			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set display_config=? where custom_dashboard=? and dashboard_chart=?", Param: []interface{}{string(cfgBytes), dashboardId, chartId}})
+		}
+	}
+
+	return
+}
+
+// generateCustomChartSeries generates chart series for custom metrics (similar to generateSimpleChartSeries)
+func generateCustomChartSeries(serviceGroup, monitorType, metricPrefixCode string, metric *models.LogMetricConfigDto) *models.CustomChartSeriesDto {
+	var serviceGroupTable = &models.ServiceGroupTable{}
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(serviceGroupTable)
+
+	metricGuid := metric.Metric
+	fullMetricName := metric.Metric
+	// Check if metric.Metric already contains metricPrefixCode, avoid duplicate addition
+	if metricPrefixCode != "" && !strings.HasPrefix(metric.Metric, metricPrefixCode+"_") {
+		metricGuid = metricPrefixCode + "_" + metricGuid
+		fullMetricName = metricPrefixCode + "_" + metric.Metric
+	}
+
+	dto := &models.CustomChartSeriesDto{
+		Endpoint:     serviceGroup,
+		ServiceGroup: serviceGroup,
+		EndpointName: serviceGroup,
+		MonitorType:  monitorType,
+		ColorGroup:   metric.ColorGroup,
+		MetricType:   "business",
+		MetricGuid:   generateMetricGuid(metricGuid, serviceGroup),
+		Metric:       fullMetricName,
+		Tags:         make([]*models.TagDto, 0),
+	}
+
+	if serviceGroupTable != nil {
+		dto.EndpointName = serviceGroupTable.DisplayName
+		dto.EndpointType = serviceGroupTable.ServiceType
+	}
+
+	if len(metric.TagConfigList) > 0 {
+		dto.Tags = append(dto.Tags, &models.TagDto{TagName: "code", Equal: "in"})
+	}
+
+	return dto
+}
+
+// handleCustomChartCreation handles the creation of custom charts and series
+// handleCustomChartCreation 已废弃：更新场景改为复用 handleAutoCreateChart，统一落库到 custom_dashboard_chart_rel
+
+// calcDisplayConfigForCustom generates display config for custom charts (similar to calcDisplayConfig)
+func calcDisplayConfigForCustom(index int) models.DisplayConfig {
+	item := models.DisplayConfig{}
+	item.W = 4
+	item.H = 7
+	item.X = float64((index % 3) * 4)
+	item.Y = math.Floor(float64(index/3)) * 7
+	return item
 }
 
 func GetServiceGroupMetricMap(serviceGroup string) (existMetricMap map[string]string, err error) {
@@ -2159,14 +2572,6 @@ func getServiceGroupMetricMap(serviceGroup string) (metricGuidMap map[string]str
 	return
 }
 
-func convertLogMetricConfigTable2DtoList(logMetricConfigList []*models.LogMetricConfigTable) (list []*models.LogMetricConfigDto) {
-	list = []*models.LogMetricConfigDto{}
-	for _, config := range logMetricConfigList {
-		list = append(list, convertLogMetricConfigTable2Dto(config))
-	}
-	return list
-}
-
 func convertLogMetricConfigTable2Dto(config *models.LogMetricConfigTable) (dto *models.LogMetricConfigDto) {
 	if config.TagConfig != "" && len(config.TagConfigList) == 0 {
 		config.TagConfigList = strings.Split(config.TagConfig, ",")
@@ -2211,4 +2616,344 @@ func GetLogMetricGroupDto(logMetricGroup string) (dto *models.LogMetricGroupWarn
 	dto = &models.LogMetricGroupWarnDto{}
 	_, err = x.SQL("select lmg.name as 'log_metric_group_name',lmg.log_metric_monitor as 'log_metric_monitor_guid',lmm.service_group from log_metric_group lmg join log_metric_monitor lmm  on lmg.log_metric_monitor= lmm.guid where lmg.guid =?", logMetricGroup).Get(dto)
 	return
+}
+
+// UpdateLogMetricGroupWithDashboardAndAlarm wraps UpdateLogMetricGroup and, when auto_dashboard is enabled,
+// computes code string_map diffs (add/rename/delete) and synchronizes dashboards accordingly.
+// When auto_alarm is enabled, it will also (reserved) sync alarm strategies in future.
+func UpdateLogMetricGroupWithDashboardAndAlarm(param *models.LogMetricGroupWithTemplate, operator string, roles []string) (err error) {
+	// load old code string_map for diff
+	var oldMaps []*models.LogMetricStringMapTable
+	x.SQL("select guid,log_param_name,value_type,source_value,regulative,target_value from log_metric_string_map where log_metric_group=?", param.LogMetricGroupGuid).Find(&oldMaps)
+	oldCode := make(map[string]*models.LogMetricStringMapTable)
+	for _, v := range oldMaps {
+		if v.LogParamName == "code" {
+			oldCode[v.Guid] = v
+		}
+	}
+	// check auto flags
+	var autoDashboard, autoAlarm int
+	x.SQL("select auto_dashboard,auto_alarm from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&autoDashboard, &autoAlarm)
+
+	// 只有当auto_dashboard 才同步看板
+	if autoDashboard == 1 {
+		// diffs
+		newByGuid := make(map[string]*models.LogMetricStringMapTable)
+		for _, v := range param.CodeStringMap {
+			newByGuid[v.Guid] = v
+		}
+		var adds []string
+		renames := make(map[string]string)
+		var deletes []string
+		for guidKey, ov := range oldCode {
+			if nv, ok := newByGuid[guidKey]; ok {
+				if ov.TargetValue != nv.TargetValue {
+					renames[ov.TargetValue] = nv.TargetValue
+				}
+			} else {
+				found := false
+				for _, nv := range param.CodeStringMap {
+					if (nv.LogParamName == "code" || nv.LogParamName == "") && nv.ValueType == ov.ValueType && nv.SourceValue == ov.SourceValue && nv.Regulative == ov.Regulative {
+						found = true
+						if ov.TargetValue != nv.TargetValue {
+							renames[ov.TargetValue] = nv.TargetValue
+						}
+						break
+					}
+				}
+				if !found {
+					deletes = append(deletes, ov.TargetValue)
+				}
+			}
+		}
+		oldTargets := make(map[string]bool)
+		for _, ov := range oldCode {
+			oldTargets[ov.TargetValue] = true
+		}
+		// Exclude pure renames from adds: collect all new target values coming from renames
+		renamedNewTargets := make(map[string]bool)
+		for _, newV := range renames {
+			renamedNewTargets[newV] = true
+		}
+		for _, nv := range param.CodeStringMap {
+			if nv.LogParamName != "code" {
+				nv.LogParamName = "code"
+			}
+			if !oldTargets[nv.TargetValue] && !renamedNewTargets[nv.TargetValue] {
+				adds = append(adds, nv.TargetValue)
+			}
+		}
+		if len(renames) > 0 || len(deletes) > 0 || len(adds) > 0 {
+			if autoDashboard == 1 {
+				var sucCode = getRetCodeSuccessCode(param.RetCodeStringMap)
+				if err = SyncDashboardForCodeChanges(param.LogMetricGroupGuid, renames, deletes, adds, operator, sucCode); err != nil {
+					return err
+				}
+			}
+			/*
+				    // NY要求只更新看板,不更新阈值告警
+					 if autoAlarm == 1 {
+						if err = SyncAlarmStrategyForCodeChanges(param, renames, deletes, adds, operator, roles); err != nil {
+							return err
+						}
+					}*/
+		}
+	}
+
+	// 无论auto_dashboard和auto_alarm是否开启，都要执行核心更新操作
+	if err = UpdateLogMetricGroup(param, operator); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SyncAlarmStrategyForCodeChanges synchronizes alarm strategies when codes are added, renamed, or deleted
+func SyncAlarmStrategyForCodeChanges(param *models.LogMetricGroupWithTemplate, codeRenames map[string]string, codeDeletes []string, codesAdded []string, operator string, roles []string) (err error) {
+	var actions []*Action
+
+	// Get existing alarm strategies for this log_metric_group
+	var existingStrategies []models.AlarmStrategyTable
+	if err = x.SQL("select guid,name,metric from alarm_strategy where log_metric_group=?", param.LogMetricGroupGuid).Find(&existingStrategies); err != nil {
+		return err
+	}
+
+	// Get log metric group info for context (query to ensure data consistency)
+	var metricPrefixCode, logMetricMonitor, logMonitorTemplateGuid string
+	x.SQL("select metric_prefix_code,log_metric_monitor,log_monitor_template from log_metric_group where guid=?", param.LogMetricGroupGuid).Get(&metricPrefixCode, &logMetricMonitor, &logMonitorTemplateGuid)
+	var serviceGroup, monitorType string
+	x.SQL("select service_group,monitor_type from log_metric_monitor where guid=?", logMetricMonitor).Get(&serviceGroup, &monitorType)
+
+	// Get service group info and display name (consistent with autoGenerateAlarmStrategy)
+	var serviceGroupTable models.ServiceGroupTable
+	var displayServiceGroup = serviceGroup
+	x.SQL("SELECT guid,display_name,service_type FROM service_group where guid=?", serviceGroup).Get(&serviceGroupTable)
+	if serviceGroupTable.DisplayName != "" {
+		displayServiceGroup = serviceGroupTable.DisplayName
+	}
+
+	// Get service group roles for alarm notifications
+	serviceGroupsRoles := getServiceGroupRoles(serviceGroup)
+
+	// Handle roles fallback logic (same as autoGenerateAlarmStrategy)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges service group roles",
+		zap.String("serviceGroup", serviceGroup),
+		zap.Strings("roles", serviceGroupsRoles))
+
+	// Get endpoint group for this service group
+	var endpointGroup string
+	var endpointGroupMonitorType string
+
+	// Use the logic from autoGenerateAlarmStrategy to get endpoint group
+	if serviceGroup != "" && monitorType != "" {
+		var endpointGroupIds []string
+		if err = x.SQL("select guid from endpoint_group where service_group=? and monitor_type=?", serviceGroup, monitorType).Find(&endpointGroupIds); err != nil {
+			return err
+		}
+		if len(endpointGroupIds) > 0 {
+			endpointGroup = endpointGroupIds[0]
+		}
+	}
+
+	// Fallback: if no endpoint group found with service_group and monitor_type,
+	// try to find one with service_group only, but this should be avoided
+	if endpointGroup == "" {
+		log.Warn(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges no endpoint group found with service_group and monitor_type",
+			zap.String("serviceGroup", serviceGroup),
+			zap.String("monitorType", monitorType))
+		// Don't use fallback as it may select wrong endpoint_group
+		// Instead, we should create a proper endpoint_group or skip alarm creation
+		return fmt.Errorf("no suitable endpoint_group found for service_group=%s and monitor_type=%s", serviceGroup, monitorType)
+	}
+
+	// Handle roles fallback logic (same as autoGenerateAlarmStrategy)
+	if len(serviceGroupsRoles) == 0 && len(roles) > 0 {
+		serviceGroupsRoles = roles[:1]
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges service group roles",
+		zap.String("serviceGroup", serviceGroup),
+		zap.Strings("roles", serviceGroupsRoles))
+	if endpointGroup == "" {
+		// If no endpoint group exists for this service group, we need to create one or use a default
+		// For now, we'll skip creating alarm strategies if no endpoint group exists
+		log.Warn(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges no endpoint group found for service group", zap.String("serviceGroup", serviceGroup))
+		return nil
+	}
+
+	log.Debug(nil, log.LOGGER_APP, "SyncAlarmStrategyForCodeChanges found endpoint group",
+		zap.String("serviceGroup", serviceGroup),
+		zap.String("endpointGroup", endpointGroup),
+		zap.String("monitorType", endpointGroupMonitorType))
+
+	// Get retcode success value
+	var retCodeStringMapRows []*models.LogMetricStringMapTable
+	x.SQL("select * from log_metric_string_map where log_metric_group=? and log_param_name='retcode'", param.LogMetricGroupGuid).Find(&retCodeStringMapRows)
+	sucCode := getRetCodeSuccessCode(retCodeStringMapRows)
+
+	// Get log monitor template to get metric list
+	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(logMonitorTemplateGuid)
+	if getErr != nil {
+		return fmt.Errorf("failed to get log monitor template: %v", getErr)
+	}
+
+	// Get auto alarm metric list using template's metric list
+	autoAlarmMetricList := getAutoAlarmMetricList(logMonitorTemplateObj.MetricList, serviceGroup, metricPrefixCode)
+
+	// Handle code additions
+	for _, code := range codesAdded {
+		for _, alarmMetric := range autoAlarmMetricList {
+			if !alarmMetric.AutoWarn {
+				continue
+			}
+
+			// Create alarm strategy for the new code
+			alarmStrategy := &models.GroupStrategyObj{
+				NotifyList: make([]*models.NotifyObj, 0),
+				Conditions: make([]*models.StrategyConditionObj, 0),
+			}
+
+			// Generate alarm strategy name following autoGenerateAlarmStrategy logic
+			alarmStrategy.Name = fmt.Sprintf("%s-%s%s%s%s", code, generateMetricGuidDisplayName(metricPrefixCode, alarmMetric.Metric, displayServiceGroup), alarmMetric.Operator, alarmMetric.Threshold, getAlarmMetricUnit(alarmMetric.Metric))
+			alarmStrategy.Priority = "high"
+			alarmStrategy.NotifyEnable = 1
+			alarmStrategy.ActiveWindow = "00:00-23:59"
+			// Set EndpointGroup to the found endpoint group
+			alarmStrategy.EndpointGroup = endpointGroup
+			alarmStrategy.LogMetricGroup = &param.LogMetricGroupGuid
+			alarmStrategy.Metric = alarmMetric.MetricId
+			alarmStrategy.MetricName = alarmMetric.Metric
+			alarmStrategy.Content = fmt.Sprintf("%s continuing for more than %s%s", alarmStrategy.Name, alarmMetric.Time, alarmMetric.TimeUnit)
+
+			// Add notification configuration
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "firing", NotifyRoles: serviceGroupsRoles})
+			alarmStrategy.NotifyList = append(alarmStrategy.NotifyList, &models.NotifyObj{AlarmAction: "ok", NotifyRoles: serviceGroupsRoles})
+
+			// Add metric tags
+			metricTags := make([]*models.MetricTag, 0)
+			for _, tag := range alarmMetric.TagConfig {
+				if tag == constCode {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName:  constCode,
+						Equal:    ConstEqualIn,
+						TagValue: []string{code},
+					})
+				} else if tag == constRetCode && (strings.HasSuffix(alarmMetric.Metric, constConstTimeAvg) || strings.HasSuffix(alarmMetric.Metric, constConstTimeMax)) {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName:  constRetCode,
+						Equal:    ConstEqualIn,
+						TagValue: []string{sucCode},
+					})
+				} else {
+					metricTags = append(metricTags, &models.MetricTag{
+						TagName: tag,
+					})
+				}
+			}
+
+			alarmStrategy.Conditions = append(alarmStrategy.Conditions, &models.StrategyConditionObj{
+				Metric:     alarmMetric.MetricId,
+				MetricName: alarmMetric.Metric,
+				Condition:  fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold),
+				Last:       fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit),
+				Tags:       metricTags,
+			})
+			alarmStrategy.Condition = fmt.Sprintf("%s%s", alarmMetric.Operator, alarmMetric.Threshold)
+			alarmStrategy.Last = fmt.Sprintf("%s%s", alarmMetric.Time, alarmMetric.TimeUnit)
+
+			// Generate actions for creating alarm strategy
+			now := time.Now().Format(models.DatetimeFormat)
+			if subActions, createErr := getCreateAlarmStrategyActions(alarmStrategy, now, operator); createErr != nil {
+				return createErr
+			} else {
+				actions = append(actions, subActions...)
+			}
+		}
+	}
+
+	// Handle code renames - update existing alarm strategies
+	for oldCode, newCode := range codeRenames {
+		// Update alarm strategy names and code tags
+		for _, strategy := range existingStrategies {
+			// Check if this strategy is for the old code (name starts with oldCode-)
+			if strings.HasPrefix(strategy.Name, oldCode+"-") {
+				newName := strings.Replace(strategy.Name, oldCode+"-", newCode+"-", 1)
+				actions = append(actions, &Action{
+					Sql:   "update alarm_strategy set name=? where guid=?",
+					Param: []interface{}{newName, strategy.Guid},
+				})
+
+				// Update code tag values in alarm_strategy_tag_value
+				actions = append(actions, &Action{
+					Sql:   "update alarm_strategy_tag_value set value=? where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{newCode, strategy.Guid, oldCode},
+				})
+			}
+		}
+	}
+
+	// Handle code deletions
+	for _, delCode := range codeDeletes {
+		// Delete alarm strategies for the deleted code
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, delCode+"-") {
+				// Delete alarm strategy and all related records
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy where guid=?",
+					Param: []interface{}{strategy.Guid},
+				})
+			}
+		}
+
+		// Update other alarm strategies to remove the deleted code from NotIn list
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Remove the deleted code from other strategies' NotIn list
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{strategy.Guid, delCode},
+				})
+			}
+		}
+	}
+
+	// Handle other alarm strategies for code renames
+	for oldCode, newCode := range codeRenames {
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Update code in other strategies' NotIn list: remove old code, add new code
+				actions = append(actions, &Action{
+					Sql:   "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and name='code') and value=?",
+					Param: []interface{}{strategy.Guid, oldCode},
+				})
+				actions = append(actions, &Action{
+					Sql:   "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and t.name='code' and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)",
+					Param: []interface{}{newCode, strategy.Guid, newCode},
+				})
+			}
+		}
+	}
+
+	// Handle other alarm strategies for code additions
+	if len(codesAdded) > 0 {
+		for _, strategy := range existingStrategies {
+			if strings.HasPrefix(strategy.Name, constOtherCode+"-") {
+				// Add new codes to other strategies' NotIn list
+				for _, code := range codesAdded {
+					actions = append(actions, &Action{
+						Sql:   "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) select t.guid,? from alarm_strategy_tag t where t.alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?) and t.name='code' and not exists (select 1 from alarm_strategy_tag_value v where v.alarm_strategy_tag=t.guid and v.value=?)",
+						Param: []interface{}{code, strategy.Guid, code},
+					})
+				}
+			}
+		}
+	}
+
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
 }

@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit')) + $t('m_original_metric') }}<span class="underline"></span></div>
+        <div class="title">{{ (viewOnly ? $t('m_button_view') : (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit'))) + $t('m_original_metric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">
@@ -51,7 +51,7 @@
                 v-model="param.value"
                 @on-open-change="getCollectedMetric"
                 @on-change="changeCollectedMetric(param)"
-                :disabled="metricConfigData.metric_type === 'business' || viewOnly"
+                :disabled="operator !== 'copy' && (metricConfigData.metric_type === 'business' || viewOnly)"
                 filterable
                 clearable
                 :key="param.label"
@@ -59,7 +59,7 @@
                 class="select-dropdown"
               >
                 <Option
-                  style="white-space: normal;"
+                  style="white-space: normal; max-width: 700px"
                   v-for="(item, itemIndex) in collectedMetricOptions"
                   :value="item.option_value"
                   :key="item.option_value + itemIndex"

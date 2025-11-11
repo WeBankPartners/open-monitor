@@ -150,6 +150,10 @@ func StartProcessMonitorCron() {
 
 func doProcessMonitor() {
 	if !ProcessJob.ContainConfig() {
+		// 当配置为空时，清空结果列表
+		ProcessJob.ResultLock.Lock()
+		ProcessJob.ResultList = []*processMonitorObj{}
+		ProcessJob.ResultLock.Unlock()
 		return
 	}
 	processUsedList := getProcessUsedResource()

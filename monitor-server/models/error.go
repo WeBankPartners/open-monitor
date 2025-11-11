@@ -77,6 +77,7 @@ type ErrorTemplate struct {
 	LogMonitorTemplateDeleteError             CustomError `json:"log_monitor_template_delete_error"`
 	AddComparisonMetricRepeatError            CustomError `json:"add_comparison_metric_repeat_error"`
 	AddMetricRepeatError                      CustomError `json:"add_metric_repeat_error"`
+	DashboardChangedError                     CustomError `json:"dashboard_changed_error"`
 }
 
 func InitErrorTemplateList(dirPath string) (err error) {

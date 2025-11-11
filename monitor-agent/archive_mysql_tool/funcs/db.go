@@ -24,14 +24,11 @@ var (
 	retryWaitSecond     int
 	jobTimeout          int
 
-	// 连接复用趋势监控
-	lastConnectionStats sql.DBStats
 	connectionTrendData []ConnectionTrendPoint
-)
-
-const (
-	// WaitCountThreshold 等待连接数阈值，超过此值才触发打印
-	WaitCountThreshold = 500
+	// 上次连接统计信息
+	lastConnectionStats sql.DBStats
+	// 插入活动标记，用于外部性能日志控制
+	isInsertingActive bool
 )
 
 // ConnectionTrendPoint 连接趋势数据点
@@ -148,6 +145,10 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	startTime := time.Now()
 	log.Printf("start insert mysql table:%s,row num:%d,concurrentInsertNum:%d \n", tableName, len(rows), concurrentInsertNum)
 
+	// 标记插入活动开始/结束
+	isInsertingActive = true
+	defer func() { isInsertingActive = false }()
+
 	var sqlList []string
 	var rowCountList []int
 	tmpCount := 0
@@ -214,7 +215,7 @@ func createTable(start int64, isFiveArchive bool) (err error, tableName string) 
 	if isFiveArchive {
 		tableDate = tableDate + "_5m"
 	}
-	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(1024) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,`sum` DOUBLE NOT NULL DEFAULT 0,`create_time` VARCHAR(64) DEFAULT NULL,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci", tableName, tableDate, tableDate)
+	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(1024) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,`sum` DOUBLE NOT NULL DEFAULT 0,`create_time` VARCHAR(64) DEFAULT NULL,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
 	_, err = mysqlEngine.Exec(createSql)
 	if err != nil {
 		log.Printf("create table %s error: %v \n", tableName, err)
@@ -340,53 +341,35 @@ func transUnixTime(input int64) (output string) {
 	return
 }
 
-// PrintDBConnectionStatsConditional 条件性打印数据库连接池统计信息（性能优化版本）
-func PrintDBConnectionStatsConditional(prefix string, forcePrint bool) {
+// PrintDBConnectionStatsConditional 条件性打印数据库连接池统计信息
+func PrintDBConnectionStatsConditional(prefix string) {
 	if mysqlEngine == nil {
 		return
 	}
 
 	stats := mysqlEngine.DB().Stats()
 
-	// 只在以下情况打印详细日志：
-	// 1. 强制打印（forcePrint=true）
-	// 2. 连接使用率超过80%
-	// 3. 等待连接数超过阈值（默认10）
-	// 4. 连接数接近最大值
-	shouldPrint := forcePrint
-	if !shouldPrint && stats.MaxOpenConnections > 0 {
-		usageRate := float64(stats.OpenConnections) / float64(stats.MaxOpenConnections)
-		shouldPrint = usageRate > 0.8 || stats.WaitCount > WaitCountThreshold || stats.OpenConnections >= stats.MaxOpenConnections-2
+	log.Printf("[%s] DB Connection Stats - Open: %d/%d, InUse: %d, Idle: %d, WaitCount: %d, WaitDuration: %v",
+		prefix,
+		stats.OpenConnections,
+		stats.MaxOpenConnections,
+		stats.InUse,
+		stats.Idle,
+		stats.WaitCount,
+		stats.WaitDuration)
+
+	if stats.MaxOpenConnections > 0 {
+		usageRate := float64(stats.OpenConnections) / float64(stats.MaxOpenConnections) * 100
+		log.Printf("[%s] DB Connection Usage Rate: %.2f%%", prefix, usageRate)
 	}
 
-	if shouldPrint {
-		log.Printf("[%s] DB Connection Stats - Open: %d/%d, InUse: %d, Idle: %d, WaitCount: %d, WaitDuration: %v",
-			prefix,
-			stats.OpenConnections,
-			stats.MaxOpenConnections,
-			stats.InUse,
-			stats.Idle,
-			stats.WaitCount,
-			stats.WaitDuration)
-
-		if stats.MaxOpenConnections > 0 {
-			usageRate := float64(stats.OpenConnections) / float64(stats.MaxOpenConnections) * 100
-			log.Printf("[%s] DB Connection Usage Rate: %.2f%%", prefix, usageRate)
-		}
-
-		if stats.WaitCount > 0 {
-			avgWaitTime := stats.WaitDuration / time.Duration(stats.WaitCount)
-			log.Printf("[%s] DB Connection Avg Wait Time: %v", prefix, avgWaitTime)
-		}
-
-		// 添加连接复用情况监控
-		printConnectionReuseStats(prefix, stats)
-
-		// 只在强制打印时调用趋势分析
-		if forcePrint {
-			PrintConnectionTrendAnalysis(prefix)
-		}
+	if stats.WaitCount > 0 {
+		avgWaitTime := stats.WaitDuration / time.Duration(stats.WaitCount)
+		log.Printf("[%s] DB Connection Avg Wait Time: %v", prefix, avgWaitTime)
 	}
+	// 添加连接复用情况监控
+	printConnectionReuseStats(prefix, stats)
+	PrintConnectionTrendAnalysis(prefix)
 }
 
 // printConnectionReuseStats 打印连接复用统计信息

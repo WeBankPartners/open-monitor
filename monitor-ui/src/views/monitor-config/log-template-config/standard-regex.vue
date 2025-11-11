@@ -214,6 +214,7 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
+          width: 250,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>

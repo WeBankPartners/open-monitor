@@ -585,5 +585,6 @@
   "m_time_range_cannot_exceed_1_hours": "Time Range Cannot Exceed 1 Hours",
   "m_select_valid_time_range": "Please Select Valid Time Range",
   "m_cluster": "Cluster",
-  "m_pod_name": "Pod Name"
+  "m_pod_name": "Pod Name",
+  "m_template_filter": "Template Filter"
 }

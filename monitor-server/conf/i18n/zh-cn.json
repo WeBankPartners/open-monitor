@@ -135,5 +135,9 @@
   "api_permission_deny": {
     "code": 20200034,
     "message": "无接口访问权限"
+  },
+  "dashboard_changed_error": {
+    "code": 20200035,
+    "message": "看板已变更，请刷新看板后再操作"
   }
 }

@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit')) + $t('m_year_over_year_metrics') }}<span class="underline"></span></div>
+        <div class="title">{{ (viewOnly ? $t('m_button_view') : (['add', 'copy'].includes(operator) ? $t('m_button_add') : $t('m_button_edit'))) + $t('m_year_over_year_metrics') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{maxHeight: maxHeight + 'px'}">

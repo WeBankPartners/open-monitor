@@ -135,6 +135,10 @@
   "api_permission_deny": {
     "code": 20200034,
     "message": "Api Permission Deny"
+  },
+  "dashboard_changed_error": {
+    "code": 20200035,
+    "message": "Dashboard has been changed, please refresh the dashboard and try again"
   }
 }
 
