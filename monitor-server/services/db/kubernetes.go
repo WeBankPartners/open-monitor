@@ -316,10 +316,10 @@ func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (e
 	return
 }
 
-func GetKubernetesByName(name string) (cluster *m.KubernetesClusterTable, err error) {
+func GetKubernetesById(id int) (cluster *m.KubernetesClusterTable, err error) {
 	cluster = &m.KubernetesClusterTable{}
 	var clusterList []*m.KubernetesClusterTable
-	if err = x.SQL("select * from kubernetes_cluster where cluster_name=?", name).Find(&clusterList); err != nil {
+	if err = x.SQL("select * from kubernetes_cluster where id=?", id).Find(&clusterList); err != nil {
 		return
 	}
 	if len(clusterList) == 0 {

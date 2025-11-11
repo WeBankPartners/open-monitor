@@ -32,7 +32,7 @@ type RegisterParamNew struct {
 	ProcessName       string `json:"process_name"`
 	Tags              string `json:"tags"`
 	PodName           string `json:"pod_name"`
-	KubernetesCluster string `json:"kubernetes_cluster"`
+	KubernetesCluster int    `json:"kubernetes_cluster"`
 }
 
 type RegisterConsulParam struct {
