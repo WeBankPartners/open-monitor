@@ -12,26 +12,27 @@ type RegisterParam struct {
 }
 
 type RegisterParamNew struct {
-	Guid             string `json:"guid"`
-	Type             string `json:"type"`
-	Name             string `json:"name"`
-	Ip               string `json:"ip"`
-	Port             string `json:"port"`
-	User             string `json:"user"`
-	Password         string `json:"password"`
-	Method           string `json:"method"`
-	Url              string `json:"url"`
-	AddDefaultGroup  bool   `json:"add_default_group"`
-	DefaultGroupName string `json:"default_group_name"`
-	AgentManager     bool   `json:"agent_manager"`
-	FetchMetric      bool   `json:"fetch_metric"`
-	Step             int    `json:"step"`
-	ExportAddress    string `json:"export_address"`
-	Cluster          string `json:"cluster"`
-	ProxyExporter    string `json:"proxy_exporter"`
-	ProcessName      string `json:"process_name"`
-	Tags             string `json:"tags"`
-	PodName          string `json:"pod_name"`
+	Guid              string `json:"guid"`
+	Type              string `json:"type"`
+	Name              string `json:"name"`
+	Ip                string `json:"ip"`
+	Port              string `json:"port"`
+	User              string `json:"user"`
+	Password          string `json:"password"`
+	Method            string `json:"method"`
+	Url               string `json:"url"`
+	AddDefaultGroup   bool   `json:"add_default_group"`
+	DefaultGroupName  string `json:"default_group_name"`
+	AgentManager      bool   `json:"agent_manager"`
+	FetchMetric       bool   `json:"fetch_metric"`
+	Step              int    `json:"step"`
+	ExportAddress     string `json:"export_address"`
+	Cluster           string `json:"cluster"`
+	ProxyExporter     string `json:"proxy_exporter"`
+	ProcessName       string `json:"process_name"`
+	Tags              string `json:"tags"`
+	PodName           string `json:"pod_name"`
+	KubernetesCluster string `json:"kubernetes_cluster"`
 }
 
 type RegisterConsulParam struct {

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
@@ -310,8 +311,21 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, names
 	return err, id, endpointGuid
 }
 
-func AddKubernetesEndpointRel(kubernetesId, endpointGuid, podGuid string) (err error) {
-	_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid) value (?,?,?)", kubernetesId, endpointGuid, podGuid)
+func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (err error) {
+	_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", kubernetesId, endpointGuid, podGuid, "default")
+	return
+}
+
+func GetKubernetesByName(name string) (cluster *m.KubernetesClusterTable, err error) {
+	cluster = &m.KubernetesClusterTable{}
+	var clusterList []*m.KubernetesClusterTable
+	if err = x.SQL("select * from kubernetes_cluster where cluster_name=?", name).Find(&clusterList); err != nil {
+		return
+	}
+	if len(clusterList) == 0 {
+		return nil, errors.New("kubernetes cluster not exist")
+	}
+	cluster = clusterList[0]
 	return
 }
 

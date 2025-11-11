@@ -152,7 +152,15 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 	}
 	// 设置pod类型与集群关联
 	if param.Type == "pod" {
-		if err = db.AddKubernetesEndpointRel(param.Cluster, guid, rData.extendParam.PodName); err != nil {
+		// 查询集群名称是否存在
+		var k8sCluster *m.KubernetesClusterTable
+		if k8sCluster, err = db.GetKubernetesByName(param.KubernetesCluster); err != nil {
+			return validateMessage, guid, err
+		}
+		if k8sCluster == nil {
+			return validateMessage, guid, fmt.Errorf("agent register fail, cluster is not exist")
+		}
+		if err = db.AddKubernetesEndpointRel(k8sCluster.Id, guid, rData.extendParam.PodName); err != nil {
 			return
 		}
 	}
