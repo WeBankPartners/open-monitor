@@ -944,7 +944,10 @@ export default {
         this.isShowDataMonitor = true
       })
     },
-    typeChange(type) {
+    async typeChange(type) {
+      // 解决切换类型时，表单验证不生效的问题
+      await this.$nextTick()
+      this.$validator.reset()
       const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
       this.systemType = obj.systemType
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
