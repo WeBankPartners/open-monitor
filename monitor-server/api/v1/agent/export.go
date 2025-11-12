@@ -203,7 +203,7 @@ func AlarmControl(c *gin.Context) {
 				tmpIp = v.InstanceIp
 			}
 			instanceName := v.Instance
-			if agentType == "process" {
+			if agentType == "process" || agentType == "pod" {
 				tmpIp = v.HostIp
 				instanceName = v.DisplayName
 			}

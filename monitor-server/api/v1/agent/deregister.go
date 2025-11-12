@@ -114,6 +114,10 @@ func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 			log.Error(nil, log.LOGGER_APP, "Sync process config after deregister fail", zap.Error(syncErr), zap.String("ip", endpointObj.Ip))
 		}
 	}
+	// 删除pod 和集群关系
+	if endpointObj.ExportType == "pod" {
+		err = db.DeleteKubernetesEndpointRelByEndpointId(endpointObj.Guid)
+	}
 	if endpointObj.ExportType == "snmp" {
 		if err = db.SnmpEndpointDelete(endpointObj.Guid); err != nil {
 			return err
@@ -123,10 +127,6 @@ func DeregisterJob(endpointObj m.EndpointTable, operator string) error {
 		if err = db.UpdateAgentManagerTable(m.EndpointTable{Guid: guid}, "", "", "", "", false); err != nil {
 			return err
 		}
-	}
-	// 删除pod 和集群关系
-	if endpointObj.ExportType == "pod" {
-		err = db.DeleteKubernetesEndpointRelByEndpointId(endpointObj.Guid)
 	}
 	return err
 }
