@@ -593,6 +593,10 @@ export default {
         {
           label: 'mysql',
           value: 'mysql'
+        },
+        {
+          label: 'pod',
+          value: 'pod'
         }
       ],
       allLogFileData: [],

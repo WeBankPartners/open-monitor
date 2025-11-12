@@ -371,6 +371,10 @@ export default {
         {
           label: 'http',
           value: 'http'
+        },
+        {
+          label: 'pod',
+          value: 'pod'
         }
       ],
       sourceEndpoints: [],
