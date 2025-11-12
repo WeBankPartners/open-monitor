@@ -584,6 +584,8 @@
   "m_data_preview": "数据预览",
   "m_time_range_cannot_exceed_1_hours": "时间范围不能超过1小时",
   "m_select_valid_time_range": "请选择合法的时间范围",
+  "m_cluster": "集群",
+  "m_pod_name": "Pod名称",
   "m_template_filter": "模板筛选"
 }
 
