@@ -162,7 +162,7 @@
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
-        <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
+        <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process', 'pod'].includes(endpointRejectModel.addRow.type))">
           <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
           <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" :disabled="isReviewMode" name="port" :class="{'red-border': veeErrors.has('port')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -206,6 +206,22 @@
             </Select>
           </div>
         </template>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
+          <label class="col-md-2 label-name">{{$t('m_cluster')}}:</label>
+          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="isReviewMode" style="width: 513px">
+            <Option v-for="item in endpointRejectModel.clusterList" :value="item.id" :key="item.id">
+              {{item.cluster_name}}
+            </Option>
+          </Select>
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('kubernetes_cluster')" class="is-danger">{{ veeErrors.first('kubernetes_cluster')}}</label>
+        </div>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
+          <label class="col-md-2 label-name">{{$t('m_pod_name')}}:</label>
+          <input v-validate="'required'" v-model="endpointRejectModel.addRow.pod_name" :disabled="isReviewMode" name="pod_name" :class="{'red-border': veeErrors.has('pod_name')}" type="text" class="col-md-9 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('pod_name')" class="is-danger">{{ veeErrors.first('pod_name')}}</label>
+        </div>
       </div>
     </ModalComponent>
 
@@ -285,8 +301,8 @@
     <ModalComponent :modelConfig="maintenanceWindowModel">
       <template slot='maintenanceWindow'>
         <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
-          <template v-for="(item, index) in maintenanceWindowModel.result">
-            <p :key="index" style="margin:6px 0">
+          <template v-for="(item, index) in maintenanceWindowModel.result" style="margin:6px 0">
+            <p :key="index">
               <Button
                 @click="deleteMaintenanceWindow(index)"
                 size="small"
@@ -551,7 +567,9 @@ export default {
           export_address: '',
           proxy_exporter: null,
           process_name: '',
-          tags: ''
+          tags: '',
+          kubernetes_cluster: null,
+          pod_name: ''
         },
         v_select_configs: {
           proxy_exporter: []
@@ -559,6 +577,7 @@ export default {
         stepOptions: collectionInterval,
         ipOptions: [],
         endpointType: [],
+        clusterList: [],
       },
       processConfigModel: {
         modalId: 'process_config_model',
@@ -837,6 +856,13 @@ export default {
         this.endpointRejectModel.addRow = res
         const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
         this.systemType = obj.systemType
+        // 如果类型是pod，加载集群列表
+        if (this.endpointRejectModel.addRow.type === 'pod') {
+          this.getClusterList()
+        }
+        if (['snmp', 'pod'].includes(this.endpointRejectModel.addRow.type)) {
+          this.endpointRejectModel.supportStep = false
+        }
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -917,7 +943,6 @@ export default {
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
       })
-
     },
     typeChange(type) {
       const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
@@ -933,7 +958,9 @@ export default {
         password: '',
         method: '',
         url: '',
-        exporter_type: ''
+        exporter_type: '',
+        kubernetes_cluster: null,
+        pod_name: ''
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
         this.endpointRejectModel.addRow.step = 30
@@ -958,6 +985,11 @@ export default {
             value: item.id
           }))
         })
+      }
+      // 当类型为pod时，获取集群列表
+      if (type && type === 'pod') {
+        this.endpointRejectModel.supportStep = false
+        this.getClusterList()
       }
     },
     add() {
@@ -1265,6 +1297,11 @@ export default {
       this.request('GET', this.apiCenter.alarmEndpointOptions, {}, res => {
         this.objectGroupList = res.endpointGroup
         this.objectTypeList = res.basicType
+      })
+    },
+    getClusterList() {
+      this.request('GET', this.apiCenter.getK8sClusterList, {}, res => {
+        this.endpointRejectModel.clusterList = Array.isArray(res) ? res : []
       })
     }
   }

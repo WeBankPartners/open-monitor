@@ -182,7 +182,7 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete n from notify n join log_keyword_notify_rel rel on n.guid=rel.notify where rel.log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
 	return actions
@@ -375,7 +375,7 @@ func DeleteLogKeyword(logKeywordConfigGuid string) (err error) {
 	}
 	actions = append(actions, closeAlarmActions...)
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
+	actions = append(actions, &Action{Sql: "delete n from notify n join log_keyword_notify_rel rel on n.guid=rel.notify where rel.log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where guid=?", Param: []interface{}{logKeywordConfigGuid}})
 	err = Transaction(actions)

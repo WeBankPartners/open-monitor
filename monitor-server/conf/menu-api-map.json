@@ -648,6 +648,11 @@
         "method": "get"
       },
       {
+        "key": "getK8sClusterList",
+        "url": "/monitor/api/v2/monitor/kubernetes/cluster/list",
+        "method": "get"
+      },
+      {
         "key": "monitorEndpointQuery",
         "url": "/monitor/api/v2/monitor/endpoint/query",
         "method": "get"
