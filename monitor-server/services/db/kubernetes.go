@@ -329,6 +329,18 @@ func GetKubernetesById(id int) (cluster *m.KubernetesClusterTable, err error) {
 	return
 }
 
+func GetKubernetesIdByEndpointGuid(guid string) (id int, err error) {
+	var kubernetesEndpointRelList []*m.KubernetesEndpointRelTable
+	if err = x.SQL("select kubernete_id from kubernetes_endpoint_rel where endpoint_guid=?", guid).Find(&kubernetesEndpointRelList); err != nil {
+		return
+	}
+	if len(kubernetesEndpointRelList) == 0 {
+		return 0, errors.New("kubernetes cluster not exist")
+	}
+	id = kubernetesEndpointRelList[0].KuberneteId
+	return
+}
+
 func DeleteKubernetesPod(podGuid, endpointGuid string) (err error, id int64) {
 	if endpointGuid == "" {
 		var kubernetesEndpointTables []*m.KubernetesEndpointRelTable

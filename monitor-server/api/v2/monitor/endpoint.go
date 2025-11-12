@@ -67,13 +67,18 @@ func GetEndpoint(c *gin.Context) {
 			result.Url = extendObj.HttpUrl
 			result.Method = extendObj.HttpMethod
 			result.ProxyExporter = extendObj.ProxyExporter
+			result.PodName = extendObj.PodName
 		}
 	}
+	if endpointObj.MonitorType == "pod" {
+		var k8sCluster int
+		if k8sCluster, err = db.GetKubernetesIdByEndpointGuid(endpointObj.Guid); err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		result.KubernetesCluster = k8sCluster
+	}
 	middleware.ReturnSuccessData(c, result)
-}
-
-func AddEndpoint(c *gin.Context) {
-
 }
 
 func UpdateEndpoint(c *gin.Context) {
