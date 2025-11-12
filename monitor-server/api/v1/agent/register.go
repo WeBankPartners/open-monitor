@@ -131,7 +131,7 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 	case "process":
 		rData = processMonitorRegister(param)
 	case "pod":
-		rData = processK8sPodRegister(param)
+		rData = k8sPodRegister(param)
 	default:
 		rData = otherExporterRegister(param)
 	}
@@ -160,7 +160,7 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 		if k8sCluster == nil {
 			return validateMessage, guid, fmt.Errorf("agent register fail, cluster is not exist")
 		}
-		if err = db.AddKubernetesEndpointRel(param.KubernetesCluster, guid, rData.extendParam.PodName); err != nil {
+		if err = db.AddKubernetesEndpointRel(param.KubernetesCluster, guid, param.Name); err != nil {
 			return
 		}
 	}
@@ -792,7 +792,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
-func processK8sPodRegister(param m.RegisterParamNew) returnData {
+func k8sPodRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = param.Step
 	if mid.IsIllegalName(param.Name) {

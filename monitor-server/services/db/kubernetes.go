@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -285,14 +286,15 @@ func SyncPodToEndpoint() bool {
 	return result
 }
 
-func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace string) (err error, id int64, endpointGuid string) {
+func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace, serviceIp string) (err error, id int64, endpointGuid string) {
 	apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
-	endpointName := fmt.Sprintf("%s-%s", namespace, podName)
-	endpointGuid = fmt.Sprintf("%s_%s_pod", endpointName, apiServerIp)
+	endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, serviceIp)
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
+	endpointObjNew := m.EndpointNewTable{Guid: endpointGuid}
 	GetEndpoint(&endpointObj)
+	result, _ := GetEndpointNew(&endpointObjNew)
 	if endpointObj.Id <= 0 {
-		execResult, err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,export_version,os_type) value (?,?,?,'pod',10,?,?)", endpointGuid, endpointName, apiServerIp, namespace, cluster.ClusterName)
+		execResult, err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,export_version,os_type) value (?,?,?,'pod',10,?,?)", endpointGuid, podName, apiServerIp, namespace, cluster.ClusterName)
 		if err != nil {
 			return err, id, endpointGuid
 		}
@@ -303,12 +305,43 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, names
 		}
 		id = lastId
 	}
+	// 插入endpoint_new表
+	if result.Guid == "" {
+		result.Guid = endpointGuid
+		result.Name = podGuid
+		result.Ip = serviceIp
+		result.MonitorType = "pod"
+		result.Step = 10
+		result.Cluster = "default"
+		nowTime := time.Now().Format(m.DatetimeFormat)
+		extendString := ""
+		if podName != "" {
+			extendParam := m.EndpointExtendParamObj{}
+			extendParam.PodName = podName
+			tmpExtendBytes, _ := json.Marshal(extendParam)
+			extendString = string(tmpExtendBytes)
+		}
+		_, err := x.Exec("insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time,create_user,update_user) "+
+			"value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", result.Guid, result.Name, result.Ip, result.MonitorType, "", "", result.Step, "", "", result.Cluster, extendString, nowTime, "system", "system")
+		if err != nil {
+			return err, id, endpointGuid
+		}
+	}
 	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
 	x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid=?", cluster.Id, endpointGuid).Find(&kubernetesEndpointTables)
 	if len(kubernetesEndpointTables) <= 0 {
 		_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", cluster.Id, endpointGuid, podGuid, namespace)
 	}
 	return err, id, endpointGuid
+}
+
+func GetKubernetesEndpointRelByPodGuid(podGuid string) (*m.KubernetesEndpointRelTable, error) {
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	x.SQL("select * from kubernetes_endpoint_rel where pod_guid=?", podGuid).Find(&kubernetesEndpointTables)
+	if len(kubernetesEndpointTables) <= 0 {
+		return nil, nil
+	}
+	return kubernetesEndpointTables[0], nil
 }
 
 func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (err error) {
@@ -353,16 +386,14 @@ func DeleteKubernetesPod(podGuid, endpointGuid string) (err error, id int64) {
 			return err, id
 		}
 		endpointGuid = kubernetesEndpointTables[0].EndpointGuid
-	}
-	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	GetEndpoint(&endpointObj)
-	if endpointObj.Id > 0 {
-		id = int64(endpointObj.Id)
-		_, err = x.Exec("delete from endpoint where id=?", endpointObj.Id)
+	} else {
+		_, err = x.Exec("delete from kubernetes_endpoint_rel where pod_guid=? and endpoint_guid=?", podGuid, endpointGuid)
 		if err != nil {
 			return err, id
 		}
 	}
+	err = DeleteEndpoint(endpointGuid, "system")
+	log.Info(nil, log.LOGGER_APP, "DeleteKubernetesPod success", zap.String("podGuid", podGuid), zap.String("endpointGuid", endpointGuid))
 	return err, id
 }
 

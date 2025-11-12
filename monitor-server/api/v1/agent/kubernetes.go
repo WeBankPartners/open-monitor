@@ -117,7 +117,7 @@ type k8sClusterRequestObj struct {
 }
 
 type k8sClusterRequestInputObj struct {
-	Guid              string `json:"guid"`
+	Guid              string `json:"guid"` // 实例名
 	CallbackParameter string `json:"callbackParameter"`
 	ClusterName       string `json:"clusterName"`
 	Namespace         string `json:"namespace"`
@@ -126,7 +126,9 @@ type k8sClusterRequestInputObj struct {
 	PodName           string `json:"podName"`
 	PodGroup          string `json:"podGroup"`
 	PodMonitorKey     string `json:"podMonitorKey"` // endpointGuid,删除时候和更新时候用
-	RealIp            string `json:"realIp"`        // 真实ip,更新时候需要传递过来
+	Ip                string `json:"ip"`            // serviceIP
+	SourceRealIp      string `json:"sourceRealIp"`  // 原真实ip,更新时候需要传递过来
+	TargetRealIp      string `json:"targetRealIp"`  // 目标真实ip,更新时候需要传递过来
 }
 
 func PluginKubernetesCluster(c *gin.Context) {
@@ -285,8 +287,7 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error, endpoin
 	}
 	input.Namespace = strings.TrimSpace(input.Namespace)
 	if input.Namespace == "" {
-		err = fmt.Errorf("Namespace can not empty ")
-		return err, endpointGuid
+		input.Namespace = "default"
 	}
 	input.PodName = strings.TrimSpace(input.PodName)
 	if input.PodName == "" {
@@ -294,7 +295,7 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error, endpoin
 		return err, endpointGuid
 	}
 	var insertId int64
-	err, insertId, endpointGuid = db.AddKubernetesPod(clusterList[0], input.Guid, input.PodName, input.Namespace)
+	err, insertId, endpointGuid = db.AddKubernetesPod(clusterList[0], input.Guid, input.PodName, input.Namespace, input.Ip)
 	if err != nil {
 		return err, endpointGuid
 	}
@@ -334,7 +335,6 @@ func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
 			return err
 		}
 		if tplId > 0 {
-			//err = alarm.SaveConfigFile(tplId, false)
 			err = db.SyncRuleConfigFile(tplId, []string{}, false)
 		}
 	}
@@ -343,33 +343,75 @@ func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
 
 // handleUpdateKubernetesPod  目前更新业务配置、指标阈值映射 ip映射就好了
 func handleUpdateKubernetesPod(input k8sClusterRequestInputObj) (err error) {
-	var endpoint *m.EndpointNewTable
-	if endpoint, err = db.GetEndpointByIpAndType(input.RealIp, "host"); err != nil {
+	var sourceEndpointGuid string
+	var k8sEndpointRel *m.KubernetesEndpointRelTable
+	var endpointList []string
+	if input.PodMonitorKey == "" {
+		input.Guid = strings.TrimSpace(input.Guid)
+		if input.Guid == "" {
+			return fmt.Errorf("Pod guid can not empty ")
+		}
+		if k8sEndpointRel, err = db.GetKubernetesEndpointRelByPodGuid(input.Guid); err != nil {
+			return
+		}
+		if k8sEndpointRel == nil {
+			return fmt.Errorf("Pod guid  not found k8s endpoint related")
+		}
+		sourceEndpointGuid = k8sEndpointRel.EndpointGuid
+	}
+	if input.TargetRealIp == "" {
+		return fmt.Errorf("targetRealIp can not empty ")
+	}
+	var targetEndpoint *m.EndpointNewTable
+	if targetEndpoint, err = db.GetEndpointByIpAndType(input.TargetRealIp, "host"); err != nil {
 		return
 	}
-	if endpoint == nil {
-		err = fmt.Errorf("pod host endpoint not found")
+	if targetEndpoint == nil {
+		err = fmt.Errorf("targetRealIp mapping pod host endpoint not found")
 		return
 	}
+	var sourceHostEndpoint *m.EndpointNewTable
+	if sourceHostEndpoint, err = db.GetEndpointByIpAndType(input.SourceRealIp, "host"); err != nil {
+		return
+	}
+	if sourceHostEndpoint == nil {
+		err = fmt.Errorf("sourceRealIp mapping pod host endpoint not found")
+		return
+	}
+	endpointList = append(endpointList, targetEndpoint.Guid, sourceHostEndpoint.Guid)
 	// 更新 日志文件业务配置
-	if err = db.UpdateLogMetricSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+	if err = db.UpdateLogMetricSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
 		return
 	}
+	log.Info(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
 	// 更新 数据库业务配置
-	if err = db.UpdateDbMetricSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+	if err = db.UpdateDbMetricSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
 		return
 	}
+	if err = db.SyncLogMetricExporterConfig(endpointList); err != nil {
+		log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
+		return
+	}
+	log.Info(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+
 	// 更新 日志文件关键字配置
-	if err = db.UpdateLogKeywordSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+	if err = db.UpdateLogKeywordSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
 		return
 	}
+	log.Info(nil, log.LOGGER_APP, "UpdateLogKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+
 	// 更新 数据库关键字配置
-	if err = db.UpdateDbKeywordSourceEndpoint(endpoint.Guid, input.PodMonitorKey); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", input.PodMonitorKey), zap.String("targetGuid", endpoint.Guid), zap.Error(err))
+	if err = db.UpdateDbKeywordSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
+	}
+	if err = db.SyncLogKeywordExporterConfig(endpointList); err != nil {
+		log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
 		return
 	}
+	log.Info(nil, log.LOGGER_APP, "UpdateDbKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", input.SourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+
 	return
 }

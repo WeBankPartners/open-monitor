@@ -287,5 +287,9 @@ func GetProcessByHostEndpoint(hostIp string) (processEndpoints []*models.Endpoin
 func GetEndpointByIpAndType(ip, monitorType string) (endpoint *models.EndpointNewTable, err error) {
 	var endpointList []*models.EndpointNewTable
 	err = x.SQL("select * from endpoint_new where monitor_type=? and ip=?", monitorType, ip).Find(&endpointList)
+	if len(endpointList) == 0 {
+		return nil, nil
+	}
+	endpoint = endpointList[0]
 	return
 }
