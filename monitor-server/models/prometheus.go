@@ -53,6 +53,10 @@ func (s ServiceDiscoverFileList) TurnToFileSdConfigByte(step int) []byte {
 	var result []*FileSdObj
 	for _, v := range s {
 		if v.Step == step {
+			// 过滤空地址，避免 Prometheus 报错 "no address"
+			if v.Address == "" {
+				continue
+			}
 			result = append(result, &FileSdObj{Targets: []string{v.Address}, Labels: FileSdLabel{EGuid: v.Guid}})
 		}
 	}
