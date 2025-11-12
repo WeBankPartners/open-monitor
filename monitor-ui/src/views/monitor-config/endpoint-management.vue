@@ -857,9 +857,12 @@ export default {
         const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
         this.systemType = obj.systemType
         // 如果类型是pod，加载集群列表
-        // if (this.endpointRejectModel.addRow.type === 'pod') {
-        //   this.getClusterList()
-        // }
+        if (this.endpointRejectModel.addRow.type === 'pod') {
+          this.getClusterList()
+        }
+        if (['snmp', 'pod'].includes(this.endpointRejectModel.addRow.type)) {
+          this.endpointRejectModel.supportStep = false
+        }
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -940,7 +943,6 @@ export default {
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
       })
-
     },
     typeChange(type) {
       const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
