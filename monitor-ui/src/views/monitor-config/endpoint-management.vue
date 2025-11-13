@@ -216,6 +216,11 @@
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('kubernetes_cluster')" class="is-danger">{{ veeErrors.first('kubernetes_cluster')}}</label>
         </div>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
+          <label class="col-md-2 label-name">Node IP:</label>
+          <input v-validate="'required'" placeholder="node ip" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.node_ip" name="node_ipip" :class="{'red-border': veeErrors.has('node_ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('node_ip')" class="is-danger">{{ veeErrors.first('node_ip')}}</label>
       </div>
     </ModalComponent>
 
@@ -562,7 +567,8 @@ export default {
           proxy_exporter: null,
           process_name: '',
           tags: '',
-          kubernetes_cluster: null
+          kubernetes_cluster: null,
+          node_ip: null
         },
         v_select_configs: {
           proxy_exporter: []
@@ -955,7 +961,8 @@ export default {
         method: '',
         url: '',
         exporter_type: '',
-        kubernetes_cluster: null
+        kubernetes_cluster: null,
+        node_ip: null
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
         this.endpointRejectModel.addRow.step = 30
