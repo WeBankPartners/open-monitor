@@ -216,12 +216,6 @@
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('kubernetes_cluster')" class="is-danger">{{ veeErrors.first('kubernetes_cluster')}}</label>
         </div>
-        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
-          <label class="col-md-2 label-name">{{$t('m_pod_name')}}:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.pod_name" :disabled="isReviewMode" name="pod_name" :class="{'red-border': veeErrors.has('pod_name')}" type="text" class="col-md-9 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('pod_name')" class="is-danger">{{ veeErrors.first('pod_name')}}</label>
-        </div>
       </div>
     </ModalComponent>
 
@@ -568,8 +562,7 @@ export default {
           proxy_exporter: null,
           process_name: '',
           tags: '',
-          kubernetes_cluster: null,
-          pod_name: ''
+          kubernetes_cluster: null
         },
         v_select_configs: {
           proxy_exporter: []
@@ -962,8 +955,7 @@ export default {
         method: '',
         url: '',
         exporter_type: '',
-        kubernetes_cluster: null,
-        pod_name: ''
+        kubernetes_cluster: null
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
         this.endpointRejectModel.addRow.step = 30
