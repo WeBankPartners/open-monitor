@@ -748,9 +748,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ip</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">port</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">token</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">apiServer</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -774,10 +772,13 @@
             <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/pod/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podMonitorKey</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podName</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podGroup</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">nodeIp</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>

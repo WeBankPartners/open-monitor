@@ -31,7 +31,7 @@ type RegisterParamNew struct {
 	ProxyExporter     string `json:"proxy_exporter"`
 	ProcessName       string `json:"process_name"`
 	Tags              string `json:"tags"`
-	KubernetesCluster int    `json:"kubernetes_cluster"`
+	KubernetesCluster string `json:"kubernetes_cluster"`
 	NodeIp            string `json:"node_ip"`
 }
 

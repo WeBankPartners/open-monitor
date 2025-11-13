@@ -349,10 +349,10 @@ func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (e
 	return
 }
 
-func GetKubernetesById(id int) (cluster *m.KubernetesClusterTable, err error) {
+func GetKubernetesByName(clusterName string) (cluster *m.KubernetesClusterTable, err error) {
 	cluster = &m.KubernetesClusterTable{}
 	var clusterList []*m.KubernetesClusterTable
-	if err = x.SQL("select * from kubernetes_cluster where id=?", id).Find(&clusterList); err != nil {
+	if err = x.SQL("select * from kubernetes_cluster where cluster_name=?", clusterName).Find(&clusterList); err != nil {
 		return
 	}
 	if len(clusterList) == 0 {
@@ -362,15 +362,17 @@ func GetKubernetesById(id int) (cluster *m.KubernetesClusterTable, err error) {
 	return
 }
 
-func GetKubernetesIdByEndpointGuid(guid string) (id int, err error) {
+func GetKubernetesClusterByEndpointGuid(guid string) (clusterName string, err error) {
 	var kubernetesEndpointRelList []*m.KubernetesEndpointRelTable
+	var kubernetesId int
 	if err = x.SQL("select kubernete_id from kubernetes_endpoint_rel where endpoint_guid=?", guid).Find(&kubernetesEndpointRelList); err != nil {
 		return
 	}
 	if len(kubernetesEndpointRelList) == 0 {
-		return 0, errors.New("kubernetes cluster not exist")
+		return "", errors.New("kubernetes cluster not exist")
 	}
-	id = kubernetesEndpointRelList[0].KuberneteId
+	kubernetesId = kubernetesEndpointRelList[0].KuberneteId
+	x.SQL("select cluster_name from kubernetes_cluster where cluster_id=?", kubernetesId).Find(&clusterName)
 	return
 }
 

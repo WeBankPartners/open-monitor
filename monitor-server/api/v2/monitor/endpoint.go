@@ -70,12 +70,12 @@ func GetEndpoint(c *gin.Context) {
 		}
 	}
 	if endpointObj.MonitorType == "pod" {
-		var k8sCluster int
-		if k8sCluster, err = db.GetKubernetesIdByEndpointGuid(endpointObj.Guid); err != nil {
+		var clusterName string
+		if clusterName, err = db.GetKubernetesClusterByEndpointGuid(endpointObj.Guid); err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-		result.KubernetesCluster = k8sCluster
+		result.KubernetesCluster = clusterName
 	}
 	middleware.ReturnSuccessData(c, result)
 }

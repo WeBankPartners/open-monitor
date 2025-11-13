@@ -63,6 +63,7 @@ type endpointRequestObj struct {
 	Cluster           string `json:"cluster"`
 	Tags              string `json:"tags"`
 	ProcessName       string `json:"process_name"`
+	NodeIp            string `json:"node_ip"`
 }
 
 func ExportAgentNew(c *gin.Context) {
