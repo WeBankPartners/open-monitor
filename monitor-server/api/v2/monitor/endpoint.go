@@ -67,7 +67,6 @@ func GetEndpoint(c *gin.Context) {
 			result.Url = extendObj.HttpUrl
 			result.Method = extendObj.HttpMethod
 			result.ProxyExporter = extendObj.ProxyExporter
-			result.PodName = extendObj.PodName
 		}
 	}
 	if endpointObj.MonitorType == "pod" {

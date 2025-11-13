@@ -286,9 +286,9 @@ func SyncPodToEndpoint() bool {
 	return result
 }
 
-func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace, serviceIp string) (err error, id int64, endpointGuid string) {
+func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace, serviceIp, nodeIp string) (err error, id int64, endpointGuid string) {
 	apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
-	endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, serviceIp)
+	endpointGuid = fmt.Sprintf("%s_%s_pod", podName, serviceIp)
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	endpointObjNew := m.EndpointNewTable{Guid: endpointGuid}
 	GetEndpoint(&endpointObj)
@@ -308,16 +308,16 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, names
 	// 插入endpoint_new表
 	if result.Guid == "" {
 		result.Guid = endpointGuid
-		result.Name = podGuid
+		result.Name = podName
 		result.Ip = serviceIp
 		result.MonitorType = "pod"
 		result.Step = 10
 		result.Cluster = "default"
 		nowTime := time.Now().Format(m.DatetimeFormat)
 		extendString := ""
-		if podName != "" {
+		if nodeIp != "" {
 			extendParam := m.EndpointExtendParamObj{}
-			extendParam.PodName = podName
+			extendParam.NodeIp = nodeIp
 			tmpExtendBytes, _ := json.Marshal(extendParam)
 			extendString = string(tmpExtendBytes)
 		}

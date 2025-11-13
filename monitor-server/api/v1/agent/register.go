@@ -812,7 +812,7 @@ func k8sPodRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Ip = param.Ip
 	result.endpoint.ExportType = param.Type
 	result.extendParam.Enable = true
-	result.extendParam.PodName = param.PodName
+	result.extendParam.NodeIp = param.NodeIp
 	result.agentManager = false
 	return result
 }
@@ -855,9 +855,8 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.fetchMetric = true
-	if param.Type == "pod" && strings.TrimSpace(param.PodName) != "" {
+	if param.Type == "pod" {
 		result.extendParam.Enable = true
-		result.extendParam.PodName = param.PodName
 		result.endpoint.Address = ""
 		result.fetchMetric = false
 	}
