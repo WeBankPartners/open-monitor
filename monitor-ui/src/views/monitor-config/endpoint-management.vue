@@ -218,10 +218,11 @@
         </div>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
           <label class="col-md-2 label-name">Node IP:</label>
-          <input v-validate="'required'" placeholder="node ip" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.node_ip" name="node_ipip" :class="{'red-border': veeErrors.has('node_ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
+          <input v-validate="'required'" placeholder="node ip" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.node_ip" name="node_ip" :class="{'red-border': veeErrors.has('node_ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('node_ip')" class="is-danger">{{ veeErrors.first('node_ip')}}</label>
         </div>
+      </div>
     </ModalComponent>
 
     <ModalComponent :modelConfig="processConfigModel">
@@ -974,7 +975,7 @@ export default {
         java: 9151,
         windows: 9182
       }
-      this.endpointRejectModel.addRow.port = typeToPort[type] || ''
+      this.endpointRejectModel.addRow.port = typeToPort[type] || null
       const proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
       proxy_exporter.hide = true
       this.endpointRejectModel.supportStep = true
