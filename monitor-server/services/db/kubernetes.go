@@ -377,7 +377,14 @@ func GetKubernetesClusterByEndpointGuid(guid string) (clusterName string, err er
 		return "", errors.New("kubernetes cluster not exist")
 	}
 	kubernetesId = kubernetesEndpointRelList[0].KuberneteId
-	x.SQL("select cluster_name from kubernetes_cluster where id=?", kubernetesId).Find(&clusterName)
+	var has bool
+	has, err = x.SQL("select cluster_name from kubernetes_cluster where id=?", kubernetesId).Get(&clusterName)
+	if err != nil {
+		return
+	}
+	if !has {
+		return "", errors.New("kubernetes cluster not found by id")
+	}
 	return
 }
 
