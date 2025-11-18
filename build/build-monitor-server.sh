@@ -9,6 +9,8 @@ export GOOS=linux
 export GOARCH=arm64
 unset GOARM
 export CGO_ENABLED=${CGO_ENABLED:-1}
+export CC=aarch64-linux-gnu-gcc
+export CXX=aarch64-linux-gnu-g++
 echo ">> Building monitor-server for ${GOOS}/${GOARCH}"
 
 cd "${PROJECT_ROOT}/monitor-server"

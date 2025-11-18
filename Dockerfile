@@ -1,4 +1,4 @@
-FROM  ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.2
+FROM  ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus-arm64:v1.3
 LABEL maintainer = "Webank CTB Team"
 
 ENV JAVA_HOME=/opt/jdk

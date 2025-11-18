@@ -18,11 +18,11 @@ clean:
 
 build: clean build_monitor_server
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext-arm64:v1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
 	./build/build-ui.sh $(current_dir)
 
 image: build
-	docker build -t $(project_name):$(version) .
+	docker build --platform linux/arm64 -t $(project_name):$(version) .
 
 agent:
 	chmod +x ./build/build-agent.sh
@@ -58,4 +58,4 @@ upload: package
 build_monitor_server:
 	rm -rf monitor-server/monitor-server
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.19.1 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext-arm64:v1.19.1 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh

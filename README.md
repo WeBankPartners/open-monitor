@@ -88,6 +88,21 @@ WeCube通过Open-Monitor监控插件来对资源以及应用的监控及告警�
 - 告警管理: 提供阈值配置、日志监控、告警触发等功能；
 - 视图管理: 提供图形配置和自定义视图功能；
 
+## 架构支持
+
+### 当前支持的架构
+- ✅ x86_64 (amd64) - 完全支持
+- ✅ ARM64 (aarch64) - 完全支持
+
+**✅ 完全支持**:
+- 所有自研Go程序（monitor-server、agent_manager、ping_exporter等）均已配置ARM64交叉编译支持
+- Node Exporter已配置多架构支持，可通过设置ARCH参数编译ARM64版本
+- Prometheus和Alertmanager：已构建ARM64基础镜像 `wecube-prometheus-arm64:v1.3`
+- PCRE正则表达式库：构建镜像中已安装ARM64版本的开发库和运行时库
+
+### ARM64 编译说明
+项目已完全支持在 x86_64 机器上交叉编译 ARM64 版本。编译时会自动使用 ARM64 交叉编译工具链和依赖库。
+
 ## 快速入门
 Open-Monitor采用容器化部署。
 
