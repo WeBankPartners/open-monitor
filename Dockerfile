@@ -16,8 +16,6 @@ ENV DB_DATA_EXPORTER=$BASE_HOME/db_data_exporter
 ENV DAEMON_PROC=$BASE_HOME/daemon_proc
 ENV METRIC_COMPARISON_EXPORTER=$BASE_HOME/metric_comparison_exporter
 
-RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $PROMETHEUS_HOME/token $ALERTMANAGER_HOME $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_HOME $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $METRIC_COMPARISON_EXPORTER/config
-
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
 COPY build/conf/prometheus.yml $PROMETHEUS_HOME/
@@ -48,8 +46,6 @@ COPY monitor-agent/daemon_proc/daemon_proc $DAEMON_PROC/
 COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARISON_EXPORTER/
 COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
-
-RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
 WORKDIR $BASE_HOME
 
