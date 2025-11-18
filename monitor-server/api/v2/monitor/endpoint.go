@@ -67,6 +67,7 @@ func GetEndpoint(c *gin.Context) {
 			result.Url = extendObj.HttpUrl
 			result.Method = extendObj.HttpMethod
 			result.ProxyExporter = extendObj.ProxyExporter
+			result.NodeIp = extendObj.NodeIp
 		}
 	}
 	if endpointObj.MonitorType == "pod" {
@@ -129,6 +130,8 @@ func UpdateEndpoint(c *gin.Context) {
 		newEndpoint, err = snmpEndpointUpdate(&param, &endpointObj)
 	case "process":
 		newEndpoint, err = processEndpointUpdate(&param, &endpointObj)
+	case "pod":
+		newEndpoint, err = k8sPodEndpointUpdate(&param, &endpointObj)
 	default:
 		newEndpoint, err = otherEndpointUpdate(&param, &endpointObj)
 	}
@@ -151,6 +154,24 @@ func UpdateEndpoint(c *gin.Context) {
 	err = db.UpdateEndpointData(&endpointObj, &newEndpoint, middleware.GetOperateUser(c))
 	if err != nil {
 		return
+	}
+	// 设置pod类型与集群关联
+	if param.Type == "pod" {
+		// 查询集群名称是否存在
+		var k8sCluster *models.KubernetesClusterTable
+		if k8sCluster, err = db.GetKubernetesByName(param.KubernetesCluster); err != nil {
+			return
+		}
+		if k8sCluster == nil {
+			err = fmt.Errorf("agent register fail, cluster is not exist")
+			return
+		}
+		if err = db.DeleteKubernetesEndpointRel(guid, param.Guid); err != nil {
+			return
+		}
+		if err = db.AddKubernetesEndpointRel(k8sCluster.Id, guid, param.Name); err != nil {
+			return
+		}
 	}
 	// update sd file if step change
 	if endpointObj.Step != param.Step || endpointObj.AgentAddress != newEndpoint.AgentAddress {
@@ -215,6 +236,13 @@ func processEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endp
 	b, _ := json.Marshal(newExtParamObj)
 	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
 	err = db.SyncNodeExporterProcessConfig(endpoint.Ip, []*models.EndpointNewTable{&newEndpoint}, true)
+	return
+}
+
+func k8sPodEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
+	newExtParamObj := models.EndpointExtendParamObj{Enable: true, NodeIp: param.NodeIp}
+	b, _ := json.Marshal(newExtParamObj)
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, ExtendParam: string(b), Ip: param.Ip, Name: param.Name}
 	return
 }
 

@@ -349,6 +349,11 @@ func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (e
 	return
 }
 
+func DeleteKubernetesEndpointRel(endpointGuid, podGuid string) (err error) {
+	_, err = x.Exec("delete from kubernetes_endpoint_rel where endpoint_guid =? and pod_guid=?", endpointGuid, podGuid)
+	return
+}
+
 func GetKubernetesByName(clusterName string) (cluster *m.KubernetesClusterTable, err error) {
 	cluster = &m.KubernetesClusterTable{}
 	var clusterList []*m.KubernetesClusterTable
@@ -372,7 +377,7 @@ func GetKubernetesClusterByEndpointGuid(guid string) (clusterName string, err er
 		return "", errors.New("kubernetes cluster not exist")
 	}
 	kubernetesId = kubernetesEndpointRelList[0].KuberneteId
-	x.SQL("select cluster_name from kubernetes_cluster where cluster_id=?", kubernetesId).Find(&clusterName)
+	x.SQL("select cluster_name from kubernetes_cluster where id=?", kubernetesId).Find(&clusterName)
 	return
 }
 
