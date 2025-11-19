@@ -1,6 +1,9 @@
+# 当前目录（宿主机工作空间路径）
 current_dir=$(shell pwd)
+# 插件版本号（外部通过 PLUGIN_VERSION 传入）
 version=$(PLUGIN_VERSION)
-project_dir=$(shell basename "${current_dir}")
+# 在 GOPATH 模式下，确保容器内路径固定为 github.com/WeBankPartners/open-monitor
+project_dir=open-monitor
 project_name=open-monitor
 ARCH ?= x86_64
 ifeq ($(ARCH), arm64)
