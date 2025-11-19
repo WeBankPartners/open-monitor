@@ -60,4 +60,4 @@ build_monitor_server:
 	rm -rf monitor-server/monitor-server
 	chmod +x ./build/*.sh
 	-@docker rm -f build_monitor_server >/dev/null 2>&1 || true
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext-arm64:v1.19.1 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.24.6-arm64  /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
