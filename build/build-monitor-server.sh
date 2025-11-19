@@ -1,4 +1,5 @@
 #!/bin/bash
 set -e -x
 cd $(dirname $0)/../monitor-server
-go build -ldflags "-linkmode external -extldflags -static -s"
+export CGO_ENABLED=1
+go build -buildvcs=false -ldflags "-linkmode external -extldflags -static -s"
