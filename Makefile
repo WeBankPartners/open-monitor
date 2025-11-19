@@ -44,12 +44,13 @@ agent:
 	chmod +x ./build/node_exporter/start.sh
 	./build/build-agent.sh
 
+ifeq ($(ARCH), arm64)
+package: image_arm64
+else
+package: image
+endif
+
 package:
-	ifeq ($(ARCH), arm64)
-		$(MAKE) image_arm64
-	else
-		$(MAKE) image
-	endif
 	$(MAKE) agent
 	mkdir -p plugin
 	cp -r monitor-ui/plugin/* plugin/
