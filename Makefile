@@ -29,7 +29,7 @@ build: clean build_monitor_server
 
 build_arm64: clean build_monitor_server_arm64
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_$(project_dir) --platform linux/arm64 ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.24.6-arm64 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_$(project_dir) --platform linux/arm64 ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6-arm64 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
 	./build/build-ui.sh $(current_dir)
 
 image: build
