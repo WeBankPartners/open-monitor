@@ -172,6 +172,10 @@ func UpdateEndpoint(c *gin.Context) {
 		if err = db.AddKubernetesEndpointRel(k8sCluster.Id, guid, param.Name); err != nil {
 			return
 		}
+		// 需要更新 endpoint 的 osType值,不然指标表达式 $k8s_cluster数据替换不了
+		if err = db.UpdateEndpointOsType(newEndpoint.Guid, param.KubernetesCluster); err != nil {
+			return
+		}
 	}
 	// update sd file if step change
 	if endpointObj.Step != param.Step || endpointObj.AgentAddress != newEndpoint.AgentAddress {

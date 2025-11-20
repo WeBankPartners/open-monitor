@@ -811,6 +811,8 @@ func k8sPodRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Name = param.Name
 	result.endpoint.Ip = param.Ip
 	result.endpoint.ExportType = param.Type
+	// osType 一定要设置为k8s集群名称,不然图表查询不到数据
+	result.endpoint.OsType = param.KubernetesCluster
 	result.extendParam.Enable = true
 	result.extendParam.NodeIp = param.NodeIp
 	result.agentManager = false

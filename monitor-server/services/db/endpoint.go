@@ -245,6 +245,11 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 	return err
 }
 
+func UpdateEndpointOsType(guid, osType string) (err error) {
+	_, err = x.Exec("update endpoint set os_type=? where guid=?", osType, guid)
+	return
+}
+
 func UpdateEndpointData(oldEndpoint, endpoint *models.EndpointNewTable, operator string) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
