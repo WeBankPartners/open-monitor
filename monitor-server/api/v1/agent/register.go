@@ -795,6 +795,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 func k8sPodRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = param.Step
+	cleanName := strings.TrimSpace(param.Name)
 	if mid.IsIllegalName(param.Name) {
 		result.validateMessage = "param instance name illegal"
 		return result
@@ -807,8 +808,8 @@ func k8sPodRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Default ip can not empty "
 		return result
 	}
-	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
-	result.endpoint.Name = param.Name
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", cleanName, param.Ip, param.Type)
+	result.endpoint.Name = cleanName
 	result.endpoint.Ip = param.Ip
 	result.endpoint.ExportType = param.Type
 	// osType 一定要设置为k8s集群名称,不然图表查询不到数据

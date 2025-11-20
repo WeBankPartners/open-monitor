@@ -246,7 +246,8 @@ func processEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endp
 func k8sPodEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, NodeIp: param.NodeIp}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, ExtendParam: string(b), Ip: param.Ip, Name: param.Name}
+	cleanName := strings.TrimSpace(param.Name)
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, ExtendParam: string(b), Ip: param.Ip, Name: cleanName}
 	return
 }
 

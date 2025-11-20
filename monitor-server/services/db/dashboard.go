@@ -206,6 +206,17 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 	if strings.Contains(promQl, "$pod") {
 		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
 	}
+	endpoint := m.EndpointTable{Guid: host.Guid}
+	if err = GetEndpoint(&endpoint); err != nil {
+		log.Error(nil, log.LOGGER_APP, "GetEndpoint err", zap.Error(err))
+		return ""
+	}
+	if strings.Contains(promQl, "$k8s_namespace") {
+		promQl = strings.Replace(promQl, "$k8s_namespace", endpoint.ExportVersion, -1)
+	}
+	if strings.Contains(promQl, "$k8s_cluster") {
+		promQl = strings.Replace(promQl, "$k8s_cluster", endpoint.OsType, -1)
+	}
 	// 看指标是否为 业务配置过来的,查询业务配置类型,自定义类型需要特殊处理 tags,tags="test_service_code=deleteUser,test_retcode=304"
 	if logType, err = GetLogTypeByMetric(metric); err != nil {
 		log.Error(nil, log.LOGGER_APP, "GetLogTypeByMetric err", zap.Error(err))
