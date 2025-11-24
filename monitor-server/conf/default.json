@@ -175,8 +175,8 @@
     "user": "root",
     "password": "wecube",
     "database_prefix": "prometheus_archive_",
-    "max_open": 100,
-    "max_idle": 10,
+    "maxOpen": 80,
+    "maxIdle": 10,
     "timeout": 60,
     "local_storage_max_day": 30,
     "five_min_start_day": 90

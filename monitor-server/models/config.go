@@ -14,6 +14,12 @@ import (
 	"sync"
 )
 
+const (
+	defaultArchiveMysqlMaxOpen = 80
+	defaultArchiveMysqlMaxIdle = 10
+	defaultArchiveMysqlTimeout = 60
+)
+
 type LogConfig struct {
 	Level            string `json:"level"`
 	LogDir           string `json:"log_dir"`
@@ -271,6 +277,15 @@ func InitConfig(cfg string) {
 	defer lock.Unlock()
 
 	config = &c
+	if config.ArchiveMysql.MaxOpen <= 0 {
+		config.ArchiveMysql.MaxOpen = defaultArchiveMysqlMaxOpen
+	}
+	if config.ArchiveMysql.MaxIdle <= 0 {
+		config.ArchiveMysql.MaxIdle = defaultArchiveMysqlMaxIdle
+	}
+	if config.ArchiveMysql.Timeout <= 0 {
+		config.ArchiveMysql.Timeout = defaultArchiveMysqlTimeout
+	}
 	config.MonitorAlarmMailEnable = strings.ToLower(config.MonitorAlarmMailEnable)
 	if config.MonitorAlarmMailEnable == "y" || config.MonitorAlarmMailEnable == "yes" || config.MonitorAlarmMailEnable == "true" {
 		AlarmMailEnable = true

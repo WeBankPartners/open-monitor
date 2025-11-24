@@ -92,7 +92,8 @@ func initArchiveDbEngine() {
 		// 使用驼峰式映射
 		archiveMysql.SetMapper(core.SnakeMapper{})
 		archiveDatabase = databaseName
-		log.Info(nil, log.LOGGER_APP, "Init archive mysql "+archiveDatabase+" success")
+		log.Info(nil, log.LOGGER_APP, "Init archive mysql "+archiveDatabase+" success", zap.Int("maxIdle", models.Config().ArchiveMysql.MaxIdle),
+			zap.Int("maxOpen", models.Config().ArchiveMysql.MaxOpen), zap.Int("timeout", models.Config().ArchiveMysql.Timeout))
 	}
 }
 
