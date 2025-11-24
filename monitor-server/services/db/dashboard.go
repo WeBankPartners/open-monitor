@@ -1014,9 +1014,20 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 
 func getKVMapFromArchiveTags(tag string) map[string]string {
 	tMap := make(map[string]string)
-	for _, v := range strings.Split(tag, ",") {
-		kv := strings.Split(v, "=\"")
-		tMap[kv[0]] = kv[1][:len(kv[1])-1]
+	for _, seg := range strings.Split(tag, ",") {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		kv := strings.SplitN(seg, "=\"", 2)
+		if len(kv) < 2 || len(kv[1]) == 0 {
+			continue // 非法格式，跳过
+		}
+		val := kv[1]
+		if strings.HasSuffix(val, "\"") {
+			val = val[:len(val)-1]
+		}
+		tMap[kv[0]] = val
 	}
 	return tMap
 }
