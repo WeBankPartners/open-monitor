@@ -175,9 +175,9 @@
     "user": "{{MONITOR_ARCHIVE_MYSQL_USER}}",
     "password": "{{MONITOR_ARCHIVE_MYSQL_PWD}}",
     "database_prefix": "prometheus_archive_",
-    "max_open": 100,
-    "max_idle": 10,
-    "timeout": 60,
+    "maxOpen": {{MONITOR_ARCHIVE_READ_MAX_OPEN}},
+    "maxIdle": {{MONITOR_ARCHIVE_READ_MAX_IDLE}},
+    "timeout": {{MONITOR_ARCHIVE_READ_TIMEOUT}},
     "local_storage_max_day": 30,
     "five_min_start_day": 90
   },
