@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultArchiveMysqlMaxOpen = 80
-	defaultArchiveMysqlMaxIdle = 10
+	defaultArchiveMysqlMaxIdle = 20
 	defaultArchiveMysqlTimeout = 60
 )
 

@@ -121,7 +121,7 @@
         <systemParameter name="MONITOR_ARCHIVE_MYSQL_MAX_OPEN" scopeType="global" defaultValue="150"/>
         <systemParameter name="MONITOR_ARCHIVE_MYSQL_MAX_IDLE" scopeType="global" defaultValue="100"/>
         <systemParameter name="MONITOR_ARCHIVE_READ_MAX_OPEN" scopeType="global" defaultValue="80"/>
-        <systemParameter name="MONITOR_ARCHIVE_READ_MAX_IDLE" scopeType="global" defaultValue="10"/>
+        <systemParameter name="MONITOR_ARCHIVE_READ_MAX_IDLE" scopeType="global" defaultValue="20"/>
         <systemParameter name="MONITOR_ARCHIVE_READ_TIMEOUT" scopeType="global" defaultValue="60"/>
         <systemParameter name="MONITOR_LOG_LEVEL" scopeType="global" defaultValue="info"/>
         <systemParameter name="MONITOR_MAIL_DEFAULT_RECEIVER" scopeType="global" defaultValue=""/>
