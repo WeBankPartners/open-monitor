@@ -785,7 +785,7 @@ export default {
   },
   computed: {
     disabledIp() {
-      if (['process', 'host'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
+      if (['process', 'host', 'pod'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
         return true
       }
       return false
