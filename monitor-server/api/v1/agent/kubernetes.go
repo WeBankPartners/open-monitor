@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/WeBankPartners/go-common-lib/cipher"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -87,8 +86,6 @@ func UpdateKubernetesCluster(c *gin.Context) {
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	} else {
-		time.Sleep(20 * time.Second)
-		db.SyncPodToEndpoint()
 		mid.ReturnSuccess(c)
 	}
 }
@@ -217,7 +214,6 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	} else {
 		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
 	}
-	db.SyncPodToEndpoint()
 	return err
 }
 
