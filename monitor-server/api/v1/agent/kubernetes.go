@@ -143,7 +143,7 @@ func PluginKubernetesCluster(c *gin.Context) {
 		c.JSON(http.StatusOK, k8sClusterResultObj{ResultCode: resultCode, ResultMessage: resultMessage, Results: resultData})
 	}()
 	data, _ := ioutil.ReadAll(c.Request.Body)
-	log.Debug(nil, log.LOGGER_APP, logFuncMessage, zap.String("action", action), zap.String("param", string(data)))
+	log.Info(nil, log.LOGGER_APP, logFuncMessage, zap.String("action", action), zap.String("param", string(data)))
 	var param k8sClusterRequestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
@@ -194,6 +194,10 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	portInt, _ := strconv.Atoi(port)
 	if portInt <= 0 {
 		err = fmt.Errorf("Param port is illegal ")
+		return err
+	}
+	if strings.TrimSpace(input.Token) == "" {
+		err = fmt.Errorf("token is empty")
 		return err
 	}
 	input.ClusterName = strings.TrimSpace(input.ClusterName)
