@@ -326,6 +326,7 @@ func verifyKubernetesClusterConnection(ip, port, token string) error {
 		return fmt.Errorf("kubernetes api token empty")
 	}
 	apiServer := fmt.Sprintf("https://%s:%s/api/v1/nodes?limit=1", targetIP, targetPort)
+	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server request", zap.String("apiServer", apiServer))
 	req, err := http.NewRequest(http.MethodGet, apiServer, nil)
 	if err != nil {
 		return fmt.Errorf("create kubernetes verify request fail,%s ", err.Error())
@@ -342,10 +343,11 @@ func verifyKubernetesClusterConnection(ip, port, token string) error {
 		return fmt.Errorf("verify kubernetes api server fail,%s ", err.Error())
 	}
 	defer resp.Body.Close()
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server response", zap.Int("status_code", resp.StatusCode), zap.String("body", string(bodyBytes)))
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil
 	}
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 	return fmt.Errorf("verify kubernetes api server fail,status:%d,body:%s", resp.StatusCode, string(bodyBytes))
 }
 
