@@ -30,7 +30,11 @@ func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTab
 }
 
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
-	if err := verifyKubernetesClusterConnection(param.Ip, param.Port, strings.TrimSpace(param.Token)); err != nil {
+	plainToken, err := getPlainTokenForVerify(param)
+	if err != nil {
+		return err
+	}
+	if err = verifyKubernetesClusterConnection(param.Ip, param.Port, plainToken); err != nil {
 		return err
 	}
 	encryptToken, clusterGuid, err := encryptKubernetesToken(param)
@@ -77,7 +81,17 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 		}
 	}
 	if needVerify {
-		if err := verifyKubernetesClusterConnection(param.Ip, param.Port, verifyToken); err != nil {
+		var plainToken string
+		var err error
+		if strings.TrimSpace(param.Token) != "" {
+			plainToken, err = getPlainTokenForVerify(param)
+		} else {
+			plainToken = verifyToken
+		}
+		if err != nil {
+			return err
+		}
+		if err := verifyKubernetesClusterConnection(param.Ip, param.Port, plainToken); err != nil {
 			return err
 		}
 	}
@@ -290,7 +304,8 @@ func decryptKubernetesToken(cluster *m.KubernetesClusterTable) (string, error) {
 	if token == "" {
 		return "", fmt.Errorf("kubernetes cluster %s token empty", cluster.ClusterName)
 	}
-	if !strings.HasPrefix(token, "{cipher_") {
+	cipherPrefix := getCipherPrefix(token)
+	if cipherPrefix == "" {
 		return token, nil
 	}
 	clusterGuid := strings.TrimSpace(cluster.Guid)
@@ -314,6 +329,25 @@ func HasKubernetesClusterPods(clusterId int) (bool, error) {
 		return false, fmt.Errorf("query kubernetes endpoint relation fail,%s ", err.Error())
 	}
 	return count > 0, nil
+}
+
+func getPlainTokenForVerify(param m.KubernetesClusterParam) (string, error) {
+	token := strings.TrimSpace(param.Token)
+	if token == "" {
+		return "", fmt.Errorf("kubernetes cluster token empty")
+	}
+	if prefix := getCipherPrefix(token); prefix != "" {
+		clusterGuid := strings.TrimSpace(param.Guid)
+		if clusterGuid == "" {
+			return "", fmt.Errorf("kubernetes cluster guid empty, can not decrypt token")
+		}
+		plainToken, err := cipher.AesDePasswordByGuid(clusterGuid, m.Config().EncryptSeed, token)
+		if err != nil {
+			return "", fmt.Errorf("decrypt kubernetes cluster token fail,%s ", err.Error())
+		}
+		return plainToken, nil
+	}
+	return token, nil
 }
 
 func verifyKubernetesClusterConnection(ip, port, token string) error {
@@ -349,6 +383,15 @@ func verifyKubernetesClusterConnection(ip, port, token string) error {
 		return nil
 	}
 	return fmt.Errorf("verify kubernetes api server fail,status:%d,body:%s", resp.StatusCode, string(bodyBytes))
+}
+
+func getCipherPrefix(token string) string {
+	for _, prefix := range cipher.CIPHER_MAP {
+		if strings.HasPrefix(token, prefix) {
+			return prefix
+		}
+	}
+	return ""
 }
 
 func SyncPodToEndpoint() bool {
