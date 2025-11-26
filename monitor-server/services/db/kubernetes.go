@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -27,7 +28,12 @@ func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTab
 }
 
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
-	_, err := x.Exec("insert into kubernetes_cluster(cluster_name,api_server,token,create_at) value (?,?,?,'"+time.Now().Format(m.DatetimeFormat)+"')", param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), param.Token)
+	encryptToken, clusterGuid, err := encryptKubernetesToken(param)
+	if err != nil {
+		return err
+	}
+	_, err = x.Exec("insert into kubernetes_cluster(cluster_name,api_server,token,create_at,guid) value (?,?,?,?,?)",
+		param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), encryptToken, time.Now().Format(m.DatetimeFormat), clusterGuid)
 	if err != nil {
 		err = fmt.Errorf("Insert into db fail,%s ", err.Error())
 		return err
@@ -40,7 +46,31 @@ func AddKubernetesCluster(param m.KubernetesClusterParam) error {
 }
 
 func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
-	_, err := x.Exec("update kubernetes_cluster set cluster_name=?,api_server=?,token=? where id=?", param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), param.Token, param.Id)
+	if param.Id <= 0 {
+		return fmt.Errorf("Update kubernetes cluster fail,id is empty")
+	}
+	var existCluster m.KubernetesClusterTable
+	has, err := x.SQL("select * from kubernetes_cluster where id=?", param.Id).Get(&existCluster)
+	if err != nil {
+		return fmt.Errorf("Query kubernetes cluster fail,%s ", err.Error())
+	}
+	if !has {
+		return fmt.Errorf("kubernetes cluster id:%d not found", param.Id)
+	}
+	encryptToken := existCluster.Token
+	clusterGuid := existCluster.Guid
+	if strings.TrimSpace(param.Token) != "" {
+		// 有新的 token，再进行加密覆盖
+		encryptToken, clusterGuid, err = encryptKubernetesToken(param)
+		if err != nil {
+			return err
+		}
+	} else if strings.TrimSpace(param.Guid) != "" && strings.TrimSpace(clusterGuid) == "" {
+		// 没有传 token，仅在原 guid 为空的情况下允许写入新 guid
+		clusterGuid = strings.TrimSpace(param.Guid)
+	}
+	_, err = x.Exec("update kubernetes_cluster set cluster_name=?,api_server=?,token=?,guid=? where id=?",
+		param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), encryptToken, clusterGuid, param.Id)
 	if err != nil {
 		err = fmt.Errorf("Update db table fail,%s ", err.Error())
 		return err
@@ -60,8 +90,16 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 			return nil
 		}
 		id = kubernetesTables[0].Id
+		clusterName = kubernetesTables[0].ClusterName
 	}
-	_, err := x.Exec("delete from kubernetes_cluster where id=?", id)
+	hasPods, err := HasKubernetesClusterPods(id)
+	if err != nil {
+		return err
+	}
+	if hasPods {
+		return fmt.Errorf("kubernetes cluster %s still has pod endpoints, please remove pod objects first", clusterName)
+	}
+	_, err = x.Exec("delete from kubernetes_cluster where id=?", id)
 	if err != nil {
 		err = fmt.Errorf("Delete db data fail,%s ", err.Error())
 		return err
@@ -111,7 +149,12 @@ func SyncKubernetesConfig() error {
 		return err
 	}
 	for _, v := range kubernetesTables {
-		err = ioutil.WriteFile(fmt.Sprintf("/app/monitor/prometheus/token/%s", v.ClusterName), []byte(v.Token), 0644)
+		plainToken, tokenErr := decryptKubernetesToken(v)
+		if tokenErr != nil {
+			err = tokenErr
+			break
+		}
+		err = ioutil.WriteFile(fmt.Sprintf("/app/monitor/prometheus/token/%s", v.ClusterName), []byte(plainToken), 0644)
 		if err != nil {
 			err = fmt.Errorf("Write cluster %s token file fail,%s ", v.ClusterName, err.Error())
 			break
@@ -178,6 +221,75 @@ func StartCronSyncKubernetesPod(interval int) {
 		<-t
 		go SyncPodToEndpoint()
 	}
+}
+
+func encryptKubernetesToken(param m.KubernetesClusterParam) (encryptToken string, clusterGuid string, err error) {
+	token := strings.TrimSpace(param.Token)
+	if token == "" {
+		err = fmt.Errorf("cluster %s token empty", param.ClusterName)
+		return
+	}
+	clusterGuid, err = ensureKubernetesClusterGuid(param)
+	if err != nil {
+		return
+	}
+	encryptToken, err = cipher.AesEnPasswordByGuid(clusterGuid, m.Config().EncryptSeed, token, "")
+	if err != nil {
+		err = fmt.Errorf("encrypt kubernetes cluster token fail,%s ", err.Error())
+	}
+	return
+}
+
+func ensureKubernetesClusterGuid(param m.KubernetesClusterParam) (string, error) {
+	clusterGuid := strings.TrimSpace(param.Guid)
+	if clusterGuid != "" {
+		return clusterGuid, nil
+	}
+	if param.Id > 0 {
+		var dbGuid string
+		has, err := x.SQL("select guid from kubernetes_cluster where id=?", param.Id).Get(&dbGuid)
+		if err != nil {
+			return "", fmt.Errorf("query kubernetes cluster guid fail,%s ", err.Error())
+		}
+		if has && strings.TrimSpace(dbGuid) != "" {
+			return strings.TrimSpace(dbGuid), nil
+		}
+	}
+	return guid.CreateGuid(), nil
+}
+
+func decryptKubernetesToken(cluster *m.KubernetesClusterTable) (string, error) {
+	if cluster == nil {
+		return "", fmt.Errorf("kubernetes cluster struct is nil")
+	}
+	token := strings.TrimSpace(cluster.Token)
+	if token == "" {
+		return "", fmt.Errorf("kubernetes cluster %s token empty", cluster.ClusterName)
+	}
+	if !strings.HasPrefix(token, "{cipher_") {
+		return token, nil
+	}
+	clusterGuid := strings.TrimSpace(cluster.Guid)
+	if clusterGuid == "" {
+		return "", fmt.Errorf("kubernetes cluster %s guid empty,can not decrypt token", cluster.ClusterName)
+	}
+	plainToken, err := cipher.AesDePasswordByGuid(clusterGuid, m.Config().EncryptSeed, token)
+	if err != nil {
+		return "", fmt.Errorf("decrypt kubernetes cluster %s token fail,%s ", cluster.ClusterName, err.Error())
+	}
+	return plainToken, nil
+}
+
+func HasKubernetesClusterPods(clusterId int) (bool, error) {
+	if clusterId <= 0 {
+		return false, fmt.Errorf("cluster id is empty")
+	}
+	var count int
+	_, err := x.SQL("select count(1) from kubernetes_endpoint_rel where kubernete_id=?", clusterId).Get(&count)
+	if err != nil {
+		return false, fmt.Errorf("query kubernetes endpoint relation fail,%s ", err.Error())
+	}
+	return count > 0, nil
 }
 
 func SyncPodToEndpoint() bool {

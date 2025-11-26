@@ -1318,3 +1318,6 @@ ALTER TABLE log_keyword_notify_rel
     ADD INDEX idx_config_notify (log_keyword_config, notify),
        ADD INDEX idx_monitor_notify (log_keyword_monitor, notify);
 #@v3.7.4-end@;
+#@v3.7.5-begin@;
+ALTER TABLE kubernetes_cluster ADD COLUMN guid varchar(64) NOT NULL DEFAULT '';
+#@v3.7.5-end@;

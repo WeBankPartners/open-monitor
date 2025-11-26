@@ -3,17 +3,19 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // ListKubernetesCluster 查询所有 Kubernetes 集群信息
@@ -207,16 +209,41 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 	}
 	currentData, _ := db.ListKubernetesCluster(input.ClusterName)
 	if len(currentData) > 0 {
-		if currentData[0].ClusterName == input.ClusterName && currentData[0].Token == input.Token && input.ApiServer == currentData[0].ApiServer {
+		if currentData[0].ClusterName == input.ClusterName && isSameKubernetesToken(currentData[0], input.Token, input.Guid) && input.ApiServer == currentData[0].ApiServer {
 			log.Warn(nil, log.LOGGER_APP, "Plugin k8s cluster add break with same data ")
 			return nil
 		}
-		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token})
+		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
 	} else {
-		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token})
+		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
 	}
 	db.SyncPodToEndpoint()
 	return err
+}
+
+func isSameKubernetesToken(cluster *m.KubernetesClusterTable, targetToken, targetGuid string) bool {
+	if cluster == nil {
+		return false
+	}
+	normalizeToken := strings.TrimSpace(targetToken)
+	if normalizeToken == "" {
+		return false
+	}
+	if cluster.Token == normalizeToken {
+		return true
+	}
+	clusterGuid := strings.TrimSpace(cluster.Guid)
+	if clusterGuid == "" {
+		clusterGuid = strings.TrimSpace(targetGuid)
+	}
+	if clusterGuid == "" {
+		return false
+	}
+	encToken, err := cipher.AesEnPasswordByGuid(clusterGuid, m.Config().EncryptSeed, normalizeToken, "")
+	if err != nil {
+		return false
+	}
+	return encToken == cluster.Token
 }
 
 func handleDeleteKubernetesCluster(input k8sClusterRequestInputObj) error {
@@ -224,7 +251,21 @@ func handleDeleteKubernetesCluster(input k8sClusterRequestInputObj) error {
 	if !mid.IsIllegalNormalInput(input.ClusterName) {
 		return fmt.Errorf("Param clusterName is illegal ")
 	}
-	return db.DeleteKubernetesCluster(0, input.ClusterName)
+	clusterList, err := db.ListKubernetesCluster(input.ClusterName)
+	if err != nil {
+		return err
+	}
+	if len(clusterList) == 0 {
+		return fmt.Errorf("kubernetes cluster %s not found", input.ClusterName)
+	}
+	hasPods, err := db.HasKubernetesClusterPods(clusterList[0].Id)
+	if err != nil {
+		return err
+	}
+	if hasPods {
+		return fmt.Errorf("kubernetes cluster %s still has pod endpoints, please remove pod objects first", input.ClusterName)
+	}
+	return db.DeleteKubernetesCluster(clusterList[0].Id, input.ClusterName)
 }
 
 func PluginKubernetesPod(c *gin.Context) {
