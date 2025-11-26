@@ -1,10 +1,12 @@
 package db
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"strings"
 	"time"
@@ -28,6 +30,9 @@ func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTab
 }
 
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
+	if err := verifyKubernetesClusterConnection(param.Ip, param.Port, strings.TrimSpace(param.Token)); err != nil {
+		return err
+	}
 	encryptToken, clusterGuid, err := encryptKubernetesToken(param)
 	if err != nil {
 		return err
@@ -56,6 +61,25 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 	}
 	if !has {
 		return fmt.Errorf("kubernetes cluster id:%d not found", param.Id)
+	}
+	needVerify := false
+	verifyToken := strings.TrimSpace(param.Token)
+	if verifyToken != "" {
+		needVerify = true
+	} else {
+		var err error
+		verifyToken, err = decryptKubernetesToken(&existCluster)
+		if err != nil {
+			return err
+		}
+		if fmt.Sprintf("%s:%s", param.Ip, param.Port) != existCluster.ApiServer {
+			needVerify = true
+		}
+	}
+	if needVerify {
+		if err := verifyKubernetesClusterConnection(param.Ip, param.Port, verifyToken); err != nil {
+			return err
+		}
 	}
 	encryptToken := existCluster.Token
 	clusterGuid := existCluster.Guid
@@ -290,6 +314,39 @@ func HasKubernetesClusterPods(clusterId int) (bool, error) {
 		return false, fmt.Errorf("query kubernetes endpoint relation fail,%s ", err.Error())
 	}
 	return count > 0, nil
+}
+
+func verifyKubernetesClusterConnection(ip, port, token string) error {
+	targetIP := strings.TrimSpace(ip)
+	targetPort := strings.TrimSpace(port)
+	if targetIP == "" || targetPort == "" {
+		return fmt.Errorf("kubernetes api server ip or port empty")
+	}
+	if strings.TrimSpace(token) == "" {
+		return fmt.Errorf("kubernetes api token empty")
+	}
+	apiServer := fmt.Sprintf("https://%s:%s/api/v1/nodes?limit=1", targetIP, targetPort)
+	req, err := http.NewRequest(http.MethodGet, apiServer, nil)
+	if err != nil {
+		return fmt.Errorf("create kubernetes verify request fail,%s ", err.Error())
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(token)))
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("verify kubernetes api server fail,%s ", err.Error())
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return nil
+	}
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	return fmt.Errorf("verify kubernetes api server fail,status:%d,body:%s", resp.StatusCode, string(bodyBytes))
 }
 
 func SyncPodToEndpoint() bool {
