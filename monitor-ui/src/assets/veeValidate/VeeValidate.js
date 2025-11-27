@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import VeeValidate, {Validator} from 'vee-validate'
 import zh from 'vee-validate/dist/locale/zh_CN'
 import en from 'vee-validate/dist/locale/en'
@@ -52,6 +51,5 @@ Validator.extend('isNumber', {
   validate: value => (/^-?\d+(\.\d+)?$/.test(value) || /^\d{1,}$/.test(value))
 })
 
-Vue.use(VeeValidate, config)
-
+export const veeValidateConfig = config
 export default VeeValidate

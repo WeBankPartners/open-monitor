@@ -10,7 +10,7 @@ import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
 import { tableUtil } from '@/assets/js/tableUtil.js'
 import { validate } from '@/assets/js/validate.js'
-import VeeValidate from '@/assets/veeValidate/VeeValidate'
+import VeeValidate, {veeValidateConfig} from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 // 引用wecube公共组件和样式
 import commonUI from 'wecube-common-ui'
@@ -33,7 +33,7 @@ Vue.component('Title', Title)
 Vue.component('PageTable', PageTable)
 Vue.component('ModalComponent', ModalComponent)
 Vue.component('TagShow', TagShow)
-Vue.use(VeeValidate)
+Vue.use(VeeValidate, veeValidateConfig)
 
 Vue.config.productionTip = false
 Vue.config.devtools = true

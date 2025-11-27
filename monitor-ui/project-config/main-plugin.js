@@ -9,7 +9,7 @@ import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
 import {tableUtil} from '@/assets/js/tableUtil.js'
 import {validate} from '@/assets/js/validate.js'
-import VeeValidate from '@/assets/veeValidate/VeeValidate'
+import VeeValidate, {veeValidateConfig} from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
 import TagShow from '@/components/Tag-show'
@@ -115,7 +115,7 @@ window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
 window.component('TagShow', TagShow)
-window.use(VeeValidate)
+window.use(VeeValidate, veeValidateConfig)
 import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
 
