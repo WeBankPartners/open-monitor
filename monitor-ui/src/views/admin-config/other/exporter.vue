@@ -131,7 +131,7 @@ export default {
             value: 'token',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
-            disabled: true,
+            disabled: false,
             type: 'textarea',
             hide: 'edit'
           }
