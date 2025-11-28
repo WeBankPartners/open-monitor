@@ -208,7 +208,7 @@
         </template>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
           <label class="col-md-2 label-name">{{$t('m_cluster')}}:</label>
-          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="isReviewMode" style="width: 513px">
+          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="!endpointRejectModel.isAdd || isReviewMode" style="width: 513px">
             <Option v-for="item in endpointRejectModel.clusterList" :value="item.cluster_name" :key="item.id">
               {{item.cluster_name}}
             </Option>
