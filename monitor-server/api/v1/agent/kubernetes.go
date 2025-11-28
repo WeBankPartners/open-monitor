@@ -76,6 +76,16 @@ func UpdateKubernetesCluster(c *gin.Context) {
 				}
 				err = db.UpdateKubernetesCluster(param)
 			} else {
+				// 新增时检查集群名称是否已存在
+				existingClusters, checkErr := db.ListKubernetesCluster(param.ClusterName)
+				if checkErr != nil {
+					mid.ReturnHandleError(c, checkErr.Error(), checkErr)
+					return
+				}
+				if len(existingClusters) > 0 {
+					mid.ReturnValidateError(c, fmt.Sprintf("kubernetes cluster name '%s' already exists", param.ClusterName))
+					return
+				}
 				err = db.AddKubernetesCluster(param)
 			}
 		} else {
@@ -165,6 +175,7 @@ func PluginKubernetesCluster(c *gin.Context) {
 		if tmpErr != nil {
 			log.Error(nil, log.LOGGER_APP, logFuncMessage, zap.String("guid", input.Guid), zap.Error(tmpErr))
 			resultMessage = tmpErr.Error()
+			resultCode = "1"
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpErr.Error(), Guid: input.Guid})
 		} else {
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid})
@@ -204,16 +215,19 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error {
 		err = fmt.Errorf("Param clusterName is illegal ")
 		return err
 	}
-	currentData, _ := db.ListKubernetesCluster(input.ClusterName)
-	if len(currentData) > 0 {
-		if currentData[0].ClusterName == input.ClusterName && isSameKubernetesToken(currentData[0], input.Token, input.Guid) && input.ApiServer == currentData[0].ApiServer {
-			log.Warn(nil, log.LOGGER_APP, "Plugin k8s cluster add break with same data ")
-			return nil
-		}
-		err = db.UpdateKubernetesCluster(m.KubernetesClusterParam{Id: currentData[0].Id, ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
-	} else {
-		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
+	// 新增时检查集群名称是否已存在
+	currentData, checkErr := db.ListKubernetesCluster(input.ClusterName)
+	if checkErr != nil {
+		err = fmt.Errorf("Check kubernetes cluster name fail: %s", checkErr.Error())
+		return err
 	}
+	if len(currentData) > 0 {
+		// 如果集群名称已存在，返回错误
+		err = fmt.Errorf("kubernetes cluster name '%s' already exists", input.ClusterName)
+		return err
+	}
+	// 名称不存在，执行新增操作
+	err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: ip, Port: port, Token: input.Token, Guid: input.Guid})
 	return err
 }
 
@@ -302,6 +316,7 @@ func PluginKubernetesPod(c *gin.Context) {
 		if tmpErr != nil {
 			log.Error(nil, log.LOGGER_APP, logFuncMessage, zap.String("guid", input.Guid), zap.Error(tmpErr))
 			resultMessage = tmpErr.Error()
+			resultCode = "1"
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpErr.Error(), Guid: input.Guid})
 		} else {
 			resultData.Outputs = append(resultData.Outputs, k8sClusterResultOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid, MonitorKey: tmpMonitorGuidKey})

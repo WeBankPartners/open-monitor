@@ -817,6 +817,8 @@ func k8sPodRegister(param m.RegisterParamNew) returnData {
 	result.extendParam.Enable = true
 	result.extendParam.NodeIp = param.NodeIp
 	result.agentManager = false
+	result.defaultGroup = "default_pod_group"
+	result.addDefaultGroup = true
 	return result
 }
 

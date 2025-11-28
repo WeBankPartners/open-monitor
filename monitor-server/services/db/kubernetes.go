@@ -70,8 +70,12 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 	verifyToken := strings.TrimSpace(param.Token)
 	if verifyToken != "" {
 		needVerify = true
+		// 如果用户传了 token 但 param.Guid 为空，尝试从数据库获取 guid
+		if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(existCluster.Guid) != "" {
+			param.Guid = existCluster.Guid
+		}
 	} else {
-		var err error
+		// existCluster 在 has=true 时已经被填充了数据，可以正常使用
 		verifyToken, err = decryptKubernetesToken(&existCluster)
 		if err != nil {
 			return err
@@ -84,6 +88,10 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 		var plainToken string
 		var err error
 		if strings.TrimSpace(param.Token) != "" {
+			// 如果 param.Guid 仍为空，尝试从数据库获取
+			if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(existCluster.Guid) != "" {
+				param.Guid = existCluster.Guid
+			}
 			plainToken, err = getPlainTokenForVerify(param)
 		} else {
 			plainToken = verifyToken
@@ -99,6 +107,10 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 	clusterGuid := existCluster.Guid
 	if strings.TrimSpace(param.Token) != "" {
 		// 有新的 token，再进行加密覆盖
+		// 如果 param.Guid 为空，尝试从数据库获取
+		if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(clusterGuid) != "" {
+			param.Guid = clusterGuid
+		}
 		encryptToken, clusterGuid, err = encryptKubernetesToken(param)
 		if err != nil {
 			return err
@@ -287,7 +299,7 @@ func ensureKubernetesClusterGuid(param m.KubernetesClusterParam) (string, error)
 		var dbGuid string
 		has, err := x.SQL("select guid from kubernetes_cluster where id=?", param.Id).Get(&dbGuid)
 		if err != nil {
-			return "", fmt.Errorf("query kubernetes cluster guid fail,%s ", err.Error())
+			return "", fmt.Errorf("query d fail,%s ", err.Error())
 		}
 		if has && strings.TrimSpace(dbGuid) != "" {
 			return strings.TrimSpace(dbGuid), nil
@@ -339,7 +351,7 @@ func getPlainTokenForVerify(param m.KubernetesClusterParam) (string, error) {
 	if prefix := getCipherPrefix(token); prefix != "" {
 		clusterGuid := strings.TrimSpace(param.Guid)
 		if clusterGuid == "" {
-			return "", fmt.Errorf("kubernetes cluster guid empty, can not decrypt token")
+			return "", fmt.Errorf("clusterGuid empty, can not decrypt token")
 		}
 		plainToken, err := cipher.AesDePasswordByGuid(clusterGuid, m.Config().EncryptSeed, token)
 		if err != nil {
