@@ -27,11 +27,13 @@ clean:
 
 build: clean build_monitor_server
 	chmod +x ./build/*.sh
+	docker rm -f build_monitor_server || true
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
 	./build/build-ui.sh $(current_dir)
 
 build_arm64: clean build_monitor_server_arm64
 	chmod +x ./build/*.sh
+	docker rm -f build_$(project_dir) || true
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_$(project_dir) --platform linux/arm64 ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6-arm64 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-server.sh
 	./build/build-ui.sh $(current_dir)
 
@@ -82,10 +84,12 @@ upload: package
 build_monitor_server:
 	rm -rf monitor-server/monitor-server
 	chmod +x ./build/*.sh
+	docker rm -f build_monitor_server || true
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.19.1 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
 
 
 build_monitor_server_arm64:
 	rm -rf monitor-server/monitor-server
 	chmod +x ./build/*.sh
+	docker rm -f build_monitor_server || true
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server --platform linux/arm64 ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.24.6-arm64 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
