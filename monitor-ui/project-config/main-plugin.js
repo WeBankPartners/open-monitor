@@ -10,11 +10,13 @@ import jquery from 'jquery'
 import {tableUtil} from '@/assets/js/tableUtil.js'
 import {validate} from '@/assets/js/validate.js'
 import VeeValidate, {veeValidateConfig} from '@/assets/veeValidate/VeeValidate'
-import { Validator } from 'vee-validate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
 import TagShow from '@/components/Tag-show'
-const eventBus = new Vue()
+
+// Try to reuse the Vue instance provided by the hosting platform; fall back to local import.
+const platformVue = typeof window !== 'undefined' && window.Vue ? window.Vue : Vue
+const eventBus = new platformVue()
 
 window.use(vuex)
 window.addOptions({
@@ -116,24 +118,15 @@ window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
 window.component('TagShow', TagShow)
+if (platformVue && typeof platformVue.use === 'function') {
+  platformVue.use(VeeValidate, veeValidateConfig)
+}
 window.use(VeeValidate, veeValidateConfig)
 
-const ensureRootValidator = () => {
-  const vm = window.vm
-  if (!vm || (vm.$validator && typeof vm.$validator.validate === 'function')) {
-    return
-  }
-  vm.$validator = new Validator(null, { fastExit: true })
-  vm.$nextTick(() => vm.$forceUpdate())
-}
-
-if (document.readyState === 'complete') {
-  ensureRootValidator()
-} else {
-  window.addEventListener('load', ensureRootValidator)
-}
-
 import DelConfirm from '@/components/del-confirm/index.js'
+if (platformVue && typeof platformVue.use === 'function') {
+  platformVue.use(DelConfirm)
+}
 window.use(DelConfirm)
 
 
