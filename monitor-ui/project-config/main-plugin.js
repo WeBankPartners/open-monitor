@@ -119,17 +119,11 @@ window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
 window.addRoutes(router, 'open-monitor')
 
-import Title from '@/components/title'
-import PageTable from '@/components/table-page/page'
-import ModalComponent from '@/components/modal'
-window.component('Title', Title)
-window.component('PageTable', PageTable)
-window.component('ModalComponent', ModalComponent)
-window.component('TagShow', TagShow)
-
+// ===== CRITICAL: Register VeeValidate BEFORE component registration =====
+// This ensures that when components are created, they have access to $validator
+// If components are registered before VeeValidate, they may be instantiated without $validator
 // Register VeeValidate using platform's window.use() mechanism
 // This ensures it's registered to the same Vue instance that the platform uses
-// Critical: VeeValidate must be registered before components are created
 // Using window.use() ensures it uses the platform's Vue instance, not the plugin's local Vue
 if (typeof window.use === 'function') {
   try {
@@ -153,6 +147,16 @@ if (typeof window.use === 'function') {
     Vue.use(VeeValidate, veeValidateConfig)
   }
 }
+// ===== End VeeValidate registration =====
+
+// Register components AFTER VeeValidate to ensure they have $validator when instantiated
+import Title from '@/components/title'
+import PageTable from '@/components/table-page/page'
+import ModalComponent from '@/components/modal'
+window.component('Title', Title)
+window.component('PageTable', PageTable)
+window.component('ModalComponent', ModalComponent)
+window.component('TagShow', TagShow)
 
 import DelConfirm from '@/components/del-confirm/index.js'
 if (typeof window.use === 'function') {
