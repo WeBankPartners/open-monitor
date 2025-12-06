@@ -153,6 +153,7 @@ type SdFileConfig struct {
 
 type ArchiveMysqlConfig struct {
 	Enable             string `json:"enable"`
+	ReadEnable         string `json:"read_enable"`
 	Type               string `json:"type"`
 	Server             string `json:"server"`
 	Port               string `json:"port"`
