@@ -15,6 +15,7 @@ sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_USER}}~$MONITOR_DB_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_ENABLE}}~$MONITOR_ARCHIVE_ENABLE~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_READ_ARCHIVE_ENABLE}}~$MONITOR_READ_ARCHIVE_ENABLE~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" monitor/conf/default.json
