@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -99,8 +100,23 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 		if err != nil {
 			return err
 		}
+		// 验证连接，带重试机制
 		if err := verifyKubernetesClusterConnection(param.Ip, param.Port, plainToken); err != nil {
-			return err
+			// 检查是否只是更新集群名称，如果是，允许验证失败但记录警告
+			onlyUpdateName := strings.TrimSpace(param.Token) == "" &&
+				fmt.Sprintf("%s:%s", param.Ip, param.Port) == existCluster.ApiServer &&
+				param.ClusterName != existCluster.ClusterName
+
+			if onlyUpdateName {
+				// 只更新名称时，验证失败只记录警告，不阻止更新
+				log.Warn(nil, log.LOGGER_APP, "Kubernetes cluster connection verify failed, but allow update cluster name only",
+					zap.String("cluster_name", param.ClusterName),
+					zap.String("api_server", fmt.Sprintf("%s:%s", param.Ip, param.Port)),
+					zap.Error(err))
+			} else {
+				// 更新关键字段（IP、端口或Token）时，验证失败必须阻止
+				return fmt.Errorf("verify kubernetes cluster connection fail, cannot update critical fields: %s", err.Error())
+			}
 		}
 	}
 	encryptToken := existCluster.Token
@@ -362,7 +378,14 @@ func getPlainTokenForVerify(param m.KubernetesClusterParam) (string, error) {
 	return token, nil
 }
 
+// verifyKubernetesClusterConnection 验证 Kubernetes 集群连接和权限，带重试机制和超时控制
+// 验证包括：1. 连接性 2. list nodes 权限 3. watch nodes 权限（Prometheus 需要）
 func verifyKubernetesClusterConnection(ip, port, token string) error {
+	return verifyKubernetesClusterConnectionWithRetry(ip, port, token, 3, 5*time.Second)
+}
+
+// verifyKubernetesClusterConnectionWithRetry 带重试机制的验证函数，包含权限检查
+func verifyKubernetesClusterConnectionWithRetry(ip, port, token string, maxRetries int, timeout time.Duration) error {
 	targetIP := strings.TrimSpace(ip)
 	targetPort := strings.TrimSpace(port)
 	if targetIP == "" || targetPort == "" {
@@ -371,30 +394,156 @@ func verifyKubernetesClusterConnection(ip, port, token string) error {
 	if strings.TrimSpace(token) == "" {
 		return fmt.Errorf("kubernetes api token empty")
 	}
-	apiServer := fmt.Sprintf("https://%s:%s/api/v1/nodes?limit=1", targetIP, targetPort)
-	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server request", zap.String("apiServer", apiServer))
-	req, err := http.NewRequest(http.MethodGet, apiServer, nil)
-	if err != nil {
-		return fmt.Errorf("create kubernetes verify request fail,%s ", err.Error())
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(token)))
+
+	baseURL := fmt.Sprintf("https://%s:%s", targetIP, targetPort)
+	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server connection and permissions", zap.String("apiServer", baseURL), zap.Int("maxRetries", maxRetries))
+
+	// 创建 HTTP client，配置超时和 TLS
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: timeout,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			MaxIdleConns:          10,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
 		},
 	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("verify kubernetes api server fail,%s ", err.Error())
+
+	// 需要验证的权限列表（Prometheus 实际需要的权限）
+	permissionChecks := []struct {
+		name        string
+		method      string
+		url         string
+		description string
+		required    bool
+	}{
+		{
+			name:        "list_nodes",
+			method:      http.MethodGet,
+			url:         fmt.Sprintf("%s/api/v1/nodes?limit=1", baseURL),
+			description: "list nodes 权限（基础连接验证）",
+			required:    true,
+		},
+		{
+			name:        "watch_nodes",
+			method:      http.MethodGet,
+			url:         fmt.Sprintf("%s/api/v1/nodes?watch=true&timeoutSeconds=1", baseURL),
+			description: "watch nodes 权限（Prometheus kubernetes_sd_configs 需要）",
+			required:    true,
+		},
 	}
-	defer resp.Body.Close()
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server response", zap.Int("status_code", resp.StatusCode), zap.String("body", string(bodyBytes)))
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return nil
+
+	var permissionErrors []string
+	for _, check := range permissionChecks {
+		var lastErr error
+		success := false
+
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			req, err := http.NewRequest(check.method, check.url, nil)
+			if err != nil {
+				lastErr = fmt.Errorf("create request fail,%s ", err.Error())
+				break
+			}
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(token)))
+			req.Header.Set("Content-Type", "application/json")
+
+			// 使用 context 控制超时
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			req = req.WithContext(ctx)
+
+			resp, err := client.Do(req)
+			cancel()
+
+			if err != nil {
+				lastErr = fmt.Errorf("request fail (attempt %d/%d),%s ", attempt, maxRetries, err.Error())
+				log.Debug(nil, log.LOGGER_APP, "Kubernetes permission check request failed, will retry",
+					zap.String("permission", check.name), zap.Int("attempt", attempt), zap.Error(err))
+				if attempt < maxRetries {
+					backoff := time.Duration(attempt) * time.Second
+					time.Sleep(backoff)
+					continue
+				}
+				break
+			}
+
+			// 读取响应体（限制大小）
+			bodyBytes, readErr := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+
+			bodyStr := string(bodyBytes)
+			if len(bodyStr) > 500 {
+				bodyStr = bodyStr[:500] + "...(truncated)"
+			}
+
+			log.Debug(nil, log.LOGGER_APP, "Kubernetes permission check response",
+				zap.String("permission", check.name), zap.Int("status_code", resp.StatusCode), zap.String("body", bodyStr))
+
+			// 检查状态码
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				log.Info(nil, log.LOGGER_APP, "Kubernetes permission check passed", zap.String("permission", check.name))
+				success = true
+				break
+			}
+
+			// 403 Forbidden 表示权限不足，不重试
+			if resp.StatusCode == 403 {
+				if readErr != nil {
+					lastErr = fmt.Errorf("permission denied (403), read body error:%s", readErr.Error())
+				} else {
+					// 解析错误信息
+					var errorObj map[string]interface{}
+					if json.Unmarshal(bodyBytes, &errorObj) == nil {
+						if message, ok := errorObj["message"].(string); ok {
+							lastErr = fmt.Errorf("permission denied (403): %s", message)
+						} else {
+							lastErr = fmt.Errorf("permission denied (403): %s", bodyStr)
+						}
+					} else {
+						lastErr = fmt.Errorf("permission denied (403): %s", bodyStr)
+					}
+				}
+				break // 权限错误不重试
+			}
+
+			// 5xx 错误可以重试
+			if resp.StatusCode >= 500 && attempt < maxRetries {
+				lastErr = fmt.Errorf("server error (status:%d),%s", resp.StatusCode, bodyStr)
+				log.Warn(nil, log.LOGGER_APP, "Kubernetes permission check returned server error, will retry",
+					zap.String("permission", check.name), zap.Int("status_code", resp.StatusCode), zap.Int("attempt", attempt))
+				backoff := time.Duration(attempt) * time.Second
+				time.Sleep(backoff)
+				continue
+			}
+
+			// 其他错误
+			if readErr != nil {
+				lastErr = fmt.Errorf("request fail,status:%d,read body error:%s", resp.StatusCode, readErr.Error())
+			} else {
+				lastErr = fmt.Errorf("request fail,status:%d,body:%s", resp.StatusCode, bodyStr)
+			}
+			break
+		}
+
+		if !success {
+			errorMsg := fmt.Sprintf("%s 验证失败: %s", check.description, lastErr.Error())
+			if check.required {
+				permissionErrors = append(permissionErrors, errorMsg)
+			} else {
+				log.Warn(nil, log.LOGGER_APP, "Optional permission check failed", zap.String("permission", check.name), zap.Error(lastErr))
+			}
+		}
 	}
-	return fmt.Errorf("verify kubernetes api server fail,status:%d,body:%s", resp.StatusCode, string(bodyBytes))
+
+	// 如果有必需的权限验证失败，返回错误
+	if len(permissionErrors) > 0 {
+		errorSummary := fmt.Sprintf("Kubernetes 集群权限验证失败，Prometheus 将无法正常工作:\n%s", strings.Join(permissionErrors, "\n"))
+		log.Error(nil, log.LOGGER_APP, "Kubernetes cluster permission verification failed", zap.String("errors", errorSummary))
+		return fmt.Errorf(errorSummary)
+	}
+
+	log.Info(nil, log.LOGGER_APP, "Kubernetes cluster connection and permissions verified successfully", zap.String("apiServer", baseURL))
+	return nil
 }
 
 func getCipherPrefix(token string) string {
