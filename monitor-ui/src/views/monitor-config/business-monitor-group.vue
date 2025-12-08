@@ -100,7 +100,7 @@
                     <template slot='list'>
                       <Input v-model.trim="templateFilterString"
                              clearable
-                             style="width: 350px; margin: 15px"
+                             style="width: 560px; margin: 15px"
                              :placeholder="$t('m_template_filter')"
                              @on-change="onTemplateFilterChange"
                              @mousedown.native="(e) => e.stopPropagation()"
@@ -1638,6 +1638,11 @@ export default {
   .ivu-dropdown-menu {
     max-height: 300px;
     overflow: auto;
+  }
+}
+.chart-option-menu {
+  .ivu-select-dropdown {
+    width: 600px !important;
   }
 }
 

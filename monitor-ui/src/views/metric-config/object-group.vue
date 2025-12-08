@@ -382,7 +382,7 @@ export default {
   },
   async mounted() {
     await this.getObjectGroupList()
-    this.endpointGroup = this.objectGroupOptions[0].guid
+    // this.endpointGroup = this.objectGroupOptions[0].guid
     this.monitorType = this.objectGroupOptions[0].monitor_type
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null

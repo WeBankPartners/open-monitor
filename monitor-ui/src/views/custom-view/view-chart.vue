@@ -200,7 +200,7 @@ export default {
       this.panalData.query.forEach(item => {
         params.data.push(item)
       })
-      if (params !== []) {
+      if (Array.isArray(params.data) && params.data.length > 0) {
         window.intervalFrom = 'view-chart'
         this.request(
           'POST',
@@ -217,7 +217,7 @@ export default {
               chartType: this.panalData.chartType,
               chartId: this.elId,
               canEditShowLines: true,
-              dataZoom: false,
+              dataZoom: true,
               params
             }
 
