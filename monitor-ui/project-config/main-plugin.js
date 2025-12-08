@@ -14,11 +14,19 @@ import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
 import TagShow from '@/components/Tag-show'
 
-// Try to reuse the Vue instance provided by the hosting platform; fall back to local import.
+// Use platform's Vue instance if available, otherwise fall back to local import
+// Note: window.Vue may not be set by platform, so we rely on window.use() for plugin registration
 const platformVue = typeof window !== 'undefined' && window.Vue ? window.Vue : Vue
 const eventBus = new platformVue()
 
-window.use(vuex)
+// Register plugins using platform's window.use() mechanism
+// Ensure window.use exists before calling (should always exist in platform context)
+if (typeof window.use === 'function') {
+  window.use(vuex)
+} else {
+  console.error('window.use is not available. Plugin registration may fail.')
+}
+
 window.addOptions({
   $httpRequestEntrance: httpRequestEntrance,
   JQ: jquery,
@@ -111,6 +119,37 @@ window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
 window.addRoutes(router, 'open-monitor')
 
+// ===== CRITICAL: Register VeeValidate BEFORE component registration =====
+// This ensures that when components are created, they have access to $validator
+// If components are registered before VeeValidate, they may be instantiated without $validator
+// Register VeeValidate using platform's window.use() mechanism
+// This ensures it's registered to the same Vue instance that the platform uses
+// Using window.use() ensures it uses the platform's Vue instance, not the plugin's local Vue
+if (typeof window.use === 'function') {
+  try {
+    window.use(VeeValidate, veeValidateConfig)
+  } catch (error) {
+    console.error('Failed to register VeeValidate via window.use():', error)
+    // Fallback: try direct registration
+    if (platformVue && typeof platformVue.use === 'function') {
+      platformVue.use(VeeValidate, veeValidateConfig)
+    } else {
+      Vue.use(VeeValidate, veeValidateConfig)
+    }
+  }
+} else {
+  // Fallback: if window.use is not available, register directly
+  // This should rarely happen in platform context, but provides a safety net
+  console.warn('window.use is not available, registering VeeValidate directly to Vue')
+  if (platformVue && typeof platformVue.use === 'function') {
+    platformVue.use(VeeValidate, veeValidateConfig)
+  } else {
+    Vue.use(VeeValidate, veeValidateConfig)
+  }
+}
+// ===== End VeeValidate registration =====
+
+// Register components AFTER VeeValidate to ensure they have $validator when instantiated
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
@@ -118,16 +157,18 @@ window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
 window.component('TagShow', TagShow)
-if (platformVue && typeof platformVue.use === 'function') {
-  platformVue.use(VeeValidate, veeValidateConfig)
-}
-window.use(VeeValidate, veeValidateConfig)
 
 import DelConfirm from '@/components/del-confirm/index.js'
-if (platformVue && typeof platformVue.use === 'function') {
-  platformVue.use(DelConfirm)
+if (typeof window.use === 'function') {
+  window.use(DelConfirm)
+} else {
+  // Fallback for DelConfirm
+  if (platformVue && typeof platformVue.use === 'function') {
+    platformVue.use(DelConfirm)
+  } else {
+    Vue.use(DelConfirm)
+  }
 }
-window.use(DelConfirm)
 
 
 import Dashboard from '@/views/dashboard'
