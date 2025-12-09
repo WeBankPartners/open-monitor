@@ -55,11 +55,14 @@ const (
 )
 
 var pcrePanicErr string = "pcre error: %s\n"
+const logSampleLimit = 512
 
 // A reference to a compiled regular expression.
 // Use Compile or MustCompile to create such objects.
 type Regexp struct {
 	ptr []byte
+	// pattern keeps the original regexp text for debugging/logging purposes.
+	pattern string
 }
 
 // Number of bytes in the compiled pattern
@@ -78,11 +81,12 @@ func pcregroups(ptr *C.pcre) (count C.int) {
 // Move pattern to the Go heap so that we do not have to use a
 // finalizer.  PCRE patterns are fully relocatable. (We do not use
 // custom character tables.)
-func toheap(ptr *C.pcre) (re Regexp) {
+func toheap(ptr *C.pcre, pattern string) (re Regexp) {
 	defer C.free(unsafe.Pointer(ptr))
 	size := pcresize(ptr)
 	re.ptr = make([]byte, size)
 	C.memcpy(unsafe.Pointer(&re.ptr[0]), unsafe.Pointer(ptr), size)
+	re.pattern = pattern
 	return
 }
 
@@ -108,7 +112,7 @@ func PcreCompile(pattern string, flags int) (Regexp, *CompileError) {
 			Offset:  int(erroffset),
 		}
 	}
-	return toheap(ptr), nil
+	return toheap(ptr, pattern), nil
 }
 
 // Compile the pattern.  If compilation fails, panic.
@@ -196,6 +200,13 @@ func (m *Matcher) init(re Regexp) {
 
 var nullbyte = []byte{0}
 
+func truncateForLog(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	return s[:limit] + "...(truncated)"
+}
+
 // Tries to match the speficied byte array slice to the current
 // pattern.  Returns true if the match succeeds.
 func (m *Matcher) Match(subject []byte, flags int) bool {
@@ -246,7 +257,13 @@ func (m *Matcher) match(subjectptr *C.char, length, flags int) bool {
 		fmt.Printf(pcrePanicErr, "match func invalid option flag")
 		return false
 	}
-	fmt.Printf(pcrePanicErr, "unexepected return code from pcre_exec: "+strconv.Itoa(int(rc)))
+	patternText := m.re.pattern
+	subjectText := m.subjects
+	if subjectText == "" && len(m.subjectb) > 0 {
+		subjectText = string(m.subjectb)
+	}
+	fmt.Printf(pcrePanicErr, fmt.Sprintf("unexepected return code from pcre_exec: %d, pattern: %q, sample: %s",
+		int(rc), patternText, truncateForLog(subjectText, logSampleLimit)))
 	return false
 }
 
