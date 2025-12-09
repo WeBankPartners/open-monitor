@@ -55,8 +55,6 @@ const (
 )
 
 var pcrePanicErr string = "pcre error: %s\n"
-
-const logSampleLimit = 51
 const logSampleLimit = 512
 
 // A reference to a compiled regular expression.
