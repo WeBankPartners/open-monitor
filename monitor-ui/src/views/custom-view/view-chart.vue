@@ -218,7 +218,8 @@ export default {
               chartId: this.elId,
               canEditShowLines: true,
               dataZoom: true,
-              params
+              params,
+              isNeedClear: true
             }
 
             this.$nextTick(() => {
