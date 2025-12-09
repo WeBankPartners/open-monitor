@@ -59,3 +59,6 @@ Add log path validation
 
 v3.6.8.3
 Update log dir with wildcard character
+
+v3.7.4.11
+Add detailed logging for unexpected pcre_exec return codes, including the regex pattern and a truncated sample of the log line that triggered the error.
