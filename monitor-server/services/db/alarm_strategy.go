@@ -7,7 +7,6 @@ import (
 	"hash/crc64"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -823,12 +822,7 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 						if tagObj.Equal == "notin" {
 							tmpEqual = "!~"
 						}
-						// 转义标签值中的特殊字符（如+号），避免被当作正则表达式特殊字符
-						escapedTagValues := make([]string, len(tagObj.TagValue))
-						for i, v := range tagObj.TagValue {
-							escapedTagValues[i] = regexp.QuoteMeta(v)
-						}
-						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(escapedTagValues, "|")+"\"", -1)
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 					}
 				}
 			}
