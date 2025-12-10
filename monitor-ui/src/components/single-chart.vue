@@ -134,7 +134,7 @@ export default {
           editTitle: false,
           lineBarSwitch: true,
           canEditShowLines: true,
-          dataZoom: false,
+          dataZoom: true,
           chartId: this.chartInfo.id + ''
         }
         responseData.metric = this.chartInfo.metric[0]

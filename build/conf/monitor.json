@@ -170,6 +170,7 @@
   },
   "archive_mysql": {
     "enable": "{{MONITOR_ARCHIVE_ENABLE}}",
+    "read_enable": "{{MONITOR_READ_ARCHIVE_ENABLE}}",
     "server": "{{MONITOR_ARCHIVE_MYSQL_HOST}}",
     "port": "{{MONITOR_ARCHIVE_MYSQL_PORT}}",
     "user": "{{MONITOR_ARCHIVE_MYSQL_USER}}",

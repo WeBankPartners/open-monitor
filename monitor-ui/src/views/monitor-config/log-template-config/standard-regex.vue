@@ -7,15 +7,26 @@
       :width="1100"
     >
       <div slot="header" class="custom-modal-header">
-        <span>
+        <span class="header-title">
           {{(isAdd ? $t('m_button_add') : $t('m_button_edit')) + $t('m_template')}}
+          <Button
+            type="primary"
+            ghost
+            size="small"
+            :icon="isLeftCollapsed ? 'md-arrow-dropright' : 'md-arrow-dropleft'"
+            @click="toggleLeftPanel"
+          >
+            {{ isLeftCollapsed ? '展开左侧' : '收起左侧' }}
+          </Button>
         </span>
-        <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
-        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+        <div class="header-actions">
+          <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
+          <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+        </div>
       </div>
       <div>
         <Row>
-          <Col span="8" :style="{height: isfullscreen ? '' : '550px'}" style="overflow: auto;">
+          <Col v-show="!isLeftCollapsed" span="8" :style="{height: isfullscreen ? '' : '550px'}" style="overflow: auto;">
           <Form :label-width="120">
             <FormItem :label="$t('m_template_name')">
               <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
@@ -49,7 +60,7 @@
             </FormItem>
           </Form>
           </Col>
-          <Col span="16" style="border-left: 2px solid rgb(232 234 236);">
+          <Col :span="isLeftCollapsed ? 24 : 16" :style="isLeftCollapsed ? '' : 'border-left: 2px solid rgb(232 234 236);'">
           <div style="margin-left: 8px">
             <!-- 采集参数 -->
             <div>
@@ -175,6 +186,7 @@ export default {
       isfullscreen: true,
       isParmasChanged: false,
       isAdd: true,
+      isLeftCollapsed: false,
       configInfo: {},
       columnsForParameterCollection: [
         {
@@ -386,6 +398,9 @@ export default {
     }
   },
   methods: {
+    toggleLeftPanel() {
+      this.isLeftCollapsed = !this.isLeftCollapsed
+    },
     loadPage(guid, actionType) {
       this.isfullscreen = true
       this.successCode = cloneDeep(initSuccessCode)
@@ -734,15 +749,21 @@ export default {
 
 <style lang="less" scoped>
 .custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   line-height: 20px;
   font-size: 16px;
   color: #17233d;
   font-weight: 500;
+  width: calc(100% - 20px);
   .fullscreen-icon {
-    float: right;
-    margin-right: 28px;
     font-size: 18px;
     cursor: pointer;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
   }
 }
 .ivu-form-item {

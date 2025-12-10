@@ -228,10 +228,12 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 			err = tmpErr
 			return
 		}
+		log.Debug(nil, log.LOGGER_APP, "print tmpPromQL", zap.String("tmpPromQl", tmpPromQl))
 		if isServiceMetric {
 			log.Debug(nil, log.LOGGER_APP, "getChartConfigByCustom $app_metric")
 			legend = "$app_metric"
 			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{}, dataConfig.Tags)
+			log.Debug(nil, log.LOGGER_APP, "print ReplacePromQlKeyword tmpPromQL", zap.String("tmpPromQl", tmpPromQl))
 			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default", CustomDashboard: true, Tags: tmpTags})
 		} else {
 			endpointList := []*models.EndpointNewTable{}
@@ -543,7 +545,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	var err error
 	var logType string
 	archiveQueryFlag := false
-	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
+	if param.Start < (time.Now().Unix()-models.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable && db.ReadArchiveEnable {
 		archiveQueryFlag = true
 	}
 	startTimestamp := float64(param.Start * 1000)
@@ -581,7 +583,7 @@ func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		tmpSerials := ds.PrometheusData(query)
 		// 如果归档数据可用，尝试从归档数据中补全数据
-		if db.ArchiveEnable {
+		if db.ArchiveEnable && db.ReadArchiveEnable {
 			if len(tmpSerials) > 0 {
 				if len(tmpSerials[0].Data) > 0 {
 					tmpSerialDataStart := int64(tmpSerials[0].Data[0][0]) / 1000

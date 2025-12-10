@@ -226,7 +226,7 @@ export default {
           clear: true,
           lineBarSwitch: true,
           canEditShowLines: true,
-          dataZoom: false,
+          dataZoom: true,
           chartId: this.elId
         }
         responseData.chartId = this.elId

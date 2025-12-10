@@ -7,15 +7,26 @@
       :width="1100"
     >
       <div slot="header" class="custom-modal-header">
-        <span>
+        <span class="header-title">
           {{(view ? $t('m_button_view') : (isAdd ? $t('m_button_add') : $t('m_button_edit'))) + $t('m_custom_regex')}}
+          <Button
+            type="primary"
+            ghost
+            size="small"
+            :icon="isLeftCollapsed ? 'md-arrow-dropright' : 'md-arrow-dropleft'"
+            @click="toggleLeftPanel"
+          >
+            {{ isLeftCollapsed ? '展开左侧' : '收起左侧' }}
+          </Button>
         </span>
-        <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
-        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+        <div class="header-actions">
+          <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
+          <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+        </div>
       </div>
       <div :class="isfullscreen ? 'modal-container-fullscreen' : 'modal-container-normal'">
         <Row>
-          <Col span="8">
+          <Col v-show="!isLeftCollapsed" span="8">
           <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
           <Form :label-width="120">
             <FormItem :label="$t('m_configuration_name')">
@@ -60,7 +71,7 @@
             </FormItem>
           </Form>
           </Col>
-          <Col span="16" style="border-left: 2px solid rgb(232 234 236)">
+          <Col :span="isLeftCollapsed ? 24 : 16" :style="isLeftCollapsed ? '' : 'border-left: 2px solid rgb(232 234 236)'">
           <div style="margin-left: 8px">
             <!-- 采集参数 -->
             <div>
@@ -165,6 +176,7 @@ export default {
       parentGuid: '', // 上级唯一标识
       isAdd: true,
       view: false, // 仅查看，供对象类型查看使用
+      isLeftCollapsed: false,
       configInfo: {
         param_list: []
       },
@@ -194,7 +206,7 @@ export default {
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
-          width: 350,
+          minWidth: 350,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -220,7 +232,7 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
-          minWidth: 100,
+          width: 250,
           renderHeader: () => (
             <span>
               <span style="color:red">*</span>
@@ -242,7 +254,7 @@ export default {
           title: this.$t('m_match_value_pure'),
           ellipsis: true,
           tooltip: true,
-          minWidth: 100,
+          width: 250,
           key: 'string_map',
           render: (h, params) => {
             const val = !isEmpty(params.row.string_map) && params.row.string_map.map(item => item.target_value).join(',') || ''
@@ -627,6 +639,9 @@ export default {
     },
   },
   methods: {
+    toggleLeftPanel() {
+      this.isLeftCollapsed = !this.isLeftCollapsed
+    },
     async loadPage(actionType, templateGuid, parentGuid, configGuid, isLogTemplate = false) {
       this.isLogTemplate = isLogTemplate
       this.isfullscreen = true
@@ -1133,15 +1148,21 @@ export default {
   overflow: auto;
 }
 .custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   line-height: 20px;
   font-size: 16px;
   color: #17233d;
   font-weight: 500;
+  width: calc(100% - 20px);
   .fullscreen-icon {
-    float: right;
-    margin-right: 28px;
     font-size: 18px;
     cursor: pointer;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
   }
 }
 .ivu-form-item {
