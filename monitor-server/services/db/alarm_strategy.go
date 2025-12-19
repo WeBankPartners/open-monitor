@@ -581,8 +581,19 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 		}
 	}
 	for _, cluster := range clusterList {
-		guidExpr, addressExpr, ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
-		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, copyStrategyListNew(strategyList))
+		guidExpr, addressExpr, ipExpr, podExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
+		// 获取 cluster 名称，用于替换 $k8s_cluster 变量
+		// 对于 pod 类型的 endpoint，os_type 字段存储的是 cluster 名称
+		clusterName := cluster
+		if len(clusterEndpointMap[cluster]) > 0 && clusterEndpointMap[cluster][0].MonitorType == "pod" {
+			// 查询 endpoint 表获取 os_type（cluster 名称）
+			var endpointTable []*models.EndpointTable
+			x.SQL("select os_type from endpoint where guid=?", clusterEndpointMap[cluster][0].Guid).Find(&endpointTable)
+			if len(endpointTable) > 0 && endpointTable[0].OsType != "" {
+				clusterName = endpointTable[0].OsType
+			}
+		}
+		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, podExpr, clusterName, copyStrategyListNew(strategyList))
 		if cluster == "default" || cluster == "" {
 			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{WithoutReloadConfig: withoutReloadConfig, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 		} else {
@@ -593,7 +604,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 			}
 		}
 		for _, monitorEngineStrategy := range monitorEngineStrategyList {
-			buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, monitorEngineStrategy)
+			buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterName, monitorEngineStrategy)
 			UpdateAlarmStrategyMetricExpr(monitorEngineStrategy)
 		}
 	}
@@ -718,11 +729,14 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 	return
 }
 
-func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr string) {
+func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr, podExpr string) {
 	for _, endpoint := range endpointList {
 		addressExpr += endpoint.AgentAddress + "|"
 		guidExpr += endpoint.Guid + "|"
 		ipExpr += endpoint.Ip + "|"
+		if endpoint.Name != "" {
+			podExpr += endpoint.Name + "|"
+		}
 	}
 	if addressExpr != "" {
 		addressExpr = addressExpr[:len(addressExpr)-1]
@@ -733,10 +747,13 @@ func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr,
 	if ipExpr != "" {
 		ipExpr = ipExpr[:len(ipExpr)-1]
 	}
+	if podExpr != "" {
+		podExpr = podExpr[:len(podExpr)-1]
+	}
 	return
 }
 
-func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string, strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
+func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, podExpr, clusterName string, strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
 	result := models.RFGroup{Name: ruleFileName}
 	if len(strategyList) == 0 {
 		return result
@@ -755,7 +772,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.Condition = strategy.Condition[:1] + " " + strategy.Condition[1:]
 			}
 		}
-		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, strategy)
+		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterName, strategy)
 		if strategy.MetricExpr == "" {
 			log.Warn(nil, log.LOGGER_APP, "metric expr empty", zap.String("alertId", tmpRfu.Alert))
 			continue
@@ -771,7 +788,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 	return result
 }
 
-func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *models.AlarmStrategyMetricObj) {
+func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterName string, strategy *models.AlarmStrategyMetricObj) {
 	if strings.Contains(strategy.MetricExpr, "$address") {
 		if strings.Contains(addressExpr, "|") {
 			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
@@ -797,6 +814,27 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
 		} else {
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$pod") {
+		if podExpr != "" {
+			if strings.Contains(podExpr, "|") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$pod\"", "=~\""+podExpr+"\"", -1)
+			} else {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$pod\"", "=\""+podExpr+"\"", -1)
+			}
+		} else {
+			// 如果没有 pod 列表，使用通配符匹配所有 pod
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$pod\"", "=~\".*\"", -1)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$k8s_cluster") {
+		if clusterName != "" && clusterName != "default" {
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", clusterName)
+		} else {
+			// 如果是 default 或空，需要查询实际的 cluster 名称
+			// 这里先尝试从 endpoint 中获取，如果没有则保持原样
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", clusterName)
 		}
 	}
 	if len(strategy.Tags) > 0 {

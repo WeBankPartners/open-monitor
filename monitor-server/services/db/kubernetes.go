@@ -434,7 +434,7 @@ func verifyKubernetesClusterConnectionWithRetry(ip, port, token string, maxRetri
 		},
 	}
 
-	var permissionErrors []string
+	var missingPermissions []string
 	for _, check := range permissionChecks {
 		var lastErr error
 		success := false
@@ -526,9 +526,8 @@ func verifyKubernetesClusterConnectionWithRetry(ip, port, token string, maxRetri
 		}
 
 		if !success {
-			errorMsg := fmt.Sprintf("%s 验证失败: %s", check.description, lastErr.Error())
 			if check.required {
-				permissionErrors = append(permissionErrors, errorMsg)
+				missingPermissions = append(missingPermissions, check.name)
 			} else {
 				log.Warn(nil, log.LOGGER_APP, "Optional permission check failed", zap.String("permission", check.name), zap.Error(lastErr))
 			}
@@ -536,8 +535,8 @@ func verifyKubernetesClusterConnectionWithRetry(ip, port, token string, maxRetri
 	}
 
 	// 如果有必需的权限验证失败，返回错误
-	if len(permissionErrors) > 0 {
-		errorSummary := fmt.Sprintf("Kubernetes 集群权限验证失败，Prometheus 将无法正常工作:\n%s", strings.Join(permissionErrors, "\n"))
+	if len(missingPermissions) > 0 {
+		errorSummary := fmt.Sprintf("Token does not have required permissions: %s", strings.Join(missingPermissions, ", "))
 		log.Error(nil, log.LOGGER_APP, "Kubernetes cluster permission verification failed", zap.String("errors", errorSummary))
 		return fmt.Errorf(errorSummary)
 	}
