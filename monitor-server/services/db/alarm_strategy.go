@@ -22,6 +22,9 @@ import (
 // 系统内置 指标阈值-组 ,& old_1~old_20
 var systemAlarmStrategyIds = []string{"new_host_ping_loss", "new_ping_ping_loss", "old_process_group"}
 
+// Kubernetes cadvisor job 名称前缀
+const k8sCadvisorJobPrefix = "k8s-cadvisor-"
+
 func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var strategy []*models.GroupStrategyObj
@@ -834,13 +837,33 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterN
 	if strings.Contains(strategy.MetricExpr, "$k8s_cluster") {
 		if clusterNameExpr != "" {
 			// 使用正则表达式匹配多个集群名，保持与 $pod 处理方式一致
-			// 先替换 $k8s_cluster 为集群名表达式
+			// 处理 job="k8s-cadvisor-$k8s_cluster" 这种情况
+			jobPattern := fmt.Sprintf("=\"%s$k8s_cluster\"", k8sCadvisorJobPrefix)
+			if strings.Contains(strategy.MetricExpr, jobPattern) {
+				// 构建 job 表达式：k8s-cadvisor-cluster1|k8s-cadvisor-cluster2
+				clusterNames := strings.Split(clusterNameExpr, "|")
+				jobExprList := make([]string, len(clusterNames))
+				for i, name := range clusterNames {
+					jobExprList[i] = k8sCadvisorJobPrefix + name
+				}
+				jobExpr := strings.Join(jobExprList, "|")
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, jobPattern, "=~\""+jobExpr+"\"", -1)
+			}
+			// 处理其他包含 $k8s_cluster 的情况（如 ="$k8s_cluster"）
+			if strings.Contains(strategy.MetricExpr, "=\"$k8s_cluster\"") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$k8s_cluster\"", "=~\""+clusterNameExpr+"\"", -1)
+			}
+			// 处理剩余的 $k8s_cluster（不在引号内的）
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", clusterNameExpr)
-			// 将 ="集群名表达式" 改为 =~"集群名表达式"（支持正则表达式匹配）
-			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+clusterNameExpr+"\"", "=~\""+clusterNameExpr+"\"", -1)
 		} else {
 			// 如果没有集群名，使用通配符匹配所有
-			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$k8s_cluster\"", "=~\".*\"", -1)
+			jobPattern := fmt.Sprintf("=\"%s$k8s_cluster\"", k8sCadvisorJobPrefix)
+			if strings.Contains(strategy.MetricExpr, jobPattern) {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, jobPattern, "=~\".*\"", -1)
+			}
+			if strings.Contains(strategy.MetricExpr, "=\"$k8s_cluster\"") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$k8s_cluster\"", "=~\".*\"", -1)
+			}
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", ".*")
 		}
 	}
