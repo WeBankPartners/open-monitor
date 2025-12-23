@@ -464,54 +464,56 @@ func handleUpdateKubernetesPod(sourceEndpointGuid, targetNodeIp, sourceRealIp st
 	}
 	var targetEndpoint *m.EndpointNewTable
 	if targetEndpoint, err = db.GetEndpointByIpAndType(targetNodeIp, "host"); err != nil {
+		log.Warn(nil, log.LOGGER_APP, "GetEndpointByIpAndType for targetNodeIp failed", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.Error(err))
 		return
 	}
 	if targetEndpoint == nil {
-		err = fmt.Errorf("targetNodeIp mapping pod host endpoint not found")
-		return
+		log.Warn(nil, log.LOGGER_APP, "targetNodeIp mapping pod host endpoint not found, skip update operation", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("monitorType", "host"))
+		return nil
 	}
 	var sourceHostEndpoint *m.EndpointNewTable
 	if sourceHostEndpoint, err = db.GetEndpointByIpAndType(sourceRealIp, "host"); err != nil {
+		log.Warn(nil, log.LOGGER_APP, "GetEndpointByIpAndType for sourceRealIp failed", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.Error(err))
 		return
 	}
 	if sourceHostEndpoint == nil {
-		err = fmt.Errorf("sourceRealIp mapping pod host endpoint not found")
-		return
+		log.Warn(nil, log.LOGGER_APP, "sourceRealIp mapping pod host endpoint not found, skip update operation", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("monitorType", "host"))
+		return nil
 	}
 	endpointList = append(endpointList, targetEndpoint.Guid, sourceHostEndpoint.Guid)
 	// 更新 日志文件业务配置
 	if err = db.UpdateLogMetricSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip), zap.Error(err))
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+	log.Info(nil, log.LOGGER_APP, "UpdateLogMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip))
 	// 更新 数据库业务配置
 	if err = db.UpdateDbMetricSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip), zap.Error(err))
 		return
 	}
 	if err = db.SyncLogMetricExporterConfig(endpointList); err != nil {
-		log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.Strings("endpointList", endpointList), zap.Error(err))
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+	log.Info(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip))
 
 	// 更新 日志文件关键字配置
 	if err = db.UpdateLogKeywordSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateLogKeywordSourceEndpoint fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip), zap.Error(err))
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "UpdateLogKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+	log.Info(nil, log.LOGGER_APP, "UpdateLogKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip))
 
 	// 更新 数据库关键字配置
 	if err = db.UpdateDbKeywordSourceEndpoint(targetEndpoint.Guid, sourceEndpointGuid); err != nil {
-		log.Error(nil, log.LOGGER_APP, "UpdateDbMetricSourceEndpoint fail", zap.String("guid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetGuid", targetEndpoint.Guid), zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "UpdateDbKeywordSourceEndpoint fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip), zap.Error(err))
 	}
 	if err = db.SyncLogKeywordExporterConfig(endpointList); err != nil {
-		log.Error(nil, log.LOGGER_APP, "SyncLogMetricExporterConfig fail", zap.Error(err))
+		log.Error(nil, log.LOGGER_APP, "SyncLogKeywordExporterConfig fail", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.Strings("endpointList", endpointList), zap.Error(err))
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "UpdateDbKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid))
+	log.Info(nil, log.LOGGER_APP, "UpdateDbKeywordSourceEndpoint success", zap.String("sourceEndpointGuid", sourceEndpointGuid), zap.String("targetNodeIp", targetNodeIp), zap.String("sourceRealIp", sourceRealIp), zap.String("targetEndpointGuid", targetEndpoint.Guid), zap.String("targetEndpointIp", targetEndpoint.Ip), zap.String("sourceHostEndpointGuid", sourceHostEndpoint.Guid), zap.String("sourceHostEndpointIp", sourceHostEndpoint.Ip))
 
 	return
 }
