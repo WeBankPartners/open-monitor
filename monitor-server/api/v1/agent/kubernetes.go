@@ -347,20 +347,57 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error, endpoin
 		err = fmt.Errorf("Pod name can not empty ")
 		return err, endpointGuid
 	}
-	if input.PodMonitorKey != "" {
+	// 根据 PodName 和集群 ID 查询是否存在
+	k8sEndpointRel, err := db.GetKubernetesEndpointRelByPodName(input.PodName, clusterList[0].Id)
+	if err != nil {
+		return err, endpointGuid
+	}
+	// 如果存在，则更新pod
+	if k8sEndpointRel != nil && k8sEndpointRel.EndpointGuid != "" {
 		var result m.EndpointNewTable
-		result, err = db.GetEndpointNew(&m.EndpointNewTable{Guid: input.PodMonitorKey})
+		result, err = db.GetEndpointNew(&m.EndpointNewTable{Guid: k8sEndpointRel.EndpointGuid})
 		if err != nil {
 			return err, endpointGuid
 		}
-		// 更新pod
 		if result.Guid != "" {
-			var extendObj m.EndpointExtendParamObj
-			err = json.Unmarshal([]byte(result.ExtendParam), &extendObj)
-			if err != nil {
-				return err, endpointGuid
+			endpointGuid = result.Guid
+			var oldExtendObj m.EndpointExtendParamObj
+			if result.ExtendParam != "" {
+				err = json.Unmarshal([]byte(result.ExtendParam), &oldExtendObj)
+				if err != nil {
+					return err, endpointGuid
+				}
 			}
-			err = handleUpdateKubernetesPod(input, extendObj.NodeIp)
+			// 构建新的 extend_param
+			newExtendObj := oldExtendObj
+			if input.NodeIp != "" {
+				newExtendObj.NodeIp = input.NodeIp
+			}
+			// 检查 node_ip 是否有变化
+			nodeIpChanged := oldExtendObj.NodeIp != newExtendObj.NodeIp
+			// 如果 node_ip 有变化，才执行复杂的更新操作
+			if nodeIpChanged && oldExtendObj.NodeIp != "" && input.NodeIp != "" {
+				err = handleUpdateKubernetesPod(endpointGuid, input.NodeIp, oldExtendObj.NodeIp)
+				if err != nil {
+					return err, endpointGuid
+				}
+				// 更新 endpoint_new 表（包括 extend_param）
+				newExtendParamBytes, _ := json.Marshal(newExtendObj)
+				newExtendParamString := string(newExtendParamBytes)
+				err = db.UpdateKubernetesPodEndpointNew(endpointGuid, input.Ip, newExtendParamString)
+				if err != nil {
+					return err, endpointGuid
+				}
+			} else {
+				// 更新 endpoint_new 表（包括 extend_param），即使 node_ip 没有变化
+				newExtendParamBytes, _ := json.Marshal(newExtendObj)
+				newExtendParamString := string(newExtendParamBytes)
+				err = db.UpdateKubernetesPodEndpointNew(endpointGuid, input.Ip, newExtendParamString)
+				if err != nil {
+					return err, endpointGuid
+				}
+			}
+			log.Info(nil, log.LOGGER_APP, "Update kubernetes pod success", zap.String("podName", input.PodName), zap.String("endpointGuid", endpointGuid), zap.String("namespace", input.Namespace), zap.String("clusterName", input.ClusterName))
 			return err, endpointGuid
 		}
 	}
@@ -385,6 +422,7 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error, endpoin
 			return err, endpointGuid
 		}
 	}
+	log.Info(nil, log.LOGGER_APP, "Add kubernetes pod success", zap.String("podName", input.PodName), zap.String("endpointGuid", endpointGuid), zap.String("namespace", input.Namespace), zap.String("clusterName", input.ClusterName), zap.String("podGuid", input.Guid))
 	return err, endpointGuid
 }
 
@@ -413,28 +451,19 @@ func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
 }
 
 // handleUpdateKubernetesPod  目前更新业务配置、指标阈值映射 ip映射就好了
-func handleUpdateKubernetesPod(input k8sClusterRequestInputObj, sourceRealIp string) (err error) {
-	var sourceEndpointGuid string
-	var k8sEndpointRel *m.KubernetesEndpointRelTable
+func handleUpdateKubernetesPod(sourceEndpointGuid, targetNodeIp, sourceRealIp string) (err error) {
 	var endpointList []string
-	if input.PodMonitorKey == "" {
-		input.Guid = strings.TrimSpace(input.Guid)
-		if input.Guid == "" {
-			return fmt.Errorf("Pod guid can not empty ")
-		}
-		if k8sEndpointRel, err = db.GetKubernetesEndpointRelByPodGuid(input.Guid); err != nil {
-			return
-		}
-		if k8sEndpointRel == nil {
-			return fmt.Errorf("Pod guid  not found k8s endpoint related")
-		}
-		sourceEndpointGuid = k8sEndpointRel.EndpointGuid
+	if sourceEndpointGuid == "" {
+		return fmt.Errorf("sourceEndpointGuid can not empty ")
 	}
-	if input.NodeIp == "" {
-		return fmt.Errorf("nodeIp can not empty ")
+	if targetNodeIp == "" {
+		return fmt.Errorf("targetNodeIp can not empty ")
+	}
+	if sourceRealIp == "" {
+		return fmt.Errorf("sourceRealIp can not empty ")
 	}
 	var targetEndpoint *m.EndpointNewTable
-	if targetEndpoint, err = db.GetEndpointByIpAndType(input.NodeIp, "host"); err != nil {
+	if targetEndpoint, err = db.GetEndpointByIpAndType(targetNodeIp, "host"); err != nil {
 		return
 	}
 	if targetEndpoint == nil {

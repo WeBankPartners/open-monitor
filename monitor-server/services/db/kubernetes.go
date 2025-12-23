@@ -718,6 +718,44 @@ func GetKubernetesEndpointRelByPodGuid(podGuid string) (*m.KubernetesEndpointRel
 	return kubernetesEndpointTables[0], nil
 }
 
+func GetKubernetesEndpointRelByPodName(podName string, kubernetesId int) (*m.KubernetesEndpointRelTable, error) {
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	// 先根据 podName 查询 endpoint_new 表，找到对应的 endpoint_guid
+	var endpointNewList []*m.EndpointNewTable
+	err := x.SQL("select * from endpoint_new where name=? and monitor_type='pod'", podName).Find(&endpointNewList)
+	if err != nil {
+		return nil, err
+	}
+	if len(endpointNewList) == 0 {
+		return nil, nil
+	}
+	// 根据 endpoint_guid 和 kubernetes_id 查询 kubernetes_endpoint_rel
+	endpointGuidList := make([]string, 0)
+	for _, endpoint := range endpointNewList {
+		endpointGuidList = append(endpointGuidList, endpoint.Guid)
+	}
+	if len(endpointGuidList) == 0 {
+		return nil, nil
+	}
+	// 使用 createListParams 安全地构建 IN 子句
+	endpointGuidFilterSql, endpointGuidFilterParam := createListParams(endpointGuidList, "")
+	params := append([]interface{}{kubernetesId}, endpointGuidFilterParam...)
+	err = x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid in ("+endpointGuidFilterSql+")", params...).Find(&kubernetesEndpointTables)
+	if err != nil {
+		return nil, err
+	}
+	if len(kubernetesEndpointTables) <= 0 {
+		return nil, nil
+	}
+	return kubernetesEndpointTables[0], nil
+}
+
+func UpdateKubernetesPodEndpointNew(endpointGuid, serviceIp, extendParam string) error {
+	nowTime := time.Now().Format(m.DatetimeFormat)
+	_, err := x.Exec("update endpoint_new set ip=?,extend_param=?,update_time=?,update_user=? where guid=?", serviceIp, extendParam, nowTime, "system", endpointGuid)
+	return err
+}
+
 func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (err error) {
 	_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", kubernetesId, endpointGuid, podGuid, "default")
 	return
