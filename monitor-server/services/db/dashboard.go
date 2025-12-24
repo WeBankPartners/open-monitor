@@ -233,12 +233,7 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 						if tagObj.Equal == "notin" {
 							tmpEqual = "!~"
 						}
-						// 转义标签值中的特殊字符（如+号），避免被当作正则表达式特殊字符
-						escapedTagValues := make([]string, len(tagObj.TagValue))
-						for i, v := range tagObj.TagValue {
-							escapedTagValues[i] = regexp.QuoteMeta(v)
-						}
-						promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(escapedTagValues, "|")+"\"", -1)
+						promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 					}
 				}
 			}
@@ -263,9 +258,7 @@ func getTagPromQl(tagObj *m.TagDto, originPromQl string) (promQl string) {
 			tmpEqual = "!~"
 		}
 		for i, tagValue := range tagObj.TagValue {
-			// 转义标签值中的特殊字符（如+号），避免被当作正则表达式特殊字符
-			escapedTagValue := regexp.QuoteMeta(tagValue)
-			tagObj.TagValue[i] = fmt.Sprintf(".*%s=%s.*", tagObj.TagName, escapedTagValue)
+			tagObj.TagValue[i] = fmt.Sprintf(".*%s=%s.*", tagObj.TagName, tagValue)
 		}
 		promQl = strings.Replace(originPromQl, "=\"$t_tags\"", tmpEqual+"\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
 	}
