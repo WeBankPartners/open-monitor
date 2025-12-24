@@ -753,6 +753,10 @@ func calcLogMetricData() {
 	logMetricHttpLock.RLock()
 	if len(logMetricMonitorJobs) == 0 {
 		logMetricHttpLock.RUnlock()
+		// 当配置为空时，清空结果列表（参考 monitor_process_linux.go 的做法）
+		logMetricMonitorMetricLock.Lock()
+		logMetricMonitorMetrics = []*logMetricDisplayObj{}
+		logMetricMonitorMetricLock.Unlock()
 		return
 	}
 	nowTimeUnix := time.Now().Unix()
