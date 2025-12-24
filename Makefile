@@ -91,5 +91,4 @@ build_monitor_server:
 build_monitor_server_arm64:
 	rm -rf monitor-server/monitor-server
 	chmod +x ./build/*.sh
-	docker rm -f build_monitor_server_arm64 || true
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server --platform linux/arm64 ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.24.6-arm64 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
