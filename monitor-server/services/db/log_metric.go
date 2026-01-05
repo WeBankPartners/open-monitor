@@ -555,7 +555,8 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 	}
 	if metric == "req_fail_count" {
 		// 失败数：直接统计 retcode!="success" 的请求数. 失败数=总数-成功数,当接口一开始只有失败请求时候,图表数据出不来
-		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\",retcode!=\"%s\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		// 去掉 retcode 分组，将所有 retcode!="success" 的数据合并为一条
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\",retcode!=\"%s\"}) by (key,agg,service_group,code)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {

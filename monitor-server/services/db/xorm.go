@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	x               *xorm.Engine
-	archiveMysql    *xorm.Engine
-	archiveDatabase string
-	ArchiveEnable   bool
+	x                 *xorm.Engine
+	archiveMysql      *xorm.Engine
+	archiveDatabase   string
+	ArchiveEnable     bool
+	ReadArchiveEnable bool
 )
 
 //var RedisStore sessions.RedisStore
@@ -66,10 +67,16 @@ func InitDatabase() error {
 	x = engine
 	log.Info(nil, log.LOGGER_APP, "Success init database connect !!")
 	tmpEnable := strings.ToLower(models.Config().ArchiveMysql.Enable)
+	tmpReadEnable := strings.ToLower(models.Config().ArchiveMysql.ReadEnable)
 	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
 		initArchiveDbEngine()
 	} else {
 		ArchiveEnable = false
+	}
+	if tmpReadEnable == "y" || tmpReadEnable == "yes" || tmpReadEnable == "true" {
+		ReadArchiveEnable = true
+	} else {
+		ReadArchiveEnable = false
 	}
 	return nil
 }
