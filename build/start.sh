@@ -26,6 +26,7 @@ sed -i "s~{{MONITOR_DB_HOST}}~$MONITOR_DB_HOST~g" archive_mysql_tool/default.jso
 sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_DB_USER}}~$MONITOR_DB_USER~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_DB_SCHEMA}}~$MONITOR_DB_SCHEMA~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_ENABLE}}~$MONITOR_ARCHIVE_ENABLE~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" archive_mysql_tool/default.json

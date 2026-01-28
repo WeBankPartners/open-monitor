@@ -46,7 +46,7 @@
       "port": "{{MONITOR_DB_PORT}}",
       "user": "{{MONITOR_DB_USER}}",
       "pwd": "{{MONITOR_DB_PWD}}",
-      "database": "monitor",
+      "database": "{{MONITOR_DB_SCHEMA}}",
       "maxOpen": 20,
       "maxIdle": 10,
       "timeout": 60

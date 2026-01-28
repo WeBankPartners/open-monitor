@@ -3,10 +3,11 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
-	"strings"
 )
 
 func GetBusinessList(endpointId int, ownerEndpoint string) (err error, pathList []*m.BusinessMonitorTable) {
@@ -280,7 +281,7 @@ func GetBusinessPromMetric(keys []string) (err error, result []*m.PromMetricTabl
 	if len(keys) == 0 {
 		return err, result
 	}
-	sql := "SELECT * FROM monitor.prom_metric where "
+	sql := "SELECT * FROM prom_metric where "
 	for i, v := range keys {
 		if v == "" {
 			continue
