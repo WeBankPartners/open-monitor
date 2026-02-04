@@ -172,6 +172,10 @@
                 <file source="node_exporter.tar.gz" toFile="node_exporter.tar.gz"/>
             </fileSet>
         </s3>
+        <!-- 多个持久化卷存储声明 -->
+        <volume name="agentmanager" size="500Mi" mountPath="/app/monitor/agent_manager"/>
+        <volume name="alertmanager" size="500Mi" mountPath="/app/monitor/alertmanager"/>
+        <volume name="prometheus" size="500Gi" mountPath="/app/monitor/prometheus"/>
     </resourceDependencies>
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
