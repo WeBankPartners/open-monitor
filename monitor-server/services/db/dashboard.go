@@ -962,7 +962,7 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 				continue
 			}
 		}
-		if i == len(v)-1 {
+		if i == len(dateList)-1 {
 			tmpEnd = query.End
 		} else {
 			tmpT, err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, v))

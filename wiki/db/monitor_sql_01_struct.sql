@@ -1,6 +1,3 @@
-create database if not exists `monitor`;
-USE `monitor`;
-
 DROP TABLE IF EXISTS `button`;
 
 CREATE TABLE `button` (
