@@ -492,8 +492,7 @@ CREATE TABLE `alarm_strategy` (
   `notify_enable` tinyint default 1,
   `notify_delay_second` int default 0,
   `update_time` varchar(32),
-  KEY `idx_strategy_endpoint_group` (`endpoint_group`),
-  KEY `idx_strategy_metric` (`metric`)
+  KEY `idx_strategy_endpoint_group` (`endpoint_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `notify` (
@@ -537,7 +536,6 @@ CREATE TABLE `sys_parameter` (
   `param_key` varchar(64) NOT NULL,
   `param_value` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
-alter table alarm_strategy drop strategy_metric;
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_01','metric_template','{"name":"custom","prom_ql":"$a","param":"$a"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_02','metric_template','{"name":"percent01","prom_ql":"100*(sum($a)/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03','metric_template','{"name":"percent02","prom_ql":"100*(1-(sum($a)/(sum($b) > 0) or vector(0)))","param":"$a,$b"}');

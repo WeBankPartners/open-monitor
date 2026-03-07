@@ -492,8 +492,7 @@ CREATE TABLE `alarm_strategy` (
   `notify_enable` tinyint default 1,
   `notify_delay_second` int default 0,
   `update_time` varchar(32),
-  KEY `idx_strategy_endpoint_group` (`endpoint_group`),
-  KEY `idx_strategy_metric` (`metric`)
+  KEY `idx_strategy_endpoint_group` (`endpoint_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `notify` (
