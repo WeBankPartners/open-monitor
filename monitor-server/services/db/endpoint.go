@@ -245,6 +245,11 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 	return err
 }
 
+func UpdateEndpointOsType(guid, osType string) (err error) {
+	_, err = x.Exec("update endpoint set os_type=? where guid=?", osType, guid)
+	return
+}
+
 func UpdateEndpointData(oldEndpoint, endpoint *models.EndpointNewTable, operator string) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
@@ -272,15 +277,6 @@ func UpdateEndpointData(oldEndpoint, endpoint *models.EndpointNewTable, operator
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
 	}
-	//if err != nil {
-	//	err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
-	//} else {
-	//	if endpoint.AgentAddress != endpoint.EndpointAddress {
-	//		x.Exec("update endpoint set address_agent=?,address=?,step=? where guid=?", endpoint.AgentAddress, endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
-	//	} else {
-	//		x.Exec("update endpoint set address=?,step=? where guid=?", endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
-	//	}
-	//}
 	return
 }
 
@@ -290,5 +286,15 @@ func GetProcessByHostEndpoint(hostIp string) (processEndpoints []*models.Endpoin
 	if err != nil {
 		err = fmt.Errorf("query endpoint with process ip fail,%s ", err.Error())
 	}
+	return
+}
+
+func GetEndpointByIpAndType(ip, monitorType string) (endpoint *models.EndpointNewTable, err error) {
+	var endpointList []*models.EndpointNewTable
+	err = x.SQL("select * from endpoint_new where monitor_type=? and ip=?", monitorType, ip).Find(&endpointList)
+	if len(endpointList) == 0 {
+		return nil, nil
+	}
+	endpoint = endpointList[0]
 	return
 }

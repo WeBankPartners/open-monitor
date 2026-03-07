@@ -269,6 +269,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/strategy/export/:queryType/:guid", Method: http.MethodGet, HandlerFunc: alarmv2.ExportAlarmStrategy, ApiCode: "alarm_strategy_export_by_query_type_and_guid"},
 		&handlerFuncObj{Url: "/alarm/strategy/import/:queryType/:guid", Method: http.MethodPost, HandlerFunc: alarmv2.ImportAlarmStrategy, ApiCode: "alarm_strategy_import_by_query_type_and_guid"},
 		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodGet, HandlerFunc: monitor.ListEndpoint, ApiCode: "monitor_endpoint_query"},
+		&handlerFuncObj{Url: "/monitor/kubernetes/cluster/list", Method: http.MethodGet, HandlerFunc: agent.ListKubernetesCluster, ApiCode: "monitor_kubernetes_cluster_query"},
 		&handlerFuncObj{Url: "/monitor/metric/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetric, ApiCode: "monitor_metric_list"},
 		&handlerFuncObj{Url: "/monitor/metric/list/count", Method: http.MethodGet, HandlerFunc: monitor.ListMetricCount, ApiCode: "monitor_metric_list_count"},
 		&handlerFuncObj{Url: "/monitor/metric_comparison/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetricComparison, ApiCode: "monitor_metric_comparison_list"},

@@ -115,7 +115,7 @@ export default {
             value: 'ip',
             placeholder: 'm_tips_required',
             v_validate: 'required:true|isIP',
-            disabled: false,
+            disabled: true,
             type: 'text'
           },
           {
@@ -123,7 +123,7 @@ export default {
             value: 'port',
             placeholder: 'm_tips_required',
             v_validate: 'required:true',
-            disabled: false,
+            disabled: true,
             type: 'text'
           },
           {

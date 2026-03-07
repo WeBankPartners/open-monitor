@@ -22,6 +22,9 @@ import (
 // 系统内置 指标阈值-组 ,& old_1~old_20
 var systemAlarmStrategyIds = []string{"new_host_ping_loss", "new_ping_ping_loss", "old_process_group"}
 
+// Kubernetes cadvisor job 名称前缀
+const k8sCadvisorJobPrefix = "k8s-cadvisor-"
+
 func QueryAlarmStrategyByGroup(endpointGroup, alarmName, show, operator string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var strategy []*models.GroupStrategyObj
@@ -581,8 +584,8 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 		}
 	}
 	for _, cluster := range clusterList {
-		guidExpr, addressExpr, ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
-		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, copyStrategyListNew(strategyList))
+		guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
+		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr, copyStrategyListNew(strategyList))
 		if cluster == "default" || cluster == "" {
 			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{WithoutReloadConfig: withoutReloadConfig, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 		} else {
@@ -593,7 +596,7 @@ func SyncPrometheusRuleFile(endpointGroup string, withoutReloadConfig bool) erro
 			}
 		}
 		for _, monitorEngineStrategy := range monitorEngineStrategyList {
-			buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, monitorEngineStrategy)
+			buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr, monitorEngineStrategy)
 			UpdateAlarmStrategyMetricExpr(monitorEngineStrategy)
 		}
 	}
@@ -718,11 +721,23 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result, monitorEngineStr
 	return
 }
 
-func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr string) {
+func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr string) {
+	clusterNameMap := make(map[string]bool)
 	for _, endpoint := range endpointList {
 		addressExpr += endpoint.AgentAddress + "|"
 		guidExpr += endpoint.Guid + "|"
 		ipExpr += endpoint.Ip + "|"
+		if endpoint.Name != "" {
+			podExpr += endpoint.Name + "|"
+		}
+		// 收集集群名（对于 pod 类型，从 endpoint 表的 os_type 字段读取集群名）
+		if endpoint.MonitorType == "pod" {
+			var endpointTable []*models.EndpointTable
+			x.SQL("select os_type from endpoint where guid=?", endpoint.Guid).Find(&endpointTable)
+			if len(endpointTable) > 0 && endpointTable[0].OsType != "" {
+				clusterNameMap[endpointTable[0].OsType] = true
+			}
+		}
 	}
 	if addressExpr != "" {
 		addressExpr = addressExpr[:len(addressExpr)-1]
@@ -733,10 +748,21 @@ func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr,
 	if ipExpr != "" {
 		ipExpr = ipExpr[:len(ipExpr)-1]
 	}
+	if podExpr != "" {
+		podExpr = podExpr[:len(podExpr)-1]
+	}
+	// 构建集群名表达式
+	var clusterNameList []string
+	for clusterName := range clusterNameMap {
+		clusterNameList = append(clusterNameList, clusterName)
+	}
+	if len(clusterNameList) > 0 {
+		clusterNameExpr = strings.Join(clusterNameList, "|")
+	}
 	return
 }
 
-func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string, strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
+func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr string, strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
 	result := models.RFGroup{Name: ruleFileName}
 	if len(strategyList) == 0 {
 		return result
@@ -755,7 +781,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.Condition = strategy.Condition[:1] + " " + strategy.Condition[1:]
 			}
 		}
-		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, strategy)
+		buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr, strategy)
 		if strategy.MetricExpr == "" {
 			log.Warn(nil, log.LOGGER_APP, "metric expr empty", zap.String("alertId", tmpRfu.Alert))
 			continue
@@ -771,7 +797,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 	return result
 }
 
-func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *models.AlarmStrategyMetricObj) {
+func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr, podExpr, clusterNameExpr string, strategy *models.AlarmStrategyMetricObj) {
 	if strings.Contains(strategy.MetricExpr, "$address") {
 		if strings.Contains(addressExpr, "|") {
 			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
@@ -797,6 +823,48 @@ func buildStrategyAlarmRuleExpr(guidExpr, addressExpr, ipExpr string, strategy *
 			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
 		} else {
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$pod") {
+		if podExpr != "" {
+			// 总是使用正则表达式匹配，即使只有一个 pod，保持与 process 类型一致
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$pod\"", "=~\""+podExpr+"\"", -1)
+		} else {
+			// 如果没有 pod 列表，使用通配符匹配所有 pod
+			strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$pod\"", "=~\".*\"", -1)
+		}
+	}
+	if strings.Contains(strategy.MetricExpr, "$k8s_cluster") {
+		if clusterNameExpr != "" {
+			// 使用正则表达式匹配多个集群名，保持与 $pod 处理方式一致
+			// 处理 job="k8s-cadvisor-$k8s_cluster" 这种情况
+			jobPattern := fmt.Sprintf("=\"%s$k8s_cluster\"", k8sCadvisorJobPrefix)
+			if strings.Contains(strategy.MetricExpr, jobPattern) {
+				// 构建 job 表达式：k8s-cadvisor-cluster1|k8s-cadvisor-cluster2
+				clusterNames := strings.Split(clusterNameExpr, "|")
+				jobExprList := make([]string, len(clusterNames))
+				for i, name := range clusterNames {
+					jobExprList[i] = k8sCadvisorJobPrefix + name
+				}
+				jobExpr := strings.Join(jobExprList, "|")
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, jobPattern, "=~\""+jobExpr+"\"", -1)
+			}
+			// 处理其他包含 $k8s_cluster 的情况（如 ="$k8s_cluster"）
+			if strings.Contains(strategy.MetricExpr, "=\"$k8s_cluster\"") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$k8s_cluster\"", "=~\""+clusterNameExpr+"\"", -1)
+			}
+			// 处理剩余的 $k8s_cluster（不在引号内的）
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", clusterNameExpr)
+		} else {
+			// 如果没有集群名，使用通配符匹配所有
+			jobPattern := fmt.Sprintf("=\"%s$k8s_cluster\"", k8sCadvisorJobPrefix)
+			if strings.Contains(strategy.MetricExpr, jobPattern) {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, jobPattern, "=~\".*\"", -1)
+			}
+			if strings.Contains(strategy.MetricExpr, "=\"$k8s_cluster\"") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$k8s_cluster\"", "=~\".*\"", -1)
+			}
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$k8s_cluster", ".*")
 		}
 	}
 	if len(strategy.Tags) > 0 {

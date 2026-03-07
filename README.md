@@ -78,6 +78,10 @@ WeCube通过Open-Monitor监控插件来对资源以及应用的监控及告警�
 - 监控数据归档
 
     提供程序自动归档监控数据到mysql中，自动管理分库分表，图表读取适配多处数据整合
+
+    **部署建议：** `archive_mysql_tool` 建议在监控集群中单独挑选 1 台（或 1 主 1 备）服务器启用归档任务，其它节点保持 `enable=false`。这样可以避免多机重复归档导致的重复写入和锁竞争，只需确保该节点能访问 Prometheus 与归档 MySQL，即可为所有监控实例统一落库。
+
+    **配置注意：** 若有多台 `monitor-server` 访问同一归档库，务必确认 `monitor-server/conf/default.json`（以及编排模版 `build/conf/monitor.json`）里的 `archive_mysql.maxOpen/maxIdle` 使用驼峰命名，并结合系统变量设置连接池上限，未配置时系统会回落到 `maxOpen=80 / maxIdle=10 / timeout=60` 的默认值，避免连接池失控。
     
 
 ## 主要功能

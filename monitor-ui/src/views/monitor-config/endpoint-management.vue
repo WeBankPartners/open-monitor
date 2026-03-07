@@ -208,8 +208,8 @@
         </template>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
           <label class="col-md-2 label-name">{{$t('m_cluster')}}:</label>
-          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="isReviewMode" style="width: 513px">
-            <Option v-for="item in endpointRejectModel.clusterList" :value="item.id" :key="item.id">
+          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="!endpointRejectModel.isAdd || isReviewMode" style="width: 513px">
+            <Option v-for="item in endpointRejectModel.clusterList" :value="item.cluster_name" :key="item.id">
               {{item.cluster_name}}
             </Option>
           </Select>
@@ -217,10 +217,10 @@
           <label v-show="veeErrors.has('kubernetes_cluster')" class="is-danger">{{ veeErrors.first('kubernetes_cluster')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
-          <label class="col-md-2 label-name">{{$t('m_pod_name')}}:</label>
-          <input v-validate="'required'" v-model="endpointRejectModel.addRow.pod_name" :disabled="isReviewMode" name="pod_name" :class="{'red-border': veeErrors.has('pod_name')}" type="text" class="col-md-9 form-control model-input c-dark" />
+          <label class="col-md-2 label-name">Node IP:</label>
+          <input v-validate="'required'" placeholder="node ip" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.node_ip" name="node_ip" :class="{'red-border': veeErrors.has('node_ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('pod_name')" class="is-danger">{{ veeErrors.first('pod_name')}}</label>
+          <label v-show="veeErrors.has('node_ip')" class="is-danger">{{ veeErrors.first('node_ip')}}</label>
         </div>
       </div>
     </ModalComponent>
@@ -569,7 +569,7 @@ export default {
           process_name: '',
           tags: '',
           kubernetes_cluster: null,
-          pod_name: ''
+          node_ip: null
         },
         v_select_configs: {
           proxy_exporter: []
@@ -785,7 +785,7 @@ export default {
   },
   computed: {
     disabledIp() {
-      if (['process', 'host'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
+      if (['process', 'host', 'pod'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
         return true
       }
       return false
@@ -857,9 +857,12 @@ export default {
         const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
         this.systemType = obj.systemType
         // 如果类型是pod，加载集群列表
-        // if (this.endpointRejectModel.addRow.type === 'pod') {
-        //   this.getClusterList()
-        // }
+        if (this.endpointRejectModel.addRow.type === 'pod') {
+          this.getClusterList()
+        }
+        if (['snmp', 'pod'].includes(this.endpointRejectModel.addRow.type)) {
+          this.endpointRejectModel.supportStep = false
+        }
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -940,9 +943,11 @@ export default {
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
       })
-
     },
-    typeChange(type) {
+    async typeChange(type) {
+      // 解决切换类型时，表单验证不生效的问题
+      await this.$nextTick()
+      this.$validator.reset()
       const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
       this.systemType = obj.systemType
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
@@ -958,7 +963,7 @@ export default {
         url: '',
         exporter_type: '',
         kubernetes_cluster: null,
-        pod_name: ''
+        node_ip: null
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
         this.endpointRejectModel.addRow.step = 30
@@ -970,7 +975,7 @@ export default {
         java: 9151,
         windows: 9182
       }
-      this.endpointRejectModel.addRow.port = typeToPort[type]
+      this.endpointRejectModel.addRow.port = typeToPort[type] || null
       const proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
       proxy_exporter.hide = true
       this.endpointRejectModel.supportStep = true
