@@ -545,9 +545,6 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05
 #@v1.13.0.6-end@;
 
 #@v1.13.0.18-begin@;
-alter table service_group drop service_group_parent;
-alter table log_metric_monitor drop log_monitor_service_group;
-alter table db_metric_monitor drop db_monitor_service_group;
 alter table metric add column log_metric_monitor varchar(64);
 alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
@@ -611,7 +608,6 @@ CREATE TABLE `log_keyword_endpoint_rel` (
 alter table metric drop column log_metric_monitor;
 alter table metric drop column db_metric_monitor;
 alter table metric add column service_group varchar(64);
-alter table metric drop metric_monitor_type;
 alter table panel add column service_group varchar(64) default null;
 alter table metric add column workspace varchar(16) default 'any_object';
 delete from sys_parameter;
@@ -833,7 +829,6 @@ alter table log_metric_string_map add column `value_type` varchar(64) DEFAULT NU
 insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,create_time,update_user,update_time) select concat('lmg_',guid),display_name,'custom',log_metric_monitor,'old_data',now(),'old_data',now() from log_metric_config where log_metric_json is null;
 insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'old_data',now() from log_metric_config where log_metric_json is null;
 update log_metric_config set log_metric_group=concat('lmg_',guid),log_param_name=metric,update_user='old_data' where log_metric_group is null and log_metric_json is null;
-ALTER TABLE log_metric_string_map DROP log_monitor_string_config;
 alter table log_metric_group add column metric_prefix_code varchar(64) default null comment '指标前缀';
 #@v2.0.7.1-end@;
 
