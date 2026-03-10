@@ -62,7 +62,11 @@ COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 # Check if binaries exist in base image directories and copy them to tmp directories
 RUN if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus $PROMETHEUS_TMP/; fi && \
     if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool $PROMETHEUS_TMP/; fi && \
-    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $ALERTMANAGER_TMP/; fi
+    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $ALERTMANAGER_TMP/; fi && \
+    # Remove original directories to avoid duplicated contents in image layers.
+    # Keep only *_tmp as the single source of truth; runtime will copy into PV-mounted dirs.
+    rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
+    mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
 # Set execute permissions (only for files that exist)
 RUN [ -f $PROMETHEUS_TMP/prometheus ] && chmod +x $PROMETHEUS_TMP/prometheus || true && \
