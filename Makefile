@@ -38,7 +38,7 @@ build_arm64: clean build_monitor_server_arm64
 	./build/build-ui.sh $(current_dir)
 
 image: build
-	docker build -t $(project_name):$(version) .
+	docker build --squash -t $(project_name):$(version) .
 
 image_arm64: build_arm64
 	docker buildx build -f Dockerfile-arm64 --platform linux/arm64 --load -t $(project_name):$(version) .
