@@ -17,13 +17,12 @@ ENV DAEMON_PROC=$BASE_HOME/daemon_proc
 ENV METRIC_COMPARISON_EXPORTER=$BASE_HOME/metric_comparison_exporter
 
 # 为 prometheus、alertmanager 和 agent_manager 创建临时目录
-# 使用不会被 PV 挂载的备份位置来存储二进制文件
+# 临时目录用于存储所有文件（包括基础镜像中的二进制文件），避免与 PV 挂载冲突
 ENV PROMETHEUS_TMP=$BASE_HOME/prometheus_tmp
 ENV ALERTMANAGER_TMP=$BASE_HOME/alertmanager_tmp
 ENV AGENT_MANAGER_TMP=$BASE_HOME/agent_manager_tmp
-ENV BIN_BACKUP=$BASE_HOME/.bin_backup
 
-RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/token $ALERTMANAGER_TMP $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_TMP $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $METRIC_COMPARISON_EXPORTER/config $BIN_BACKUP
+RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/token $ALERTMANAGER_TMP $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_TMP $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $METRIC_COMPARISON_EXPORTER/config
 
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
@@ -60,17 +59,23 @@ COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARISON_EXPORTER/
 COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 
-# 从基础镜像复制二进制文件到备份位置（不会被 PV 挂载）
-# 这避免了镜像层中的重复，同时确保 PV 挂载后二进制文件仍然可用
-RUN if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus $BIN_BACKUP/prometheus; fi && \
-    if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool $BIN_BACKUP/promtool; fi && \
-    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $BIN_BACKUP/alertmanager; fi && \
-    # 现在删除原始目录以避免重复（备份位置已有二进制文件）
+# 从基础镜像复制所有内容到临时目录，然后删除原始目录
+# 这样避免在镜像层中同时存在两份内容，减少镜像体积
+RUN if [ -d "$PROMETHEUS_HOME" ] && [ "$(ls -A $PROMETHEUS_HOME 2>/dev/null)" ]; then \
+        cp -rf $PROMETHEUS_HOME/* $PROMETHEUS_TMP/ 2>/dev/null || true; \
+    fi && \
+    if [ -d "$ALERTMANAGER_HOME" ] && [ "$(ls -A $ALERTMANAGER_HOME 2>/dev/null)" ]; then \
+        cp -rf $ALERTMANAGER_HOME/* $ALERTMANAGER_TMP/ 2>/dev/null || true; \
+    fi && \
+    if [ -d "$AGENT_MANAGER_HOME" ] && [ "$(ls -A $AGENT_MANAGER_HOME 2>/dev/null)" ]; then \
+        cp -rf $AGENT_MANAGER_HOME/* $AGENT_MANAGER_TMP/ 2>/dev/null || true; \
+    fi && \
+    # 删除原始目录，避免重复（所有内容已在临时目录中）
     rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
     mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
 # 设置执行权限
-RUN chmod +x $BIN_BACKUP/prometheus $BIN_BACKUP/promtool $BIN_BACKUP/alertmanager 2>/dev/null || true && \
+RUN chmod +x $PROMETHEUS_TMP/prometheus $PROMETHEUS_TMP/promtool $ALERTMANAGER_TMP/alertmanager 2>/dev/null || true && \
     chmod +x $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
 WORKDIR $BASE_HOME
