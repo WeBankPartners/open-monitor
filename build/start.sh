@@ -109,12 +109,17 @@ fi
 
 if [ -n "$MONITOR_LOCAL_DNS_MAP" ]
 then
-  dns_map=${MONITOR_LOCAL_DNS_MAP}
-  set ${dns_map//,/ }
-  for v in "$@"
-  do
-    echo "${v//=/ }" >> /etc/hosts
-  done
+  # 非 root 用户无法写 /etc/hosts；在 k8s 里建议用 hostAliases / dnsConfig 来实现
+  if [ "$(id -u 2>/dev/null)" = "0" ]; then
+    dns_map=${MONITOR_LOCAL_DNS_MAP}
+    set ${dns_map//,/ }
+    for v in "$@"
+    do
+      echo "${v//=/ }" >> /etc/hosts
+    done
+  else
+    echo "WARN: 当前非root用户运行，跳过写入 /etc/hosts。请用 k8s hostAliases/dnsConfig 配置：MONITOR_LOCAL_DNS_MAP=$MONITOR_LOCAL_DNS_MAP"
+  fi
 fi
 
 archive_day="30d"

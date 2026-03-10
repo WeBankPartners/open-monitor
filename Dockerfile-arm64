@@ -78,6 +78,15 @@ RUN if [ -d "$PROMETHEUS_HOME" ] && [ "$(ls -A $PROMETHEUS_HOME 2>/dev/null)" ];
 RUN chmod +x $PROMETHEUS_TMP/prometheus $PROMETHEUS_TMP/promtool $ALERTMANAGER_TMP/alertmanager 2>/dev/null || true && \
     chmod +x $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
+# 安全基线：禁止容器内以 root 运行进程，创建专用用户并切换
+# 注意：如需写 /etc/hosts，请在 k8s 侧用 hostAliases/dnsConfig 配置
+RUN (getent group monitor >/dev/null 2>&1 || groupadd -g 10001 monitor) && \
+    (id -u monitor >/dev/null 2>&1 || useradd -u 10001 -g monitor -s /sbin/nologin -M monitor) && \
+    mkdir -p $BASE_HOME $AGENT_MANAGER_DEPLOY && \
+    chown -R monitor:monitor $BASE_HOME $AGENT_MANAGER_DEPLOY
+
+USER monitor
+
 WORKDIR $BASE_HOME
 
 ENTRYPOINT ["/bin/sh", "start.sh"]
