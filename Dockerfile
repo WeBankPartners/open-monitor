@@ -16,8 +16,8 @@ ENV DB_DATA_EXPORTER=$BASE_HOME/db_data_exporter
 ENV DAEMON_PROC=$BASE_HOME/daemon_proc
 ENV METRIC_COMPARISON_EXPORTER=$BASE_HOME/metric_comparison_exporter
 
-# Create tmp directories for prometheus, alertmanager, and agent_manager
-# Use a backup location that won't be mounted by PV to store binaries
+# 为 prometheus、alertmanager 和 agent_manager 创建临时目录
+# 使用不会被 PV 挂载的备份位置来存储二进制文件
 ENV PROMETHEUS_TMP=$BASE_HOME/prometheus_tmp
 ENV ALERTMANAGER_TMP=$BASE_HOME/alertmanager_tmp
 ENV AGENT_MANAGER_TMP=$BASE_HOME/agent_manager_tmp
@@ -27,7 +27,7 @@ RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/to
 
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
-# Copy prometheus files to tmp directory
+# 复制 prometheus 文件到临时目录
 COPY build/conf/prometheus.yml $PROMETHEUS_TMP/
 COPY build/conf/kubernetes_prometheus.tpl $PROMETHEUS_TMP/
 COPY build/conf/snmp_prometheus.tpl $PROMETHEUS_TMP/
@@ -35,13 +35,13 @@ COPY build/conf/remote_write_prometheus.tpl $PROMETHEUS_TMP/
 COPY build/conf/prometheus.yml $PROMETHEUS_TMP/prometheus_tpl.yml
 COPY build/conf/sd_file $PROMETHEUS_TMP/sd_file
 COPY build/conf/base.yml $PROMETHEUS_TMP/
-# Copy alertmanager files to tmp directory
+# 复制 alertmanager 文件到临时目录
 COPY build/conf/alertmanager.yml $ALERTMANAGER_TMP/
-# Copy agent_manager files to tmp directory
+# 复制 agent_manager 文件到临时目录
 COPY monitor-agent/agent_manager/agent_manager $AGENT_MANAGER_TMP/
 COPY monitor-agent/agent_manager/exporters.tar.gz $AGENT_MANAGER_TMP/
 COPY build/conf/agent_manager.json $AGENT_MANAGER_TMP/conf.json
-# Copy other files (not affected by persistent volumes)
+# 复制其他文件（不受持久化卷影响）
 COPY monitor-server/monitor-server $MONITOR_HOME/
 COPY build/conf/monitor.json $MONITOR_HOME/conf/default.json
 COPY monitor-server/conf/i18n $MONITOR_HOME/conf/i18n
@@ -60,16 +60,16 @@ COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARISON_EXPORTER/
 COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 
-# Copy binaries from base image to backup location (not mounted by PV)
-# This avoids duplication in image layers while ensuring binaries are available after PV mount
+# 从基础镜像复制二进制文件到备份位置（不会被 PV 挂载）
+# 这避免了镜像层中的重复，同时确保 PV 挂载后二进制文件仍然可用
 RUN if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus $BIN_BACKUP/prometheus; fi && \
     if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool $BIN_BACKUP/promtool; fi && \
     if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $BIN_BACKUP/alertmanager; fi && \
-    # Now remove original directories to avoid duplication (backup has the binaries)
+    # 现在删除原始目录以避免重复（备份位置已有二进制文件）
     rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
     mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
-# Set execute permissions
+# 设置执行权限
 RUN chmod +x $BIN_BACKUP/prometheus $BIN_BACKUP/promtool $BIN_BACKUP/alertmanager 2>/dev/null || true && \
     chmod +x $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
