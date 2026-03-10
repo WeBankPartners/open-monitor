@@ -17,11 +17,13 @@ ENV DAEMON_PROC=$BASE_HOME/daemon_proc
 ENV METRIC_COMPARISON_EXPORTER=$BASE_HOME/metric_comparison_exporter
 
 # Create tmp directories for prometheus, alertmanager, and agent_manager
+# Use a backup location that won't be mounted by PV to store binaries
 ENV PROMETHEUS_TMP=$BASE_HOME/prometheus_tmp
 ENV ALERTMANAGER_TMP=$BASE_HOME/alertmanager_tmp
 ENV AGENT_MANAGER_TMP=$BASE_HOME/agent_manager_tmp
+ENV BIN_BACKUP=$BASE_HOME/.bin_backup
 
-RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/token $ALERTMANAGER_TMP $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_TMP $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $METRIC_COMPARISON_EXPORTER/config
+RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/token $ALERTMANAGER_TMP $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_TMP $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $METRIC_COMPARISON_EXPORTER/config $BIN_BACKUP
 
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
@@ -58,20 +60,17 @@ COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARISON_EXPORTER/
 COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 
-# Copy binaries from base image to tmp directories (base image has prometheus and alertmanager binaries)
-# Check if binaries exist in base image directories and copy them to tmp directories
-RUN if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus $PROMETHEUS_TMP/; fi && \
-    if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool $PROMETHEUS_TMP/; fi && \
-    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $ALERTMANAGER_TMP/; fi && \
-    # Remove original directories to avoid duplicated contents in image layers.
-    # Keep only *_tmp as the single source of truth; runtime will copy into PV-mounted dirs.
+# Copy binaries from base image to backup location (not mounted by PV)
+# This avoids duplication in image layers while ensuring binaries are available after PV mount
+RUN if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus $BIN_BACKUP/prometheus; fi && \
+    if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool $BIN_BACKUP/promtool; fi && \
+    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager $BIN_BACKUP/alertmanager; fi && \
+    # Now remove original directories to avoid duplication (backup has the binaries)
     rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
     mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
-# Set execute permissions (only for files that exist)
-RUN [ -f $PROMETHEUS_TMP/prometheus ] && chmod +x $PROMETHEUS_TMP/prometheus || true && \
-    [ -f $PROMETHEUS_TMP/promtool ] && chmod +x $PROMETHEUS_TMP/promtool || true && \
-    [ -f $ALERTMANAGER_TMP/alertmanager ] && chmod +x $ALERTMANAGER_TMP/alertmanager || true && \
+# Set execute permissions
+RUN chmod +x $BIN_BACKUP/prometheus $BIN_BACKUP/promtool $BIN_BACKUP/alertmanager 2>/dev/null || true && \
     chmod +x $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
 WORKDIR $BASE_HOME

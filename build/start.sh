@@ -7,20 +7,34 @@ echo "start run"
 # Must be done before sed replacements to ensure files exist
 echo "Copying files from tmp directories to target directories..."
 
-# Copy prometheus files
+# Copy prometheus files (configs from tmp, binaries from backup)
 if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tmp 2>/dev/null)" ]; then
   echo "Copying prometheus files from prometheus_tmp to prometheus..."
   mkdir -p /app/monitor/prometheus
   cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/ 2>/dev/null || true
+  # Copy binaries from backup location (not mounted by PV)
+  if [ -f "/app/monitor/.bin_backup/prometheus" ]; then
+    cp /app/monitor/.bin_backup/prometheus /app/monitor/prometheus/ 2>/dev/null || true
+    chmod +x /app/monitor/prometheus/prometheus 2>/dev/null || true
+  fi
+  if [ -f "/app/monitor/.bin_backup/promtool" ]; then
+    cp /app/monitor/.bin_backup/promtool /app/monitor/prometheus/ 2>/dev/null || true
+    chmod +x /app/monitor/prometheus/promtool 2>/dev/null || true
+  fi
   # Remove tmp directory after copy to save space
   rm -rf /app/monitor/prometheus_tmp
 fi
 
-# Copy alertmanager files
+# Copy alertmanager files (configs from tmp, binaries from backup)
 if [ -d "/app/monitor/alertmanager_tmp" ] && [ "$(ls -A /app/monitor/alertmanager_tmp 2>/dev/null)" ]; then
   echo "Copying alertmanager files from alertmanager_tmp to alertmanager..."
   mkdir -p /app/monitor/alertmanager
   cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/ 2>/dev/null || true
+  # Copy binary from backup location
+  if [ -f "/app/monitor/.bin_backup/alertmanager" ]; then
+    cp /app/monitor/.bin_backup/alertmanager /app/monitor/alertmanager/ 2>/dev/null || true
+    chmod +x /app/monitor/alertmanager/alertmanager 2>/dev/null || true
+  fi
   # Remove tmp directory after copy to save space
   rm -rf /app/monitor/alertmanager_tmp
 fi
