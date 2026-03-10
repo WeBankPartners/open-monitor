@@ -130,6 +130,8 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 		rData = snmpExporterRegister(param)
 	case "process":
 		rData = processMonitorRegister(param)
+	case "pod":
+		rData = k8sPodRegister(param)
 	default:
 		rData = otherExporterRegister(param)
 	}
@@ -147,6 +149,20 @@ func AgentRegister(param m.RegisterParamNew, operator string) (validateMessage, 
 	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString, operator)
 	if err != nil {
 		return validateMessage, guid, err
+	}
+	// 设置pod类型与集群关联
+	if param.Type == "pod" {
+		// 查询集群名称是否存在
+		var k8sCluster *m.KubernetesClusterTable
+		if k8sCluster, err = db.GetKubernetesByName(param.KubernetesCluster); err != nil {
+			return validateMessage, guid, err
+		}
+		if k8sCluster == nil {
+			return validateMessage, guid, fmt.Errorf("agent register fail, cluster is not exist")
+		}
+		if err = db.AddKubernetesEndpointRel(k8sCluster.Id, guid, param.Name); err != nil {
+			return
+		}
 	}
 	if rData.fetchMetric {
 		if rData.storeMetric {
@@ -776,6 +792,36 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
+func k8sPodRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	result.endpoint.Step = param.Step
+	cleanName := strings.TrimSpace(param.Name)
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if strings.Contains(param.Type, "_") {
+		result.validateMessage = "ExporterType illegal "
+		return result
+	}
+	if param.Ip == "" {
+		result.validateMessage = "Default ip can not empty "
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", cleanName, param.Ip, param.Type)
+	result.endpoint.Name = cleanName
+	result.endpoint.Ip = param.Ip
+	result.endpoint.ExportType = param.Type
+	// osType 一定要设置为k8s集群名称,不然图表查询不到数据
+	result.endpoint.OsType = param.KubernetesCluster
+	result.extendParam.Enable = true
+	result.extendParam.NodeIp = param.NodeIp
+	result.agentManager = false
+	result.defaultGroup = "default_pod_group"
+	result.addDefaultGroup = true
+	return result
+}
+
 func otherExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = param.Step
@@ -806,11 +852,6 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
 		}
-		//result.endpoint.Step, err = calcStep(startTime, param.Step)
-		//if err != nil {
-		//	result.err = err
-		//	return result
-		//}
 		result.metricList = strList
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -819,6 +860,11 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.fetchMetric = true
+	if param.Type == "pod" {
+		result.extendParam.Enable = true
+		result.endpoint.Address = ""
+		result.fetchMetric = false
+	}
 	result.agentManager = false
 	return result
 }

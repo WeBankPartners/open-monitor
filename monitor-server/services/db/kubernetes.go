@@ -1,12 +1,18 @@
 package db
 
 import (
+	"context"
+	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -25,7 +31,19 @@ func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTab
 }
 
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
-	_, err := x.Exec("insert into kubernetes_cluster(cluster_name,api_server,token,create_at) value (?,?,?,'"+time.Now().Format(m.DatetimeFormat)+"')", param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), param.Token)
+	plainToken, err := getPlainTokenForVerify(param)
+	if err != nil {
+		return err
+	}
+	if err = verifyKubernetesClusterConnection(param.Ip, param.Port, plainToken); err != nil {
+		return err
+	}
+	encryptToken, clusterGuid, err := encryptKubernetesToken(param)
+	if err != nil {
+		return err
+	}
+	_, err = x.Exec("insert into kubernetes_cluster(cluster_name,api_server,token,create_at,guid) value (?,?,?,?,?)",
+		param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), encryptToken, time.Now().Format(m.DatetimeFormat), clusterGuid)
 	if err != nil {
 		err = fmt.Errorf("Insert into db fail,%s ", err.Error())
 		return err
@@ -38,7 +56,87 @@ func AddKubernetesCluster(param m.KubernetesClusterParam) error {
 }
 
 func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
-	_, err := x.Exec("update kubernetes_cluster set cluster_name=?,api_server=?,token=? where id=?", param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), param.Token, param.Id)
+	if param.Id <= 0 {
+		return fmt.Errorf("Update kubernetes cluster fail,id is empty")
+	}
+	var existCluster m.KubernetesClusterTable
+	has, err := x.SQL("select * from kubernetes_cluster where id=?", param.Id).Get(&existCluster)
+	if err != nil {
+		return fmt.Errorf("Query kubernetes cluster fail,%s ", err.Error())
+	}
+	if !has {
+		return fmt.Errorf("kubernetes cluster id:%d not found", param.Id)
+	}
+	needVerify := false
+	verifyToken := strings.TrimSpace(param.Token)
+	if verifyToken != "" {
+		needVerify = true
+		// 如果用户传了 token 但 param.Guid 为空，尝试从数据库获取 guid
+		if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(existCluster.Guid) != "" {
+			param.Guid = existCluster.Guid
+		}
+	} else {
+		// existCluster 在 has=true 时已经被填充了数据，可以正常使用
+		verifyToken, err = decryptKubernetesToken(&existCluster)
+		if err != nil {
+			return err
+		}
+		if fmt.Sprintf("%s:%s", param.Ip, param.Port) != existCluster.ApiServer {
+			needVerify = true
+		}
+	}
+	if needVerify {
+		var plainToken string
+		var err error
+		if strings.TrimSpace(param.Token) != "" {
+			// 如果 param.Guid 仍为空，尝试从数据库获取
+			if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(existCluster.Guid) != "" {
+				param.Guid = existCluster.Guid
+			}
+			plainToken, err = getPlainTokenForVerify(param)
+		} else {
+			plainToken = verifyToken
+		}
+		if err != nil {
+			return err
+		}
+		// 验证连接，带重试机制
+		if err := verifyKubernetesClusterConnection(param.Ip, param.Port, plainToken); err != nil {
+			// 检查是否只是更新集群名称，如果是，允许验证失败但记录警告
+			onlyUpdateName := strings.TrimSpace(param.Token) == "" &&
+				fmt.Sprintf("%s:%s", param.Ip, param.Port) == existCluster.ApiServer &&
+				param.ClusterName != existCluster.ClusterName
+
+			if onlyUpdateName {
+				// 只更新名称时，验证失败只记录警告，不阻止更新
+				log.Warn(nil, log.LOGGER_APP, "Kubernetes cluster connection verify failed, but allow update cluster name only",
+					zap.String("cluster_name", param.ClusterName),
+					zap.String("api_server", fmt.Sprintf("%s:%s", param.Ip, param.Port)),
+					zap.Error(err))
+			} else {
+				// 更新关键字段（IP、端口或Token）时，验证失败必须阻止
+				return fmt.Errorf("verify kubernetes cluster connection fail, cannot update critical fields: %s", err.Error())
+			}
+		}
+	}
+	encryptToken := existCluster.Token
+	clusterGuid := existCluster.Guid
+	if strings.TrimSpace(param.Token) != "" {
+		// 有新的 token，再进行加密覆盖
+		// 如果 param.Guid 为空，尝试从数据库获取
+		if strings.TrimSpace(param.Guid) == "" && strings.TrimSpace(clusterGuid) != "" {
+			param.Guid = clusterGuid
+		}
+		encryptToken, clusterGuid, err = encryptKubernetesToken(param)
+		if err != nil {
+			return err
+		}
+	} else if strings.TrimSpace(param.Guid) != "" && strings.TrimSpace(clusterGuid) == "" {
+		// 没有传 token，仅在原 guid 为空的情况下允许写入新 guid
+		clusterGuid = strings.TrimSpace(param.Guid)
+	}
+	_, err = x.Exec("update kubernetes_cluster set cluster_name=?,api_server=?,token=?,guid=? where id=?",
+		param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), encryptToken, clusterGuid, param.Id)
 	if err != nil {
 		err = fmt.Errorf("Update db table fail,%s ", err.Error())
 		return err
@@ -58,14 +156,27 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 			return nil
 		}
 		id = kubernetesTables[0].Id
+		clusterName = kubernetesTables[0].ClusterName
 	}
-	_, err := x.Exec("delete from kubernetes_cluster where id=?", id)
+	hasPods, err := HasKubernetesClusterPods(id)
+	if err != nil {
+		return err
+	}
+	if hasPods {
+		return fmt.Errorf("kubernetes cluster %s still has pod endpoints, please remove pod objects first", clusterName)
+	}
+	_, err = x.Exec("delete from kubernetes_cluster where id=?", id)
 	if err != nil {
 		err = fmt.Errorf("Delete db data fail,%s ", err.Error())
 		return err
 	}
 	x.Exec("delete from kubernetes_endpoint_rel where kubernete_id=?", id)
 	SyncKubernetesConfig()
+	return err
+}
+
+func DeleteKubernetesEndpointRelByEndpointId(endpointGuid string) error {
+	_, err := x.Exec("delete from kubernetes_endpoint_rel where endpoint_guid=?", endpointGuid)
 	return err
 }
 
@@ -104,7 +215,12 @@ func SyncKubernetesConfig() error {
 		return err
 	}
 	for _, v := range kubernetesTables {
-		err = ioutil.WriteFile(fmt.Sprintf("/app/monitor/prometheus/token/%s", v.ClusterName), []byte(v.Token), 0644)
+		plainToken, tokenErr := decryptKubernetesToken(v)
+		if tokenErr != nil {
+			err = tokenErr
+			break
+		}
+		err = ioutil.WriteFile(fmt.Sprintf("/app/monitor/prometheus/token/%s", v.ClusterName), []byte(plainToken), 0644)
 		if err != nil {
 			err = fmt.Errorf("Write cluster %s token file fail,%s ", v.ClusterName, err.Error())
 			break
@@ -171,6 +287,271 @@ func StartCronSyncKubernetesPod(interval int) {
 		<-t
 		go SyncPodToEndpoint()
 	}
+}
+
+func encryptKubernetesToken(param m.KubernetesClusterParam) (encryptToken string, clusterGuid string, err error) {
+	token := strings.TrimSpace(param.Token)
+	if token == "" {
+		err = fmt.Errorf("cluster %s token empty", param.ClusterName)
+		return
+	}
+	clusterGuid, err = ensureKubernetesClusterGuid(param)
+	if err != nil {
+		return
+	}
+	encryptToken, err = cipher.AesEnPasswordByGuid(clusterGuid, m.Config().EncryptSeed, token, "")
+	if err != nil {
+		err = fmt.Errorf("encrypt kubernetes cluster token fail,%s ", err.Error())
+	}
+	return
+}
+
+func ensureKubernetesClusterGuid(param m.KubernetesClusterParam) (string, error) {
+	clusterGuid := strings.TrimSpace(param.Guid)
+	if clusterGuid != "" {
+		return clusterGuid, nil
+	}
+	if param.Id > 0 {
+		var dbGuid string
+		has, err := x.SQL("select guid from kubernetes_cluster where id=?", param.Id).Get(&dbGuid)
+		if err != nil {
+			return "", fmt.Errorf("query d fail,%s ", err.Error())
+		}
+		if has && strings.TrimSpace(dbGuid) != "" {
+			return strings.TrimSpace(dbGuid), nil
+		}
+	}
+	return guid.CreateGuid(), nil
+}
+
+func decryptKubernetesToken(cluster *m.KubernetesClusterTable) (string, error) {
+	if cluster == nil {
+		return "", fmt.Errorf("kubernetes cluster struct is nil")
+	}
+	token := strings.TrimSpace(cluster.Token)
+	if token == "" {
+		return "", fmt.Errorf("kubernetes cluster %s token empty", cluster.ClusterName)
+	}
+	cipherPrefix := getCipherPrefix(token)
+	if cipherPrefix == "" {
+		return token, nil
+	}
+	clusterGuid := strings.TrimSpace(cluster.Guid)
+	if clusterGuid == "" {
+		return "", fmt.Errorf("kubernetes cluster %s guid empty,can not decrypt token", cluster.ClusterName)
+	}
+	plainToken, err := cipher.AesDePasswordByGuid(clusterGuid, m.Config().EncryptSeed, token)
+	if err != nil {
+		return "", fmt.Errorf("decrypt kubernetes cluster %s token fail,%s ", cluster.ClusterName, err.Error())
+	}
+	return plainToken, nil
+}
+
+func HasKubernetesClusterPods(clusterId int) (bool, error) {
+	if clusterId <= 0 {
+		return false, fmt.Errorf("cluster id is empty")
+	}
+	var count int
+	_, err := x.SQL("select count(1) from kubernetes_endpoint_rel where kubernete_id=?", clusterId).Get(&count)
+	if err != nil {
+		return false, fmt.Errorf("query kubernetes endpoint relation fail,%s ", err.Error())
+	}
+	return count > 0, nil
+}
+
+func getPlainTokenForVerify(param m.KubernetesClusterParam) (string, error) {
+	token := strings.TrimSpace(param.Token)
+	if token == "" {
+		return "", fmt.Errorf("kubernetes cluster token empty")
+	}
+	if prefix := getCipherPrefix(token); prefix != "" {
+		clusterGuid := strings.TrimSpace(param.Guid)
+		if clusterGuid == "" {
+			return "", fmt.Errorf("clusterGuid empty, can not decrypt token")
+		}
+		plainToken, err := cipher.AesDePasswordByGuid(clusterGuid, m.Config().EncryptSeed, token)
+		if err != nil {
+			return "", fmt.Errorf("decrypt kubernetes cluster token fail,%s ", err.Error())
+		}
+		return plainToken, nil
+	}
+	return token, nil
+}
+
+// verifyKubernetesClusterConnection 验证 Kubernetes 集群连接和权限，带重试机制和超时控制
+// 验证包括：1. 连接性 2. list nodes 权限 3. watch nodes 权限（Prometheus 需要）
+func verifyKubernetesClusterConnection(ip, port, token string) error {
+	return verifyKubernetesClusterConnectionWithRetry(ip, port, token, 3, 5*time.Second)
+}
+
+// verifyKubernetesClusterConnectionWithRetry 带重试机制的验证函数，包含权限检查
+func verifyKubernetesClusterConnectionWithRetry(ip, port, token string, maxRetries int, timeout time.Duration) error {
+	targetIP := strings.TrimSpace(ip)
+	targetPort := strings.TrimSpace(port)
+	if targetIP == "" || targetPort == "" {
+		return fmt.Errorf("kubernetes api server ip or port empty")
+	}
+	if strings.TrimSpace(token) == "" {
+		return fmt.Errorf("kubernetes api token empty")
+	}
+
+	baseURL := fmt.Sprintf("https://%s:%s", targetIP, targetPort)
+	log.Info(nil, log.LOGGER_APP, "Verify kubernetes api server connection and permissions", zap.String("apiServer", baseURL), zap.Int("maxRetries", maxRetries))
+
+	// 创建 HTTP client，配置超时和 TLS
+	client := &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			MaxIdleConns:          10,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+
+	// 需要验证的权限列表（Prometheus 实际需要的权限）
+	permissionChecks := []struct {
+		name        string
+		method      string
+		url         string
+		description string
+		required    bool
+	}{
+		{
+			name:        "list_nodes",
+			method:      http.MethodGet,
+			url:         fmt.Sprintf("%s/api/v1/nodes?limit=1", baseURL),
+			description: "list nodes 权限（基础连接验证）",
+			required:    true,
+		},
+		{
+			name:        "watch_nodes",
+			method:      http.MethodGet,
+			url:         fmt.Sprintf("%s/api/v1/nodes?watch=true&timeoutSeconds=1", baseURL),
+			description: "watch nodes 权限（Prometheus kubernetes_sd_configs 需要）",
+			required:    true,
+		},
+	}
+
+	var missingPermissions []string
+	for _, check := range permissionChecks {
+		var lastErr error
+		success := false
+
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			req, err := http.NewRequest(check.method, check.url, nil)
+			if err != nil {
+				lastErr = fmt.Errorf("create request fail,%s ", err.Error())
+				break
+			}
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(token)))
+			req.Header.Set("Content-Type", "application/json")
+
+			// 使用 context 控制超时
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			req = req.WithContext(ctx)
+
+			resp, err := client.Do(req)
+			cancel()
+
+			if err != nil {
+				lastErr = fmt.Errorf("request fail (attempt %d/%d),%s ", attempt, maxRetries, err.Error())
+				log.Debug(nil, log.LOGGER_APP, "Kubernetes permission check request failed, will retry",
+					zap.String("permission", check.name), zap.Int("attempt", attempt), zap.Error(err))
+				if attempt < maxRetries {
+					backoff := time.Duration(attempt) * time.Second
+					time.Sleep(backoff)
+					continue
+				}
+				break
+			}
+
+			// 读取响应体（限制大小）
+			bodyBytes, readErr := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+
+			bodyStr := string(bodyBytes)
+			if len(bodyStr) > 500 {
+				bodyStr = bodyStr[:500] + "...(truncated)"
+			}
+
+			log.Debug(nil, log.LOGGER_APP, "Kubernetes permission check response",
+				zap.String("permission", check.name), zap.Int("status_code", resp.StatusCode), zap.String("body", bodyStr))
+
+			// 检查状态码
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				log.Info(nil, log.LOGGER_APP, "Kubernetes permission check passed", zap.String("permission", check.name))
+				success = true
+				break
+			}
+
+			// 403 Forbidden 表示权限不足，不重试
+			if resp.StatusCode == 403 {
+				if readErr != nil {
+					lastErr = fmt.Errorf("permission denied (403), read body error:%s", readErr.Error())
+				} else {
+					// 解析错误信息
+					var errorObj map[string]interface{}
+					if json.Unmarshal(bodyBytes, &errorObj) == nil {
+						if message, ok := errorObj["message"].(string); ok {
+							lastErr = fmt.Errorf("permission denied (403): %s", message)
+						} else {
+							lastErr = fmt.Errorf("permission denied (403): %s", bodyStr)
+						}
+					} else {
+						lastErr = fmt.Errorf("permission denied (403): %s", bodyStr)
+					}
+				}
+				break // 权限错误不重试
+			}
+
+			// 5xx 错误可以重试
+			if resp.StatusCode >= 500 && attempt < maxRetries {
+				lastErr = fmt.Errorf("server error (status:%d),%s", resp.StatusCode, bodyStr)
+				log.Warn(nil, log.LOGGER_APP, "Kubernetes permission check returned server error, will retry",
+					zap.String("permission", check.name), zap.Int("status_code", resp.StatusCode), zap.Int("attempt", attempt))
+				backoff := time.Duration(attempt) * time.Second
+				time.Sleep(backoff)
+				continue
+			}
+
+			// 其他错误
+			if readErr != nil {
+				lastErr = fmt.Errorf("request fail,status:%d,read body error:%s", resp.StatusCode, readErr.Error())
+			} else {
+				lastErr = fmt.Errorf("request fail,status:%d,body:%s", resp.StatusCode, bodyStr)
+			}
+			break
+		}
+
+		if !success {
+			if check.required {
+				missingPermissions = append(missingPermissions, check.name)
+			} else {
+				log.Warn(nil, log.LOGGER_APP, "Optional permission check failed", zap.String("permission", check.name), zap.Error(lastErr))
+			}
+		}
+	}
+
+	// 如果有必需的权限验证失败，返回错误
+	if len(missingPermissions) > 0 {
+		errorSummary := fmt.Sprintf("Token does not have required permissions: %s", strings.Join(missingPermissions, ", "))
+		log.Error(nil, log.LOGGER_APP, "Kubernetes cluster permission verification failed", zap.String("errors", errorSummary))
+		return fmt.Errorf(errorSummary)
+	}
+
+	log.Info(nil, log.LOGGER_APP, "Kubernetes cluster connection and permissions verified successfully", zap.String("apiServer", baseURL))
+	return nil
+}
+
+func getCipherPrefix(token string) string {
+	for _, prefix := range cipher.CIPHER_MAP {
+		if strings.HasPrefix(token, prefix) {
+			return prefix
+		}
+	}
+	return ""
 }
 
 func SyncPodToEndpoint() bool {
@@ -279,14 +660,15 @@ func SyncPodToEndpoint() bool {
 	return result
 }
 
-func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace string) (err error, id int64, endpointGuid string) {
+func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, namespace, serviceIp, nodeIp string) (err error, id int64, endpointGuid string) {
 	apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
-	endpointName := fmt.Sprintf("%s-%s", namespace, podName)
-	endpointGuid = fmt.Sprintf("%s_%s_pod", endpointName, apiServerIp)
+	endpointGuid = fmt.Sprintf("%s_%s_pod", podName, serviceIp)
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
+	endpointObjNew := m.EndpointNewTable{Guid: endpointGuid}
 	GetEndpoint(&endpointObj)
+	result, _ := GetEndpointNew(&endpointObjNew)
 	if endpointObj.Id <= 0 {
-		execResult, err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,export_version,os_type) value (?,?,?,'pod',10,?,?)", endpointGuid, endpointName, apiServerIp, namespace, cluster.ClusterName)
+		execResult, err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,export_version,os_type) value (?,?,?,'pod',10,?,?)", endpointGuid, podName, apiServerIp, namespace, cluster.ClusterName)
 		if err != nil {
 			return err, id, endpointGuid
 		}
@@ -297,12 +679,125 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable, podGuid, podName, names
 		}
 		id = lastId
 	}
+	// 插入endpoint_new表
+	if result.Guid == "" {
+		result.Guid = endpointGuid
+		result.Name = podName
+		result.Ip = serviceIp
+		result.MonitorType = "pod"
+		result.Step = 10
+		result.Cluster = "default"
+		nowTime := time.Now().Format(m.DatetimeFormat)
+		extendString := ""
+		if nodeIp != "" {
+			extendParam := m.EndpointExtendParamObj{}
+			extendParam.NodeIp = nodeIp
+			tmpExtendBytes, _ := json.Marshal(extendParam)
+			extendString = string(tmpExtendBytes)
+		}
+		_, err := x.Exec("insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time,create_user,update_user) "+
+			"value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", result.Guid, result.Name, result.Ip, result.MonitorType, "", "", result.Step, "", "", result.Cluster, extendString, nowTime, "system", "system")
+		if err != nil {
+			return err, id, endpointGuid
+		}
+	}
 	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
 	x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid=?", cluster.Id, endpointGuid).Find(&kubernetesEndpointTables)
 	if len(kubernetesEndpointTables) <= 0 {
 		_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", cluster.Id, endpointGuid, podGuid, namespace)
 	}
 	return err, id, endpointGuid
+}
+
+func GetKubernetesEndpointRelByPodGuid(podGuid string) (*m.KubernetesEndpointRelTable, error) {
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	x.SQL("select * from kubernetes_endpoint_rel where pod_guid=?", podGuid).Find(&kubernetesEndpointTables)
+	if len(kubernetesEndpointTables) <= 0 {
+		return nil, nil
+	}
+	return kubernetesEndpointTables[0], nil
+}
+
+func GetKubernetesEndpointRelByPodName(podName string, kubernetesId int) (*m.KubernetesEndpointRelTable, error) {
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	// 先根据 podName 查询 endpoint_new 表，找到对应的 endpoint_guid
+	var endpointNewList []*m.EndpointNewTable
+	err := x.SQL("select * from endpoint_new where name=? and monitor_type='pod'", podName).Find(&endpointNewList)
+	if err != nil {
+		return nil, err
+	}
+	if len(endpointNewList) == 0 {
+		return nil, nil
+	}
+	// 根据 endpoint_guid 和 kubernetes_id 查询 kubernetes_endpoint_rel
+	endpointGuidList := make([]string, 0)
+	for _, endpoint := range endpointNewList {
+		endpointGuidList = append(endpointGuidList, endpoint.Guid)
+	}
+	if len(endpointGuidList) == 0 {
+		return nil, nil
+	}
+	// 使用 createListParams 安全地构建 IN 子句
+	endpointGuidFilterSql, endpointGuidFilterParam := createListParams(endpointGuidList, "")
+	params := append([]interface{}{kubernetesId}, endpointGuidFilterParam...)
+	err = x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid in ("+endpointGuidFilterSql+")", params...).Find(&kubernetesEndpointTables)
+	if err != nil {
+		return nil, err
+	}
+	if len(kubernetesEndpointTables) <= 0 {
+		return nil, nil
+	}
+	return kubernetesEndpointTables[0], nil
+}
+
+func UpdateKubernetesPodEndpointNew(endpointGuid, serviceIp, extendParam string) error {
+	nowTime := time.Now().Format(m.DatetimeFormat)
+	_, err := x.Exec("update endpoint_new set ip=?,extend_param=?,update_time=?,update_user=? where guid=?", serviceIp, extendParam, nowTime, "system", endpointGuid)
+	return err
+}
+
+func AddKubernetesEndpointRel(kubernetesId int, endpointGuid, podGuid string) (err error) {
+	_, err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid,namespace) value (?,?,?,?)", kubernetesId, endpointGuid, podGuid, "default")
+	return
+}
+
+func DeleteKubernetesEndpointRel(endpointGuid, podGuid string) (err error) {
+	_, err = x.Exec("delete from kubernetes_endpoint_rel where endpoint_guid =? and pod_guid=?", endpointGuid, podGuid)
+	return
+}
+
+func GetKubernetesByName(clusterName string) (cluster *m.KubernetesClusterTable, err error) {
+	cluster = &m.KubernetesClusterTable{}
+	var clusterList []*m.KubernetesClusterTable
+	if err = x.SQL("select * from kubernetes_cluster where cluster_name=?", clusterName).Find(&clusterList); err != nil {
+		return
+	}
+	if len(clusterList) == 0 {
+		return nil, errors.New("kubernetes cluster not exist")
+	}
+	cluster = clusterList[0]
+	return
+}
+
+func GetKubernetesClusterByEndpointGuid(guid string) (clusterName string, err error) {
+	var kubernetesEndpointRelList []*m.KubernetesEndpointRelTable
+	var kubernetesId int
+	if err = x.SQL("select kubernete_id from kubernetes_endpoint_rel where endpoint_guid=?", guid).Find(&kubernetesEndpointRelList); err != nil {
+		return
+	}
+	if len(kubernetesEndpointRelList) == 0 {
+		return "", errors.New("kubernetes cluster not exist")
+	}
+	kubernetesId = kubernetesEndpointRelList[0].KuberneteId
+	var has bool
+	has, err = x.SQL("select cluster_name from kubernetes_cluster where id=?", kubernetesId).Get(&clusterName)
+	if err != nil {
+		return
+	}
+	if !has {
+		return "", errors.New("kubernetes cluster not found by id")
+	}
+	return
 }
 
 func DeleteKubernetesPod(podGuid, endpointGuid string) (err error, id int64) {
@@ -317,16 +812,14 @@ func DeleteKubernetesPod(podGuid, endpointGuid string) (err error, id int64) {
 			return err, id
 		}
 		endpointGuid = kubernetesEndpointTables[0].EndpointGuid
-	}
-	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	GetEndpoint(&endpointObj)
-	if endpointObj.Id > 0 {
-		id = int64(endpointObj.Id)
-		_, err = x.Exec("delete from endpoint where id=?", endpointObj.Id)
+	} else {
+		_, err = x.Exec("delete from kubernetes_endpoint_rel where pod_guid=? and endpoint_guid=?", podGuid, endpointGuid)
 		if err != nil {
 			return err, id
 		}
 	}
+	err = DeleteEndpoint(endpointGuid, "system")
+	log.Info(nil, log.LOGGER_APP, "DeleteKubernetesPod success", zap.String("podGuid", podGuid), zap.String("endpointGuid", endpointGuid))
 	return err, id
 }
 

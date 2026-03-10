@@ -1,6 +1,3 @@
-create database if not exists `monitor`;
-USE `monitor`;
-
 DROP TABLE IF EXISTS `button`;
 
 CREATE TABLE `button` (
@@ -197,8 +194,10 @@ CREATE TABLE `tpl` (
 DROP TABLE IF EXISTS `grp_endpoint`;
 
 CREATE TABLE `grp_endpoint` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `grp_id` INT(11) UNSIGNED NOT NULL,
   `endpoint_id` INT(11) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
   UNIQUE KEY `idx_grp_endpoint` (`grp_id`,`endpoint_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 

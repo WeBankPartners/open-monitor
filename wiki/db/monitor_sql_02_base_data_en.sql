@@ -1,5 +1,3 @@
-USE `monitor`;
-
 insert  into `button`(`id`,`group_id`,`name`,`b_type`,`b_text`,`refresh_panels`,`refresh_charts`,`option_group`,`refresh_button`) values (1,1,'time','select','Time',0,1,1,0),(2,1,'start_end','datetime','Date',0,1,0,0);
 
 insert  into `chart`(`id`,`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (1,1,'','cpu.used.percent^cpu.detail.percent',6,'/dashboard/chart','%','cpu.used.percent','line','metric',0,'p95','$custom_metric'),(2,2,'','disk.read.bytes',6,'/dashboard/chart','B/s','disk.read.bytes','line','metric',0,'avg','$metric'),(3,2,'','disk.write.bytes',6,'/dashboard/chart','B/s','disk.write.bytes','line','metric',0,'avg','$metric'),(4,1,'','mem.used.percent',6,'/dashboard/chart','%','mem.used.percent','line','metric',0,'avg','$metric'),(6,3,'','net.if.in.bytes',6,'/dashboard/chart','B/s','net.if.in.bytes','line','metric',0,'avg','$metric'),(7,3,'','net.if.out.bytes',6,'/dashboard/chart','B/s','net.if.out.bytes','line','metric',0,'avg','$metric'),(8,2,'','disk.iops',6,'/dashboard/chart','','IOPS','line','metric',0,'avg','$metric'),(9,4,'','mysql.requests',6,'/dashboard/chart','','mysql.requests','line','metric',0,'avg','$command'),(10,4,'','mysql.threads.connected^mysql.threads.max',6,'/dashboard/chart','','mysql.threads.connected','line','metric',0,'avg','$metric'),(11,4,'','mysql.buffer.status',6,'/dashboard/chart','','mysql.buffer.status','line','metric',0,'avg','$state'),(12,5,'','redis.mem.used',6,'/dashboard/chart','B','redis.mem.used','line','metric',0,'avg','$metric'),(13,5,'','redis.db.keys',6,'/dashboard/chart','','redis.db.keys','line','metric',0,'avg','$db'),(14,5,'','redis.cmd.num',6,'/dashboard/chart','','redis.cmd.num','line','metric',0,'avg','$cmd'),(15,5,'','redis.expire.key',6,'/dashboard/chart','','redis.expire.key','line','metric',0,'avg','$metric'),(16,8,'','jvm.thread.count',6,'/dashboard/chart','','jvm.thread.count','line','metric',0,'avg','$metric'),(18,8,'','jvm.memory.heap.used^jvm.memory.heap.max',6,'/dashboard/chart','B','jvm.memory.heap.used','line','metric',0,'avg','$metric'),(19,8,'','jvm.gc.time',6,'/dashboard/chart','s','jvm.gc.time(2min)','line','metric',0,'avg','$name'),(20,1,'','mem.used^mem.total',6,'/dashboard/chart','B','mem.status','line','metric',0,'avg','$metric'),(21,1,'','load.1min',6,'/dashboard/chart','','load.1min','line','metric',0,'avg','$metric'),(22,7,'','process_cpu_used_percent',6,'/dashboard/chart','%','process.cpu.used','line','metric',0,'avg','$name'),(23,7,'','process_mem_byte',6,'/dashboard/chart','B','process.mem.used','line','metric',0,'avg','$name'),(24,6,'','tomcat.connection',6,'/dashboard/chart','','tomcat.connection','line','metric',0,'avg','$name'),(25,6,'','tomcat.request',6,'/dashboard/chart','','tomcat.request','line','metric',0,'avg','$name'),(26,9,'','app.metric',6,'/dashboard/chart','','${auto}','line','metric',0,'avg','$key'),(27,10,'','telnet_alive',6,'/dashboard/chart','','telnet.alive','line','metric',0,'avg','$metric');
@@ -317,7 +315,7 @@ CREATE TABLE `service_group` (
   `parent` varchar(64) DEFAULT NULL,
   `service_type` varchar(32) NOT NULL,
   `update_time` varchar(32),
-  CONSTRAINT `service_group_parent` FOREIGN KEY (`parent`) REFERENCES `service_group` (`guid`)
+  KEY `idx_service_group_parent` (`parent`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `cluster_new` (
@@ -353,16 +351,16 @@ CREATE TABLE `endpoint_new` (
   `extend_param` text,
   `description` varchar(255),
   `update_time` varchar(32),
-  CONSTRAINT `endpoint_cluster` FOREIGN KEY (`cluster`) REFERENCES `cluster_new` (`guid`),
-  CONSTRAINT `endpoint_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+  KEY `idx_endpoint_cluster` (`cluster`),
+  KEY `idx_endpoint_monitor_type` (`monitor_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `endpoint_service_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `endpoint` varchar(160) NOT NULL,
   `service_group` varchar(64) NOT NULL,
-  CONSTRAINT `e_service_rel_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
-  CONSTRAINT `e_service_rel_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+  KEY `idx_e_service_rel_e` (`endpoint`),
+  KEY `idx_e_service_rel_s` (`service_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_metric_monitor` (
@@ -372,8 +370,8 @@ CREATE TABLE `log_metric_monitor` (
   `metric_type` varchar(16) default 'json',
   `monitor_type` varchar(32) DEFAULT NULL,
   `update_time` varchar(32),
-  CONSTRAINT `log_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
-  CONSTRAINT `log_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+  KEY `idx_log_monitor_service_group` (`service_group`),
+  KEY `idx_log_monitor_monitor_type` (`monitor_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_metric_json` (
@@ -382,7 +380,7 @@ CREATE TABLE `log_metric_json` (
   `json_regular` varchar(255),
   `tags` varchar(64),
   `update_time` varchar(32),
-  CONSTRAINT `log_monitor_json_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`)
+  KEY `idx_log_monitor_json_monitor` (`log_metric_monitor`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_metric_config` (
@@ -396,8 +394,8 @@ CREATE TABLE `log_metric_config` (
   `step` int default 10,
   `agg_type` varchar(16) DEFAULT 'avg',
   `update_time` varchar(32),
-  CONSTRAINT `log_monitor_config_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
-  CONSTRAINT `log_monitor_config_json` FOREIGN KEY (`log_metric_json`) REFERENCES `log_metric_json` (`guid`)
+  KEY `idx_log_monitor_config_monitor` (`log_metric_monitor`),
+  KEY `idx_log_monitor_config_json` (`log_metric_json`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_metric_string_map` (
@@ -407,7 +405,7 @@ CREATE TABLE `log_metric_string_map` (
   `regulative` tinyint default 0,
   `target_value` varchar(64),
   `update_time` varchar(32),
-  CONSTRAINT `log_monitor_string_config` FOREIGN KEY (`log_metric_config`) REFERENCES `log_metric_config` (`guid`)
+  KEY `idx_log_monitor_string_config` (`log_metric_config`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_metric_endpoint_rel` (
@@ -415,9 +413,9 @@ CREATE TABLE `log_metric_endpoint_rel` (
   `log_metric_monitor` varchar(64) NOT NULL,
   `source_endpoint` varchar(160),
   `target_endpoint` varchar(160),
-  CONSTRAINT `log_monitor_endpoint_metric` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
-  CONSTRAINT `log_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
-  CONSTRAINT `log_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+  KEY `idx_log_monitor_endpoint_metric` (`log_metric_monitor`),
+  KEY `idx_log_monitor_endpoint_source` (`source_endpoint`),
+  KEY `idx_log_monitor_endpoint_target` (`target_endpoint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `db_metric_monitor` (
@@ -429,8 +427,8 @@ CREATE TABLE `db_metric_monitor` (
   `step` int default 10,
   `monitor_type` varchar(32) DEFAULT NULL,
   `update_time` varchar(32),
-  CONSTRAINT `db_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
-  CONSTRAINT `db_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+  KEY `idx_db_monitor_service_group` (`service_group`),
+  KEY `idx_db_monitor_monitor_type` (`monitor_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `db_metric_endpoint_rel` (
@@ -438,9 +436,9 @@ CREATE TABLE `db_metric_endpoint_rel` (
   `db_metric_monitor` varchar(64) NOT NULL,
   `source_endpoint` varchar(160),
   `target_endpoint` varchar(160),
-  CONSTRAINT `db_monitor_endpoint_metric` FOREIGN KEY (`db_metric_monitor`) REFERENCES `db_metric_monitor` (`guid`),
-  CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
-  CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+  KEY `idx_db_monitor_endpoint_metric` (`db_metric_monitor`),
+  KEY `idx_db_monitor_endpoint_source` (`source_endpoint`),
+  KEY `idx_db_monitor_endpoint_target` (`target_endpoint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 #@v1.13.0.1-end@;
 
@@ -453,16 +451,16 @@ CREATE TABLE `endpoint_group` (
   `service_group` varchar(64),
   `alarm_window` varchar(255),
   `update_time` varchar(32),
-  CONSTRAINT `endpoint_group_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`),
-  CONSTRAINT `endpoint_group_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+  KEY `idx_endpoint_group_monitor_type` (`monitor_type`),
+  KEY `idx_endpoint_group_service_group` (`service_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `endpoint_group_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `endpoint` varchar(160) NOT NULL,
   `endpoint_group` varchar(64),
-  CONSTRAINT `endpoint_group_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
-  CONSTRAINT `endpoint_group_g` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`)
+  KEY `idx_endpoint_group_e` (`endpoint`),
+  KEY `idx_endpoint_group_g` (`endpoint_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `role_new` (
@@ -480,7 +478,7 @@ CREATE TABLE `metric` (
   `prom_expr` text,
   `tag_owner` varchar(64),
   `update_time` varchar(32),
-  CONSTRAINT `metric_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+  KEY `idx_metric_monitor_type` (`monitor_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `alarm_strategy` (
@@ -494,8 +492,7 @@ CREATE TABLE `alarm_strategy` (
   `notify_enable` tinyint default 1,
   `notify_delay_second` int default 0,
   `update_time` varchar(32),
-  CONSTRAINT `strategy_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
-  CONSTRAINT `strategy_metric` FOREIGN KEY (`metric`) REFERENCES `metric` (`guid`)
+  KEY `idx_strategy_endpoint_group` (`endpoint_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `notify` (
@@ -510,17 +507,17 @@ CREATE TABLE `notify` (
   `proc_callback_key` varchar(64),
   `callback_url` varchar(255),
   `callback_param` varchar(255),
-  CONSTRAINT `notify_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
-  CONSTRAINT `notify_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
-  CONSTRAINT `notify_alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+  KEY `idx_notify_endpoint_group` (`endpoint_group`),
+  KEY `idx_notify_service_group` (`service_group`),
+  KEY `idx_notify_alarm_strategy` (`alarm_strategy`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `notify_role_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `notify` varchar(64) NOT NULL,
   `role` varchar(64) NOT NULL,
-  CONSTRAINT `notify_role_n` FOREIGN KEY (`notify`) REFERENCES `notify` (`guid`),
-  CONSTRAINT `notify_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+  KEY `idx_notify_role_n` (`notify`),
+  KEY `idx_notify_role_r` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 alter table alarm add column alarm_strategy varchar(64);
@@ -539,7 +536,6 @@ CREATE TABLE `sys_parameter` (
   `param_key` varchar(64) NOT NULL,
   `param_value` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
-alter table alarm_strategy drop foreign key strategy_metric;
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_01','metric_template','{"name":"custom","prom_ql":"$a","param":"$a"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_02','metric_template','{"name":"percent01","prom_ql":"100*(sum($a)/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03','metric_template','{"name":"percent02","prom_ql":"100*(1-(sum($a)/(sum($b) > 0) or vector(0)))","param":"$a,$b"}');
@@ -548,9 +544,6 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05
 #@v1.13.0.6-end@;
 
 #@v1.13.0.18-begin@;
-alter table service_group drop foreign key service_group_parent;
-alter table log_metric_monitor drop foreign key log_monitor_service_group;
-alter table db_metric_monitor drop foreign key db_monitor_service_group;
 alter table metric add column log_metric_monitor varchar(64);
 alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
@@ -575,8 +568,8 @@ CREATE TABLE `service_group_role_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `service_group` varchar(64) NOT NULL,
   `role` varchar(64) NOT NULL,
-  CONSTRAINT `service_role_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
-  CONSTRAINT `service_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+  KEY `idx_service_role_s` (`service_group`),
+  KEY `idx_service_role_r` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_keyword_monitor` (
@@ -585,7 +578,7 @@ CREATE TABLE `log_keyword_monitor` (
   `log_path` varchar(255) NOT NULL,
   `monitor_type` varchar(32) NOT NULL,
   `update_time` varchar(32),
-  CONSTRAINT `log_keyword_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+  KEY `idx_log_keyword_monitor_type` (`monitor_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_keyword_config` (
@@ -596,7 +589,7 @@ CREATE TABLE `log_keyword_config` (
   `notify_enable` tinyint default 1,
   `priority` varchar(16) default 'low',
   `update_time` varchar(32),
-  CONSTRAINT `log_keyword_config_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`)
+  KEY `idx_log_keyword_config_monitor` (`log_keyword_monitor`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `log_keyword_endpoint_rel` (
@@ -604,9 +597,9 @@ CREATE TABLE `log_keyword_endpoint_rel` (
   `log_keyword_monitor` varchar(64) NOT NULL,
   `source_endpoint` varchar(160),
   `target_endpoint` varchar(160),
-  CONSTRAINT `log_keyword_endpoint_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`),
-  CONSTRAINT `log_keyword_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
-  CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+  KEY `idx_log_keyword_endpoint_monitor` (`log_keyword_monitor`),
+  KEY `idx_log_keyword_endpoint_source` (`source_endpoint`),
+  KEY `idx_log_keyword_endpoint_target` (`target_endpoint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 #@v1.13.0.24-end@;
 
@@ -614,7 +607,6 @@ CREATE TABLE `log_keyword_endpoint_rel` (
 alter table metric drop column log_metric_monitor;
 alter table metric drop column db_metric_monitor;
 alter table metric add column service_group varchar(64);
-alter table metric drop foreign key metric_monitor_type;
 alter table panel add column service_group varchar(64) default null;
 alter table metric add column workspace varchar(16) default 'any_object';
 delete from sys_parameter;
@@ -836,7 +828,6 @@ alter table log_metric_string_map add column `value_type` varchar(64) DEFAULT NU
 insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,create_time,update_user,update_time) select concat('lmg_',guid),display_name,'custom',log_metric_monitor,'old_data',now(),'old_data',now() from log_metric_config where log_metric_json is null;
 insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'old_data',now() from log_metric_config where log_metric_json is null;
 update log_metric_config set log_metric_group=concat('lmg_',guid),log_param_name=metric,update_user='old_data' where log_metric_group is null and log_metric_json is null;
-ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
 alter table log_metric_group add column metric_prefix_code varchar(64) default null comment '指标前缀';
 #@v2.0.7.1-end@;
 
@@ -852,7 +843,7 @@ CREATE TABLE `alarm_strategy_metric` (
                                          `update_time` datetime DEFAULT NULL COMMENT '更新时间',
                                          PRIMARY KEY (`guid`),
                                          KEY `idx__strategy_metric__metric` (`metric`),
-                                         CONSTRAINT `fk__strategy_metric__alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+                                         KEY `idx_fk__strategy_metric__alarm_strategy` (`alarm_strategy`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `alarm_strategy_tag` (
@@ -860,7 +851,7 @@ CREATE TABLE `alarm_strategy_tag` (
                                       `alarm_strategy_metric` varchar(64) NOT NULL COMMENT '告警配置指标',
                                       `name` varchar(64) NOT NULL COMMENT '标签名',
                                       PRIMARY KEY (`guid`),
-                                      CONSTRAINT `fk__strategy_tag__metric` FOREIGN KEY (`alarm_strategy_metric`) REFERENCES `alarm_strategy_metric` (`guid`)
+                                      KEY `idx_fk__strategy_tag__metric` (`alarm_strategy_metric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE `alarm_strategy_tag_value` (
@@ -868,8 +859,9 @@ CREATE TABLE `alarm_strategy_tag_value` (
                                             `alarm_strategy_tag` varchar(64) NOT NULL COMMENT '告警配置标签值',
                                             `value` varchar(255) DEFAULT NULL COMMENT '标签值',
                                             PRIMARY KEY (`id`),
-                                            CONSTRAINT `fk__strategy_tag_value__tag` FOREIGN KEY (`alarm_strategy_tag`) REFERENCES `alarm_strategy_tag` (`guid`)
+                                            KEY `idx_fk__strategy_tag_value__tag` (`alarm_strategy_tag`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
 alter table alarm_strategy add column name varchar(128) default null comment '名称';
 alter table rel_role_custom_dashboard rename to custom_dashboard_role_rel;
 alter table custom_dashboard modify column `name` varchar(255) NOT NULL;
@@ -926,7 +918,7 @@ CREATE TABLE IF NOT EXISTS `main_dashboard` (
     `role_id` varchar(64) NOT NULL,
     `custom_dashboard` int(11)  unsigned not null COMMENT '首页看板表',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_main_dashboard_custom_dashboard` FOREIGN KEY (`custom_dashboard`) REFERENCES `custom_dashboard` (`id`)
+    KEY `idx_main_dashboard_custom_dashboard` (`custom_dashboard`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '首页看板表';
 
 
@@ -961,8 +953,8 @@ CREATE TABLE IF NOT EXISTS `custom_dashboard_chart_rel` (
     `create_time` datetime  null COMMENT '创建时间',
     `update_time` datetime  null COMMENT '更新时间',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_custom_dashboard_chart_rel_custom_dashboard` FOREIGN KEY (`custom_dashboard`) REFERENCES `custom_dashboard` (`id`),
-    CONSTRAINT `fore_custom_dashboard_chart_rel_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+    KEY `idx_custom_dashboard_chart_rel_custom_dashboard` (`custom_dashboard`),
+    KEY `idx_custom_dashboard_chart_rel_dashboard_chart` (`dashboard_chart`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
 
 
@@ -976,7 +968,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series` (
     `metric` varchar(128) NULL COMMENT '指标',
     `color_group` varchar(32) NULL COMMENT '默认色系',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_custom_chart_series_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+    KEY `idx_custom_chart_series_dashboard_chart` (`dashboard_chart`)
     )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
 
 
@@ -987,7 +979,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_permission` (
     `role_id` varchar(64) NOT NULL COMMENT '角色名',
     `permission` varchar(32)  NULL COMMENT '权限,mgmt/use',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_custom_chart_permission_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+    KEY `idx_custom_chart_permission_dashboard_chart` (`dashboard_chart`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '公共图表权限表';
 
 
@@ -999,7 +991,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
     `color` varchar(32)  NULL COMMENT '颜色',
     `series_name` varchar(255)  NULL COMMENT '指标+对象+标签值',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_custom_chart_series_config_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
+    KEY `idx_custom_chart_series_config_dashboard_chart_config` (`dashboard_chart_config`)
     )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表配置表';
 
 
@@ -1008,7 +1000,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_tag` (
     `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
     `name` varchar(64)  NOT NULL COMMENT '标签名',
     PRIMARY KEY (`guid`),
-    CONSTRAINT `fore_custom_chart_series_tag_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
+    KEY `idx_custom_chart_series_tag_dashboard_chart_config` (`dashboard_chart_config`)
     )ENGINE = InnoDB DEFAULT CHARSET =utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表标签配置表';
 
 
@@ -1018,7 +1010,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_tagvalue` (
     `dashboard_chart_tag` varchar(64) NOT NULL COMMENT '所属图表标签',
     `value` varchar(255)  NULL COMMENT '标签值',
     PRIMARY KEY (`id`),
-    CONSTRAINT `fore_custom_chart_series_tagvalue_dashboard_chart_tag` FOREIGN KEY (`dashboard_chart_tag`) REFERENCES `custom_chart_series_tag` (`guid`)
+    KEY `idx_custom_chart_series_tagvalue_dashboard_chart_tag` (`dashboard_chart_tag`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表标签值配置表';
 
 
@@ -1057,8 +1049,8 @@ CREATE TABLE  `metric_comparison` (
       `create_user` varchar(64)  default null COMMENT '创建人',
       `create_time` datetime  default null COMMENT '创建时间',
       PRIMARY KEY (`guid`),
-      CONSTRAINT `fore_metric_comparison_metric_id` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`guid`),
-      CONSTRAINT `fore_metric_comparison_origin_metric_id` FOREIGN KEY (`origin_metric_id`) REFERENCES `metric` (`guid`)
+      KEY `idx_metric_comparison_metric_id` (`metric_id`),
+      KEY `idx_metric_comparison_origin_metric_id` (`origin_metric_id`)
 )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '指标同环比';
 
 alter table metric add column endpoint_group varchar(64)  default NULL COMMENT '对象组';
@@ -1318,3 +1310,6 @@ ALTER TABLE log_keyword_notify_rel
     ADD INDEX idx_config_notify (log_keyword_config, notify),
        ADD INDEX idx_monitor_notify (log_keyword_monitor, notify);
 #@v3.7.4-end@;
+#@v3.7.5-begin@;
+ALTER TABLE kubernetes_cluster ADD COLUMN guid varchar(64) NOT NULL DEFAULT '';
+#@v3.7.5-end@;
