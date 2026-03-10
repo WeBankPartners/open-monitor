@@ -1,4 +1,28 @@
-FROM  ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.2
+# 多阶段构建：第一阶段提取基础镜像中的二进制文件
+FROM ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.2 AS extractor
+
+ENV BASE_HOME=/app/monitor
+ENV PROMETHEUS_HOME=$BASE_HOME/prometheus
+ENV ALERTMANAGER_HOME=$BASE_HOME/alertmanager
+ENV AGENT_MANAGER_HOME=$BASE_HOME/agent_manager
+
+# 提取基础镜像中的二进制文件到临时位置
+RUN mkdir -p /tmp/extract/prometheus /tmp/extract/alertmanager /tmp/extract/agent_manager && \
+    if [ -f $PROMETHEUS_HOME/prometheus ]; then cp $PROMETHEUS_HOME/prometheus /tmp/extract/prometheus/; fi && \
+    if [ -f $PROMETHEUS_HOME/promtool ]; then cp $PROMETHEUS_HOME/promtool /tmp/extract/prometheus/; fi && \
+    if [ -f $ALERTMANAGER_HOME/alertmanager ]; then cp $ALERTMANAGER_HOME/alertmanager /tmp/extract/alertmanager/; fi && \
+    if [ -d "$PROMETHEUS_HOME" ] && [ "$(ls -A $PROMETHEUS_HOME 2>/dev/null)" ]; then \
+        cp -rf $PROMETHEUS_HOME/* /tmp/extract/prometheus/ 2>/dev/null || true; \
+    fi && \
+    if [ -d "$ALERTMANAGER_HOME" ] && [ "$(ls -A $ALERTMANAGER_HOME 2>/dev/null)" ]; then \
+        cp -rf $ALERTMANAGER_HOME/* /tmp/extract/alertmanager/ 2>/dev/null || true; \
+    fi && \
+    if [ -d "$AGENT_MANAGER_HOME" ] && [ "$(ls -A $AGENT_MANAGER_HOME 2>/dev/null)" ]; then \
+        cp -rf $AGENT_MANAGER_HOME/* /tmp/extract/agent_manager/ 2>/dev/null || true; \
+    fi
+
+# 第二阶段：最终镜像，只包含需要的文件，不包含基础镜像的冗余层
+FROM ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.2
 LABEL maintainer = "Webank CTB Team"
 
 ENV JAVA_HOME=/opt/jdk
@@ -59,19 +83,13 @@ COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 COPY monitor-agent/metric_comparison_exporter/metric_comparison $METRIC_COMPARISON_EXPORTER/
 COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 
-# 从基础镜像复制所有内容到临时目录，然后删除原始目录
-# 这样避免在镜像层中同时存在两份内容，减少镜像体积
-RUN if [ -d "$PROMETHEUS_HOME" ] && [ "$(ls -A $PROMETHEUS_HOME 2>/dev/null)" ]; then \
-        cp -rf $PROMETHEUS_HOME/* $PROMETHEUS_TMP/ 2>/dev/null || true; \
-    fi && \
-    if [ -d "$ALERTMANAGER_HOME" ] && [ "$(ls -A $ALERTMANAGER_HOME 2>/dev/null)" ]; then \
-        cp -rf $ALERTMANAGER_HOME/* $ALERTMANAGER_TMP/ 2>/dev/null || true; \
-    fi && \
-    if [ -d "$AGENT_MANAGER_HOME" ] && [ "$(ls -A $AGENT_MANAGER_HOME 2>/dev/null)" ]; then \
-        cp -rf $AGENT_MANAGER_HOME/* $AGENT_MANAGER_TMP/ 2>/dev/null || true; \
-    fi && \
-    # 删除原始目录，避免重复（所有内容已在临时目录中）
-    rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
+# 从第一阶段复制提取的二进制文件到临时目录（只复制一次，不包含基础镜像的冗余）
+COPY --from=extractor /tmp/extract/prometheus/* $PROMETHEUS_TMP/ 2>/dev/null || true
+COPY --from=extractor /tmp/extract/alertmanager/* $ALERTMANAGER_TMP/ 2>/dev/null || true
+COPY --from=extractor /tmp/extract/agent_manager/* $AGENT_MANAGER_TMP/ 2>/dev/null || true
+
+# 删除基础镜像中的原始目录，避免重复（所有内容已在临时目录中）
+RUN rm -rf $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
     mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
 # 设置执行权限
