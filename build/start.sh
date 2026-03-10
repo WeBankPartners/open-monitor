@@ -1,6 +1,43 @@
 #!/bin/bash
 
 echo "start run"
+
+# Copy files from tmp directories to target directories FIRST
+# This is needed for k8s persistent volumes which may clear directory contents
+# Must be done before sed replacements to ensure files exist
+echo "Copying files from tmp directories to target directories..."
+
+# Copy prometheus files
+if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tmp 2>/dev/null)" ]; then
+  echo "Copying prometheus files from prometheus_tmp to prometheus..."
+  mkdir -p /app/monitor/prometheus
+  cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/ 2>/dev/null || true
+  # Remove tmp directory after copy to save space
+  rm -rf /app/monitor/prometheus_tmp
+fi
+
+# Copy alertmanager files
+if [ -d "/app/monitor/alertmanager_tmp" ] && [ "$(ls -A /app/monitor/alertmanager_tmp 2>/dev/null)" ]; then
+  echo "Copying alertmanager files from alertmanager_tmp to alertmanager..."
+  mkdir -p /app/monitor/alertmanager
+  cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/ 2>/dev/null || true
+  # Remove tmp directory after copy to save space
+  rm -rf /app/monitor/alertmanager_tmp
+fi
+
+# Copy agent_manager files
+if [ -d "/app/monitor/agent_manager_tmp" ] && [ "$(ls -A /app/monitor/agent_manager_tmp 2>/dev/null)" ]; then
+  echo "Copying agent_manager files from agent_manager_tmp to agent_manager..."
+  mkdir -p /app/monitor/agent_manager
+  cp -rf /app/monitor/agent_manager_tmp/* /app/monitor/agent_manager/ 2>/dev/null || true
+  # Remove tmp directory after copy to save space
+  rm -rf /app/monitor/agent_manager_tmp
+fi
+
+# Now perform sed replacements on the copied files
+# Change to base directory for relative paths
+cd /app/monitor
+
 laststr=`echo ${MONITOR_HOST_IP}|awk -F '' '{print $NF}'`
 subnum='3'
 if [ $laststr ]
