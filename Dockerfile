@@ -71,9 +71,17 @@ COPY --chown=app:apps monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 # 设置执行权限（对临时目录中的文件）
 RUN chmod +x $PROMETHEUS_TMP/prometheus $PROMETHEUS_TMP/promtool $ALERTMANAGER_TMP/alertmanager $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
+# 对应用镜像新增的所有目录递归设置权限为 app:apps
+# 基础镜像中的 prometheus_tmp 和 alertmanager_tmp 已属于 app:apps，无需再次设置
+# 只对应用镜像新增的目录执行 chown -R，避免影响基础镜像已有目录，减少镜像大小影响
+RUN chown -R app:apps $MONITOR_HOME $AGENT_MANAGER_TMP $PING_EXPORTER \
+    $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER \
+    $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $PROMETHEUS_HOME \
+    $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
+
 # 安全基线：禁止容器内以 root 运行进程，切换为非 root 用户运行
 # 基础镜像 v1.4 中已创建用户并对整个 /app/monitor 设置了权限
-# 应用镜像中所有文件已通过 COPY --chown=app:apps 设置了权限，无需额外的 chown -R
+# 应用镜像中所有文件已通过 COPY --chown=app:apps 设置了权限，并在上面递归设置了目录权限
 WORKDIR $BASE_HOME
 USER app
 ENTRYPOINT ["/bin/sh", "start.sh"]
