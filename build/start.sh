@@ -2,6 +2,12 @@
 
 echo "start run"
 
+# ========== 第零步：确保 consul 目录权限正确（如果存在） ==========
+# consul 目录可能来自基础镜像,需要确保权限正确
+if [ -d "/app/monitor/consul" ]; then
+  chown -R app:apps /app/monitor/consul 2>/dev/null || true
+fi
+
 # ========== 第一步：从 _tmp 目录复制到原目录（PV 挂载前准备） ==========
 echo "Copying files from tmp directories to target directories..."
 

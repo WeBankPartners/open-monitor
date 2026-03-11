@@ -72,10 +72,13 @@ RUN chmod +x $PROMETHEUS_TMP/prometheus $PROMETHEUS_TMP/promtool $ALERTMANAGER_T
 # 基础镜像 v1.4 中已创建 app:apps 用户并对 /app/monitor 设置了权限（包括 prometheus_tmp 和 alertmanager_tmp）
 # 应用镜像新增的文件和目录需要设置为 app:apps，以便 gosu app 可以正常访问
 # 注意：不包含 PROMETHEUS_TMP 和 ALERTMANAGER_TMP，因为基础镜像中已设置
+# consul 目录如果存在，也需要设置权限
 RUN chown -R app:apps $MONITOR_HOME $AGENT_MANAGER_TMP $PING_EXPORTER \
     $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER \
     $DAEMON_PROC $METRIC_COMPARISON_EXPORTER $PROMETHEUS_HOME \
-    $ALERTMANAGER_HOME $AGENT_MANAGER_HOME $BASE_HOME/*.sh
+    $ALERTMANAGER_HOME $AGENT_MANAGER_HOME $BASE_HOME/*.sh && \
+    # 如果 consul 目录存在，也设置权限（可能来自基础镜像）
+    ([ -d "$BASE_HOME/consul" ] && chown -R app:apps $BASE_HOME/consul || true)
 
 WORKDIR $BASE_HOME
 
