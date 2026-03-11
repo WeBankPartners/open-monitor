@@ -1,6 +1,40 @@
 #!/bin/bash
 
 echo "start run"
+
+# ========== 第一步：从 _tmp 目录复制到原目录（PV 挂载前准备） ==========
+echo "Copying files from tmp directories to target directories..."
+
+# 复制 prometheus_tmp 到 prometheus
+if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tmp 2>/dev/null)" ]; then
+  echo "Copying prometheus files from prometheus_tmp to prometheus..."
+  mkdir -p /app/monitor/prometheus
+  cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/ 2>/dev/null || true
+  chmod +x /app/monitor/prometheus/prometheus /app/monitor/prometheus/promtool 2>/dev/null || true
+  # 删除 tmp 目录
+  rm -rf /app/monitor/prometheus_tmp
+fi
+
+# 复制 alertmanager_tmp 到 alertmanager
+if [ -d "/app/monitor/alertmanager_tmp" ] && [ "$(ls -A /app/monitor/alertmanager_tmp 2>/dev/null)" ]; then
+  echo "Copying alertmanager files from alertmanager_tmp to alertmanager..."
+  mkdir -p /app/monitor/alertmanager
+  cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/ 2>/dev/null || true
+  chmod +x /app/monitor/alertmanager/alertmanager 2>/dev/null || true
+  # 删除 tmp 目录
+  rm -rf /app/monitor/alertmanager_tmp
+fi
+
+# 复制 agent_manager_tmp 到 agent_manager
+if [ -d "/app/monitor/agent_manager_tmp" ] && [ "$(ls -A /app/monitor/agent_manager_tmp 2>/dev/null)" ]; then
+  echo "Copying agent_manager files from agent_manager_tmp to agent_manager..."
+  mkdir -p /app/monitor/agent_manager
+  cp -rf /app/monitor/agent_manager_tmp/* /app/monitor/agent_manager/ 2>/dev/null || true
+  # 删除 tmp 目录
+  rm -rf /app/monitor/agent_manager_tmp
+fi
+
+# ========== 第二步：执行原有的 sed 替换逻辑 ==========
 laststr=`echo ${MONITOR_HOST_IP}|awk -F '' '{print $NF}'`
 subnum='3'
 if [ $laststr ]
@@ -70,12 +104,17 @@ fi
 
 if [ -n "$MONITOR_LOCAL_DNS_MAP" ]
 then
-  dns_map=${MONITOR_LOCAL_DNS_MAP}
-  set ${dns_map//,/ }
-  for v in "$@"
-  do
-    echo "${v//=/ }" >> /etc/hosts
-  done
+  # 非 root 用户无法写 /etc/hosts；在 k8s 里建议用 hostAliases / dnsConfig 来实现
+  if [ "$(id -u 2>/dev/null)" = "0" ]; then
+    dns_map=${MONITOR_LOCAL_DNS_MAP}
+    set ${dns_map//,/ }
+    for v in "$@"
+    do
+      echo "${v//=/ }" >> /etc/hosts
+    done
+  else
+    echo "WARN: 当前非root用户运行，跳过写入 /etc/hosts。请用 k8s hostAliases/dnsConfig 配置：MONITOR_LOCAL_DNS_MAP=$MONITOR_LOCAL_DNS_MAP"
+  fi
 fi
 
 archive_day="30d"
