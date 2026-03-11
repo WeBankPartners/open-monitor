@@ -22,14 +22,26 @@ ENV ALERTMANAGER_TMP=$BASE_HOME/alertmanager_tmp
 ENV AGENT_MANAGER_TMP=$BASE_HOME/agent_manager_tmp
 
 # 创建临时目录（基础镜像中 prometheus_tmp 和 alertmanager_tmp 已存在，这里确保 agent_manager_tmp 存在）
-# 同时创建空的原始目录供 PV 挂载
+# 同时创建空的原始目录供 PV 挂载，并预先创建所有日志目录，确保权限正确
 RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/token \
     $ALERTMANAGER_TMP $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_TMP \
     $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL \
     $DB_DATA_EXPORTER $DAEMON_PROC $METRIC_COMPARISON_EXPORTER \
     $METRIC_COMPARISON_EXPORTER/config && \
     # 创建空的原始目录供 PV 挂载
-    mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
+    mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME && \
+    # 预先创建所有日志目录，后续通过 chown -R 统一赋予 app:apps 权限
+    mkdir -p \
+      $AGENT_MANAGER_HOME/logs \
+      $DAEMON_PROC/logs \
+      $ALERTMANAGER_HOME/logs \
+      $PROMETHEUS_HOME/rules $PROMETHEUS_HOME/logs \
+      $PING_EXPORTER/logs \
+      $TRANS_GATEWAY/logs $TRANS_GATEWAY/data \
+      $ARCHIVE_TOOL/logs \
+      $DB_DATA_EXPORTER/logs \
+      $METRIC_COMPARISON_EXPORTER/logs \
+      $MONITOR_HOME/logs
 
 # 使用 --chown=app:apps 在 COPY 时设置文件所有者，避免后续 chown -R 创建大层
 # 基础镜像中已对整个 /app/monitor 设置了权限，新文件也需要属于 app:apps

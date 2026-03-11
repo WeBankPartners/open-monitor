@@ -135,6 +135,8 @@ mkdir -p logs
 cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
+# 如果 rules/base.yml 已存在，先删除再复制
+rm -f rules/base.yml 2>/dev/null || true
 /bin/cp -f base.yml rules/
 cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
