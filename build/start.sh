@@ -9,8 +9,15 @@ echo "Copying files from tmp directories to target directories..."
 if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tmp 2>/dev/null)" ]; then
   echo "Copying prometheus files from prometheus_tmp to prometheus..."
   mkdir -p /app/monitor/prometheus
-  cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/ 2>/dev/null || true
-  chmod +x /app/monitor/prometheus/prometheus /app/monitor/prometheus/promtool 2>/dev/null || true
+  mkdir -p /app/monitor/prometheus/rules
+  cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/
+  chmod +x /app/monitor/prometheus/prometheus /app/monitor/prometheus/promtool
+  # 确保 rules 目录和 base.yml 的权限正确
+  if [ -f "/app/monitor/prometheus/base.yml" ]; then
+    # 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
+    rm -f /app/monitor/prometheus/rules/base.yml
+    cp -f /app/monitor/prometheus/base.yml /app/monitor/prometheus/rules/base.yml
+  fi
   # 删除 tmp 目录
   rm -rf /app/monitor/prometheus_tmp
 fi
@@ -19,8 +26,8 @@ fi
 if [ -d "/app/monitor/alertmanager_tmp" ] && [ "$(ls -A /app/monitor/alertmanager_tmp 2>/dev/null)" ]; then
   echo "Copying alertmanager files from alertmanager_tmp to alertmanager..."
   mkdir -p /app/monitor/alertmanager
-  cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/ 2>/dev/null || true
-  chmod +x /app/monitor/alertmanager/alertmanager 2>/dev/null || true
+  cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/
+  chmod +x /app/monitor/alertmanager/alertmanager
   # 删除 tmp 目录
   rm -rf /app/monitor/alertmanager_tmp
 fi
@@ -29,7 +36,7 @@ fi
 if [ -d "/app/monitor/agent_manager_tmp" ] && [ "$(ls -A /app/monitor/agent_manager_tmp 2>/dev/null)" ]; then
   echo "Copying agent_manager files from agent_manager_tmp to agent_manager..."
   mkdir -p /app/monitor/agent_manager
-  cp -rf /app/monitor/agent_manager_tmp/* /app/monitor/agent_manager/ 2>/dev/null || true
+  cp -rf /app/monitor/agent_manager_tmp/* /app/monitor/agent_manager/
   # 删除 tmp 目录
   rm -rf /app/monitor/agent_manager_tmp
 fi
@@ -125,37 +132,51 @@ fi
 
 cd agent_manager
 mkdir -p logs
+chmod 755 logs
 tar zxf exporters.tar.gz
 #nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
-nohup ./daemon_proc > app.log 2>&1 &
+mkdir -p logs
+chmod 755 logs
+nohup ./daemon_proc > logs/app.log 2>&1 &
 cd ../alertmanager
 mkdir -p logs
+chmod 755 logs
 #nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
-# 如果 rules/base.yml 已存在，先删除再复制
-rm -f rules/base.yml 2>/dev/null || true
-/bin/cp -f base.yml rules/
+# 确保 logs 目录有写权限（PV 挂载可能覆盖了权限）
+chmod 755 logs
+# 如果 rules/base.yml 已存在，先删除再复制（解决 PV 挂载时文件权限问题）
+rm -f rules/base.yml
+if [ -f "base.yml" ]; then
+  /bin/cp -f base.yml rules/
+fi
 cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 mkdir -p logs
+chmod 755 logs
 #nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
+chmod 755 logs
 #nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 mkdir -p logs
+chmod 755 logs
 #nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 mkdir -p logs
+chmod 755 logs
 #nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
 mkdir -p logs
+chmod 755 logs
 cd ../monitor/
 mkdir -p logs
+chmod 755 logs
 sleep 2
 Exit_actions (){
   kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
