@@ -111,17 +111,12 @@ fi
 
 if [ -n "$MONITOR_LOCAL_DNS_MAP" ]
 then
-  # 非 root 用户无法写 /etc/hosts；在 k8s 里建议用 hostAliases / dnsConfig 来实现
-  if [ "$(id -u 2>/dev/null)" = "0" ]; then
-    dns_map=${MONITOR_LOCAL_DNS_MAP}
-    set ${dns_map//,/ }
-    for v in "$@"
-    do
-      echo "${v//=/ }" >> /etc/hosts
-    done
-  else
-    echo "WARN: 当前非root用户运行，跳过写入 /etc/hosts。请用 k8s hostAliases/dnsConfig 配置：MONITOR_LOCAL_DNS_MAP=$MONITOR_LOCAL_DNS_MAP"
-  fi
+  dns_map=${MONITOR_LOCAL_DNS_MAP}
+  set ${dns_map//,/ }
+  for v in "$@"
+  do
+    echo "${v//=/ }" >> /etc/hosts
+  done
 fi
 
 archive_day="30d"
@@ -132,23 +127,16 @@ fi
 
 cd agent_manager
 mkdir -p logs
-chmod 755 logs
 tar zxf exporters.tar.gz
 #nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
-mkdir -p logs
-chmod 755 logs
-nohup ./daemon_proc > logs/app.log 2>&1 &
+nohup ./daemon_proc > app.log 2>&1 &
 cd ../alertmanager
 mkdir -p logs
-chmod 755 logs
 #nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
-# 确保 logs 目录有写权限（PV 挂载可能覆盖了权限）
-chmod 755 logs
-# 如果 rules/base.yml 已存在，先删除再复制（解决 PV 挂载时文件权限问题）
 rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   /bin/cp -f base.yml rules/
@@ -156,27 +144,21 @@ fi
 cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 mkdir -p logs
-chmod 755 logs
 #nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
-chmod 755 logs
 #nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 mkdir -p logs
-chmod 755 logs
 #nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 mkdir -p logs
-chmod 755 logs
 #nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
 mkdir -p logs
-chmod 755 logs
 cd ../monitor/
 mkdir -p logs
-chmod 755 logs
 sleep 2
 Exit_actions (){
   kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
