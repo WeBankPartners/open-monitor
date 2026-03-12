@@ -49,8 +49,8 @@ if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tm
   # 确保 rules 目录和 base.yml 的权限正确
   if [ -f "/app/monitor/prometheus/base.yml" ]; then
     # 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
-    rm -f /app/monitor/prometheus/rules/base.yml
-    cp -f /app/monitor/prometheus/base.yml /app/monitor/prometheus/rules/base.yml
+    sudo rm -f /app/monitor/prometheus/rules/base.yml 2>/dev/null || rm -f /app/monitor/prometheus/rules/base.yml
+    sudo cp -f /app/monitor/prometheus/base.yml /app/monitor/prometheus/rules/base.yml && sudo chown app:apps /app/monitor/prometheus/rules/base.yml
   fi
   # 确保所有文件属于 app:apps，以便 app 用户可以正常访问
   sudo chown -R app:apps /app/monitor/prometheus
@@ -185,10 +185,10 @@ ensure_log_file logs/alertmanager.log
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 sudo mkdir -p rules logs && sudo chown app:apps logs rules
-rm -f rules/base.yml
+# 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
+sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
 if [ -f "base.yml" ]; then
-  /bin/cp -f base.yml rules/
-  sudo chown app:apps rules/base.yml 2>/dev/null || true
+  sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
 fi
 cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
