@@ -5,7 +5,7 @@ echo "start run"
 # ========== 第零步：确保 consul 目录权限正确（如果存在） ==========
 # consul 目录可能来自基础镜像,需要确保权限正确
 if [ -d "/app/monitor/consul" ]; then
-  chown -R app:apps /app/monitor/consul 2>/dev/null || true
+  sudo chown -R app:apps /app/monitor/consul 2>/dev/null || true
 fi
 
 # ========== 第一步：从 _tmp 目录复制到原目录（PV 挂载前准备） ==========
@@ -24,10 +24,10 @@ if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tm
     rm -f /app/monitor/prometheus/rules/base.yml
     cp -f /app/monitor/prometheus/base.yml /app/monitor/prometheus/rules/base.yml
   fi
-  # 确保所有文件属于 app:apps，以便 gosu app 可以正常访问
-  chown -R app:apps /app/monitor/prometheus
-  # 删除 tmp 目录
-  rm -rf /app/monitor/prometheus_tmp
+  # 确保所有文件属于 app:apps，以便 app 用户可以正常访问
+  sudo chown -R app:apps /app/monitor/prometheus
+  # 删除 tmp 目录（如果权限不对，使用 sudo）
+  sudo rm -rf /app/monitor/prometheus_tmp 2>/dev/null || rm -rf /app/monitor/prometheus_tmp
 fi
 
 # 复制 alertmanager_tmp 到 alertmanager
@@ -36,10 +36,10 @@ if [ -d "/app/monitor/alertmanager_tmp" ] && [ "$(ls -A /app/monitor/alertmanage
   mkdir -p /app/monitor/alertmanager
   cp -rf /app/monitor/alertmanager_tmp/* /app/monitor/alertmanager/
   chmod +x /app/monitor/alertmanager/alertmanager
-  # 确保所有文件属于 app:apps，以便 gosu app 可以正常访问
-  chown -R app:apps /app/monitor/alertmanager
-  # 删除 tmp 目录
-  rm -rf /app/monitor/alertmanager_tmp
+  # 确保所有文件属于 app:apps，以便 app 用户可以正常访问
+  sudo chown -R app:apps /app/monitor/alertmanager
+  # 删除 tmp 目录（如果权限不对，使用 sudo）
+  sudo rm -rf /app/monitor/alertmanager_tmp 2>/dev/null || rm -rf /app/monitor/alertmanager_tmp
 fi
 
 # 复制 agent_manager_tmp 到 agent_manager
@@ -47,15 +47,15 @@ if [ -d "/app/monitor/agent_manager_tmp" ] && [ "$(ls -A /app/monitor/agent_mana
   echo "Copying agent_manager files from agent_manager_tmp to agent_manager..."
   mkdir -p /app/monitor/agent_manager
   cp -rf /app/monitor/agent_manager_tmp/* /app/monitor/agent_manager/
-  # 确保所有文件属于 app:apps，以便 gosu app 可以正常访问
-  chown -R app:apps /app/monitor/agent_manager
-  # 删除 tmp 目录
-  rm -rf /app/monitor/agent_manager_tmp
+  # 确保所有文件属于 app:apps，以便 app 用户可以正常访问
+  sudo chown -R app:apps /app/monitor/agent_manager
+  # 删除 tmp 目录（如果权限不对，使用 sudo）
+  sudo rm -rf /app/monitor/agent_manager_tmp 2>/dev/null || rm -rf /app/monitor/agent_manager_tmp
 fi
 
 # ========== 第二步：执行原有的 sed 替换逻辑 ==========
 # 确保所有配置文件属于 app:apps，以便 sed 可以正常修改（文件复制时已设置，这里再次确保）
-chown -R app:apps alertmanager/alertmanager.yml monitor/conf/default.json archive_mysql_tool/default.json agent_manager/conf.json 2>/dev/null || true
+sudo chown -R app:apps alertmanager/alertmanager.yml monitor/conf/default.json archive_mysql_tool/default.json agent_manager/conf.json 2>/dev/null || true
 
 laststr=`echo ${MONITOR_HOST_IP}|awk -F '' '{print $NF}'`
 subnum='3'
@@ -130,7 +130,7 @@ then
   set ${dns_map//,/ }
   for v in "$@"
   do
-    echo "${v//=/ }" >> /etc/hosts
+    sudo sh -c "echo '${v//=/ }' >> /etc/hosts"
   done
 fi
 
@@ -142,57 +142,57 @@ fi
 
 cd agent_manager
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
+sudo chown app:apps logs 2>/dev/null || true
 tar zxf exporters.tar.gz
 # 确保解压出来的文件属于 app:apps
-chown -R app:apps . 2>/dev/null || true
-#gosu app nohup ./agent_manager > logs/app.log 2>&1 &
+sudo chown -R app:apps . 2>/dev/null || true
+nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
-gosu app nohup ./daemon_proc > logs/app.log 2>&1 &
+sudo chown app:apps logs 2>/dev/null || true
+nohup ./daemon_proc > logs/app.log 2>&1 &
 cd ../alertmanager
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
-#gosu app nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
+sudo chown app:apps logs 2>/dev/null || true
+nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
-chown app:apps logs rules 2>/dev/null || true
+sudo chown app:apps logs rules 2>/dev/null || true
 rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   /bin/cp -f base.yml rules/
-  chown app:apps rules/base.yml 2>/dev/null || true
+  sudo chown app:apps rules/base.yml 2>/dev/null || true
 fi
-cd /app/monitor/prometheus && gosu app nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
+cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
-#gosu app nohup ./ping_exporter > logs/app.log 2>&1 &
+sudo chown app:apps logs 2>/dev/null || true
+nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
-chown app:apps logs data 2>/dev/null || true
-#gosu app nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
+sudo chown app:apps logs data 2>/dev/null || true
+nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
-#gosu app nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+sudo chown app:apps logs 2>/dev/null || true
+nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
-#gosu app nohup ./db_data_exporter > logs/app.log 2>&1 &
+sudo chown app:apps logs 2>/dev/null || true
+nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
+sudo chown app:apps logs 2>/dev/null || true
 cd ../monitor/
 mkdir -p logs
-chown app:apps logs 2>/dev/null || true
+sudo chown app:apps logs 2>/dev/null || true
 sleep 2
 Exit_actions (){
   kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
   wait $!
 }
 trap Exit_actions INT TERM EXIT
-gosu app nohup ./monitor-server > logs/app.log 2>&1 &
+nohup ./monitor-server > logs/app.log 2>&1 &
 wait $!

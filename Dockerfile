@@ -70,7 +70,8 @@ COPY monitor-server/conf/menu-api-map.json $MONITOR_HOME/conf/
 RUN chmod +x $PROMETHEUS_TMP/prometheus $PROMETHEUS_TMP/promtool $ALERTMANAGER_TMP/alertmanager $AGENT_MANAGER_TMP/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc $METRIC_COMPARISON_EXPORTER/metric_comparison
 
 # 基础镜像 v1.4 中已创建 app:apps 用户并对 /app/monitor 设置了权限（包括 prometheus_tmp 和 alertmanager_tmp）
-# 应用镜像新增的文件和目录需要设置为 app:apps，以便 gosu app 可以正常访问
+# 基础镜像 v1.4 中已安装 sudo 并配置 app 用户无密码 sudo 权限
+# 应用镜像新增的文件和目录需要设置为 app:apps，以便 app 用户可以正常访问
 # 注意：不包含 PROMETHEUS_TMP 和 ALERTMANAGER_TMP，因为基础镜像中已设置
 # consul 目录如果存在，也需要设置权限
 RUN chown -R app:apps $MONITOR_HOME $AGENT_MANAGER_TMP $PING_EXPORTER \
@@ -82,5 +83,6 @@ RUN chown -R app:apps $MONITOR_HOME $AGENT_MANAGER_TMP $PING_EXPORTER \
 
 WORKDIR $BASE_HOME
 
-# 容器以 root 启动，start.sh 中使用 gosu app 运行服务
+# 容器以 app 用户启动，start.sh 中使用 sudo 提权执行需要 root 权限的操作
+USER app
 ENTRYPOINT ["/bin/sh", "start.sh"]
