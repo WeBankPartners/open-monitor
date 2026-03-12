@@ -224,5 +224,5 @@ Exit_actions (){
   wait $!
 }
 trap Exit_actions INT TERM EXIT
-nohup ./monitor-server > logs/app.log 2>&1 &
+nohup GODEBUG=netdns=go ./monitor-server > logs/app.log 2>&1 &
 wait $!
