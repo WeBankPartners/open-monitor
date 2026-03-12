@@ -141,24 +141,19 @@ then
 fi
 
 cd agent_manager
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 tar zxf exporters.tar.gz
 # 确保解压出来的文件属于 app:apps
 sudo chown -R app:apps . 2>/dev/null || true
 nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 nohup ./daemon_proc > logs/app.log 2>&1 &
 cd ../alertmanager
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
-mkdir -p rules
-mkdir -p logs
-sudo chown app:apps logs rules 2>/dev/null || true
+sudo mkdir -p rules logs && sudo chown app:apps logs rules
 rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   /bin/cp -f base.yml rules/
@@ -166,28 +161,21 @@ if [ -f "base.yml" ]; then
 fi
 cd /app/monitor/prometheus && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
-mkdir -p logs
-mkdir -p data
-sudo chown app:apps logs data 2>/dev/null || true
+sudo mkdir -p logs data && sudo chown app:apps logs data
 nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 cd ../monitor/
-mkdir -p logs
-sudo chown app:apps logs 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
 sleep 2
 Exit_actions (){
   kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
