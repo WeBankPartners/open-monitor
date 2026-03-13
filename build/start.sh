@@ -281,6 +281,6 @@ Exit_actions (){
 }
 trap Exit_actions INT TERM EXIT
 log "STEP5 start monitor-server"
-nohup ./monitor-server > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./monitor-server > logs/app.log 2>&1 &
 log "STEP5 monitor-server started, waiting for process to exit"
 wait $!
