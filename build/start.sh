@@ -105,6 +105,21 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" monitor/
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" monitor/conf/default.json
+
+# 为数字类型的环境变量设置默认值，避免空值导致 JSON 格式错误
+# 这些字段在配置文件中没有引号，是数字类型，如果为空会导致 JSON 解析失败
+if [ -z "$MONITOR_ARCHIVE_READ_MAX_OPEN" ]; then
+  MONITOR_ARCHIVE_READ_MAX_OPEN="20"
+  echo "WARNING: MONITOR_ARCHIVE_READ_MAX_OPEN is empty, using default value: 20"
+fi
+if [ -z "$MONITOR_ARCHIVE_READ_MAX_IDLE" ]; then
+  MONITOR_ARCHIVE_READ_MAX_IDLE="10"
+  echo "WARNING: MONITOR_ARCHIVE_READ_MAX_IDLE is empty, using default value: 10"
+fi
+if [ -z "$MONITOR_ARCHIVE_READ_TIMEOUT" ]; then
+  MONITOR_ARCHIVE_READ_TIMEOUT="60"
+  echo "WARNING: MONITOR_ARCHIVE_READ_TIMEOUT is empty, using default value: 60"
+fi
 sed -i "s~{{MONITOR_ARCHIVE_READ_MAX_OPEN}}~$MONITOR_ARCHIVE_READ_MAX_OPEN~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_READ_MAX_IDLE}}~$MONITOR_ARCHIVE_READ_MAX_IDLE~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_READ_TIMEOUT}}~$MONITOR_ARCHIVE_READ_TIMEOUT~g" monitor/conf/default.json
