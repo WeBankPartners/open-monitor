@@ -221,66 +221,164 @@ then
   archive_day="${MONITOR_PROMETHEUS_ARCHIVE_DAY}d"
 fi
 
-log "STEP4 only start monitor-server, other components are disabled for debugging"
-## ===== 这里只保留 monitor-server 的启动，其它服务暂时不启动，用于排查问题 =====
-#cd agent_manager
-#sudo mkdir -p logs && sudo chown app:apps logs
-#tar zxf exporters.tar.gz
-## 确保解压出来的文件属于 app:apps
-#sudo chown -R app:apps . 2>/dev/null || true
-#ensure_log_file logs/app.log
-#nohup ./agent_manager > logs/app.log 2>&1 &
-#cd ../daemon_proc
-#sudo mkdir -p logs && sudo chown app:apps logs
-#ensure_log_file logs/app.log
-#nohup ./daemon_proc > logs/app.log 2>&1 &
-#cd ../alertmanager
-#sudo mkdir -p logs && sudo chown app:apps logs
-#ensure_log_file logs/alertmanager.log
-#nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
-#cd ../prometheus/
-#sudo mkdir -p rules logs && sudo chown app:apps logs rules
-## 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
-#sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
-#if [ -f "base.yml" ]; then
-#  sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
-#fi
-#cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
-#cd ../ping_exporter/
-#sudo chown app:apps . 2>/dev/null || true
-#sudo mkdir -p logs && sudo chown app:apps logs
-#ensure_log_file logs/app.log
-#nohup ./ping_exporter > logs/app.log 2>&1 &
-#cd ../transgateway/
-#sudo chown app:apps . 2>/dev/null || true
-#sudo mkdir -p logs data && sudo chown app:apps logs data
-#ensure_log_file logs/app.log
-#nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
-#cd ../archive_mysql_tool
-#sudo chown app:apps . 2>/dev/null || true
-#sudo mkdir -p logs && sudo chown app:apps logs
-#ensure_log_file logs/app.log
-#nohup ./archive_mysql_tool > logs/app.log 2>&1 &
-#cd ../db_data_exporter
-#sudo chown app:apps . 2>/dev/null || true
-#sudo mkdir -p logs && sudo chown app:apps logs
-#ensure_log_file logs/app.log
-#nohup ./db_data_exporter > logs/app.log 2>&1 &
-#cd ../metric_comparison_exporter
-#sudo chown app:apps . 2>/dev/null || true
-#sudo mkdir -p logs && sudo chown app:apps logs
-# 由于当前工作目录是 /app/monitor，这里直接进入 monitor 目录
-cd monitor/
+log "STEP4 start all services"
+# ========== 启动 agent_manager ==========
+log "STEP4.1 start agent_manager"
+cd agent_manager
+sudo mkdir -p logs && sudo chown app:apps logs
+log "STEP4.1 extract exporters.tar.gz"
+tar zxf exporters.tar.gz
+# 确保解压出来的文件属于 app:apps
+sudo chown -R app:apps . 2>/dev/null || true
+ensure_log_file logs/app.log
+log "STEP4.1 start agent_manager process"
+GODEBUG=netdns=go nohup ./agent_manager > logs/app.log 2>&1 &
+AGENT_MANAGER_PID=$!
+log "STEP4.1 agent_manager started with PID: $AGENT_MANAGER_PID"
+
+# ========== 启动 daemon_proc ==========
+log "STEP4.2 start daemon_proc"
+cd ../daemon_proc
+sudo mkdir -p logs && sudo chown app:apps logs
+ensure_log_file logs/app.log
+log "STEP4.2 start daemon_proc process"
+GODEBUG=netdns=go nohup ./daemon_proc > logs/app.log 2>&1 &
+DAEMON_PROC_PID=$!
+log "STEP4.2 daemon_proc started with PID: $DAEMON_PROC_PID"
+
+# ========== 启动 alertmanager ==========
+log "STEP4.3 start alertmanager"
+cd ../alertmanager
+sudo mkdir -p logs && sudo chown app:apps logs
+ensure_log_file logs/alertmanager.log
+log "STEP4.3 start alertmanager process"
+GODEBUG=netdns=go nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
+ALERTMANAGER_PID=$!
+log "STEP4.3 alertmanager started with PID: $ALERTMANAGER_PID"
+
+# ========== 启动 prometheus ==========
+log "STEP4.4 start prometheus"
+cd ../prometheus/
+sudo mkdir -p rules logs && sudo chown app:apps logs rules
+# 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
+sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
+if [ -f "base.yml" ]; then
+  log "STEP4.4 copy base.yml to rules/base.yml"
+  sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
+fi
+cd /app/monitor/prometheus
+ensure_log_file logs/prometheus.log
+log "STEP4.4 start prometheus process with archive_day=${archive_day}"
+GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
+PROMETHEUS_PID=$!
+log "STEP4.4 prometheus started with PID: $PROMETHEUS_PID"
+
+# ========== 启动 ping_exporter ==========
+log "STEP4.5 start ping_exporter"
+cd ../ping_exporter/
+sudo chown app:apps . 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
+ensure_log_file logs/app.log
+log "STEP4.5 start ping_exporter process"
+GODEBUG=netdns=go nohup ./ping_exporter > logs/app.log 2>&1 &
+PING_EXPORTER_PID=$!
+log "STEP4.5 ping_exporter started with PID: $PING_EXPORTER_PID"
+
+# ========== 启动 transgateway ==========
+log "STEP4.6 start transgateway"
+cd ../transgateway/
+sudo chown app:apps . 2>/dev/null || true
+sudo mkdir -p logs data && sudo chown app:apps logs data
+ensure_log_file logs/app.log
+log "STEP4.6 start transgateway process"
+GODEBUG=netdns=go nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
+TRANSGATEWAY_PID=$!
+log "STEP4.6 transgateway started with PID: $TRANSGATEWAY_PID"
+
+# ========== 启动 archive_mysql_tool ==========
+log "STEP4.7 start archive_mysql_tool"
+cd ../archive_mysql_tool
+sudo chown app:apps . 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
+ensure_log_file logs/app.log
+log "STEP4.7 start archive_mysql_tool process"
+GODEBUG=netdns=go nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+ARCHIVE_MYSQL_TOOL_PID=$!
+log "STEP4.7 archive_mysql_tool started with PID: $ARCHIVE_MYSQL_TOOL_PID"
+
+# ========== 启动 db_data_exporter ==========
+log "STEP4.8 start db_data_exporter"
+cd ../db_data_exporter
+sudo chown app:apps . 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
+ensure_log_file logs/app.log
+log "STEP4.8 start db_data_exporter process"
+GODEBUG=netdns=go nohup ./db_data_exporter > logs/app.log 2>&1 &
+DB_DATA_EXPORTER_PID=$!
+log "STEP4.8 db_data_exporter started with PID: $DB_DATA_EXPORTER_PID"
+
+# ========== 准备 metric_comparison_exporter 目录 ==========
+log "STEP4.9 prepare metric_comparison_exporter directory"
+cd ../metric_comparison_exporter
+sudo chown app:apps . 2>/dev/null || true
+sudo mkdir -p logs && sudo chown app:apps logs
+log "STEP4.9 metric_comparison_exporter directory prepared"
+
+# ========== 启动 monitor-server ==========
+log "STEP4.10 start monitor-server"
+cd ../monitor/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
 sleep 2
-Exit_actions (){
-  # 这里只启动了 monitor-server，先简单等待其退出
-  wait $!
+
+Exit_actions() {
+  log "Exit signal received, cleaning up processes..."
+  # 清理所有后台进程
+  if [ -n "$AGENT_MANAGER_PID" ]; then
+    log "kill agent_manager (PID: $AGENT_MANAGER_PID)"
+    kill $AGENT_MANAGER_PID 2>/dev/null || true
+  fi
+  if [ -n "$DAEMON_PROC_PID" ]; then
+    log "kill daemon_proc (PID: $DAEMON_PROC_PID)"
+    kill $DAEMON_PROC_PID 2>/dev/null || true
+  fi
+  if [ -n "$ALERTMANAGER_PID" ]; then
+    log "kill alertmanager (PID: $ALERTMANAGER_PID)"
+    kill $ALERTMANAGER_PID 2>/dev/null || true
+  fi
+  if [ -n "$PROMETHEUS_PID" ]; then
+    log "kill prometheus (PID: $PROMETHEUS_PID)"
+    kill $PROMETHEUS_PID 2>/dev/null || true
+  fi
+  if [ -n "$PING_EXPORTER_PID" ]; then
+    log "kill ping_exporter (PID: $PING_EXPORTER_PID)"
+    kill $PING_EXPORTER_PID 2>/dev/null || true
+  fi
+  if [ -n "$TRANSGATEWAY_PID" ]; then
+    log "kill transgateway (PID: $TRANSGATEWAY_PID)"
+    kill $TRANSGATEWAY_PID 2>/dev/null || true
+  fi
+  if [ -n "$ARCHIVE_MYSQL_TOOL_PID" ]; then
+    log "kill archive_mysql_tool (PID: $ARCHIVE_MYSQL_TOOL_PID)"
+    kill $ARCHIVE_MYSQL_TOOL_PID 2>/dev/null || true
+  fi
+  if [ -n "$DB_DATA_EXPORTER_PID" ]; then
+    log "kill db_data_exporter (PID: $DB_DATA_EXPORTER_PID)"
+    kill $DB_DATA_EXPORTER_PID 2>/dev/null || true
+  fi
+  if [ -n "$MONITOR_SERVER_PID" ]; then
+    log "kill monitor-server (PID: $MONITOR_SERVER_PID)"
+    kill $MONITOR_SERVER_PID 2>/dev/null || true
+  fi
+  log "cleanup completed"
 }
+
 trap Exit_actions INT TERM EXIT
-log "STEP5 start monitor-server"
+
+log "STEP4.10 start monitor-server process"
 GODEBUG=netdns=go nohup ./monitor-server > logs/app.log 2>&1 &
-log "STEP5 monitor-server started, waiting for process to exit"
-wait $!
+MONITOR_SERVER_PID=$!
+log "STEP4.10 monitor-server started with PID: $MONITOR_SERVER_PID"
+log "STEP4 all services started, waiting for monitor-server to exit"
+wait $MONITOR_SERVER_PID
