@@ -189,15 +189,15 @@ tar zxf exporters.tar.gz
 # 确保解压出来的文件属于 app:apps
 sudo chown -R app:apps . 2>/dev/null || true
 ensure_log_file logs/app.log
-nohup ./agent_manager > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./daemon_proc > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./daemon_proc > logs/app.log 2>&1 &
 cd ../alertmanager
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/alertmanager.log
-nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
+GODEBUG=netdns=go nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 sudo mkdir -p rules logs && sudo chown app:apps logs rules
 # 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
@@ -205,27 +205,27 @@ sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
 fi
-cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
+cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./ping_exporter > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs data && sudo chown app:apps logs data
 ensure_log_file logs/app.log
-nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./db_data_exporter > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
@@ -239,5 +239,5 @@ Exit_actions (){
   wait $!
 }
 trap Exit_actions INT TERM EXIT
-nohup ./monitor-server > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./monitor-server > logs/app.log 2>&1 &
 wait $!
