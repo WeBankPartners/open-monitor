@@ -35,7 +35,7 @@
     "js-cookie": "^2.2.1",
     "lint-staged": "^8.2.1",
     "lodash": "^4.17.21",
-    "serialize-javascript": "^3.1.0",
+    "serialize-javascript": "^7.0.5",
     "style-resources-loader": "^1.2.1",
     "typescript": "^3.9.2",
     "vee-validate": "^2.0.6",
