@@ -2,11 +2,12 @@ package db
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 func GetAlertWindowList(endpoint string) (result []*m.AlertWindowObj, err error) {
@@ -56,7 +57,37 @@ func CheckEndpointActiveAlert(endpoint string) bool {
 	if len(tableData) == 0 {
 		return true
 	}
-	activeFlag := true
+	return checkEndpointActiveWindow(tableData)
+}
+
+func CheckEndpointsIsActive(endpoints []string) (activeEndpointMap map[string]int) {
+	activeEndpointMap = make(map[string]int)
+	var tableData []*m.AlertWindowTable
+	x.SQL("select id,endpoint,`start`,`end`,`weekday` from alert_window order by endpoint").Find(&tableData)
+	if len(tableData) == 0 {
+		for _, v := range endpoints {
+			activeEndpointMap[v] = 1
+		}
+		return
+	}
+	activeConfigMap := make(map[string][]*m.AlertWindowTable)
+	for _, row := range tableData {
+		if existList, ok := activeConfigMap[row.Endpoint]; ok {
+			activeConfigMap[row.Endpoint] = append(existList, row)
+		} else {
+			activeConfigMap[row.Endpoint] = []*m.AlertWindowTable{row}
+		}
+	}
+	for endpoint, configListData := range activeConfigMap {
+		if checkEndpointActiveWindow(configListData) {
+			activeEndpointMap[endpoint] = 1
+		}
+	}
+	return
+}
+
+func checkEndpointActiveWindow(tableData []*m.AlertWindowTable) (activeFlag bool) {
+	activeFlag = true
 	nTime := time.Now()
 	for _, v := range tableData {
 		if strings.Contains(v.Weekday, "All") || strings.Contains(v.Weekday, time.Now().Weekday().String()) {
@@ -76,5 +107,5 @@ func CheckEndpointActiveAlert(endpoint string) bool {
 			}
 		}
 	}
-	return activeFlag
+	return
 }

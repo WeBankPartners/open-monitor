@@ -451,9 +451,16 @@ func doLogKeywordMonitorJob() {
 			return
 		}
 		sourceEndpointGuids := make([]string, 0)
+		var sourceEndpointList []string
 		for _, rel := range endpointRels {
 			if rel.SourceEndpoint != "" {
-				sourceEndpointGuids = append(sourceEndpointGuids, rel.SourceEndpoint)
+				sourceEndpointList = append(sourceEndpointList, rel.SourceEndpoint)
+			}
+		}
+		activeEndpointMap := CheckEndpointsIsActive(sourceEndpointList)
+		for _, activeEndpoint := range sourceEndpointList {
+			if _, ok := activeEndpointMap[activeEndpoint]; ok {
+				sourceEndpointGuids = append(sourceEndpointGuids, activeEndpoint)
 			}
 		}
 		// 4. 查 endpoint_new
