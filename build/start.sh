@@ -105,6 +105,21 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" monitor/
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" monitor/conf/default.json
+
+# 为数字类型的环境变量设置默认值，避免空值导致 JSON 格式错误
+# 这些字段在配置文件中没有引号，是数字类型，如果为空会导致 JSON 解析失败
+if [ -z "$MONITOR_ARCHIVE_READ_MAX_OPEN" ]; then
+  MONITOR_ARCHIVE_READ_MAX_OPEN="20"
+  echo "WARNING: MONITOR_ARCHIVE_READ_MAX_OPEN is empty, using default value: 20"
+fi
+if [ -z "$MONITOR_ARCHIVE_READ_MAX_IDLE" ]; then
+  MONITOR_ARCHIVE_READ_MAX_IDLE="10"
+  echo "WARNING: MONITOR_ARCHIVE_READ_MAX_IDLE is empty, using default value: 10"
+fi
+if [ -z "$MONITOR_ARCHIVE_READ_TIMEOUT" ]; then
+  MONITOR_ARCHIVE_READ_TIMEOUT="60"
+  echo "WARNING: MONITOR_ARCHIVE_READ_TIMEOUT is empty, using default value: 60"
+fi
 sed -i "s~{{MONITOR_ARCHIVE_READ_MAX_OPEN}}~$MONITOR_ARCHIVE_READ_MAX_OPEN~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_READ_MAX_IDLE}}~$MONITOR_ARCHIVE_READ_MAX_IDLE~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_READ_TIMEOUT}}~$MONITOR_ARCHIVE_READ_TIMEOUT~g" monitor/conf/default.json
@@ -174,15 +189,15 @@ tar zxf exporters.tar.gz
 # 确保解压出来的文件属于 app:apps
 sudo chown -R app:apps . 2>/dev/null || true
 ensure_log_file logs/app.log
-nohup ./agent_manager > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../daemon_proc
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./daemon_proc > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./daemon_proc > logs/app.log 2>&1 &
 cd ../alertmanager
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/alertmanager.log
-nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
+GODEBUG=netdns=go nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 sudo mkdir -p rules logs && sudo chown app:apps logs rules
 # 如果 rules/base.yml 已存在，先删除（解决 PV 挂载时文件权限问题）
@@ -190,27 +205,27 @@ sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
 fi
-cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
+cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./ping_exporter > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs data && sudo chown app:apps logs data
 ensure_log_file logs/app.log
-nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-nohup ./db_data_exporter > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../metric_comparison_exporter
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
@@ -224,5 +239,5 @@ Exit_actions (){
   wait $!
 }
 trap Exit_actions INT TERM EXIT
-nohup GODEBUG=netdns=go ./monitor-server > logs/app.log 2>&1 &
+GODEBUG=netdns=go nohup ./monitor-server > logs/app.log 2>&1 &
 wait $!
