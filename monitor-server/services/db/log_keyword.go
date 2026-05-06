@@ -496,6 +496,9 @@ func doLogKeywordMonitorJob() {
 					if endpoint != nil {
 						agentAddress = endpoint.AgentAddress
 					}
+					if agentAddress == "" {
+						continue
+					}
 					logKeywordConfigs = append(logKeywordConfigs, &models.LogKeywordCronJobQuery{
 						Guid:                 m.Guid,
 						ServiceGroup:         m.ServiceGroup,
