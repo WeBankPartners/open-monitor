@@ -1314,3 +1314,7 @@ ALTER TABLE log_keyword_notify_rel
 #@v3.7.5-begin@;
 ALTER TABLE kubernetes_cluster ADD COLUMN guid varchar(64) NOT NULL DEFAULT '';
 #@v3.7.5-end@;
+
+#@v3.7.9.7-begin@;
+alter table log_keyword_alarm modify column `alarm_id` int DEFAULT null;
+#@v3.7.9.7-end@;

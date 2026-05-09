@@ -60,14 +60,14 @@ func CheckEndpointActiveAlert(endpoint string) bool {
 	return checkEndpointActiveWindow(tableData)
 }
 
-func CheckEndpointsIsActive(endpoints []string) (activeEndpointMap map[string]int) {
-	activeEndpointMap = make(map[string]int)
+func CheckEndpointsIsActive(endpoints []string) (inactiveEndpointMap map[string]int) {
+	inactiveEndpointMap = make(map[string]int)
 	var tableData []*m.AlertWindowTable
 	x.SQL("select id,endpoint,`start`,`end`,`weekday` from alert_window order by endpoint").Find(&tableData)
 	if len(tableData) == 0 {
-		for _, v := range endpoints {
-			activeEndpointMap[v] = 1
-		}
+		// for _, v := range endpoints {
+		// 	activeEndpointMap[v] = 1
+		// }
 		return
 	}
 	activeConfigMap := make(map[string][]*m.AlertWindowTable)
@@ -79,8 +79,8 @@ func CheckEndpointsIsActive(endpoints []string) (activeEndpointMap map[string]in
 		}
 	}
 	for endpoint, configListData := range activeConfigMap {
-		if checkEndpointActiveWindow(configListData) {
-			activeEndpointMap[endpoint] = 1
+		if !checkEndpointActiveWindow(configListData) {
+			inactiveEndpointMap[endpoint] = 1
 		}
 	}
 	return

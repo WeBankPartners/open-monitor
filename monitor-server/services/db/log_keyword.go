@@ -410,9 +410,10 @@ func doLogKeywordMonitorJob() {
 
 	// 1. 分批查 log_keyword_monitor
 	var (
-		logKeywordConfigs []*models.LogKeywordCronJobQuery
-		batchSize         = 500
-		lastGuid          = ""
+		logKeywordConfigs   []*models.LogKeywordCronJobQuery
+		batchSize           = 500
+		lastGuid            = ""
+		inactiveEndpointMap = make(map[string]int)
 	)
 	for {
 		var monitors []*models.LogKeywordMonitorTable
@@ -451,17 +452,16 @@ func doLogKeywordMonitorJob() {
 			return
 		}
 		sourceEndpointGuids := make([]string, 0)
-		var sourceEndpointList []string
+		// var sourceEndpointList []string
 		for _, rel := range endpointRels {
 			if rel.SourceEndpoint != "" {
-				sourceEndpointList = append(sourceEndpointList, rel.SourceEndpoint)
+				// sourceEndpointList = append(sourceEndpointList, rel.SourceEndpoint)
+				sourceEndpointGuids = append(sourceEndpointGuids, rel.SourceEndpoint)
 			}
 		}
-		activeEndpointMap := CheckEndpointsIsActive(sourceEndpointList)
-		for _, activeEndpoint := range sourceEndpointList {
-			if _, ok := activeEndpointMap[activeEndpoint]; ok {
-				sourceEndpointGuids = append(sourceEndpointGuids, activeEndpoint)
-			}
+		tmpInactiveEndpointMap := CheckEndpointsIsActive(sourceEndpointGuids)
+		for inactiveEndpoint, _ := range tmpInactiveEndpointMap {
+			inactiveEndpointMap[inactiveEndpoint] = 1
 		}
 		// 4. 查 endpoint_new
 		var endpoints []*models.EndpointNewTable
@@ -541,7 +541,8 @@ func doLogKeywordMonitorJob() {
 		}
 		alarmMap[v.Tags] = v
 	}
-	var addAlarmRows []*models.AlarmTable
+	// inactiveAddAalarmRows是给告警维护窗口期间，关键字记数器能一直持续纪录，防止维护窗口一过关键字告警因为记数器差马上触发
+	var addAlarmRows, inactiveAddAalarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	nowTime := time.Now()
 	notifyConfigMap := make(map[string]int)
@@ -618,7 +619,11 @@ func doLogKeywordMonitorJob() {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
-				addFlag = true
+				if _, inactiveFlag := inactiveEndpointMap[config.SourceEndpoint]; inactiveFlag {
+					inactiveAddAalarmRows = append(inactiveAddAalarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				} else {
+					addFlag = true
+				}
 			}
 		} else {
 			if InActiveWindowList(config.ActiveWindow) {
@@ -635,8 +640,18 @@ func doLogKeywordMonitorJob() {
 			)
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
+			newAlarmRow := models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid}
+			if _, inactiveFlag := inactiveEndpointMap[config.SourceEndpoint]; inactiveFlag {
+				newAlarmRow.Status = "ok"
+				newAlarmRow.EndValue = newAlarmRow.StartValue
+				inactiveAddAalarmRows = append(inactiveAddAalarmRows, &newAlarmRow)
+			} else {
+				addAlarmRows = append(addAlarmRows, &newAlarmRow)
+			}
 		}
+	}
+	if len(inactiveAddAalarmRows) > 0 {
+		doInactiveLogKeywordDBAction(inactiveAddAalarmRows)
 	}
 	if len(addAlarmRows) == 0 {
 		return
@@ -859,6 +874,23 @@ func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
 		}
 	}
 	return
+}
+
+func doInactiveLogKeywordDBAction(inactiveAlarmList []*models.AlarmTable) {
+	var actions []*Action
+	for _, alarmObj := range inactiveAlarmList {
+		if alarmObj.Id > 0 {
+			actions = append(actions, &Action{Sql: "UPDATE log_keyword_alarm SET content=?,end_value=?,updated_time=? WHERE id=?", Param: []interface{}{alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id}})
+		} else {
+			actions = append(actions, &Action{Sql: "insert into log_keyword_alarm(endpoint,status,content,tags,end_value,updated_time,log_keyword_config) values (?,?,?,?,?,?,?)", Param: []interface{}{
+				alarmObj.Endpoint, alarmObj.Status, alarmObj.Content, alarmObj.Tags, alarmObj.EndValue, alarmObj.Start.Format(models.DatetimeFormat), alarmObj.AlarmStrategy,
+			}})
+		}
+	}
+	err := Transaction(actions)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "doInactiveLogKeywordDBAction fail", zap.Error(err))
+	}
 }
 
 func UpdateLogKeywordNotify(param *models.LogKeywordNotifyParam) (err error) {
