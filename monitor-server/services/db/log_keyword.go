@@ -487,6 +487,9 @@ func doLogKeywordMonitorJob() {
 		}
 		for _, m := range monitors {
 			for _, c := range configMap[m.Guid] {
+				if !inActiveWindow(c.ActiveWindow) {
+					continue
+				}
 				for _, r := range relMap[m.Guid] {
 					if r.SourceEndpoint == "" {
 						continue
@@ -615,7 +618,7 @@ func doLogKeywordMonitorJob() {
 					continue
 				}
 			}
-			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
+			if existAlarm.Status == "firing" {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name)
 				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
@@ -626,9 +629,7 @@ func doLogKeywordMonitorJob() {
 				}
 			}
 		} else {
-			if InActiveWindowList(config.ActiveWindow) {
-				addFlag = true
-			}
+			addFlag = true
 		}
 		if addFlag {
 			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob add alarm",
