@@ -531,7 +531,7 @@ func doLogKeywordMonitorJob() {
 		log.Debug(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
 		return
 	}
-	log.Info(nil, log.LOGGER_APP, "logKeyWord inactiveEndpointMap", log.JsonObj("inactiveEndpointMap", inactiveEndpointMap))
+	log.Debug(nil, log.LOGGER_APP, "logKeyWord inactiveEndpointMap", log.JsonObj("inactiveEndpointMap", inactiveEndpointMap))
 	var alarmTable []*models.LogKeywordAlarmTable
 	err = x.SQL("select * from log_keyword_alarm order by id desc").Find(&alarmTable)
 	if err != nil {
@@ -610,7 +610,7 @@ func doLogKeywordMonitorJob() {
 			if newValue == oldValue {
 				if v, existKey := previousResult[key]; existKey && (newValue > v || (newValue == v && previousResult[key+"_reset"] == 1)) {
 					// 说明数据被重置过了 也需要告警
-					log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset detected",
+					log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset detected",
 						zap.String("key", key),
 						zap.Float64("newValue", newValue),
 						zap.Float64("oldValue", oldValue),
@@ -621,16 +621,16 @@ func doLogKeywordMonitorJob() {
 			}
 			if existAlarm.Status == "firing" {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name)
-				if _, inactiveFlag := inactiveEndpointMap[config.SourceEndpoint]; inactiveFlag {
+				if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
 					// 屏蔽窗口期间，只更新 log_keyword_alarm 的计数，不触发告警通知
-					log.Info(nil, log.LOGGER_APP, "logKeyWord firing add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
+					log.Debug(nil, log.LOGGER_APP, "logKeyWord firing add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
 					inactiveAddAalarmRows = append(inactiveAddAalarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 				} else {
 					addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 				}
 			} else {
-				if _, inactiveFlag := inactiveEndpointMap[config.SourceEndpoint]; inactiveFlag {
-					log.Info(nil, log.LOGGER_APP, "logKeyWord add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
+				if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
+					log.Debug(nil, log.LOGGER_APP, "logKeyWord add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
 					inactiveAddAalarmRows = append(inactiveAddAalarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 				} else {
 					addFlag = true
@@ -650,8 +650,8 @@ func doLogKeywordMonitorJob() {
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
 			newAlarmRow := models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid}
-			if _, inactiveFlag := inactiveEndpointMap[config.SourceEndpoint]; inactiveFlag {
-				log.Info(nil, log.LOGGER_APP, "logKeyWord new add inactiveAddAalarmRows", log.JsonObj("newAlarmRow", newAlarmRow))
+			if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
+				log.Debug(nil, log.LOGGER_APP, "logKeyWord new add inactiveAddAalarmRows", log.JsonObj("newAlarmRow", newAlarmRow))
 				newAlarmRow.Status = "ok"
 				newAlarmRow.EndValue = newAlarmRow.StartValue
 				inactiveAddAalarmRows = append(inactiveAddAalarmRows, &newAlarmRow)
@@ -661,7 +661,7 @@ func doLogKeywordMonitorJob() {
 		}
 	}
 	if len(inactiveAddAalarmRows) > 0 {
-		log.Info(nil, log.LOGGER_APP, "logKeyWord doInactiveLogKeywordDBAction", log.JsonObj("inactiveAddAalarmRows", inactiveAddAalarmRows))
+		log.Debug(nil, log.LOGGER_APP, "logKeyWord doInactiveLogKeywordDBAction", log.JsonObj("inactiveAddAalarmRows", inactiveAddAalarmRows))
 		doInactiveLogKeywordDBAction(inactiveAddAalarmRows)
 	}
 	if len(addAlarmRows) == 0 {
