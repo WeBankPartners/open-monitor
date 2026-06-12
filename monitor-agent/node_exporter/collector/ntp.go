@@ -24,6 +24,7 @@ import (
 
 	"github.com/beevik/ntp"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -50,6 +51,9 @@ var (
 type ntpCollector struct {
 	stratum, leap, rtt, offset, reftime, rootDelay, rootDispersion, sanity typedDesc
 	logger                                                                 log.Logger
+	mu                                                                     sync.Mutex
+	failCount                                                              int
+	disabled                                                               bool
 }
 
 func init() {
@@ -120,14 +124,37 @@ func NewNtpCollector(logger log.Logger) (Collector, error) {
 }
 
 func (c *ntpCollector) Update(ch chan<- prometheus.Metric) error {
+	c.mu.Lock()
+	if c.disabled {
+		c.mu.Unlock()
+		return nil
+	}
+	c.mu.Unlock()
+
 	resp, err := ntp.QueryWithOptions(*ntpServer, ntp.QueryOptions{
 		Version: *ntpProtocolVersion,
 		TTL:     *ntpIPTTL,
 		Timeout: time.Second, // default `ntpdate` timeout
 	})
 	if err != nil {
+		c.mu.Lock()
+		c.failCount++
+		if c.failCount >= 10 && !c.disabled {
+			c.disabled = true
+			level.Warn(c.logger).Log(
+				"msg", "ntp collector disabled after consecutive failures",
+				"fail_count", c.failCount,
+				"server", *ntpServer,
+				"err", err,
+			)
+		}
+		c.mu.Unlock()
 		return fmt.Errorf("couldn't get SNTP reply: %s", err)
 	}
+	// success, reset failure counter
+	c.mu.Lock()
+	c.failCount = 0
+	c.mu.Unlock()
 
 	ch <- c.stratum.mustNewConstMetric(float64(resp.Stratum))
 	ch <- c.leap.mustNewConstMetric(float64(resp.Leap))

@@ -80,7 +80,7 @@ const isEmptyInObj = params => {
  * return: boolean
  */
 const isEmpty = val => {
-  if (val === '' || val === null || val === undefined || JSON.stringify(val) === '{}' || JSON.stringify(val) === '[]') {
+  if (val === '' || val === null || val === undefined || val === 'undefined' || JSON.stringify(val) === '{}' || JSON.stringify(val) === '[]') {
     return false
   }
   return true
@@ -94,7 +94,7 @@ const isEmpty = val => {
  * return: boolean
  */
 const isEmpty_reset = val => {
-  if (val === '' || val === null || val === undefined || JSON.stringify(val) === '{}' || JSON.stringify(val) === '[]') {
+  if (val === '' || val === null || val === undefined || val === 'undefined' || JSON.stringify(val) === '{}' || JSON.stringify(val) === '[]') {
     return true
   }
   return false

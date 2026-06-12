@@ -601,7 +601,7 @@ export default {
     }
     this.zoneWidth = window.screen.width * 0.65
     this.isShowLoading = true
-    this.getAllChartOptionList()
+    // this.getAllChartOptionList()
     this.getPannelList()
     this.activeGroup = 'ALL'
     this.getAllRolesOptions()

@@ -296,7 +296,8 @@ func StartCronJob() {
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
 	go StartCheckBusinessConfigMatchCodeCount()
-	go StartCronSyncKubernetesPod(intervalSec)
+	// k8s 集群pod同步 改成编排触发, 不需要定时从 prometheus拉取
+	//go StartCronSyncKubernetesPod(intervalSec)
 	go StartCleanAlarmTable()
 }
 

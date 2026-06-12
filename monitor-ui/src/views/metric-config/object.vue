@@ -323,7 +323,7 @@ export default {
   },
   async mounted() {
     await this.getEndpointList()
-    this.endpoint = this.endpointOptions[0].guid
+    // this.endpoint = this.endpointOptions[0].guid
     this.previewObject = this.endpointOptions[0]
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null

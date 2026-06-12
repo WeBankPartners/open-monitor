@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 cd $(dirname $0)/../monitor-server
-#go build -ldflags "-linkmode external -extldflags -static -s"
+export CGO_ENABLED=1
 cd ../monitor-agent/agent_manager
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../archive_mysql_tool

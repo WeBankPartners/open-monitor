@@ -63,6 +63,7 @@ type endpointRequestObj struct {
 	Cluster           string `json:"cluster"`
 	Tags              string `json:"tags"`
 	ProcessName       string `json:"process_name"`
+	NodeIp            string `json:"node_ip"`
 }
 
 func ExportAgentNew(c *gin.Context) {
@@ -203,7 +204,7 @@ func AlarmControl(c *gin.Context) {
 				tmpIp = v.InstanceIp
 			}
 			instanceName := v.Instance
-			if agentType == "process" {
+			if agentType == "process" || agentType == "pod" {
 				tmpIp = v.HostIp
 				instanceName = v.DisplayName
 			}

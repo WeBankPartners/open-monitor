@@ -383,7 +383,7 @@ export default {
   },
   async mounted() {
     await this.getRecursiveList()
-    this.serviceGroup = this.recursiveOptions[0].guid
+    // this.serviceGroup = this.recursiveOptions[0].guid
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     this.maxHeight = document.documentElement.clientHeight - this.$refs.maxHeight.$el.getBoundingClientRect().top - 60

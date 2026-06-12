@@ -158,7 +158,7 @@ export default {
       this.isChartInWindow = this.calcIsChartInWindow()
       if (type === 'mounted') {
         if (this.isInViewConfig) {
-          if (this.chartInfo.parsedDisplayConfig.y < 14) {
+          if (this.chartInfo.parsedDisplayConfig.y < 28) { // 之前是14（两行），现在是四行
             // 这里用在自定义视图中首屏渲染
             this.$emit('isChartInWindow')
             this.requestChartData()

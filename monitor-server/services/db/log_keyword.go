@@ -182,7 +182,7 @@ func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_monitor=?)", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete n from notify n join log_keyword_notify_rel rel on n.guid=rel.notify where rel.log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
 	return actions
@@ -375,7 +375,7 @@ func DeleteLogKeyword(logKeywordConfigGuid string) (err error) {
 	}
 	actions = append(actions, closeAlarmActions...)
 	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify where guid in (select notify from log_keyword_notify_rel where log_keyword_config=?)", Param: []interface{}{logKeywordConfigGuid}})
+	actions = append(actions, &Action{Sql: "delete n from notify n join log_keyword_notify_rel rel on n.guid=rel.notify where rel.log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_notify_rel where log_keyword_config=?", Param: []interface{}{logKeywordConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_config where guid=?", Param: []interface{}{logKeywordConfigGuid}})
 	err = Transaction(actions)
@@ -410,9 +410,10 @@ func doLogKeywordMonitorJob() {
 
 	// 1. 分批查 log_keyword_monitor
 	var (
-		logKeywordConfigs []*models.LogKeywordCronJobQuery
-		batchSize         = 500
-		lastGuid          = ""
+		logKeywordConfigs   []*models.LogKeywordCronJobQuery
+		batchSize           = 500
+		lastGuid            = ""
+		inactiveEndpointMap = make(map[string]int)
 	)
 	for {
 		var monitors []*models.LogKeywordMonitorTable
@@ -451,10 +452,16 @@ func doLogKeywordMonitorJob() {
 			return
 		}
 		sourceEndpointGuids := make([]string, 0)
+		// var sourceEndpointList []string
 		for _, rel := range endpointRels {
 			if rel.SourceEndpoint != "" {
+				// sourceEndpointList = append(sourceEndpointList, rel.SourceEndpoint)
 				sourceEndpointGuids = append(sourceEndpointGuids, rel.SourceEndpoint)
 			}
+		}
+		tmpInactiveEndpointMap := CheckEndpointsIsActive(sourceEndpointGuids)
+		for inactiveEndpoint, _ := range tmpInactiveEndpointMap {
+			inactiveEndpointMap[inactiveEndpoint] = 1
 		}
 		// 4. 查 endpoint_new
 		var endpoints []*models.EndpointNewTable
@@ -480,6 +487,9 @@ func doLogKeywordMonitorJob() {
 		}
 		for _, m := range monitors {
 			for _, c := range configMap[m.Guid] {
+				if !inActiveWindow(c.ActiveWindow) {
+					continue
+				}
 				for _, r := range relMap[m.Guid] {
 					if r.SourceEndpoint == "" {
 						continue
@@ -488,6 +498,9 @@ func doLogKeywordMonitorJob() {
 					var agentAddress string
 					if endpoint != nil {
 						agentAddress = endpoint.AgentAddress
+					}
+					if agentAddress == "" {
+						continue
 					}
 					logKeywordConfigs = append(logKeywordConfigs, &models.LogKeywordCronJobQuery{
 						Guid:                 m.Guid,
@@ -518,6 +531,7 @@ func doLogKeywordMonitorJob() {
 		log.Debug(nil, log.LOGGER_APP, "Check log keyword break with empty config ")
 		return
 	}
+	log.Debug(nil, log.LOGGER_APP, "logKeyWord inactiveEndpointMap", log.JsonObj("inactiveEndpointMap", inactiveEndpointMap))
 	var alarmTable []*models.LogKeywordAlarmTable
 	err = x.SQL("select * from log_keyword_alarm order by id desc").Find(&alarmTable)
 	if err != nil {
@@ -531,7 +545,8 @@ func doLogKeywordMonitorJob() {
 		}
 		alarmMap[v.Tags] = v
 	}
-	var addAlarmRows []*models.AlarmTable
+	// inactiveAddAalarmRows是给告警维护窗口期间，关键字记数器能一直持续纪录，防止维护窗口一过关键字告警因为记数器差马上触发
+	var addAlarmRows, inactiveAddAalarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	nowTime := time.Now()
 	notifyConfigMap := make(map[string]int)
@@ -595,7 +610,7 @@ func doLogKeywordMonitorJob() {
 			if newValue == oldValue {
 				if v, existKey := previousResult[key]; existKey && (newValue > v || (newValue == v && previousResult[key+"_reset"] == 1)) {
 					// 说明数据被重置过了 也需要告警
-					log.Info(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset detected",
+					log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob Counter reset detected",
 						zap.String("key", key),
 						zap.Float64("newValue", newValue),
 						zap.Float64("oldValue", oldValue),
@@ -604,16 +619,25 @@ func doLogKeywordMonitorJob() {
 					continue
 				}
 			}
-			if existAlarm.Status == "firing" || !InActiveWindowList(config.ActiveWindow) {
+			if existAlarm.Status == "firing" {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name)
-				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
+					// 屏蔽窗口期间，只更新 log_keyword_alarm 的计数，不触发告警通知
+					log.Debug(nil, log.LOGGER_APP, "logKeyWord firing add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
+					inactiveAddAalarmRows = append(inactiveAddAalarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				} else {
+					addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				}
 			} else {
-				addFlag = true
+				if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
+					log.Debug(nil, log.LOGGER_APP, "logKeyWord add inactiveAddAalarmRows", zap.Int("id", existAlarm.Id))
+					inactiveAddAalarmRows = append(inactiveAddAalarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				} else {
+					addFlag = true
+				}
 			}
 		} else {
-			if InActiveWindowList(config.ActiveWindow) {
-				addFlag = true
-			}
+			addFlag = true
 		}
 		if addFlag {
 			log.Debug(nil, log.LOGGER_APP, "doLogKeywordMonitorJob add alarm",
@@ -625,8 +649,20 @@ func doLogKeywordMonitorJob() {
 			)
 			alarmContent := config.Content
 			alarmContent = alarmContent + "<br/>"
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid})
+			newAlarmRow := models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword, config.Name), Tags: key, StartValue: newValue, Start: nowTime, AlarmName: config.Name, AlarmStrategy: config.LogKeywordConfigGuid}
+			if _, inactiveFlag := inactiveEndpointMap[config.TargetEndpoint]; inactiveFlag {
+				log.Debug(nil, log.LOGGER_APP, "logKeyWord new add inactiveAddAalarmRows", log.JsonObj("newAlarmRow", newAlarmRow))
+				newAlarmRow.Status = "ok"
+				newAlarmRow.EndValue = newAlarmRow.StartValue
+				inactiveAddAalarmRows = append(inactiveAddAalarmRows, &newAlarmRow)
+			} else {
+				addAlarmRows = append(addAlarmRows, &newAlarmRow)
+			}
 		}
+	}
+	if len(inactiveAddAalarmRows) > 0 {
+		log.Debug(nil, log.LOGGER_APP, "logKeyWord doInactiveLogKeywordDBAction", log.JsonObj("inactiveAddAalarmRows", inactiveAddAalarmRows))
+		doInactiveLogKeywordDBAction(inactiveAddAalarmRows)
 	}
 	if len(addAlarmRows) == 0 {
 		return
@@ -851,6 +887,23 @@ func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
 	return
 }
 
+func doInactiveLogKeywordDBAction(inactiveAlarmList []*models.AlarmTable) {
+	var actions []*Action
+	for _, alarmObj := range inactiveAlarmList {
+		if alarmObj.Id > 0 {
+			actions = append(actions, &Action{Sql: "UPDATE log_keyword_alarm SET content=?,end_value=?,updated_time=? WHERE id=?", Param: []interface{}{alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id}})
+		} else {
+			actions = append(actions, &Action{Sql: "insert into log_keyword_alarm(endpoint,status,content,tags,end_value,updated_time,log_keyword_config) values (?,?,?,?,?,?,?)", Param: []interface{}{
+				alarmObj.Endpoint, alarmObj.Status, alarmObj.Content, alarmObj.Tags, alarmObj.EndValue, alarmObj.Start.Format(models.DatetimeFormat), alarmObj.AlarmStrategy,
+			}})
+		}
+	}
+	err := Transaction(actions)
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "doInactiveLogKeywordDBAction fail", zap.Error(err))
+	}
+}
+
 func UpdateLogKeywordNotify(param *models.LogKeywordNotifyParam) (err error) {
 	if param.Notify == nil {
 		return
@@ -928,4 +981,9 @@ func getLogKeywordAlarmNotify(logKeywordConfigGuid string) (notifyRow *models.No
 		}
 	}
 	return
+}
+
+func UpdateLogKeywordSourceEndpoint(sourceEndpoint, targetEndpoint string) error {
+	_, err := x.Exec("update log_keyword_endpoint_rel set source_endpoint=? where target_endpoint=?", sourceEndpoint, targetEndpoint)
+	return err
 }

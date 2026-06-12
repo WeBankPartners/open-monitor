@@ -172,6 +172,10 @@
                 <file source="node_exporter.tar.gz" toFile="node_exporter.tar.gz"/>
             </fileSet>
         </s3>
+        <!-- 多个持久化卷存储声明 -->
+        <volume name="agentmanager" size="500Mi" mountPath="/app/monitor/agent_manager"/>
+        <volume name="alertmanager" size="500Mi" mountPath="/app/monitor/alertmanager"/>
+        <volume name="prometheus" size="500Gi" mountPath="/app/monitor/prometheus"/>
     </resourceDependencies>
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
@@ -752,9 +756,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ip</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">port</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">token</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">apiServer</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -778,10 +780,13 @@
             <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/pod/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podMonitorKey</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podName</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podGroup</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">nodeIp</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>

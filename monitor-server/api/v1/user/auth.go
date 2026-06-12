@@ -3,17 +3,18 @@ package user
 import (
 	"encoding/base64"
 	"errors"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -200,7 +201,7 @@ type pluginInterfaceResultOutput struct {
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.RequestURI, "/export/ping/source") || strings.Contains(c.Request.RequestURI, "/agent/export/custom") {
+		if strings.Contains(c.Request.RequestURI, "/export/ping/source") || strings.Contains(c.Request.RequestURI, "/agent/export/custom") || strings.Contains(c.Request.RequestURI, "/query") {
 			c.Next()
 		} else {
 			if m.Config().Http.Session.Enable != "true" {

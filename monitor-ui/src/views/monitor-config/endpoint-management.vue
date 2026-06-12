@@ -162,7 +162,7 @@
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
-        <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
+        <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process', 'pod'].includes(endpointRejectModel.addRow.type))">
           <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
           <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" :disabled="isReviewMode" name="port" :class="{'red-border': veeErrors.has('port')}" type="text" class="col-md-9 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -206,6 +206,22 @@
             </Select>
           </div>
         </template>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
+          <label class="col-md-2 label-name">{{$t('m_cluster')}}:</label>
+          <Select filterable clearable v-model="endpointRejectModel.addRow.kubernetes_cluster" :disabled="!endpointRejectModel.isAdd || isReviewMode" style="width: 513px">
+            <Option v-for="item in endpointRejectModel.clusterList" :value="item.cluster_name" :key="item.id">
+              {{item.cluster_name}}
+            </Option>
+          </Select>
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('kubernetes_cluster')" class="is-danger">{{ veeErrors.first('kubernetes_cluster')}}</label>
+        </div>
+        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'pod'">
+          <label class="col-md-2 label-name">Node IP:</label>
+          <input v-validate="'required'" placeholder="node ip" :disabled="isReviewMode" v-model="endpointRejectModel.addRow.node_ip" name="node_ip" :class="{'red-border': veeErrors.has('node_ip')}" type="text" class="col-md-9 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('node_ip')" class="is-danger">{{ veeErrors.first('node_ip')}}</label>
+        </div>
       </div>
     </ModalComponent>
 
@@ -285,8 +301,8 @@
     <ModalComponent :modelConfig="maintenanceWindowModel">
       <template slot='maintenanceWindow'>
         <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
-          <template v-for="(item, index) in maintenanceWindowModel.result">
-            <p :key="index" style="margin:6px 0">
+          <template v-for="(item, index) in maintenanceWindowModel.result" style="margin:6px 0">
+            <p :key="index">
               <Button
                 @click="deleteMaintenanceWindow(index)"
                 size="small"
@@ -551,7 +567,9 @@ export default {
           export_address: '',
           proxy_exporter: null,
           process_name: '',
-          tags: ''
+          tags: '',
+          kubernetes_cluster: null,
+          node_ip: null
         },
         v_select_configs: {
           proxy_exporter: []
@@ -559,6 +577,7 @@ export default {
         stepOptions: collectionInterval,
         ipOptions: [],
         endpointType: [],
+        clusterList: [],
       },
       processConfigModel: {
         modalId: 'process_config_model',
@@ -766,7 +785,7 @@ export default {
   },
   computed: {
     disabledIp() {
-      if (['process', 'host'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
+      if (['process', 'host', 'pod'].includes(this.endpointRejectModel.addRow.type) && this.endpointRejectModel.isAdd === false) {
         return true
       }
       return false
@@ -837,6 +856,13 @@ export default {
         this.endpointRejectModel.addRow = res
         const obj = this.endpointRejectModel.endpointType.find(i => i.value === this.endpointRejectModel.addRow.type) || {}
         this.systemType = obj.systemType
+        // 如果类型是pod，加载集群列表
+        if (this.endpointRejectModel.addRow.type === 'pod') {
+          this.getClusterList()
+        }
+        if (['snmp', 'pod'].includes(this.endpointRejectModel.addRow.type)) {
+          this.endpointRejectModel.supportStep = false
+        }
         this.$root.JQ('#endpoint_reject_model').modal('show')
       })
     },
@@ -917,9 +943,11 @@ export default {
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
       })
-
     },
-    typeChange(type) {
+    async typeChange(type) {
+      // 解决切换类型时，表单验证不生效的问题
+      await this.$nextTick()
+      this.$validator.reset()
       const obj = this.endpointRejectModel.endpointType.find(i => i.value === type) || {}
       this.systemType = obj.systemType
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
@@ -933,7 +961,9 @@ export default {
         password: '',
         method: '',
         url: '',
-        exporter_type: ''
+        exporter_type: '',
+        kubernetes_cluster: null,
+        node_ip: null
       })
       if (['ping', 'telnet', 'http'].includes(type)) {
         this.endpointRejectModel.addRow.step = 30
@@ -945,7 +975,7 @@ export default {
         java: 9151,
         windows: 9182
       }
-      this.endpointRejectModel.addRow.port = typeToPort[type]
+      this.endpointRejectModel.addRow.port = typeToPort[type] || null
       const proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
       proxy_exporter.hide = true
       this.endpointRejectModel.supportStep = true
@@ -958,6 +988,11 @@ export default {
             value: item.id
           }))
         })
+      }
+      // 当类型为pod时，获取集群列表
+      if (type && type === 'pod') {
+        this.endpointRejectModel.supportStep = false
+        this.getClusterList()
       }
     },
     add() {
@@ -1265,6 +1300,11 @@ export default {
       this.request('GET', this.apiCenter.alarmEndpointOptions, {}, res => {
         this.objectGroupList = res.endpointGroup
         this.objectTypeList = res.basicType
+      })
+    },
+    getClusterList() {
+      this.request('GET', this.apiCenter.getK8sClusterList, {}, res => {
+        this.endpointRejectModel.clusterList = Array.isArray(res) ? res : []
       })
     }
   }
