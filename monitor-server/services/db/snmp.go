@@ -89,6 +89,8 @@ func checkSnmpEndpointExists(snmpExporter,endpointGuid string) bool {
 }
 
 func SyncSnmpPrometheusConfig() error {
+	prometheusConfigMutex.Lock()
+	defer prometheusConfigMutex.Unlock()
 	snmpList,err := SnmpExporterList()
 	if err != nil {
 		return err

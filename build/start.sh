@@ -205,6 +205,45 @@ sudo rm -f rules/base.yml 2>/dev/null || rm -f rules/base.yml
 if [ -f "base.yml" ]; then
   sudo cp -f base.yml rules/ && sudo chown app:apps rules/base.yml
 fi
+# 自定义采集独立配置目录，主配置通过 scrape_config_files 引用
+sudo mkdir -p /app/monitor/prometheus/custom_scrape && sudo chown app:apps /app/monitor/prometheus/custom_scrape
+# 存量 prometheus.yml 可能没有 scrape_config_files，启动前补上
+if [ -f /app/monitor/prometheus/prometheus.yml ] && ! grep -q 'custom_scrape/\*\.yml' /app/monitor/prometheus/prometheus.yml; then
+  echo "Insert scrape_config_files into prometheus.yml"
+  awk '
+    /^remote_write:/ && !done {
+      print "# Custom scrape jobs live in isolated files. Comment scrape_config_files to disable them all."
+      print "scrape_config_files:"
+      print "  - /app/monitor/prometheus/custom_scrape/*.yml"
+      print ""
+      done=1
+    }
+    { print }
+    END {
+      if (!done) {
+        print ""
+        print "scrape_config_files:"
+        print "  - /app/monitor/prometheus/custom_scrape/*.yml"
+      }
+    }
+  ' /app/monitor/prometheus/prometheus.yml > /tmp/prometheus.yml.custom_scrape && \
+  sudo cp /tmp/prometheus.yml.custom_scrape /app/monitor/prometheus/prometheus.yml && \
+  sudo chown app:apps /app/monitor/prometheus/prometheus.yml
+  rm -f /tmp/prometheus.yml.custom_scrape
+fi
+# 启动前校验，避免自定义 YAML 把 Prometheus 卡死起不来
+if [ -x /app/monitor/prometheus/promtool ]; then
+  if ! /app/monitor/prometheus/promtool check config /app/monitor/prometheus/prometheus.yml > /tmp/promtool_check.log 2>&1; then
+    echo "WARN: prometheus config check failed, isolate custom_scrape and retry"
+    cat /tmp/promtool_check.log
+    if [ -d /app/monitor/prometheus/custom_scrape ] && [ "$(ls -A /app/monitor/prometheus/custom_scrape 2>/dev/null)" ]; then
+      sudo mv /app/monitor/prometheus/custom_scrape "/app/monitor/prometheus/custom_scrape_bad_$(date +%Y%m%d%H%M%S)"
+      sudo mkdir -p /app/monitor/prometheus/custom_scrape && sudo chown app:apps /app/monitor/prometheus/custom_scrape
+      /app/monitor/prometheus/promtool check config /app/monitor/prometheus/prometheus.yml > /tmp/promtool_check.log 2>&1 || echo "WARN: prometheus config still invalid after isolating custom scrape"
+      cat /tmp/promtool_check.log
+    fi
+  fi
+fi
 cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 sudo chown app:apps . 2>/dev/null || true

@@ -70,6 +70,48 @@
         </div>
       </Card>
     </Card>
+    <Card :key="'custom'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
+      <p slot="title">{{$t('m_custom_scrape')}}</p>
+      <template v-for="item in customScrapeList">
+        <Card style="width:20%;display:inline-block;margin:16px;" :key="'custom_' + item.guid">
+          <p slot="title">
+            {{item.name}}
+          </p>
+          <a href="#" slot="extra" @click.prevent="editCustomItem(item)">
+            {{$t('m_button_edit')}}
+          </a>
+          <a href="#" slot="extra" @click.prevent="deleteCustomItem(item)" style="color:red">
+            {{$t('m_button_remove')}}
+          </a>
+          <ul>
+            <li style="margin:8px;list-style: none;">
+              <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
+                {{$t('m_job_name')}}:
+              </div>
+              <div style="width:65%;display:inline-block;word-break:break-all;">
+                {{item.job_name}}
+              </div>
+            </li>
+            <li style="margin:8px;list-style: none;">
+              <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
+                {{$t('m_enabled')}}:
+              </div>
+              <div style="width:65%;display:inline-block;">
+                {{item.enabled === 1 ? $t('m_enabled') : $t('m_disable')}}
+              </div>
+            </li>
+          </ul>
+        </Card>
+      </template>
+      <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
+        <p slot="title">
+          {{$t('m_button_add')}}
+        </p>
+        <div style="margin:8px;text-align:center">
+          <Icon @click="addCustomItem" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#5384FF'" />
+        </div>
+      </Card>
+    </Card>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
     <ModalComponent :modelConfig="modelItemConfig"></ModalComponent>
     <Modal
@@ -85,18 +127,55 @@
         </div>
       </div>
     </Modal>
+    <Modal
+      v-model="customModalVisible"
+      :title="$t('m_custom_scrape')"
+      :mask-closable="false"
+      :width="860"
+      @on-cancel="closeCustomModal"
+    >
+      <div>
+        <p style="margin-bottom: 12px;color:#808695;">{{$t('m_custom_scrape_tip')}}</p>
+        <Form :label-width="120">
+          <FormItem :label="$t('m_name')" required>
+            <Input v-model="customForm.name" :placeholder="$t('m_tips_required')" />
+          </FormItem>
+          <FormItem :label="$t('m_enabled')">
+            <i-switch v-model="customForm.enabled" :true-value="1" :false-value="0" />
+          </FormItem>
+          <FormItem :label="$t('m_custom_scrape_yaml')" required>
+            <Input
+              v-model="customForm.yaml_content"
+              type="textarea"
+              :rows="16"
+              :placeholder="$t('m_custom_scrape_yaml_placeholder')"
+              class="custom-scrape-yaml"
+            />
+          </FormItem>
+        </Form>
+      </div>
+      <div slot="footer">
+        <Button @click="formatCustomYaml">{{$t('m_button_format_indent')}}</Button>
+        <Button @click="validateCustomYaml">{{$t('m_button_validate')}}</Button>
+        <Button @click="closeCustomModal">{{$t('m_button_cancel')}}</Button>
+        <Button type="primary" @click="saveCustomItem">{{$t('m_button_save')}}</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script>
 import { collectionInterval } from '@/assets/config/common-config'
+import { formatScrapeYaml } from '@/assets/js/format-scrape-yaml'
 export default {
   name: '',
   data() {
     return {
       isShowWarning: false,
+      customModalVisible: false,
       clusterList: [],
       snmpList: [],
+      customScrapeList: [],
       modelConfig: {
         modalId: 'cluster_Modal',
         modalTitle: 'm_proxy_exporter',
@@ -195,6 +274,13 @@ export default {
       },
       selectedData: {},
       selectedDataType: '',
+      customForm: {
+        isAdd: true,
+        guid: '',
+        name: '',
+        yaml_content: '',
+        enabled: 1
+      },
       modelTip: {
         key: 'cluster_name',
         value: null
@@ -206,6 +292,7 @@ export default {
   mounted() {
     this.getClusterList()
     this.getSnmpList()
+    this.getCustomScrapeList()
   },
   methods: {
     addCluster() {
@@ -245,6 +332,11 @@ export default {
         this.request('DELETE', this.apiCenter.newSnmpConfig, this.selectedData, () => {
           this.isShowWarning = false
           this.getSnmpList()
+        })
+      } else if (this.selectedDataType === 'custom') {
+        this.request('DELETE', this.apiCenter.customScrapeConfig, { guid: this.selectedData.guid }, () => {
+          this.isShowWarning = false
+          this.getCustomScrapeList()
         })
       }
     },
@@ -304,6 +396,78 @@ export default {
           this.getSnmpList()
         })
       }
+    },
+    getCustomScrapeList() {
+      this.request('GET', this.apiCenter.customScrapeConfig, '', responseData => {
+        this.customScrapeList = responseData || []
+      })
+    },
+    addCustomItem() {
+      this.customForm = {
+        isAdd: true,
+        guid: '',
+        name: '',
+        yaml_content: '',
+        enabled: 1
+      }
+      this.customModalVisible = true
+    },
+    editCustomItem(item) {
+      this.customForm = {
+        isAdd: false,
+        guid: item.guid,
+        name: item.name,
+        yaml_content: item.yaml_content,
+        enabled: item.enabled === 0 ? 0 : 1
+      }
+      this.customModalVisible = true
+    },
+    deleteCustomItem(item) {
+      this.selectedData = item
+      this.selectedDataType = 'custom'
+      this.isShowWarning = true
+    },
+    closeCustomModal() {
+      this.customModalVisible = false
+    },
+    formatCustomYaml() {
+      const formatted = formatScrapeYaml(this.customForm.yaml_content)
+      if (formatted === this.customForm.yaml_content) {
+        this.$Message.info(this.$t('m_custom_scrape_format_unchanged'))
+        return
+      }
+      this.customForm.yaml_content = formatted
+      this.$Message.success(this.$t('m_custom_scrape_format_done'))
+    },
+    buildCustomPayload() {
+      return {
+        guid: this.customForm.guid,
+        name: (this.customForm.name || '').trim(),
+        yaml_content: this.customForm.yaml_content,
+        enabled: this.customForm.enabled === 0 ? 0 : 1
+      }
+    },
+    validateCustomYaml() {
+      const payload = this.buildCustomPayload()
+      if (!payload.name || !payload.yaml_content) {
+        this.$Message.warning(this.$t('m_tips_required'))
+        return
+      }
+      this.request('POST', this.apiCenter.customScrapeConfigCheck, payload, () => {
+        this.$Message.success(this.$t('m_custom_scrape_validate_ok'))
+      })
+    },
+    saveCustomItem() {
+      const payload = this.buildCustomPayload()
+      if (!payload.name || !payload.yaml_content) {
+        this.$Message.warning(this.$t('m_tips_required'))
+        return
+      }
+      const method = this.customForm.isAdd ? 'POST' : 'PUT'
+      this.request(method, this.apiCenter.customScrapeConfig, payload, () => {
+        this.customModalVisible = false
+        this.getCustomScrapeList()
+      })
     }
   },
   components: {},
@@ -311,5 +475,9 @@ export default {
 </script>
 
 <style scoped lang="less">
-
+.custom-scrape-yaml /deep/ textarea {
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
 </style>

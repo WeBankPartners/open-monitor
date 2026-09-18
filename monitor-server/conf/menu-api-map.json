@@ -1828,6 +1828,31 @@
         "method": "put"
       },
       {
+        "key": "customScrapeConfig",
+        "url": "/monitor/api/v1/config/custom_scrape",
+        "method": "get"
+      },
+      {
+        "key": "customScrapeConfig",
+        "url": "/monitor/api/v1/config/custom_scrape",
+        "method": "post"
+      },
+      {
+        "key": "customScrapeConfig",
+        "url": "/monitor/api/v1/config/custom_scrape",
+        "method": "put"
+      },
+      {
+        "key": "customScrapeConfig",
+        "url": "/monitor/api/v1/config/custom_scrape",
+        "method": "delete"
+      },
+      {
+        "key": "customScrapeConfigCheck",
+        "url": "/monitor/api/v1/config/custom_scrape/check",
+        "method": "post"
+      },
+      {
         "key": "remoteWrite",
         "url": "/monitor/api/v2/config/remote/write",
         "method": "get"

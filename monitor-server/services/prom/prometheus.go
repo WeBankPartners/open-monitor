@@ -2,14 +2,16 @@ package prom
 
 import (
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"go.uber.org/zap"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"go.uber.org/zap"
 )
 
 var (
@@ -52,6 +54,25 @@ func ReloadConfig() error {
 	//}
 	//return err
 	reloadConfigChan <- 1
+	return nil
+}
+
+func ReloadConfigNow() error {
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
+	if err != nil {
+		return fmt.Errorf("reload prometheus config fail,%s", err.Error())
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		msg := strings.TrimSpace(string(body))
+		if msg == "" {
+			msg = resp.Status
+		}
+		return fmt.Errorf("reload prometheus config fail,status:%d,%s", resp.StatusCode, msg)
+	}
+	log.Info(nil, log.LOGGER_APP, "Reload prometheus config success")
 	return nil
 }
 

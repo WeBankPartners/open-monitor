@@ -586,5 +586,16 @@
   "m_select_valid_time_range": "Please Select Valid Time Range",
   "m_cluster": "Cluster",
   "m_pod_name": "Pod Name",
-  "m_template_filter": "Template Filter"
+  "m_template_filter": "Template Filter",
+  "m_custom_scrape": "Custom Scrape",
+  "m_custom_scrape_yaml": "Prometheus YAML",
+  "m_custom_scrape_yaml_placeholder": "- job_name: 'CLUSTER-CORE'\n  metrics_path: '/assemble'\n  static_configs:\n    - targets: ['10.0.128.162:19997']\n  relabel_configs:\n    - source_labels: [job]\n      target_label: __param_clusterName",
+  "m_custom_scrape_tip": "Paste scrape job list only (starting with - job_name). Do not paste a full prometheus.yml. Jobs are stored in isolated files referenced by scrape_config_files.",
+  "m_button_format_indent": "Format Indent",
+  "m_button_validate": "Validate",
+  "m_custom_scrape_format_done": "Indent aligned to Prometheus scrape config, please review and save",
+  "m_custom_scrape_format_unchanged": "Indent is already normalized",
+  "m_custom_scrape_validate_ok": "YAML validation passed",
+  "m_enabled": "Enabled",
+  "m_job_name": "Job Name"
 }

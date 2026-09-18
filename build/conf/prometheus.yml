@@ -114,6 +114,10 @@ scrape_configs:
 #Snmp_start
 #Snmp_end
 
+# Custom scrape jobs live in isolated files. Comment scrape_config_files to disable them all.
+scrape_config_files:
+  - /app/monitor/prometheus/custom_scrape/*.yml
+
 #Remote write configuration
 remote_write:
 #Remote_write_start

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/WeBankPartners/go-common-lib/cipher"
@@ -20,6 +21,8 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
 )
+
+var prometheusConfigMutex sync.Mutex
 
 func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTable, err error) {
 	if clusterName != "" {
@@ -189,9 +192,15 @@ func InitPrometheusConfigFile() {
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Init Snmp config fail", zap.Error(err))
 	}
+	err = SyncCustomScrapeConfig()
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "Init custom scrape config fail", zap.Error(err))
+	}
 }
 
 func SyncKubernetesConfig() error {
+	prometheusConfigMutex.Lock()
+	defer prometheusConfigMutex.Unlock()
 	var kubernetesTables []*m.KubernetesClusterTable
 	err := x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
 	if len(kubernetesTables) == 0 {

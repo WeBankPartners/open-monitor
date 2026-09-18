@@ -64,6 +64,8 @@ func CallSyncWritePrometheusConfig() {
 }
 
 func SyncRemoteWritePrometheusConfig() error {
+	prometheusConfigMutex.Lock()
+	defer prometheusConfigMutex.Unlock()
 	var remoteWriteConfigRows []*models.RemoteWriteConfigTable
 	err := x.SQL("select * from remote_write_config where address<>''").Find(&remoteWriteConfigRows)
 	if err != nil {

@@ -43,6 +43,11 @@ func InitPrometheusConfig() {
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Start sync remote write config fail", zap.Error(err))
 	}
+	// init custom scrape config
+	err = SyncCustomScrapeConfig()
+	if err != nil {
+		log.Error(nil, log.LOGGER_APP, "Start sync custom scrape config fail", zap.Error(err))
+	}
 	select {}
 }
 

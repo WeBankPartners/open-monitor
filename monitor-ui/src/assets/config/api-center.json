@@ -249,6 +249,8 @@
     "kubernetesClusterList": "/monitor/api/v1/agent/kubernetes/cluster/list",
     "deleteKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/delete",
     "newSnmpConfig": "/monitor/api/v1/config/new/snmp",
+    "customScrapeConfig": "/monitor/api/v1/config/custom_scrape",
+    "customScrapeConfigCheck": "/monitor/api/v1/config/custom_scrape/check",
     "updateKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/update",
     "metricListCount": "/monitor/api/v2/monitor/metric/list/count",
     "metricComparisonList": "/monitor/api/v2/monitor/metric_comparison/list",

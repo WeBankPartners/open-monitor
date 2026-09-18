@@ -174,6 +174,11 @@ func init() {
 		&handlerFuncObj{Url: "/config/new/snmp", Method: http.MethodPost, HandlerFunc: config_new.SnmpExporterCreate, ApiCode: "config_snmp_post"},
 		&handlerFuncObj{Url: "/config/new/snmp", Method: http.MethodPut, HandlerFunc: config_new.SnmpExporterUpdate, ApiCode: "config_snmp_put"},
 		&handlerFuncObj{Url: "/config/new/snmp", Method: http.MethodDelete, HandlerFunc: config_new.SnmpExporterDelete, ApiCode: "config_snmp_delete"},
+		&handlerFuncObj{Url: "/config/custom_scrape", Method: http.MethodGet, HandlerFunc: config_new.CustomScrapeConfigList, ApiCode: "config_custom_scrape_get"},
+		&handlerFuncObj{Url: "/config/custom_scrape", Method: http.MethodPost, HandlerFunc: config_new.CustomScrapeConfigCreate, ApiCode: "config_custom_scrape_post"},
+		&handlerFuncObj{Url: "/config/custom_scrape", Method: http.MethodPut, HandlerFunc: config_new.CustomScrapeConfigUpdate, ApiCode: "config_custom_scrape_put"},
+		&handlerFuncObj{Url: "/config/custom_scrape", Method: http.MethodDelete, HandlerFunc: config_new.CustomScrapeConfigDelete, ApiCode: "config_custom_scrape_delete"},
+		&handlerFuncObj{Url: "/config/custom_scrape/check", Method: http.MethodPost, HandlerFunc: config_new.CustomScrapeConfigCheck, ApiCode: "config_custom_scrape_check"},
 	)
 	// User
 	httpHandlerFuncList = append(httpHandlerFuncList,

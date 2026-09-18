@@ -1318,3 +1318,18 @@ ALTER TABLE kubernetes_cluster ADD COLUMN guid varchar(64) NOT NULL DEFAULT '';
 #@v3.7.9.7-begin@;
 alter table log_keyword_alarm modify column `alarm_id` int DEFAULT null;
 #@v3.7.9.7-end@;
+
+#@v3.7.9.8-begin@;
+CREATE TABLE `custom_scrape_config` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `name` varchar(64) NOT NULL,
+  `job_name` varchar(255) NOT NULL,
+  `yaml_content` mediumtext NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `create_user` varchar(64) DEFAULT '',
+  `update_user` varchar(64) DEFAULT '',
+  `create_at` datetime,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_custom_scrape_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+#@v3.7.9.8-end@;
