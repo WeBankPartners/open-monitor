@@ -45,10 +45,13 @@ function isTopLevelKey(key) {
 }
 
 export function formatScrapeYaml(input) {
-  if (input == null) {
+  if (input === null || input === undefined) {
     return ''
   }
-  let text = String(input).replace(/\t/g, '  ').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const text = String(input)
+    .replace(/\t/g, '  ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
   if (text.trim() === '') {
     return text
   }
@@ -97,7 +100,10 @@ export function formatScrapeYaml(input) {
     rel = Math.round(rel / 2) * 2
     result.push(' '.repeat(2 + rel) + trimmed)
   }
-  return result.join('\n').replace(/\s+$/g, '') + (text.endsWith('\n') ? '\n' : '')
+  const formatted = result
+    .join('\n')
+    .replace(/\s+$/g, '')
+  return formatted + (text.endsWith('\n') ? '\n' : '')
 }
 
 export default {
