@@ -590,7 +590,7 @@
   "m_custom_scrape": "自定义采集",
   "m_custom_scrape_yaml": "Prometheus YAML",
   "m_custom_scrape_yaml_placeholder": "- job_name: 'CLUSTER-CORE'\n  metrics_path: '/assemble'\n  static_configs:\n    - targets: ['10.0.128.162:19997']\n  relabel_configs:\n    - source_labels: [job]\n      target_label: __param_clusterName",
-  "m_custom_scrape_tip": "只填写 scrape job 列表（以 - job_name 开头），不要粘贴完整 prometheus.yml。配置会写入独立文件，主配置通过 scrape_config_files 引用。",
+  "m_custom_scrape_tip": "只填写 scrape job 列表（以 - job_name 开头），不要粘贴完整 prometheus.yml。保存时会写入独立文件并自动包成 scrape_configs，主配置通过 scrape_config_files 引用。",
   "m_button_format_indent": "优化缩进",
   "m_button_validate": "校验",
   "m_custom_scrape_format_done": "已按 Prometheus scrape 配置对齐缩进，请确认后保存",

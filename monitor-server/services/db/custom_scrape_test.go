@@ -21,8 +21,29 @@ func TestNormalizeCustomScrapeYamlList(t *testing.T) {
 	if len(jobNames) != 1 || jobNames[0] != "CLUSTER-CORE" {
 		t.Fatalf("unexpected job names: %v", jobNames)
 	}
-	if fileContent == "" {
-		t.Fatal("file content empty")
+	if !strings.HasPrefix(strings.TrimSpace(fileContent), "scrape_configs:") {
+		t.Fatalf("prometheus 3.x scrape file must wrap jobs with scrape_configs, got:\n%s", fileContent)
+	}
+	if strings.HasPrefix(strings.TrimSpace(fileContent), "-") {
+		t.Fatal("scrape file must not be a bare job list")
+	}
+}
+
+func TestNormalizeCustomScrapeYamlWrapper(t *testing.T) {
+	content := `scrape_configs:
+  - job_name: demo
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+`
+	fileContent, jobNames, err := normalizeCustomScrapeYaml(content)
+	if err != nil {
+		t.Fatalf("normalize fail: %v", err)
+	}
+	if len(jobNames) != 1 || jobNames[0] != "demo" {
+		t.Fatalf("unexpected job names: %v", jobNames)
+	}
+	if !strings.Contains(fileContent, "scrape_configs:") {
+		t.Fatalf("missing scrape_configs wrap:\n%s", fileContent)
 	}
 }
 
@@ -32,12 +53,15 @@ metrics_path: /metrics
 static_configs:
   - targets: ['127.0.0.1:9100']
 `
-	_, jobNames, err := normalizeCustomScrapeYaml(content)
+	fileContent, jobNames, err := normalizeCustomScrapeYaml(content)
 	if err != nil {
 		t.Fatalf("normalize fail: %v", err)
 	}
 	if len(jobNames) != 1 || jobNames[0] != "demo" {
 		t.Fatalf("unexpected job names: %v", jobNames)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(fileContent), "scrape_configs:") {
+		t.Fatalf("single job must still wrap as scrape_configs, got:\n%s", fileContent)
 	}
 }
 

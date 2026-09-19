@@ -21,7 +21,6 @@ import (
 var (
 	customScrapeForbiddenRootKeys = map[string]bool{
 		"global":              true,
-		"scrape_configs":      true,
 		"scrape_config_files": true,
 		"remote_write":        true,
 		"remote_read":         true,
@@ -260,34 +259,43 @@ func normalizeCustomScrapeYaml(content string) (fileContent string, jobNames []s
 	var jobs []map[interface{}]interface{}
 	switch typed := raw.(type) {
 	case []interface{}:
-		if len(typed) == 0 {
-			err = fmt.Errorf("yaml_content must contain at least one scrape job")
+		jobs, err = jobsFromYamlList(typed)
+		if err != nil {
 			return
 		}
-		for i, item := range typed {
-			jobMap, ok := item.(map[interface{}]interface{})
-			if !ok {
-				err = fmt.Errorf("scrape job[%d] must be a mapping", i)
-				return
-			}
-			jobs = append(jobs, jobMap)
-		}
-		fileContent = strings.TrimSpace(content) + "\n"
 	case map[interface{}]interface{}:
-		for key := range typed {
-			keyStr := fmt.Sprintf("%v", key)
-			if customScrapeForbiddenRootKeys[keyStr] {
-				err = fmt.Errorf("please only paste scrape job list starting with - job_name, do not paste full prometheus.yml (found %s)", keyStr)
+		if scrapeRaw, hasScrape := lookupYamlMap(typed, "scrape_configs"); hasScrape {
+			for key := range typed {
+				keyStr := fmt.Sprintf("%v", key)
+				if keyStr == "scrape_configs" {
+					continue
+				}
+				if customScrapeForbiddenRootKeys[keyStr] {
+					err = fmt.Errorf("please only paste scrape job list starting with - job_name, do not paste full prometheus.yml (found %s)", keyStr)
+					return
+				}
+				err = fmt.Errorf("scrape file extra root key %s is not allowed", keyStr)
 				return
 			}
+			scrapeList, ok := scrapeRaw.([]interface{})
+			if !ok {
+				err = fmt.Errorf("scrape_configs must be a job list")
+				return
+			}
+			jobs, err = jobsFromYamlList(scrapeList)
+			if err != nil {
+				return
+			}
+		} else {
+			for key := range typed {
+				keyStr := fmt.Sprintf("%v", key)
+				if customScrapeForbiddenRootKeys[keyStr] {
+					err = fmt.Errorf("please only paste scrape job list starting with - job_name, do not paste full prometheus.yml (found %s)", keyStr)
+					return
+				}
+			}
+			jobs = []map[interface{}]interface{}{typed}
 		}
-		jobs = []map[interface{}]interface{}{typed}
-		wrapped, marshalErr := yaml.Marshal(jobs)
-		if marshalErr != nil {
-			err = fmt.Errorf("wrap scrape job fail,%s", marshalErr.Error())
-			return
-		}
-		fileContent = string(wrapped)
 	default:
 		err = fmt.Errorf("yaml_content must be a scrape job list starting with - job_name")
 		return
@@ -309,7 +317,41 @@ func normalizeCustomScrapeYaml(content string) (fileContent string, jobNames []s
 		nameSet[jobName] = true
 		jobNames = append(jobNames, jobName)
 	}
+	fileContent, err = marshalCustomScrapeFile(jobs)
 	return
+}
+
+func jobsFromYamlList(typed []interface{}) ([]map[interface{}]interface{}, error) {
+	if len(typed) == 0 {
+		return nil, fmt.Errorf("yaml_content must contain at least one scrape job")
+	}
+	jobs := make([]map[interface{}]interface{}, 0, len(typed))
+	for i, item := range typed {
+		jobMap, ok := item.(map[interface{}]interface{})
+		if !ok {
+			return nil, fmt.Errorf("scrape job[%d] must be a mapping", i)
+		}
+		jobs = append(jobs, jobMap)
+	}
+	return jobs, nil
+}
+
+func marshalCustomScrapeFile(jobs []map[interface{}]interface{}) (string, error) {
+	out, err := yaml.Marshal(map[string]interface{}{"scrape_configs": jobs})
+	if err != nil {
+		return "", fmt.Errorf("wrap scrape job fail,%s", err.Error())
+	}
+	return string(out), nil
+}
+
+func lookupYamlMap(input map[interface{}]interface{}, key string) (interface{}, bool) {
+	if input == nil {
+		return nil, false
+	}
+	if v, ok := input[key]; ok {
+		return v, true
+	}
+	return nil, false
 }
 
 func validateCustomScrapeJobName(jobName string) error {
