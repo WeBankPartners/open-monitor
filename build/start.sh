@@ -249,7 +249,12 @@ cd ../ping_exporter/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs && sudo chown app:apps logs
 ensure_log_file logs/app.log
-GODEBUG=netdns=go nohup ./ping_exporter > logs/app.log 2>&1 &
+# raw ICMP 需要 CAP_NET_RAW；容器以 app 运行。优先 setcap，否则 sudo 启动。
+if sudo setcap cap_net_raw+ep ./ping_exporter 2>/dev/null; then
+  GODEBUG=netdns=go nohup ./ping_exporter > logs/app.log 2>&1 &
+else
+  nohup sudo env GODEBUG=netdns=go ./ping_exporter > logs/app.log 2>&1 &
+fi
 cd ../transgateway/
 sudo chown app:apps . 2>/dev/null || true
 sudo mkdir -p logs data && sudo chown app:apps logs data
