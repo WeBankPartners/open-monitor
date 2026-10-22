@@ -135,3 +135,32 @@ test('namespace object action opens the complete browser with its original scope
   assert.equal(route.query.clusterId,'cluster-a')
   assert.equal(route.query.namespace,'sit-a')
 })
+
+test('cluster creation requires a token while cluster edits may keep the current token', () => {
+  const component = loadComponent('k8s-sources')
+  const requests = []
+  const errors = []
+  const context = {
+    cluster: { clusterId: 'cluster-a', apiServer: 'https://api.example.invalid', ca: '', token: '', enabled: true, editing: false },
+    apiCenter: { k8sClusterSource: '/cluster/source' },
+    $t: key => key,
+    $Message: { error: value => errors.push(value), success() {} },
+    request(method, url, body) { requests.push({ method, url, body }) },
+    refreshLists() {}
+  }
+  component.methods.saveCluster.call(context)
+  assert.deepEqual(errors, ['m_k8s_cluster_token_required'])
+  assert.equal(requests.length, 0)
+
+  context.cluster.editing = true
+  component.methods.saveCluster.call(context)
+  assert.equal(requests.length, 1)
+  assert.equal(requests[0].body.token, '')
+})
+
+test('cluster and namespace forms are opened in dedicated dialogs', () => {
+  const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-sources.vue'), 'utf8')
+  assert.match(source, /<Modal[^>]*v-model="cluster\.visible"/)
+  assert.match(source, /<Modal[^>]*v-model="namespace\.visible"/)
+  assert.doesNotMatch(source, /<Form inline>/)
+})

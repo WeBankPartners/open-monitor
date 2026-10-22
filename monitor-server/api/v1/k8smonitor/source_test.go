@@ -55,3 +55,33 @@ func TestWebSourceDeleteQueryIsIdempotent(t *testing.T) {
 		t.Fatalf("delete not idempotent: %s", out.Body.String())
 	}
 }
+
+func TestClusterCreateWithoutTokenReturnsActionableError(t *testing.T) {
+	s := &sourceMemory{}
+	h := Handler{ClusterMode: true, Seed: "test-seed", Policy: k8s.Policy{Environment: "sit"}, Store: s}
+	r := gin.New()
+	r.PUT("/source", h.PutSource)
+	out := httptest.NewRecorder()
+	r.ServeHTTP(out, httptest.NewRequest("PUT", "/source", strings.NewReader(`{"clusterId":"cluster-a","apiServer":"https://api.example.invalid","token":"","enabled":true}`)))
+	if out.Code != 400 || !strings.Contains(out.Body.String(), `"error":"cluster token is required"`) {
+		t.Fatalf("expected actionable missing-token error, got %d %s", out.Code, out.Body.String())
+	}
+	if len(s.saved) != 0 {
+		t.Fatal("cluster without a token must not be saved")
+	}
+}
+
+func TestClusterCreateWithoutEncryptionSeedReturnsServerError(t *testing.T) {
+	s := &sourceMemory{}
+	h := Handler{ClusterMode: true, Policy: k8s.Policy{Environment: "sit"}, Store: s}
+	r := gin.New()
+	r.PUT("/source", h.PutSource)
+	out := httptest.NewRecorder()
+	r.ServeHTTP(out, httptest.NewRequest("PUT", "/source", strings.NewReader(`{"clusterId":"cluster-a","apiServer":"https://api.example.invalid","token":"provided-token","enabled":true}`)))
+	if out.Code != 500 || !strings.Contains(out.Body.String(), `"error":"credential encryption is not configured"`) {
+		t.Fatalf("expected server configuration error, got %d %s", out.Code, out.Body.String())
+	}
+	if len(s.saved) != 0 {
+		t.Fatal("cluster must not be saved without the encryption seed")
+	}
+}

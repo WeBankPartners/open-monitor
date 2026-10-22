@@ -43,6 +43,10 @@ func (h Handler) saveSource(c *gin.Context, in sourceInput, enabled bool) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
+	if h.ClusterMode && h.Seed == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "credential encryption is not configured"})
+		return
+	}
 	rows, err := h.Store.List(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusServiceUnavailable)
@@ -55,6 +59,10 @@ func (h Handler) saveSource(c *gin.Context, in sourceInput, enabled bool) {
 			r.Version = rows[i].Version
 			break
 		}
+	}
+	if h.ClusterMode && existing == nil && strings.TrimSpace(in.Token) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cluster token is required"})
+		return
 	}
 	if h.ClusterMode && strings.TrimSpace(in.Token) == "" && existing != nil {
 		r.Credentials = existing.Credentials

@@ -104,7 +104,8 @@ class KubernetesLogAgentDeploymentTest(unittest.TestCase):
         init_mount = next(item for item in self.init["volumeMounts"] if item["name"] == "state")
         self.assertEqual(self.config["data"]["LOG_AGENT_STATE_DIR"], state_mount["mountPath"])
         self.assertNotEqual(0, self.init["securityContext"]["runAsUser"])
-        self.assertNotIn("fsGroup", self.pod["securityContext"])
+        self.assertEqual(10001, self.pod["securityContext"]["fsGroup"])
+        self.assertEqual("OnRootMismatch", self.pod["securityContext"]["fsGroupChangePolicy"])
         cases = [("monitor-sit", "node-a"), ("monitor-sit", "node-b"), ("monitor-uat", "node-a")]
         paths = []
         with tempfile.TemporaryDirectory() as root:
