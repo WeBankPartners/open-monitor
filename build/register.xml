@@ -781,127 +781,43 @@
             </interface>
         </plugin>
         <plugin name="kubernetes_namespace" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="put" path="/monitor/api/v1/k8s/namespace/source" filterRule="" type="EXECUTION">
+            <interface action="put" path="/monitor/api/v1/k8s/namespace/plugin/put" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="constant" mappingEntityExpression="">token</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="Y" mappingType="constant" mappingEntityExpression="">token</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <!-- update is handled by the idempotent PUT interface above -->
-            <!--
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="constant" mappingEntityExpression="">token</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface> -->
-            <interface action="delete" path="/monitor/api/v1/k8s/namespace/source" filterRule="" type="EXECUTION">
+            <interface action="delete" path="/monitor/api/v1/k8s/namespace/plugin/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">namespace</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
-        <!-- Log-agent configuration is managed by the Web UI; agents only auto-register their endpoint. -->
-        <!-- <plugin name="kubernetes_log_agent" ...> was intentionally removed. -->
-        <!--
-        <plugin name="kubernetes_log_agent" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/k8s/log-agent/plugin/add" filterRule="" type="EXECUTION">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">node</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">config</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="update" path="/monitor/api/v1/k8s/log-agent/plugin/update" filterRule="" type="EXECUTION">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">node</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">config</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="delete" path="/monitor/api/v1/k8s/log-agent/plugin/delete" filterRule="" type="EXECUTION">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">node</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-        </plugin> -->
+        <!-- Agent endpoints auto-register; log targets and rules are managed in Web. -->
         <plugin name="kubernetes_metric_cluster" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/k8s/cluster/plugin/add" filterRule="" type="EXECUTION">
+            <interface action="put" path="/monitor/api/v1/k8s/cluster/plugin/put" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">apiServer</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ca</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ca</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="constant" mappingEntityExpression="">token</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="update" path="/monitor/api/v1/k8s/cluster/plugin/update" filterRule="" type="EXECUTION">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">apiServer</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">ca</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="constant" mappingEntityExpression="">token</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
@@ -911,10 +827,8 @@
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterId</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">version</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">version</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>

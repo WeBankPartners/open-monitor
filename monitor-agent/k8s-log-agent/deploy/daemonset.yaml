@@ -15,7 +15,6 @@
 #
 # How to obtain real values without logging into a node:
 #   kubectl get svc -A
-#   kubectl get svc -A
 #   kubectl get pvc -n <agent-namespace> -o wide
 #   kubectl get pod <business-pod> -n <business-namespace> -o yaml
 # The Cluster ID is the value registered in Monitor Web -> Kubernetes Sources.
@@ -87,6 +86,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       initContainers:

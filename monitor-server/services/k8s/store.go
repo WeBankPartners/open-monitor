@@ -198,6 +198,9 @@ func sameAppliedRegistration(current, input Registration, seed string) bool {
 	if a.Guid != b.Guid || a.APIServer != b.APIServer || a.CA != b.CA {
 		return false
 	}
+	if a.EncryptedToken == "" && b.EncryptedToken == "" {
+		return input.Namespace != ""
+	}
 	plainA, err := a.PlainToken(seed)
 	if err != nil || plainA == "" {
 		return false

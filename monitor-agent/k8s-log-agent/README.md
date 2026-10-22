@@ -1,30 +1,55 @@
-# Kubernetes log Agent
+# Kubernetes 日志 Agent
 
-独立 Linux Go 应用；启动参数全部使用 ENV，动态规则主动拉取 Monitor。
+独立 Linux Go 应用。Monitor 保存日志目标和规则，Agent 主动注册、拉取配置、扫描节点日志，通过标准 Prometheus `/metrics` 暴露内存中的结果。Prometheus 负责抓取并写入 TSDB。
+
+首次部署、占位符替换与验收见 [DaemonSet 部署指南](../../docs/k8s-log-agent-deployment.md)；本文说明构建、启动参数和 Agent 的运行边界。
 
 ## 构建和测试
 
-在本目录运行 `make build`、`make test`；镜像使用 `make image IMAGE=<image>`。
-校验部署模板时，先在 Python 虚拟环境中安装 `python3 -m pip install -r ../../build/tests/requirements.txt`，再运行 `make deploy-template-check`。该检查验证合并 YAML 的配置引用、PVC 节点隔离和初始化脚本的重复执行；不替代实际 NFS 联调。
-镜像与 DaemonSet 默认使用 `10001:10001`。运行时安装 `ca-certificates` 和 `tzdata`；`TZ` 默认 `Asia/Shanghai`，可在 DaemonSet 中改为其他 IANA 时区。指标时间戳使用 Unix 时间，不因时区变更偏移；普通关键字日志不按业务时间计算；OTLP 指标优先使用 timeUnixNano，缺省时按 TZ 解析行首时间。
+在本目录运行：
 
-APK 默认使用阿里云镜像源；可通过 `make image IMAGE=<image> ALPINE_MIRROR=dl-cdn.alpinelinux.org` 切回官方源。该参数仅替换 APK 源域名，保留 Alpine 版本路径，不影响基础镜像拉取；基础镜像加速需配置构建环境的镜像仓库。
-`deploy/daemonset.yaml` 是包含 PVC、ConfigMap 和 DaemonSet 三个文档的占位符模板；一次 `kubectl apply -f` 会创建 1Gi RWX NFS PVC `monitor-k8s-log-agent-state`、ConfigMap `monitor-k8s-log-agent-config` 和 DaemonSet `monitor-k8s-log-agent`。Agent 镜像默认名为 `monitor-k8s-log-agent`。日志目录需预先允许 UID/GID `10001:10001` 读取；initContainer 会在 PVC 中创建 `k8s-log-agent/<namespace>/<node>` 子目录。模板内 Agent Token 默认值必须与 Monitor 的 `MONITOR_K8S_LOG_AGENT_TOKEN` 一致；这是公开的共享默认凭据，生产环境应每个环境单独生成并建议改用 Secret 注入。initContainer 不使用 root，不执行递归 `chown`，也不修改业务日志目录权限。完整替换说明见 [DaemonSet 部署指南](../../docs/k8s-log-agent-deployment.md)。
+```bash
+make build
+make test
+make image IMAGE=<registry>/monitor-k8s-log-agent:<tag>
+```
 
-## ENV
+部署模板检查依赖 `../../build/tests/requirements.txt`，在 Python 虚拟环境安装后执行 `make deploy-template-check`。该检查覆盖 YAML 引用、PVC 子目录隔离和初始化脚本重复执行，不替代真实 NFS 联调。
 
-必填：`LOG_AGENT_ROOT`、`LOG_AGENT_STATE_DIR`（绝对目录）、`LOG_AGENT_MONITOR_URL`（HTTP/HTTPS Monitor 基础路径）、`LOG_AGENT_CLUSTER_ID`、`LOG_AGENT_NODE_NAME`、`LOG_AGENT_AUTH_TOKEN`、`LOG_AGENT_ADVERTISE_ADDRESS`。Agent 启动及周期性向 Monitor 注册实际地址和监听端口。生产环境优先使用 HTTPS；HTTP 仅适用于受信任的集群内网络。
-可选：`LOG_AGENT_HTTP_ADDR`（默认 `:9105`）、`LOG_AGENT_POLL_INTERVAL`（默认 `10s`，至少 `1s`）。凭据由部署时注入，不提交真实值。
+镜像和 DaemonSet 默认使用 `10001:10001`，安装 `ca-certificates`、`tzdata`，`TZ` 默认 `Asia/Shanghai`。APK 默认使用阿里云源；构建时可传 `ALPINE_MIRROR=dl-cdn.alpinelinux.org` 切换源域名，基础镜像仓库仍由构建环境配置。
 
-Agent 请求 `<Monitor基础路径>/internal/k8s/log-agent/config`，携带 Bearer 认证及 URL 编码的 `clusterId/node/version`。服务端按 cluster/node 返回完整配置；撤销目标时发布更高版本的空 targets 配置。禁止重定向。
+## 启动参数
 
-有效配置取得后定时扫描。拉取失败保留旧配置，超过一分钟无有效响应时暂停采集、readiness 与 metrics 返回 503，避免无限期执行已可能撤销的目标。健康检查 `/healthz` 表示进程 HTTP 服务可用，不等同于采集正常。
+| ENV | 要求或默认值 |
+| --- | --- |
+| `LOG_AGENT_MONITOR_URL` | 必填，HTTP/HTTPS Monitor 基础路径，通常以 `/monitor` 结尾 |
+| `LOG_AGENT_CLUSTER_ID` | 必填，与 Monitor 登记的 Cluster ID 一致 |
+| `LOG_AGENT_NODE_NAME` | 必填，DaemonSet 通过 Downward API 注入 |
+| `LOG_AGENT_ADVERTISE_ADDRESS` | 必填，Monitor/Prometheus 可访问的地址，模板注入 Pod IP |
+| `LOG_AGENT_AUTH_TOKEN` | 必填，与 Monitor 的 `MONITOR_K8S_LOG_AGENT_TOKEN` 一致；不是 Kubernetes Token |
+| `LOG_AGENT_ROOT` | 必填，允许读取的绝对日志根目录 |
+| `LOG_AGENT_STATE_DIR` | 必填，checkpoint 绝对目录，模板为 `/state` |
+| `LOG_AGENT_HTTP_ADDR` | 默认 `:9105` |
+| `LOG_AGENT_POLL_INTERVAL` | 默认 `10s`，至少 `1s`；控制注册、配置轮询和扫描循环 |
+| `TZ` | 镜像默认 `Asia/Shanghai` |
 
-当前输出 `k8s_log_match_total`；计数在内存中立即推进，并尽力保存到 checkpoint。支持 literal/Go regex、完整行、重启半行续读、文件身份和同一路径轮转后新文件从头读取。成功扫描目标目录后，Agent 会回收不再匹配的旧文件游标，并把历史计数折叠到每条规则的累计记录，因此日志轮转不会让 checkpoint 随轮转次数持续增长；目录或文件读取异常时暂缓该目标的回收。初次接管默认由目标的 `start` 指定 beginning/end。NFS checkpoint 不可用时 Agent 降级为内存游标继续采集，暴露 `k8s_log_agent_state_available`、`k8s_log_agent_state_resets_total`、`k8s_log_agent_state_persist_errors_total`；恢复写入时保存当前内存状态，不回读旧 checkpoint。进程在 checkpoint 恢复前重启可能造成计数重置、日志漏计或重复计数。PVC 挂载失败或 initContainer 无法创建子目录属于 Pod 启动前故障，Agent 无法绕过。
+ENV 变更需重启 Pod。日志目标及规则不放入 ENV 或 ConfigMap，由 Monitor 动态下发。Prometheus 的抓取间隔独立于 Agent 循环：Monitor 内置两个 Kubernetes job 默认 `30s`，共用 `MONITOR_K8S_METRICS_INTERVAL_SECONDS`。
 
-### 可选排除条件
+## 配置与采集流程
 
-规则由 Monitor Server 保存，Agent 主动拉取。Web 的 Agent 日志目标配置中点击“日志匹配与排除规则”，选择目标后编辑主规则与排除条件；也可在目标 JSON 中填写可选的 `exclude`：
+1. Agent 向 `<Monitor基础路径>/internal/k8s/log-agent/register` 上报 `clusterId/node/address/port`，并携带 Bearer Token。
+2. 通过 `GET <Monitor基础路径>/internal/k8s/log-agent/config` 拉取完整配置；查询参数为 URL 编码后的 `clusterId/node/version`，禁止重定向。
+3. 应用配置后扫描文件。HTTP `/metrics` 只读取已生成的内存结果，不在抓取时现场解析日志。
+
+Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_path}/logs` 下的普通 `*.log` 和应用 `*_metric.log` 目标分配给该节点。默认普通规则匹配 `ERROR/FATAL/PANIC`，普通扫描显式跳过 `_metric.log`，避免应用指标内容触发关键字告警。
+
+配置采用 `{"config":{"version":1,"targets":[...]}}` 响应，撤销目标通过更高版本配置移除目标；配置、规则版本由 Server 维护。具体协议见 [系统设计](../../docs/k8s-monitoring-system-design.md#5-agent-配置采集与状态恢复)。
+
+拉取失败暂时保留旧配置；超过一分钟没有有效配置响应时，在采集循环的检查点暂停扫描，`/readyz` 和 `/metrics` 返回 503。`/healthz` 仅表示 HTTP 进程可用。注册、拉取和扫描共用循环，慢请求或阻塞文件操作可能拉长实际周期，不能把一分钟当作严格超时保证。
+
+## 可选排除条件
+
+Web 的 Agent 日志目标配置提供“日志匹配与排除规则”，也支持在目标 JSON 中填写可选 `exclude`。以下是人工编辑的规则片段，保存后 Server 补充内部版本：
 
 ```json
 {
@@ -38,20 +63,34 @@ Agent 请求 `<Monitor基础路径>/internal/k8s/log-agent/config`，携带 Bear
 }
 ```
 
-每个完整日志行命中主规则，且没有命中任何排除条件，才增加该规则计数。排除对整行判断，仅影响所属规则；被排除行照常推进读取游标，其他规则仍可计数。`exclude` 不填或为 `[]` 时不排除，自动生成的默认规则不带排除。普通文本区分大小写，正则使用 Go regexp 语法，可用 `(?i)` 忽略大小写，不支持前后查找断言。每条规则最多 100 个排除条件，每个非空 pattern 最多 4096 字节；Server 和 Agent 均校验模式、长度及正则合法性。
+完整行命中主规则且未命中任何排除条件才计数。排除针对整行、只影响所属规则；被排除行仍推进游标，其他规则可正常计数。`exclude` 缺省或为空数组时不排除，自动默认规则不带排除。
 
-人工保存时规则版本由 Server 在已有集群配置事务锁内管理：新增规则为 1，匹配或排除条件变化才递增版本，相同配置重试保持版本不变。调用方无需填写规则 version，Agent 收到的配置仍包含 version。自动发现、Pod 重建和节点切换保留人工配置的排除条件。新规则版本使用新计数序列，在日志目录、glob 和 Pod UID 未变化时继承已提交读取位置（包括 Agent 重启后），不重读历史，也不跳过尚未读取的行；规则变更前已累计的计数和历史告警不会被追溯重算。排除内容不进入指标标签，增加排除条件不会增加每个规则的活跃序列数。
+literal 区分大小写；regex 使用 Go regexp 语法，可用 `(?i)` 忽略大小写，不支持前后查找断言。每条规则最多 100 个排除条件，每个非空 pattern 最多 4096 字节，Server 与 Agent 都校验。
 
-以 `*_metric.log` 为默认 glob 的 `otlp_metric` 目标读取文件最后一条完整 OTLP JSON 记录，将白名单内的应用指标转换为 `k8s_app_*`。该目标使用最近 5 分钟的新鲜样本，单目标最多 4096 条序列，单条记录最多 1 MiB；没有匹配文件时静默跳过且不输出应用指标，文件存在但读取或解析失败时输出可用性和错误计数，不会把它误报为普通关键字日志异常。指标目标不进入普通日志游标和匹配计数。
+Server 在集群配置事务锁内管理规则版本：新增为 1，匹配或排除内容变化才递增，相同配置重试不变。自动发现、Pod 重建和节点切换保留人工规则。新版本使用新计数序列；目录、glob 和 Pod UID 未变时继承已提交游标，不重读历史，已有计数和告警不追溯重算。排除文本不进入指标标签。
 
-## 未完成及边界
+## 文件与 checkpoint
 
-第5步的 Agent 配置拉取、认证、版本化配置存储、基础日志扫描、Snapshot 目标重绑定和 Prometheus file_sd 接入已经实现。规则和目录由 Monitor 根据 Pod instanceId 与 CMDB deploy_path 自动生成：日志目录为 `{deploy_path}/logs`，并支持 Web 调整；实际日志目录映射、Agent 地址和 DaemonSet 仍需环境联调确认。当前读取失败只影响对应目标，正常目标仍可提交 checkpoint。
+- 扫描不递归，单目录最多检查 10000 个条目。普通日志只处理完整行，单行最多 64 KiB；OTLP 单记录最多 1 MiB，超限报告错误。
+- 游标记录文件设备号和 inode；首次接管由 `start` 控制，默认目标为 `end`。相同路径换 inode 时新文件从头读取，检测到 truncate 时归零。若轮转旧文件不再匹配 glob，其尚未读取的尾部不能保证补读；copytruncate 也有漏读窗口。
+- 成功扫描目标后回收不再匹配的旧文件游标，将计数折叠到目标/规则累计记录，避免 checkpoint 按轮转次数持续增长；读取异常时暂缓该目标回收。配置撤销时清理对应目标、规则和旧 Pod 游标。
+- checkpoint 通过文件锁、临时文件、文件同步和原子重命名提交。文件锁防止同目录双写；已有进程持锁时，新进程拒绝启动。模板的 RWX PVC 按 `k8s-log-agent/<namespace>/<node>` 分目录，同节点重建沿用原状态。
+- 扫描先更新内存，再尝试保存。state 损坏或读写返回错误时可降级为空状态或内存游标，后续重试写当前状态，不回读过期 checkpoint；新建默认目标从日志末尾接管。NFS 调用若阻塞，仍可能阻塞采集和 HTTP 请求，不能保证存储故障时持续服务。
+- checkpoint 尚未恢复时重启可能重置计数并漏计或重复计数，影响窗口可能覆盖整个未持久化期间，不能固定为一个扫描周期。PVC 挂载或 initContainer 失败属于启动前故障，Agent 无法自行绕过。
 
-普通日志当前仅支持最大 64 KiB 完整行，指标日志单条上限为 1 MiB，超限均报错，不静默跳过。copytruncate 检测存在不可避免的漏读窗口；节点日志丢失不能恢复。匹配计数不是精确一次告警交付保证。请勿把日志正文、路径或匹配内容作为指标标签。
+这不是原始日志存储或精确一次交付方案。容量取决于当前目标、活跃文件和规则数；游标回收避免随轮转无限增长，但不等于任意负载下 1Gi 都足够。
 
-当前指标还包括 `k8s_log_last_match_timestamp`、`k8s_log_file_missing`、`k8s_log_read_error_total`、`k8s_log_last_read_timestamp`、`k8s_log_agent_up` 和 `k8s_log_agent_config_version`。配置版本变更会清理已撤销目标和规则的本地游标，避免旧 Pod/规则继续复用状态。
+## 指标与健康
 
-指标对象标签统一为 `cluster_id`、`namespace`、`workload_type`、`workload_name`、`pod`、`pod_uid`、`container`，匹配指标保留 `instance_id`。`k8s_log_target_healthy` 表示当前目标扫描是否成功，读取异常或文件缺失时为 0。Monitor 自动创建的日志告警按最近 5 分钟新增匹配数评估，采集缺失不会作为恢复。
+| 指标组 | 主要输出 |
+| --- | --- |
+| Agent | `k8s_log_agent_up`、`k8s_log_agent_config_version` |
+| checkpoint | `k8s_log_agent_state_available`、`k8s_log_agent_state_resets_total`、`k8s_log_agent_state_persist_errors_total` |
+| 普通日志 | `k8s_log_match_total`、`k8s_log_last_match_timestamp`、`k8s_log_target_healthy`、`k8s_log_file_missing`、`k8s_log_read_error_total`、`k8s_log_last_read_timestamp` |
+| 应用指标 | 白名单内的 `k8s_app_*` 及可用性、读取错误、源样本时间指标 |
 
-应用指标完整白名单、排除项和扩展方法见 [应用指标说明](../../docs/k8s-app-metric-whitelist.md)。
+匹配指标包含 `cluster_id/namespace/workload_type/workload_name/pod/pod_uid/container/instance_id`，其中 `instance_id` 是 CMDB guid。Agent 级状态按 `cluster_id/node` 标记；文件健康等指标按各自用途携带目标或 Pod 标签，并非每条序列都有全部业务标签。不要将日志正文、路径或匹配内容作为标签。
+
+应用指标读取文件尾部约 2 MiB 中最后一条完整 OTLP JSON 记录，最多 4096 条样本，要求最近 5 分钟内且不领先当前时间超过 5 秒。没有 `*_metric.log` 时静默跳过，不输出该目标的应用和诊断指标；文件存在但读取、解析失败或过期时报告不可用。应用指标不进入普通日志游标和匹配计数。完整目录、单位与扩展方法见 [应用指标白名单](../../docs/k8s-app-metric-whitelist.md)。
+
+Unix 指标时间不因 `TZ` 偏移。普通关键字匹配不按业务时间计算；应用记录优先使用 `timeUnixNano`，缺省时按 `TZ` 解析行首时间。

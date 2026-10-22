@@ -165,7 +165,7 @@ tomcat.sessions.rejected
 
 在 `monitor-agent/k8s-log-agent/internal/agent/otlp_metric.go` 的 `buildAppMetricWhitelist` 增加 `metricSpec`，明确输出名、`gauge`/`counter`/`histogram` 类型、单位和允许的属性；随后为单位换算、累计语义、重复点和 Prometheus 输出补充单元测试。若来源是 Delta Sum、Summary、Exponential Histogram，必须先扩展解析器并定义重启/分位数语义，不能只把名称加入白名单。Druid 计数、磁盘空间和会话指标还应先确认采集端的类型与标签，再决定是否作为默认指标。
 
-增加白名单只改变 Agent 镜像能力，不需要新增 Prometheus scrape job；若要默认告警，还需在 Monitor 的默认规则中增加明确阈值、窗口和恢复条件。发布新镜像后，已有 metric 目标会随配置轮询自动使用新能力。
+增加白名单不需要新增 Prometheus scrape job。构建并部署新 Agent 镜像、完成 DaemonSet 滚动更新后，已有 metric 目标即可使用新能力；仅推送镜像不会更新运行中的 Agent。若需在 Monitor 页面查询和绘图，还须同步维护 `monitor-server/services/k8s/metric_catalog.go` 的查询目录并补充测试；若要默认告警，还需增加明确阈值、窗口和恢复条件。
 
 ## 采集边界与验证
 
@@ -175,5 +175,5 @@ tomcat.sessions.rejected
 - `k8s_app_metric_available` 表示目标是否存在可用的新鲜样本；`k8s_app_metric_read_error_total` 表示读取/解析失败次数；`k8s_app_metric_sample_timestamp_seconds` 是最近源数据时间。没有匹配的 `*_metric.log` 文件时，应用指标目标静默跳过，不输出这些状态序列；文件名匹配但打开、读取或解析失败时才输出可用性和错误计数。文件缺失不影响普通关键字日志目标的健康状态。
 - 相同身份、相同时间、不同数值的重复序列被排除，其他指标继续输出。样本 B 的 `jvm.trace.exception.events` 存在这种冲突，因此该样本不会输出异常计数。若要启用，需要源端消除冲突，或明确两个 instrumentation scope 的业务含义后增加受控 scope 维度。
 - Histogram 没有 bucket 时仅输出 sum/count，可以计算均值，不能计算 P95/P99。`jdk.thread.pool.*` 按来源的非单调 Sum 解释为 gauge，不能仅凭 type 标签名称就当作 counter。
-- 本次实现应用指标采集与 Prometheus 暴露，不新增应用指标 Web 图表、Monitor 查询白名单或默认 JVM/连接池阈值告警。已有 CPU/内存/普通日志告警不变。
+- Monitor 的“监控对象”页面和查询目录已支持应用指标，具体入口见 [对象指标查看说明](k8s-object-metrics.md)。采集白名单不等于默认告警清单；当前没有自动创建 JVM/连接池阈值告警。
 - 两份实际样本解析验证分别得到 103 和 131 条样本；样本含历史时间，因此此数字只验证解析兼容性，并不表示这些旧数据会被实时输出。原始业务样本不提交到仓库。

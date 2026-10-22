@@ -22,6 +22,17 @@ func TestNamespaceCreateRetryReleasesTransactionBeforeReadingCurrentState(t *tes
 	}
 }
 
+func TestNamespaceCreateRetryAcceptsInheritedClusterToken(t *testing.T) {
+	store, script := newLogStoreTest(t, []logStoreStep{
+		{match: "INSERT INTO k8s_namespace_source", err: &mysql.MySQLError{Number: 1062}},
+		{match: "SELECT enabled,version,credential_guid,token", columns: []string{"enabled", "version", "credential_guid", "token"}, rows: [][]driver.Value{{true, int64(1), "cluster-a/sit-a", ""}}},
+	})
+	input := Registration{ClusterID: "cluster-a", Namespace: "sit-a", Enabled: true, Credentials: Credentials{Guid: "cluster-a/sit-a"}}
+	if err := store.Save(context.Background(), input); err != nil || !script.rolledBack {
+		t.Fatalf("identical registration with inherited cluster token was not accepted: %v", err)
+	}
+}
+
 func TestRegistrationRetryRequiresSameConfigurationAndAppliedVersion(t *testing.T) {
 	credentials, err := PrepareCredentials("object-a", "test-seed", "https://api.example.invalid", "", "test-token")
 	if err != nil {
@@ -56,5 +67,25 @@ func TestRegistrationRetryRequiresSameConfigurationAndAppliedVersion(t *testing.
 	current.Enabled = true
 	if sameAppliedRegistration(current, input, "test-seed") {
 		t.Fatal("different enabled state accepted")
+	}
+}
+
+func TestNamespaceRegistrationRetryAcceptsInheritedClusterToken(t *testing.T) {
+	input := Registration{
+		ClusterID:   "cluster-a",
+		Namespace:   "sit-a",
+		Enabled:     true,
+		Credentials: Credentials{Guid: "cluster-a/sit-a"},
+	}
+	current := input
+	current.Version = 1
+	if !sameAppliedRegistration(current, input, "test-seed") {
+		t.Fatal("identical namespace registration without a token override should be an idempotent retry")
+	}
+	cluster := Registration{ClusterID: "cluster-a", Enabled: true, Credentials: Credentials{Guid: "cluster-a"}}
+	clusterCurrent := cluster
+	clusterCurrent.Version = 1
+	if sameAppliedRegistration(clusterCurrent, cluster, "test-seed") {
+		t.Fatal("cluster registration without its required token must not be accepted")
 	}
 }
