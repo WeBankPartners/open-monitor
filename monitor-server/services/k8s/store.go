@@ -168,7 +168,7 @@ func (s Store) Publish(ctx context.Context, r Registration, ticket string, snaps
 	if err != nil {
 		return err
 	}
-	result, err := s.DB.ExecContext(ctx, "UPDATE k8s_namespace_source SET snapshot=?,state='ACTIVE',observed_at=CURRENT_TIMESTAMP(6),lease_token=NULL,lease_until=NULL WHERE cluster_id=? AND namespace=? AND version=? AND enabled=1 AND lease_token=? AND lease_until>CURRENT_TIMESTAMP(6)", raw, r.ClusterID, r.Namespace, r.Version, ticket)
+	result, err := s.DB.ExecContext(ctx, "UPDATE k8s_namespace_source SET snapshot=?,state='ACTIVE',observed_at=CURRENT_TIMESTAMP(6),lease_token=NULL,lease_until=NULL WHERE cluster_id=? AND namespace=? AND version=? AND enabled=1 AND lease_token=? AND lease_until>CURRENT_TIMESTAMP(6)", string(raw), r.ClusterID, r.Namespace, r.Version, ticket)
 	return changed(result, err)
 }
 

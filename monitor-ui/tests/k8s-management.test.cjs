@@ -127,6 +127,11 @@ test('generated administrator permissions contain every Kubernetes management op
   }
 })
 
+test('agent inventory GET route is assigned an API permission code', () => {
+  const source = fs.readFileSync(path.join(root, '../monitor-server/api/api.go'), 'utf8')
+  assert.match(source, /apiCodeMap\[http\.MethodGet\+"_"\+urlPrefix\+"\/api\/v1\/k8s\/log-agent\/list"\]\s*=\s*"k8s_log_agent_list"/)
+})
+
 test('namespace object action opens the complete browser with its original scope', () => {
   const component = loadComponent('k8s-sources')
   let route

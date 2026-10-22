@@ -415,6 +415,7 @@ func InitHttpServer() {
 		k8sRoutes.DELETE("/namespace/source", handlers.DeleteSource)
 		k8sRoutes.POST("/log-agent/plugin/:action", handlers.LogAgentPlugin)
 		k8sRoutes.GET("/log-agent/list", handlers.ListLogAgents)
+		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/log-agent/list"] = "k8s_log_agent_list"
 		k8sRoutes.GET("/log-agent/source", handlers.GetLogAgentSource)
 		k8sRoutes.PUT("/log-agent/source", handlers.PutLogAgentSource)
 		k8sRoutes.DELETE("/log-agent/source", handlers.DeleteLogAgentSource)
