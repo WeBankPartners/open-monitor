@@ -111,7 +111,10 @@ const menuPathMap = {
     "src/views/admin-config/basic/metric-config",
     "src/views/admin-config/other/exporter",
     "src/views/admin-config/other/remote-sync",
-    "src/views/admin-config/other/prometheus-logs"
+    "src/views/admin-config/other/prometheus-logs",
+    "src/views/admin-config/other/k8s-sources",
+    "src/views/admin-config/other/k8s-objects",
+    "src/views/admin-config/other/k8s-alert-rules"
   ]
 }
 
@@ -392,4 +395,3 @@ Object.keys(newMenuKeysMap).forEach(key => {
 
 const menuApiMapPath = path.join(WRITE_API_PATH, 'menu-api-map.json')
 fs.writeFileSync(menuApiMapPath, JSON.stringify(finalResult, null, 2))
-   

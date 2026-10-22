@@ -10,12 +10,18 @@ import (
 
 func doInsertOrUpdateAlarm(alarmObj *models.AlarmHandleObj) (err error) {
 	session := x.NewSession()
-	session.Begin()
+	if err = session.Begin(); err != nil {
+		session.Close()
+		return fmt.Errorf("begin alarm transaction fail,%s", err.Error())
+	}
 	defer func() {
 		if err != nil {
-			session.Rollback()
+			_ = session.Rollback()
 		} else {
-			session.Commit()
+			if commitErr := session.Commit(); commitErr != nil {
+				err = fmt.Errorf("commit alarm transaction fail,%s", commitErr.Error())
+				_ = session.Rollback()
+			}
 		}
 		session.Close()
 	}()

@@ -1,0 +1,184 @@
+# Kubernetes Log Agent deployment template.
+#
+# This file contains the state PVC, ConfigMap and DaemonSet.
+# Replace every occurrence of the following placeholders. UAT examples are
+# illustrative only; do not commit real environment values:
+#   REPLACE_AGENT_NAMESPACE       -> monitor-uat (Agent and PVC namespace)
+#   REPLACE_MONITOR_URL           -> http://monitor-server.monitor-uat.svc:19191/monitor
+#   REPLACE_CLUSTER_ID            -> uat-cluster-example (Monitor registration)
+#   REPLACE_NODE_LOG_ROOT         -> /var/data (all three occurrences; CMDB deploy_path is below this root)
+#   REPLACE_INIT_IMAGE_PREFIX     -> registry.example.invalid/namespace (no trailing slash)
+#   REPLACE_AGENT_IMAGE           -> monitor-k8s-log-agent:3.8.0 (image path and tag)
+# Edit the complete Monitor URL in one place; use the Service port 19191.
+# The init image is <environment-prefix>/package-init-container:1.0.0.
+# Its default entrypoint is overridden by the command below.
+#
+# How to obtain real values without logging into a node:
+#   kubectl get svc -A
+#   kubectl get svc -A
+#   kubectl get pvc -n <agent-namespace> -o wide
+#   kubectl get pod <business-pod> -n <business-namespace> -o yaml
+# The Cluster ID is the value registered in Monitor Web -> Kubernetes Sources.
+# The bundled Agent token default matches the WeCube parameter default; it is
+# public and intended only for quick setup in trusted non-production networks.
+# The Monitor Service must expose port 19191 and target container port 8080.
+# LOG_AGENT_ROOT and the logs hostPath must be the same node absolute path;
+# confirm it with the application owner or inspect business Pod volumeMounts.
+# The state PVC is created below in the Agent namespace with the nfs StorageClass.
+# State is isolated automatically as
+# k8s-log-agent/<agent-namespace>/<node-name>; no node state directory is needed.
+# The init container does not chown the PVC or modify existing application data.
+# Keep the default Agent port unless also updating ports/probes/network rules.
+# Optional node access: uncomment hostPort below for external Prometheus to
+# scrape http://<node-address>:9105/metrics. Allow TCP 9105 from that Prometheus;
+# only one Agent deployment can reserve this host port on each node.
+# ConfigMap/Agent token ENV changes require a DaemonSet rollout restart.
+# Full build, value lookup and deployment steps: docs/k8s-log-agent-deployment.md
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: monitor-k8s-log-agent-state
+  namespace: REPLACE_AGENT_NAMESPACE
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitor-k8s-log-agent-config
+  namespace: REPLACE_AGENT_NAMESPACE
+data:
+  TZ: Asia/Shanghai
+  LOG_AGENT_MONITOR_URL: REPLACE_MONITOR_URL
+  LOG_AGENT_CLUSTER_ID: REPLACE_CLUSTER_ID
+  # Keep this equal to the logs volume mountPath and hostPath.path below.
+  LOG_AGENT_ROOT: REPLACE_NODE_LOG_ROOT
+  LOG_AGENT_STATE_DIR: /state
+  LOG_AGENT_HTTP_ADDR: :9105
+  LOG_AGENT_POLL_INTERVAL: 10s
+---
+# The init container prepares only the Agent state directory.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: monitor-k8s-log-agent
+  namespace: REPLACE_AGENT_NAMESPACE
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: monitor-k8s-log-agent
+  template:
+    metadata:
+      labels:
+        app: monitor-k8s-log-agent
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: prepare-state
+          image: REPLACE_INIT_IMAGE_PREFIX/package-init-container:1.0.0
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              umask 077
+              state_dir="/state-root/k8s-log-agent/${POD_NAMESPACE}/${LOG_AGENT_NODE_NAME}"
+              mkdir -p "$state_dir"
+              test -w "$state_dir"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: state
+              mountPath: /state-root
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LOG_AGENT_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+      containers:
+        - name: agent
+          image: REPLACE_INIT_IMAGE_PREFIX/REPLACE_AGENT_IMAGE
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LOG_AGENT_AUTH_TOKEN
+              value: wecube-monitor-k8s-log-agent-token
+            - name: LOG_AGENT_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: LOG_AGENT_ADVERTISE_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          envFrom:
+            - configMapRef:
+                name: monitor-k8s-log-agent-config
+          ports:
+            - name: metrics
+              containerPort: 9105
+              # Optional: expose metrics on the node; disabled by default.
+              # hostPort: 9105
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 256m
+              memory: 256Mi
+          volumeMounts:
+            - name: logs
+              mountPath: REPLACE_NODE_LOG_ROOT
+              readOnly: true
+            - name: state
+              mountPath: /state
+              subPathExpr: k8s-log-agent/$(POD_NAMESPACE)/$(LOG_AGENT_NODE_NAME)
+      volumes:
+        - name: logs
+          hostPath:
+            path: REPLACE_NODE_LOG_ROOT
+            type: Directory
+        - name: state
+          persistentVolumeClaim:
+            claimName: monitor-k8s-log-agent-state

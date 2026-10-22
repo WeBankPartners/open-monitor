@@ -113,6 +113,18 @@ const implicitRoute = {
   'adminConfig/prometheusLogs': {
     parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
     childBreadcrumb: { 'zh-CN': 'Prometheus日志', 'en-US': 'Prometheus Logs'}
+  },
+  'adminConfig/k8sAlertRules': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': 'Kubernetes告警规则', 'en-US': 'Kubernetes Alert Rules'}
+  }
+  ,'adminConfig/k8sSources': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': 'Kubernetes监控源', 'en-US': 'Kubernetes Sources'}
+  },
+  'adminConfig/k8sObjects': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: {'zh-CN': 'Kubernetes监控对象', 'en-US': 'Kubernetes Objects'}
   }
 }
 window.addImplicitRoute(implicitRoute)

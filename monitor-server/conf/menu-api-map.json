@@ -1808,6 +1808,11 @@
         "method": "delete"
       },
       {
+        "key": "customScrapeConfig",
+        "url": "/monitor/api/v1/config/custom_scrape",
+        "method": "delete"
+      },
+      {
         "key": "updateKubernetesCluster",
         "url": "/monitor/api/v1/agent/kubernetes/cluster/update",
         "method": "post"
@@ -1831,21 +1836,6 @@
         "key": "customScrapeConfig",
         "url": "/monitor/api/v1/config/custom_scrape",
         "method": "get"
-      },
-      {
-        "key": "customScrapeConfig",
-        "url": "/monitor/api/v1/config/custom_scrape",
-        "method": "post"
-      },
-      {
-        "key": "customScrapeConfig",
-        "url": "/monitor/api/v1/config/custom_scrape",
-        "method": "put"
-      },
-      {
-        "key": "customScrapeConfig",
-        "url": "/monitor/api/v1/config/custom_scrape",
-        "method": "delete"
       },
       {
         "key": "customScrapeConfigCheck",
@@ -1876,6 +1866,116 @@
         "key": "getPrometheusLogs",
         "url": "/monitor/api/v2/prometheus/raw",
         "method": "get"
+      },
+      {
+        "key": "k8sClusterList",
+        "url": "/monitor/api/v1/k8s/cluster/list",
+        "method": "post"
+      },
+      {
+        "key": "k8sNamespaceList",
+        "url": "/monitor/api/v1/k8s/namespace/list",
+        "method": "post"
+      },
+      {
+        "key": "k8sLogAgentList",
+        "url": "/monitor/api/v1/k8s/log-agent/list",
+        "method": "get"
+      },
+      {
+        "key": "k8sClusterSource",
+        "url": "/monitor/api/v1/k8s/cluster/source",
+        "method": "put"
+      },
+      {
+        "key": "k8sNamespaceSource",
+        "url": "/monitor/api/v1/k8s/namespace/source",
+        "method": "put"
+      },
+      {
+        "key": "k8sClusterSource",
+        "url": "/monitor/api/v1/k8s/cluster/source",
+        "method": "delete"
+      },
+      {
+        "key": "k8sNamespaceSource",
+        "url": "/monitor/api/v1/k8s/namespace/source",
+        "method": "delete"
+      },
+      {
+        "key": "k8sLogAgentSource",
+        "url": "/monitor/api/v1/k8s/log-agent/source",
+        "method": "get"
+      },
+      {
+        "key": "k8sLogAgentSource",
+        "url": "/monitor/api/v1/k8s/log-agent/source",
+        "method": "put"
+      },
+      {
+        "key": "k8sLogAgentSource",
+        "url": "/monitor/api/v1/k8s/log-agent/source",
+        "method": "delete"
+      },
+      {
+        "key": "k8sLogAgentEndpoint",
+        "url": "/monitor/api/v1/k8s/log-agent/endpoint",
+        "method": "put"
+      },
+      {
+        "key": "k8sLogAgentEndpoint",
+        "url": "/monitor/api/v1/k8s/log-agent/endpoint",
+        "method": "delete"
+      },
+      {
+        "key": "k8sLogAgentReleaseOverride",
+        "url": "/monitor/api/v1/k8s/log-agent/endpoint/override",
+        "method": "delete"
+      },
+      {
+        "key": "k8sClusterList",
+        "url": "/monitor/api/v1/k8s/cluster/list",
+        "method": "post"
+      },
+      {
+        "key": "k8sNamespaceList",
+        "url": "/monitor/api/v1/k8s/namespace/list",
+        "method": "post"
+      },
+      {
+        "key": "k8sMetricCatalog",
+        "url": "/monitor/api/v1/k8s/metrics/catalog",
+        "method": "get"
+      },
+      {
+        "key": "k8sObjects",
+        "url": "/monitor/api/v1/k8s/objects",
+        "method": "get"
+      },
+      {
+        "key": "k8sMetricHistory",
+        "url": "/monitor/api/v1/k8s/metrics/history",
+        "method": "post"
+      },
+      {
+        "key": "k8sAlertRules",
+        "url": "/monitor/api/v1/k8s/alert-rules",
+        "method": "get"
+      },
+      {
+        "key": "k8sAlertRules",
+        "url": "/monitor/api/v1/k8s/alert-rules",
+        "method": "post"
+      },
+      {
+        "key": "k8sAlertRule",
+        "url": "/monitor/api/v1/k8s/alert-rules/:ruleId",
+        "method": "put"
+      },
+      {
+        "key": "k8sAlertRule",
+        "url": "/monitor/api/v1/k8s/alert-rules/:ruleId",
+        "method": "delete"
       }
     ]
   }

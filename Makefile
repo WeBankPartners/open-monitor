@@ -64,6 +64,7 @@ package:
 	cp build/register.xml ./
 	cp wiki/db/monitor_sql_01_struct.sql ./init.sql
 	cat wiki/db/monitor_sql_02_base_data_en.sql >> ./init.sql
+	cat wiki/db/migrations/20261012_k8s_namespace_source.sql >> ./init.sql
 	sed -i "s~{{PLUGIN_VERSION}}~$(version)~g" ./register.xml
 	docker save -o image.tar $(project_name):$(version)
 	zip  $(package_name)  image.tar init.sql register.xml ui.zip node_exporter.tar.gz

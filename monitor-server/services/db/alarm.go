@@ -3,6 +3,7 @@ package db
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -1775,54 +1776,60 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 }
 
 func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
-	if alarmObj.NotifyDelay > 0 {
-		var alarmRows []*m.AlarmTable
-		abortNotify := false
-		if alarmObj.Status == "ok" {
-			x.SQL("select * from alarm where id=?", alarmObj.Id).Find(&alarmRows)
-			if len(alarmRows) > 0 {
-				if (alarmRows[0].End.Unix() - alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
-					log.Info(nil, log.LOGGER_APP, "Abort recover alarm notify", zap.Int("id", alarmObj.Id), zap.String("start", alarmRows[0].Start.Format(m.DatetimeFormat)), zap.String("end", alarmRows[0].End.Format(m.DatetimeFormat)))
-					abortNotify = true
-				}
-			}
-		} else {
-			time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
-			x.SQL("select * from alarm where strategy_id=? and endpoint=? and start=?", alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Start.Format(m.DatetimeFormat)).Find(&alarmRows)
-			if len(alarmRows) > 0 {
-				if alarmRows[0].Status == "ok" {
-					log.Info(nil, log.LOGGER_APP, "Abort firing alarm notify", zap.String("endpoint", alarmObj.Endpoint), zap.Int("strategyId", alarmObj.StrategyId), zap.String("start", alarmObj.Start.Format(m.DatetimeFormat)))
-					abortNotify = true
-				}
-			}
+	_ = NotifyAlarmWithError(alarmObj)
+}
+
+// NotifyAlarmWithError persists the alarm lifecycle before dispatching the
+// existing Core or SMTP notification. It is the durable outbox adapter; the
+// legacy NotifyAlarm wrapper intentionally keeps its fire-and-forget contract.
+func NotifyAlarmWithError(alarmObj *m.AlarmHandleObj) error {
+	if alarmObj == nil {
+		return errors.New("alarm is required")
+	}
+	if alarmObj.Status == "firing" {
+		var rows []*m.AlarmTable
+		if err := x.SQL("SELECT id FROM alarm WHERE endpoint=? AND strategy_id=? AND s_metric=? AND status='firing' ORDER BY id DESC LIMIT 1", alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.SMetric).Find(&rows); err != nil {
+			return err
 		}
-		if abortNotify {
-			return
+		if len(rows) > 0 {
+			alarmObj.Id = rows[0].Id
+		} else if err := doInsertOrUpdateAlarm(alarmObj); err != nil {
+			return err
+		}
+	} else if alarmObj.Status == "ok" {
+		if alarmObj.Id == 0 {
+			var rows []*m.AlarmTable
+			if err := x.SQL("SELECT id FROM alarm WHERE endpoint=? AND strategy_id=? AND s_metric=? AND status='firing' ORDER BY id DESC LIMIT 1", alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.SMetric).Find(&rows); err != nil {
+				return err
+			}
+			if len(rows) == 0 {
+				return errors.New("firing alarm record not found")
+			}
+			alarmObj.Id = rows[0].Id
+		}
+		if err := doInsertOrUpdateAlarm(alarmObj); err != nil {
+			return err
 		}
 	}
 	if m.CoreUrl != "" {
-		notifyErr := NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.Id, 0)
-		if notifyErr != nil {
-			log.Error(nil, log.LOGGER_APP, "notify core event fail", zap.Error(notifyErr))
-		}
-	} else {
-		if m.Config().Alert.Enable {
-			var sao m.SendAlertObj
-			accept := GetMailByStrategy(alarmObj.StrategyId)
-			if len(accept) == 0 {
-				return
-			}
-			timeString := alarmObj.Start.Format(m.DatetimeFormat)
-			if alarmObj.Status == "ok" {
-				timeString = alarmObj.End.Format(m.DatetimeFormat)
-			}
-			sao.Accept = accept
-			sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, timeString)
-			other.SendSmtpMail(sao)
-		}
+		return NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.Id, 0)
 	}
-
+	if !m.Config().Alert.Enable {
+		return nil
+	}
+	accept := GetMailByStrategy(alarmObj.StrategyId)
+	if len(accept) == 0 {
+		return nil
+	}
+	timeString := alarmObj.Start.Format(m.DatetimeFormat)
+	if alarmObj.Status == "ok" {
+		timeString = alarmObj.End.Format(m.DatetimeFormat)
+	}
+	return other.SendSmtpMailResult(m.SendAlertObj{
+		Accept:  accept,
+		Subject: fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric),
+		Content: fmt.Sprintf("Endpoint:%s \\r\\nStatus:%s\\r\\nMetric:%s\\r\\nEvent:%.3f%s\\r\\nLast:%s\\r\\nPriority:%s\\r\\nNote:%s\\r\\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, timeString),
+	})
 }
 
 func NotifyTreevent(param m.EventTreeventNotifyDto) {

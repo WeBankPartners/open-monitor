@@ -623,7 +623,7 @@ func GetRoleMap() (roleMap map[string]string) {
 func CheckRoleIllegal(roleList []string, roleMap map[string]string) (err error) {
 	for _, v := range roleList {
 		if _, b := roleMap[v]; !b {
-			err = fmt.Errorf("role:%s illegal")
+			err = fmt.Errorf("role:%s illegal", v)
 			break
 		}
 	}

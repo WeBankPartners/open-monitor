@@ -406,7 +406,7 @@ func GetHistoryAlarm(c *gin.Context) {
 			endpointObj := m.EndpointTable{Guid: idParam}
 			err = db.GetEndpoint(&endpointObj)
 			if err != nil || endpointObj.Guid == "" {
-				mid.ReturnValidateError(c, fmt.Sprintf("Endpoint guid:%d fetch data fail", idParam))
+				mid.ReturnValidateError(c, fmt.Sprintf("Endpoint guid:%s fetch data fail", idParam))
 				return
 			}
 			endpoint = endpointObj.Guid

@@ -627,6 +627,10 @@ func getPromQlMainExpr(input string) (output string) {
 
 // QueryPrometheusRange start/end/step second value
 func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.PrometheusData, err error) {
+	return QueryPrometheusRangeContext(context.Background(), promQL, start, end, step)
+}
+
+func QueryPrometheusRangeContext(ctx context.Context, promQL string, start, end, step int64) (result *m.PrometheusData, err error) {
 	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
 	if urlParseErr != nil {
 		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
@@ -643,12 +647,15 @@ func QueryPrometheusRange(promQL string, start, end, step int64) (result *m.Prom
 	if getClientErr != nil {
 		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
 	}
-	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	res, reqErr := ctxhttp.Do(ctx, httpClient, req)
 	if reqErr != nil {
 		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
 	}
-	body, _ := ioutil.ReadAll(res.Body)
-	res.Body.Close()
+	defer res.Body.Close()
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		return result, fmt.Errorf("read metric history response: %w", readErr)
+	}
 	if res.StatusCode/100 != 2 {
 		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
 	}
@@ -700,6 +707,10 @@ func QueryPrometheusRangeRaw(promQL string, start, end, step int64) (result map[
 // QueryPrometheusInstantRaw calls Prometheus query and returns the raw decoded JSON
 // timeParam can be empty; if provided, it is passed as-is to Prometheus (supports fractional seconds)
 func QueryPrometheusInstantRaw(promQL string, timeParam string) (result map[string]interface{}, err error) {
+	return QueryPrometheusInstantRawContext(context.Background(), promQL, timeParam)
+}
+
+func QueryPrometheusInstantRawContext(ctx context.Context, promQL string, timeParam string) (result map[string]interface{}, err error) {
 	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
 	if urlParseErr != nil {
 		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
@@ -710,13 +721,16 @@ func QueryPrometheusInstantRaw(promQL string, timeParam string) (result map[stri
 		urlParams.Set("time", timeParam)
 	}
 	requestUrl.RawQuery = urlParams.Encode()
-	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
 	if getClientErr != nil {
 		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
 	}
-	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	res, reqErr := ctxhttp.Do(ctx, httpClient, req)
 	if reqErr != nil {
 		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
 	}

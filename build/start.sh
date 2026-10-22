@@ -207,6 +207,35 @@ if [ -f "base.yml" ]; then
 fi
 # 自定义采集独立配置目录，主配置通过 scrape_config_files 引用
 sudo mkdir -p /app/monitor/prometheus/custom_scrape && sudo chown app:apps /app/monitor/prometheus/custom_scrape
+# Keep Kubernetes exporter persistence aligned with the cAdvisor polling period.
+# Only the two Kubernetes jobs are adjusted; unrelated Prometheus jobs retain
+# their configured intervals. Existing PV-backed configs are updated at startup.
+k8s_metrics_interval=$(awk -v seconds="${MONITOR_K8S_METRICS_INTERVAL_SECONDS:-30}" 'BEGIN {
+  gsub(/^[[:space:]]+|[[:space:]]+$/, "", seconds)
+  sub(/^\+/, "", seconds)
+  if (seconds ~ /^[0-9]+$/ && seconds+0 >= 15 && seconds+0 <= 300) printf "%d", seconds
+  else print 30
+}')
+if [ -f /app/monitor/prometheus/prometheus.yml ]; then
+  if ! awk -v interval="${k8s_metrics_interval}s" '
+    /^  - job_name:/ { job=$3; gsub(/["\047]/, "", job) }
+    (job == "k8s_monitor" || job == "k8s_log_agent") && /^[[:space:]]+scrape_interval:/ {
+      sub(/scrape_interval:.*/, "scrape_interval: " interval)
+    }
+    { print }
+  ' /app/monitor/prometheus/prometheus.yml > /tmp/prometheus.yml.k8s_interval; then
+    echo "ERROR: failed to render Kubernetes scrape interval" >&2
+    exit 1
+  fi
+  if ! cmp -s /tmp/prometheus.yml.k8s_interval /app/monitor/prometheus/prometheus.yml; then
+    if ! sudo cp /tmp/prometheus.yml.k8s_interval /app/monitor/prometheus/prometheus.yml || \
+       ! sudo chown app:apps /app/monitor/prometheus/prometheus.yml; then
+      echo "ERROR: failed to apply Kubernetes scrape interval" >&2
+      exit 1
+    fi
+  fi
+  rm -f /tmp/prometheus.yml.k8s_interval
+fi
 # 存量 prometheus.yml 可能没有 scrape_config_files，启动前补上
 if [ -f /app/monitor/prometheus/prometheus.yml ] && ! grep -q 'custom_scrape/\*\.yml' /app/monitor/prometheus/prometheus.yml; then
   echo "Insert scrape_config_files into prometheus.yml"

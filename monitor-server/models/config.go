@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/cipher"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/k8s"
 	"github.com/toolkits/file"
 	"io/ioutil"
 	"log"
@@ -174,6 +175,7 @@ type CapacityServerConfig struct {
 }
 
 type GlobalConfig struct {
+	KubernetesMonitor            k8s.Policy          `json:"kubernetesMonitor"`
 	IsPluginMode                 string              `json:"is_plugin_mode"`
 	Http                         *HttpConfig         `json:"http"`
 	Log                          LogConfig           `json:"log"`
@@ -262,6 +264,20 @@ func InitConfig(cfg string) {
 	err = json.Unmarshal([]byte(configContent), &c)
 	if err != nil {
 		log.Fatalln("parse config file:", cfg, "fail:", err)
+	}
+	if value, ok := os.LookupEnv("MONITOR_K8S_ENABLED"); ok {
+		c.KubernetesMonitor.Enabled = strings.EqualFold(value, "Y") || strings.EqualFold(value, "true")
+	}
+	if value, ok := os.LookupEnv("MONITOR_K8S_ENVIRONMENT"); ok {
+		c.KubernetesMonitor.Environment = strings.TrimSpace(value)
+	}
+	if value, ok := os.LookupEnv("MONITOR_K8S_LOG_AGENT_TOKEN"); ok {
+		c.KubernetesMonitor.LogAgentToken = strings.TrimSpace(value)
+	}
+	if value, ok := os.LookupEnv("MONITOR_K8S_METRICS_INTERVAL_SECONDS"); ok {
+		if seconds, parseErr := strconv.Atoi(strings.TrimSpace(value)); parseErr == nil {
+			c.KubernetesMonitor.MetricsIntervalSeconds = seconds
+		}
 	}
 	rsaPemByte, readRsaErr := ioutil.ReadFile(RsaPemPath)
 	if readRsaErr != nil {

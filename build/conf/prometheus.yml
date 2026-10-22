@@ -58,6 +58,26 @@ scrape_configs:
         files:
           - '/app/monitor/prometheus/sd_file/sd_file_5.json'
 
+  # Scrape Monitor's cached exporter, not kubelet. cAdvisor polling defaults to 30s.
+  # file_sd sets __metrics_path__ to /monitor/internal/k8s/metrics.
+  - job_name: 'k8s_monitor'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    file_sd_configs:
+      - refresh_interval: 10s
+        files:
+          - '/app/monitor/prometheus/sd_file/k8s_monitor.json'
+
+  # Registered agent endpoints expose /metrics; file_sd changes need no reload.
+  # Keep this job name consistent with the log health PromQL up selector.
+  - job_name: 'k8s_log_agent'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    file_sd_configs:
+      - refresh_interval: 10s
+        files:
+          - '/app/monitor/prometheus/sd_file/k8s_log_agents.json'
+
   - job_name: 'sd_file_10'
     scrape_interval: 10s
     scrape_timeout: 10s

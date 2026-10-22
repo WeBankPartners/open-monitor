@@ -25,6 +25,9 @@ import adminMetric from '@/views/admin-config/basic/metric-config';
 import exporter from "@/views/admin-config/other/exporter";
 import remoteSync from "@/views/admin-config/other/remote-sync";
 import prometheusLogs from "@/views/admin-config/other/prometheus-logs";
+import k8sAlertRules from "@/views/admin-config/other/k8s-alert-rules";
+import k8sSources from "@/views/admin-config/other/k8s-sources";
+import k8sObjects from "@/views/admin-config/other/k8s-objects";
 import index from "@/views/index";
 
 const router = [
@@ -224,6 +227,27 @@ const router = [
         title: "Prometheus日志",
         meta: {},
         component: prometheusLogs
+      },
+      {
+        path: "k8sAlertRules",
+        name: "k8sAlertRules",
+        title: "Kubernetes Alert Rules",
+        meta: {},
+        component: k8sAlertRules
+      },
+      {
+        path: "k8sSources",
+        name: "k8sSources",
+        title: "Kubernetes Sources",
+        meta: {},
+        component: k8sSources
+      },
+      {
+        path: "k8sObjects",
+        name: "k8sObjects",
+        title: "Kubernetes Objects",
+        meta: {},
+        component: k8sObjects
       }
     ]
   }

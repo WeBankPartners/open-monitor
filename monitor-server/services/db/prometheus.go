@@ -1,12 +1,15 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
+	"net"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -43,12 +46,48 @@ func InitPrometheusConfig() {
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Start sync remote write config fail", zap.Error(err))
 	}
+	// Kubernetes target changes are reconciled on startup; file_sd refreshes atomically.
+	if err = prom.WriteKubernetesTarget(models.Config().Prometheus.SdConfigPath, models.Config().Http.Port, models.Config().KubernetesMonitor.Enabled); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Write Kubernetes scrape target failed", zap.Error(err))
+	} else if err = prom.ReloadConfigNow(); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Reload Kubernetes scrape target failed", zap.Error(err))
+	}
+	if err = prom.WriteLogAgentTargets(models.Config().Prometheus.SdConfigPath, nil); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Write Kubernetes log agent targets failed", zap.Error(err))
+	} else if err = prom.ReloadConfigNow(); err != nil {
+		log.Error(nil, log.LOGGER_APP, "Reload Kubernetes log agent targets failed", zap.Error(err))
+	}
+	go syncKubernetesLogAgentTargets()
 	// init custom scrape config
 	err = SyncCustomScrapeConfig()
 	if err != nil {
 		log.Error(nil, log.LOGGER_APP, "Start sync custom scrape config fail", zap.Error(err))
 	}
 	select {}
+}
+
+func syncKubernetesLogAgentTargets() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	sync := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		rows, err := KubernetesMonitoringStore().ListLiveLogAgentEndpointsAll(ctx, 2*time.Minute)
+		cancel()
+		if err != nil {
+			return
+		}
+		addresses := make([]string, 0, len(rows))
+		for _, row := range rows {
+			addresses = append(addresses, net.JoinHostPort(row.Address, strconv.Itoa(row.Port)))
+		}
+		if err = prom.WriteLogAgentTargets(models.Config().Prometheus.SdConfigPath, addresses); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Write Kubernetes log agent targets failed", zap.Error(err))
+		}
+	}
+	sync()
+	for range ticker.C {
+		sync()
+	}
 }
 
 func startCheckPrometheusConfig() {

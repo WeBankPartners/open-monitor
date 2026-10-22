@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitor-k8s-log-agent
+  namespace: REPLACE_MONITOR_NAMESPACE
+spec:
+  podSelector:
+    matchLabels:
+      app: monitor-k8s-log-agent
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: REPLACE_MONITOR_NAMESPACE
+      ports:
+        - protocol: TCP
+          port: 9105
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443

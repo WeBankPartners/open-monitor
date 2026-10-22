@@ -265,6 +265,13 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/admin-config/other/prometheus-logs")
+            },
+            {
+              path: "k8sObjects",
+              name: "k8sObjects",
+              title: "Kubernetes Objects",
+              meta: {},
+              component: () => import("@/views/admin-config/other/k8s-objects")
             }
           ]
         }
