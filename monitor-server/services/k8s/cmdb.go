@@ -32,7 +32,7 @@ func (c CMDBClient) QueryAppInstance(ctx context.Context, guid string) (AppInsta
 		return AppInstance{}, errors.New("invalid CMDB URL")
 	}
 	base.Path = strings.TrimRight(base.Path, "/") + "/wecmdb/api/v1/ci-data/query/app_instance"
-	body, err := json.Marshal(map[string]interface{}{"dialect": map[string]string{"queryMode": "new"}, "filters": []map[string]string{{"name": "guid", "operator": "equal", "value": guid}}, "pageable": map[string]int{"pageSize": 1, "startIndex": 0}, "paging": true, "resultColumns": []string{"guid", "deploy_path"}})
+	body, err := json.Marshal(map[string]interface{}{"dialect": map[string]string{"queryMode": "new"}, "filters": []map[string]string{{"name": "guid", "operator": "eq", "value": guid}}, "pageable": map[string]int{"pageSize": 1, "startIndex": 0}, "paging": true, "resultColumns": []string{"guid", "deploy_path"}})
 	if err != nil {
 		return AppInstance{}, err
 	}
@@ -75,8 +75,12 @@ func (c CMDBClient) QueryAppInstance(ctx context.Context, guid string) (AppInsta
 	if out.Data.PageInfo.TotalRows != 1 || len(out.Data.Contents) != 1 {
 		return AppInstance{}, fmt.Errorf("CMDB app instance not found: total_rows=%d returned_rows=%d", out.Data.PageInfo.TotalRows, len(out.Data.Contents))
 	}
-	if strings.TrimSpace(out.Data.Contents[0].DeployPath) == "" {
+	app := out.Data.Contents[0]
+	if strings.TrimSpace(app.GUID) != guid {
+		return AppInstance{}, errors.New("CMDB app instance guid mismatch")
+	}
+	if strings.TrimSpace(app.DeployPath) == "" {
 		return AppInstance{}, errors.New("CMDB deploy path is empty")
 	}
-	return out.Data.Contents[0], nil
+	return app, nil
 }

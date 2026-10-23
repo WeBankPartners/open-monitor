@@ -20,7 +20,7 @@ func TestCMDBClientQueriesGUIDAndReturnsDeployPath(t *testing.T) {
 		}
 		body := make([]byte, r.ContentLength)
 		r.Body.Read(body)
-		if !strings.Contains(string(body), `"name":"guid"`) || !strings.Contains(string(body), `"operator":"equal"`) {
+		if !strings.Contains(string(body), `"name":"guid"`) || !strings.Contains(string(body), `"operator":"eq"`) {
 			return nil, errors.New("missing guid equality filter")
 		}
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"app_instance-a","deploy_path":"/var/log/app"}]}}`)), Header: make(http.Header)}, nil
@@ -39,6 +39,7 @@ func TestCMDBClientReportsSafeFailureReason(t *testing.T) {
 		{"http", `private-response`, "CMDB query status 403", http.StatusForbidden},
 		{"application", `{"code":123,"statusCode":"ERROR","message":"private-response"}`, "CMDB query rejected: code=123", http.StatusOK},
 		{"missing", `{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":0},"contents":[]}}`, "CMDB app instance not found: total_rows=0 returned_rows=0", http.StatusOK},
+		{"guid_mismatch", `{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"other-instance","deploy_path":"/var/log/app"}]}}`, "CMDB app instance guid mismatch", http.StatusOK},
 		{"empty_path", `{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"instance-a","deploy_path":""}]}}`, "CMDB deploy path is empty", http.StatusOK},
 		{"invalid", `private-response`, "invalid CMDB response", http.StatusOK},
 		{"transport", "", "CMDB query request failed", 0},
