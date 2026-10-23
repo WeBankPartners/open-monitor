@@ -42,6 +42,27 @@ test('chart data retains incarnation and label series and leaves missing samples
   assert.equal(chartSeries({result:[]},{start:0,end:60,step:60}).length,0)
 })
 
+test('chart labels omit infrastructure fields without merging incarnations or losing full labels', () => {
+  const {chartSeries} = loadHelpers()
+  const labels = {cluster_id:'cluster-a',namespace:'ns-a',node:'node-a',instance:'agent.example.test:9105',instance_id:'instance-a',container:'main',source_id:'source-a',series_id:'series-a',pod_uid:'old',area:'heap',pool:'Young'}
+  const series = chartSeries({result:[
+    {metric:labels,values:[[0,'1']]},
+    {metric:{...labels,pod_uid:'new'},values:[[0,'2']]},
+    {metric:{...labels,pool:'Old'},values:[[0,'3']]}
+  ]}, {start:0,end:0,step:60})
+  assert.equal(series.length,3)
+  assert.match(series[0].displayName,/area=heap/)
+  assert.match(series[0].displayName,/pool=Young/)
+  assert.doesNotMatch(series[0].displayName,/node|instance|source_id|series_id|pod_uid|container/)
+  assert.notEqual(series[0].displayName,series[1].displayName)
+  assert.notEqual(series[0].name,series[1].name)
+  assert.equal(series[0].labels.pod_uid,'old')
+  assert.equal(series[1].labels.pod_uid,'new')
+  assert.equal(series[0].labels.source_id,'source-a')
+  assert.equal(series[0].data[0][1],1)
+  assert.equal(series[1].data[0][1],2)
+})
+
 test('metric formatting distinguishes cores, memory, throughput and durations', () => {
   const {formatMetricValue} = loadHelpers()
   assert.match(formatMetricValue(1048576,'bytes'), /1.*MiB/)
@@ -144,14 +165,58 @@ test('chart disposal releases resize handling and rejects responses after unmoun
 test('chart options retain gaps and escape application labels in the HTML tooltip', () => {
   const component=loadComponent('k8s-metric-chart',loadHelpers())
   let option
-  const ctx={range:{start:0,end:60},metric:{unit:'bytes'},series:[{data:[[0,null]]}],$nextTick(callback){callback()},_chart:{setOption(value){option=value},resize(){}}}
+  let width = 1000
+  const ctx={range:{start:0,end:60},metric:{unit:'bytes'},series:[{name:'internal',displayName:'pool=<script>bad</script>',data:[[0,null]]},{name:'long',displayName:'x'.repeat(200),data:[[0,1]]},{name:'longer',displayName:'x'.repeat(201),data:[[0,2]]}],$nextTick(callback){callback()},_chart:{getOption(){return undefined},getWidth(){return width},getHeight(){return 280},setOption(value){option=value},resize(){width=320}}}
   component.methods.renderChart.call(ctx)
   assert.equal(option.xAxis.min,0)
   assert.equal(option.xAxis.max,60000)
   assert.equal(option.series[0].data[0][1],null)
-  const tooltip=option.tooltip.formatter([{value:[0,1024],seriesName:'pool=<script>bad</script>'}])
+  const tooltip=option.tooltip.formatter([{value:[0,1024],seriesIndex:0,seriesName:'internal'}])
   assert.ok(!tooltip.includes('<script>'))
   assert.ok(tooltip.includes('&lt;script&gt;'))
+  assert.equal(option.tooltip.enterable,true)
+  assert.equal(option.tooltip.confine,true)
+  assert.match(option.tooltip.extraCssText,/max-width:296px/)
+  assert.match(option.tooltip.extraCssText,/max-height:256px/)
+  assert.match(option.tooltip.extraCssText,/overflow-y:auto/)
+  assert.equal(option.legend.formatter('internal'),'pool=<script>bad</script>')
+  assert.ok(option.legend.formatter('long').length < 100)
+  assert.notEqual(option.legend.formatter('long'),option.legend.formatter('longer'))
+  const manyPoints = Array.from({length:30},(_,i) => ({value:[0,i],seriesName:'line-'+i}))
+  assert.match(option.tooltip.formatter(manyPoints),/line-29/)
+  assert.equal(option.tooltip.formatter([]),'')
+})
+
+test('expanded chart shares the current data and range without requesting history again', () => {
+  const options = []
+  let disposed = false
+  const expandedChart = {getOption(){return undefined},getWidth(){return 1000},getHeight(){return 600},setOption(option){options.push(option)},resize(){},dispose(){disposed=true}}
+  const component = loadComponent('k8s-metric-chart',{...loadHelpers(),echarts:{init(){return expandedChart}}})
+  const ctx = {expanded:true,$refs:{expandedChart:{}},range:{start:0,end:60},metric:{unit:'bytes'},series:[{name:'a',displayName:'pool=Young',labels:{pod_uid:'old'},data:[[0,1024]]}],$nextTick(fn){fn()},request(){assert.fail('expanding a chart must not request history')},_chart:{getOption(){return {legend:[{selected:{a:false}}]}},getWidth(){return 320},getHeight(){return 280},setOption(option){options.push(option)},resize(){}}}
+  ctx.renderChart = component.methods.renderChart.bind(ctx)
+  component.methods.expandedChanged.call(ctx,true)
+  assert.equal(options.length,2)
+  for (const option of options) {
+    assert.equal(option.series,ctx.series)
+    assert.equal(option.xAxis.max,60000)
+    assert.equal(option.series[0].labels.pod_uid,'old')
+    assert.equal(option.legend.selected.a,false)
+  }
+  assert.match(options[1].tooltip.extraCssText,/max-width:460px/)
+  component.methods.expandedChanged.call(ctx,false)
+  assert.equal(disposed,true)
+  assert.equal(ctx._expandedChart,null)
+})
+
+test('closing the expanded chart before the next tick does not create a detached chart', () => {
+  const callbacks = []
+  const component = loadComponent('k8s-metric-chart',{...loadHelpers(),echarts:{init(){assert.fail('chart initialized after close')}}})
+  const ctx = {expanded:true,$refs:{expandedChart:{}},$nextTick(fn){callbacks.push(fn)}}
+  component.methods.expandedChanged.call(ctx,true)
+  ctx.expanded = false
+  component.methods.expandedChanged.call(ctx,false)
+  callbacks[0]()
+  assert.equal(ctx._expandedChart,null)
 })
 
 test('source list failures can be retried and obsolete source responses cannot reset scope', () => {

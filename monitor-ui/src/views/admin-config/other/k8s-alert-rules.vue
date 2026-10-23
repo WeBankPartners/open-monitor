@@ -3,11 +3,23 @@
     <Card>
       <p slot="title">{{$t('m_k8s_alert_rules')}}</p>
       <div class="scope-form">
-        <Input v-model.trim="scope.clusterId" :placeholder="$t('m_k8s_cluster_id')" style="width:180px" />
-        <Input v-model.trim="scope.namespace" :placeholder="$t('m_k8s_namespace')" style="width:180px;margin-left:8px" />
-        <Button type="primary" style="margin-left:8px" @click="loadRules">{{$t('m_search')}}</Button>
-        <Button type="success" style="margin-left:8px" @click="openCreate">{{$t('m_button_add')}}</Button>
+        <div class="scope-field">
+          <label>{{$t('m_k8s_cluster_id')}}</label>
+          <Select v-model="scope.clusterId" filterable :loading="sourcesLoading" :disabled="sourcesLoading" @on-change="clusterChanged()">
+            <Option v-for="cluster in clusters" :key="cluster.clusterId" :value="cluster.clusterId">{{cluster.clusterId}}</Option>
+          </Select>
+        </div>
+        <div class="scope-field">
+          <label>{{$t('m_k8s_namespace')}}</label>
+          <Select v-model="scope.namespace" filterable :disabled="sourcesLoading || !scope.clusterId" @on-change="loadRules">
+            <Option v-for="namespace in namespaceOptions" :key="namespace.namespace" :value="namespace.namespace">{{namespace.namespace}}</Option>
+          </Select>
+        </div>
+        <Button type="primary" :disabled="sourcesLoading || !scope.namespace" @click="loadRules">{{$t('m_search')}}</Button>
+        <Button type="success" :disabled="sourcesLoading || !scope.namespace" @click="openCreate">{{$t('m_button_add')}}</Button>
       </div>
+      <Alert v-if="sourcesFailed" type="error" style="margin-top:12px">{{$t('m_k8s_sources_failed')}} <Button size="small" @click="loadSources">{{$t('m_refresh')}}</Button></Alert>
+      <Alert v-else-if="!sourcesLoading && !scope.namespace" style="margin-top:12px">{{$t('m_k8s_no_namespace')}}</Alert>
       <Table border :columns="columns" :data="rules" style="margin-top:16px" />
     </Card>
     <Modal v-model="editor.visible" :title="editor.editing ? $t('m_k8s_edit_alert_rule') : $t('m_k8s_add_alert_rule')" :mask-closable="false">
@@ -32,6 +44,7 @@
 
 <script>
 export const custom_api_enum = [
+  { k8sAlertStates: 'get' },
   { k8sAlertRules: 'post' },
   { k8sAlertRule: 'put' },
   { k8sAlertRule: 'delete' }
@@ -42,6 +55,10 @@ export default {
     return {
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       apiCenter: this.$root.apiCenter,
+      clusters: [],
+      namespaces: [],
+      sourcesLoading: false,
+      sourcesFailed: false,
       scope: { clusterId: '', namespace: '' },
       rules: [],
       metrics: ['log_matches', 'log_health', 'cpu', 'memory', 'network_receive', 'network_transmit', 'block_read', 'block_write', 'cpu_throttled', 'cpu_throttled_periods', 'cpu_request', 'cpu_limit', 'memory_request', 'memory_limit', 'restart_count', 'ready', 'oom_events', 'memory_failcnt', 'container_ready', 'last_termination_oom'],
@@ -50,6 +67,7 @@ export default {
     }
   },
   computed: {
+    namespaceOptions() { return this.namespaces.filter(row => row.clusterId === this.scope.clusterId && row.enabled) },
     columns() {
       return [
         { title: this.$t('m_k8s_rule_id'), key: 'ruleId' },
@@ -65,17 +83,60 @@ export default {
       ]
     }
   },
+  mounted() { this.loadSources() },
+  beforeDestroy() {
+    this._destroyed = true
+    clearTimeout(this._sourcesDeadline)
+  },
   methods: {
+    loadSources() {
+      const generation = this._sourcesGeneration = (this._sourcesGeneration || 0) + 1
+      clearTimeout(this._sourcesDeadline)
+      this.sourcesLoading = true
+      this.sourcesFailed = false
+      this.rules = []
+      this._rulesRequestGeneration = (this._rulesRequestGeneration || 0) + 1
+      let finished = false
+      const current = () => !this._destroyed && this._sourcesGeneration === generation && !finished
+      const fail = () => {
+        if (!current()) {return}
+        finished = true
+        clearTimeout(this._sourcesDeadline)
+        this.sourcesLoading = false
+        this.sourcesFailed = true
+        this.clusters = []
+        this.namespaces = []
+        this.scope.clusterId = ''
+        this.scope.namespace = ''
+      }
+      this._sourcesDeadline = setTimeout(fail, 30000)
+      this.request('POST', this.apiCenter.k8sClusterList, {}, clusters => {
+        if (!current()) {return}
+        this.request('POST', this.apiCenter.k8sNamespaceList, {}, namespaces => {
+          if (!current()) {return}
+          finished = true
+          clearTimeout(this._sourcesDeadline)
+          this.sourcesLoading = false
+          this.clusters = (clusters || []).filter(row => row.enabled)
+          this.namespaces = namespaces || []
+          this.scope.clusterId = this.clusters.some(row => row.clusterId === this.scope.clusterId) ? this.scope.clusterId : ((this.clusters[0] || {}).clusterId || '')
+          this.clusterChanged(this.scope.namespace)
+        }, {isNeedloading: false}, fail)
+      }, {isNeedloading: false}, fail)
+    },
+    clusterChanged(namespace) {
+      this.scope.namespace = this.namespaceOptions.some(row => row.namespace === namespace) ? namespace : ((this.namespaceOptions[0] || {}).namespace || '')
+      this.loadRules()
+    },
     loadRules() {
       const scope = Object.assign({}, this.scope)
       const generation = this._rulesRequestGeneration = (this._rulesRequestGeneration || 0) + 1
       this.rules = []
-      if (!this.scope.clusterId || !this.scope.namespace) {
-        this.$Message.error(this.$t('m_k8s_scope_required'))
-        return
-      }
+      if (this.sourcesLoading || !scope.clusterId || !scope.namespace) {return}
       this.request('GET', this.apiCenter.k8sAlertRules, scope, data => {
-        if (this._rulesRequestGeneration === generation && this.scope.clusterId === scope.clusterId && this.scope.namespace === scope.namespace) this.rules = data || []
+        if (!this._destroyed && this._rulesRequestGeneration === generation && this.scope.clusterId === scope.clusterId && this.scope.namespace === scope.namespace) {
+          this.rules = data || []
+        }
       })
     },
     emptyRule() {
@@ -102,3 +163,22 @@ export default {
   }
 }
 </script>
+<style scoped>
+.scope-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.scope-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scope-field label { white-space: nowrap; }
+.scope-field .ivu-select { width: 220px; }
+@media (max-width: 600px) {
+  .scope-field { width: 100%; }
+  .scope-field .ivu-select { flex: 1; min-width: 0; }
+}
+</style>

@@ -14,6 +14,7 @@
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm List" localDisplayName="告警列表">/alarmManagement</menu>
         <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex</menu>
         <menu code='MONITOR_ADMINISTRATOR_CONFIG' cat='MONITORING' displayName="Administrator Config" localDisplayName="管理员配置">/adminConfig</menu>
+        <menu code='MONITOR_K8S_CONFIG' cat='MONITORING' displayName="Kubernetes Monitoring" localDisplayName="Kubernetes监控">/k8sConfig</menu>
     </menus>
 
     <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
@@ -164,6 +165,7 @@
             <menu code="MONITOR_ALARM_CONFIG" />
             <menu code="MONITOR_ALARM_MANAGEMENT" />
             <menu code="MONITOR_ADMINISTRATOR_CONFIG" />
+            <menu code="MONITOR_K8S_CONFIG" />
         </authority >
     </authorities>
 

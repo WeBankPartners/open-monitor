@@ -19,6 +19,7 @@ import viewConfig from "@/views/custom-view/view-config";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
 import adminConfigIndex from '@/views/admin-config/index';
+import k8sConfigIndex from '@/views/k8s-config/index';
 import typeConfig from "@/views/admin-config/basic/type-config";
 import groupBoard from "@/views/admin-config/basic/board-config";
 import adminMetric from '@/views/admin-config/basic/metric-config';
@@ -179,6 +180,37 @@ const router = [
     component: portal
   },
   {
+    path: "/k8sConfig",
+    name: "k8sConfig",
+    title: "Kubernetes Monitoring",
+    meta: {},
+    redirect: '/k8sConfig/k8sSources',
+    component: k8sConfigIndex,
+    children: [
+      {
+        path: "k8sSources",
+        name: "k8sSources",
+        title: "Monitoring Sources",
+        meta: {},
+        component: k8sSources
+      },
+      {
+        path: "k8sObjects",
+        name: "k8sObjects",
+        title: "Monitoring Objects",
+        meta: {},
+        component: k8sObjects
+      },
+      {
+        path: "k8sAlertRules",
+        name: "k8sAlertRules",
+        title: "Alert Rules",
+        meta: {},
+        component: k8sAlertRules
+      }
+    ]
+  },
+  {
     path: "/adminConfig",
     name: "adminConfig",
     title: "管理员配置",
@@ -229,25 +261,16 @@ const router = [
         component: prometheusLogs
       },
       {
-        path: "k8sAlertRules",
-        name: "k8sAlertRules",
-        title: "Kubernetes Alert Rules",
-        meta: {},
-        component: k8sAlertRules
-      },
-      {
         path: "k8sSources",
-        name: "k8sSources",
-        title: "Kubernetes Sources",
-        meta: {},
-        component: k8sSources
+        redirect: route => ({path: '/k8sConfig/k8sSources', query: route.query, hash: route.hash})
       },
       {
         path: "k8sObjects",
-        name: "k8sObjects",
-        title: "Kubernetes Objects",
-        meta: {},
-        component: k8sObjects
+        redirect: route => ({path: '/k8sConfig/k8sObjects', query: route.query, hash: route.hash})
+      },
+      {
+        path: "k8sAlertRules",
+        redirect: route => ({path: '/k8sConfig/k8sAlertRules', query: route.query, hash: route.hash})
       }
     ]
   }

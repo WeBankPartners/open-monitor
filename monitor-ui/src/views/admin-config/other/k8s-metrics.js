@@ -15,12 +15,14 @@ export function metricRange(duration, interval, now = Math.floor(Date.now() / 10
 
 export function chartSeries(response, range) {
   const rows = Array.isArray(response) ? response : ((response.data || response).result || [])
-  return rows.map((row, index) => {
+  const contextLabels = ['__name__', 'cluster_id', 'namespace', 'workload_type', 'workload_name', 'pod', 'pod_name', 'container', 'job', 'instance', 'instance_id', 'node', 'pod_uid', 'source_id', 'series_id']
+  const series = rows.map((row, index) => {
     const labels = row.metric || {}
-    const name = Object.keys(labels).sort()
-      .filter(key => !['__name__', 'cluster_id', 'namespace', 'workload_type', 'workload_name', 'pod', 'job'].includes(key))
+    const keys = Object.keys(labels).sort()
+    const name = keys.length ? JSON.stringify(keys.map(key => [key, labels[key]])) : String(index + 1)
+    const displayName = keys.filter(key => !contextLabels.includes(key))
       .map(key => key + '=' + labels[key])
-      .join(', ') || String(index + 1)
+      .join(', ') || '#' + (index + 1)
     const values = new Map((row.values || []).map(value => [Number(value[0]), value[1]]))
     const data = []
     for (let time = range.start; time <= range.end; time += range.step) {
@@ -30,12 +32,20 @@ export function chartSeries(response, range) {
     }
     return {
       name,
+      displayName,
+      labels: {...labels},
       type: 'line',
       showSymbol: false,
       connectNulls: false,
       data
     }
   }).filter(series => series.data.some(point => point[1] !== null))
+  const counts = new Map()
+  series.forEach(item => counts.set(item.displayName, (counts.get(item.displayName) || 0) + 1))
+  series.forEach((item, index) => {
+    if (counts.get(item.displayName) > 1) {item.displayName += ' · #' + (index + 1)}
+  })
+  return series
 }
 
 export function formatMetricValue(value, unit) {

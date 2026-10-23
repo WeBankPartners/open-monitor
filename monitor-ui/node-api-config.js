@@ -111,7 +111,9 @@ const menuPathMap = {
     "src/views/admin-config/basic/metric-config",
     "src/views/admin-config/other/exporter",
     "src/views/admin-config/other/remote-sync",
-    "src/views/admin-config/other/prometheus-logs",
+    "src/views/admin-config/other/prometheus-logs"
+  ],
+  "MONITOR_K8S_CONFIG": [
     "src/views/admin-config/other/k8s-sources",
     "src/views/admin-config/other/k8s-objects",
     "src/views/admin-config/other/k8s-alert-rules"

@@ -146,8 +146,10 @@ func networkCgroupMatches(cgroup, podUID string) bool {
 	normalized := strings.ToLower(strings.ReplaceAll(podUID, "-", "_"))
 	for _, part := range strings.Split(strings.ToLower(cgroup), "/") {
 		part = strings.TrimSuffix(part, ".slice")
-		if part == "pod"+normalized || part == "pod"+strings.ToLower(podUID) {
-			return true
+		for _, podPart := range []string{"pod" + normalized, "pod" + strings.ToLower(podUID)} {
+			if part == podPart || strings.HasSuffix(part, "-"+podPart) {
+				return true
+			}
 		}
 	}
 	return false

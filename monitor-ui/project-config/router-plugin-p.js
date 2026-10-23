@@ -87,6 +87,18 @@ const routerP = [
     name: "/adminConfig/prometheusLogs"
   },
   {
+    path: "/k8sConfig/k8sSources",
+    name: "/k8sConfig/k8sSources"
+  },
+  {
+    path: "/k8sConfig/k8sObjects",
+    name: "/k8sConfig/k8sObjects"
+  },
+  {
+    path: "/k8sConfig/k8sAlertRules",
+    name: "/k8sConfig/k8sAlertRules"
+  },
+  {
     path: "/adminConfig/k8sSources",
     name: "/adminConfig/k8sSources"
   },

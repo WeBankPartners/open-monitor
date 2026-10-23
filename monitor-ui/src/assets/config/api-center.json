@@ -257,6 +257,7 @@
     "k8sMetricCatalog": "/monitor/api/v1/k8s/metrics/catalog",
     "k8sAlertRules": "/monitor/api/v1/k8s/alert-rules",
     "k8sAlertRule": "/monitor/api/v1/k8s/alert-rules/:ruleId",
+    "k8sAlertStates": "/monitor/api/v1/k8s/alerts/states",
     "k8sClusterSource": "/monitor/api/v1/k8s/cluster/source",
     "k8sNamespaceSource": "/monitor/api/v1/k8s/namespace/source",
     "k8sLogAgentSource": "/monitor/api/v1/k8s/log-agent/source",

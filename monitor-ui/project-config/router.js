@@ -214,6 +214,37 @@ const router = new Router({
           component: () => import("@/views/portal")
         },
         {
+          path: "k8sConfig",
+          name: "k8sConfig",
+          title: "Kubernetes Monitoring",
+          meta: {},
+          redirect: '/k8sConfig/k8sSources',
+          component: () => import("@/views/k8s-config/index"),
+          children: [
+            {
+              path: "k8sSources",
+              name: "k8sSources",
+              title: "Monitoring Sources",
+              meta: {},
+              component: () => import("@/views/admin-config/other/k8s-sources")
+            },
+            {
+              path: "k8sObjects",
+              name: "k8sObjects",
+              title: "Monitoring Objects",
+              meta: {},
+              component: () => import("@/views/admin-config/other/k8s-objects")
+            },
+            {
+              path: "k8sAlertRules",
+              name: "k8sAlertRules",
+              title: "Alert Rules",
+              meta: {},
+              component: () => import("@/views/admin-config/other/k8s-alert-rules")
+            }
+          ]
+        },
+        {
           path: "adminConfig",
           name: "adminConfig",
           title: "管理员配置",
@@ -267,11 +298,16 @@ const router = new Router({
                 import("@/views/admin-config/other/prometheus-logs")
             },
             {
+              path: "k8sSources",
+              redirect: route => ({path: '/k8sConfig/k8sSources', query: route.query, hash: route.hash})
+            },
+            {
               path: "k8sObjects",
-              name: "k8sObjects",
-              title: "Kubernetes Objects",
-              meta: {},
-              component: () => import("@/views/admin-config/other/k8s-objects")
+              redirect: route => ({path: '/k8sConfig/k8sObjects', query: route.query, hash: route.hash})
+            },
+            {
+              path: "k8sAlertRules",
+              redirect: route => ({path: '/k8sConfig/k8sAlertRules', query: route.query, hash: route.hash})
             }
           ]
         }

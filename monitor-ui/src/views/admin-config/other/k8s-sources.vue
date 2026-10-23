@@ -209,7 +209,7 @@ export default {
       this.agent.targetsJson=JSON.stringify(this.rulesEditor.targets,null,2)
       this.saveAgent(()=>{this.rulesEditor.visible=false})
     },
-    openObjects(row) { this.$router.push({path:'/adminConfig/k8sObjects',query:{clusterId:row.clusterId,namespace:row.namespace}}) },
+    openObjects(row) { this.$router.push({path:'/k8sConfig/k8sObjects',query:{clusterId:row.clusterId,namespace:row.namespace}}) },
     refreshLists() { this.request('POST', this.apiCenter.k8sClusterList, {}, data => { this.clusters = data || []; this.loadAgents() }); this.request('POST', this.apiCenter.k8sNamespaceList, {}, data => { this.namespaces = data || [] }) },
     loadAgents() {
       if (!this.agent.clusterId && this.clusters.length) this.agent.clusterId = this.clusters[0].clusterId

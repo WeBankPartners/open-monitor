@@ -24,6 +24,10 @@
       <Icon type="md-eye" :size="20"></Icon>
       {{$t("m_monitor_config")}}
     </MenuItem>
+    <MenuItem name="k8sConfig">
+      <Icon type="md-cube" :size="18"></Icon>
+      {{$t("m_k8s_config")}}
+    </MenuItem>
     <!--管理员配置-->
     <MenuItem name="adminConfig">
       <Icon type="md-person" :size="18"></Icon>

@@ -63,21 +63,6 @@ export default {
               title: this.$t('m_prometheus_logs'),
               path: '/adminConfig/prometheusLogs',
               name: '2-3'
-            },
-            {
-              title: this.$t('m_k8s_alert_rules'),
-              path: '/adminConfig/k8sAlertRules',
-              name: '2-4'
-            },
-            {
-              title: this.$t('m_k8s_sources'),
-              path: '/adminConfig/k8sSources',
-              name: '2-5'
-            },
-            {
-              title: this.$t('m_k8s_objects'),
-              path: '/adminConfig/k8sObjects',
-              name: '2-6'
             }
           ]
         }

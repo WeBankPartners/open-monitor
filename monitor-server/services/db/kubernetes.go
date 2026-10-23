@@ -198,79 +198,11 @@ func InitPrometheusConfigFile() {
 	}
 }
 
+// SyncKubernetesConfig keeps the legacy API callable without enabling retired scrapes.
 func SyncKubernetesConfig() error {
-	prometheusConfigMutex.Lock()
-	defer prometheusConfigMutex.Unlock()
-	var kubernetesTables []*m.KubernetesClusterTable
-	err := x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
-	if len(kubernetesTables) == 0 {
-		if err == nil {
-			x.Exec("delete from kubernetes_endpoint_rel")
-		}
-		return fmt.Errorf("kubernetes config empty")
-	}
-	promBytes, err := ioutil.ReadFile("/app/monitor/prometheus/prometheus.yml")
-	if err != nil {
-		err = fmt.Errorf("Read prometheus tpl file fail,%s ", err.Error())
-		return err
-	}
-	backupConfigName, backupErr := backupPrometheusConfig()
-	if backupErr != nil {
-		return backupErr
-	}
-	cleanTokenOutput, err := exec.Command("/bin/sh", "-c", "rm -f /app/monitor/prometheus/token/*").Output()
-	if err != nil {
-		err = fmt.Errorf("Clean token fail,output:%s,err:%s ", string(cleanTokenOutput), err.Error())
-		return err
-	}
-	for _, v := range kubernetesTables {
-		plainToken, tokenErr := decryptKubernetesToken(v)
-		if tokenErr != nil {
-			err = tokenErr
-			break
-		}
-		err = ioutil.WriteFile(fmt.Sprintf("/app/monitor/prometheus/token/%s", v.ClusterName), []byte(plainToken), 0644)
-		if err != nil {
-			err = fmt.Errorf("Write cluster %s token file fail,%s ", v.ClusterName, err.Error())
-			break
-		}
-	}
-	if err != nil {
-		return err
-	}
-	promString := string(promBytes)
-	startIndex := strings.Index(promString, "#Kubernetes_start")
-	endIndex := strings.Index(promString, "#Kubernetes_end")
-	tplBytes, err := ioutil.ReadFile("/app/monitor/prometheus/kubernetes_prometheus.tpl")
-	if err != nil {
-		err = fmt.Errorf("Read kubernetes prometheus config template file fail,%s ", err.Error())
-		return err
-	}
-	kubernetesConfigString := ""
-	tplString := string(tplBytes)
-	for _, kube := range kubernetesTables {
-		tmpKPConfig := tplString + "\n"
-		tmpIpSplit := strings.Split(kube.ApiServer, ":")
-		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{cluster_name}}", kube.ClusterName)
-		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{api_server_ip}}", tmpIpSplit[0])
-		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{api_server_port}}", tmpIpSplit[1])
-		kubernetesConfigString += tmpKPConfig + "\n"
-	}
-	promString = promString[:startIndex+17] + "\n" + kubernetesConfigString + promString[endIndex:]
-	err = ioutil.WriteFile("/app/monitor/prometheus/prometheus.yml", []byte(promString), 0644)
-	if err != nil {
-		err = fmt.Errorf("Write kubenetes config to prometheus fail,%s ", err.Error())
-		recoverPrometheusConfig(backupConfigName)
-		return err
-	}
-	err = prom.ReloadConfig()
-	if err != nil {
-		err = fmt.Errorf("Reload prometheus config fail,%s ", err.Error())
-		recoverPrometheusConfig(backupConfigName)
-		prom.ReloadConfig()
-		return err
-	}
-	return nil
+	return disableLegacyKubernetesScrape(m.PrometheusYmlPath,
+		"/app/monitor/disable-legacy-k8s-scrape.sh", m.PromtoolPath,
+		"/app/monitor/prometheus_scrape_defaults.yml", prom.ReloadConfigNow)
 }
 
 func backupPrometheusConfig() (name string, err error) {

@@ -74,6 +74,8 @@ Checkpoint 用 flock、临时文件、文件同步与原子重命名写入，避
 
 Monitor `/monitor/api/v1/k8s/metrics/catalog` 提供当前 UI 查询白名单；`POST /monitor/api/v1/k8s/metrics/history` 查询历史；`GET /monitor/api/v1/k8s/objects` 和 `/alerts/states` 提供对象与告警视图。Web 在“监控对象”统一展示资源、日志、应用曲线和当前告警状态。字节类 counter 以 rate 语义显示；块设备读取粒度是 bytes，不提供 IOPS/latency。
 
+图表沿用原有数量和布局。图例及悬浮提示只展示业务维度，完整标签仍参与曲线标识，Pod 重建和不同来源的曲线独立保留；同名显示项增加编号。提示框限制宽高，长文本换行，多曲线时内部滚动。单图可放大并展开查看完整标签，复用当前数据及时间范围，不另发历史查询。
+
 普通日志默认规则匹配不区分大小写的 ERROR、FATAL、PANIC。用户可在 Web 为规则增加排除条件；只有主规则命中且没有任何排除项命中时才计数。规则变更使用新计数版本，不追溯重算历史日志或告警。
 
 ## 7. 告警与通知
@@ -83,6 +85,10 @@ Monitor `/monitor/api/v1/k8s/metrics/catalog` 提供当前 UI 查询白名单；
 Namespace 首次登记自动补齐四条默认规则，重复登记不覆盖已存在规则：`default-log-error`（log_matches > 0）、`default-not-ready`（ready < 1）、`default-oom`（oom_events > 0）、`default-cpu-throttled`（cpu_throttled > 0）。默认恢复条件是连续 3 次有效正常评估；从 unknown 回来时先恢复有效性，再累计正常周期。日志/OOM 的增量窗口为 `max(300 秒, 4 × 采集周期)`。没有默认 CPU/内存百分比或 JVM/连接池阈值告警，用户可按业务阈值增补。
 
 ## 8. API、编排与数据表
+
+Kubernetes 页面统一位于一级菜单“Kubernetes监控”（`/k8sConfig`），下设监控源、监控对象、告警规则，页面标题及面包屑使用相同名称，默认进入监控源。原 `/adminConfig/k8sSources`、`/adminConfig/k8sObjects`、`/adminConfig/k8sAlertRules` 地址保留跳转并携带原查询参数。页面 API 权限归属 `MONITOR_K8S_CONFIG`；WeCube 发布时须同步更新 `register.xml` 的菜单注册及服务端 `menu-api-map.json`，超级管理员默认授权，自定义角色须授予新菜单权限。
+
+告警规则页的集群和命名空间使用联动下拉框，仅展示已登记并启用的监控源；切换集群后选择其命名空间并重新查询，清空原范围结果，忽略旧请求的延迟响应。无可用命名空间时提示先登记监控源，列表加载失败时可重试。
 
 新增的 K8s Web API 位于经登录认证的 `/monitor/api/v1/k8s` 下，资源登记提供 PUT/DELETE；内部 Agent 和 Prometheus endpoint 使用独立内部路由及各自的访问控制。WeCube 通过 `POST /cluster/plugin/put|delete` 和 `POST /namespace/plugin/put|delete` 发送平台批量 envelope，逐条返回 guid、callbackParameter 和错误状态。调用方不提交版本号。实际路由以 `monitor-server/api/api.go` 和 `build/register.xml` 为准，主要接口如下：
 
@@ -107,4 +113,4 @@ Web 与 WeCube 均可管理 Cluster/Namespace。数据库迁移当前是 v3.8.0 
 - 单环境按一个活动 Monitor 实例设计；当前不提供同环境多副本采集租约/HA 保证。
 - 单元测试和模板静态检查不能证明真实 RBAC、CMDB 跨插件调用、NetworkPolicy、NAS 锁语义或 Prometheus Service/Pod 网络已通过部署联调。
 
-旧 `kubernetes_cluster` exporter 管理功能仍在仓库，按既有决定留待另项清理；它与本 MVP 使用的 `kubernetes_metric_cluster` 是不同功能。
+旧 `kubernetes_cluster` 管理 API、Web 和数据库仍保留，与本 MVP 使用的 `kubernetes_metric_cluster` 是不同功能。旧 `k8s-kubelet-*`、`k8s-cadvisor-*` 抓取任务已停用：升级启动时清理 PVC 中的存量配置，后端不再重新生成。升级验证见 [Kubernetes 旧采集停用与升级验证](k8s-legacy-scrape-upgrade.md)。

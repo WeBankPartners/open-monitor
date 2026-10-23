@@ -31,10 +31,15 @@ func InitPrometheusConfig() {
 	checkRuleConfigTime(true)
 	// start cron check
 	go startCheckPrometheusConfig()
-	// init kubernetes config
-	err = SyncKubernetesConfig()
-	if err != nil {
-		log.Error(nil, log.LOGGER_APP, "Start sync kubernetes config fail", zap.Error(err))
+	// Retire persisted legacy jobs, including when the legacy cluster table is empty.
+	for attempt := 1; attempt <= 3; attempt++ {
+		if err = SyncKubernetesConfig(); err == nil {
+			break
+		}
+		log.Error(nil, log.LOGGER_APP, "Disable legacy Kubernetes scrape failed", zap.Int("attempt", attempt), zap.Error(err))
+		if attempt < 3 {
+			time.Sleep(2 * time.Second)
+		}
 	}
 	// init snmp config
 	err = SyncSnmpPrometheusConfig()

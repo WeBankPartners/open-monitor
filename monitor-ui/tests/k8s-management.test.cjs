@@ -23,10 +23,84 @@ test('log rule editor saves optional exclusions and reloads server-managed versi
   assert.equal(context.rulesEditor.visible, false)
 })
 
-function loadComponent(name) {
+function loadComponent(name, globals = {}) {
   const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/' + name + '.vue'), 'utf8')
-  return vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export const', 'const').replace('export default', 'module.exports ='), { module: { exports: {} } })
+  return vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export const', 'const').replace('export default', 'module.exports ='), { module: { exports: {} }, setTimeout: () => 0, clearTimeout() {}, ...globals })
 }
+
+function alertRuleContext(component) {
+  const pending = []
+  const context = {
+    $root: {$httpRequestEntrance: {httpRequestEntrance(method, url, body, done, config, fail) { pending.push({method, url, body, done, fail}) }}, apiCenter: {k8sClusterList: '/clusters', k8sNamespaceList: '/namespaces', k8sAlertRules: '/rules'}},
+    $t: key => key,
+    $Message: {error: message => assert.fail(message)}
+  }
+  Object.assign(context, component.data.call(context))
+  for (const [name, method] of Object.entries(component.methods)) context[name] = method.bind(context)
+  Object.defineProperty(context, 'namespaceOptions', {get: () => component.computed.namespaceOptions.call(context)})
+  return {context, pending}
+}
+
+test('alert rule scope selects enabled sources and keeps rules within the selected cluster', () => {
+  const component = loadComponent('k8s-alert-rules')
+  const {context, pending} = alertRuleContext(component)
+  component.mounted.call(context)
+  assert.equal(pending[0].url, '/clusters')
+  assert.equal(pending[0].method, 'POST')
+  pending[0].done([{clusterId: 'disabled', enabled: false}, {clusterId: 'cluster-a', enabled: true}, {clusterId: 'cluster-b', enabled: true}])
+  assert.equal(pending[1].url, '/namespaces')
+  pending[1].done([{clusterId: 'cluster-a', namespace: 'off', enabled: false}, {clusterId: 'cluster-a', namespace: 'ns-a', enabled: true}, {clusterId: 'cluster-b', namespace: 'ns-b', enabled: true}])
+  assert.equal(context.clusters.length, 2)
+  assert.equal(context.namespaceOptions.length, 1)
+  assert.equal(context.namespaceOptions[0].namespace, 'ns-a')
+  assert.equal(context.scope.clusterId, 'cluster-a')
+  assert.equal(context.scope.namespace, 'ns-a')
+  assert.equal(pending[2].url, '/rules')
+  assert.equal(pending[2].body.namespace, 'ns-a')
+  context.rules = [{ruleId: 'previous'}]
+  context.scope.clusterId = 'cluster-b'
+  context.clusterChanged()
+  assert.equal(context.rules.length, 0)
+  assert.equal(context.namespaceOptions[0].namespace, 'ns-b')
+  assert.equal(context.scope.namespace, 'ns-b')
+  assert.equal(pending[3].body.clusterId, 'cluster-b')
+  pending[3].done([{ruleId: 'current'}])
+  pending[2].done([{ruleId: 'stale'}])
+  assert.equal(context.rules[0].ruleId, 'current')
+})
+
+test('alert rule scope with no enabled namespace does not query rules', () => {
+  const component = loadComponent('k8s-alert-rules')
+  const {context, pending} = alertRuleContext(component)
+  context.loadSources()
+  pending[0].done([{clusterId: 'cluster-a', enabled: true}])
+  pending[1].done([{clusterId: 'cluster-a', namespace: 'off', enabled: false}])
+  assert.equal(context.sourcesLoading, false)
+  assert.equal(context.scope.namespace, '')
+  assert.equal(context.namespaceOptions.length, 0)
+  assert.equal(context.rules.length, 0)
+  assert.equal(pending.length, 2)
+})
+
+test('alert rule source failure is recoverable and late responses cannot replace the retried scope', () => {
+  let deadline
+  const component = loadComponent('k8s-alert-rules', {setTimeout: fn => { deadline = fn; return 1 }})
+  const {context, pending} = alertRuleContext(component)
+  context.loadSources()
+  deadline()
+  assert.equal(context.sourcesLoading, false)
+  assert.equal(context.sourcesFailed, true)
+  pending[0].done([{clusterId: 'stale', enabled: true}])
+  assert.equal(pending.length, 1)
+  context.loadSources()
+  pending[1].done([{clusterId: 'cluster-b', enabled: true}])
+  pending[2].done([{clusterId: 'cluster-b', namespace: 'ns-b', enabled: true}])
+  assert.equal(context.sourcesFailed, false)
+  assert.equal(context.scope.clusterId, 'cluster-b')
+  component.beforeDestroy.call(context)
+  pending[3].done([{ruleId: 'stale-after-destroy'}])
+  assert.equal(context.rules.length, 0)
+})
 
 test('agent editor ignores obsolete responses and cannot save another node configuration', () => {
   const component = loadComponent('k8s-sources')
@@ -116,12 +190,14 @@ test('editing an automatically registered agent explicitly overrides its address
   component.methods.saveEndpoint.call(context)
 })
 
-test('generated administrator permissions contain every Kubernetes management operation', () => {
+test('generated Kubernetes menu permissions contain every Kubernetes management operation', () => {
   let output
   const script = fs.readFileSync(path.join(root, 'node-api-config.js'), 'utf8')
   const proxyFs = { ...fs, writeFileSync(file, data) { output = JSON.parse(data) } }
   vm.runInNewContext(script, { require(name) { return name === 'fs' ? proxyFs : require(require.resolve(name, { paths: [root] })) }, __dirname: root, console }, { timeout: 30000 })
-  const urls = output.find(row => row.menu === 'MONITOR_ADMINISTRATOR_CONFIG').urls
+  const urls = output.find(row => row.menu === 'MONITOR_K8S_CONFIG').urls
+  assert.ok(!output.find(row => row.menu === 'MONITOR_ADMINISTRATOR_CONFIG').urls.some(row => row.url.startsWith('/monitor/api/v1/k8s/')))
+  assert.ok(urls.some(row => row.url === '/monitor/api/v1/k8s/alerts/states' && row.method === 'get'))
   for (const [suffix, methods] of Object.entries({ 'objects': ['get'], 'metrics/history': ['post'], 'metrics/catalog': ['get'], 'cluster/source': ['put', 'delete'], 'namespace/source': ['put', 'delete'], 'cluster/list': ['post'], 'namespace/list': ['post'], 'log-agent/list': ['get'], 'log-agent/source': ['get', 'put', 'delete'], 'log-agent/endpoint': ['put', 'delete'], 'log-agent/endpoint/override': ['delete'], 'alert-rules': ['get', 'post'], 'alert-rules/:ruleId': ['put', 'delete'] })) {
     for (const method of methods) assert.ok(urls.some(row => row.url === '/monitor/api/v1/k8s/' + suffix && row.method === method), method + ' ' + suffix)
   }
@@ -136,7 +212,7 @@ test('namespace object action opens the complete browser with its original scope
   const component = loadComponent('k8s-sources')
   let route
   component.methods.openObjects.call({$router:{push(value){route=value}}},{clusterId:'cluster-a',namespace:'sit-a'})
-  assert.equal(route.path,'/adminConfig/k8sObjects')
+  assert.equal(route.path,'/k8sConfig/k8sObjects')
   assert.equal(route.query.clusterId,'cluster-a')
   assert.equal(route.query.namespace,'sit-a')
 })
@@ -168,4 +244,43 @@ test('cluster and namespace forms are opened in dedicated dialogs', () => {
   assert.match(source, /<Modal[^>]*v-model="cluster\.visible"/)
   assert.match(source, /<Modal[^>]*v-model="namespace\.visible"/)
   assert.doesNotMatch(source, /<Form inline>/)
+})
+
+function loadRoutes(file) {
+  const source = fs.readFileSync(path.join(root, 'project-config', file), 'utf8')
+    .replace(/^import (\w+) from [^\n]+;?$/gm, (_, name) => {
+      if (name === 'Vue') return 'const Vue = {use() {}};'
+      if (name === 'Router') return 'const Router = routerConstructor;'
+      return 'const ' + name + ' = {};'
+    })
+    .replace('export default router;', 'module.exports = router;')
+  const context = {module: {exports: {}}, routerConstructor: require('vue-router')}
+  vm.runInNewContext(source, context)
+  return context.module.exports
+}
+
+test('plugin and standalone routes group all Kubernetes pages and preserve old links', () => {
+  for (const file of ['router-plugin.js', 'router.js']) {
+    const loaded = loadRoutes(file)
+    const routes = Array.isArray(loaded) ? loaded : loaded.options.routes[0].children
+    const group = routes.find(row => row.name === 'k8sConfig')
+    assert.ok(group, file + ' is missing the Kubernetes menu')
+    assert.equal(group.redirect, '/k8sConfig/k8sSources')
+    const admin = routes.find(row => row.name === 'adminConfig')
+    const router = Array.isArray(loaded) ? new (require('vue-router'))({routes: loaded}) : loaded
+    for (const name of ['k8sSources', 'k8sObjects', 'k8sAlertRules']) {
+      assert.ok(group.children.some(row => row.name === name), file + ': ' + name)
+      const old = admin.children.find(row => row.path === name)
+      const query = {clusterId: 'cluster-a', namespace: 'sit-a'}
+      const target = old.redirect({query, hash: '#detail'})
+      assert.equal(target.path, '/k8sConfig/' + name)
+      assert.equal(target.query, query)
+      assert.equal(target.hash, '#detail')
+      const resolved = router.resolve('/adminConfig/' + name + '?clusterId=cluster-a&namespace=sit-a#detail').route
+      assert.equal(resolved.path, '/k8sConfig/' + name)
+      assert.equal(resolved.query.namespace, 'sit-a')
+      assert.equal(resolved.hash, '#detail')
+      assert.ok(resolved.matched.some(row => row.name === 'k8sConfig'))
+    }
+  }
 })

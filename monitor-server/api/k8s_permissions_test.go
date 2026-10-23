@@ -46,8 +46,14 @@ func TestKubernetesMenuContainsAuthenticatedRoutes(t *testing.T) {
 		if strings.Contains(route.Path, "/plugin/") {
 			continue
 		} // Existing SUB_SYSTEM authentication.
-		if len(user.ApiMenuMap[code]) == 0 {
-			t.Errorf("route %s has no menu permission mapping", key)
+		mapped := false
+		for _, menu := range user.ApiMenuMap[code] {
+			if menu == "MONITOR_K8S_CONFIG" {
+				mapped = true
+			}
+		}
+		if !mapped {
+			t.Errorf("route %s has no Kubernetes menu permission mapping", key)
 		}
 	}
 	for key := range codes {

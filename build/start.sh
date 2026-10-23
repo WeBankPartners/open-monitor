@@ -44,7 +44,13 @@ if [ -d "/app/monitor/prometheus_tmp" ] && [ "$(ls -A /app/monitor/prometheus_tm
   echo "Copying prometheus files from prometheus_tmp to prometheus..."
   mkdir -p /app/monitor/prometheus
   mkdir -p /app/monitor/prometheus/rules
-  cp -rf /app/monitor/prometheus_tmp/* /app/monitor/prometheus/
+  for prometheus_file in /app/monitor/prometheus_tmp/*; do
+    if [ "${prometheus_file##*/}" = "prometheus.yml" ] && [ -f /app/monitor/prometheus/prometheus.yml ]; then
+      echo "Preserving persistent prometheus.yml"
+      continue
+    fi
+    cp -rf "$prometheus_file" /app/monitor/prometheus/ || exit 1
+  done
   chmod +x /app/monitor/prometheus/prometheus /app/monitor/prometheus/promtool
   # 确保 rules 目录和 base.yml 的权限正确
   if [ -f "/app/monitor/prometheus/base.yml" ]; then
@@ -272,6 +278,13 @@ if [ -x /app/monitor/prometheus/promtool ]; then
       cat /tmp/promtool_check.log
     fi
   fi
+fi
+# Disable retired jobs in the mounted config before Prometheus can load them.
+if ! sh /app/monitor/disable-legacy-k8s-scrape.sh \
+  /app/monitor/prometheus/prometheus.yml /app/monitor/prometheus/promtool \
+  /app/monitor/prometheus_scrape_defaults.yml; then
+  echo "ERROR: legacy Kubernetes scrape cleanup failed; Prometheus was not started" >&2
+  exit 1
 fi
 cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/

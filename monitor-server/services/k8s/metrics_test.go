@@ -149,6 +149,15 @@ func TestNetworkIsPodScopedAndSelectsOneSourceDeterministically(t *testing.T) {
 	}
 }
 
+func TestNetworkMatchesBurstablePodCgroup(t *testing.T) {
+	s := metricSnapshot()
+	payload := "container_network_receive_bytes_total{namespace=\"sit-a\",pod=\"orders-0\",container=\"\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-podpod-a.slice/cri-containerd-sandbox.scope\"} 10\n"
+	samples, err := ParseCAdvisor(payload, s)
+	if err != nil || len(samples) != 1 {
+		t.Fatalf("burstable pod network sample was dropped: %+v %v", samples, err)
+	}
+}
+
 func TestParseCAdvisorIncludesThrottlingOOMAndMemoryFailureMetrics(t *testing.T) {
 	s := metricSnapshot()
 	payload := "container_cpu_cfs_periods_total{namespace=\"sit-a\",pod=\"orders-0\",container=\"app\",id=\"/kubepods/runtime-a\"} 100\n" +

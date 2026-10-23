@@ -114,17 +114,17 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
     childBreadcrumb: { 'zh-CN': 'Prometheus日志', 'en-US': 'Prometheus Logs'}
   },
-  'adminConfig/k8sAlertRules': {
-    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: { 'zh-CN': 'Kubernetes告警规则', 'en-US': 'Kubernetes Alert Rules'}
-  }
-  ,'adminConfig/k8sSources': {
-    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: { 'zh-CN': 'Kubernetes监控源', 'en-US': 'Kubernetes Sources'}
+  'k8sConfig/k8sSources': {
+    parentBreadcrumb: {'zh-CN': 'Kubernetes监控', 'en-US': 'Kubernetes Monitoring'},
+    childBreadcrumb: {'zh-CN': '监控源', 'en-US': 'Monitoring Sources'}
   },
-  'adminConfig/k8sObjects': {
-    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: {'zh-CN': 'Kubernetes监控对象', 'en-US': 'Kubernetes Objects'}
+  'k8sConfig/k8sObjects': {
+    parentBreadcrumb: {'zh-CN': 'Kubernetes监控', 'en-US': 'Kubernetes Monitoring'},
+    childBreadcrumb: {'zh-CN': '监控对象', 'en-US': 'Monitoring Objects'}
+  },
+  'k8sConfig/k8sAlertRules': {
+    parentBreadcrumb: {'zh-CN': 'Kubernetes监控', 'en-US': 'Kubernetes Monitoring'},
+    childBreadcrumb: {'zh-CN': '告警规则', 'en-US': 'Alert Rules'}
   }
 }
 window.addImplicitRoute(implicitRoute)

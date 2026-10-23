@@ -1866,7 +1866,12 @@
         "key": "getPrometheusLogs",
         "url": "/monitor/api/v2/prometheus/raw",
         "method": "get"
-      },
+      }
+    ]
+  },
+  {
+    "menu": "MONITOR_K8S_CONFIG",
+    "urls": [
       {
         "key": "k8sClusterList",
         "url": "/monitor/api/v1/k8s/cluster/list",
@@ -1958,8 +1963,23 @@
         "method": "post"
       },
       {
+        "key": "k8sClusterList",
+        "url": "/monitor/api/v1/k8s/cluster/list",
+        "method": "post"
+      },
+      {
+        "key": "k8sNamespaceList",
+        "url": "/monitor/api/v1/k8s/namespace/list",
+        "method": "post"
+      },
+      {
         "key": "k8sAlertRules",
         "url": "/monitor/api/v1/k8s/alert-rules",
+        "method": "get"
+      },
+      {
+        "key": "k8sAlertStates",
+        "url": "/monitor/api/v1/k8s/alerts/states",
         "method": "get"
       },
       {

@@ -32,6 +32,8 @@ RUN mkdir -p $BASE_HOME $PROMETHEUS_TMP $PROMETHEUS_TMP/rules $PROMETHEUS_TMP/to
     mkdir -p $PROMETHEUS_HOME $ALERTMANAGER_HOME $AGENT_MANAGER_HOME
 
 COPY build/start.sh $BASE_HOME/
+COPY build/disable-legacy-k8s-scrape.sh $BASE_HOME/
+COPY build/conf/prometheus.yml $BASE_HOME/prometheus_scrape_defaults.yml
 COPY build/stop.sh $BASE_HOME/
 # 复制 prometheus 相关文件到临时目录
 COPY build/conf/prometheus.yml $PROMETHEUS_TMP/
