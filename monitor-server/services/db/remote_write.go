@@ -7,6 +7,8 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -63,6 +65,53 @@ func CallSyncWritePrometheusConfig() {
 	}()
 }
 
+// Database rows remain intact; repeated addresses must not produce repeated writes.
+func renderRemoteWriteConfig(config, template string, rows []*models.RemoteWriteConfigTable) (string, int, error) {
+	const startMarker, endMarker = "#Remote_write_start", "#Remote_write_end"
+	start, end := strings.Index(config, startMarker), strings.Index(config, endMarker)
+	if strings.Count(config, startMarker) != 1 || strings.Count(config, endMarker) != 1 || end < start {
+		return "", 0, fmt.Errorf("invalid managed remote write markers")
+	}
+	seen := make(map[string]bool, len(rows))
+	var entries strings.Builder
+	duplicates := 0
+	for _, row := range rows {
+		address := strings.TrimSpace(row.Address)
+		if address == "" {
+			continue
+		}
+		if seen[address] {
+			duplicates++
+			continue
+		}
+		seen[address] = true
+		// The packaged template uses a single-quoted YAML scalar.
+		entries.WriteString(strings.ReplaceAll(template, "{{remote_write_url}}", strings.ReplaceAll(address, "'", "''")))
+		entries.WriteByte('\n')
+	}
+	return config[:start+len(startMarker)] + "\n" + entries.String() + config[end:], duplicates, nil
+}
+
+func writeRemoteWriteConfig(name string, content []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(name), ".remote-write-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	if _, err = f.Write(content); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(f.Name(), name)
+}
+
 func SyncRemoteWritePrometheusConfig() error {
 	prometheusConfigMutex.Lock()
 	defer prometheusConfigMutex.Unlock()
@@ -79,26 +128,21 @@ func SyncRemoteWritePrometheusConfig() error {
 	if err != nil {
 		return fmt.Errorf("Read prometheus tpl file fail,%s ", err.Error())
 	}
-	promString := string(promBytes)
-	startIndex := strings.Index(promString, "#Remote_write_start")
-	endIndex := strings.Index(promString, "#Remote_write_end")
 	tplBytes, err := ioutil.ReadFile("/app/monitor/prometheus/remote_write_prometheus.tpl")
 	if err != nil {
 		return fmt.Errorf("Read remote write prometheus tpl file fail,%s ", err.Error())
 	}
-	remoteWriteConfigString := ""
-	tplString := string(tplBytes)
-	for _, row := range remoteWriteConfigRows {
-		tmpConfigString := tplString + "\n"
-		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{remote_write_url}}", row.Address)
-		remoteWriteConfigString += tmpConfigString
-	}
-	promString = promString[:startIndex+19] + "\n" + remoteWriteConfigString + promString[endIndex:]
-	err = ioutil.WriteFile("/app/monitor/prometheus/prometheus.yml", []byte(promString), 0644)
+	promString, duplicates, err := renderRemoteWriteConfig(string(promBytes), string(tplBytes), remoteWriteConfigRows)
 	if err != nil {
-		err = fmt.Errorf("Write remote write config to prometheus fail,%s ", err.Error())
-		recoverPrometheusConfig(backupConfigName)
 		return err
+	}
+	if duplicates > 0 {
+		log.Warn(nil, log.LOGGER_APP, "Duplicate remote write addresses omitted from generated config", zap.Int("duplicate_count", duplicates))
+	}
+	err = writeRemoteWriteConfig("/app/monitor/prometheus/prometheus.yml", []byte(promString))
+	if err != nil {
+		// Atomic replacement has not changed the original on failure.
+		return fmt.Errorf("write remote write config to prometheus: %w", err)
 	}
 	err = prom.ReloadConfig()
 	if err != nil {

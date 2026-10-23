@@ -279,6 +279,12 @@ if [ -x /app/monitor/prometheus/promtool ]; then
     fi
   fi
 fi
+# Repair persisted duplicates even when Prometheus cannot currently start.
+if ! sh /app/monitor/deduplicate-remote-write.sh \
+  /app/monitor/prometheus/prometheus.yml /app/monitor/prometheus/promtool; then
+  echo "ERROR: remote write duplicate repair failed; Prometheus was not started" >&2
+  exit 1
+fi
 # Disable retired jobs in the mounted config before Prometheus can load them.
 if ! sh /app/monitor/disable-legacy-k8s-scrape.sh \
   /app/monitor/prometheus/prometheus.yml /app/monitor/prometheus/promtool \

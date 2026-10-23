@@ -178,6 +178,8 @@ class LegacyKubernetesScrapeTest(unittest.TestCase):
             promtool.write_text('#!/bin/sh\n[ ! -f "' + str(custom / 'invalid.yml') + '" ]\n')
             promtool.chmod(0o755)
             block = block.replace('/app/monitor/disable-legacy-k8s-scrape.sh', str(MIGRATE))
+            block = block.replace('/app/monitor/deduplicate-remote-write.sh',
+                                  str(ROOT / 'build/deduplicate-remote-write.sh'))
             block = block.replace('/app/monitor/prometheus', str(target))
             block = block.replace('/tmp/promtool_check.log', str(directory / 'check.log'))
             block = 'sudo() { if [ "$1" = chown ]; then return 0; fi; command "$@"; }\n' + block
