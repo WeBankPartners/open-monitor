@@ -96,6 +96,31 @@ func TestPersistentScanIncrementsVersionForAutomaticTargetChange(t *testing.T) {
 	}
 }
 
+func TestPersistentScanReportsLogTargetResolutionFailure(t *testing.T) {
+	var reported Container
+	var reportedErr error
+	ConfigureLogTargetResolverReport(func(container Container, err error) { reported, reportedErr = container, err })
+	t.Cleanup(func() {
+		ConfigureLogTargetResolver(nil)
+		ConfigureLogTargetResolverReport(nil)
+	})
+	ConfigureLogTargetResolver(failingLogResolver{})
+	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 1}}}
+	snapshot := &Snapshot{Containers: []Container{{Key: ObjectKey{ClusterID: "cluster-a", Namespace: "sit-a", PodName: "app-0", ContainerName: "main"}, Node: "node-a", InstanceID: "instance-a"}}}
+	if err := reconcileLogAgents(context.Background(), persistence, "cluster-a", "sit-a", snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if reported.InstanceID != "instance-a" || reportedErr == nil {
+		t.Fatalf("resolution failure was not reported: %+v %v", reported, reportedErr)
+	}
+}
+
+type failingLogResolver struct{}
+
+func (failingLogResolver) Resolve(context.Context, Container) (LogTarget, error) {
+	return LogTarget{}, errors.New("CMDB app instance not found")
+}
+
 type failingSource struct{}
 
 func (*failingSource) Snapshot(context.Context, string) (*Snapshot, error) {

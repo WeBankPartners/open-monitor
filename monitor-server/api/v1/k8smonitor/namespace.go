@@ -6,9 +6,11 @@ import (
 	"database/sql"
 	"errors"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/k8s"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"regexp"
@@ -56,6 +58,7 @@ func (h Handler) LogAgentConfig(c *gin.Context) {
 	auth := strings.TrimSpace(c.GetHeader("Authorization"))
 	want := "Bearer " + strings.TrimSpace(h.Policy.LogAgentToken)
 	if h.Policy.LogAgentToken == "" || subtle.ConstantTimeCompare([]byte(auth), []byte(want)) != 1 {
+		log.Warn(c, log.LOGGER_APP, "Log agent config authentication failed", zap.String("cluster", c.Query("clusterId")), zap.String("node", c.Query("node")))
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
@@ -70,14 +73,17 @@ func (h Handler) LogAgentConfig(c *gin.Context) {
 	}
 	config, err := h.LogStore.GetLogAgentConfig(c.Request.Context(), cluster, node)
 	if errors.Is(err, sql.ErrNoRows) {
-		c.AbortWithStatus(http.StatusNotFound)
+		log.Debug(c, log.LOGGER_APP, "Log agent config is not published", zap.String("cluster", cluster), zap.String("node", node))
+		c.AbortWithStatus(http.StatusNoContent)
 		return
 	}
 	if err != nil {
+		log.Error(c, log.LOGGER_APP, "Log agent config query failed", zap.String("cluster", cluster), zap.String("node", node), zap.Error(err))
 		c.AbortWithStatus(http.StatusServiceUnavailable)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"config": config})
+	log.Debug(c, log.LOGGER_APP, "Log agent config served", zap.String("cluster", cluster), zap.String("node", node), zap.Uint64("version", config.Version), zap.Int("target_count", len(config.Targets)))
 }
 
 func (h Handler) List(c *gin.Context) {

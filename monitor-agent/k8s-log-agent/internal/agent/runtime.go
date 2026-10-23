@@ -16,6 +16,8 @@ type RuntimeConfig struct {
 	PollInterval                                                                           time.Duration
 }
 
+var ErrConfigNotPublished = errors.New("configuration is not published")
+
 func LoadRuntimeConfig(get func(string) string) (RuntimeConfig, error) {
 	c := RuntimeConfig{Root: get("LOG_AGENT_ROOT"), StateDir: get("LOG_AGENT_STATE_DIR"), MonitorURL: strings.TrimRight(get("LOG_AGENT_MONITOR_URL"), "/"), ClusterID: get("LOG_AGENT_CLUSTER_ID"), NodeName: get("LOG_AGENT_NODE_NAME"), AuthToken: get("LOG_AGENT_AUTH_TOKEN"), HTTPAddr: get("LOG_AGENT_HTTP_ADDR"), AdvertiseAddress: get("LOG_AGENT_ADVERTISE_ADDRESS"), PollInterval: 10 * time.Second}
 	if v := get("LOG_AGENT_POLL_INTERVAL"); v != "" {
@@ -102,6 +104,9 @@ func FetchConfig(client *http.Client, c RuntimeConfig, current uint64) (Config, 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNoContent {
+			return Config{}, ErrConfigNotPublished
+		}
 		return Config{}, fmt.Errorf("config request status %d", resp.StatusCode)
 	}
 	var out struct {

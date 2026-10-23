@@ -31,6 +31,7 @@ type logStoreStep struct {
 	rows    [][]driver.Value
 	err     error
 	args    []driver.Value
+	check   func([]driver.NamedValue)
 }
 type logStoreRows struct {
 	columns []string
@@ -71,6 +72,9 @@ func (c *logStoreConn) step(query string, args []driver.NamedValue) logStoreStep
 				c.test.t.Fatalf("argument %d mismatch", i)
 			}
 		}
+	}
+	if step.check != nil {
+		step.check(args)
 	}
 	return step
 }
@@ -208,5 +212,31 @@ func TestLogConfigReadDoesNotWriteUnchangedConfiguration(t *testing.T) {
 	got, err := store.GetLogAgentConfig(context.Background(), "cluster-a", "node-a")
 	if err != nil || got.Version != 9 || !script.committed {
 		t.Fatalf("unchanged configuration: %+v %v", got, err)
+	}
+}
+
+func TestLogConfigStoreBindsJSONAsText(t *testing.T) {
+	target := LogTarget{ID: "target", Namespace: "sit-a", PodUID: "pod", Directory: "logs", Glob: "*.log", Start: "end"}
+	steps := []logStoreStep{
+		{match: "FROM k8s_metric_source", columns: []string{"enabled"}, rows: [][]driver.Value{{true}}},
+		{match: "FROM k8s_namespace_source", columns: []string{"namespace"}, rows: [][]driver.Value{{"sit-a"}}},
+		{match: "FROM k8s_log_agent_config", columns: []string{"node_name", "version", "config"}},
+		{match: "INSERT INTO k8s_log_agent_config", check: func(args []driver.NamedValue) {
+			if len(args) != 4 {
+				t.Fatalf("argument count: %d", len(args))
+			}
+			raw, ok := args[3].Value.(string)
+			if !ok {
+				t.Fatalf("JSON config argument has type %T, want string", args[3].Value)
+			}
+			var got LogAgentConfig
+			if err := json.Unmarshal([]byte(raw), &got); err != nil || got.Version != 1 || len(got.Targets) != 1 {
+				t.Fatalf("invalid JSON config %q: %+v %v", raw, got, err)
+			}
+		}},
+	}
+	store, _ := newLogStoreTest(t, steps)
+	if err := store.SaveLogAgentConfig(context.Background(), "cluster-a", "node-a", LogAgentConfig{Version: 1, Targets: []LogTarget{target}}); err != nil {
+		t.Fatalf("save config: %v", err)
 	}
 }

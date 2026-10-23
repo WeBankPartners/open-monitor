@@ -56,7 +56,9 @@ Monitor 按 node 汇总当前对象目标并持久化版本配置，Agent 地址
 
 Agent 启动后向 `POST /monitor/internal/k8s/log-agent/register` 发送 Bearer Token 认证 JSON：`clusterId`、`node`、`address`、`port`。Agent 不上报 Pod UID；Monitor 以 cluster/node 为注册键，保存上报地址并记录最近心跳，Web 可设置人工 endpoint override。
 
-Agent 周期性请求 `GET /monitor/internal/k8s/log-agent/config?clusterId=...&node=...&version=...`，响应 envelope 为 `{ "config": { "version": 1, "targets": [...] } }`。实际 target 包含 id、namespace、workloadType/name、podName/podUid、instanceId、container、directory、glob、start、rules 和可选 format。规则包含 id、内部 version、literal/regex 主 pattern 和可选 exclude。路径限定到配置的 Agent root，打开文件时逐层拒绝符号链接越界。
+Agent 周期性请求 `GET /monitor/internal/k8s/log-agent/config?clusterId=...&node=...&version=...`，响应 envelope 为 `{ "config": { "version": 1, "targets": [...] } }`。配置尚未发布时返回 HTTP 204，Agent 保留当前配置并继续轮询；其他非 200 响应仍记录失败状态。实际 target 包含 id、namespace、workloadType/name、podName/podUid、instanceId、container、directory、glob、start、rules 和可选 format。规则包含 id、内部 version、literal/regex 主 pattern 和可选 exclude。路径限定到配置的 Agent root，打开文件时逐层拒绝符号链接越界。
+
+CMDB 解析失败会记录 `Kubernetes log target resolution failed`，包含对象身份和失败原因，不记录 Token 或响应正文；失败对象被跳过，其他对象继续生成目标。配置未发布的 HTTP 204 仅表示等待，不代表采集目标已生成。
 
 注册、拉取和扫描在 Agent 周期循环执行，默认 10 秒；Prometheus 拉取 `/metrics` 是另一条独立链路，读取 Agent 已准备的内存指标，不在 scrape 请求中解析文件。有效配置超过一分钟未成功更新时，Agent 在后续循环检查点暂停采集，readiness 与 metrics 返回 503；这不是精确的一分钟暂停 SLA。`/healthz` 只表示 HTTP 进程存活。
 

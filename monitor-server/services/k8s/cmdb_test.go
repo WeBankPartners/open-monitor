@@ -31,6 +31,33 @@ func TestCMDBClientQueriesGUIDAndReturnsDeployPath(t *testing.T) {
 	}
 }
 
+func TestCMDBClientReportsSafeFailureReason(t *testing.T) {
+	for _, tc := range []struct {
+		name, body, want string
+		status           int
+	}{
+		{"http", `private-response`, "CMDB query status 403", http.StatusForbidden},
+		{"application", `{"code":123,"statusCode":"ERROR","message":"private-response"}`, "CMDB query rejected: code=123", http.StatusOK},
+		{"missing", `{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":0},"contents":[]}}`, "CMDB app instance not found: total_rows=0 returned_rows=0", http.StatusOK},
+		{"empty_path", `{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"instance-a","deploy_path":""}]}}`, "CMDB deploy path is empty", http.StatusOK},
+		{"invalid", `private-response`, "invalid CMDB response", http.StatusOK},
+		{"transport", "", "CMDB query request failed", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := cmdbRoundTripper(func(*http.Request) (*http.Response, error) {
+				if tc.status == 0 {
+					return nil, errors.New("private-response")
+				}
+				return &http.Response{StatusCode: tc.status, Body: io.NopCloser(strings.NewReader(tc.body))}, nil
+			})
+			_, err := (CMDBClient{BaseURL: "https://cmdb.invalid", HTTP: client}).QueryAppInstance(context.Background(), "instance-a")
+			if err == nil || err.Error() != tc.want || strings.Contains(err.Error(), "private-response") {
+				t.Fatalf("expected safe reason %q, got %v", tc.want, err)
+			}
+		})
+	}
+}
+
 func TestCMDBLogTargetResolverBuildsStableTarget(t *testing.T) {
 	client := cmdbRoundTripper(func(r *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"app_instance-a","deploy_path":"/var/log/app/"}]}}`)), Header: make(http.Header)}, nil

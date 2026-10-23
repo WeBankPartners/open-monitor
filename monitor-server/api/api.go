@@ -351,6 +351,61 @@ func init() {
 	)
 }
 
+func registerKubernetesRoutes(r *gin.Engine, urlPrefix string, handlers, clusterHandler k8smonitor.Handler) {
+	k8sRoutes := r.Group(urlPrefix+"/api/v1/k8s", user.AuthRequired())
+	k8sRoutes.POST("/namespace/plugin/:action", handlers.Plugin)
+	k8sRoutes.PUT("/namespace/source", handlers.PutSource)
+	k8sRoutes.DELETE("/namespace/source", handlers.DeleteSource)
+	apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/namespace/source"] = "k8s_namespace_source_put"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/namespace/source"] = "k8s_namespace_source_delete"
+	k8sRoutes.POST("/log-agent/plugin/:action", handlers.LogAgentPlugin)
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/log-agent/plugin/:action"] = "k8s_log_agent_plugin"
+	k8sRoutes.GET("/log-agent/list", handlers.ListLogAgents)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/log-agent/list"] = "k8s_log_agent_list"
+	k8sRoutes.GET("/log-agent/source", handlers.GetLogAgentSource)
+	k8sRoutes.PUT("/log-agent/source", handlers.PutLogAgentSource)
+	k8sRoutes.DELETE("/log-agent/source", handlers.DeleteLogAgentSource)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/log-agent/source"] = "k8s_log_agent_source_get"
+	apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/log-agent/source"] = "k8s_log_agent_source_put"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/log-agent/source"] = "k8s_log_agent_source_delete"
+	k8sRoutes.PUT("/log-agent/endpoint", handlers.UpdateLogAgent)
+	k8sRoutes.DELETE("/log-agent/endpoint", handlers.DeleteLogAgent)
+	k8sRoutes.DELETE("/log-agent/endpoint/override", handlers.ReleaseLogAgent)
+	apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/log-agent/endpoint"] = "k8s_log_agent_endpoint_put"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/log-agent/endpoint"] = "k8s_log_agent_endpoint_delete"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/log-agent/endpoint/override"] = "k8s_log_agent_endpoint_override_delete"
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/namespace/plugin/:action"] = "k8s_namespace_plugin"
+	k8sRoutes.POST("/namespace/list", handlers.List)
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/namespace/list"] = "k8s_namespace_list"
+	k8sRoutes.POST("/metrics/history", handlers.History)
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/metrics/history"] = "k8s_metric_history"
+	k8sRoutes.GET("/metrics/catalog", handlers.MetricCatalog)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/metrics/catalog"] = "k8s_metric_catalog"
+	k8sRoutes.GET("/alerts/states", handlers.AlertStates)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/alerts/states"] = "k8s_alert_states"
+	k8sRoutes.GET("/objects", handlers.Objects)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/objects"] = "k8s_objects"
+	k8sRoutes.GET("/alert-rules", handlers.ListAlertRules)
+	k8sRoutes.POST("/alert-rules", handlers.CreateAlertRule)
+	k8sRoutes.PUT("/alert-rules/:ruleId", handlers.UpdateAlertRule)
+	k8sRoutes.DELETE("/alert-rules/:ruleId", handlers.DeleteAlertRule)
+	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/alert-rules"] = "k8s_alert_rules"
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/alert-rules"] = "k8s_alert_rule_create"
+	apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/alert-rules/:ruleId"] = "k8s_alert_rule_update"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/alert-rules/:ruleId"] = "k8s_alert_rule_delete"
+	r.GET(urlPrefix+"/internal/k8s/metrics", handlers.InternalMetrics)
+	r.GET(urlPrefix+"/internal/k8s/log-agent/config", handlers.LogAgentConfig)
+	r.POST(urlPrefix+"/internal/k8s/log-agent/register", handlers.RegisterLogAgent)
+	k8sRoutes.POST("/cluster/plugin/:action", clusterHandler.Plugin)
+	k8sRoutes.PUT("/cluster/source", clusterHandler.PutSource)
+	k8sRoutes.DELETE("/cluster/source", clusterHandler.DeleteSource)
+	apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/cluster/source"] = "k8s_cluster_source_put"
+	apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/cluster/source"] = "k8s_cluster_source_delete"
+	k8sRoutes.POST("/cluster/list", clusterHandler.List)
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/cluster/plugin/:action"] = "k8s_cluster_plugin"
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/cluster/list"] = "k8s_cluster_list"
+}
+
 func InitHttpServer() {
 	middleware.InitHttpError()
 	urlPrefix := models.UrlPrefix
@@ -409,51 +464,10 @@ func InitHttpServer() {
 	// Namespace monitoring is opt-in and uses the existing authenticated API boundary.
 	if models.Config().KubernetesMonitor.Enabled {
 		handlers := k8smonitor.Handler{Seed: models.Config().EncryptSeed, Policy: models.Config().KubernetesMonitor, Store: db.KubernetesMonitoringStore(), LogStore: db.KubernetesMonitoringStore(), AlertStore: db.KubernetesAlertStore(), Rules: db.KubernetesAlertStore(), Exporter: k8s.RuntimeExporter()}
-		k8sRoutes := r.Group(urlPrefix+"/api/v1/k8s", user.AuthRequired())
-		k8sRoutes.POST("/namespace/plugin/:action", handlers.Plugin)
-		k8sRoutes.PUT("/namespace/source", handlers.PutSource)
-		k8sRoutes.DELETE("/namespace/source", handlers.DeleteSource)
-		k8sRoutes.POST("/log-agent/plugin/:action", handlers.LogAgentPlugin)
-		k8sRoutes.GET("/log-agent/list", handlers.ListLogAgents)
-		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/log-agent/list"] = "k8s_log_agent_list"
-		k8sRoutes.GET("/log-agent/source", handlers.GetLogAgentSource)
-		k8sRoutes.PUT("/log-agent/source", handlers.PutLogAgentSource)
-		k8sRoutes.DELETE("/log-agent/source", handlers.DeleteLogAgentSource)
-		k8sRoutes.PUT("/log-agent/endpoint", handlers.UpdateLogAgent)
-		k8sRoutes.DELETE("/log-agent/endpoint", handlers.DeleteLogAgent)
-		k8sRoutes.DELETE("/log-agent/endpoint/override", handlers.ReleaseLogAgent)
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/log-agent/plugin/:action"] = "k8s_log_agent_plugin"
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/namespace/plugin/:action"] = "k8s_namespace_plugin"
-		k8sRoutes.POST("/namespace/list", handlers.List)
-		k8sRoutes.POST("/metrics/history", handlers.History)
-		k8sRoutes.GET("/metrics/catalog", handlers.MetricCatalog)
-		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/metrics/catalog"] = "k8s_metric_catalog"
-		k8sRoutes.GET("/alerts/states", handlers.AlertStates)
-		k8sRoutes.GET("/objects", handlers.Objects)
-		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/objects"] = "k8s_objects"
-		k8sRoutes.GET("/alert-rules", handlers.ListAlertRules)
-		k8sRoutes.POST("/alert-rules", handlers.CreateAlertRule)
-		k8sRoutes.PUT("/alert-rules/:ruleId", handlers.UpdateAlertRule)
-		k8sRoutes.DELETE("/alert-rules/:ruleId", handlers.DeleteAlertRule)
-		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/alerts/states"] = "k8s_alert_states"
-		apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/alert-rules"] = "k8s_alert_rules"
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/alert-rules"] = "k8s_alert_rule_create"
-		apiCodeMap[http.MethodPut+"_"+urlPrefix+"/api/v1/k8s/alert-rules/:ruleId"] = "k8s_alert_rule_update"
-		apiCodeMap[http.MethodDelete+"_"+urlPrefix+"/api/v1/k8s/alert-rules/:ruleId"] = "k8s_alert_rule_delete"
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/metrics/history"] = "k8s_metric_history"
-		r.GET(urlPrefix+"/internal/k8s/metrics", handlers.InternalMetrics)
-		r.GET(urlPrefix+"/internal/k8s/log-agent/config", handlers.LogAgentConfig)
-		r.POST(urlPrefix+"/internal/k8s/log-agent/register", handlers.RegisterLogAgent)
 		clusterHandler := handlers
 		clusterHandler.ClusterMode = true
 		clusterHandler.Store = k8s.ClusterStore{Store: db.KubernetesMonitoringStore()}
-		k8sRoutes.POST("/cluster/plugin/:action", clusterHandler.Plugin)
-		k8sRoutes.PUT("/cluster/source", clusterHandler.PutSource)
-		k8sRoutes.DELETE("/cluster/source", clusterHandler.DeleteSource)
-		k8sRoutes.POST("/cluster/list", clusterHandler.List)
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/cluster/plugin/:action"] = "k8s_cluster_plugin"
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/cluster/list"] = "k8s_cluster_list"
-		apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/namespace/list"] = "k8s_namespace_list"
+		registerKubernetesRoutes(r, urlPrefix, handlers, clusterHandler)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())

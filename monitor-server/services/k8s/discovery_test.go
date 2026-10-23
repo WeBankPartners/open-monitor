@@ -118,6 +118,13 @@ func TestWatchUsesListVersionAndReportsExpiredVersion(t *testing.T) {
 	}
 }
 
+func TestWatchTreatsNormalStreamCloseAsResync(t *testing.T) {
+	client := testClient(t, func(http.ResponseWriter, *http.Request) {})
+	if err := client.Watch(context.Background(), "pods", "pod-version", func() {}); err != nil {
+		t.Fatalf("normal watch close should trigger resync without an error, got %v", err)
+	}
+}
+
 func TestClientRejectsUntrustedCertificateAndRedirect(t *testing.T) {
 	var foreignRequests atomic.Int32
 	foreign := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

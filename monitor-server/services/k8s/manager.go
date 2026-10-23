@@ -4,12 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 )
 
 var autoLogResolver LogTargetResolver
+var autoLogResolverReport func(Container, error)
+var discoverySnapshotReport func(string, string, *Snapshot)
+var logAgentConfigReport func(string, string, LogAgentConfig)
 
 type LogTargetResolver interface {
 	Resolve(context.Context, Container) (LogTarget, error)
@@ -20,6 +24,24 @@ func sameLogTargetObject(a, b LogTarget) bool {
 }
 
 func ConfigureLogTargetResolver(r LogTargetResolver) { autoLogResolver = r }
+
+// ConfigureLogTargetResolverReport installs an optional observer for resolver
+// failures. A missing CMDB record must not prevent other pods from receiving
+// configuration, but it must remain diagnosable.
+func ConfigureLogTargetResolverReport(report func(Container, error)) {
+	autoLogResolverReport = report
+}
+
+// ConfigureDiscoverySnapshotReport installs a lightweight observer for
+// successful inventory snapshots. It is intended for operational diagnostics.
+func ConfigureDiscoverySnapshotReport(report func(string, string, *Snapshot)) {
+	discoverySnapshotReport = report
+}
+
+// ConfigureLogAgentConfigReport installs an observer for persisted snapshots.
+func ConfigureLogAgentConfigReport(report func(string, string, LogAgentConfig)) {
+	logAgentConfigReport = report
+}
 
 type Persistence interface {
 	Claim(context.Context, Registration, time.Duration) (string, error)
@@ -106,6 +128,8 @@ func reconcileLogAgents(ctx context.Context, persistence Persistence, cluster, n
 			}
 			if target, err := autoLogResolver.Resolve(ctx, container); err == nil {
 				resolved[container.Key] = target
+			} else if autoLogResolverReport != nil {
+				autoLogResolverReport(container, err)
 			}
 		}
 	}
@@ -283,6 +307,9 @@ func saveLogAgentConfigs(ctx context.Context, store LogAgentPersistence, cluster
 		if err := store.SaveLogAgentConfig(ctx, cluster, node, config); err != nil {
 			return err
 		}
+		if logAgentConfigReport != nil {
+			logAgentConfigReport(cluster, node, config)
+		}
 	}
 	return nil
 }
@@ -342,9 +369,14 @@ func RunDiscovery(ctx context.Context, policy Policy, store Store, index *Index,
 					defer close(done)
 					defer client.Close()
 					source := persistentSource{DiscoverySource: client, Persistence: store, Registration: registration}
-					worker := Worker{Index: index, Source: source, Cluster: registration.ClusterID, Namespace: registration.Namespace, Version: registration.Version, Report: report}
+					snapshotReport := discoverySnapshotReport
+					worker := Worker{Index: index, Source: source, Cluster: registration.ClusterID, Namespace: registration.Namespace, Version: registration.Version, Report: report, SnapshotReport: func(snapshot *Snapshot) {
+						if snapshotReport != nil {
+							snapshotReport(registration.ClusterID, registration.Namespace, snapshot)
+						}
+					}}
 					if err := worker.Run(workCtx); err != nil && !errors.Is(err, context.Canceled) {
-						report(err)
+						report(fmt.Errorf("cluster=%s namespace=%s: %w", registration.ClusterID, registration.Namespace, err))
 					}
 				}(r.Registration, client, workCtx, done)
 			}

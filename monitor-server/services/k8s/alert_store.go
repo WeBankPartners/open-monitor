@@ -222,7 +222,7 @@ FROM k8s_alert_state WHERE rule_id=? AND cluster_id=? AND namespace=? AND worklo
 			return Transition{}, marshalErr
 		}
 		_, err = tx.ExecContext(ctx, `INSERT INTO k8s_alert_outbox(event_id,idempotency_key,rule_id,cluster_id,namespace,event_type,payload,status,available_at,created_at) VALUES(?,?,?,?,?,?,?,'pending',?,?) ON DUPLICATE KEY UPDATE idempotency_key=idempotency_key`,
-			uuid.NewString(), OutboxIdempotencyKey(input.Key, newVersion, transition.Event), input.Key.RuleID, input.Key.ClusterID, input.Key.Namespace, transition.Event, payload, now, now)
+			uuid.NewString(), OutboxIdempotencyKey(input.Key, newVersion, transition.Event), input.Key.RuleID, input.Key.ClusterID, input.Key.Namespace, transition.Event, string(payload), now, now)
 		if err != nil {
 			return Transition{}, err
 		}

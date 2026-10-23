@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/k8s"
 	"github.com/gin-gonic/gin"
 	"net/http"
- "os"
- "path/filepath"
- "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -74,7 +74,7 @@ func TestLogAgentConfigRequiresScopedBearerToken(t *testing.T) {
 	}
 }
 
-func TestLogAgentConfigNotFoundAndScope(t *testing.T) {
+func TestLogAgentConfigNotPublishedAndScope(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := Handler{Policy: k8s.Policy{Enabled: true, Environment: "sit", LogAgentToken: "agent-token", Clusters: map[string]k8s.ClusterConfig{"cluster-a": {}}}, LogStore: &logAgentTestStore{err: sql.ErrNoRows}}
 	r := gin.New()
@@ -92,7 +92,7 @@ func TestLogAgentConfigNotFoundAndScope(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer agent-token")
 	out := httptest.NewRecorder()
 	r.ServeHTTP(out, req)
-	if out.Code != http.StatusNotFound {
+	if out.Code != http.StatusNoContent {
 		t.Fatalf("status=%d", out.Code)
 	}
 }
@@ -141,19 +141,26 @@ func TestAgentRegistrationIsAutomaticAndManualUpdateIsExplicit(t *testing.T) {
 }
 
 func TestAgentHeartbeatUpdatesFileDiscoveryWithoutPrometheusReload(t *testing.T) {
- dir:=t.TempDir()
- configPath:=filepath.Join(dir,"config.json")
- raw,_:=json.Marshal(map[string]interface{}{"prometheus":map[string]interface{}{"sdConfigPath":dir,"configReload":"invalid-reload-url"}})
- if err:=os.WriteFile(configPath,raw,0600);err!=nil{t.Fatal(err)}
- models.InitConfig(configPath)
- // Set fields directly to avoid depending on JSON spelling of legacy settings.
- models.Config().Prometheus.SdConfigPath=dir
- models.Config().Prometheus.ConfigReload="invalid-reload-url"
- h:=Handler{LogStore:&logAgentTestStore{}}
- for i:=0;i<2;i++ {
-  c,_:=gin.CreateTestContext(httptest.NewRecorder());c.Request=httptest.NewRequest("POST","/register",nil)
-  if err:=h.syncLogAgentTargets(c,"cluster-a");err!=nil {t.Fatalf("file discovery required a reload: %v",err)}
- }
- body,err:=os.ReadFile(filepath.Join(dir,"k8s_log_agents.json"))
- if err!=nil || string(body)!="[]"{t.Fatalf("targets not written: %s %v",body,err)}
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+	raw, _ := json.Marshal(map[string]interface{}{"prometheus": map[string]interface{}{"sdConfigPath": dir, "configReload": "invalid-reload-url"}})
+	if err := os.WriteFile(configPath, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	models.InitConfig(configPath)
+	// Set fields directly to avoid depending on JSON spelling of legacy settings.
+	models.Config().Prometheus.SdConfigPath = dir
+	models.Config().Prometheus.ConfigReload = "invalid-reload-url"
+	h := Handler{LogStore: &logAgentTestStore{}}
+	for i := 0; i < 2; i++ {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest("POST", "/register", nil)
+		if err := h.syncLogAgentTargets(c, "cluster-a"); err != nil {
+			t.Fatalf("file discovery required a reload: %v", err)
+		}
+	}
+	body, err := os.ReadFile(filepath.Join(dir, "k8s_log_agents.json"))
+	if err != nil || string(body) != "[]" {
+		t.Fatalf("targets not written: %s %v", body, err)
+	}
 }

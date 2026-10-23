@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -38,6 +40,23 @@ func TestFetchConfigEncodesScopeAndAuth(t *testing.T) {
 	got, e := FetchConfig(s.Client(), c, 1)
 	if e != nil || got.Version != 2 {
 		t.Fatalf("%+v %v", got, e)
+	}
+}
+
+func TestFetchConfigDistinguishesWaitingFromHTTPFailures(t *testing.T) {
+	for _, status := range []int{http.StatusNoContent, http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden, http.StatusServiceUnavailable} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(status) }))
+			defer server.Close()
+			_, err := FetchConfig(server.Client(), RuntimeConfig{MonitorURL: server.URL, ClusterID: "sit", NodeName: "node-a", AuthToken: "token"}, 0)
+			if status == http.StatusNoContent {
+				if !errors.Is(err, ErrConfigNotPublished) {
+					t.Fatalf("expected unpublished config, got %v", err)
+				}
+			} else if err == nil || errors.Is(err, ErrConfigNotPublished) || !strings.Contains(err.Error(), fmt.Sprint(status)) {
+				t.Fatalf("HTTP failure must retain status %d, got %v", status, err)
+			}
+		})
 	}
 }
 

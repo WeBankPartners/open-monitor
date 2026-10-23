@@ -289,7 +289,7 @@ func (s Store) UpdateLogAgentConfigs(ctx context.Context, cluster string, update
 		if encodeErr != nil {
 			return encodeErr
 		}
-		if _, err = tx.ExecContext(ctx, "INSERT INTO k8s_log_agent_config(cluster_id,node_name,version,config,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE version=VALUES(version),config=VALUES(config),updated_at=VALUES(updated_at)", cluster, node, config.Version, raw); err != nil {
+		if _, err = tx.ExecContext(ctx, "INSERT INTO k8s_log_agent_config(cluster_id,node_name,version,config,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE version=VALUES(version),config=VALUES(config),updated_at=VALUES(updated_at)", cluster, node, config.Version, string(raw)); err != nil {
 			return err
 		}
 	}

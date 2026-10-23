@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/k8s"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"strconv"
@@ -32,14 +34,17 @@ func (h Handler) RegisterLogAgent(c *gin.Context) {
 	// Agent registration is authoritative for automatic discovery. A manual
 	// endpoint override is applied only through the administrator API below.
 	if err := h.LogStore.SetLogAgentEndpoint(c.Request.Context(), endpoint, false); err != nil {
+		log.Error(c, log.LOGGER_APP, "Log agent registration persistence failed", zap.String("cluster", endpoint.ClusterID), zap.String("node", endpoint.Node), zap.Error(err))
 		c.AbortWithStatus(http.StatusServiceUnavailable)
 		return
 	}
 	if err := h.syncLogAgentTargets(c, endpoint.ClusterID); err != nil {
+		log.Error(c, log.LOGGER_APP, "Log agent target file sync failed", zap.String("cluster", endpoint.ClusterID), zap.String("node", endpoint.Node), zap.Error(err))
 		c.AbortWithStatus(http.StatusServiceUnavailable)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	log.Debug(c, log.LOGGER_APP, "Log agent heartbeat registered", zap.String("cluster", endpoint.ClusterID), zap.String("node", endpoint.Node), zap.String("address", endpoint.Address), zap.Int("port", endpoint.Port))
 }
 
 func (h Handler) ListLogAgents(c *gin.Context) {
@@ -67,6 +72,7 @@ func (h Handler) ListLogAgents(c *gin.Context) {
 		}
 	}
 	if err != nil {
+		log.Error(c, log.LOGGER_APP, "Log agent inventory query failed", zap.String("cluster", cluster), zap.Error(err))
 		c.AbortWithStatus(http.StatusServiceUnavailable)
 		return
 	}
@@ -145,6 +151,7 @@ func (h Handler) syncLogAgentTargets(c *gin.Context, cluster string) error {
 		rows, err = h.LogStore.ListLiveLogAgentEndpoints(c.Request.Context(), cluster, 2*time.Minute)
 	}
 	if err != nil {
+		log.Error(c, log.LOGGER_APP, "Log agent target file sync failed", zap.String("cluster", cluster), zap.Error(err))
 		return err
 	}
 	addresses := make([]string, 0, len(rows))

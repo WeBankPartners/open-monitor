@@ -58,7 +58,7 @@ func TestLogConfigSaveVersionsExclusionChangesAndRetries(t *testing.T) {
 		t.Fatal(err)
 	}
 	steps := logStoreReadSteps(t, true, []string{"sit-a"}, original)
-	steps = append(steps, logStoreStep{match: "INSERT INTO k8s_log_agent_config", args: []driver.Value{"cluster-a", "node-a", int64(6), raw}})
+	steps = append(steps, logStoreStep{match: "INSERT INTO k8s_log_agent_config", args: []driver.Value{"cluster-a", "node-a", int64(6), string(raw)}})
 	store, script := newLogStoreTest(t, steps)
 	if err = store.SaveLogAgentConfig(context.Background(), "cluster-a", "node-a", incoming); err != nil {
 		t.Fatal(err)

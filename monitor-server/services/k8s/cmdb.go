@@ -50,7 +50,7 @@ func (c CMDBClient) QueryAppInstance(ctx context.Context, guid string) (AppInsta
 	}
 	resp, err := h.Do(req)
 	if err != nil {
-		return AppInstance{}, fmt.Errorf("CMDB query failed: %w", err)
+		return AppInstance{}, errors.New("CMDB query request failed")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -69,8 +69,11 @@ func (c CMDBClient) QueryAppInstance(ctx context.Context, guid string) (AppInsta
 	if err = json.NewDecoder(http.MaxBytesReader(nil, resp.Body, 4<<20)).Decode(&out); err != nil {
 		return AppInstance{}, errors.New("invalid CMDB response")
 	}
-	if out.Code != 0 || out.StatusCode != "OK" || out.Data.PageInfo.TotalRows != 1 || len(out.Data.Contents) != 1 {
-		return AppInstance{}, errors.New("CMDB app instance not found")
+	if out.Code != 0 || out.StatusCode != "OK" {
+		return AppInstance{}, fmt.Errorf("CMDB query rejected: code=%d", out.Code)
+	}
+	if out.Data.PageInfo.TotalRows != 1 || len(out.Data.Contents) != 1 {
+		return AppInstance{}, fmt.Errorf("CMDB app instance not found: total_rows=%d returned_rows=%d", out.Data.PageInfo.TotalRows, len(out.Data.Contents))
 	}
 	if strings.TrimSpace(out.Data.Contents[0].DeployPath) == "" {
 		return AppInstance{}, errors.New("CMDB deploy path is empty")

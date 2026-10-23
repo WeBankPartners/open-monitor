@@ -2,11 +2,43 @@ package k8s
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestAlertOutboxBindsJSONAsText(t *testing.T) {
+	store, _ := newLogStoreTest(t, []logStoreStep{
+		{match: "FROM k8s_alert_state", err: sql.ErrNoRows},
+		{match: "INSERT INTO k8s_alert_state"},
+		{match: "INSERT INTO k8s_alert_outbox", check: func(args []driver.NamedValue) {
+			if len(args) != 9 {
+				t.Fatalf("argument count: %d", len(args))
+			}
+			raw, ok := args[6].Value.(string)
+			if !ok {
+				t.Fatalf("JSON payload argument has type %T, want string", args[6].Value)
+			}
+			var payload map[string]interface{}
+			if err := json.Unmarshal([]byte(raw), &payload); err != nil || payload["key"] == nil {
+				t.Fatalf("invalid alert payload %q: %v", raw, err)
+			}
+		}},
+	})
+	value := 1.0
+	input := AlertEvaluation{
+		Key:         AlertKey{RuleID: "cpu", ClusterID: "cluster-a", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "app", PodName: "app-0", Container: "main"},
+		Rule:        AlertRule{ID: "cpu", NotifyStrategyID: 1},
+		Observation: Observation{Valid: true, Violated: true, PodUID: "pod-a"},
+		Value:       &value,
+	}
+	if _, err := (AlertStore{DB: store.DB}).EvaluateAndPersist(context.Background(), input, time.Unix(1, 0)); err != nil {
+		t.Fatalf("persist alert: %v", err)
+	}
+}
 
 func TestAlertObjectEndpointDistinguishesClustersAndContainers(t *testing.T) {
 	key := AlertKey{ClusterID: "cluster-a", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "app", PodName: "app-0", Container: "app", RuleID: "cpu"}

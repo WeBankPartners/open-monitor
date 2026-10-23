@@ -167,6 +167,23 @@ kubectl -n <monitor-namespace> exec <monitor-pod> -c <prometheus-container> -- \
 - Monitor 集群、Namespace 登记正确，Pod/容器已自动发现。
 - Agent 列表显示在线，自动上报地址与实际 Pod IP 一致，未保留错误的人工地址覆盖。
 - 有符合条件的业务 Pod 时，自动日志目标数量大于零；配置中的目录对应 CMDB `{deploy_path}/logs`。
+
+## 联调排障日志
+
+Monitor 应用日志使用以下事件名定位链路：`Kubernetes discovery snapshot ready` 表示 Kubernetes 清单已得到，`Kubernetes log target resolution failed` 表示某个 `instanceId` 的 CMDB 查询或路径解析失败，`Kubernetes log agent config snapshot prepared` 表示节点配置已生成待持久化。Agent 日志中的 `agent registration failed`、`configuration not published yet`、`configuration refresh failed`、`configuration applied` 和 `log scan summary` 分别对应登记、等待配置、拉取失败、应用配置和本地目录读取；重复错误会限频。日志不会输出 Bearer Token、完整 Authorization、CMDB 响应正文或业务日志内容。
+
+可在 Monitor 容器执行：
+
+```sh
+grep -nE 'Kubernetes discovery snapshot ready|Kubernetes log target resolution failed|Kubernetes log agent config snapshot prepared|CMDB query' logs/open-monitor.log
+grep -nE 'internal/k8s/log-agent/(register|config)' logs/open-monitor-access.log
+```
+
+可在 Agent 容器执行：
+
+```sh
+grep -nE 'agent registration|configuration (not published|refresh failed|applied)|log scan summary' /path/to/agent.log
+```
 - Namespace 登记自动创建 `default-log-error`：`log_matches > 0`，最近增量窗口默认 5 分钟（间隔较长时至少覆盖 4 个采样间隔），连续有效正常评估达到恢复条件后恢复；采集异常进入 unknown，不判为恢复。
 - Namespace 行的“监控对象”入口可以查看同一 Pod/容器的资源、日志指标和告警状态。
 - Prometheus 抓取正常，接管后新增的匹配日志使 `k8s_log_match_total` 增长，包含正确的 `pod`、`instance_id` 标签。

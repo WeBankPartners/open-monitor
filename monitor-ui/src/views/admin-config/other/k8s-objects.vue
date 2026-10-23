@@ -2,15 +2,34 @@
   <div class="k8s-objects">
     <Card>
       <p slot="title">{{$t('m_k8s_objects')}}</p>
-      <Form inline>
-        <FormItem :label="$t('m_k8s_cluster_id')"><Select v-model="scope.clusterId" style="width:200px" @on-change="clusterChanged()"><Option v-for="cluster in clusters" :key="cluster.clusterId" :value="cluster.clusterId">{{cluster.clusterId}}</Option></Select></FormItem>
-        <FormItem :label="$t('m_k8s_namespace')"><Select v-model="scope.namespace" style="width:200px" @on-change="loadObjects(true)"><Option v-for="namespace in namespaceOptions" :key="namespace.namespace" :value="namespace.namespace">{{namespace.namespace}}</Option></Select></FormItem>
-        <FormItem :label="$t('m_k8s_workload_name')"><Select v-model="filters.workload" clearable filterable style="width:220px" @on-change="filterChanged"><Option v-for="name in workloads" :key="name" :value="name">{{name}}</Option></Select></FormItem>
-        <FormItem :label="$t('m_k8s_pod_name')"><Input v-model="filters.pod" clearable @on-change="filterChanged" /></FormItem>
-        <FormItem :label="$t('m_k8s_instance_id')"><Input v-model="filters.instanceId" clearable @on-change="filterChanged" /></FormItem>
-        <FormItem><Button @click="refresh">{{$t('m_refresh')}}</Button></FormItem>
-        <FormItem><Checkbox v-model="autoRefresh" @on-change="startRefresh">{{$t('m_k8s_auto_refresh', {seconds: scrapeInterval})}}</Checkbox></FormItem>
-      </Form>
+      <div class="object-filters">
+        <div class="object-filter filter-scope">
+          <label>{{$t('m_k8s_cluster_id')}}</label>
+          <Select v-model="scope.clusterId" @on-change="clusterChanged()"><Option v-for="cluster in clusters" :key="cluster.clusterId" :value="cluster.clusterId">{{cluster.clusterId}}</Option></Select>
+        </div>
+        <div class="object-filter filter-scope">
+          <label>{{$t('m_k8s_namespace')}}</label>
+          <Select v-model="scope.namespace" @on-change="loadObjects(true)"><Option v-for="namespace in namespaceOptions" :key="namespace.namespace" :value="namespace.namespace">{{namespace.namespace}}</Option></Select>
+        </div>
+        <div class="object-filter filter-workload">
+          <label>{{$t('m_k8s_workload_name')}}</label>
+          <Select v-model="filters.workload" clearable filterable @on-change="filterChanged"><Option v-for="name in workloads" :key="name" :value="name">{{name}}</Option></Select>
+        </div>
+        <div class="object-filter filter-text">
+          <label>{{$t('m_k8s_pod_name')}}</label>
+          <Input v-model="filters.pod" clearable @on-change="filterChanged" />
+        </div>
+        <div class="object-filter filter-text">
+          <label>{{$t('m_k8s_instance_id')}}</label>
+          <Input v-model="filters.instanceId" clearable @on-change="filterChanged" />
+        </div>
+        <div class="object-filter filter-actions">
+          <Button @click="refresh">{{$t('m_refresh')}}</Button>
+        </div>
+        <div class="object-filter filter-auto">
+          <Checkbox v-model="autoRefresh" @on-change="startRefresh">{{$t('m_k8s_auto_refresh', {seconds: scrapeInterval})}}</Checkbox>
+        </div>
+      </div>
       <Alert v-if="sourcesFailed" type="error">{{$t('m_k8s_sources_failed')}} <Button size="small" @click="loadSources">{{$t('m_refresh')}}</Button></Alert>
       <Alert v-else-if="!scope.namespace">{{$t('m_k8s_no_namespace')}}</Alert>
       <p>{{scope.clusterId}} / {{scope.namespace}} — {{state || '-'}} · {{$t('m_k8s_observed_at')}}: {{observedAt ? new Date(observedAt).toLocaleString() : '-'}}</p>
@@ -20,20 +39,21 @@
       <Alert v-if="!selected" style="margin-top:12px">{{$t('m_k8s_select_object')}}</Alert>
     </Card>
     <Card v-if="selected" style="margin-top:16px">
-      <p slot="title">{{selected.workloadType}} / {{selected.workloadName}} / {{selected.podName}} / {{selected.container}}</p>
-      <p>{{selected.clusterId}} / {{selected.namespace}} · {{$t('m_k8s_node')}}: {{selected.node}} · instanceId: {{selected.instanceId || '-'}} · Pod UID: {{selected.podUid}}</p>
-      <p>Phase: {{selected.phase || '-'}} · Ready: {{selected.statusKnown ? $t(selected.ready ? 'm_yes' : 'm_no') : '-'}} · {{$t('m_k8s_metric_restart_count')}}: {{selected.statusKnown ? selected.restartCount : '-'}}</p>
+      <p slot="title" class="object-title">{{selected.workloadType}} / {{selected.workloadName}} / {{selected.podName}} / {{selected.container}}</p>
+      <p class="object-summary">{{selected.clusterId}} / {{selected.namespace}} · {{$t('m_k8s_node')}}: {{selected.node}} · instanceId: {{selected.instanceId || '-'}} · Pod UID: {{selected.podUid}}</p>
+      <p class="object-summary">Phase: {{selected.phase || '-'}} · Ready: {{selected.statusKnown ? $t(selected.ready ? 'm_yes' : 'm_no') : '-'}} · {{$t('m_k8s_metric_restart_count')}}: {{selected.statusKnown ? selected.restartCount : '-'}}</p>
       <Alert style="margin-top:12px">{{$t('m_k8s_logical_history_help')}}</Alert>
-      <Form inline style="margin-top:12px">
-        <FormItem :label="$t('m_k8s_time_range')">
-          <Select v-model="timePreset" style="width:150px" @on-change="applyRange">
+      <div class="history-toolbar">
+        <div class="range-preset">
+          <span>{{$t('m_k8s_time_range')}}</span>
+          <Select v-model="timePreset" class="range-select" @on-change="applyRange">
             <Option v-for="seconds in [900,3600,21600,86400]" :key="seconds" :value="String(seconds)">{{$t('m_k8s_range_' + seconds)}}</Option>
             <Option value="custom">{{$t('m_k8s_custom_range')}}</Option>
           </Select>
-        </FormItem>
-        <FormItem v-if="timePreset === 'custom'"><DatePicker v-model="customRange" type="datetimerange" style="width:340px" @on-change="applyRange" /></FormItem>
-        <FormItem><Button @click="refresh">{{$t('m_refresh')}}</Button></FormItem>
-      </Form>
+        </div>
+        <DatePicker v-if="timePreset === 'custom'" v-model="customRange" type="datetimerange" class="range-custom" @on-change="applyRange" />
+        <Button @click="refresh">{{$t('m_refresh')}}</Button>
+      </div>
       <Tabs v-model="category">
         <TabPane v-for="item in ['resource','log','application']" :key="item" :name="item" :label="$t('m_k8s_category_' + item)" />
       </Tabs>
@@ -268,3 +288,43 @@ export default {
   }
 }
 </script>
+<style scoped>
+.object-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: #f7f9fc;
+  border: 1px solid #e8edf3;
+  border-radius: 4px;
+}
+.object-filter { flex-shrink: 0; min-width: 0; max-width: 100%; }
+.object-filter > label {
+  display: block;
+  margin-bottom: 6px;
+  color: #515a6e;
+  font-size: 12px;
+  line-height: 16px;
+}
+.filter-scope { width: 150px; }
+.filter-workload { width: 230px; }
+.filter-text { width: 190px; }
+.filter-auto >>> .ivu-checkbox-wrapper { margin-right: 0; line-height: 32px; white-space: nowrap; }
+.object-title { height: auto; white-space: normal; overflow-wrap: anywhere; }
+.object-summary { line-height: 1.7; overflow-wrap: anywhere; }
+.history-toolbar, .range-preset { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.history-toolbar { gap: 12px; margin: 12px 0; }
+.range-select { width: 150px; }
+.range-custom { width: 340px; max-width: 100%; }
+@media (max-width: 1200px) {
+  .filter-workload { width: 210px; }
+  .filter-text { width: 170px; }
+}
+@media (max-width: 768px) {
+  .object-filters { align-items: stretch; }
+  .filter-scope, .filter-workload, .filter-text { width: 100%; }
+  .range-custom { width: 100%; }
+}
+</style>

@@ -43,6 +43,15 @@ func main() {
 		index := k8s.NewIndex()
 		exporter := k8s.NewExporter(index)
 		k8s.ConfigureLogTargetResolver(k8s.CMDBLogTargetResolver{Client: k8s.CMDBClient{BaseURL: m.CoreUrl, Token: m.GetCoreToken}})
+		k8s.ConfigureLogTargetResolverReport(func(container k8s.Container, err error) {
+			log.Warn(nil, log.LOGGER_APP, "Kubernetes log target resolution failed", zap.Error(err), zap.String("cluster", container.Key.ClusterID), zap.String("namespace", container.Key.Namespace), zap.String("pod", container.Key.PodName), zap.String("container", container.Key.ContainerName), zap.String("instance_id", container.InstanceID))
+		})
+		k8s.ConfigureDiscoverySnapshotReport(func(cluster, namespace string, snapshot *k8s.Snapshot) {
+			log.Info(nil, log.LOGGER_APP, "Kubernetes discovery snapshot ready", zap.String("cluster", cluster), zap.String("namespace", namespace), zap.Int("workload_count", len(snapshot.Workloads)), zap.Int("container_count", len(snapshot.Containers)), zap.Int("instance_count", countKubernetesInstances(snapshot)))
+		})
+		k8s.ConfigureLogAgentConfigReport(func(cluster, node string, config k8s.LogAgentConfig) {
+			log.Info(nil, log.LOGGER_APP, "Kubernetes log agent config snapshot prepared", zap.String("cluster", cluster), zap.String("node", node), zap.Uint64("version", config.Version), zap.Int("target_count", len(config.Targets)))
+		})
 		exporter.SetFreshness(m.Config().KubernetesMonitor.MetricsInterval() * 2)
 		k8s.ConfigureRuntime(index, exporter)
 		go k8s.RunMetrics(context.Background(), m.Config().KubernetesMonitor, db.KubernetesMonitoringStore(), index, exporter, func(err error) { log.Error(nil, log.LOGGER_APP, "Kubernetes metrics failed", zap.Error(err)) })
@@ -111,4 +120,14 @@ func main() {
 	go db.SyncMetricComparison()
 
 	api.InitHttpServer()
+}
+
+func countKubernetesInstances(snapshot *k8s.Snapshot) int {
+	count := 0
+	for _, container := range snapshot.Containers {
+		if container.InstanceID != "" {
+			count++
+		}
+	}
+	return count
 }

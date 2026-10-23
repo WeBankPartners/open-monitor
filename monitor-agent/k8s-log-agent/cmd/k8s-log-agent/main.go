@@ -36,6 +36,7 @@ func run() error {
 	if err != nil {
 		return errors.New("cannot initialize log reader")
 	}
+	log.Printf("agent started: cluster=%s node=%s root=%s state_dir=%s poll_interval=%s", cfg.ClusterID, cfg.NodeName, cfg.Root, cfg.StateDir, cfg.PollInterval)
 	defer reader.Close()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
@@ -74,31 +75,70 @@ func run() error {
 		server.Shutdown(shutdown)
 	}()
 	client := &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	var lastRegistrationError string
+	var lastRegistrationLog time.Time
+	registrationHealthy := false
 	register := func() {
 		if err := agent.Register(client, cfg); err != nil {
-			log.Print("agent registration failed")
+			registrationHealthy = false
+			if err.Error() != lastRegistrationError || time.Since(lastRegistrationLog) >= time.Minute {
+				log.Printf("agent registration failed: %v", err)
+				lastRegistrationError, lastRegistrationLog = err.Error(), time.Now()
+			}
+		} else if !registrationHealthy {
+			log.Printf("agent registration succeeded")
+			registrationHealthy = true
+			lastRegistrationError = ""
+		} else if lastRegistrationError != "" {
+			log.Printf("agent registration recovered")
+			lastRegistrationError = ""
 		}
 	}
 	register()
 	ticker := time.NewTicker(cfg.PollInterval)
 	defer ticker.Stop()
 	lastConfig := time.Time{}
+	var lastRefreshError string
+	var lastRefreshLog time.Time
+	var lastUnpublishedLog time.Time
 	for {
 		register()
 		next, fetchErr := agent.FetchConfig(client, cfg, reader.Version())
 		if fetchErr == nil {
+			previousVersion := reader.Version()
 			fetchErr = reader.Apply(next)
+			if fetchErr != nil {
+				log.Printf("configuration apply failed: %v", fetchErr)
+			} else if next.Version != previousVersion {
+				log.Printf("configuration applied: version=%d target_count=%d", next.Version, len(next.Targets))
+			}
+			if lastRefreshError != "" {
+				log.Printf("configuration refresh recovered")
+				lastRefreshError = ""
+			}
+		} else if errors.Is(fetchErr, agent.ErrConfigNotPublished) {
+			if time.Since(lastUnpublishedLog) >= time.Minute {
+				log.Printf("configuration not published yet")
+				lastUnpublishedLog = time.Now()
+			}
+			if lastRefreshError != "" {
+				log.Printf("configuration refresh recovered")
+				lastRefreshError = ""
+			}
+		} else {
+			if fetchErr.Error() != lastRefreshError || time.Since(lastRefreshLog) >= time.Minute {
+				log.Printf("configuration refresh failed: %v", fetchErr)
+				lastRefreshError, lastRefreshLog = fetchErr.Error(), time.Now()
+			}
 		}
 		if fetchErr == nil {
 			lastConfig = time.Now()
-		} else {
-			log.Print("configuration refresh failed")
 		}
 		if time.Since(lastConfig) > time.Minute {
 			ready.Store(false)
 		} else if err = reader.Scan(); err != nil {
 			ready.Store(false)
-			log.Print("log scan failed")
+			log.Printf("log scan failed: %v", err)
 		} else {
 			ready.Store(true)
 		}

@@ -165,6 +165,9 @@ func (c *Client) Watch(ctx context.Context, resource, version string, changed fu
 			} `json:"object"`
 		}
 		if err = decoder.Decode(&event); err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
 			return err
 		}
 		switch event.Type {

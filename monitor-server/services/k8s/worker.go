@@ -19,6 +19,7 @@ type Worker struct {
 	Version                    uint64
 	RetryDelay, ResyncInterval time.Duration
 	Report                     func(error)
+	SnapshotReport             func(*Snapshot)
 }
 
 // Run reconciles before watching and relists after changes, expiration or periodic resync.
@@ -69,6 +70,9 @@ func (w Worker) cycle(ctx context.Context, resync time.Duration) (err error) {
 	snapshot, ok := w.Index.Current(w.Cluster, w.Namespace)
 	if !ok {
 		return errors.New("namespace inventory unavailable")
+	}
+	if w.SnapshotReport != nil {
+		w.SnapshotReport(snapshot)
 	}
 	watchCtx, cancel := context.WithCancel(ctx)
 	defer cancel()

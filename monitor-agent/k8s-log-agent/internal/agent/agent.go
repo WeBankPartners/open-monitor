@@ -72,6 +72,7 @@ type Agent struct {
 	stateAvailable     bool
 	stateResets        uint64
 	statePersistErrors uint64
+	lastScanIssueLog   time.Time
 }
 
 func New(root, state string) (*Agent, error) {
@@ -372,6 +373,7 @@ func (a *Agent) Scan() error {
 	activeFiles := map[string]map[string]bool{}
 	activePaths := map[string]map[string]bool{}
 	pruneTarget := map[string]bool{}
+	missingTargets, readErrorTargets := 0, 0
 	for _, t := range a.config.Targets {
 		pruneTarget[t.ID+"\x00"+t.PodUID] = true
 		activeFiles[t.ID+"\x00"+t.PodUID] = map[string]bool{}
@@ -381,6 +383,7 @@ func (a *Agent) Scan() error {
 		dir, err := a.open(t.Directory)
 		if err != nil {
 			a.missing[t.ID] = true
+			missingTargets++
 			pruneTarget[t.ID+"\x00"+t.PodUID] = false
 			continue
 		}
@@ -388,11 +391,13 @@ func (a *Agent) Scan() error {
 		dir.Close()
 		if err != nil && err != io.EOF {
 			a.readErrors[t.ID]++
+			readErrorTargets++
 			pruneTarget[t.ID+"\x00"+t.PodUID] = false
 			continue
 		}
 		if len(entries) > 10000 {
 			a.readErrors[t.ID]++
+			readErrorTargets++
 			pruneTarget[t.ID+"\x00"+t.PodUID] = false
 			continue
 		}
@@ -405,12 +410,14 @@ func (a *Agent) Scan() error {
 			f, err := a.open(filepath.Join(t.Directory, name))
 			if err != nil {
 				a.readErrors[t.ID]++
+				readErrorTargets++
 				pruneTarget[t.ID+"\x00"+t.PodUID] = false
 				continue
 			}
 			stat, statErr := f.Stat()
 			if statErr != nil {
 				a.readErrors[t.ID]++
+				readErrorTargets++
 				pruneTarget[t.ID+"\x00"+t.PodUID] = false
 				f.Close()
 				continue
@@ -426,6 +433,7 @@ func (a *Agent) Scan() error {
 			f.Close()
 			if err != nil {
 				a.readErrors[t.ID]++
+				readErrorTargets++
 				pruneTarget[t.ID+"\x00"+t.PodUID] = false
 				continue
 			}
@@ -436,6 +444,10 @@ func (a *Agent) Scan() error {
 		} else {
 			a.missing[t.ID] = false
 		}
+	}
+	if (missingTargets > 0 || readErrorTargets > 0) && time.Since(a.lastScanIssueLog) >= time.Minute {
+		log.Printf("log scan summary: target_count=%d missing_target_count=%d read_error_target_count=%d", len(a.config.Targets), missingTargets, readErrorTargets)
+		a.lastScanIssueLog = time.Now()
 	}
 	for key := range next.Files {
 		parts := strings.SplitN(key, "\x00", 3)
