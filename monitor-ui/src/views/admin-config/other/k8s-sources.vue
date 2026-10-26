@@ -112,12 +112,14 @@
     </Modal>
     <Modal v-model="agent.editorVisible" :title="$t('m_k8s_log_targets')" width="850" :mask-closable="false">
       <div v-if="agent.loadedScope" class="editor-scope">{{agent.loadedScope.clusterId}} / {{agent.loadedScope.node}}</div>
+      <Alert v-if="agent.defaultRules.length" type="info">{{$t('m_k8s_log_defaults_help')}}</Alert>
       <Form v-if="agent.loaded && agent.loadedScope && agent.loadedScope.clusterId === agent.clusterId && agent.loadedScope.node === agent.node">
         <FormItem><Input v-model="agent.targetsJson" type="textarea" :rows="14" /></FormItem>
       </Form>
       <div slot="footer" class="editor-actions">
         <Button type="error" @click="deleteAgent">{{$t('m_button_remove')}}</Button>
         <Button @click="editLogRules">{{$t('m_k8s_log_matching_rules')}}</Button>
+        <Button :disabled="!agent.loaded || !agent.defaultRules.length" @click="resetDefaultLogRules">{{$t('m_k8s_reset_log_defaults')}}</Button>
         <Button @click="agent.editorVisible = false">{{$t('m_button_cancel')}}</Button>
         <Button type="primary" @click="saveAgent">{{$t('m_save')}}</Button>
       </div>
@@ -138,7 +140,7 @@ export default {
   data() {
     return { request: this.$root.$httpRequestEntrance.httpRequestEntrance, apiCenter: this.$root.apiCenter, activeTab: 'clusters', namespaceClusterFilter: '',
       cluster: { clusterId: '', apiServer: '', ca: '', token: '', enabled: true, editing: false, visible: false }, namespace: { clusterId: '', namespace: '', token: '', enabled: true, editing: false, visible: false },
-      agent: { clusterId: '', node: '', searchNode: '', loaded: false, loadedScope: null, targetsJson: '[]', editorVisible: false }, rulesEditor: {visible:false,targetIndex:0,targets:[]}, clusters: [], namespaces: [], agents: [], endpoint: {visible:false} }
+      agent: { clusterId: '', node: '', searchNode: '', loaded: false, loadedScope: null, targetsJson: '[]', defaultRules: [], editorVisible: false }, rulesEditor: {visible:false,targetIndex:0,targets:[]}, clusters: [], namespaces: [], agents: [], endpoint: {visible:false} }
   },
   computed: {
     editableLogTargets() { return this.rulesEditor.targets.map((target,index)=>({target,index})).filter(item=>!item.target.format) },
@@ -175,6 +177,32 @@ export default {
   },
   mounted() { this.refreshLists() },
   methods: {
+    resetDefaultLogRules() {
+      const scope = this.agent.loadedScope
+      if (!this.agent.loaded || !scope || scope.clusterId !== this.agent.clusterId || scope.node !== this.agent.node || !this.agent.defaultRules.length) return
+      let targets
+      try {
+        targets = JSON.parse(this.agent.targetsJson)
+        if (!Array.isArray(targets)) throw new Error('invalid targets')
+        targets.forEach(target=>{
+          if (!target || typeof target !== 'object' || Array.isArray(target) || (target.rules != null && !Array.isArray(target.rules))) throw new Error('invalid target')
+          if ((target.rules || []).some(rule=>!rule || typeof rule !== 'object' || Array.isArray(rule))) throw new Error('invalid rule')
+        })
+      } catch (e) { this.$Message.error(this.$t('m_k8s_invalid_json')); return }
+      const logTargets = targets.filter(target=>!target.format)
+      if (!logTargets.length) { this.$Message.error(this.$t('m_k8s_no_log_targets')); return }
+      logTargets.forEach(target=>{
+        target.rules = target.rules || []
+        this.agent.defaultRules.forEach(rule=>{
+          const index = target.rules.findIndex(current=>current.id === rule.id)
+          const replacement = JSON.parse(JSON.stringify(rule))
+          if (index < 0) target.rules.push(replacement)
+          else target.rules.splice(index, 1, replacement)
+        })
+      })
+      this.agent.targetsJson = JSON.stringify(targets,null,2)
+      this.$Message.success(this.$t('m_k8s_log_defaults_reset'))
+    },
     editLogRules() {
       let targets
       try {
@@ -242,11 +270,13 @@ export default {
       const scope = { clusterId: this.agent.clusterId, node: this.agent.node }
       const generation = this._agentRequestGeneration = (this._agentRequestGeneration || 0) + 1
       this.agent.loaded = false
+      this.agent.defaultRules = []
       if (openEditor) this.agent.editorVisible = false
       if (!scope.clusterId || !scope.node) return
       this.request('GET', this.apiCenter.k8sLogAgentSource, scope, data => {
         if (this._agentRequestGeneration !== generation || this.agent.clusterId !== scope.clusterId || this.agent.node !== scope.node) return
         this.agent.targetsJson = JSON.stringify(data.targets || [], null, 2)
+        this.agent.defaultRules = data.defaultRules || []
         this.agent.loadedScope = scope
         this.agent.loaded = true
         if (openEditor) this.agent.editorVisible = true

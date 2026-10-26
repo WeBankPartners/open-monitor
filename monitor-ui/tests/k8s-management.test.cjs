@@ -28,6 +28,57 @@ function loadComponent(name, globals = {}) {
   return vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export const', 'const').replace('export default', 'module.exports ='), { module: { exports: {} }, setTimeout: () => 0, clearTimeout() {}, ...globals })
 }
 
+test('reset defaults changes all ordinary log targets in the draft and saves only on request', () => {
+  const component = loadComponent('k8s-sources')
+  const pending = []
+  const context = {
+    agent: {clusterId:'cluster-a',node:'node-a'},
+    apiCenter: {k8sLogAgentSource:'/source'},
+    $t:key=>key,
+    $Message: {error:message=>assert.fail(message),success(){}},
+    request(method,url,body,done){pending.push({method,url,body,done})}
+  }
+  const defaults = [{id:'default-error',version:1,mode:'regex',pattern:'server-default'}]
+  const targets = [
+    {id:'target-a',namespace:'ns-a',podUid:'pod-a',directory:'/var/log/app',glob:'*.log',rules:[{id:'default-error',version:3,mode:'literal',pattern:'old',exclude:[{mode:'literal',pattern:'custom-exclusion'}]},{id:'custom',version:8,mode:'literal',pattern:'CUSTOM'}]},
+    {id:'target-b',namespace:'ns-b',rules:[]},
+    {id:'metrics',format:'otlp_metric',rules:null}
+  ]
+  component.methods.loadAgent.call(context, true)
+  pending[0].done({targets,defaultRules:defaults})
+  component.methods.resetDefaultLogRules.call(context)
+  const reset = JSON.parse(context.agent.targetsJson)
+  assert.equal(pending.length,1,'reset must not save configuration')
+  assert.deepEqual(reset[0], {...targets[0],rules:[defaults[0],targets[0].rules[1]]})
+  assert.deepEqual(reset[1].rules,defaults)
+  assert.deepEqual(reset[2],targets[2])
+  const draft = context.agent.targetsJson
+  component.methods.resetDefaultLogRules.call(context)
+  assert.equal(context.agent.targetsJson,draft,'repeated reset must be idempotent')
+  component.methods.editLogRules.call(context)
+  context.rulesEditor.targets[0].rules[0].pattern='edited-draft'
+  assert.equal(context.rulesEditor.targets[1].rules[0].pattern,'server-default')
+  assert.equal(context.agent.defaultRules[0].pattern,'server-default')
+  component.methods.saveAgent.call(context)
+  assert.equal(pending[1].method,'PUT')
+  assert.deepEqual(JSON.parse(JSON.stringify(pending[1].body.targets)),reset)
+})
+
+test('reset defaults rejects invalid JSON and leaves OTLP-only targets unchanged', () => {
+  const component = loadComponent('k8s-sources')
+  for (const targetsJson of ['{', '[null]', '[{"rules":"invalid"}]', '[{"rules":[null]}]', '[{"format":"otlp_metric","rules":null}]']) {
+    let message
+    const context = {
+      agent: {clusterId:'cluster-a',node:'node-a',loaded:true,loadedScope:{clusterId:'cluster-a',node:'node-a'},targetsJson,defaultRules:[{id:'default-error',version:1,mode:'regex',pattern:'server-default'}]},
+      $t:key=>key,$Message:{error:value=>{message=value},success:()=>assert.fail('invalid reset succeeded')},
+      request:()=>assert.fail('reset submitted a request')
+    }
+    component.methods.resetDefaultLogRules.call(context)
+    assert.equal(context.agent.targetsJson,targetsJson)
+    assert.equal(message,targetsJson.includes('otlp_metric')?'m_k8s_no_log_targets':'m_k8s_invalid_json')
+  }
+})
+
 function alertRuleContext(component) {
   const pending = []
   const context = {
@@ -110,11 +161,14 @@ test('agent editor ignores obsolete responses and cannot save another node confi
     context.agent.node = node
     component.methods.loadAgent.call(context)
   }
-  pending[2]({targets:[{id:'current'}]})
-  pending[0]({targets:[{id:'stale'}]})
-  pending[1]({targets:[{id:'wrong-node'}]})
+  pending[2]({targets:[{id:'current'}],defaultRules:[{id:'default-error',pattern:'current-default'}]})
+  pending[0]({targets:[{id:'stale'}],defaultRules:[{id:'default-error',pattern:'stale-default'}]})
+  pending[1]({targets:[{id:'wrong-node'}],defaultRules:[{id:'default-error',pattern:'wrong-default'}]})
   assert.equal(JSON.parse(context.agent.targetsJson)[0].id,'current')
+  assert.equal(context.agent.defaultRules[0].pattern,'current-default')
   context.agent.node = 'node-b'
+  component.methods.resetDefaultLogRules.call(context)
+  assert.equal(JSON.parse(context.agent.targetsJson)[0].id,'current')
   component.methods.saveAgent.call(context)
   component.methods.deleteAgent.call(context)
 })

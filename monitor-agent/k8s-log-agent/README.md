@@ -41,7 +41,7 @@ ENV 变更需重启 Pod。日志目标及规则不放入 ENV 或 ConfigMap，由
 2. 通过 `GET <Monitor基础路径>/internal/k8s/log-agent/config` 拉取完整配置；查询参数为 URL 编码后的 `clusterId/node/version`，禁止重定向。
 3. 应用配置后扫描文件。HTTP `/metrics` 只读取已生成的内存结果，不在抓取时现场解析日志。
 
-Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_path}/logs` 下的普通 `*.log` 和应用 `*_metric.log` 目标分配给该节点。默认普通规则匹配 `ERROR/FATAL/PANIC`，普通扫描显式跳过 `_metric.log`，避免应用指标内容触发关键字告警。
+Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_path}/logs` 下的普通 `*.log` 和应用 `*_metric.log` 目标分配给该节点。默认普通规则匹配日志头中的 `ERROR/FATAL/PANIC` 级别，支持方括号格式和时间戳后直接跟级别的格式（包括毫秒前使用冒号），正文中的同名字段和异常续行不单独计数。普通扫描显式跳过 `_metric.log`，避免应用指标内容触发关键字告警。
 
 配置采用 `{"config":{"version":1,"targets":[...]}}` 响应，撤销目标通过更高版本配置移除目标；配置、规则版本由 Server 维护。具体协议见 [系统设计](../../docs/k8s-monitoring-system-design.md#5-agent-配置采集与状态恢复)。
 
@@ -55,7 +55,7 @@ Web 的 Agent 日志目标配置提供“日志匹配与排除规则”，也支
 {
   "id": "default-error",
   "mode": "regex",
-  "pattern": "(?i)\\b(ERROR|FATAL|PANIC)\\b",
+  "pattern": "(?i)^\\s*(?:(?:\\[[^\\]\\r\\n]*\\]){0,2}\\[(?:ERROR|FATAL|PANIC)\\]|\\d{4}[-/]\\d{2}[-/]\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}(?:[.,:]\\d+)?[\\t ]+(?:ERROR|FATAL|PANIC)\\b)",
   "exclude": [
     { "mode": "literal", "pattern": "EXPECTED_ERROR" },
     { "mode": "regex", "pattern": "(?i)healthcheck.*timeout" }
@@ -68,6 +68,8 @@ Web 的 Agent 日志目标配置提供“日志匹配与排除规则”，也支
 literal 区分大小写；regex 使用 Go regexp 语法，可用 `(?i)` 忽略大小写，不支持前后查找断言。每条规则最多 100 个排除条件，每个非空 pattern 最多 4096 字节，Server 与 Agent 都校验。
 
 Server 在集群配置事务锁内管理规则版本：新增为 1，匹配或排除内容变化才递增，相同配置重试不变。自动发现、Pod 重建和节点切换保留人工规则。新版本使用新计数序列；目录、glob 和 Pod UID 未变时继承已提交游标，不重读历史，已有计数和告警不追溯重算。排除文本不进入指标标签。
+
+已有环境升级 Monitor Server 和 Web 后，可在“K8s监控配置 → 监控源 → 日志 Agent 管理 → 日志目标（JSON）”点击“重置默认日志规则”，检查后点击“保存”。一次处理当前 Agent 下所有普通日志目标的 `default-error` 规则（缺少时补充），清空该默认规则的排除项，保留其他自定义规则和应用指标目标。重置仅修改编辑内容，取消不会下发；重复重置并保存相同内容不会再次递增版本。无需执行 SQL 或升级 Agent 镜像。
 
 ## 文件与 checkpoint
 

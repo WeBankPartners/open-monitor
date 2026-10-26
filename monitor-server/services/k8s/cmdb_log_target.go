@@ -16,6 +16,13 @@ type CMDBLogTargetResolver struct {
 	Client CMDBClient
 }
 
+// DefaultLogRules returns a fresh rule list for discovery and the Web editor.
+func DefaultLogRules() []LogRule {
+	return []LogRule{
+		{ID: "default-error", Version: 1, Mode: "regex", Pattern: `(?i)^\s*(?:(?:\[[^\]\r\n]*\]){0,2}\[(?:ERROR|FATAL|PANIC)\]|\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,:]\d+)?[\t ]+(?:ERROR|FATAL|PANIC)\b)`},
+	}
+}
+
 func (r CMDBLogTargetResolver) Resolve(ctx context.Context, c Container) (LogTarget, error) {
 	if strings.TrimSpace(c.InstanceID) == "" {
 		return LogTarget{}, errors.New("instance id is required")
@@ -42,9 +49,7 @@ func (r CMDBLogTargetResolver) Resolve(ctx context.Context, c Container) (LogTar
 		Directory:    path,
 		Glob:         "*.log",
 		Start:        "end",
-		Rules: []LogRule{
-			{ID: "default-error", Version: 1, Mode: "regex", Pattern: `(?i)\b(ERROR|FATAL|PANIC)\b`},
-		},
+		Rules:        DefaultLogRules(),
 	}, nil
 }
 
