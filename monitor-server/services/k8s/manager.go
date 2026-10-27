@@ -200,7 +200,9 @@ func reconcileResolvedLogAgents(ctx context.Context, persistence Persistence, cl
 				for node, existingConfig := range configs {
 					filtered := existingConfig.Targets[:0]
 					for _, existing := range existingConfig.Targets {
-						if existing.Namespace == namespace && strings.HasPrefix(existing.ID, "cmdb-") && sameLogTargetObject(existing, target) && existing.Format == target.Format {
+						if existing.Namespace == namespace && (strings.HasPrefix(existing.ID, "k8s-log-") || strings.HasPrefix(existing.ID, "cmdb-")) && sameLogTargetObject(existing, target) && existing.Format == target.Format {
+							// Preserve persisted IDs, including the legacy automatic prefix.
+							target.ID = existing.ID
 							target.Rules = existing.Rules
 							continue
 						}

@@ -49,6 +49,8 @@ http://<monitor-service>.<monitor-namespace>.svc.<cluster-dns-domain>:19191/moni
 
 Monitor 自动发现 Pod 所在节点并下发日志目标；不需要逐个登记 Pod、Agent 地址或日志规则。首次接管默认从文件末尾开始，因此验收应观察接管后新增的日志。指标中的 `pod` 是 Pod 名称，`instance_id` 是上述 CMDB guid。
 
+新自动生成的目标 ID 使用 `k8s-log-<hash>`，应用指标日志目标另加 `-metric` 后缀。ID 由集群、Namespace、工作负载、Pod 名称、容器名和实例 ID 生成，不是 CMDB 记录的 guid。升级保留已有目标的 ID（包括旧 `cmdb-` 前缀）及自定义规则；同一逻辑目标在 Pod 重建或迁移节点后继续沿用原 ID，无需迁移数据库或 Agent checkpoint。
+
 业务容器内存在目录，不代表同一路径一定存在于节点上。应检查业务 Pod 的 `volumes`、`volumeMounts` 和实际日志落盘方式；若日志仅在容器可写层或不同路径的卷内，本模板的同路径 hostPath 方案不能直接读取。
 
 ## 3. 准备镜像与认证

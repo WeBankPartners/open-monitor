@@ -149,6 +149,49 @@ func TestAutomaticLogReconcileIsIdempotentAndRevokesOldNode(t *testing.T) {
 	}
 }
 
+func TestAutomaticLogReconcilePreservesExistingIDsAcrossPrefixChange(t *testing.T) {
+	for _, id := range []string{"cmdb-app", "k8s-log-app"} {
+		t.Run(id, func(t *testing.T) {
+			target := LogTarget{ID: id, Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", WorkloadUID: "work-a", PodName: "orders-0", Container: "app", PodUID: "pod-a", InstanceID: "instance-a", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 3, Mode: "literal", Pattern: "ERROR", Exclude: []LogExclusion{{Mode: "literal", Pattern: "EXPECTED_ERROR"}}}}}
+			metricTarget := target
+			metricTarget.ID = id + "-metric"
+			metricTarget.Glob, metricTarget.Format, metricTarget.Rules = "*_metric.log", "otlp_metric", nil
+			persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 4, Targets: []LogTarget{target, metricTarget}}}}
+			generated := target
+			generated.ID = "k8s-log-app"
+			generated.Rules = []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}
+			ConfigureLogTargetResolver(fixedLogResolver{target: generated})
+			t.Cleanup(func() { ConfigureLogTargetResolver(nil) })
+			snapshot := &Snapshot{Containers: []Container{{Key: ObjectKey{Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", ContainerName: "app"}, Node: "node-a", PodUID: "pod-a", WorkloadUID: "work-a", InstanceID: "instance-a"}}}
+			if err := reconcileLogAgents(context.Background(), persistence, "cluster-a", "sit-a", snapshot); err != nil {
+				t.Fatal(err)
+			}
+			if persistence.saved != 0 || persistence.configs["node-a"].Version != 4 || !sameLogTargets(persistence.configs["node-a"].Targets, []LogTarget{target, metricTarget}) {
+				t.Fatalf("prefix change rewrote existing configuration: %+v", persistence.configs)
+			}
+
+			// A rebuilt Pod on another node keeps both target IDs and custom rules.
+			snapshot.Containers[0].Node, snapshot.Containers[0].PodUID = "node-b", "pod-b"
+			generated.PodUID = "pod-b"
+			ConfigureLogTargetResolver(fixedLogResolver{target: generated})
+			if err := reconcileLogAgents(context.Background(), persistence, "cluster-a", "sit-a", snapshot); err != nil {
+				t.Fatal(err)
+			}
+			target.PodUID, metricTarget.PodUID = "pod-b", "pod-b"
+			if len(persistence.configs["node-a"].Targets) != 0 || persistence.configs["node-a"].Version != 5 || persistence.configs["node-b"].Version != 1 || !sameLogTargets(persistence.configs["node-b"].Targets, []LogTarget{target, metricTarget}) {
+				t.Fatalf("migration changed target identity or rules: %+v", persistence.configs)
+			}
+			saved := persistence.saved
+			if err := reconcileLogAgents(context.Background(), persistence, "cluster-a", "sit-a", snapshot); err != nil {
+				t.Fatal(err)
+			}
+			if persistence.saved != saved {
+				t.Fatal("unchanged discovery rewrote migrated configuration")
+			}
+		})
+	}
+}
+
 func TestLogTargetComparisonIncludesRules(t *testing.T) {
 	a := []LogTarget{{ID: "target", Rules: []LogRule{{ID: "rule", Version: 1, Mode: "literal", Pattern: "ERROR"}}}}
 	b := []LogTarget{{ID: "target", Rules: []LogRule{{ID: "rule", Version: 2, Mode: "literal", Pattern: "FATAL"}}}}
@@ -215,7 +258,7 @@ func TestLogTargetOrderDoesNotChangeVersion(t *testing.T) {
 }
 
 func TestAutoDiscoveryCreatesSeparateMetricTargetAndPreservesBothOnRescan(t *testing.T) {
-	target := LogTarget{ID: "cmdb-app", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", Container: "app", PodUID: "pod", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}
+	target := LogTarget{ID: "k8s-log-app", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", Container: "app", PodUID: "pod", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}
 	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 1}}}
 	ConfigureLogTargetResolver(fixedLogResolver{target: target})
 	t.Cleanup(func() { ConfigureLogTargetResolver(nil) })

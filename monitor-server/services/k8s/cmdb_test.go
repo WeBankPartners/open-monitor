@@ -69,6 +69,9 @@ func TestCMDBLogTargetResolverBuildsStableTarget(t *testing.T) {
 	if err != nil || first.Directory != "/var/log/app/logs" || first.Glob != "*.log" || first.InstanceID != container.InstanceID || first.PodName != container.Key.PodName {
 		t.Fatalf("unexpected target: %+v %v", first, err)
 	}
+	if !strings.HasPrefix(first.ID, "k8s-log-") {
+		t.Fatalf("new target has unexpected ID prefix: %s", first.ID)
+	}
 	container.PodUID = "pod-b"
 	second, err := resolver.Resolve(context.Background(), container)
 	if err != nil || first.ID != second.ID {

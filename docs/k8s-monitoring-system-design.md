@@ -84,7 +84,9 @@ Monitor `/monitor/api/v1/k8s/metrics/catalog` 提供当前 UI 查询白名单；
 
 告警规则由 Monitor 周期评估资源和日志计数，并检查样本质量与当前 Pod UID；状态为 `normal/pending/firing/recovered/unknown`，没有独立的 recovering 或 resolved 状态。相同规则和可读对象名称组合形成事件身份；Pod UID 限制样本来源，但同名 Pod 重建不会强制拆成新告警，状态机按名称延续判断。幂等键使用固定长度 SHA-256。规则状态与通知任务通过数据库事务/outbox 持久化，数据库主键/唯一键提供并发兜底；Dispatcher 通过 lease 和有限重试发送 SMTP。邮件系统无法提供与数据库共享事务，超时或回执丢失时可能重复投递。SMTP 服务器和接收策略仍需人工配置。
 
-Namespace 首次登记自动补齐四条默认规则，重复登记不覆盖已存在规则：`default-log-error`（log_matches > 0）、`default-not-ready`（ready < 1）、`default-oom`（oom_events > 0）、`default-cpu-throttled`（cpu_throttled > 0）。默认恢复条件是连续 3 次有效正常评估；从 unknown 回来时先恢复有效性，再累计正常周期。日志/OOM 的增量窗口为 `max(300 秒, 4 × 采集周期)`。没有默认 CPU/内存百分比或 JVM/连接池阈值告警，用户可按业务阈值增补。
+Namespace 首次登记自动补齐四条默认规则，重复登记不覆盖已存在规则：`default-log-error`（log_matches > 0）、`default-not-ready`（ready < 1）、`default-oom`（oom_events > 0）、`default-cpu-throttled`（cpu_throttled > 0.1 s/s，持续 300 秒）。CPU 限流指标是最近 `4 × 采集周期` 内的限流时间增长速率，不是限流周期占比或 CPU 使用率；默认阈值用于过滤轻微限流与短时突发，仍应按业务负载调整。默认恢复条件是连续 3 次有效正常评估；从 unknown 回来时先恢复有效性，再累计正常周期。日志/OOM 的增量窗口为 `max(300 秒, 4 × 采集周期)`。没有默认 CPU/内存百分比或 JVM/连接池阈值告警，用户可按业务阈值增补。
+
+已有 CPU 限流规则不随升级覆盖，可手工执行[旧默认参数调整 SQL](development/k8s-default-cpu-throttled-once.sql)。脚本只更新仍为旧默认参数且没有对象筛选条件的同名规则，保留启用状态和通知策略；每批最多 500 条，可重复执行。SQL 不重置已有告警状态或删除历史事件；启用本地告警评估时，下一轮开始使用新参数，已触发告警按新阈值与原恢复流程处理。
 
 ## 8. API、编排与数据表
 

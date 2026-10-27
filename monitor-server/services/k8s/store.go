@@ -92,14 +92,15 @@ func (s Store) ensureDefaultAlertRulesTx(ctx context.Context, executor sqlExecut
 	rules := []struct {
 		id, metric, op string
 		threshold      float64
+		forSeconds     int
 	}{
-		{"default-log-error", "log_matches", ">", 0},
-		{"default-not-ready", "ready", "<", 1},
-		{"default-oom", "oom_events", ">", 0},
-		{"default-cpu-throttled", "cpu_throttled", ">", 0},
+		{"default-log-error", "log_matches", ">", 0, 0},
+		{"default-not-ready", "ready", "<", 1, 0},
+		{"default-oom", "oom_events", ">", 0, 0},
+		{"default-cpu-throttled", "cpu_throttled", ">", 0.1, 300},
 	}
 	for _, rule := range rules {
-		if _, err := executor.ExecContext(ctx, `INSERT INTO k8s_alert_rule(rule_id,cluster_id,namespace,metric,operator,threshold,for_seconds,recover_after,notify_strategy_id,enabled,version,updated_at) VALUES(?,?,?,?,?,?,0,3,0,1,1,CURRENT_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE rule_id=rule_id`, rule.id, cluster, namespace, rule.metric, rule.op, rule.threshold); err != nil {
+		if _, err := executor.ExecContext(ctx, `INSERT INTO k8s_alert_rule(rule_id,cluster_id,namespace,metric,operator,threshold,for_seconds,recover_after,notify_strategy_id,enabled,version,updated_at) VALUES(?,?,?,?,?,?,?,3,0,1,1,CURRENT_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE rule_id=rule_id`, rule.id, cluster, namespace, rule.metric, rule.op, rule.threshold, rule.forSeconds); err != nil {
 			return err
 		}
 	}

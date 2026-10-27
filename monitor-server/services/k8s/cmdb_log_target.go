@@ -61,7 +61,7 @@ func automaticLogTargetID(c Container) string {
 		h.Write(size[:])
 		h.Write([]byte(value))
 	}
-	return "cmdb-" + hex.EncodeToString(h.Sum(nil))
+	return "k8s-log-" + hex.EncodeToString(h.Sum(nil))
 }
 
 func safeAbsolutePath(path string) bool {
