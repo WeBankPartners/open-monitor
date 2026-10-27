@@ -91,9 +91,12 @@ Server 在集群配置事务锁内管理规则版本：新增为 1，匹配或�
 | Agent | `k8s_log_agent_up`、`k8s_log_agent_config_version` |
 | checkpoint | `k8s_log_agent_state_available`、`k8s_log_agent_state_resets_total`、`k8s_log_agent_state_persist_errors_total` |
 | 普通日志 | `k8s_log_match_total`、`k8s_log_last_match_timestamp`、`k8s_log_target_healthy`、`k8s_log_file_missing`、`k8s_log_read_error_total`、`k8s_log_last_read_timestamp` |
+| 命中摘要 | `k8s_log_match_sample_timestamp_seconds`、`k8s_log_sample_limit_hits_total` |
 | 应用指标 | 白名单内的 `k8s_app_*` 及可用性、读取错误、源样本时间指标 |
 
-匹配指标包含 `cluster_id/namespace/workload_type/workload_name/pod/pod_uid/container/instance_id`，其中 `instance_id` 是 CMDB guid。Agent 级状态按 `cluster_id/node` 标记；文件健康等指标按各自用途携带目标或 Pod 标签，并非每条序列都有全部业务标签。不要将日志正文、路径或匹配内容作为标签。
+匹配指标包含 `cluster_id/namespace/workload_type/workload_name/pod/pod_uid/container/instance_id`，其中 `instance_id` 是 CMDB guid。Agent 级状态按 `cluster_id/node` 标记；文件健康等指标按各自用途携带目标或 Pod 标签，并非每条序列都有全部业务标签。计数指标不携带日志正文或文件位置；只有受限的独立摘要指标额外携带当前行前 1,024 个字符、文件名、文件标识和起始字节偏移。
+
+摘要按目标/规则每 5 分钟最多更新一次，15 分钟过期；每 Agent 最多保留 128 条，每 5 分钟最多更新 20 条。摘要及预算使用原 checkpoint 保存并兼容旧状态，所有匹配仍完整计数。默认规则和日志目标 JSON 不需要修改，升级 Agent 后从新命中生成摘要。限制、容量、Prometheus 和 Grafana 接入示例见[日志命中摘要](../../docs/k8s-log-match-samples.md)。
 
 应用指标读取文件尾部约 2 MiB 中最后一条完整 OTLP JSON 记录，最多 4096 条样本，要求最近 5 分钟内且不领先当前时间超过 5 秒。没有 `*_metric.log` 时静默跳过，不输出该目标的应用和诊断指标；文件存在但读取、解析失败或过期时报告不可用。应用指标不进入普通日志游标和匹配计数。完整目录、单位与扩展方法见 [应用指标白名单](../../docs/k8s-app-metric-whitelist.md)。
 

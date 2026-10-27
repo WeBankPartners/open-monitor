@@ -1,0 +1,97 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: k8s-log-agent
+    folder: Kubernetes
+    interval: 30s
+    rules:
+      - uid: k8s-agent-log-matches
+        title: KubernetesLogMatches
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: REPLACE_PROMETHEUS_DATASOURCE_UID
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: REPLACE_PROMETHEUS_DATASOURCE_UID
+              editorMode: code
+              expr: |
+                (
+                  (
+                    increase(k8s_log_match_total{job="k8s_log_agent"}[5m])
+                    and on (cluster_id, namespace, pod, pod_uid, container, target, node, instance, job)
+                    (
+                      (k8s_log_target_healthy{job="k8s_log_agent"} == 1)
+                      and (time() - timestamp(k8s_log_target_healthy{job="k8s_log_agent"}) < 90)
+                    )
+                    and on (instance, job) (up{job="k8s_log_agent"} == 1)
+                  )
+                  * on (cluster_id, namespace, pod_uid, container, target, rule, rule_version, node, instance, job)
+                  group_left (file, file_id, byte_offset, preview, truncated)
+                  (
+                    (k8s_log_match_sample_timestamp_seconds{job="k8s_log_agent"} > (time() - 900))
+                    / k8s_log_match_sample_timestamp_seconds{job="k8s_log_agent"}
+                  )
+                )
+                or on (cluster_id, namespace, pod_uid, container, target, rule, rule_version, node, instance, job)
+                (
+                  increase(k8s_log_match_total{job="k8s_log_agent"}[5m])
+                  and on (cluster_id, namespace, pod, pod_uid, container, target, node, instance, job)
+                  (
+                    (k8s_log_target_healthy{job="k8s_log_agent"} == 1)
+                    and (time() - timestamp(k8s_log_target_healthy{job="k8s_log_agent"}) < 90)
+                  )
+                  and on (instance, job) (up{job="k8s_log_agent"} == 1)
+                )
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: __expr__
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - type: query
+                  evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                    params: []
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: 'Log matches for {{ $labels.namespace }}/{{ $labels.pod }}'
+          description: 'Container={{ $labels.container }} target={{ $labels.target }} rule={{ $labels.rule }} version={{ $labels.rule_version }}'
+          log_sample: >-
+            {{- if $labels.preview -}}
+            file={{ $labels.file }} file_id={{ $labels.file_id }} byte_offset={{ $labels.byte_offset }} truncated={{ $labels.truncated }} preview={{ $labels.preview }}
+            {{- else -}}
+            Sample unavailable (not selected, limited, or expired); the count alert remains valid.
+            {{- end -}}
+        # Keep all five overrides: query metadata goes into annotations, while
+        # final alert labels remain stable when a sample changes or disappears.
+        labels:
+          severity: warning
+          file: _
+          file_id: _
+          byte_offset: _
+          preview: _
+          truncated: _
+        isPaused: false

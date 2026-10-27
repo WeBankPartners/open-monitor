@@ -76,7 +76,7 @@ test('metric formatting distinguishes cores, memory, throughput and durations', 
 function loadComponent(file, globals = {}) {
   const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/' + file + '.vue'), 'utf8')
   const script = source.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm,'').replace('export default','module.exports =')
-  return vm.runInNewContext(script,{module:{exports:{}},setTimeout:()=>0,clearTimeout(){},...globals})
+  return vm.runInNewContext(script,{module:{exports:{}},setTimeout:()=>0,clearTimeout(){},K8sLogSamples:{},...globals})
 }
 
 test('object mode comes from catalog and preserves history controls and raw alert states', () => {

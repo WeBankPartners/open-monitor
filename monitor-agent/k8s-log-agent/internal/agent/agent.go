@@ -53,10 +53,13 @@ type cursor struct {
 	LastMatch int64
 }
 type checkpoint struct {
-	Files  map[string]cursor
-	Paths  map[string]bool
-	Totals map[string]cursor
-	Config Config
+	Files           map[string]cursor
+	Paths           map[string]bool
+	Totals          map[string]cursor
+	Config          Config
+	Samples         map[string]logSample `json:",omitempty"`
+	SampleBudget    logSampleBudget      `json:",omitempty"`
+	SampleLimitHits uint64               `json:",omitempty"`
 }
 type Agent struct {
 	mu                 sync.Mutex
@@ -109,6 +112,7 @@ func New(root, state string) (*Agent, error) {
 	if a.saved.Totals == nil {
 		a.saved.Totals = map[string]cursor{}
 	}
+	pruneLogSamples(&a.saved, time.Now().Unix())
 	return a, nil
 }
 
@@ -266,10 +270,17 @@ func (a *Agent) Apply(c Config) error {
 	}
 	a.config = copy
 	allowed := map[string]bool{}
+	allowedSamples := map[string]bool{}
 	for _, t := range copy.Targets {
 		for _, r := range t.Rules {
 			prefix := fmt.Sprintf("%s\x00%s\x00%s\x00%d\x00", t.ID, t.PodUID, r.ID, r.Version)
 			allowed[prefix] = true
+			allowedSamples[logSampleKey(t, r)] = true
+		}
+	}
+	for key := range a.saved.Samples {
+		if !allowedSamples[key] {
+			delete(a.saved.Samples, key)
 		}
 	}
 	for key := range a.saved.Files {
@@ -367,6 +378,7 @@ func (a *Agent) Scan() error {
 		next.Totals = map[string]cursor{}
 	}
 	next.Config = a.config
+	pruneLogSamples(&next, time.Now().Unix())
 	a.appMetrics = map[string]appMetric{}
 	seen := map[string]bool{}
 	matched := map[string]bool{}
@@ -566,6 +578,8 @@ func (a *Agent) read(f *os.File, t Target, next *checkpoint) error {
 			return err
 		}
 		reader := bufio.NewReaderSize(f, 64*1024)
+		var sample *logSample
+		sampleChecked := false
 		var pattern *regexp.Regexp
 		if r.Mode == "regex" {
 			pattern = regexp.MustCompile(r.Pattern)
@@ -596,10 +610,17 @@ func (a *Agent) read(f *os.File, t Target, next *checkpoint) error {
 			if match {
 				c.Counts[r.ID]++
 				c.LastMatch = time.Now().Unix()
+				if !sampleChecked {
+					sample = newLogSample(next, logSampleKey(t, r), f.Name(), fmt.Sprintf("%d:%d", sys.Dev, sys.Ino), c.Offset, line, c.LastMatch)
+					sampleChecked = true
+				}
 			}
 			c.Offset += int64(len(line))
 		}
 		next.Files[key] = c
+		if sample != nil {
+			commitLogSample(next, logSampleKey(t, r), *sample)
+		}
 	}
 	return nil
 }

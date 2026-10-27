@@ -133,6 +133,7 @@ func (a *Agent) MetricsText(cluster, node string) string {
 	fmt.Fprintf(&b, "k8s_log_agent_state_available{cluster_id=%q,node=%q} %d\n", cluster, node, stateAvailable)
 	fmt.Fprintf(&b, "k8s_log_agent_state_resets_total{cluster_id=%q,node=%q} %d\n", cluster, node, a.stateResets)
 	fmt.Fprintf(&b, "k8s_log_agent_state_persist_errors_total{cluster_id=%q,node=%q} %d\n", cluster, node, a.statePersistErrors)
+	fmt.Fprintf(&b, "k8s_log_sample_limit_hits_total{cluster_id=%q,node=%q} %d\n", cluster, node, a.saved.SampleLimitHits)
 	for _, t := range a.config.Targets {
 		if t.Format == "otlp_metric" {
 			a.writeAppMetrics(&b, t, cluster, node)
@@ -172,6 +173,7 @@ func (a *Agent) MetricsText(cluster, node string) string {
 			}
 			fmt.Fprintf(&b, "k8s_log_match_total{cluster_id=%q,namespace=%q,pod=%q,pod_uid=%q,instance_id=%q,workload_name=%q,workload_type=%q,container=%q,target=%q,rule=%q,rule_version=%q,node=%q} %d\n", cluster, t.Namespace, t.PodName, t.PodUID, t.InstanceID, t.WorkloadName, t.WorkloadType, t.Container, t.ID, r.ID, strconv.FormatUint(r.Version, 10), node, v)
 			fmt.Fprintf(&b, "k8s_log_last_match_timestamp{cluster_id=%q,namespace=%q,pod=%q,pod_uid=%q,instance_id=%q,workload_name=%q,workload_type=%q,container=%q,target=%q,rule=%q,rule_version=%q,node=%q} %d\n", cluster, t.Namespace, t.PodName, t.PodUID, t.InstanceID, t.WorkloadName, t.WorkloadType, t.Container, t.ID, r.ID, strconv.FormatUint(r.Version, 10), node, lastMatch)
+			a.writeLogSample(&b, t, r, cluster, node, time.Now().Unix())
 		}
 
 	}

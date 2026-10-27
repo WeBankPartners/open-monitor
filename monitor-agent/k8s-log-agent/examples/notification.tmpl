@@ -1,0 +1,9 @@
+{{ define "k8s.log.matches" -}}
+{{ range .Alerts -}}
+Status: {{ .Status }}
+Summary: {{ .Annotations.summary }}
+Details: {{ .Annotations.description }}
+Sample: {{ .Annotations.log_sample }}
+
+{{ end -}}
+{{ end }}

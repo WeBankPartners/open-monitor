@@ -379,6 +379,8 @@ func registerKubernetesRoutes(r *gin.Engine, urlPrefix string, handlers, cluster
 	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/namespace/list"] = "k8s_namespace_list"
 	k8sRoutes.POST("/metrics/history", handlers.History)
 	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/metrics/history"] = "k8s_metric_history"
+	k8sRoutes.POST("/log-samples", handlers.LogSamples)
+	apiCodeMap[http.MethodPost+"_"+urlPrefix+"/api/v1/k8s/log-samples"] = "k8s_log_samples"
 	k8sRoutes.GET("/metrics/catalog", handlers.MetricCatalog)
 	apiCodeMap[http.MethodGet+"_"+urlPrefix+"/api/v1/k8s/metrics/catalog"] = "k8s_metric_catalog"
 	k8sRoutes.GET("/alerts/states", handlers.AlertStates)

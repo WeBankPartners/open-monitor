@@ -38,15 +38,16 @@ type AlertStateStore interface {
 	ListStates(context.Context, string, string) ([]k8s.AlertStateView, error)
 }
 type Handler struct {
-	ClusterMode bool
-	Seed        string
-	Policy      k8s.Policy
-	Store       Store
-	Exporter    *k8s.Exporter
-	LogStore    LogAgentStore
-	AlertStore  AlertStateStore
-	Rules       AlertRuleStore
-	QueryRange  func(context.Context, string, int64, int64, int64) (*models.PrometheusData, error)
+	ClusterMode  bool
+	Seed         string
+	Policy       k8s.Policy
+	Store        Store
+	Exporter     *k8s.Exporter
+	LogStore     LogAgentStore
+	AlertStore   AlertStateStore
+	Rules        AlertRuleStore
+	QueryRange   func(context.Context, string, int64, int64, int64) (*models.PrometheusData, error)
+	QueryInstant func(context.Context, string, string) (map[string]interface{}, error)
 }
 
 var logAgentClusterID = regexp.MustCompile(`^[a-z0-9](?:[-a-z0-9]{0,62}[a-z0-9])?$`)

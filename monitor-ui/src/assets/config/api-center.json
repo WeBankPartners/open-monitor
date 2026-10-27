@@ -254,6 +254,7 @@
     "updateKubernetesCluster": "/monitor/api/v1/agent/kubernetes/cluster/update",
     "k8sObjects": "/monitor/api/v1/k8s/objects",
     "k8sMetricHistory": "/monitor/api/v1/k8s/metrics/history",
+    "k8sLogSamples": "/monitor/api/v1/k8s/log-samples",
     "k8sMetricCatalog": "/monitor/api/v1/k8s/metrics/catalog",
     "k8sAlertRules": "/monitor/api/v1/k8s/alert-rules",
     "k8sAlertRule": "/monitor/api/v1/k8s/alert-rules/:ruleId",

@@ -1,0 +1,178 @@
+rule_files:
+- prometheus-alerts.yml
+evaluation_interval: 30s
+tests:
+- name: sample changes do not reset pending alert
+  interval: 30s
+  input_series:
+  - series: k8s_log_match_total{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 0+1x10
+  - series: k8s_log_target_healthy{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 1+0x10
+  - &id001
+    series: up{job="k8s_log_agent",instance="agent-a"}
+    values: 1+0x50
+  - series: k8s_log_match_sample_timestamp_seconds{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent",file="app.log",file_id="device:inode",byte_offset="0",preview="ERROR
+      first",truncated="false"}
+    values: 1 1 stale
+  - series: k8s_log_match_sample_timestamp_seconds{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent",file="app.log",file_id="device:inode",byte_offset="42",preview="ERROR
+      second",truncated="false"}
+    values: _ _ 60+0x8
+  alert_rule_test:
+  - eval_time: 90s
+    alertname: KubernetesLogMatches
+    exp_alerts:
+    - exp_labels:
+        cluster_id: cluster-a
+        namespace: test
+        pod: app-0
+        pod_uid: pod-0
+        instance_id: instance-0
+        workload_name: app
+        workload_type: StatefulSet
+        container: app
+        target: target-0
+        rule: error
+        rule_version: '1'
+        node: node-a
+        instance: agent-a
+        job: k8s_log_agent
+        severity: warning
+      exp_annotations:
+        summary: Log matches for test/app-0
+        description: Container=app target=target-0 rule=error version=1
+        log_sample: file=app.log file_id=device:inode byte_offset=42 observed_at_unix=60
+          truncated=false preview=ERROR second
+- name: different pods select their own samples
+  interval: 30s
+  input_series:
+  - series: k8s_log_match_total{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 0+1x10
+  - series: k8s_log_target_healthy{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 1+0x10
+  - series: k8s_log_match_total{cluster_id="cluster-a",namespace="test",pod="app-1",pod_uid="pod-1",instance_id="instance-1",workload_name="app",workload_type="StatefulSet",container="app",target="target-1",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 0+1x10
+  - series: k8s_log_target_healthy{cluster_id="cluster-a",namespace="test",pod="app-1",pod_uid="pod-1",workload_name="app",workload_type="StatefulSet",container="app",target="target-1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 1+0x10
+  - *id001
+  - series: k8s_log_match_sample_timestamp_seconds{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent",file="app.log",file_id="device:inode",byte_offset="0",preview="ERROR
+      alpha",truncated="false"}
+    values: 1+0x10
+  - series: k8s_log_match_sample_timestamp_seconds{cluster_id="cluster-a",namespace="test",pod="app-1",pod_uid="pod-1",instance_id="instance-1",workload_name="app",workload_type="StatefulSet",container="app",target="target-1",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent",file="app.log",file_id="device:inode",byte_offset="100",preview="ERROR
+      beta",truncated="false"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 90s
+    alertname: KubernetesLogMatches
+    exp_alerts:
+    - exp_labels:
+        cluster_id: cluster-a
+        namespace: test
+        pod: app-0
+        pod_uid: pod-0
+        instance_id: instance-0
+        workload_name: app
+        workload_type: StatefulSet
+        container: app
+        target: target-0
+        rule: error
+        rule_version: '1'
+        node: node-a
+        instance: agent-a
+        job: k8s_log_agent
+        severity: warning
+      exp_annotations:
+        summary: Log matches for test/app-0
+        description: Container=app target=target-0 rule=error version=1
+        log_sample: file=app.log file_id=device:inode byte_offset=0 observed_at_unix=1
+          truncated=false preview=ERROR alpha
+    - exp_labels:
+        cluster_id: cluster-a
+        namespace: test
+        pod: app-1
+        pod_uid: pod-1
+        instance_id: instance-1
+        workload_name: app
+        workload_type: StatefulSet
+        container: app
+        target: target-1
+        rule: error
+        rule_version: '1'
+        node: node-a
+        instance: agent-a
+        job: k8s_log_agent
+        severity: warning
+      exp_annotations:
+        summary: Log matches for test/app-1
+        description: Container=app target=target-1 rule=error version=1
+        log_sample: file=app.log file_id=device:inode byte_offset=100 observed_at_unix=1
+          truncated=false preview=ERROR beta
+- name: missing sample does not suppress a count alert
+  interval: 30s
+  input_series:
+  - series: k8s_log_match_total{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 0+1x10
+  - series: k8s_log_target_healthy{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 1+0x10
+  - *id001
+  alert_rule_test:
+  - eval_time: 90s
+    alertname: KubernetesLogMatches
+    exp_alerts:
+    - exp_labels:
+        cluster_id: cluster-a
+        namespace: test
+        pod: app-0
+        pod_uid: pod-0
+        instance_id: instance-0
+        workload_name: app
+        workload_type: StatefulSet
+        container: app
+        target: target-0
+        rule: error
+        rule_version: '1'
+        node: node-a
+        instance: agent-a
+        job: k8s_log_agent
+        severity: warning
+      exp_annotations:
+        summary: Log matches for test/app-0
+        description: Container=app target=target-0 rule=error version=1
+        log_sample: Sample unavailable (not selected, limited, or expired); the count
+          alert remains valid.
+- name: sample age is independent of scrape timestamp
+  interval: 30s
+  input_series:
+  - series: k8s_log_match_total{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 0+1x50
+  - series: k8s_log_target_healthy{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",node="node-a",instance="agent-a",job="k8s_log_agent"}
+    values: 1+0x50
+  - *id001
+  - series: k8s_log_match_sample_timestamp_seconds{cluster_id="cluster-a",namespace="test",pod="app-0",pod_uid="pod-0",instance_id="instance-0",workload_name="app",workload_type="StatefulSet",container="app",target="target-0",rule="error",rule_version="1",node="node-a",instance="agent-a",job="k8s_log_agent",file="app.log",file_id="device:inode",byte_offset="0",preview="ERROR
+      old",truncated="false"}
+    values: 1+0x50
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubernetesLogMatches
+    exp_alerts:
+    - exp_labels:
+        cluster_id: cluster-a
+        namespace: test
+        pod: app-0
+        pod_uid: pod-0
+        instance_id: instance-0
+        workload_name: app
+        workload_type: StatefulSet
+        container: app
+        target: target-0
+        rule: error
+        rule_version: '1'
+        node: node-a
+        instance: agent-a
+        job: k8s_log_agent
+        severity: warning
+      exp_annotations:
+        summary: Log matches for test/app-0
+        description: Container=app target=target-0 rule=error version=1
+        log_sample: Sample unavailable (not selected, limited, or expired); the count
+          alert remains valid.

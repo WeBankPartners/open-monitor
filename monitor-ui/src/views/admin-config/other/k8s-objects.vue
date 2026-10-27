@@ -61,6 +61,7 @@
       </Tabs>
       <Alert v-if="catalogFailed" type="error">{{$t('m_k8s_catalog_failed')}} <Button size="small" @click="loadCatalog">{{$t('m_refresh')}}</Button></Alert>
       <Alert v-if="category === 'log'">{{$t('m_k8s_count_window_help',{seconds: countWindow})}}</Alert>
+      <K8sLogSamples v-if="category === 'log'" :object="selected" :range="range" :refresh-token="refreshToken" />
       <Alert v-if="category === 'application'">{{$t('m_k8s_app_chart_help')}}</Alert>
       <Select v-model="metricSelections[category]" multiple filterable style="width:100%;margin-bottom:16px" @on-change="limitMetrics">
         <Option v-for="metric in categoryMetrics" :key="metric.id" :value="metric.id">{{metricTitle(metric)}} ({{metric.unit}})</Option>
@@ -77,10 +78,14 @@
 </template>
 <script>
 import K8sMetricChart from './k8s-metric-chart'
+import K8sLogSamples from './k8s-log-samples'
 import {filterObjects, metricRange} from './k8s-metrics'
 
 export default {
-  components: {K8sMetricChart},
+  components: {
+    K8sMetricChart,
+    K8sLogSamples
+  },
   data() {
     return {
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,

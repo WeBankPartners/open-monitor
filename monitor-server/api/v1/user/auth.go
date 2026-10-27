@@ -201,7 +201,7 @@ type pluginInterfaceResultOutput struct {
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.RequestURI, "/export/ping/source") || strings.Contains(c.Request.RequestURI, "/agent/export/custom") || strings.Contains(c.Request.RequestURI, "/query") {
+		if strings.Contains(c.Request.URL.Path, "/export/ping/source") || strings.Contains(c.Request.URL.Path, "/agent/export/custom") || strings.Contains(c.Request.URL.Path, "/query") {
 			c.Next()
 		} else {
 			if m.Config().Http.Session.Enable != "true" {

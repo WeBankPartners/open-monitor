@@ -1,0 +1,36 @@
+groups:
+  - name: k8s-log-agent
+    interval: 30s
+    rules:
+      - alert: KubernetesLogMatches
+        expr: |
+          (increase(k8s_log_match_total{job="k8s_log_agent"}[5m]) > 0)
+          and on (cluster_id, namespace, pod, pod_uid, container, target, node, instance, job)
+          (
+            (k8s_log_target_healthy{job="k8s_log_agent"} == 1)
+            and (time() - timestamp(k8s_log_target_healthy{job="k8s_log_agent"}) < 90)
+          )
+          and on (instance, job) (up{job="k8s_log_agent"} == 1)
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Log matches for {{ $labels.namespace }}/{{ $labels.pod }}'
+          description: 'Container={{ $labels.container }} target={{ $labels.target }} rule={{ $labels.rule }} version={{ $labels.rule_version }}'
+          log_sample: >-
+            {{- $selector := printf "topk(1, k8s_log_match_sample_timestamp_seconds{cluster_id=%q,namespace=%q,pod_uid=%q,container=%q,target=%q,rule=%q,rule_version=%q,node=%q,instance=%q,job=%q} > (time() - 900))" $labels.cluster_id $labels.namespace $labels.pod_uid $labels.container $labels.target $labels.rule $labels.rule_version $labels.node $labels.instance $labels.job -}}
+            {{- with query $selector -}}
+            {{- range . -}}
+            file={{ label "file" . }} file_id={{ label "file_id" . }} byte_offset={{ label "byte_offset" . }} observed_at_unix={{ printf "%.0f" (value .) }} truncated={{ label "truncated" . }} preview={{ label "preview" . }}
+            {{- end -}}
+            {{- else -}}
+            Sample unavailable (not selected, limited, or expired); the count alert remains valid.
+            {{- end -}}
+      - alert: KubernetesLogAgentDown
+        expr: up{job="k8s_log_agent"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Log Agent scrape failed for {{ $labels.instance }}'
+          description: 'Check Agent readiness, target discovery, and network access before treating missing log data as healthy.'

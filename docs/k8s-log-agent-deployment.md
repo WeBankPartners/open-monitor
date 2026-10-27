@@ -190,6 +190,7 @@ grep -nE 'agent registration|configuration (not published|refresh failed|applied
 - Namespace 行的“监控对象”入口可以查看同一 Pod/容器的资源、日志指标和告警状态。
 - Prometheus 抓取正常，接管后新增的匹配日志使 `k8s_log_match_total` 增长，包含正确的 `pod`、`instance_id` 标签。
 - `k8s_log_file_missing`、`k8s_log_read_error_total` 未持续报告文件缺失或读取错误。
+- 新版 Agent 命中新日志且摘要预算可用时，`/metrics` 额外输出 `k8s_log_match_sample_timestamp_seconds`，含文件名和起始字节偏移。旧断点和目标 JSON 无需迁移；外部 Prometheus/Grafana 的正文接入与限额说明见[日志命中摘要](k8s-log-match-samples.md)。
 - 需要调整目录、规则或 Agent 地址时，再通过 Web 管理功能补充配置。SMTP 和通知接收人按需人工设置，不影响采集与告警状态记录。
 
 变更部署副本后重新 apply；ConfigMap/Secret 注入的 ENV 不会自动刷新，需执行一次滚动重启。更新 Monitor 端 Token 时也要使对应服务配置生效：
