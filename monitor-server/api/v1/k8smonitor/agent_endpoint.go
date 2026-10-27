@@ -141,6 +141,9 @@ func (h Handler) syncLogAgentTargets(c *gin.Context, cluster string) error {
 	}
 	agentTargetSync.Lock()
 	defer agentTargetSync.Unlock()
+	if !h.Policy.LocalCollectionActive() {
+		return prom.WriteLogAgentTargets(models.Config().Prometheus.SdConfigPath, nil)
+	}
 	var rows []k8s.LogAgentEndpoint
 	var err error
 	if all, ok := h.LogStore.(interface {

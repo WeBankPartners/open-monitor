@@ -4,6 +4,8 @@
 
 默认先不应用 NetworkPolicy，验证集群内部通信后再按需调整。本文是部署操作指引，不代表已经通过真实环境联调。
 
+Monitor 部署参数 `MONITOR_K8S_LOCAL_COLLECTION_ENABLED` 默认 `N`，因此默认仅保留发现、日志目标/规则下发和 Agent exporter，不由内置 Prometheus 抓取或计算 Kubernetes 告警。需要内置采集时首次部署/升级显式设置 `Y`，并保留总开关开启；后续使用同模式部署。Agent ENV 和镜像不需要为本开关修改。升级前停旧实例、PVC 清理及外部逐 Pod 抓取验收见[本地采集与告警开关](k8s-local-collection-switch.md)。
+
 ## 1. 准备信息
 
 | 项目 | 要求 |

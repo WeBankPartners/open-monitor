@@ -16,7 +16,8 @@ import (
 func TestHistoryFiltersAtPrometheusAndRejectsDisabledScopes(t *testing.T) {
 	s := &sourceMemory{rows: []k8s.NamespaceState{{Registration: k8s.Registration{ClusterID: "cluster-a", Namespace: "sit-a", Enabled: true}}}}
 	calls := 0
-	h := Handler{Store: s, Policy: k8s.Policy{Environment: "sit"}, QueryRange: func(ctx context.Context, query string, start, end, step int64) (*models.PrometheusData, error) {
+	// Local collection is disabled; registered scopes can still query history.
+	h := Handler{Store: s, Policy: k8s.Policy{Enabled: true, Environment: "sit"}, QueryRange: func(ctx context.Context, query string, start, end, step int64) (*models.PrometheusData, error) {
 		calls++
 		if !strings.Contains(query, `pod="app-0",container="main"`) || ctx.Err() != nil || step != 60 {
 			t.Fatalf("incorrect history query: %s %v", query, ctx.Err())
@@ -45,6 +46,27 @@ func TestHistoryFiltersAtPrometheusAndRejectsDisabledScopes(t *testing.T) {
 	request()
 	if calls != 1 {
 		t.Fatal("invalid scope reached Prometheus")
+	}
+}
+
+func TestMetricCatalogReportsEffectiveCollectionMode(t *testing.T) {
+	for _, policy := range []k8s.Policy{{}, {Enabled: true}, {LocalCollectionEnabled: true}, {Enabled: true, LocalCollectionEnabled: true}} {
+		r := gin.New()
+		r.GET("/catalog", (Handler{Policy: policy}).MetricCatalog)
+		out := httptest.NewRecorder()
+		r.ServeHTTP(out, httptest.NewRequest("GET", "/catalog", nil))
+		var response struct {
+			Data map[string]interface{} `json:"data"`
+		}
+		if err := json.Unmarshal(out.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		for _, field := range []string{"localCollectionEnabled", "alertEvaluationEnabled"} {
+			value, ok := response.Data[field].(bool)
+			if !ok || value != policy.LocalCollectionActive() {
+				t.Fatalf("invalid %s: %s", field, out.Body.String())
+			}
+		}
 	}
 }
 

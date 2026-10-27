@@ -2,6 +2,8 @@
 
 本文记录当前代码实现，供开发、评审和联调使用。它描述静态代码行为，不代表已在目标 Kubernetes 环境完成联调。产品范围、权限申请和容量风险见[评审方案](k8s-monitoring-review.md)；Agent 首次部署见[部署指南](k8s-log-agent-deployment.md)。
 
+本地资源/日志指标抓取与 Kubernetes 告警由 `MONITOR_K8S_LOCAL_COLLECTION_ENABLED` 控制，默认 `N`。有效状态要求原总开关同时开启；关闭时发现、CMDB 日志解析、Agent 配置和 exporter 保留，停止 cAdvisor、本地两个 job 的目标及告警发送。历史状态保留、pending 通知分批取消；详见[开关与升级验收](k8s-local-collection-switch.md)。以下资源采集与告警流程以有效本地采集开启为前提。
+
 ## 1. 架构与边界
 
 每个环境部署一套 Monitor 和一套日志 Agent DaemonSet。用户在 Web 登记 cluster 与允许监控的 namespace；Monitor 自动发现 StatefulSet、Pod、容器，抓取资源指标，生成节点日志目标并评估告警。Prometheus 抓取 Monitor 与 Agent 的缓存指标并写入 TSDB；原始日志不进入 TSDB。

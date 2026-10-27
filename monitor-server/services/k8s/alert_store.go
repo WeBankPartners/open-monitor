@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"strings"
 	"time"
@@ -163,6 +164,63 @@ func (s AlertStore) ListStates(ctx context.Context, cluster, namespace string) (
 }
 
 var ErrLeaseLost = errors.New("alert outbox lease lost")
+
+const pendingOutboxCancellationSelect = `SELECT event_id FROM k8s_alert_outbox FORCE INDEX (idx_k8s_alert_outbox_claim) WHERE status=?
+ORDER BY available_at,lease_until,event_id LIMIT ? FOR UPDATE`
+
+// CancelPendingOutbox commits a bounded batch of all pending event types,
+// regardless of retry time or lease. Terminal events and alert state are intact.
+func (s AlertStore) CancelPendingOutbox(ctx context.Context, limit int) (int64, error) {
+	if s.DB == nil || limit <= 0 {
+		return 0, errors.New("invalid alert outbox cancellation")
+	}
+	if limit > 500 {
+		limit = 500
+	}
+	// READ COMMITTED avoids retaining gap locks around the bounded index scan.
+	// Waiting for competing maintenance is intentional: an empty SKIP LOCKED
+	// result could report completion before another instance rolls back.
+	tx, err := s.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		return 0, fmt.Errorf("begin alert outbox cancellation: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	rows, err := tx.QueryContext(ctx, pendingOutboxCancellationSelect, "pending", limit)
+	if err != nil {
+		return 0, fmt.Errorf("select pending alert outbox: %w", err)
+	}
+	defer rows.Close()
+	ids := make([]any, 0, limit)
+	for rows.Next() {
+		var id string
+		if err = rows.Scan(&id); err != nil {
+			return 0, fmt.Errorf("scan pending alert outbox: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err = rows.Err(); err != nil {
+		return 0, fmt.Errorf("read pending alert outbox: %w", err)
+	}
+	if err = rows.Close(); err != nil {
+		return 0, fmt.Errorf("close pending alert outbox: %w", err)
+	}
+	var count int64
+	if len(ids) > 0 {
+		args := append([]any{"cancelled", "local collection disabled", "pending"}, ids...)
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+		result, updateErr := tx.ExecContext(ctx, `UPDATE k8s_alert_outbox FORCE INDEX (PRIMARY) SET status=?,last_error=?,lease_token=NULL,lease_until=NULL WHERE status=? AND event_id IN (`+placeholders+`)`, args...)
+		if updateErr != nil {
+			return 0, fmt.Errorf("cancel pending alert outbox: %w", updateErr)
+		}
+		if count, err = result.RowsAffected(); err != nil {
+			return 0, fmt.Errorf("count cancelled alert outbox: %w", err)
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit alert outbox cancellation: %w", err)
+	}
+	return count, nil
+}
 
 func (s AlertStore) EvaluateAndPersist(ctx context.Context, input AlertEvaluation, now time.Time) (Transition, error) {
 	return s.evaluateAndPersist(ctx, input, now, true)

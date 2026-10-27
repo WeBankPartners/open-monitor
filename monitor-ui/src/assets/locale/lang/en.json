@@ -731,5 +731,10 @@
   "m_custom_scrape_format_unchanged": "Indent is already normalized",
   "m_custom_scrape_validate_ok": "YAML validation passed",
   "m_enabled": "Enabled",
-  "m_job_name": "Job Name"
+  "m_job_name": "Job Name",
+  "m_k8s_local_collection_disabled": "Local collection and alerting are disabled. Object discovery, Agent log processing and configuration delivery continue.",
+  "m_k8s_local_collection_history": "Local collection is disabled. Only existing history is available; gaps are not filled with zero. External Prometheus data is not automatically shown here.",
+  "m_k8s_alerts_last_evaluation": "Alerts (last evaluation results)",
+  "m_k8s_last_evaluation_state": "Last evaluated state",
+  "m_k8s_alert_rules_paused": "Local collection and alerting are disabled. Rules can be edited and retained but are not evaluated. Log matching rules continue to be delivered."
 }

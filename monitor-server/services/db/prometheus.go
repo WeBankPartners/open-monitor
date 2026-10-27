@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/k8s"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"go.uber.org/zap"
 	"net"
@@ -52,16 +53,6 @@ func InitPrometheusConfig() {
 		log.Error(nil, log.LOGGER_APP, "Start sync remote write config fail", zap.Error(err))
 	}
 	// Kubernetes target changes are reconciled on startup; file_sd refreshes atomically.
-	if err = prom.WriteKubernetesTarget(models.Config().Prometheus.SdConfigPath, models.Config().Http.Port, models.Config().KubernetesMonitor.Enabled); err != nil {
-		log.Error(nil, log.LOGGER_APP, "Write Kubernetes scrape target failed", zap.Error(err))
-	} else if err = prom.ReloadConfigNow(); err != nil {
-		log.Error(nil, log.LOGGER_APP, "Reload Kubernetes scrape target failed", zap.Error(err))
-	}
-	if err = prom.WriteLogAgentTargets(models.Config().Prometheus.SdConfigPath, nil); err != nil {
-		log.Error(nil, log.LOGGER_APP, "Write Kubernetes log agent targets failed", zap.Error(err))
-	} else if err = prom.ReloadConfigNow(); err != nil {
-		log.Error(nil, log.LOGGER_APP, "Reload Kubernetes log agent targets failed", zap.Error(err))
-	}
 	go syncKubernetesLogAgentTargets()
 	// init custom scrape config
 	err = SyncCustomScrapeConfig()
@@ -76,23 +67,40 @@ func syncKubernetesLogAgentTargets() {
 	defer ticker.Stop()
 	sync := func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		rows, err := KubernetesMonitoringStore().ListLiveLogAgentEndpointsAll(ctx, 2*time.Minute)
-		cancel()
-		if err != nil {
-			return
-		}
-		addresses := make([]string, 0, len(rows))
-		for _, row := range rows {
-			addresses = append(addresses, net.JoinHostPort(row.Address, strconv.Itoa(row.Port)))
-		}
-		if err = prom.WriteLogAgentTargets(models.Config().Prometheus.SdConfigPath, addresses); err != nil {
-			log.Error(nil, log.LOGGER_APP, "Write Kubernetes log agent targets failed", zap.Error(err))
+		defer cancel()
+		config := models.Config()
+		if err := syncKubernetesTargets(ctx, config.KubernetesMonitor, config.Prometheus.SdConfigPath, config.Http.Port,
+			func(ctx context.Context, ttl time.Duration) ([]k8s.LogAgentEndpoint, error) {
+				return KubernetesMonitoringStore().ListLiveLogAgentEndpointsAll(ctx, ttl)
+			}); err != nil {
+			log.Error(nil, log.LOGGER_APP, "Sync Kubernetes scrape targets failed", zap.Error(err))
 		}
 	}
 	sync()
 	for range ticker.C {
 		sync()
 	}
+}
+
+func syncKubernetesTargets(ctx context.Context, policy k8s.Policy, directory, port string, list func(context.Context, time.Duration) ([]k8s.LogAgentEndpoint, error)) error {
+	if err := prom.WriteKubernetesTarget(directory, port, policy.LocalCollectionActive()); err != nil {
+		return fmt.Errorf("write Kubernetes monitor target: %w", err)
+	}
+	var addresses []string
+	if policy.LocalCollectionActive() {
+		rows, err := list(ctx, 2*time.Minute)
+		if err != nil {
+			return fmt.Errorf("list live log agent endpoints: %w", err)
+		}
+		addresses = make([]string, 0, len(rows))
+		for _, row := range rows {
+			addresses = append(addresses, net.JoinHostPort(row.Address, strconv.Itoa(row.Port)))
+		}
+	}
+	if err := prom.WriteLogAgentTargets(directory, addresses); err != nil {
+		return fmt.Errorf("write Kubernetes log agent targets: %w", err)
+	}
+	return nil
 }
 
 func startCheckPrometheusConfig() {

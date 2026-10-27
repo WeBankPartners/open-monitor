@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -42,4 +43,38 @@ func TestMetricServiceUsesIndependentClusterCredentialAndDeduplicatesNodes(t *te
 		t.Fatal("samples not published")
 	}
 	_ = time.Second
+}
+
+func TestRunMetricsDisabledDoesNotAccessDependencies(t *testing.T) {
+	for _, policy := range []Policy{{}, {Enabled: true}, {LocalCollectionEnabled: true}} {
+		// Nil dependencies are deliberate: neither database nor Kubernetes may be
+		// accessed when either deployment switch disables local collection.
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			RunMetrics(ctx, policy, Store{}, nil, nil, func(err error) { t.Errorf("disabled worker: %v", err) })
+		}()
+		select {
+		case <-done:
+		case <-ctx.Done():
+			t.Error("disabled worker did not return")
+		}
+		cancel()
+	}
+}
+
+func TestRunMetricsEnabledLoadsScopes(t *testing.T) {
+	store, _ := newLogStoreTest(t, []logStoreStep{{match: "FROM k8s_namespace_source", err: errors.New("test database unavailable")}})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	index := NewIndex()
+	reported := false
+	RunMetrics(ctx, Policy{Enabled: true, LocalCollectionEnabled: true}, store, index, NewExporter(index), func(err error) {
+		reported = true
+		cancel()
+	})
+	if !reported {
+		t.Fatal("enabled worker did not load scopes")
+	}
 }

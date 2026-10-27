@@ -22,12 +22,19 @@ const (
 // Policy controls the deployment environment and optional namespace allowlist.
 type Policy struct {
 	Enabled                bool   `json:"enabled"`
+	LocalCollectionEnabled bool   `json:"-"`
 	Environment            string `json:"environment"`
 	MetricsIntervalSeconds int    `json:"-"`
 	// LogAgentToken authenticates node-local log agents. It is injected through
 	// the deployment secret and is never returned by an API.
 	LogAgentToken string                   `json:"logAgentToken"`
 	Clusters      map[string]ClusterConfig `json:"clusters"`
+}
+
+// LocalCollectionActive controls only built-in collection and alert delivery.
+// Discovery and Agent configuration continue under the existing master switch.
+func (p Policy) LocalCollectionActive() bool {
+	return p.Enabled && p.LocalCollectionEnabled
 }
 
 func (p Policy) MetricsInterval() time.Duration {

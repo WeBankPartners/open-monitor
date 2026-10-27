@@ -2,6 +2,7 @@
   <div class="k8s-objects">
     <Card>
       <p slot="title">{{$t('m_k8s_objects')}}</p>
+      <Alert v-if="localCollectionEnabled === false" type="warning">{{$t('m_k8s_local_collection_disabled')}}</Alert>
       <div class="object-filters">
         <div class="object-filter filter-scope">
           <label>{{$t('m_k8s_cluster_id')}}</label>
@@ -43,6 +44,7 @@
       <p class="object-summary">{{selected.clusterId}} / {{selected.namespace}} · {{$t('m_k8s_node')}}: {{selected.node}} · instanceId: {{selected.instanceId || '-'}} · Pod UID: {{selected.podUid}}</p>
       <p class="object-summary">Phase: {{selected.phase || '-'}} · Ready: {{selected.statusKnown ? $t(selected.ready ? 'm_yes' : 'm_no') : '-'}} · {{$t('m_k8s_metric_restart_count')}}: {{selected.statusKnown ? selected.restartCount : '-'}}</p>
       <Alert style="margin-top:12px">{{$t('m_k8s_logical_history_help')}}</Alert>
+      <Alert v-if="localCollectionEnabled === false" type="warning">{{$t('m_k8s_local_collection_history')}}</Alert>
       <div class="history-toolbar">
         <div class="range-preset">
           <span>{{$t('m_k8s_time_range')}}</span>
@@ -68,7 +70,7 @@
         <K8sMetricChart :object="selected" :metric="metric" :range="range" :refresh-token="refreshToken" :title="metricTitle(metric)" />
         </Col>
       </Row>
-      <Divider>{{$t('m_k8s_related_alerts')}}</Divider>
+      <Divider>{{$t(alertEvaluationEnabled === true ? 'm_k8s_related_alerts' : 'm_k8s_alerts_last_evaluation')}}</Divider>
       <Table border :columns="alertColumns" :data="selected.alerts || []" />
     </Card>
   </div>
@@ -96,6 +98,8 @@ export default {
       loading: false,
       inventoryFailed: false,
       catalogFailed: false,
+      localCollectionEnabled: null,
+      alertEvaluationEnabled: null,
       sourcesFailed: false,
       filters: {
         workload: '',
@@ -147,7 +151,7 @@ export default {
         title: this.$t('m_k8s_rule_id'),
         render: (h,p) => h('span',p.row.Key.RuleID)
       }, {
-        title: this.$t('m_k8s_state'),
+        title: this.$t(this.alertEvaluationEnabled === true ? 'm_k8s_state' : 'm_k8s_last_evaluation_state'),
         key: 'Status'
       }, {
         title: this.$t('m_k8s_metric'),
@@ -216,6 +220,8 @@ export default {
         finished = true
         clearTimeout(this._catalogDeadline)
         this.catalogFailed = failed
+        this.localCollectionEnabled = !failed && typeof data.localCollectionEnabled === 'boolean' ? data.localCollectionEnabled : null
+        this.alertEvaluationEnabled = !failed && typeof data.alertEvaluationEnabled === 'boolean' ? data.alertEvaluationEnabled : null
         if (failed) {return}
         this.catalog = data.metrics || []
         this.scrapeInterval = data.scrapeIntervalSeconds

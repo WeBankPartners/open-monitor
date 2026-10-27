@@ -81,16 +81,37 @@ test('reset defaults rejects invalid JSON and leaves OTLP-only targets unchanged
 
 function alertRuleContext(component) {
   const pending = []
+  const catalogPending = []
   const context = {
-    $root: {$httpRequestEntrance: {httpRequestEntrance(method, url, body, done, config, fail) { pending.push({method, url, body, done, fail}) }}, apiCenter: {k8sClusterList: '/clusters', k8sNamespaceList: '/namespaces', k8sAlertRules: '/rules'}},
+    $root: {$httpRequestEntrance: {httpRequestEntrance(method, url, body, done, config, fail) { (url === '/catalog' ? catalogPending : pending).push({method, url, body, done, fail}) }}, apiCenter: {k8sClusterList: '/clusters', k8sNamespaceList: '/namespaces', k8sAlertRules: '/rules', k8sMetricCatalog:'/catalog'}},
     $t: key => key,
     $Message: {error: message => assert.fail(message)}
   }
   Object.assign(context, component.data.call(context))
   for (const [name, method] of Object.entries(component.methods)) context[name] = method.bind(context)
   Object.defineProperty(context, 'namespaceOptions', {get: () => component.computed.namespaceOptions.call(context)})
-  return {context, pending}
+  return {context, pending, catalogPending}
 }
+
+test('alert rule mode is read from catalog without preventing rule management', () => {
+  const component = loadComponent('k8s-alert-rules')
+  const {context,pending,catalogPending} = alertRuleContext(component)
+  component.mounted.call(context)
+  assert.equal(catalogPending.length,1)
+  catalogPending[0].done({localCollectionEnabled:false,alertEvaluationEnabled:false})
+  assert.equal(context.alertEvaluationEnabled,false)
+  context.scope={clusterId:'cluster-a',namespace:'ns-a'}
+  context.openCreate()
+  assert.equal(context.editor.visible,true)
+  context.loadCatalog()
+  catalogPending[1].fail()
+  assert.equal(context.alertEvaluationEnabled,null)
+  context.loadCatalog()
+  component.beforeDestroy.call(context)
+  catalogPending[2].done({localCollectionEnabled:true,alertEvaluationEnabled:true})
+  assert.equal(context.alertEvaluationEnabled,null,'late response must not update an unmounted page')
+  assert.equal(pending[0].url,'/clusters')
+})
 
 test('alert rule scope selects enabled sources and keeps rules within the selected cluster', () => {
   const component = loadComponent('k8s-alert-rules')

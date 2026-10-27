@@ -70,5 +70,5 @@ func (h Handler) MetricCatalog(c *gin.Context) {
 	if window < 300 {
 		window = 300
 	}
-	mid.ReturnSuccessData(c, gin.H{"metrics": k8s.MetricCatalog(), "scrapeIntervalSeconds": seconds, "countWindowSeconds": window})
+	mid.ReturnSuccessData(c, gin.H{"metrics": k8s.MetricCatalog(), "scrapeIntervalSeconds": seconds, "countWindowSeconds": window, "localCollectionEnabled": h.Policy.LocalCollectionActive(), "alertEvaluationEnabled": h.Policy.LocalCollectionActive()})
 }

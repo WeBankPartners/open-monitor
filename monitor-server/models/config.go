@@ -268,6 +268,7 @@ func InitConfig(cfg string) {
 	if value, ok := os.LookupEnv("MONITOR_K8S_ENABLED"); ok {
 		c.KubernetesMonitor.Enabled = strings.EqualFold(value, "Y") || strings.EqualFold(value, "true")
 	}
+	configureKubernetesLocalCollection(&c.KubernetesMonitor)
 	if value, ok := os.LookupEnv("MONITOR_K8S_ENVIRONMENT"); ok {
 		c.KubernetesMonitor.Environment = strings.TrimSpace(value)
 	}
@@ -390,5 +391,14 @@ func initLocalTimeZone() {
 		} else {
 			DefaultLocalTimeZone = "CST"
 		}
+	}
+}
+
+// configureKubernetesLocalCollection deliberately ignores JSON configuration.
+func configureKubernetesLocalCollection(policy *k8s.Policy) {
+	value := strings.TrimSpace(os.Getenv("MONITOR_K8S_LOCAL_COLLECTION_ENABLED"))
+	policy.LocalCollectionEnabled = strings.EqualFold(value, "Y") || strings.EqualFold(value, "true")
+	if value != "" && !policy.LocalCollectionEnabled && !strings.EqualFold(value, "N") && !strings.EqualFold(value, "false") {
+		log.Print("WARN: invalid MONITOR_K8S_LOCAL_COLLECTION_ENABLED; local collection disabled")
 	}
 }

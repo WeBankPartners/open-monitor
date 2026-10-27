@@ -4,6 +4,8 @@
 
 首次部署、占位符替换与验收见 [DaemonSet 部署指南](../../docs/k8s-log-agent-deployment.md)；本文说明构建、启动参数和 Agent 的运行边界。
 
+Monitor 的 `MONITOR_K8S_LOCAL_COLLECTION_ENABLED` 默认 `N`，只关闭其本地 cAdvisor/Prometheus 抓取与 Kubernetes 告警，Agent 注册、配置拉取、日志扫描、checkpoint 和 `/metrics` 继续工作。外部 Prometheus 需逐个抓取所有 Agent Pod；仍需 Monitor 作为配置服务，且企业 Prometheus 数据不会自动出现在 Monitor Charts。启用内置采集需在 Monitor 部署中显式设置 `Y` 并开启原总开关。部署模式与升级限制见[开关说明](../../docs/k8s-local-collection-switch.md)。
+
 ## 构建和测试
 
 在本目录运行：

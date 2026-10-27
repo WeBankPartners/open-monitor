@@ -292,6 +292,36 @@ if ! sh /app/monitor/disable-legacy-k8s-scrape.sh \
   echo "ERROR: legacy Kubernetes scrape cleanup failed; Prometheus was not started" >&2
   exit 1
 fi
+# Clear persisted local targets before Prometheus starts in every deployment mode.
+# The server repopulates these files only when local collection is active.
+k8s_sd_directory=/app/monitor/prometheus/sd_file
+if ! mkdir -p "$k8s_sd_directory"; then
+  if ! sudo mkdir -p "$k8s_sd_directory" || ! sudo chown app:apps "$k8s_sd_directory"; then
+    echo "ERROR: failed to create Kubernetes target directory $k8s_sd_directory; Prometheus was not started" >&2
+    exit 1
+  fi
+fi
+if [ ! -w "$k8s_sd_directory" ] && ! sudo chown app:apps "$k8s_sd_directory"; then
+  echo "ERROR: failed to set Kubernetes target directory permissions $k8s_sd_directory; Prometheus was not started" >&2
+  exit 1
+fi
+for k8s_target_name in k8s_monitor.json k8s_log_agents.json; do
+  k8s_target_file="$k8s_sd_directory/$k8s_target_name"
+  if ! k8s_target_tmp=$(mktemp "$k8s_sd_directory/.$k8s_target_name.XXXXXX"); then
+    echo "ERROR: failed to create temporary target file for $k8s_target_file; Prometheus was not started" >&2
+    exit 1
+  fi
+  if ! printf '[]' > "$k8s_target_tmp"; then
+    rm -f "$k8s_target_tmp"
+    echo "ERROR: failed to write empty targets for $k8s_target_file; Prometheus was not started" >&2
+    exit 1
+  fi
+  if [ -d "$k8s_target_file" ] || ! mv -f "$k8s_target_tmp" "$k8s_target_file"; then
+    rm -f "$k8s_target_tmp"
+    echo "ERROR: failed to replace target file $k8s_target_file; Prometheus was not started" >&2
+    exit 1
+  fi
+done
 cd /app/monitor/prometheus && ensure_log_file logs/prometheus.log && GODEBUG=netdns=go nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../ping_exporter/
 sudo chown app:apps . 2>/dev/null || true

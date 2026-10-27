@@ -731,5 +731,10 @@
   "m_custom_scrape_format_unchanged": "缩进已是规范格式",
   "m_custom_scrape_validate_ok": "YAML 校验通过",
   "m_enabled": "启用",
-  "m_job_name": "Job 名称"
+  "m_job_name": "Job 名称",
+  "m_k8s_local_collection_disabled": "本地采集与告警已关闭；对象发现、Agent 日志处理和配置下发继续运行。",
+  "m_k8s_local_collection_history": "本地采集已关闭，仅查询已有历史数据；无样本区间不会补零，外部 Prometheus 数据不会自动展示于此页。",
+  "m_k8s_alerts_last_evaluation": "告警（最后一次评估结果）",
+  "m_k8s_last_evaluation_state": "最后一次评估状态",
+  "m_k8s_alert_rules_paused": "本地采集与告警已关闭；规则可以编辑和保留，但暂停执行。日志匹配规则继续下发。"
 }

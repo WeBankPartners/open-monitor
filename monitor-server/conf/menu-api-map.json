@@ -1963,6 +1963,11 @@
         "method": "post"
       },
       {
+        "key": "k8sMetricCatalog",
+        "url": "/monitor/api/v1/k8s/metrics/catalog",
+        "method": "get"
+      },
+      {
         "key": "k8sClusterList",
         "url": "/monitor/api/v1/k8s/cluster/list",
         "method": "post"

@@ -83,6 +83,9 @@ func (c *nodeResponseCache) Fetch(ctx context.Context, node string) (string, err
 
 // RunMetrics is serialized: a slow cycle never overlaps the next one.
 func RunMetrics(ctx context.Context, policy Policy, store Store, index *Index, exporter *Exporter, report func(error)) {
+	if !policy.LocalCollectionActive() {
+		return
+	}
 	service := MetricService{Index: index, Exporter: exporter, Factory: func(r Registration) (MetricSource, func(), error) {
 		token, err := r.Credentials.PlainToken(store.Seed)
 		if err != nil {

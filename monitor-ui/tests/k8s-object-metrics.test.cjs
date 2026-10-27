@@ -79,6 +79,25 @@ function loadComponent(file, globals = {}) {
   return vm.runInNewContext(script,{module:{exports:{}},setTimeout:()=>0,clearTimeout(){},...globals})
 }
 
+test('object mode comes from catalog and preserves history controls and raw alert states', () => {
+  const component = loadComponent('k8s-objects', {...loadHelpers(),K8sMetricChart:{}})
+  let done, fail
+  const selections = {resource:['cpu','memory']}
+  const range = {start:0,end:60,step:30}
+  const ctx = {catalog:[],metricSelections:selections,range,request(method,url,body,success,config,error){done=success;fail=error},apiCenter:{k8sMetricCatalog:'/catalog'},applyRange(){},startRefresh(){},$t:k=>k}
+  component.methods.loadCatalog.call(ctx)
+  done({metrics:[],scrapeIntervalSeconds:30,countWindowSeconds:300,localCollectionEnabled:false,alertEvaluationEnabled:false})
+  assert.equal(ctx.localCollectionEnabled,false)
+  assert.equal(ctx.alertEvaluationEnabled,false)
+  assert.equal(ctx.metricSelections,selections)
+  assert.equal(ctx.range,range)
+  assert.equal(component.computed.alertColumns.call(ctx)[1].title,'m_k8s_last_evaluation_state')
+  component.methods.loadCatalog.call(ctx)
+  fail()
+  assert.equal(ctx.localCollectionEnabled,null,'unavailable mode must not be inferred from lack of samples')
+  assert.equal(ctx.alertEvaluationEnabled,null)
+})
+
 test('chart queries the selected logical object and ignores obsolete responses', () => {
   const helpers = loadHelpers()
   const component = loadComponent('k8s-metric-chart', helpers)

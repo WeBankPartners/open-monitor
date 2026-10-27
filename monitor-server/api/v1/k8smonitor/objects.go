@@ -57,5 +57,5 @@ func (h Handler) Objects(c *gin.Context) {
 	if !snapshot.ObservedAt.IsZero() {
 		observedAt = snapshot.ObservedAt
 	}
-	mid.ReturnSuccessData(c, map[string]interface{}{"objects": objects, "state": state, "observedAt": observedAt})
+	mid.ReturnSuccessData(c, map[string]interface{}{"objects": objects, "state": state, "observedAt": observedAt, "localCollectionEnabled": h.Policy.LocalCollectionActive(), "alertEvaluationEnabled": h.Policy.LocalCollectionActive()})
 }

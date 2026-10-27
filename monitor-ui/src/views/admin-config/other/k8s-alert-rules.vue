@@ -2,6 +2,8 @@
   <div class="k8s-alert-rules">
     <Card>
       <p slot="title">{{$t('m_k8s_alert_rules')}}</p>
+      <Alert v-if="alertEvaluationEnabled === false" type="warning">{{$t('m_k8s_alert_rules_paused')}}</Alert>
+      <Alert v-if="catalogFailed" type="error">{{$t('m_k8s_catalog_failed')}} <Button size="small" @click="loadCatalog">{{$t('m_refresh')}}</Button></Alert>
       <div class="scope-form">
         <div class="scope-field">
           <label>{{$t('m_k8s_cluster_id')}}</label>
@@ -59,6 +61,8 @@ export default {
       namespaces: [],
       sourcesLoading: false,
       sourcesFailed: false,
+      catalogFailed: false,
+      alertEvaluationEnabled: null,
       scope: { clusterId: '', namespace: '' },
       rules: [],
       metrics: ['log_matches', 'log_health', 'cpu', 'memory', 'network_receive', 'network_transmit', 'block_read', 'block_write', 'cpu_throttled', 'cpu_throttled_periods', 'cpu_request', 'cpu_limit', 'memory_request', 'memory_limit', 'restart_count', 'ready', 'oom_events', 'memory_failcnt', 'container_ready', 'last_termination_oom'],
@@ -83,12 +87,28 @@ export default {
       ]
     }
   },
-  mounted() { this.loadSources() },
+  mounted() { this.loadSources(); this.loadCatalog() },
   beforeDestroy() {
     this._destroyed = true
     clearTimeout(this._sourcesDeadline)
+    clearTimeout(this._catalogDeadline)
   },
   methods: {
+    loadCatalog() {
+      const generation = this._catalogGeneration = (this._catalogGeneration || 0) + 1
+      clearTimeout(this._catalogDeadline)
+      this.catalogFailed = false
+      let finished = false
+      const finish = (data, failed) => {
+        if (this._destroyed || this._catalogGeneration !== generation || finished) {return}
+        finished = true
+        clearTimeout(this._catalogDeadline)
+        this.catalogFailed = failed
+        this.alertEvaluationEnabled = !failed && typeof data.alertEvaluationEnabled === 'boolean' ? data.alertEvaluationEnabled : null
+      }
+      this._catalogDeadline = setTimeout(() => finish(null,true),30000)
+      this.request('GET', this.apiCenter.k8sMetricCatalog, {}, data => finish(data,false), {isNeedloading: false}, () => finish(null,true))
+    },
     loadSources() {
       const generation = this._sourcesGeneration = (this._sourcesGeneration || 0) + 1
       clearTimeout(this._sourcesDeadline)
