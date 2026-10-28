@@ -60,6 +60,39 @@ func TestFetchConfigDistinguishesWaitingFromHTTPFailures(t *testing.T) {
 	}
 }
 
+func TestIdleConfigCanBeAppliedRepeatedlyBeforeTargetsArrive(t *testing.T) {
+	root := t.TempDir()
+	reader, err := New(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	for i := 0; i < 2; i++ {
+		if err = reader.Apply(Config{Version: 1, Targets: []Target{}}); err != nil {
+			t.Fatalf("apply idle configuration: %v", err)
+		}
+		if err = reader.Scan(); err != nil {
+			t.Fatalf("scan idle configuration: %v", err)
+		}
+	}
+	if reader.Version() != 1 || !strings.Contains(reader.MetricsText("cluster-a", "node-a"), "k8s_log_agent_up{") {
+		t.Fatal("idle Agent metrics are unavailable")
+	}
+	if err = os.WriteFile(filepath.Join(root, "app.log"), []byte("ERROR after scheduling\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	config := Config{Version: 2, Targets: []Target{{ID: "target-a", Namespace: "scope-a", PodUID: "pod-a", Directory: root, Glob: "*.log", Start: "beginning", Rules: []Rule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}}}
+	if err = reader.Apply(config); err != nil {
+		t.Fatalf("apply assigned target: %v", err)
+	}
+	if err = reader.Scan(); err != nil {
+		t.Fatalf("scan assigned target: %v", err)
+	}
+	if !strings.Contains(reader.MetricsText("cluster-a", "node-a"), "k8s_log_match_total{") {
+		t.Fatal("assigned target did not produce metrics")
+	}
+}
+
 func TestRuntimeRejectsUnsafeBootstrap(t *testing.T) {
 	for _, tc := range []struct{ key, value string }{{"LOG_AGENT_AUTH_TOKEN", ""}, {"LOG_AGENT_MONITOR_URL", "ftp://monitor.example"}, {"LOG_AGENT_MONITOR_URL", "https://monitor.example?token=hidden"}, {"LOG_AGENT_ROOT", "relative"}} {
 		env := map[string]string{"LOG_AGENT_ROOT": "/logs", "LOG_AGENT_STATE_DIR": "/state", "LOG_AGENT_MONITOR_URL": "https://monitor.example", "LOG_AGENT_CLUSTER_ID": "sit", "LOG_AGENT_NODE_NAME": "node-a", "LOG_AGENT_AUTH_TOKEN": "test-token", "LOG_AGENT_ADVERTISE_ADDRESS": "10.0.0.2"}

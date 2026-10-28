@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"reflect"
 	"strings"
 	"sync"
@@ -238,5 +239,71 @@ func TestLogConfigStoreBindsJSONAsText(t *testing.T) {
 	store, _ := newLogStoreTest(t, steps)
 	if err := store.SaveLogAgentConfig(context.Background(), "cluster-a", "node-a", LogAgentConfig{Version: 1, Targets: []LogTarget{target}}); err != nil {
 		t.Fatalf("save config: %v", err)
+	}
+}
+
+func TestLogAgentRegistrationInitializesIdleConfigAtomically(t *testing.T) {
+	endpoint := LogAgentEndpoint{ClusterID: "cluster-a", Node: "node-a", Address: net.IPv6loopback.String(), Port: 9105}
+	for _, fail := range []bool{false, true} {
+		t.Run(map[bool]string{false: "commit", true: "rollback"}[fail], func(t *testing.T) {
+			writeErr := error(nil)
+			if fail {
+				writeErr = errors.New("configuration storage unavailable")
+			}
+			steps := []logStoreStep{
+				{match: "FROM k8s_metric_source WHERE cluster_id=? FOR UPDATE", columns: []string{"enabled"}, rows: [][]driver.Value{{true}}, args: []driver.Value{"cluster-a"}},
+				{match: "INSERT INTO k8s_log_agent_endpoint"},
+				{match: "INSERT INTO k8s_log_agent_config", err: writeErr, check: func(args []driver.NamedValue) {
+					if len(args) != 3 || args[1].Value != "cluster-a" || args[2].Value != "node-a" {
+						t.Fatalf("configuration scope: %+v", args)
+					}
+					raw, ok := args[0].Value.(string)
+					var config LogAgentConfig
+					if !ok || json.Unmarshal([]byte(raw), &config) != nil || config.Version != 1 || config.Targets == nil || len(config.Targets) != 0 {
+						t.Fatalf("invalid idle configuration: %+v", args[0].Value)
+					}
+				}},
+			}
+			if !fail {
+				steps = append(steps, logStoreReadSteps(t, true, nil, LogAgentConfig{Version: 1, Targets: []LogTarget{}})...)
+			}
+			store, script := newLogStoreTest(t, steps)
+			if err := store.UpsertLogAgentEndpoint(context.Background(), endpoint); !errors.Is(err, writeErr) {
+				t.Fatalf("registration error: %v", err)
+			}
+			if fail {
+				if script.committed || !script.rolledBack {
+					t.Fatal("registration with failed configuration initialization was not rolled back")
+				}
+				return
+			}
+			if !script.committed {
+				t.Fatal("registration and idle configuration were not committed")
+			}
+			config, err := store.GetLogAgentConfig(context.Background(), endpoint.ClusterID, endpoint.Node)
+			if err != nil || config.Version != 1 || len(config.Targets) != 0 {
+				t.Fatalf("idle configuration unavailable: %+v %v", config, err)
+			}
+		})
+	}
+}
+
+func TestLogAgentRegistrationDoesNotInitializeDisabledOrUnknownCluster(t *testing.T) {
+	for _, exists := range []bool{true, false} {
+		t.Run(map[bool]string{true: "disabled", false: "unknown"}[exists], func(t *testing.T) {
+			steps := []logStoreStep{{match: "FROM k8s_metric_source", columns: []string{"enabled"}}}
+			if exists {
+				steps[0].rows = [][]driver.Value{{false}}
+				steps = append(steps, logStoreStep{match: "INSERT INTO k8s_log_agent_endpoint"})
+			}
+			store, script := newLogStoreTest(t, steps)
+			err := store.UpsertLogAgentEndpoint(context.Background(), LogAgentEndpoint{ClusterID: "cluster-a", Node: "node-a", Address: net.IPv6loopback.String(), Port: 9105})
+			if exists && (err != nil || !script.committed) {
+				t.Fatalf("disabled cluster heartbeat: %v", err)
+			}
+			if !exists && (!errors.Is(err, sql.ErrNoRows) || script.committed || !script.rolledBack) {
+				t.Fatalf("unknown cluster registration: %v", err)
+			}
+		})
 	}
 }

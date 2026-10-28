@@ -351,8 +351,32 @@ func (s Store) UpsertLogAgentEndpoint(ctx context.Context, e LogAgentEndpoint) e
 	if err := ValidateLogAgentEndpoint(e); err != nil {
 		return err
 	}
-	_, err := s.DB.ExecContext(ctx, "INSERT INTO k8s_log_agent_endpoint(cluster_id,node_name,address,port,reported_address,reported_port,pod_uid,last_seen,enabled,manual_override) VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP(6),1,0) ON DUPLICATE KEY UPDATE address=IF(manual_override=1,address,VALUES(address)),port=IF(manual_override=1,port,VALUES(port)),reported_address=VALUES(reported_address),reported_port=VALUES(reported_port),pod_uid=VALUES(pod_uid),last_seen=VALUES(last_seen)", e.ClusterID, e.Node, e.Address, e.Port, e.Address, e.Port, e.PodUID)
-	return err
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	// Use the configuration writers' cluster lock so initialization cannot race
+	// with discovery publishing the first targets or disabling the cluster.
+	var enabled bool
+	if err = tx.QueryRowContext(ctx, "SELECT enabled FROM k8s_metric_source WHERE cluster_id=? FOR UPDATE", e.ClusterID).Scan(&enabled); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, "INSERT INTO k8s_log_agent_endpoint(cluster_id,node_name,address,port,reported_address,reported_port,pod_uid,last_seen,enabled,manual_override) VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP(6),1,0) ON DUPLICATE KEY UPDATE address=IF(manual_override=1,address,VALUES(address)),port=IF(manual_override=1,port,VALUES(port)),reported_address=VALUES(reported_address),reported_port=VALUES(reported_port),pod_uid=VALUES(pod_uid),last_seen=VALUES(last_seen)", e.ClusterID, e.Node, e.Address, e.Port, e.Address, e.Port, e.PodUID); err != nil {
+		return err
+	}
+	if enabled {
+		// An enabled Agent with no assigned targets is idle, not unready. Preserve
+		// existing configurations and never re-enable an administratively disabled node.
+		raw, encodeErr := EncodeLogAgentConfig(LogAgentConfig{Version: 1, Targets: []LogTarget{}})
+		if encodeErr != nil {
+			return encodeErr
+		}
+		if _, err = tx.ExecContext(ctx, "INSERT INTO k8s_log_agent_config(cluster_id,node_name,version,config,updated_at) SELECT cluster_id,node_name,1,?,CURRENT_TIMESTAMP(6) FROM k8s_log_agent_endpoint WHERE cluster_id=? AND node_name=? AND enabled=1 ON DUPLICATE KEY UPDATE node_name=VALUES(node_name)", string(raw), e.ClusterID, e.Node); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 func (s Store) SetLogAgentEndpoint(ctx context.Context, e LogAgentEndpoint, manual bool) error {
 	if !manual {

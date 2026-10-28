@@ -47,6 +47,8 @@ Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_
 
 配置采用 `{"config":{"version":1,"targets":[...]}}` 响应，撤销目标通过更高版本配置移除目标；配置、规则版本由 Server 维护。具体协议见 [系统设计](../../docs/k8s-monitoring-system-design.md#5-agent-配置采集与状态恢复)。
 
+已登记并启用的集群中，Agent 自动注册时，Server 为尚无配置的启用节点初始化版本为 1、`targets: []` 的空配置。无采集目标的节点可以正常就绪，避免阻塞 DaemonSet 滚动更新；后续发现目标时按更高版本下发。重复注册不会覆盖已有配置或递增版本，已停用节点不会因心跳重新启用。升级 Server 后，已运行的 Agent 会在后续注册周期自动获得初始配置，无需重新构建 Agent 镜像。
+
 拉取失败暂时保留旧配置；超过一分钟没有有效配置响应时，在采集循环的检查点暂停扫描，`/readyz` 和 `/metrics` 返回 503。`/healthz` 仅表示 HTTP 进程可用。注册、拉取和扫描共用循环，慢请求或阻塞文件操作可能拉长实际周期，不能把一分钟当作严格超时保证。
 
 ## 可选排除条件
