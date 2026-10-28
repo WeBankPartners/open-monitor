@@ -55,7 +55,7 @@ func main() {
 	if m.Config().KubernetesMonitor.Enabled {
 		index := k8s.NewIndex()
 		exporter := k8s.NewExporter(index)
-		k8s.ConfigureLogTargetResolver(k8s.CMDBLogTargetResolver{Client: k8s.CMDBClient{BaseURL: m.CoreUrl, Token: m.GetCoreToken}})
+		k8s.ConfigureLogTargetResolver(k8s.CMDBLogTargetResolver{Client: k8s.CMDBClient{BaseURL: m.CoreUrl, Token: m.GetCoreTokenContext}})
 		k8s.ConfigureLogTargetResolverReport(func(container k8s.Container, err error) {
 			log.Warn(nil, log.LOGGER_APP, "Kubernetes log target resolution failed", zap.Error(err), zap.String("cluster", container.Key.ClusterID), zap.String("namespace", container.Key.Namespace), zap.String("pod", container.Key.PodName), zap.String("container", container.Key.ContainerName), zap.String("instance_id", container.InstanceID))
 		})
@@ -80,7 +80,7 @@ func main() {
 				return ds.QueryPrometheusInstantRawContext(ctx, query, "")
 			},
 		}
-		sender := k8s.LocalCollectionNotificationSender(policy, k8s.NotificationSenderFunc(func(_ context.Context, notification k8s.Notification) error {
+		sender := k8s.LocalCollectionNotificationSender(policy, k8s.NotificationSenderFunc(func(ctx context.Context, notification k8s.Notification) error {
 			if notification.StrategyID == 0 {
 				return nil
 			}
@@ -105,7 +105,7 @@ func main() {
 			}
 			now := time.Now()
 			alarmObj := &m.AlarmHandleObj{AlarmTable: m.AlarmTable{StrategyId: notification.StrategyID, Endpoint: body.Key.Endpoint(), Status: status, SMetric: body.Key.RuleID, StartValue: value, EndValue: value, Start: now, End: now, Content: fmt.Sprintf("Kubernetes alert: cluster=%s namespace=%s workload=%s/%s pod=%s container=%s", body.Key.ClusterID, body.Key.Namespace, body.Key.WorkloadType, body.Key.WorkloadName, body.Key.PodName, body.Key.Container)}, NotifyEnable: 1}
-			return db.NotifyAlarmWithError(alarmObj)
+			return db.NotifyOutboxAlarm(ctx, alarmObj, notification.EventID)
 		}))
 		alertStore := db.KubernetesAlertStore()
 		if policy.LocalCollectionActive() {

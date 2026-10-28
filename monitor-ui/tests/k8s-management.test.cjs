@@ -5,17 +5,18 @@ const vm = require('node:vm')
 const path = require('node:path')
 const root = path.resolve(__dirname, '..')
 
-test('log rule editor saves optional exclusions and reloads server-managed versions', () => {
-  const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-sources.vue'), 'utf8')
-  const component = vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export default', 'module.exports ='), { module: { exports: {} } })
+test('log rule editor applies exclusions to the draft before publishing and reloading versions', () => {
+  const component = loadComponent('k8s-sources')
   let saved, loaded = false
-  const context = { agent: {clusterId:'cluster-a',node:'node-a',loaded:true,loadedScope:{clusterId:'cluster-a',node:'node-a'},targetsJson:JSON.stringify([{id:'app',rules:[{id:'error',version:3,mode:'literal',pattern:'ERROR'}]}])}, rulesEditor: {visible:false}, apiCenter:{k8sLogAgentSource:'/source'}, $t:k=>k, $Message:{error:message=>assert.fail(message),success(){}}, loadAgent(){loaded=true}, request(method,url,body,done){saved=body;done()} }
+  const context = { agent: {clusterId:'cluster-a',node:'node-a',loaded:true,loadedScope:{clusterId:'cluster-a',node:'node-a'},targetsJson:JSON.stringify([{id:'app',rules:[{id:'error',version:3,mode:'literal',pattern:'ERROR'}]}])}, rulesEditor: {visible:false}, apiCenter:{k8sLogAgentSource:'/source'}, $t:k=>k, $Message:{error:message=>assert.fail(message),success(){}}, loadAgent(){loaded=true},loadAgents(){}, request(method,url,body,done){saved=body;done()} }
   Object.assign(context, {saveAgent:component.methods.saveAgent, saveLogRules:component.methods.saveLogRules})
   component.methods.editLogRules.call(context)
   const rule = context.rulesEditor.targets[0].rules[0]
   component.methods.addLogExclusion.call(context, rule)
   rule.exclude[0].pattern = 'EXPECTED_ERROR'
   context.saveLogRules()
+  assert.equal(saved,undefined,'applying rules must only update the draft')
+  context.saveAgent()
   assert.equal(saved.targets[0].rules[0].exclude[0].mode, 'literal')
   assert.equal(saved.targets[0].rules[0].exclude[0].pattern, 'EXPECTED_ERROR')
   assert.equal(JSON.parse(context.agent.targetsJson)[0].rules[0].exclude.length, 1)
@@ -25,7 +26,9 @@ test('log rule editor saves optional exclusions and reloads server-managed versi
 
 function loadComponent(name, globals = {}) {
   const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/' + name + '.vue'), 'utf8')
-  return vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export const', 'const').replace('export default', 'module.exports ='), { module: { exports: {} }, setTimeout: () => 0, clearTimeout() {}, ...globals })
+  const stateSource = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-view-state.js'), 'utf8')
+  const state = vm.runInNewContext(stateSource.replace(/export /g,'')+'\nmodule.exports={readViewState,writeViewState,resolveScope}',{module:{exports:{}}})
+  return vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm,'').replace('export const', 'const').replace('export default', 'module.exports ='), { module: { exports: {} }, setTimeout: () => 0, clearTimeout() {}, ...state,...globals })
 }
 
 test('reset defaults changes all ordinary log targets in the draft and saves only on request', () => {
@@ -198,6 +201,7 @@ test('agent list ignores responses from an older cluster selection', () => {
   const component = loadComponent('k8s-sources')
   const pending = []
   const context = {agent:{clusterId:'cluster-a'},clusters:[],agents:[],apiCenter:{k8sLogAgentList:'/list'},request(method,url,body,done){pending.push(done)}}
+  context.loadManagementList=component.methods.loadManagementList.bind(context)
   component.methods.loadAgents.call(context)
   context.agent.clusterId = 'cluster-b'
   component.methods.loadAgents.call(context)
@@ -236,8 +240,7 @@ test('alert rule list ignores obsolete namespace requests', () => {
 })
 
 test('log rule editor rejects empty exclusions without submitting configuration', () => {
-  const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-sources.vue'), 'utf8')
-  const component = vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export default', 'module.exports ='), { module: { exports: {} } })
+  const component = loadComponent('k8s-sources')
   let message
   const context = {rulesEditor:{visible:true,targets:[{rules:[{id:'error',mode:'literal',pattern:'ERROR',exclude:[{mode:'literal',pattern:''}]}]}]}, $t:k=>k, $Message:{error:value=>{message=value}}, saveAgent(){assert.fail('invalid configuration submitted')} }
   component.methods.saveLogRules.call(context)
@@ -246,8 +249,7 @@ test('log rule editor rejects empty exclusions without submitting configuration'
 })
 
 test('log rule editor rejects malformed target and exclusion JSON without crashing', () => {
-  const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-sources.vue'), 'utf8')
-  const component = vm.runInNewContext(source.match(/<script>([\s\S]*?)<\/script>/)[1].replace('export default', 'module.exports ='), { module: { exports: {} } })
+  const component = loadComponent('k8s-sources')
   for (const targetsJson of ['[null]', '[{"rules":"invalid"}]', '[{"rules":[{"exclude":"invalid"}]}]']) {
     let message
     const context = {agent:{targetsJson},rulesEditor:{visible:false},$t:k=>k,$Message:{error:value=>{message=value}}}
@@ -258,9 +260,7 @@ test('log rule editor rejects malformed target and exclusion JSON without crashi
 })
 
 test('editing an automatically registered agent explicitly overrides its address', () => {
-  const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-sources.vue'), 'utf8')
-  const script = source.match(/<script>([\s\S]*?)<\/script>/)[1]
-  const component = vm.runInNewContext(script.replace('export default', 'module.exports ='), { module: { exports: {} } })
+  const component = loadComponent('k8s-sources')
   const context = { endpoint: { clusterId: 'cluster-a', node: 'node-a', address: 'agent.example.test', port: 9105, manualOverride: false }, apiCenter: { k8sLogAgentEndpoint: '/endpoint' }, request(method, url, body) { assert.equal(method, 'PUT'); assert.equal(body.manualOverride, true) } }
   component.methods.saveEndpoint.call(context)
 })

@@ -40,6 +40,57 @@ func TestAlertOutboxBindsJSONAsText(t *testing.T) {
 	}
 }
 
+func TestImmediateAlertAndRecoveryPersistTheSameStartTime(t *testing.T) {
+	now := time.Date(2026, 1, 1, 0, 0, 0, 123456789, time.UTC)
+	var storedStart time.Time
+	var payloadStates []AlertState
+	recoveryRows := [][]driver.Value{{string(AlertFiring), "", "pod-a", nil, nil, int64(0), int64(1)}}
+	capturePayload := func(args []driver.NamedValue) {
+		var payload struct{ State AlertState }
+		if err := json.Unmarshal([]byte(args[6].Value.(string)), &payload); err != nil {
+			t.Fatal(err)
+		}
+		payloadStates = append(payloadStates, payload.State)
+	}
+	store, _ := newLogStoreTest(t, []logStoreStep{
+		{match: "FROM k8s_alert_state", err: sql.ErrNoRows},
+		{match: "INSERT INTO k8s_alert_state", check: func(args []driver.NamedValue) {
+			// DATETIME(6) cannot retain nanoseconds. Simulate the database
+			// round trip before evaluating a later recovery of this period.
+			storedStart = args[12].Value.(time.Time).Round(time.Microsecond)
+			recoveryRows[0][3] = storedStart
+			recoveryRows[0][4] = args[11].Value.(time.Time).Round(time.Microsecond)
+		}},
+		{match: "INSERT INTO k8s_alert_outbox", check: capturePayload},
+		{match: "FROM k8s_alert_state", columns: []string{"status", "unknown_from", "pod_uid", "started_at", "observed_at", "recovery_count", "state_version"}, rows: recoveryRows},
+		{match: "UPDATE k8s_alert_state SET"},
+		{match: "INSERT INTO k8s_alert_outbox", check: capturePayload},
+	})
+	input := AlertEvaluation{
+		Key:         AlertKey{RuleID: "cpu", ClusterID: "cluster-a", Namespace: "sit-a", PodName: "app-0", Container: "main"},
+		Rule:        AlertRule{ID: "cpu", ForSeconds: 0, RecoverAfter: 1, NotifyStrategyID: 1},
+		Observation: Observation{Valid: true, Violated: true, PodUID: "pod-a"},
+	}
+	alerts := AlertStore{DB: store.DB}
+	firing, err := alerts.EvaluateAndPersist(context.Background(), input, now)
+	if err != nil || firing.Event != AlertEventFiring {
+		t.Fatalf("immediate firing was not persisted: %+v %v", firing, err)
+	}
+	input.Observation.Violated = false
+	recovery, err := alerts.EvaluateAndPersist(context.Background(), input, now.Add(time.Minute))
+	if err != nil || recovery.Event != AlertEventRecovered {
+		t.Fatalf("recovery was not persisted: %+v %v", recovery, err)
+	}
+	if len(payloadStates) != 2 || !payloadStates[0].StartedAt.Equal(payloadStates[1].StartedAt) || !payloadStates[0].StartedAt.Equal(storedStart) {
+		t.Fatalf("firing, persisted state and recovery identify different periods: %+v", payloadStates)
+	}
+	for _, state := range payloadStates {
+		if state.StartedAt.Nanosecond()%1000 != 0 || state.ObservedAt.Nanosecond()%1000 != 0 {
+			t.Fatalf("outbox timestamps exceed database precision: %+v", state)
+		}
+	}
+}
+
 func TestAlertObjectEndpointDistinguishesClustersAndContainers(t *testing.T) {
 	key := AlertKey{ClusterID: "cluster-a", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "app", PodName: "app-0", Container: "app", RuleID: "cpu"}
 	first := key.Endpoint()

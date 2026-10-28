@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 type cmdbRoundTripper func(*http.Request) (*http.Response, error)
@@ -18,6 +19,9 @@ func TestCMDBClientQueriesGUIDAndReturnsDeployPath(t *testing.T) {
 		if r.URL.Path != "/wecmdb/api/v1/ci-data/query/app_instance" || r.Method != http.MethodPost {
 			return nil, errors.New("invalid CMDB request")
 		}
+		if r.Header.Get("Authorization") != "Bearer test" {
+			return nil, errors.New("missing CMDB authorization")
+		}
 		body := make([]byte, r.ContentLength)
 		r.Body.Read(body)
 		if !strings.Contains(string(body), `"name":"guid"`) || !strings.Contains(string(body), `"operator":"eq"`) {
@@ -25,9 +29,50 @@ func TestCMDBClientQueriesGUIDAndReturnsDeployPath(t *testing.T) {
 		}
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"app_instance-a","deploy_path":"/var/log/app"}]}}`)), Header: make(http.Header)}, nil
 	})
-	got, err := (CMDBClient{BaseURL: "https://cmdb.invalid", Token: func() string { return "Bearer test" }, HTTP: client}).QueryAppInstance(context.Background(), "app_instance-a")
+	got, err := (CMDBClient{BaseURL: "https://cmdb.invalid", Token: func(context.Context) (string, error) { return "Bearer test", nil }, HTTP: client}).QueryAppInstance(context.Background(), "app_instance-a")
 	if err != nil || got.DeployPath != "/var/log/app" {
 		t.Fatalf("unexpected result: %+v %v", got, err)
+	}
+}
+
+func TestCMDBClientCancelsTokenAcquisition(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	called := false
+	client := CMDBClient{
+		BaseURL: "https://cmdb.invalid",
+		Token: func(tokenCtx context.Context) (string, error) {
+			if tokenCtx != ctx {
+				t.Error("CMDB token acquisition did not receive the caller context")
+			}
+			<-tokenCtx.Done()
+			return "", tokenCtx.Err()
+		},
+		HTTP: cmdbRoundTripper(func(*http.Request) (*http.Response, error) {
+			called = true
+			return nil, errors.New("unexpected CMDB request")
+		}),
+	}
+	_, err := client.QueryAppInstance(ctx, "instance-a")
+	if !errors.Is(err, context.DeadlineExceeded) || called {
+		t.Fatalf("canceled token acquisition issued a query or lost cancellation: %v", err)
+	}
+}
+
+func TestCMDBClientReportsSafeTokenFailureReason(t *testing.T) {
+	client := CMDBClient{
+		BaseURL: "https://cmdb.invalid",
+		Token: func(context.Context) (string, error) {
+			return "", errors.New("private-response")
+		},
+		HTTP: cmdbRoundTripper(func(*http.Request) (*http.Response, error) {
+			t.Error("CMDB query sent despite token acquisition failure")
+			return nil, errors.New("unexpected CMDB request")
+		}),
+	}
+	_, err := client.QueryAppInstance(context.Background(), "instance-a")
+	if err == nil || err.Error() != "CMDB authentication failed" {
+		t.Fatalf("expected safe authentication failure, got %v", err)
 	}
 }
 

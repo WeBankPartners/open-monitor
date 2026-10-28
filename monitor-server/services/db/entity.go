@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -193,15 +194,30 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 		alarmId = alarms[0].Id
 		eventKeys = getCoreEventKey(alarmStatus, endpoint)
 	}
+	return sendCoreEvents(context.Background(), alarmId, alarmStatus, eventKeys, "")
+}
+
+var coreNotificationClient = &http.Client{Timeout: 10 * time.Second}
+
+func sendCoreEvents(ctx context.Context, alarmId int, alarmStatus string, eventKeys []string, eventID string) error {
 	if len(eventKeys) == 0 {
 		return fmt.Errorf("notify core event fail, event key is null")
 	} else {
 		log.Info(nil, log.LOGGER_APP, "Start to notify with event keys", zap.Strings("eventKeys", eventKeys))
 	}
 	for i, coreKey := range eventKeys {
-		keySplit := strings.Split(coreKey, "^")
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		keySplit := strings.SplitN(coreKey, "^", 2)
+		if len(keySplit) != 2 || keySplit[1] == "" {
+			return fmt.Errorf("invalid core notification callback")
+		}
 		var requestParam m.CoreNotifyRequest
 		requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%d", alarmId, alarmStatus, time.Now().Unix(), i)
+		if eventID != "" {
+			requestParam.EventSeqNo = fmt.Sprintf("%x", sha256.Sum256([]byte(eventID+"\x00"+coreKey)))
+		}
 		requestParam.EventType = "alarm"
 		requestParam.SourceSubSystem = "SYS_MONITOR"
 		requestParam.OperationKey = keySplit[1]
@@ -209,25 +225,38 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 		requestParam.OperationUser = ""
 		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
-		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
-		request.Header.Set("Authorization", m.GetCoreToken())
-		request.Header.Set("Content-Type", "application/json")
+		request, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
 		if err != nil {
 			log.Error(nil, log.LOGGER_APP, "Notify core event new request fail", zap.Error(err))
 			return err
 		}
-		res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+		token, err := m.GetCoreTokenContext(ctx)
+		if err != nil {
+			return err
+		}
+		request.Header.Set("Authorization", token)
+		request.Header.Set("Content-Type", "application/json")
+		res, err := coreNotificationClient.Do(request)
 		if err != nil {
 			log.Error(nil, log.LOGGER_APP, "Notify core event ctxhttp request fail", zap.Error(err))
 			return err
 		}
-		resultBody, _ := ioutil.ReadAll(res.Body)
+		resultBody, readErr := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if readErr != nil {
+			return readErr
+		}
+		if res.StatusCode < 200 || res.StatusCode >= 300 {
+			return fmt.Errorf("core notification HTTP status %d", res.StatusCode)
+		}
 		var resultObj m.CoreNotifyResult
 		err = json.Unmarshal(resultBody, &resultObj)
-		res.Body.Close()
 		if err != nil {
 			log.Error(nil, log.LOGGER_APP, "Notify core event unmarshal json body fail", zap.Error(err))
 			return err
+		}
+		if resultObj.Status != "OK" {
+			return fmt.Errorf("core notification rejected with status %q", resultObj.Status)
 		}
 		log.Info(nil, log.LOGGER_APP, fmt.Sprintf("result -> status:%s  message:%s", resultObj.Status, resultObj.Message))
 	}

@@ -57,6 +57,30 @@ test('old object responses and closed drawer responses cannot replace current su
   assert.equal(ctx.rows.length,0)
 })
 
+test('periodic refresh is paused while manual time and object changes replace sample queries', () => {
+  const {view,ctx,requests}=setup()
+  ctx.open()
+  ctx.periodicRefresh=true
+  ctx.range={start:1015,end:1915,step:300}
+  view.watch.queryKey.call(ctx)
+  requests[0].done({samples:[{observedAt:1800,labels:{preview:'ERROR first'}}],limited:false,limit:200})
+  assert.equal(ctx.rows.length,1,'periodic refresh must accept the pending response')
+  assert.equal(ctx.rows[0].labels.preview,'ERROR first')
+  assert.equal(ctx.loading,false)
+  assert.equal(requests.length,1)
+  view.watch.queryKey.call(ctx)
+  assert.equal(requests.length,1,'periodic refresh must remain paused after completion')
+  ctx.periodicRefresh=false
+  ctx.range={start:1500,end:1900,step:300}
+  view.watch.queryKey.call(ctx)
+  ctx.periodicRefresh=false
+  ctx.object={...ctx.object,podName:'app-1'}
+  view.watch.queryKey.call(ctx)
+  requests[2].done({samples:[{observedAt:1800,labels:{pod:'app-1'}}],limited:false,limit:200})
+  requests[1].done({samples:[{observedAt:1800,labels:{pod:'app-0'}}],limited:false,limit:200})
+  assert.equal(ctx.rows[0].labels.pod,'app-1')
+})
+
 test('empty summaries and query failures have different states and can be retried', () => {
   const {ctx,requests} = setup()
   ctx.open()

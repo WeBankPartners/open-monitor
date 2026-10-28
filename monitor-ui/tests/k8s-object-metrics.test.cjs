@@ -76,7 +76,9 @@ test('metric formatting distinguishes cores, memory, throughput and durations', 
 function loadComponent(file, globals = {}) {
   const source = fs.readFileSync(path.join(root, 'src/views/admin-config/other/' + file + '.vue'), 'utf8')
   const script = source.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm,'').replace('export default','module.exports =')
-  return vm.runInNewContext(script,{module:{exports:{}},setTimeout:()=>0,clearTimeout(){},K8sLogSamples:{},...globals})
+  const stateSource = fs.readFileSync(path.join(root, 'src/views/admin-config/other/k8s-view-state.js'), 'utf8')
+  const state = vm.runInNewContext(stateSource.replace(/export /g,'')+'\nmodule.exports={readViewState,writeViewState,resolveScope}',{module:{exports:{}}})
+  return vm.runInNewContext(script,{module:{exports:{}},setTimeout:()=>0,clearTimeout(){},K8sLogSamples:{},...state,...globals})
 }
 
 test('object mode comes from catalog and preserves history controls and raw alert states', () => {
@@ -146,7 +148,7 @@ test('automatic refresh stops when disabled or when the page is destroyed', () =
   const callbacks=[],cleared=[]
   const component = loadComponent('k8s-objects', {...loadHelpers(),K8sMetricChart:{},document:{hidden:false},setInterval(callback,delay){callbacks.push({callback,delay});return callbacks.length},clearInterval(id){cleared.push(id)}})
   let refreshes=0
-  const ctx = {autoRefresh:true,scrapeInterval:60,refresh(){refreshes++}}
+  const ctx = {autoRefresh:true,scrapeInterval:60,scope:{},filters:{},metricSelections:{},customRange:[],selected:null,refresh(){refreshes++}}
   component.methods.startRefresh.call(ctx)
   assert.equal(callbacks[0].delay,60000)
   callbacks[0].callback()
@@ -155,6 +157,107 @@ test('automatic refresh stops when disabled or when the page is destroyed', () =
   component.methods.startRefresh.call(ctx)
   assert.ok(cleared.includes(1))
   component.beforeDestroy.call(ctx)
+})
+
+function clock() {
+  let now=0, next=1
+  const tasks=new Map()
+  const schedule=(callback,delay,interval=0)=>{const id=next++;tasks.set(id,{callback,time:now+delay,interval});return id}
+  return {
+    get now() {return now},
+    setTimeout:(callback,delay)=>schedule(callback,delay),
+    clearTimeout:id=>tasks.delete(id),
+    setInterval:(callback,delay)=>schedule(callback,delay,delay),
+    clearInterval:id=>tasks.delete(id),
+    advance(end) {
+      while (tasks.size) {
+        const entry=[...tasks].filter(([,task])=>task.time<=end).sort((a,b)=>a[1].time-b[1].time || a[0]-b[0])[0]
+        if (!entry) {break}
+        const [id,task]=entry
+        now=task.time
+        if (task.interval) {task.time+=task.interval} else {tasks.delete(id)}
+        task.callback()
+      }
+      now=end
+    }
+  }
+}
+
+test('periodic refresh lets slow inventory and moving-range chart requests finish', () => {
+  const timer=clock(), helpers=loadHelpers(), requests={objects:0,history:0}
+  const page=loadComponent('k8s-objects',{...helpers,...timer,K8sMetricChart:{},document:{hidden:false},metricRange:(duration,interval)=>helpers.metricRange(duration,interval,10000+timer.now/1000)})
+  const chart=loadComponent('k8s-metric-chart',{...helpers,...timer})
+  const object={clusterId:'cluster-a',namespace:'ns-a',workloadType:'StatefulSet',workloadName:'app',podName:'app-0',container:'main'}
+  const parent={scope:{clusterId:'cluster-a',namespace:'ns-a'},rows:[],selected:object,filters:{workload:'',pod:'',instanceId:''},page:1,timePreset:'3600',scrapeInterval:15,autoRefresh:true,refreshToken:0,range:{start:6400,end:10000,step:15},apiCenter:{k8sObjects:'objects'},request(method,url,body,done){requests.objects++;timer.setTimeout(()=>done({objects:[object],state:'ACTIVE'}),20000)}}
+  let renders=0
+  const child={object,metric:{id:'cpu'},range:parent.range,refreshToken:0,apiCenter:{k8sMetricHistory:'history'},renderChart(){renders++},request(method,url,body,done){requests.history++;timer.setTimeout(()=>done({result:[{metric:{pod_uid:'current'},values:[[body.end,'2']]}]}),20000)}}
+  child.load=chart.methods.load.bind(child)
+  for (const [name,method] of Object.entries(page.methods)) {parent[name]=method.bind(parent)}
+  const refresh=parent.refresh
+  parent.refresh=automatic=>{
+    refresh(automatic)
+    Object.assign(child,{range:parent.range,refreshToken:parent.refreshToken,periodicRefresh:parent.periodicRefresh})
+    chart.watch.queryKey.call(child)
+  }
+  parent.loadObjects()
+  child.load()
+  parent.startRefresh()
+  timer.advance(20000)
+  assert.equal(parent.rows.length,1,'the first inventory response must remain current after a periodic tick')
+  assert.equal(parent.rows[0].podName,'app-0','the first inventory response must remain current after a periodic tick')
+  assert.equal(parent.loading,false)
+  assert.equal(renders,1,'a successful history response must not be discarded by periodic refresh')
+  assert.equal(child.series[0].data.some(point=>point[1]===2),true)
+  assert.equal(child.range.end,10015,'relative ranges must keep advancing during automatic refresh')
+  assert.deepEqual(requests,{objects:1,history:1})
+  timer.advance(50000)
+  assert.equal(renders,2,'polling must resume after the previous request finishes')
+  assert.deepEqual(requests,{objects:2,history:2})
+  assert.equal(parent.loading,false)
+})
+
+test('periodic inventory refresh preserves its timeout and changing scope still replaces the request', () => {
+  const timer=clock(), pending=[]
+  const page=loadComponent('k8s-objects',{...loadHelpers(),...timer,K8sMetricChart:{}})
+  const ctx={scope:{clusterId:'cluster-a',namespace:'ns-a'},rows:[],selected:null,filters:{workload:'',pod:'',instanceId:''},page:1,apiCenter:{k8sObjects:'/objects'},request(method,url,body,done){pending.push(done)}}
+  page.methods.loadObjects.call(ctx)
+  timer.advance(15000)
+  page.methods.loadObjects.call(ctx,false,true)
+  timer.advance(30000)
+  assert.equal(ctx.inventoryFailed,true,'periodic ticks must not postpone the original deadline')
+  assert.equal(ctx.loading,false)
+  page.methods.loadObjects.call(ctx,false,true)
+  ctx.scope.namespace='ns-b'
+  page.methods.loadObjects.call(ctx,false,true)
+  pending[2]({objects:[{podName:'current'}],state:'ACTIVE'})
+  pending[1]({objects:[{podName:'obsolete'}],state:'DEGRADED'})
+  assert.equal(ctx.rows[0].podName,'current')
+  assert.equal(ctx.state,'ACTIVE')
+})
+
+test('chart time changes and object changes replace pending periodic requests', () => {
+  const chart=loadComponent('k8s-metric-chart',loadHelpers()), pending=[]
+  const page=loadComponent('k8s-objects',{...loadHelpers(),K8sMetricChart:{}})
+  const ctx={object:{clusterId:'cluster-a',namespace:'ns-a',podName:'app-0',container:'main'},metric:{id:'cpu'},range:{start:0,end:60,step:30},apiCenter:{k8sMetricHistory:'/history'},renderChart(){},request(method,url,body,done){pending.push(done)}}
+  ctx.load=chart.methods.load.bind(ctx)
+  ctx.load()
+  ctx.periodicRefresh=true
+  ctx.range={start:15,end:75,step:30}
+  chart.watch.queryKey.call(ctx)
+  ctx.timePreset='custom'
+  ctx.customRange=[new Date(60000),new Date(120000)]
+  ctx.scrapeInterval=30
+  page.methods.applyRange.call(ctx)
+  chart.watch.queryKey.call(ctx)
+  ctx.periodicRefresh=true
+  ctx.object={...ctx.object,podName:'app-1'}
+  chart.watch.queryKey.call(ctx)
+  assert.equal(pending.length,3,'periodic ticks must not replace a pending request, but time and object changes must')
+  pending[2]({result:[{metric:{pod:'app-1'},values:[[120,'3']]}]})
+  pending[1]({result:[{metric:{pod:'app-0'},values:[[120,'99']]}]})
+  pending[0]({result:[{metric:{pod:'app-0'},values:[[60,'99']]}]})
+  assert.equal(ctx.series[0].labels.pod,'app-1')
+  assert.equal(ctx.series[0].data[2][1],3)
 })
 
 test('manual refresh reissues a chart query even for a fixed custom time range', () => {
@@ -241,7 +344,7 @@ test('closing the expanded chart before the next tick does not create a detached
 test('source list failures can be retried and obsolete source responses cannot reset scope', () => {
   const component=loadComponent('k8s-objects',{...loadHelpers(),K8sMetricChart:{}})
   const requests=[]
-  const ctx={$route:{query:{clusterId:'cluster-a',namespace:'sit-a'}},scope:{},request(method,url,body,done,config,fail){requests.push({done,fail})},apiCenter:{k8sClusterList:'/clusters',k8sNamespaceList:'/namespaces'},clusterChanged(namespace){this.scope.namespace=namespace}}
+  const ctx={$route:{query:{clusterId:'cluster-a',namespace:'sit-a'}},scope:{},request(method,url,body,done,config,fail){requests.push({done,fail})},apiCenter:{k8sClusterList:'/clusters',k8sNamespaceList:'/namespaces'},loadObjects(){}}
   component.methods.loadSources.call(ctx)
   requests[0].fail()
   assert.equal(ctx.sourcesFailed,true)

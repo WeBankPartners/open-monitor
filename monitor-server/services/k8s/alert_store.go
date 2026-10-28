@@ -227,6 +227,8 @@ func (s AlertStore) EvaluateAndPersist(ctx context.Context, input AlertEvaluatio
 }
 
 func (s AlertStore) evaluateAndPersist(ctx context.Context, input AlertEvaluation, now time.Time, retry bool) (Transition, error) {
+	// Match DATETIME(6) before generating either state or the outbox payload.
+	now = now.Truncate(time.Microsecond)
 	if s.DB == nil {
 		return Transition{}, errors.New("alert store database is unavailable")
 	}

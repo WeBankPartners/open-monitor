@@ -199,9 +199,30 @@ type pluginInterfaceResultOutput struct {
 	Outputs []string `json:"outputs"`
 }
 
+func isPublicRequest(c *gin.Context) bool {
+	switch c.Request.Method + " " + c.FullPath() {
+	case http.MethodGet + " " + m.UrlPrefix + "/api/v1/agent/export/ping/source",
+		http.MethodPost + " " + m.UrlPrefix + "/api/v1/agent/export/custom/endpoint/add",
+		http.MethodPost + " " + m.UrlPrefix + "/api/v1/alarm/problem/query",
+		http.MethodGet + " " + m.UrlPrefix + "/api/v2/alarm/endpoint_group/query",
+		http.MethodPost + " " + m.UrlPrefix + "/api/v2/alarm/strategy/query",
+		http.MethodGet + " " + m.UrlPrefix + "/api/v2/monitor/endpoint/query",
+		http.MethodGet + " " + m.UrlPrefix + "/api/v2/config/type/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/alarm/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/alarm_event/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/endpoint/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/service_group/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/endpoint_group/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/monitor_type/query",
+		http.MethodPost + " " + m.UrlPrefix + "/entities/log_monitor_template/query":
+		return true
+	}
+	return false
+}
+
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.URL.Path, "/export/ping/source") || strings.Contains(c.Request.URL.Path, "/agent/export/custom") || strings.Contains(c.Request.URL.Path, "/query") {
+		if isPublicRequest(c) {
 			c.Next()
 		} else {
 			if m.Config().Http.Session.Enable != "true" {

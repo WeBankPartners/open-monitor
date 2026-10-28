@@ -3,9 +3,13 @@
     <Button icon="ios-document-outline" @click="open">{{$t('m_k8s_log_samples')}}</Button>
     <Drawer v-model="visible" :width="85" :title="$t('m_k8s_log_samples')" @on-visible-change="visibleChanged">
       <p class="sample-context">{{object.clusterId}} / {{object.namespace}} / {{object.podName}} / {{object.container}}</p>
-      <p class="sample-context">{{new Date(range.start * 1000).toLocaleString()}} — {{new Date(range.end * 1000).toLocaleString()}}</p>
+      <p class="sample-context">{{new Date(displayRange.start * 1000).toLocaleString()}} — {{new Date(displayRange.end * 1000).toLocaleString()}}</p>
       <Alert>{{$t('m_k8s_log_samples_help')}}</Alert>
-      <Button :loading="loading" @click="load">{{$t('m_refresh')}}</Button>
+      <div class="sample-toolbar">
+        <Button :loading="loading" @click="load()">{{$t('m_refresh')}}</Button>
+        <span>{{$t('m_k8s_samples_refresh_paused')}}</span>
+        <span v-if="updatedAt">{{$t('m_k8s_updated_at')}}: {{new Date(updatedAt).toLocaleString()}}</span>
+      </div>
       <Alert v-if="failed" type="error" class="sample-message">{{$t('m_k8s_log_samples_failed')}}</Alert>
       <Alert v-else-if="!loading && !rows.length" class="sample-message">{{$t('m_k8s_log_samples_empty')}}</Alert>
       <Alert v-if="limited" type="warning" class="sample-message">{{$t('m_k8s_log_samples_limited', {limit})}}</Alert>
@@ -39,7 +43,8 @@ export default {
   props: {
     object: Object,
     range: Object,
-    refreshToken: Number
+    refreshToken: Number,
+    periodicRefresh: Boolean
   },
   data() {
     return {
@@ -51,7 +56,10 @@ export default {
       limited: false,
       limit: 200,
       rows: [],
-      page: 1
+      page: 1,
+      loadedRange: null,
+      requestedRange: null,
+      updatedAt: 0
     }
   },
   computed: {
@@ -59,10 +67,11 @@ export default {
       const o = this.object
       return JSON.stringify([o.clusterId,o.namespace,o.workloadType,o.workloadName,o.podName,o.container,this.range.start,this.range.end,this.refreshToken])
     },
-    pageRows() { return this.rows.slice((this.page-1)*5, this.page*5) }
+    pageRows() { return this.rows.slice((this.page-1)*5, this.page*5) },
+    displayRange() { return this.loadedRange || this.requestedRange || this.range }
   },
   watch: {
-    queryKey() { if (this.visible) {this.load()} }
+    queryKey() { if (this.visible && this.periodicRefresh !== true) {this.load()} }
   },
   beforeDestroy() {
     this._destroyed = true
@@ -80,12 +89,21 @@ export default {
         this.loading = false
       }
     },
-    load() {
+    load(periodic = false) {
       if (!this.visible || this._destroyed) {return}
+      const {
+        clusterId, namespace, workloadType, workloadName, podName, container
+      } = this.object
+      const scopeKey = JSON.stringify([clusterId,namespace,workloadType,workloadName,podName,container])
+      if (periodic === true && this.loading && this._scopeKey === scopeKey) {return}
+      this._scopeKey = scopeKey
       const generation = this._generation = (this._generation || 0) + 1
       clearTimeout(this._deadline)
       this.rows = []
       this.page = 1
+      this.loadedRange = null
+      this.requestedRange = {...this.range}
+      this.updatedAt = 0
       this.loading = true
       this.failed = false
       this.limited = false
@@ -97,13 +115,12 @@ export default {
         this.loading = false
         this.failed = failed
         this.rows = failed ? [] : data.samples || []
+        this.loadedRange = failed ? null : {...this.requestedRange}
+        this.updatedAt = failed ? 0 : Date.now()
         this.limited = !failed && data.limited === true
         this.limit = !failed && data.limit || 200
       }
       this._deadline = setTimeout(() => finish(null, true), 30000)
-      const {
-        clusterId, namespace, workloadType, workloadName, podName, container
-      } = this.object
       this.request('POST', this.apiCenter.k8sLogSamples, {
         clusterId,
         namespace,
@@ -138,6 +155,7 @@ export default {
 .log-samples { margin:0 0 12px; }
 .sample-context, .sample-location { overflow-wrap:anywhere; margin-bottom:8px; }
 .sample-message { margin-top:12px; }
+.sample-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; color:#808695; }
 .sample-list { position:relative; min-height:60px; margin-top:12px; }
 .sample-card { margin-bottom:12px; }
 .sample-heading { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:8px; }

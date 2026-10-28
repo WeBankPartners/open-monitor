@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
+	"xorm.io/xorm"
 )
 
 func doInsertOrUpdateAlarm(alarmObj *models.AlarmHandleObj) (err error) {
@@ -25,6 +26,10 @@ func doInsertOrUpdateAlarm(alarmObj *models.AlarmHandleObj) (err error) {
 		}
 		session.Close()
 	}()
+	return insertOrUpdateAlarm(session, alarmObj)
+}
+
+func insertOrUpdateAlarm(session *xorm.Session, alarmObj *models.AlarmHandleObj) (err error) {
 	if alarmObj.Id > 0 {
 		if alarmObj.Status != "firing" {
 			updateExecResult, updateExecErr := session.Exec("UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'",

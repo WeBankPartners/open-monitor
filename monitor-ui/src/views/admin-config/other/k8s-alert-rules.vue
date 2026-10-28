@@ -21,21 +21,24 @@
         <Button type="success" :disabled="sourcesLoading || !scope.namespace" @click="openCreate">{{$t('m_button_add')}}</Button>
       </div>
       <Alert v-if="sourcesFailed" type="error" style="margin-top:12px">{{$t('m_k8s_sources_failed')}} <Button size="small" @click="loadSources">{{$t('m_refresh')}}</Button></Alert>
+      <Alert v-else-if="unavailableScope" type="warning" style="margin-top:12px">{{$t('m_k8s_scope_unavailable', {scope: unavailableScope})}}</Alert>
       <Alert v-else-if="!sourcesLoading && !scope.namespace" style="margin-top:12px">{{$t('m_k8s_no_namespace')}}</Alert>
-      <Table border :columns="columns" :data="rules" style="margin-top:16px" />
+      <Alert v-if="rulesFailed" type="error" style="margin-top:12px">{{$t('m_k8s_rule_list_failed')}} <Button size="small" @click="loadRules">{{$t('m_refresh')}}</Button></Alert>
+      <Table border :loading="rulesLoading || sourcesLoading" :columns="columns" :data="rules" style="margin-top:16px" />
     </Card>
     <Modal v-model="editor.visible" :title="editor.editing ? $t('m_k8s_edit_alert_rule') : $t('m_k8s_add_alert_rule')" :mask-closable="false">
-      <Form :label-width="130">
+      <Form :label-width="130" class="rule-editor-form">
         <FormItem :label="$t('m_k8s_rule_id')"><Input v-model.trim="editor.rule.ruleId" :disabled="editor.editing" /></FormItem>
-        <FormItem :label="$t('m_k8s_metric')"><Select v-model="editor.rule.metric"><Option v-for="metric in metrics" :key="metric" :value="metric">{{metric}}</Option></Select></FormItem>
+        <FormItem :label="$t('m_k8s_metric')"><Select v-model="editor.rule.metric" filterable><Option v-for="metric in metrics" :key="metric" :value="metric">{{metricLabel(metric)}}</Option></Select></FormItem>
         <FormItem :label="$t('m_k8s_operator')"><Select v-model="editor.rule.operator"><Option v-for="operator in operators" :key="operator" :value="operator">{{operator}}</Option></Select></FormItem>
-        <FormItem :label="$t('m_k8s_threshold')"><InputNumber v-model="editor.rule.threshold" :step="0.1" style="width:100%" /></FormItem>
+        <FormItem :label="$t('m_k8s_threshold')"><InputNumber v-model="editor.rule.threshold" :step="0.1" style="width:100%" /><p class="field-help">{{thresholdHelp}}</p></FormItem>
+        <p class="selector-help">{{$t('m_k8s_rule_selector_help')}}</p>
         <FormItem :label="$t('m_k8s_workload_type')"><Input v-model.trim="editor.rule.workloadType" /></FormItem>
         <FormItem :label="$t('m_k8s_workload_name')"><Input v-model.trim="editor.rule.workloadName" /></FormItem>
         <FormItem :label="$t('m_k8s_pod_name')"><Input v-model.trim="editor.rule.podName" /></FormItem>
         <FormItem :label="$t('m_k8s_container')"><Input v-model.trim="editor.rule.container" /></FormItem>
-        <FormItem :label="$t('m_k8s_for_seconds')"><InputNumber v-model="editor.rule.forSeconds" :min="0" style="width:100%" /></FormItem>
-        <FormItem :label="$t('m_k8s_recover_after')"><InputNumber v-model="editor.rule.recoverAfter" :min="0" style="width:100%" /></FormItem>
+        <FormItem :label="$t('m_k8s_for_seconds')"><InputNumber v-model="editor.rule.forSeconds" :min="0" style="width:100%" /><p class="field-help">{{$t('m_k8s_for_seconds_help')}}</p></FormItem>
+        <FormItem :label="$t('m_k8s_recover_after')"><InputNumber v-model="editor.rule.recoverAfter" :min="0" style="width:100%" /><p class="field-help">{{$t('m_k8s_recover_after_help')}}</p></FormItem>
         <FormItem :label="$t('m_k8s_notify_strategy')"><InputNumber v-model="editor.rule.notifyStrategyId" :min="0" style="width:100%" /></FormItem>
         <FormItem :label="$t('m_enabled')"><Checkbox v-model="editor.rule.enabled" /></FormItem>
       </Form>
@@ -45,6 +48,8 @@
 </template>
 
 <script>
+import {readViewState, writeViewState, resolveScope} from './k8s-view-state'
+
 export const custom_api_enum = [
   { k8sAlertStates: 'get' },
   { k8sAlertRules: 'post' },
@@ -63,6 +68,11 @@ export default {
       sourcesFailed: false,
       catalogFailed: false,
       alertEvaluationEnabled: null,
+      catalog: [],
+      countWindow: 300,
+      unavailableScope: '',
+      rulesLoading: false,
+      rulesFailed: false,
       scope: { clusterId: '', namespace: '' },
       rules: [],
       metrics: ['log_matches', 'log_health', 'cpu', 'memory', 'network_receive', 'network_transmit', 'block_read', 'block_write', 'cpu_throttled', 'cpu_throttled_periods', 'cpu_request', 'cpu_limit', 'memory_request', 'memory_limit', 'restart_count', 'ready', 'oom_events', 'memory_failcnt', 'container_ready', 'last_termination_oom'],
@@ -72,12 +82,18 @@ export default {
   },
   computed: {
     namespaceOptions() { return this.namespaces.filter(row => row.clusterId === this.scope.clusterId && row.enabled) },
+    thresholdHelp() {
+      const metric = this.catalog.find(row=>row.id === this.editor.rule.metric)
+      if (!metric) return this.$t('m_k8s_threshold_catalog_help')
+      const key = metric.id === 'cpu_throttled' ? 'throttled' : ({cores:'cores',bytes:'bytes','bytes/s':'throughput','events/window':'window','events/s':'rate',count:'count',state:'state'})[metric.unit]
+      return this.$t('m_k8s_threshold_'+(key || 'raw')+'_help',{seconds:this.countWindow,unit:metric.unit})
+    },
     columns() {
       return [
         { title: this.$t('m_k8s_rule_id'), key: 'ruleId' },
-        { title: this.$t('m_k8s_metric'), key: 'metric' },
+        { title: this.$t('m_k8s_metric'), minWidth:180, render:(h,p)=>h('span',this.metricLabel(p.row.metric)) },
         { title: this.$t('m_k8s_operator'), key: 'operator' },
-        { title: this.$t('m_k8s_threshold'), key: 'threshold' },
+        { title: this.$t('m_k8s_threshold'), minWidth:120, render:(h,p)=>h('span',String(p.row.threshold)+(this.metricUnit(p.row.metric) ? ' '+this.metricUnit(p.row.metric) : '')) },
         { title: this.$t('m_k8s_version'), key: 'version' },
         { title: this.$t('m_enabled'), key: 'enabled', render: (h, params) => h('span', {}, params.row.enabled ? this.$t('m_yes') : this.$t('m_no')) },
         { title: this.$t('m_actions'), key: 'actions', width: 150, render: (h, params) => h('div', [
@@ -92,8 +108,11 @@ export default {
     this._destroyed = true
     clearTimeout(this._sourcesDeadline)
     clearTimeout(this._catalogDeadline)
+    clearTimeout(this._rulesDeadline)
   },
   methods: {
+    metricUnit(id) { return (this.catalog.find(row=>row.id === id) || {}).unit || '' },
+    metricLabel(id) { const unit = this.metricUnit(id); return this.$t('m_k8s_metric_'+id)+(unit ? ' ('+unit+')' : '') },
     loadCatalog() {
       const generation = this._catalogGeneration = (this._catalogGeneration || 0) + 1
       clearTimeout(this._catalogDeadline)
@@ -105,6 +124,7 @@ export default {
         clearTimeout(this._catalogDeadline)
         this.catalogFailed = failed
         this.alertEvaluationEnabled = !failed && typeof data.alertEvaluationEnabled === 'boolean' ? data.alertEvaluationEnabled : null
+        if (!failed) {this.catalog = data.metrics || [];this.countWindow = data.countWindowSeconds || 300}
       }
       this._catalogDeadline = setTimeout(() => finish(null,true),30000)
       this.request('GET', this.apiCenter.k8sMetricCatalog, {}, data => finish(data,false), {isNeedloading: false}, () => finish(null,true))
@@ -116,6 +136,11 @@ export default {
       this.sourcesFailed = false
       this.rules = []
       this._rulesRequestGeneration = (this._rulesRequestGeneration || 0) + 1
+      clearTimeout(this._rulesDeadline)
+      this.rulesLoading=false
+      const remembered = readViewState('scope'), routeQuery = (this.$route || {}).query || {}
+      const query = {...remembered, ...routeQuery}
+      if (routeQuery.clusterId && routeQuery.clusterId !== remembered.clusterId && !routeQuery.namespace) query.namespace = ''
       let finished = false
       const current = () => !this._destroyed && this._sourcesGeneration === generation && !finished
       const fail = () => {
@@ -139,12 +164,16 @@ export default {
           this.sourcesLoading = false
           this.clusters = (clusters || []).filter(row => row.enabled)
           this.namespaces = namespaces || []
-          this.scope.clusterId = this.clusters.some(row => row.clusterId === this.scope.clusterId) ? this.scope.clusterId : ((this.clusters[0] || {}).clusterId || '')
-          this.clusterChanged(this.scope.namespace)
+          const resolved=resolveScope(this.clusters,this.namespaces,query)
+          this.unavailableScope=resolved.unavailable ? [query.clusterId,query.namespace].filter(Boolean).join(' / ') : ''
+          this.scope={clusterId:resolved.clusterId,namespace:resolved.namespace}
+          if (this.scope.namespace) writeViewState('scope',this.scope)
+          this.loadRules()
         }, {isNeedloading: false}, fail)
       }, {isNeedloading: false}, fail)
     },
     clusterChanged(namespace) {
+      this.unavailableScope=''
       this.scope.namespace = this.namespaceOptions.some(row => row.namespace === namespace) ? namespace : ((this.namespaceOptions[0] || {}).namespace || '')
       this.loadRules()
     },
@@ -152,12 +181,24 @@ export default {
       const scope = Object.assign({}, this.scope)
       const generation = this._rulesRequestGeneration = (this._rulesRequestGeneration || 0) + 1
       this.rules = []
+      this.rulesLoading=false
+      this.rulesFailed=false
+      clearTimeout(this._rulesDeadline)
       if (this.sourcesLoading || !scope.clusterId || !scope.namespace) {return}
+      this.unavailableScope=''
+      writeViewState('scope',scope)
+      this.rulesLoading=true
+      let finished=false
+      const finish=(data,failed)=>{
+        if (this._destroyed || this._rulesRequestGeneration !== generation || finished) return
+        finished=true;clearTimeout(this._rulesDeadline)
+        this.rulesLoading=false;this.rulesFailed=failed
+        if (!failed) this.rules=data || []
+      }
+      this._rulesDeadline=setTimeout(()=>finish(null,true),30000)
       this.request('GET', this.apiCenter.k8sAlertRules, scope, data => {
-        if (!this._destroyed && this._rulesRequestGeneration === generation && this.scope.clusterId === scope.clusterId && this.scope.namespace === scope.namespace) {
-          this.rules = data || []
-        }
-      })
+        finish(data,false)
+      }, {isNeedloading:false}, ()=>finish(null,true))
     },
     emptyRule() {
       return { ruleId: '', metric: 'cpu', operator: '>', threshold: 0, workloadType: '', workloadName: '', podName: '', container: '', forSeconds: 0, recoverAfter: 3, notifyStrategyId: 0, enabled: true, version: 0 }
@@ -184,6 +225,9 @@ export default {
 }
 </script>
 <style scoped>
+.rule-editor-form { max-height:65vh; overflow-y:auto; padding-right:12px; }
+.field-help { margin-top:6px; line-height:1.6; color:#808695; }
+.selector-help { margin:0 0 16px; color:#808695; }
 .scope-form {
   display: flex;
   flex-wrap: wrap;

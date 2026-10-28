@@ -1,7 +1,9 @@
-export function filterObjects(rows, filters) {
+export function filterObjects(rows, filters, alertsActive = true) {
   return rows.filter(row => (!filters.workload || row.workloadName === filters.workload)
     && (!filters.pod || (row.podName || '').includes(filters.pod.trim()))
-    && (!filters.instanceId || (row.instanceId || '').includes(filters.instanceId.trim())))
+    && (!filters.instanceId || (row.instanceId || '').includes(filters.instanceId.trim()))
+    && (!filters.onlyAbnormal || (row.statusKnown && (!row.ready || row.restartCount > 0))
+      || (alertsActive && (row.alerts || []).some(alert => ['pending','firing'].includes(alert.Status)))))
 }
 
 export function metricRange(duration, interval, now = Math.floor(Date.now() / 1000)) {

@@ -82,6 +82,52 @@ func (r fixedLogResolver) Resolve(context.Context, Container) (LogTarget, error)
 	return r.target, nil
 }
 
+type contextLogResolver struct {
+	deadline time.Time
+	wait     bool
+}
+
+func (r *contextLogResolver) Resolve(ctx context.Context, _ Container) (LogTarget, error) {
+	r.deadline, _ = ctx.Deadline()
+	if r.wait {
+		<-ctx.Done()
+		return LogTarget{}, ctx.Err()
+	}
+	return LogTarget{}, errors.New("CMDB unavailable")
+}
+
+func TestPersistentScanBoundsLogTargetResolution(t *testing.T) {
+	resolver := &contextLogResolver{}
+	ConfigureLogTargetResolver(resolver)
+	t.Cleanup(func() { ConfigureLogTargetResolver(nil) })
+	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 1}}}
+	source := persistentSource{Persistence: persistence, Registration: Registration{ClusterID: "cluster-a", Namespace: "sit-a"}, DiscoverySource: &snapshotSource{snapshot: &Snapshot{Containers: []Container{{Key: ObjectKey{ClusterID: "cluster-a", Namespace: "sit-a", PodName: "app-0", ContainerName: "main"}, Node: "node-a", InstanceID: "instance-a"}}}}}
+	before := time.Now()
+	if _, err := source.Snapshot(context.Background(), "cluster-a"); err != nil {
+		t.Fatal(err)
+	}
+	if resolver.deadline.IsZero() || resolver.deadline.Before(before) || resolver.deadline.After(before.Add(91*time.Second)) {
+		t.Fatalf("log target resolution has no bounded scan deadline: %s", resolver.deadline)
+	}
+}
+
+func TestPersistentScanTimeoutPreservesLogAgentConfiguration(t *testing.T) {
+	resolver := &contextLogResolver{wait: true}
+	ConfigureLogTargetResolver(resolver)
+	t.Cleanup(func() { ConfigureLogTargetResolver(nil) })
+	target := LogTarget{ID: "cmdb-app", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", Container: "app", PodUID: "pod-old", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}
+	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 4, Targets: []LogTarget{target}}}}
+	source := persistentSource{Persistence: persistence, Registration: Registration{ClusterID: "cluster-a", Namespace: "sit-a"}, DiscoverySource: &snapshotSource{snapshot: &Snapshot{Containers: []Container{{Key: ObjectKey{ClusterID: "cluster-a", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", ContainerName: "app"}, Node: "node-b", PodUID: "pod-new", InstanceID: "instance-a"}}}}}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if _, err := source.Snapshot(ctx, "cluster-a"); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("CMDB timeout did not end reconciliation: %v", err)
+	}
+	if persistence.saved != 0 || len(persistence.configs) != 1 || persistence.configs["node-a"].Version != 4 || !sameLogTargets(persistence.configs["node-a"].Targets, []LogTarget{target}) {
+		t.Fatalf("timed out resolution changed existing log configuration: %+v", persistence.configs)
+	}
+}
+
 func TestPersistentScanIncrementsVersionForAutomaticTargetChange(t *testing.T) {
 	old := LogTarget{ID: "cmdb-app", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", Container: "app", PodUID: "old-pod", WorkloadUID: "old-workload", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}
 	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 4, Targets: []LogTarget{old}}}}

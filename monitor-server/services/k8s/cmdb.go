@@ -17,7 +17,7 @@ type AppInstance struct {
 }
 type CMDBClient struct {
 	BaseURL string
-	Token   func() string
+	Token   func(context.Context) (string, error)
 	HTTP    interface {
 		Do(*http.Request) (*http.Response, error)
 	}
@@ -42,7 +42,14 @@ func (c CMDBClient) QueryAppInstance(ctx context.Context, guid string) (AppInsta
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if c.Token != nil {
-		req.Header.Set("Authorization", c.Token())
+		token, tokenErr := c.Token(ctx)
+		if tokenErr != nil {
+			if ctx.Err() != nil {
+				return AppInstance{}, ctx.Err()
+			}
+			return AppInstance{}, errors.New("CMDB authentication failed")
+		}
+		req.Header.Set("Authorization", token)
 	}
 	h := c.HTTP
 	if h == nil {

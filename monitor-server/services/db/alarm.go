@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -1811,8 +1812,105 @@ func NotifyAlarmWithError(alarmObj *m.AlarmHandleObj) error {
 			return err
 		}
 	}
+	return sendAlarmNotification(context.Background(), alarmObj, "")
+}
+
+// NotifyOutboxAlarm binds each durable event to its alarm before delivery. The
+// binding and lifecycle change commit together, so a transport retry or restart
+// cannot lose the recovery's alarm ID or close a later firing alarm.
+func NotifyOutboxAlarm(ctx context.Context, alarmObj *m.AlarmHandleObj, eventID string) error {
+	if alarmObj == nil || eventID == "" {
+		return errors.New("alarm and outbox event are required")
+	}
+	if err := persistOutboxAlarm(ctx, alarmObj, eventID); err != nil {
+		return err
+	}
+	return sendAlarmNotification(ctx, alarmObj, eventID)
+}
+
+func persistOutboxAlarm(ctx context.Context, alarmObj *m.AlarmHandleObj, eventID string) error {
+	session := x.NewSession()
+	defer session.Close()
+	session.Context(ctx)
+	if err := session.Begin(); err != nil {
+		return err
+	}
+	defer session.Rollback()
+	var event struct{ Payload string }
+	found, err := session.SQL("SELECT payload FROM k8s_alert_outbox WHERE event_id=? FOR UPDATE", eventID).Get(&event)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return errors.New("notification outbox event not found")
+	}
+	var binding struct {
+		AlarmID int `json:"alarm_id"`
+		State   struct {
+			StartedAt  time.Time
+			ObservedAt time.Time
+		} `json:"state"`
+	}
+	if err = json.Unmarshal([]byte(event.Payload), &binding); err != nil {
+		return err
+	}
+	if !binding.State.StartedAt.IsZero() {
+		// Old pending payloads may still contain nanoseconds. Match the
+		// default MySQL DATETIME(6) rounding used by their persisted state.
+		alarmObj.Start = binding.State.StartedAt.Round(time.Microsecond)
+		alarmObj.End = binding.State.ObservedAt
+		// Separate consecutive firing periods even if their outbox events are
+		// delivered out of order. Firing and recovery retain the same start.
+		alarmObj.AlarmStrategy = fmt.Sprintf("%x", sha256.Sum256([]byte(alarmObj.Endpoint+"\x00"+alarmObj.SMetric+"\x00"+alarmObj.Start.UTC().Format(time.RFC3339Nano))))
+	}
+	if binding.AlarmID > 0 {
+		alarmObj.Id = binding.AlarmID
+		return session.Commit()
+	}
+	var rows []*m.AlarmTable
+	if err = session.SQL("SELECT id FROM alarm WHERE endpoint=? AND strategy_id=? AND s_metric=? AND alarm_strategy=? ORDER BY id DESC LIMIT 1", alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.SMetric, alarmObj.AlarmStrategy).Find(&rows); err != nil {
+		return err
+	}
+	if len(rows) == 0 && alarmObj.AlarmStrategy != "" {
+		// Reuse an active alarm created by a version without event bindings.
+		if err = session.SQL("SELECT id FROM alarm WHERE endpoint=? AND strategy_id=? AND s_metric=? AND status='firing' AND (alarm_strategy IS NULL OR alarm_strategy='') AND start<=? ORDER BY id DESC LIMIT 1", alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.SMetric, alarmObj.End.Format(m.DatetimeFormat)).Find(&rows); err != nil {
+			return err
+		}
+	}
+	alarmObj.Id = 0
+	if len(rows) > 0 {
+		alarmObj.Id = rows[0].Id
+	}
+	if alarmObj.Status == "ok" && alarmObj.Id == 0 {
+		return errors.New("firing alarm record not found")
+	}
+	if alarmObj.Status == "ok" || alarmObj.Id == 0 {
+		if err = insertOrUpdateAlarm(session, alarmObj); err != nil {
+			return err
+		}
+	}
+	if _, err = session.Exec("UPDATE k8s_alert_outbox SET payload=JSON_SET(payload,'$.alarm_id',?) WHERE event_id=?", alarmObj.Id, eventID); err != nil {
+		return err
+	}
+	return session.Commit()
+}
+
+func sendAlarmNotification(ctx context.Context, alarmObj *m.AlarmHandleObj, eventID string) error {
+	if eventID != "" && alarmObj.Status == "firing" {
+		var current m.AlarmTable
+		found, err := x.Context(ctx).SQL("SELECT status FROM alarm WHERE id=?", alarmObj.Id).Get(&current)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errors.New("notification alarm not found")
+		}
+		if current.Status != "firing" {
+			return nil
+		}
+	}
 	if m.CoreUrl != "" {
-		return NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.Id, 0)
+		return sendCoreEvents(ctx, alarmObj.Id, alarmObj.Status, getCoreEventKey(alarmObj.Status, alarmObj.Endpoint), eventID)
 	}
 	if !m.Config().Alert.Enable {
 		return nil

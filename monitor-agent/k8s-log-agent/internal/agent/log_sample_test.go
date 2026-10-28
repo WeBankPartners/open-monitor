@@ -427,6 +427,62 @@ func TestLogSampleWaitsForCompleteLineAndCommittedCursor(t *testing.T) {
 	}
 }
 
+func TestLogSampleReadErrorKeepsCommittedCursor(t *testing.T) {
+	first, second := "ERROR first\n", "ERROR second\n"
+	a, path, _ := sampleTestAgent(t, first)
+	if err := a.Scan(); err != nil {
+		t.Fatal(err)
+	}
+	var sampleKey string
+	var previousSample logSample
+	for key, sample := range a.saved.Samples {
+		sample.ObservedAt = time.Now().Unix() - 301
+		a.saved.Samples[key] = sample
+		sampleKey, previousSample = key, sample
+	}
+	previousBudget := a.saved.SampleBudget
+	if err := os.WriteFile(path, []byte(first+second+strings.Repeat("x", 65536)+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		if err := a.Scan(); err != nil {
+			t.Fatal(err)
+		}
+		if got := a.Count("app", "error"); got != 1 {
+			t.Errorf("failed scan %d changed committed count: %d", i, got)
+		}
+		for _, saved := range a.saved.Files {
+			if saved.Offset != int64(len(first)) {
+				t.Errorf("failed scan advanced committed offset: %d", saved.Offset)
+			}
+		}
+		if a.saved.Samples[sampleKey] != previousSample || a.saved.SampleBudget != previousBudget {
+			t.Fatal("failed scan changed committed sample or budget")
+		}
+	}
+	if a.readErrors["app"] != 3 {
+		t.Fatal("oversized line did not report a read error on each retry")
+	}
+	if err := os.Truncate(path, int64(len(first+second))); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Scan(); err != nil {
+		t.Fatal(err)
+	}
+	labels := sampleMetricLabels(t, a.MetricsText("cluster-a", "node-a"))
+	if a.Count("app", "error") != 2 || labels["preview"] != "ERROR second" || labels["byte_offset"] != strconv.Itoa(len(first)) {
+		t.Fatal("recovered scan did not commit the new count and sample together")
+	}
+	for _, saved := range a.saved.Files {
+		if saved.Offset != int64(len(first+second)) {
+			t.Fatalf("recovered scan did not commit its offset: %d", saved.Offset)
+		}
+	}
+	if err := a.Scan(); err != nil || a.Count("app", "error") != 2 {
+		t.Fatal("recovered line was counted more than once")
+	}
+}
+
 func TestLogSampleProvidedFiles(t *testing.T) {
 	directory := os.Getenv("LOG_AGENT_SAMPLE_LOG_DIR")
 	if directory == "" {

@@ -63,13 +63,13 @@ type persistentSource struct {
 }
 
 func (s persistentSource) Snapshot(ctx context.Context, cluster string) (*Snapshot, error) {
+	ctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
 	ticket, err := s.Persistence.Claim(ctx, s.Registration, 2*time.Minute)
 	if err != nil {
 		return nil, err
 	}
-	scanCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
-	defer cancel()
-	snapshot, scanErr := s.DiscoverySource.Snapshot(scanCtx, cluster)
+	snapshot, scanErr := s.DiscoverySource.Snapshot(ctx, cluster)
 	if err = s.Persistence.Publish(ctx, s.Registration, ticket, snapshot, scanErr); err != nil {
 		return nil, err
 	}
@@ -126,12 +126,19 @@ func reconcileLogAgents(ctx context.Context, persistence Persistence, cluster, n
 			if container.InstanceID == "" || container.Key.Namespace != namespace {
 				continue
 			}
-			if target, err := autoLogResolver.Resolve(ctx, container); err == nil {
+			target, err := autoLogResolver.Resolve(ctx, container)
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if err == nil {
 				resolved[container.Key] = target
 			} else if autoLogResolverReport != nil {
 				autoLogResolverReport(container, err)
 			}
 		}
+	}
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
 	if atomic, ok := persistence.(AtomicLogAgentPersistence); ok {
 		return atomic.UpdateLogAgentConfigs(ctx, cluster, func(configs map[string]LogAgentConfig) (map[string]LogAgentConfig, error) {

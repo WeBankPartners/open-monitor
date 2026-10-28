@@ -590,6 +590,7 @@ func (a *Agent) read(f *os.File, t Target, next *checkpoint) error {
 				exclusions[i] = regexp.MustCompile(exclude.Pattern)
 			}
 		}
+		count := c.Counts[r.ID]
 		for n := 0; n < 10000; n++ {
 			line, e := reader.ReadSlice('\n')
 			if e == io.EOF {
@@ -608,7 +609,7 @@ func (a *Agent) read(f *os.File, t Target, next *checkpoint) error {
 				}
 			}
 			if match {
-				c.Counts[r.ID]++
+				count++
 				c.LastMatch = time.Now().Unix()
 				if !sampleChecked {
 					sample = newLogSample(next, logSampleKey(t, r), f.Name(), fmt.Sprintf("%d:%d", sys.Dev, sys.Ino), c.Offset, line, c.LastMatch)
@@ -617,6 +618,7 @@ func (a *Agent) read(f *os.File, t Target, next *checkpoint) error {
 			}
 			c.Offset += int64(len(line))
 		}
+		c.Counts[r.ID] = count
 		next.Files[key] = c
 		if sample != nil {
 			commitLogSample(next, logSampleKey(t, r), *sample)

@@ -6,21 +6,23 @@
       <Button size="small" icon="ios-expand" :disabled="!series.length" @click="expanded = true">{{$t('m_k8s_expand_chart')}}</Button>
     </div>
     <div class="chart-body">
-      <Spin v-if="loading" fix />
-      <Alert v-if="!loading && failed" type="error">{{$t('m_k8s_history_failed')}}</Alert>
+      <Spin v-if="loading && !series.length" fix />
+      <Alert v-if="!loading && failed" :type="series.length ? 'warning' : 'error'">{{$t(series.length ? 'm_k8s_history_stale' : 'm_k8s_history_failed')}} <Button size="small" @click="load()">{{$t('m_refresh')}}</Button></Alert>
       <Alert v-else-if="!loading && !series.length">{{$t('m_k8s_no_metric_data')}}</Alert>
       <div v-show="series.length" ref="chart" style="height:280px" ></div>
     </div>
+    <p v-if="updatedAt" class="chart-update"><Icon v-if="loading" type="ios-loading" /> {{$t('m_k8s_updated_at')}}: {{new Date(updatedAt).toLocaleString()}}</p>
     <Modal v-model="expanded" fullscreen footer-hide :mask-closable="false" @on-visible-change="expandedChanged">
       <p slot="header" class="expanded-title">{{title}}</p>
       <div v-if="expanded">
         <p class="expanded-summary">{{object.clusterId}} / {{object.namespace}} / {{object.podName}} / {{object.container}} · {{metric.unit}}</p>
         <div class="chart-body">
-          <Spin v-if="loading" fix />
-          <Alert v-if="!loading && failed" type="error">{{$t('m_k8s_history_failed')}}</Alert>
+          <Spin v-if="loading && !series.length" fix />
+          <Alert v-if="!loading && failed" :type="series.length ? 'warning' : 'error'">{{$t(series.length ? 'm_k8s_history_stale' : 'm_k8s_history_failed')}} <Button size="small" @click="load()">{{$t('m_refresh')}}</Button></Alert>
           <Alert v-else-if="!loading && !series.length">{{$t('m_k8s_no_metric_data')}}</Alert>
           <div v-show="series.length" ref="expandedChart" class="expanded-chart"></div>
         </div>
+        <p v-if="updatedAt" class="chart-update">{{$t('m_k8s_updated_at')}}: {{new Date(updatedAt).toLocaleString()}}</p>
         <Collapse v-if="series.length" style="margin-top:12px">
           <Panel name="labels">
             {{$t('m_k8s_series_details', {count: series.length})}}
@@ -48,6 +50,7 @@ export default {
     metric: Object,
     range: Object,
     refreshToken: Number,
+    periodicRefresh: Boolean,
     title: String
   },
   data() {
@@ -57,7 +60,9 @@ export default {
       series: [],
       expanded: false,
       loading: false,
-      failed: false
+      failed: false,
+      loadedRange: null,
+      updatedAt: 0
     }
   },
   computed: {
@@ -66,7 +71,7 @@ export default {
       return JSON.stringify([object.clusterId, object.namespace, object.workloadType, object.workloadName, object.podName, object.container, this.metric.id, this.range, this.refreshToken])
     }
   },
-  watch: {queryKey() { this.load() }},
+  watch: {queryKey() { this.load(this.periodicRefresh) }},
   mounted() {
     this._chart = echarts.init(this.$refs.chart)
     this._resizeChart = () => this.renderChart()
@@ -96,10 +101,19 @@ export default {
         this.renderChart()
       })
     },
-    load() {
+    load(periodic = false) {
+      const {
+        clusterId, namespace, workloadType, workloadName, podName, container
+      } = this.object
+      const scopeKey = JSON.stringify([clusterId,namespace,workloadType,workloadName,podName,container,this.metric.id])
+      if (periodic === true && this.loading && this._scopeKey === scopeKey) {return}
+      const rangeKey = JSON.stringify(this.range)
+      const keepData = this._scopeKey === scopeKey && (periodic === true || this._rangeKey === rangeKey)
+      this._scopeKey = scopeKey
+      this._rangeKey = rangeKey
       const generation = this._generation = (this._generation || 0) + 1
       clearTimeout(this._deadline)
-      this.series = []
+      if (!keepData) { this.series = []; this.loadedRange = null; this.updatedAt = 0 }
       this.loading = true
       this.failed = false
       const range = {...this.range}
@@ -110,13 +124,14 @@ export default {
         clearTimeout(this._deadline)
         this.loading = false
         this.failed = failed
-        this.series = failed ? [] : chartSeries(data, range)
+        if (!failed) {
+          this.series = chartSeries(data, range)
+          this.loadedRange = range
+          this.updatedAt = Date.now()
+        }
         this.renderChart()
       }
       this._deadline = setTimeout(() => finish(null, true), 30000)
-      const {
-        clusterId, namespace, workloadType, workloadName, podName, container
-      } = this.object
       this.request(
         'POST',
         this.apiCenter.k8sMetricHistory,
@@ -139,6 +154,7 @@ export default {
       this.$nextTick(() => {
         if (!this._chart) {return}
         const unit = this.metric.unit
+        const range = this.loadedRange || this.range
         const escape = text => String(text).replace(/[&<>"']/g, c => ({
           '&': '&amp;',
           '<': '&lt;',
@@ -183,8 +199,8 @@ export default {
             },
             xAxis: {
               type: 'time',
-              min: this.range.start * 1000,
-              max: this.range.end * 1000
+              min: range.start * 1000,
+              max: range.end * 1000
             },
             yAxis: {
               type: 'value',
@@ -203,6 +219,7 @@ export default {
 .metric-card >>> .ivu-card-head { padding-right:180px; }
 .metric-actions { display:flex; align-items:center; gap:8px; }
 .chart-body { min-height:280px; position:relative; }
+.chart-update { margin-top:8px; color:#808695; font-size:12px; }
 .expanded-title { margin-right:28px; overflow-wrap:anywhere; }
 .expanded-summary { margin-bottom:12px; overflow-wrap:anywhere; }
 .expanded-chart { height:calc(100vh - 220px); min-height:280px; }
