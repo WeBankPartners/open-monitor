@@ -2,7 +2,9 @@
   <div class="k8s-objects">
     <Card>
       <p slot="title">{{$t('m_k8s_objects')}}</p>
-      <Button v-if="selected" slot="extra" size="small" @click="inventoryCollapsed = !inventoryCollapsed">{{$t(inventoryCollapsed ? 'm_k8s_switch_object' : 'm_k8s_collapse_inventory')}}</Button>
+      <div slot="extra">
+        <Button v-if="selected" size="small" @click="inventoryCollapsed = !inventoryCollapsed">{{$t(inventoryCollapsed ? 'm_k8s_switch_object' : 'm_k8s_collapse_inventory')}}</Button>
+      </div>
       <Alert v-if="localCollectionEnabled === false" type="warning">{{$t('m_k8s_local_collection_disabled')}}</Alert>
       <div v-show="!inventoryCollapsed || !selected" class="object-filters">
         <div class="object-filter filter-scope">

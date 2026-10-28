@@ -148,6 +148,70 @@ test('selecting an object collapses inventory without changing the chosen metric
   assert.equal(ctx.range.end,1900)
 })
 
+test('the mounted Card retains a working inventory toggle after the first object selection', async () => {
+  const Vue=require('vue')
+  const compiler=require('vue-template-compiler')
+  const cardSource=fs.readFileSync(path.join(__dirname,'../node_modules/view-design/src/components/card/card.vue'),'utf8')
+  const cardScript=cardSource.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^\s*import .*$/gm,'').replace('export default','module.exports =')
+  const cardOptions=vm.runInNewContext(cardScript,{module:{exports:{}},Icon:{},mixinsLink:{}})
+  const compile=source=>{
+    const result=compiler.compile(source.match(/<template>([\s\S]*?)<\/template>/)[1])
+    assert.deepEqual(result.errors,[])
+    return {render:new Function(result.render),staticRenderFns:result.staticRenderFns.map(code=>new Function(code))}
+  }
+  const {view,ctx}=setup('k8s-objects')
+  const parent=new Vue({data:()=>({apiCenter:ctx.apiCenter})})
+  parent.$httpRequestEntrance={httpRequestEntrance:ctx.request}
+  const page=new Vue({...view,parent,components:{...view.components,Card:{...cardOptions,...compile(cardSource)}},...compile(fs.readFileSync(path.join(root,'k8s-objects.vue'),'utf8'))})
+  page.$route={query:{}}
+  page.$t=key=>key
+  const inventory=()=>page._render().children[0]
+  const createCard=vnode=>new vnode.componentOptions.Ctor({parent:page,_parentVnode:vnode,_renderChildren:vnode.componentOptions.children})
+  const card=createCard(inventory())
+  card.$mount()
+  // Without a browser, Vue does not insert child components into a DOM tree.
+  card._isMounted=true
+  card.$options.mounted.forEach(hook=>hook.call(card))
+  const find=(node,predicate)=>{
+    if (!node) return null
+    if (predicate(node)) return node
+    for (const child of node.children || (node.componentOptions || {}).children || []) {
+      const match=find(child,predicate)
+      if (match) return match
+    }
+    return null
+  }
+  const renderUpdatedCard=()=>{
+    const vnode=inventory()
+    const updated=createCard(vnode)
+    card.$slots=updated.$slots
+    card.$options._parentVnode=vnode
+    updated.$destroy()
+    return card._render()
+  }
+  try {
+    page.selectObject(object)
+    await Vue.nextTick()
+    const selected=page.selected, range=page.range, metrics=page.metricSelections
+    assert.equal(page.inventoryCollapsed,true)
+    let toggle=find(renderUpdatedCard(),node=>node.data && node.data.on && node.data.on.click && (node.children || []).some(child=>child.text==='m_k8s_switch_object'))
+    assert.ok(toggle,'the switch-object button must appear after selecting the first object')
+    toggle.data.on.click()
+    assert.equal(page.inventoryCollapsed,false)
+    assert.equal(page.selected,selected)
+    assert.equal(page.range,range)
+    assert.equal(page.metricSelections,metrics)
+    toggle=find(renderUpdatedCard(),node=>node.data && node.data.on && node.data.on.click && (node.children || []).some(child=>child.text==='m_k8s_collapse_inventory'))
+    assert.ok(toggle,'the expanded list must still offer its collapse action')
+    toggle.data.on.click()
+    assert.equal(page.inventoryCollapsed,true)
+  } finally {
+    card.$destroy()
+    page.$destroy()
+    parent.$destroy()
+  }
+})
+
 test('an explicitly requested disabled namespace never falls back to a different namespace', () => {
   for (const name of ['k8s-objects','k8s-alert-rules']) {
     const {ctx,requests} = setup(name, {$route:{query:{clusterId:'cluster-a',namespace:'off'}}})
