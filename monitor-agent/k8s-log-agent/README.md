@@ -43,7 +43,7 @@ ENV 变更需重启 Pod。日志目标及规则不放入 ENV 或 ConfigMap，由
 2. 通过 `GET <Monitor基础路径>/internal/k8s/log-agent/config` 拉取完整配置；查询参数为 URL 编码后的 `clusterId/node/version`，禁止重定向。
 3. 应用配置后扫描文件。HTTP `/metrics` 只读取已生成的内存结果，不在抓取时现场解析日志。
 
-Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_path}/logs` 下的普通 `*.log` 和应用 `*_metric.log` 目标分配给该节点。默认普通规则匹配日志头中的 `ERROR/FATAL/PANIC` 级别，支持方括号格式和时间戳后直接跟级别的格式（包括毫秒前使用冒号），正文中的同名字段和异常续行不单独计数。普通扫描显式跳过 `_metric.log`，避免应用指标内容触发关键字告警。新建普通目标还默认排除 `.log` 与结尾 `.log` 之间包含日期的归档文件，例如 `app.log.2026-01-01_08-1.log`；支持 `YYYY-MM-DD`、`YYYYMMDD`、`YYYY_MM_DD`、`YYYY.MM.DD` 日期形态。`app.log.worker.log` 等不含日期的文件继续采集。
+Monitor 按 Pod 的 `instanceId` 查询 CMDB `app_instance` guid，将 `{deploy_path}/logs` 下的普通 `*.log` 和应用 `*_metric.log` 目标分配给该节点。默认普通规则匹配日志头中的 `ERROR/FATAL/PANIC` 级别，支持方括号格式和时间戳后直接跟级别的格式（包括毫秒前使用冒号），正文中的同名字段和异常续行不单独计数。普通扫描显式跳过 `_metric.log`，避免应用指标内容触发关键字告警。新建普通目标默认排除文件名包含日期形态、且以 `.log` 结尾的文件，统一采用 `*日期*.log`；日期支持 `YYYY-MM-DD`、`YYYYMMDD`、`YYYY_MM_DD`、`YYYY.MM.DD`。不限定文件名前缀、时间或序号，不区分文件是否仍被写入；`app.log.2026-01-01_08-1.log`、`access_log.2026-01-01.log`、`20260101-080000.log` 均被排除。`app.log.worker.log` 等不含日期形态的文件继续采集。
 
 配置采用 `{"config":{"version":1,"targets":[...]}}` 响应，撤销目标通过更高版本配置移除目标；配置、规则版本由 Server 维护。具体协议见 [系统设计](../../docs/k8s-monitoring-system-design.md#5-agent-配置采集与状态恢复)。
 
@@ -75,7 +75,7 @@ literal 区分大小写；regex 使用 Go regexp 语法，可用 `(?i)` 忽略�
 
 Server 在集群配置事务锁内管理规则版本：新增为 1，匹配或排除内容变化才递增，相同配置重试不变。自动发现、Pod 重建和节点切换保留人工规则。新版本使用新计数序列；目录、glob 和 Pod UID 未变时继承已提交游标，不重读历史，已有计数和告警不追溯重算。排除文本不进入指标标签。
 
-已有环境升级 Monitor Server、Web 和 Agent 后，可在“K8s监控配置 → 监控源 → 日志 Agent 管理 → 日志目标（JSON）”点击“重置默认日志规则”，检查后点击“保存并发布”。一次处理当前 Agent 下所有普通日志目标的 `default-error` 规则（缺少时补充），清空该默认规则的行内容排除项，并将目标级 `excludeGlobs` 重置为当前默认归档排除模式；保留其他自定义规则和应用指标目标。重置仅修改编辑内容，取消不会下发；重复重置并保存相同内容不会再次递增版本。已有目标的文件排除配置在自动发现、Pod 重建和节点迁移时保留，不会被新版默认值自动覆盖。无需执行 SQL；旧 Agent 不识别文件排除字段，因此本次文件过滤必须升级 Agent 镜像。
+已有环境升级 Monitor Server、Web 和 Agent 后，可在“K8s监控配置 → 监控源 → 日志 Agent 管理 → 日志目标（JSON）”点击“重置默认日志规则”，检查后点击“保存并发布”。一次处理当前 Agent 下所有普通日志目标的 `default-error` 规则（缺少时补充），清空该默认规则的行内容排除项，并将目标级 `excludeGlobs` 重置为当前默认归档排除模式；保留其他自定义规则和应用指标目标。重置仅修改编辑内容，取消不会下发；重复重置并保存相同内容不会再次递增版本。已有目标的文件排除配置在自动发现、Pod 重建和节点迁移时保留，不会被新版默认值自动覆盖。无需执行 SQL；旧 Agent 不识别文件排除字段，需要升级 Agent 镜像。已支持文件排除和默认规则重置的环境，本次仅扩充默认排除模式，只需升级 Monitor Server 后重置并保存，无需更新 Agent 或 Web。
 
 ## 文件与 checkpoint
 

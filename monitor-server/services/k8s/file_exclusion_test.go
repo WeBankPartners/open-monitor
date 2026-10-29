@@ -48,7 +48,7 @@ func TestDiscoveredFileDefaultsExcludeArchivesAndKeepActiveLogs(t *testing.T) {
 	client := cmdbRoundTripper(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{"code":0,"statusCode":"OK","data":{"pageInfo":{"totalRows":1},"contents":[{"guid":"instance-a","deploy_path":"/var/log/app"}]}}`))}, nil
 	})
-	target, err := (CMDBLogTargetResolver{Client: CMDBClient{BaseURL: "https://cmdb.example.invalid", HTTP: client}}).Resolve(context.Background(), Container{InstanceID: "instance-a"})
+	target, err := (CMDBLogTargetResolver{Client: CMDBClient{BaseURL: "https://cmdb.example.invalid", HTTP: client}}).Resolve(context.Background(), Container{Key: ObjectKey{Namespace: "test"}, PodUID: "pod-a", InstanceID: "instance-a"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,13 +71,36 @@ func TestDiscoveredFileDefaultsExcludeArchivesAndKeepActiveLogs(t *testing.T) {
 		{"app.log-archive-20260101-08-1.log", true},
 		{"app.log_2026_01_01_08-1.log", true},
 		{"app.log.2026.01.01-08.log", true},
+		{"service.2026-01-01_08-1.log", true},
+		{"service-api.2026-01-01_08-12.log", true},
+		{"server-2026-01-01-08-2.log", true},
+		{"client-2026-01-01-08-1.log", true},
+		{"admin-2026-01-01.0.log", true},
+		{"admin-audit-2026-01-01.0.log", true},
+		{"service.20260101_08-1.log", true},
+		{"server-2026_01_01-08-2.log", true},
+		{"admin-2026.01.01.0.log", true},
+		{"access.2026-01-01.log", true},
+		{"account.2026-01-01.log", true},
+		{"access_log.2026-01-01.log", true},
+		{"access.20260101.log", true},
+		{"account.2026_01_01.log", true},
+		{"access_log.2026.01.01.log", true},
+		{"app-2026-01-01.log", true},
+		{"app.2026-01-01.log", true},
+		{"20260101-080000.log", true},
+		{"server-2026-01-01-08.log", true},
+		{"service20260101-extra.log", true},
 		{"app.log", false},
 		{"rmb-client.log", false},
+		{"access.log", false},
+		{"account.log", false},
+		{"access_log.log", false},
 		{"app-worker-1.log", false},
 		{"app.log.worker.log", false},
 		{"app.log.backup.log", false},
 		{"app.log.12345678.log", false},
-		{"app-2026-01-01.log", false},
+		{"access.12345678.log", false},
 	} {
 		skipped := false
 		for _, pattern := range wire.ExcludeGlobs {
@@ -90,5 +113,8 @@ func TestDiscoveredFileDefaultsExcludeArchivesAndKeepActiveLogs(t *testing.T) {
 		if skipped != tc.skip {
 			t.Errorf("file=%s excluded=%t want=%t", tc.name, skipped, tc.skip)
 		}
+	}
+	if err := ValidateLogAgentConfig(LogAgentConfig{Version: 1, Targets: []LogTarget{target}}); err != nil {
+		t.Fatalf("discovered file exclusions are invalid: %v", err)
 	}
 }

@@ -26,9 +26,9 @@ func DefaultLogRules() []LogRule {
 // DefaultLogExcludeGlobs returns file exclusions for discovery and the Web editor.
 func DefaultLogExcludeGlobs() []string {
 	return []string{
-		"*.log*[12][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]*.log",
-		"*.log*[12][0-9][0-9][0-9][._][01][0-9][._][0-3][0-9]*.log",
-		"*.log*[12][0-9][0-9][0-9][01][0-9][0-3][0-9]*.log",
+		"*[12][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]*.log",
+		"*[12][0-9][0-9][0-9][._][01][0-9][._][0-3][0-9]*.log",
+		"*[12][0-9][0-9][0-9][01][0-9][0-3][0-9]*.log",
 	}
 }
 

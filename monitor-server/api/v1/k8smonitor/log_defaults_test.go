@@ -49,7 +49,18 @@ func TestLogSourceOffersCurrentDefaultsWithoutChangingSavedRules(t *testing.T) {
 		}{
 			{"app.log.2026-01-01_08-1.log", true},
 			{"app.log.20260101.log", true},
+			{"service.2026-01-01_08-1.log", true},
+			{"server-2026-01-01-08-2.log", true},
+			{"admin-2026-01-01.0.log", true},
+			{"access.2026-01-01.log", true},
+			{"account.2026-01-01.log", true},
+			{"access_log.2026-01-01.log", true},
+			{"app-2026-01-01.log", true},
+			{"20260101-080000.log", true},
 			{"app.log.worker.log", false},
+			{"access.log", false},
+			{"account.log", false},
+			{"access_log.log", false},
 		} {
 			excluded := false
 			for _, glob := range body.Data.DefaultExcludeGlobs {
