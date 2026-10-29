@@ -6,7 +6,7 @@
         <Button v-if="selected" size="small" @click="inventoryCollapsed = !inventoryCollapsed">{{$t(inventoryCollapsed ? 'm_k8s_switch_object' : 'm_k8s_collapse_inventory')}}</Button>
       </div>
       <Alert v-if="localCollectionEnabled === false" type="warning">{{$t('m_k8s_local_collection_disabled')}}</Alert>
-      <div v-show="!inventoryCollapsed || !selected" class="object-filters">
+      <div v-show="inventoryVisible" class="object-filters">
         <div class="object-filter filter-scope">
           <label>{{$t('m_k8s_cluster_id')}}</label>
           <Select v-model="scope.clusterId" filterable :loading="sourcesLoading" :disabled="sourcesLoading" @on-change="clusterChanged()"><Option v-for="cluster in clusters" :key="cluster.clusterId" :value="cluster.clusterId">{{cluster.clusterId}}</Option></Select>
@@ -40,8 +40,8 @@
       <Alert v-else-if="!sourcesLoading && !scope.namespace">{{$t('m_k8s_no_namespace')}}</Alert>
       <p>{{scope.clusterId}} / {{scope.namespace}} — {{state || '-'}} · {{$t('m_k8s_observed_at')}}: {{observedAt ? new Date(observedAt).toLocaleString() : '-'}}</p>
       <Alert v-if="inventoryFailed" type="error">{{$t('m_k8s_inventory_failed')}}</Alert>
-      <div v-show="!inventoryCollapsed || !selected">
-        <Table border highlight-row :max-height="420" :loading="loading || sourcesLoading" :columns="columns" :data="pageRows" @on-row-click="selectObject" style="margin-top:12px" />
+      <div v-show="inventoryVisible">
+        <Table ref="inventoryTable" border highlight-row :max-height="420" :loading="loading || sourcesLoading" :columns="columns" :data="pageRows" @on-row-click="selectObject" style="margin-top:12px" />
         <Page :total="filteredObjects.length" :current="page" :page-size="20" show-total @on-change="page = $event" style="margin-top:12px" />
       </div>
       <Alert v-if="!selected" style="margin-top:12px">{{$t('m_k8s_select_object')}}</Alert>
@@ -143,6 +143,7 @@ export default {
     }
   },
   computed: {
+    inventoryVisible() { return !this.inventoryCollapsed || !this.selected },
     namespaceOptions() { return this.namespaces.filter(row => row.clusterId === this.scope.clusterId && row.enabled) },
     workloads() { return [...new Set(this.rows.map(row => row.workloadName))].sort() },
     filteredObjects() { return filterObjects(this.rows, this.filters, this.alertEvaluationEnabled === true) },
@@ -193,6 +194,15 @@ export default {
         title: this.$t('m_k8s_metric'),
         key: 'Value'
       }]
+    }
+  },
+  watch: {
+    inventoryVisible(visible) {
+      if (!visible) {return}
+      // A refresh while hidden may have cached the table's minimum column widths.
+      this.$nextTick(() => {
+        if (this.inventoryVisible && this.$refs.inventoryTable) {this.$refs.inventoryTable.handleResize()}
+      })
     }
   },
   mounted() {

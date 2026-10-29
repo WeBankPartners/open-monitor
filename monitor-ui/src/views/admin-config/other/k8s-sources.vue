@@ -153,7 +153,7 @@ export default {
   data() {
     return { request: this.$root.$httpRequestEntrance.httpRequestEntrance, apiCenter: this.$root.apiCenter, activeTab: 'clusters', namespaceClusterFilter: '',
       cluster: { clusterId: '', apiServer: '', ca: '', token: '', enabled: true, editing: false, visible: false }, namespace: { clusterId: '', namespace: '', token: '', enabled: true, editing: false, visible: false },
-      agent: { clusterId: '', node: '', searchNode: '', loaded: false, loading: false, failed: false, saving: false, saveFailed: false, loadedScope: null, targetsJson: '[]', originalJson: '[]', defaultRules: [], editorVisible: false }, rulesEditor: {visible:false,targetIndex:0,targets:[],originalJson:'[]'},
+      agent: { clusterId: '', node: '', searchNode: '', loaded: false, loading: false, failed: false, saving: false, saveFailed: false, loadedScope: null, targetsJson: '[]', originalJson: '[]', defaultRules: [], defaultExcludeGlobs: [], editorVisible: false }, rulesEditor: {visible:false,targetIndex:0,targets:[],originalJson:'[]'},
       clusters: [], namespaces: [], agents: [], clustersLoading:false,clustersFailed:false,namespacesLoading:false,namespacesFailed:false,agentsLoading:false,agentsFailed:false,endpoint: {visible:false} }
   },
   computed: {
@@ -241,6 +241,7 @@ export default {
       const logTargets = targets.filter(target=>!target.format)
       if (!logTargets.length) { this.$Message.error(this.$t('m_k8s_no_log_targets')); return }
       logTargets.forEach(target=>{
+        if (this.agent.defaultExcludeGlobs && this.agent.defaultExcludeGlobs.length) target.excludeGlobs = this.agent.defaultExcludeGlobs.slice()
         target.rules = target.rules || []
         this.agent.defaultRules.forEach(rule=>{
           const index = target.rules.findIndex(current=>current.id === rule.id)
@@ -361,6 +362,7 @@ export default {
       this.agent.failed = false
       this.agent.saveFailed = false
       this.agent.defaultRules = []
+      this.agent.defaultExcludeGlobs = []
       clearTimeout(this._agentDeadline)
       if (openEditor) {this.agent.editorVisible = true;this.agent.loadedScope = null}
       if (!scope.clusterId || !scope.node) return
@@ -379,6 +381,7 @@ export default {
         this.agent.targetsJson = JSON.stringify(data.targets || [], null, 2)
         this.agent.originalJson = this.agent.targetsJson
         this.agent.defaultRules = data.defaultRules || []
+        this.agent.defaultExcludeGlobs = data.defaultExcludeGlobs || []
         this.agent.loadedScope = scope
         this.agent.loaded = true
         this.agent.loading = false

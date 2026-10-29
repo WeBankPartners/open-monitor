@@ -264,7 +264,7 @@
   "m_k8s_log_targets": "日志目标（JSON）",
   "m_k8s_log_matching_rules": "日志匹配与排除规则",
   "m_k8s_reset_log_defaults": "重置默认日志规则",
-  "m_k8s_log_defaults_help": "重置会更新当前 Agent 所有普通日志目标的默认 ERROR 规则，并清空该默认规则的排除项；其他自定义规则和应用指标目标保持不变。点击“保存并发布”后才生效。",
+  "m_k8s_log_defaults_help": "重置会更新当前 Agent 所有普通日志目标的默认 ERROR 规则，清空该规则的行内容排除项，并重置文件排除项：跳过 .log 与结尾 .log 之间含 YYYY-MM-DD、YYYYMMDD、YYYY_MM_DD 或 YYYY.MM.DD 日期的归档文件；其他自定义规则和应用指标目标保持不变。点击“保存并发布”后才生效。",
   "m_k8s_log_defaults_reset": "已重置编辑内容，请检查后点击“保存并发布”。",
   "m_k8s_match_mode": "匹配方式",
   "m_k8s_match_pattern": "匹配内容",

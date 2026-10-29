@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"testing"
@@ -30,9 +31,10 @@ func TestLogSourceOffersCurrentDefaultsWithoutChangingSavedRules(t *testing.T) {
 		}
 		var body struct {
 			Data struct {
-				Version      uint64          `json:"version"`
-				Targets      []k8s.LogTarget `json:"targets"`
-				DefaultRules []k8s.LogRule   `json:"defaultRules"`
+				Version             uint64          `json:"version"`
+				Targets             []k8s.LogTarget `json:"targets"`
+				DefaultRules        []k8s.LogRule   `json:"defaultRules"`
+				DefaultExcludeGlobs []string        `json:"defaultExcludeGlobs"`
 			} `json:"data"`
 		}
 		if err := json.Unmarshal(out.Body.Bytes(), &body); err != nil {
@@ -40,6 +42,26 @@ func TestLogSourceOffersCurrentDefaultsWithoutChangingSavedRules(t *testing.T) {
 		}
 		if len(body.Data.DefaultRules) != 1 || body.Data.DefaultRules[0].ID != "default-error" || body.Data.DefaultRules[0].Mode != "regex" {
 			t.Fatalf("current defaults missing: %s", out.Body.String())
+		}
+		for _, file := range []struct {
+			name     string
+			excluded bool
+		}{
+			{"app.log.2026-01-01_08-1.log", true},
+			{"app.log.20260101.log", true},
+			{"app.log.worker.log", false},
+		} {
+			excluded := false
+			for _, glob := range body.Data.DefaultExcludeGlobs {
+				match, err := filepath.Match(glob, file.name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				excluded = excluded || match
+			}
+			if excluded != file.excluded {
+				t.Fatalf("incorrect file exclusion for %s", file.name)
+			}
 		}
 		pattern, err := regexp.Compile(body.Data.DefaultRules[0].Pattern)
 		if err != nil || !pattern.MatchString("2026-01-01 00:00:00:123 ERROR worker failed") || pattern.MatchString("2026-01-01 00:00:00:123 INFO body error") {

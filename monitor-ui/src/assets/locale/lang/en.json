@@ -264,7 +264,7 @@
   "m_k8s_log_targets": "Log targets (JSON)",
   "m_k8s_log_matching_rules": "Log matching and exclusion rules",
   "m_k8s_reset_log_defaults": "Reset default log rules",
-  "m_k8s_log_defaults_help": "Reset updates the default ERROR rule and clears its exclusions for every ordinary log target on this Agent. Other custom rules and application metric targets are preserved. Changes take effect only after clicking Save and publish.",
+  "m_k8s_log_defaults_help": "Reset updates the default ERROR rule, clears its line exclusions and resets file exclusions to skip archives containing a YYYY-MM-DD, YYYYMMDD, YYYY_MM_DD or YYYY.MM.DD date between .log and the final .log suffix for every ordinary log target on this Agent. Other custom rules and application metric targets are preserved. Changes take effect only after clicking Save and publish.",
   "m_k8s_log_defaults_reset": "Draft reset. Review the changes and click Save and publish.",
   "m_k8s_match_mode": "Match mode",
   "m_k8s_match_pattern": "Pattern",

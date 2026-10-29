@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -56,6 +57,7 @@ type LogTarget struct {
 	InstanceID   string    `json:"instanceId"`
 	Directory    string    `json:"directory"`
 	Glob         string    `json:"glob"`
+	ExcludeGlobs []string  `json:"excludeGlobs,omitempty"`
 	Start        string    `json:"start"`
 	Rules        []LogRule `json:"rules"`
 	Format       string    `json:"format,omitempty"`
@@ -75,6 +77,17 @@ func ValidateLogAgentConfig(c LogAgentConfig) error {
 			return errors.New("invalid log target")
 		}
 		ids[t.ID] = true
+		if len(t.ExcludeGlobs) > 100 {
+			return errors.New("too many log file exclusions")
+		}
+		for _, pattern := range t.ExcludeGlobs {
+			if pattern == "" || len(pattern) > 4096 || strings.ContainsAny(pattern, "/\\") {
+				return errors.New("invalid log file exclusion")
+			}
+			if _, err := filepath.Match(pattern, ""); err != nil {
+				return errors.New("invalid log file exclusion glob")
+			}
+		}
 		if len(t.Rules) > 100 {
 			return errors.New("too many log rules")
 		}

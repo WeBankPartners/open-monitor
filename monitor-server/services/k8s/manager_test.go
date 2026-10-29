@@ -196,15 +196,22 @@ func TestAutomaticLogReconcileIsIdempotentAndRevokesOldNode(t *testing.T) {
 }
 
 func TestAutomaticLogReconcilePreservesExistingIDsAcrossPrefixChange(t *testing.T) {
-	for _, id := range []string{"cmdb-app", "k8s-log-app"} {
-		t.Run(id, func(t *testing.T) {
+	for _, tc := range []struct {
+		id         string
+		exclusions []string
+	}{{"cmdb-app", nil}, {"k8s-log-app", []string{"custom*.log"}}} {
+		t.Run(tc.id, func(t *testing.T) {
+			id := tc.id
 			target := LogTarget{ID: id, Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", WorkloadUID: "work-a", PodName: "orders-0", Container: "app", PodUID: "pod-a", InstanceID: "instance-a", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 3, Mode: "literal", Pattern: "ERROR", Exclude: []LogExclusion{{Mode: "literal", Pattern: "EXPECTED_ERROR"}}}}}
+			target.ExcludeGlobs = tc.exclusions
 			metricTarget := target
+			metricTarget.ExcludeGlobs = nil
 			metricTarget.ID = id + "-metric"
 			metricTarget.Glob, metricTarget.Format, metricTarget.Rules = "*_metric.log", "otlp_metric", nil
 			persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 4, Targets: []LogTarget{target, metricTarget}}}}
 			generated := target
 			generated.ID = "k8s-log-app"
+			generated.ExcludeGlobs = DefaultLogExcludeGlobs()
 			generated.Rules = []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}
 			ConfigureLogTargetResolver(fixedLogResolver{target: generated})
 			t.Cleanup(func() { ConfigureLogTargetResolver(nil) })
@@ -305,6 +312,7 @@ func TestLogTargetOrderDoesNotChangeVersion(t *testing.T) {
 
 func TestAutoDiscoveryCreatesSeparateMetricTargetAndPreservesBothOnRescan(t *testing.T) {
 	target := LogTarget{ID: "k8s-log-app", Namespace: "sit-a", WorkloadType: "StatefulSet", WorkloadName: "orders", PodName: "orders-0", Container: "app", PodUID: "pod", Directory: "logs", Glob: "*.log", Start: "end", Rules: []LogRule{{ID: "error", Version: 1, Mode: "literal", Pattern: "ERROR"}}}
+	target.ExcludeGlobs = []string{"archive*.log"}
 	persistence := &fakePersistence{configs: map[string]LogAgentConfig{"node-a": {Version: 1}}}
 	ConfigureLogTargetResolver(fixedLogResolver{target: target})
 	t.Cleanup(func() { ConfigureLogTargetResolver(nil) })
@@ -319,11 +327,14 @@ func TestAutoDiscoveryCreatesSeparateMetricTargetAndPreservesBothOnRescan(t *tes
 		}
 		ordinaryFound := false
 		for _, target := range config.Targets {
-			if target.Format == "otlp_metric" && (target.Glob != "*_metric.log" || len(target.Rules) != 0) {
+			if target.Format == "otlp_metric" && (target.Glob != "*_metric.log" || len(target.Rules) != 0 || len(target.ExcludeGlobs) != 0) {
 				t.Fatalf("invalid metric target: %+v", target)
 			}
 			if target.Format == "" {
 				ordinaryFound = true
+				if len(target.ExcludeGlobs) != 1 || target.ExcludeGlobs[0] != "archive*.log" {
+					t.Fatalf("file exclusions were not preserved: %+v", target)
+				}
 				if len(target.Rules) != 1 || target.Rules[0].Pattern != "ERROR" {
 					t.Fatalf("default error rule was not preserved: %+v", target)
 				}

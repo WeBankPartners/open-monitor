@@ -23,6 +23,15 @@ func DefaultLogRules() []LogRule {
 	}
 }
 
+// DefaultLogExcludeGlobs returns file exclusions for discovery and the Web editor.
+func DefaultLogExcludeGlobs() []string {
+	return []string{
+		"*.log*[12][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]*.log",
+		"*.log*[12][0-9][0-9][0-9][._][01][0-9][._][0-3][0-9]*.log",
+		"*.log*[12][0-9][0-9][0-9][01][0-9][0-3][0-9]*.log",
+	}
+}
+
 func (r CMDBLogTargetResolver) Resolve(ctx context.Context, c Container) (LogTarget, error) {
 	if strings.TrimSpace(c.InstanceID) == "" {
 		return LogTarget{}, errors.New("instance id is required")
@@ -48,6 +57,7 @@ func (r CMDBLogTargetResolver) Resolve(ctx context.Context, c Container) (LogTar
 		InstanceID:   c.InstanceID,
 		Directory:    path,
 		Glob:         "*.log",
+		ExcludeGlobs: DefaultLogExcludeGlobs(),
 		Start:        "end",
 		Rules:        DefaultLogRules(),
 	}, nil

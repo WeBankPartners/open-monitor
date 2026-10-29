@@ -42,18 +42,20 @@ test('reset defaults changes all ordinary log targets in the draft and saves onl
     request(method,url,body,done){pending.push({method,url,body,done})}
   }
   const defaults = [{id:'default-error',version:1,mode:'regex',pattern:'server-default'}]
+  const fileExclusions = ['*.log*2026-*.log','*.log*2026*.log']
   const targets = [
     {id:'target-a',namespace:'ns-a',podUid:'pod-a',directory:'/var/log/app',glob:'*.log',rules:[{id:'default-error',version:3,mode:'literal',pattern:'old',exclude:[{mode:'literal',pattern:'custom-exclusion'}]},{id:'custom',version:8,mode:'literal',pattern:'CUSTOM'}]},
     {id:'target-b',namespace:'ns-b',rules:[]},
     {id:'metrics',format:'otlp_metric',rules:null}
   ]
   component.methods.loadAgent.call(context, true)
-  pending[0].done({targets,defaultRules:defaults})
+  pending[0].done({targets,defaultRules:defaults,defaultExcludeGlobs:fileExclusions})
   component.methods.resetDefaultLogRules.call(context)
   const reset = JSON.parse(context.agent.targetsJson)
   assert.equal(pending.length,1,'reset must not save configuration')
-  assert.deepEqual(reset[0], {...targets[0],rules:[defaults[0],targets[0].rules[1]]})
+  assert.deepEqual(reset[0], {...targets[0],excludeGlobs:fileExclusions,rules:[defaults[0],targets[0].rules[1]]})
   assert.deepEqual(reset[1].rules,defaults)
+  assert.deepEqual(reset[1].excludeGlobs,fileExclusions)
   assert.deepEqual(reset[2],targets[2])
   const draft = context.agent.targetsJson
   component.methods.resetDefaultLogRules.call(context)

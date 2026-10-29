@@ -23,14 +23,14 @@ func (h Handler) GetLogAgentSource(c *gin.Context) {
 	}
 	config, err := h.LogStore.GetLogAgentConfig(c.Request.Context(), cluster, node)
 	if errors.Is(err, sql.ErrNoRows) {
-		mid.ReturnSuccessData(c, gin.H{"clusterId": cluster, "node": node, "version": 0, "targets": []k8s.LogTarget{}, "defaultRules": k8s.DefaultLogRules()})
+		mid.ReturnSuccessData(c, gin.H{"clusterId": cluster, "node": node, "version": 0, "targets": []k8s.LogTarget{}, "defaultRules": k8s.DefaultLogRules(), "defaultExcludeGlobs": k8s.DefaultLogExcludeGlobs()})
 		return
 	}
 	if err != nil {
 		c.AbortWithStatus(http.StatusServiceUnavailable)
 		return
 	}
-	mid.ReturnSuccessData(c, gin.H{"clusterId": cluster, "node": node, "version": config.Version, "targets": config.Targets, "defaultRules": k8s.DefaultLogRules()})
+	mid.ReturnSuccessData(c, gin.H{"clusterId": cluster, "node": node, "version": config.Version, "targets": config.Targets, "defaultRules": k8s.DefaultLogRules(), "defaultExcludeGlobs": k8s.DefaultLogExcludeGlobs()})
 }
 
 func (h Handler) PutLogAgentSource(c *gin.Context) {

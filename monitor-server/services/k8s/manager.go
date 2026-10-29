@@ -200,6 +200,7 @@ func reconcileResolvedLogAgents(ctx context.Context, persistence Persistence, cl
 			metricTarget := target
 			metricTarget.ID = target.ID + "-metric"
 			metricTarget.Glob = "*_metric.log"
+			metricTarget.ExcludeGlobs = nil
 			metricTarget.Format = "otlp_metric"
 			metricTarget.Rules = nil
 			for _, candidate := range []LogTarget{target, metricTarget} {
@@ -211,6 +212,7 @@ func reconcileResolvedLogAgents(ctx context.Context, persistence Persistence, cl
 							// Preserve persisted IDs, including the legacy automatic prefix.
 							target.ID = existing.ID
 							target.Rules = existing.Rules
+							target.ExcludeGlobs = existing.ExcludeGlobs
 							continue
 						}
 						filtered = append(filtered, existing)
@@ -223,6 +225,7 @@ func reconcileResolvedLogAgents(ctx context.Context, persistence Persistence, cl
 				found := false
 				for i := range config.Targets {
 					if config.Targets[i].ID == target.ID {
+						target.ExcludeGlobs = config.Targets[i].ExcludeGlobs
 						if len(config.Targets[i].Rules) > 0 {
 							target.Rules = config.Targets[i].Rules
 						}
@@ -266,6 +269,7 @@ func reconcileResolvedLogAgents(ctx context.Context, persistence Persistence, cl
 func cloneLogAgentConfig(config LogAgentConfig) LogAgentConfig {
 	config.Targets = append([]LogTarget(nil), config.Targets...)
 	for i := range config.Targets {
+		config.Targets[i].ExcludeGlobs = append([]string(nil), config.Targets[i].ExcludeGlobs...)
 		config.Targets[i].Rules = append([]LogRule(nil), config.Targets[i].Rules...)
 		for j := range config.Targets[i].Rules {
 			config.Targets[i].Rules[j].Exclude = append([]LogExclusion(nil), config.Targets[i].Rules[j].Exclude...)

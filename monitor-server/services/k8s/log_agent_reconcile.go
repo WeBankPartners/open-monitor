@@ -95,6 +95,14 @@ func sameLogTargets(a, b []LogTarget) bool {
 		if a[i].ID != b[i].ID || a[i].Namespace != b[i].Namespace || a[i].WorkloadType != b[i].WorkloadType || a[i].WorkloadName != b[i].WorkloadName || a[i].PodName != b[i].PodName || a[i].PodUID != b[i].PodUID || a[i].WorkloadUID != b[i].WorkloadUID || a[i].Container != b[i].Container || a[i].InstanceID != b[i].InstanceID || a[i].Directory != b[i].Directory || a[i].Glob != b[i].Glob || a[i].Start != b[i].Start || a[i].Format != b[i].Format {
 			return false
 		}
+		if len(a[i].ExcludeGlobs) != len(b[i].ExcludeGlobs) {
+			return false
+		}
+		for j := range a[i].ExcludeGlobs {
+			if a[i].ExcludeGlobs[j] != b[i].ExcludeGlobs[j] {
+				return false
+			}
+		}
 		if len(a[i].Rules) != len(b[i].Rules) {
 			return false
 		}

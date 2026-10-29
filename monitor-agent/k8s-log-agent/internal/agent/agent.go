@@ -29,19 +29,20 @@ type Exclusion struct {
 	Pattern string `json:"pattern"`
 }
 type Target struct {
-	WorkloadType string `json:"workloadType"`
-	ID           string `json:"id"`
-	Namespace    string `json:"namespace"`
-	PodUID       string `json:"podUid"`
-	PodName      string `json:"podName"`
-	InstanceID   string `json:"instanceId"`
-	Container    string `json:"container"`
-	WorkloadName string `json:"workloadName"`
-	Directory    string `json:"directory"`
-	Glob         string `json:"glob"`
-	Start        string `json:"start"`
-	Rules        []Rule `json:"rules"`
-	Format       string `json:"format,omitempty"`
+	WorkloadType string   `json:"workloadType"`
+	ID           string   `json:"id"`
+	Namespace    string   `json:"namespace"`
+	PodUID       string   `json:"podUid"`
+	PodName      string   `json:"podName"`
+	InstanceID   string   `json:"instanceId"`
+	Container    string   `json:"container"`
+	WorkloadName string   `json:"workloadName"`
+	Directory    string   `json:"directory"`
+	Glob         string   `json:"glob"`
+	ExcludeGlobs []string `json:"excludeGlobs,omitempty"`
+	Start        string   `json:"start"`
+	Rules        []Rule   `json:"rules"`
+	Format       string   `json:"format,omitempty"`
 }
 type Config struct {
 	Version uint64   `json:"version"`
@@ -194,6 +195,17 @@ func (a *Agent) Apply(c Config) error {
 		ids[t.ID] = true
 		if _, err := filepath.Match(t.Glob, ""); err != nil {
 			return errors.New("invalid glob")
+		}
+		if len(t.ExcludeGlobs) > 100 {
+			return errors.New("too many file exclusions")
+		}
+		for _, pattern := range t.ExcludeGlobs {
+			if pattern == "" || len(pattern) > 4096 || strings.ContainsAny(pattern, "/\\") {
+				return errors.New("invalid file exclusion")
+			}
+			if _, err := filepath.Match(pattern, ""); err != nil {
+				return errors.New("invalid file exclusion glob")
+			}
 		}
 		rules := map[string]bool{}
 		for _, r := range t.Rules {
@@ -362,6 +374,41 @@ func (a *Agent) open(path string) (*os.File, error) {
 	}
 	return os.NewFile(uintptr(fd), relative), nil
 }
+
+// Filter in bounded batches so archived and unrelated files do not consume
+// the active-file limit or require opening every archived file.
+func matchingLogFiles(dir *os.File, target Target) ([]string, error) {
+	var files []string
+	for {
+		names, err := dir.Readdirnames(256)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		for _, name := range names {
+			match, _ := filepath.Match(target.Glob, name)
+			if !match || (target.Format == "" && strings.HasSuffix(name, "_metric.log")) {
+				continue
+			}
+			for _, pattern := range target.ExcludeGlobs {
+				if excluded, _ := filepath.Match(pattern, name); excluded {
+					match = false
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+			files = append(files, name)
+			if len(files) > 10000 {
+				return nil, errors.New("too many matching log files")
+			}
+		}
+		if err == io.EOF {
+			return files, nil
+		}
+	}
+}
+
 func (a *Agent) Scan() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -399,25 +446,15 @@ func (a *Agent) Scan() error {
 			pruneTarget[t.ID+"\x00"+t.PodUID] = false
 			continue
 		}
-		entries, err := dir.Readdirnames(10001)
+		entries, err := matchingLogFiles(dir, t)
 		dir.Close()
-		if err != nil && err != io.EOF {
-			a.readErrors[t.ID]++
-			readErrorTargets++
-			pruneTarget[t.ID+"\x00"+t.PodUID] = false
-			continue
-		}
-		if len(entries) > 10000 {
+		if err != nil {
 			a.readErrors[t.ID]++
 			readErrorTargets++
 			pruneTarget[t.ID+"\x00"+t.PodUID] = false
 			continue
 		}
 		for _, name := range entries {
-			match, _ := filepath.Match(t.Glob, name)
-			if !match || (t.Format == "" && strings.HasSuffix(name, "_metric.log")) {
-				continue
-			}
 			matched[t.ID] = true
 			f, err := a.open(filepath.Join(t.Directory, name))
 			if err != nil {

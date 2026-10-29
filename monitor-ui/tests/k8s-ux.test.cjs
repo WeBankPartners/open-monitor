@@ -212,6 +212,87 @@ test('the mounted Card retains a working inventory toggle after the first object
   }
 })
 
+test('showing inventory recalculates the real table widths after a hidden refresh and preserves view state', async () => {
+  const Vue=require('vue')
+  const {view,ctx}=setup('k8s-objects')
+  const parent=new Vue({data:()=>({apiCenter:ctx.apiCenter})})
+  parent.$httpRequestEntrance={httpRequestEntrance:ctx.request}
+  const page=new Vue({...view,parent,mounted:[],beforeDestroy:[]})
+  page.$t=key=>key
+  const tableSource=fs.readFileSync(path.join(__dirname,'../node_modules/view-design/src/components/table/table.vue'),'utf8')
+  const widths=[]
+  const table={
+    cloneColumns:page.columns.map((column,index)=>({...column,_index:index})),
+    showVerticalScrollBar:false,scrollBarWidth:0,
+    $el:{get offsetWidth(){return !page.inventoryCollapsed || !page.selected ? 1600 : 0}},
+    fixedHeader(){widths.push(this.$el.offsetWidth)},
+    handleResize:new Function(tableSource.match(/            handleResize \(\) \{([\s\S]*?)\n            \},/)[1])
+  }
+  page.$refs.inventoryTable=table
+  try {
+    page.rows=Array.from({length:40},(_,i)=>({...object,podName:'app-'+i}))
+    page.selected=page.rows[20]
+    page.inventoryCollapsed=true
+    page.page=2
+    page.timePreset='custom'
+    page.range={...range}
+    await Vue.nextTick()
+    page.rows=page.rows.map(row=>({...row}))
+    table.handleResize()
+    assert.equal(table.tableWidth,1131,'the real Table calculation must reproduce the hidden width')
+    const selected=page.selected, filters=page.filters, selections=page.metricSelections, selectedRange=page.range
+    page.inventoryCollapsed=false
+    assert.equal(table.tableWidth,1131,'recalculation must wait for the visibility update')
+    await Vue.nextTick()
+    await Vue.nextTick()
+    assert.equal(table.tableWidth,1599,'expanding must replace the cached minimum width')
+    assert.equal(page.selected,selected)
+    assert.equal(page.filters,filters)
+    assert.equal(page.metricSelections,selections)
+    assert.equal(page.range,selectedRange)
+    assert.equal(page.page,2)
+
+    page.inventoryCollapsed=true
+    await Vue.nextTick()
+    table.handleResize()
+    assert.equal(table.tableWidth,1131)
+    page.selected=null
+    await Vue.nextTick()
+    await Vue.nextTick()
+    assert.equal(table.tableWidth,1599,'clearing the selected object must also restore the visible inventory')
+    assert.deepEqual(widths,[0,1600,0,1600])
+  } finally {
+    page.$destroy()
+    parent.$destroy()
+  }
+})
+
+test('a queued inventory resize does not measure the table after it is hidden again', async () => {
+  const Vue=require('vue')
+  const {view,ctx}=setup('k8s-objects')
+  const parent=new Vue({data:()=>({apiCenter:ctx.apiCenter})})
+  parent.$httpRequestEntrance={httpRequestEntrance:ctx.request}
+  const page=new Vue({...view,parent,mounted:[],beforeDestroy:[]})
+  let resizes=0
+  page.$refs.inventoryTable={handleResize(){resizes++}}
+  try {
+    page.selected=object
+    page.inventoryCollapsed=true
+    await Vue.nextTick()
+    page.inventoryCollapsed=false
+    await new Promise(resolve=>page.$nextTick(()=>{page.inventoryCollapsed=true;resolve()}))
+    await Vue.nextTick()
+    assert.equal(resizes,0)
+    page.inventoryCollapsed=false
+    await Vue.nextTick()
+    await Vue.nextTick()
+    assert.equal(resizes,1,'a later expansion must still recalculate the table')
+  } finally {
+    page.$destroy()
+    parent.$destroy()
+  }
+})
+
 test('an explicitly requested disabled namespace never falls back to a different namespace', () => {
   for (const name of ['k8s-objects','k8s-alert-rules']) {
     const {ctx,requests} = setup(name, {$route:{query:{clusterId:'cluster-a',namespace:'off'}}})
