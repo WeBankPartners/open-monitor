@@ -1320,7 +1320,7 @@ alter table log_keyword_alarm modify column `alarm_id` int DEFAULT null;
 #@v3.7.9.7-end@;
 
 #@v3.7.9.8-begin@;
-CREATE TABLE `custom_scrape_config` (
+CREATE TABLE IF NOT EXISTS `custom_scrape_config` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `name` varchar(64) NOT NULL,
   `job_name` varchar(255) NOT NULL,

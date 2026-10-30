@@ -1,3 +1,4 @@
+
 #@v3.8.0-begin@;
 
 -- MySQL 8. Apply to each environment's independent Monitor database.
